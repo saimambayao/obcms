@@ -12,7 +12,7 @@ Implements defense against:
 import os
 import unicodedata
 from django.core.exceptions import ValidationError
-from django.utils.decorate import method_decorator
+from django.utils.decorators import method_decorator
 from django.views.decorators.debug import sensitive_variables
 
 try:

@@ -9,6 +9,12 @@ from django.views.generic import CreateView
 
 from ..forms import CustomLoginForm, UserRegistrationForm
 from ..models import User
+from ..security_logging import (
+    log_failed_login,
+    log_successful_login,
+    log_logout,
+    log_admin_action,
+)
 
 
 class CustomLoginView(LoginView):
@@ -19,22 +25,45 @@ class CustomLoginView(LoginView):
     redirect_authenticated_user = True
 
     def form_valid(self, form):
+        """Process valid login form with security logging."""
         user = form.get_user()
+
+        # Check if user account is approved
         if not user.is_approved and not user.is_superuser:
+            # Log failed login due to unapproved account
+            log_failed_login(self.request, user.username, reason="Account pending approval")
             messages.error(
                 self.request,
                 "Your account is pending approval. Please contact the administrator.",
             )
             return self.form_invalid(form)
+
+        # Log successful login
+        log_successful_login(self.request, user)
+
         return super().form_valid(form)
+
+    def form_invalid(self, form):
+        """Process invalid login form with security logging."""
+        # Log failed login attempt (if username was provided)
+        username = form.data.get('username', 'Unknown')
+        if username:
+            log_failed_login(self.request, username, reason="Invalid credentials")
+
+        return super().form_invalid(form)
 
 
 class CustomLogoutView(LogoutView):
-    """Custom logout view."""
+    """Custom logout view with security logging."""
 
     next_page = reverse_lazy("common:login")
 
     def dispatch(self, request, *args, **kwargs):
+        """Handle logout with security logging."""
+        # Log logout before user is logged out
+        if request.user.is_authenticated:
+            log_logout(request, request.user)
+
         messages.success(request, "You have been successfully logged out.")
         return super().dispatch(request, *args, **kwargs)
 
@@ -48,7 +77,18 @@ class UserRegistrationView(CreateView):
     success_url = reverse_lazy("common:login")
 
     def form_valid(self, form):
+        """Process valid registration form with security logging."""
         response = super().form_valid(form)
+
+        # Log new user registration
+        from ..security_logging import log_security_event
+        log_security_event(
+            self.request,
+            event_type="User Registration",
+            details=f"New user registered: {self.object.username} ({self.object.email})",
+            severity="INFO"
+        )
+
         messages.success(
             self.request,
             "Registration successful! Your account is pending approval. "

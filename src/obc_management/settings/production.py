@@ -157,3 +157,13 @@ CELERY_TASK_SEND_SENT_EVENT = True
 # Celery 5.5+ Soft Shutdown (graceful task completion on worker restart)
 CELERY_WORKER_SOFT_SHUTDOWN_TIMEOUT = 60.0  # Seconds to wait for tasks to finish
 CELERY_WORKER_ENABLE_SOFT_SHUTDOWN_ON_IDLE = True  # Prevent losing ETA/retry tasks
+
+# ============================================================================
+# SECURITY ENHANCEMENT: Disable DRF Browsable API in Production
+# ============================================================================
+# Remove HTML browsable API renderer to prevent information disclosure
+# API will only return JSON responses
+REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
+    "rest_framework.renderers.JSONRenderer",
+    # BrowsableAPIRenderer intentionally removed for production security
+]

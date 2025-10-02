@@ -55,12 +55,14 @@ urlpatterns = [
         include(("recommendations.documents.urls", "documents"), namespace="documents"),
     ),
     path("mana/workshops/", include(("mana.urls", "mana"), namespace="mana")),
-    # API Authentication
-    path("api/auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    # API documentation (backend only - accessible via admin or direct API calls)
-    # API endpoints
-    path("api/v1/", include(api_router.urls)),
+    # =========================================================================
+    # API ENDPOINTS (Versioned)
+    # =========================================================================
+    # API v1 (Current stable version)
+    path("api/v1/", include("api.v1.urls")),
+
+    # Legacy API endpoints (deprecated - will be migrated to v1)
+    # TODO: Migrate these to api/v1/ and add deprecation warnings
     path(
         "api/administrative/",
         include(("common.api_urls", "common_api"), namespace="common_api"),

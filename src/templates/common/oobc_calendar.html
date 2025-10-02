@@ -483,59 +483,57 @@
     </div>
 </div>
 
-<div id="calendarModal" class="fixed inset-0 hidden z-50 flex items-center justify-center px-4 sm:px-6" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" data-close-modal></div>
-    <div class="relative max-h-[90vh] overflow-y-auto" id="calendarModalContent" tabindex="-1"></div>
-</div>
+{% include 'common/components/task_modal.html' %}
 {% endblock %}
 
 {% block extra_js %}
 {{ block.super }}
+<script src="{% static 'common/js/htmx-focus-management.js' %}"></script>
 <script src="{% static 'common/js/task_modal_enhancements.js' %}"></script>
 <script src="{% static 'common/vendor/fullcalendar/index.global.min.js' %}"></script>
 <script src="{% static 'common/js/calendar.js' %}"></script>
 <script>
     (function () {
-        var calendarModal = document.getElementById('calendarModal');
-        var calendarModalContent = document.getElementById('calendarModalContent');
+        var taskModal = document.getElementById('taskModal');
+        var taskModalContent = document.getElementById('taskModalContent');
 
-        function closeCalendarModal() {
-            if (!calendarModal) {
+        function closeTaskModal() {
+            if (!taskModal) {
                 return;
             }
-            calendarModal.classList.add('hidden');
-            calendarModal.setAttribute('aria-hidden', 'true');
-            if (calendarModalContent) {
-                calendarModalContent.innerHTML = '';
+            taskModal.classList.add('hidden');
+            taskModal.setAttribute('aria-hidden', 'true');
+            if (taskModalContent) {
+                taskModalContent.innerHTML = '';
             }
             document.body.classList.remove('overflow-hidden');
         }
 
         function injectModalContent(html) {
-            if (calendarModalContent) {
-                calendarModalContent.innerHTML = html;
+            if (taskModalContent) {
+                taskModalContent.innerHTML = html;
                 if (typeof window.taskModalEnhancer !== 'undefined' && typeof window.taskModalEnhancer.init === 'function') {
-                    window.taskModalEnhancer.init(calendarModalContent);
+                    window.taskModalEnhancer.init(taskModalContent);
                 }
-                calendarModalContent.focus({ preventScroll: true });
+                taskModalContent.focus({ preventScroll: true });
             }
         }
 
-        function openCalendarModal(url) {
-            if (!calendarModal || !calendarModalContent) {
+        function openTaskModal(url) {
+            if (!taskModal || !taskModalContent) {
                 if (url) {
                     window.location.href = url;
                 }
                 return;
             }
 
-            calendarModal.classList.remove('hidden');
-            calendarModal.setAttribute('aria-hidden', 'false');
+            taskModal.classList.remove('hidden');
+            taskModal.setAttribute('aria-hidden', 'false');
             document.body.classList.add('overflow-hidden');
-            calendarModalContent.innerHTML = '<div class="bg-white rounded-2xl shadow-xl p-10 flex items-center justify-center min-h-[240px] text-slate-500"><span class="inline-flex items-center gap-3 text-sm font-semibold"><i class="fas fa-spinner fa-spin text-emerald-500"></i>Loading details…</span></div>';
+            taskModalContent.innerHTML = '<div class="bg-white rounded-2xl shadow-xl p-10 flex items-center justify-center min-h-[240px] text-slate-500"><span class="inline-flex items-center gap-3 text-sm font-semibold"><i class="fas fa-spinner fa-spin text-emerald-500"></i>Loading details…</span></div>';
 
             if (typeof htmx !== 'undefined') {
-                htmx.ajax('GET', url, { target: '#calendarModalContent', swap: 'innerHTML' });
+                htmx.ajax('GET', url, { target: '#taskModalContent', swap: 'innerHTML' });
             } else if (url) {
                 fetch(url, {
                     method: 'GET',
@@ -555,36 +553,20 @@
                     })
                     .catch(function (error) {
                         console.error(error);
-                        calendarModalContent.innerHTML = '<div class="bg-white rounded-2xl shadow-xl p-8 text-sm text-rose-600">Unable to load details. Please try again.</div>';
+                        taskModalContent.innerHTML = '<div class="bg-white rounded-2xl shadow-xl p-8 text-sm text-rose-600">Unable to load details. Please try again.</div>';
                     });
             }
         }
 
-        window.openCalendarModal = openCalendarModal;
+        window.openCalendarModal = openTaskModal;
+        window.openTaskModal = openTaskModal;
 
-        if (calendarModal) {
-            calendarModal.addEventListener('click', function (event) {
-                if (event.target === calendarModal || event.target.hasAttribute('data-close-modal')) {
-                    closeCalendarModal();
-                }
-            });
-        }
-
-        document.addEventListener('keyup', function (event) {
-            if (event.key === 'Escape') {
-                closeCalendarModal();
-            }
-        });
-
-        document.addEventListener('click', function (event) {
-            if (event.target && event.target.matches('[data-close-modal]')) {
-                event.preventDefault();
-                closeCalendarModal();
-            }
-        });
+        // Note: Modal close functionality is handled by htmx-focus-management.js
+        // which listens for clicks on [data-modal-backdrop] and [data-close-modal]
+        // and handles Escape key presses
 
         ['calendar-close-modal', 'task-modal-close'].forEach(function (eventName) {
-            document.body.addEventListener(eventName, closeCalendarModal);
+            document.body.addEventListener(eventName, closeTaskModal);
         });
 
         document.body.addEventListener('calendar-event-updated', function (event) {
@@ -615,8 +597,17 @@
             }
         });
 
+        // Listen for task-board-refresh event (triggered when tasks are deleted)
+        document.body.addEventListener('task-board-refresh', function (event) {
+            var calendar = window.__oobcCalendars && window.__oobcCalendars['oobc-calendar'];
+            if (calendar) {
+                // Refetch all events from the server to sync the calendar
+                calendar.refetchEvents();
+            }
+        });
+
         document.addEventListener('htmx:afterSwap', function (event) {
-            if (event.detail && event.detail.target && event.detail.target.id === 'calendarModalContent') {
+            if (event.detail && event.detail.target && event.detail.target.id === 'taskModalContent') {
                 injectModalContent(event.detail.target.innerHTML);
             }
         });

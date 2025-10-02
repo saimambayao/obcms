@@ -399,10 +399,10 @@ os.makedirs(BASE_DIR / "logs", exist_ok=True)
 AXES_ENABLED = True
 AXES_FAILURE_LIMIT = 5  # Lock account after 5 failed login attempts
 AXES_COOLOFF_TIME = timedelta(minutes=30)  # Lock duration: 30 minutes
-AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True  # More precise lockout
 AXES_RESET_ON_SUCCESS = True  # Reset failure count on successful login
 AXES_LOCKOUT_TEMPLATE = None  # Use default lockout response
-AXES_LOCKOUT_PARAMETERS = [["username"], ["ip_address"]]  # Track by username and IP
+# Track by both username AND IP address (list of lists, each inner list is AND'd)
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]  # Track by username AND IP
 AXES_IPWARE_PROXY_COUNT = 1  # Trust X-Forwarded-For header (behind proxy)
 AXES_IPWARE_META_PRECEDENCE_ORDER = [
     "HTTP_X_FORWARDED_FOR",

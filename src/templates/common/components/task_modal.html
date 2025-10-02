@@ -1,0 +1,13 @@
+{# Reusable Task/Event Modal Component #}
+{# Usage: {% include 'common/components/task_modal.html' %} #}
+{# Requires: htmx-focus-management.js and task_modal_enhancements.js #}
+
+<div id="taskModal"
+     class="fixed inset-0 hidden z-50 flex items-center justify-center px-4 sm:px-6"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="modal-title"
+     aria-describedby="modal-description">
+    <div class="absolute inset-0 bg-gray-900 bg-opacity-50" data-modal-backdrop aria-hidden="true"></div>
+    <div class="relative max-h-[90vh] w-full sm:w-auto overflow-y-auto" id="taskModalContent" hx-target="this" hx-swap="innerHTML"></div>
+</div>

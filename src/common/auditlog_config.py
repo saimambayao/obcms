@@ -18,10 +18,33 @@ def register_auditlog_models():
     """
     # Import models here to avoid circular imports
     from common.models import User, Region, Province, Municipality, Barangay
-    from communities.models import BarangayOBC, MunicipalOBC, ProvincialOBC
-    from mana.models import Assessment, AssessmentResponse, Workshop
-    from coordination.models import Partnership, Stakeholder
-    from project_central.models import Task, Workflow, Project
+    from communities.models import (
+        OBCCommunity,
+        MunicipalityCoverage,
+        ProvinceCoverage,
+        CommunityLivelihood,
+        CommunityInfrastructure,
+    )
+    from mana.models import (
+        Assessment,
+        Survey,
+        SurveyResponse,
+        WorkshopSession,
+        WorkshopResponse,
+        WorkshopParticipant,
+    )
+    from coordination.models import (
+        Partnership,
+        StakeholderEngagement,
+        Organization,
+        MAOFocalPerson,
+    )
+    from project_central.models import (
+        ProjectWorkflow,
+        BudgetCeiling,
+        BudgetScenario,
+        Alert,
+    )
 
     # User and Authentication
     auditlog.register(
@@ -38,19 +61,27 @@ def register_auditlog_models():
 
     # OBC Community Data (High Value)
     auditlog.register(
-        BarangayOBC,
+        OBCCommunity,
         serialize_data=True,
         serialize_kwargs={'fields': '__all__'},
     )
     auditlog.register(
-        MunicipalOBC,
+        MunicipalityCoverage,
         serialize_data=True,
         serialize_kwargs={'fields': '__all__'},
     )
     auditlog.register(
-        ProvincialOBC,
+        ProvinceCoverage,
         serialize_data=True,
         serialize_kwargs={'fields': '__all__'},
+    )
+    auditlog.register(
+        CommunityLivelihood,
+        serialize_data=True,
+    )
+    auditlog.register(
+        CommunityInfrastructure,
+        serialize_data=True,
     )
 
     # MANA Assessment Data (High Value)
@@ -59,21 +90,36 @@ def register_auditlog_models():
         serialize_data=True,
     )
     auditlog.register(
-        AssessmentResponse,
+        Survey,
         serialize_data=True,
     )
     auditlog.register(
-        Workshop,
+        SurveyResponse,
+        serialize_data=True,
+    )
+    auditlog.register(
+        WorkshopSession,
+        serialize_data=True,
+    )
+    auditlog.register(
+        WorkshopResponse,
+        serialize_data=True,
+    )
+    auditlog.register(
+        WorkshopParticipant,
         serialize_data=True,
     )
 
     # Coordination Data
     auditlog.register(Partnership, serialize_data=True)
-    auditlog.register(Stakeholder, serialize_data=True)
+    auditlog.register(StakeholderEngagement, serialize_data=True)
+    auditlog.register(Organization, serialize_data=True)
+    auditlog.register(MAOFocalPerson, serialize_data=True)
 
     # Project Management
-    auditlog.register(Task, serialize_data=True)
-    auditlog.register(Workflow, serialize_data=True)
-    auditlog.register(Project, serialize_data=True)
+    auditlog.register(ProjectWorkflow, serialize_data=True)
+    auditlog.register(BudgetCeiling, serialize_data=True)
+    auditlog.register(BudgetScenario, serialize_data=True)
+    auditlog.register(Alert, serialize_data=True)
 
     print("✅ Auditlog registered for all security-sensitive models")

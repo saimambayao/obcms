@@ -17,6 +17,7 @@
 - [Forms & Input Components](#forms--input-components)
 - [Buttons](#buttons)
 - [Cards & Containers](#cards--containers)
+- [Modal & Dialogs](#modal--dialogs) ⭐ **NEW**
 - [Navigation Components](#navigation-components)
 - [Alerts & Messages](#alerts--messages)
 - [Tables & Data Display](#tables--data-display)
@@ -614,6 +615,161 @@ Quick action cards provide instant access to common workflows. Used in managemen
 
 ---
 
+## Modal & Dialogs
+
+### Task/Event Modal (Reusable Component)
+
+**Official reusable modal for tasks, events, and dynamic content.**
+
+#### Template Location
+```django
+{% include 'common/components/task_modal.html' %}
+```
+
+#### Component Structure
+
+```html
+<div id="taskModal"
+     class="fixed inset-0 hidden z-50 flex items-center justify-center px-4 sm:px-6"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="modal-title"
+     aria-describedby="modal-description">
+    <div class="absolute inset-0 bg-gray-900 bg-opacity-50" data-modal-backdrop aria-hidden="true"></div>
+    <div class="relative max-h-[90vh] w-full sm:w-auto overflow-y-auto" id="taskModalContent" hx-target="this" hx-swap="innerHTML"></div>
+</div>
+```
+
+#### Required JavaScript Dependencies
+
+```html
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'common/js/htmx-focus-management.js' %}"></script>
+<script src="{% static 'common/js/task_modal_enhancements.js' %}"></script>
+{% endblock %}
+```
+
+#### Usage Example
+
+**1. Include the component in your template:**
+```django
+{% extends "common/base_with_sidebar.html" %}
+
+{% block content %}
+    <!-- Your page content -->
+{% endblock %}
+
+{# Include modal at the end of content block #}
+{% include 'common/components/task_modal.html' %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'common/js/htmx-focus-management.js' %}"></script>
+<script src="{% static 'common/js/task_modal_enhancements.js' %}"></script>
+{% endblock %}
+```
+
+**2. Trigger modal with HTMX or JavaScript:**
+
+```html
+<!-- Option A: HTMX (preferred) -->
+<button hx-get="{% url 'common:staff_task_modal' task.id %}"
+        hx-target="#taskModalContent"
+        hx-swap="innerHTML"
+        onclick="document.getElementById('taskModal').classList.remove('hidden')"
+        class="text-blue-600 hover:text-blue-800">
+    View Task
+</button>
+
+<!-- Option B: JavaScript -->
+<button onclick="openTaskModal('{% url 'common:staff_task_modal' task.id %}')"
+        class="text-blue-600 hover:text-blue-800">
+    View Task
+</button>
+```
+
+**3. Define `openTaskModal` function (if using Option B):**
+```javascript
+function openTaskModal(url) {
+    const modal = document.getElementById('taskModal');
+    const content = document.getElementById('taskModalContent');
+
+    modal.classList.remove('hidden');
+    content.innerHTML = '<div class="bg-white rounded-2xl shadow-xl p-10">Loading...</div>';
+
+    htmx.ajax('GET', url, { target: '#taskModalContent', swap: 'innerHTML' });
+}
+```
+
+#### Modal Content Requirements
+
+**The modal content (returned by your view) should include:**
+
+1. **Close button with `data-close-modal` attribute:**
+```html
+<button type="button" class="text-gray-400 hover:text-gray-600" data-close-modal>
+    <span class="sr-only">Close</span>
+    <i class="fas fa-times text-lg"></i>
+</button>
+```
+
+2. **Proper heading with `id="modal-title"`:**
+```html
+<h2 id="modal-title" class="text-2xl font-bold text-gray-900">Task Title</h2>
+```
+
+3. **Optional description with `id="modal-description"`:**
+```html
+<div id="modal-description" class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+    Task details and description
+</div>
+```
+
+#### Automatic Features
+
+✅ **Close on backdrop click** - Click outside modal to close
+✅ **Close on Escape key** - Press Esc to close
+✅ **Focus trap** - Keyboard navigation stays within modal
+✅ **Delete button** - Auto-wired with confirmation dialog
+✅ **Loading state** - Shows spinner during HTMX requests
+✅ **Accessibility** - ARIA attributes, screen reader support
+
+#### Integration with Task Board
+
+This modal component is used in:
+- Staff Task Board (`/oobc-management/staff/tasks/`)
+- OOBC Calendar (`/oobc-management/calendar/`)
+- All task-related views
+- Event management pages
+
+#### Best Practices
+
+1. **Always include required JavaScript:**
+   - `htmx-focus-management.js` - Handles modal open/close
+   - `task_modal_enhancements.js` - Handles delete buttons, color selects
+
+2. **Use `data-modal-backdrop` for backdrop:**
+   - Ensures proper click-outside-to-close behavior
+
+3. **Return only modal content from views:**
+   - Don't include the modal container in HTMX responses
+   - Only return the card/form content to inject into `#taskModalContent`
+
+4. **Test accessibility:**
+   - Keyboard navigation (Tab, Shift+Tab, Escape)
+   - Screen reader announcements
+   - Focus management
+
+#### Reference Implementation
+
+See working examples:
+- [Staff Task Board](src/templates/common/staff_task_board.html)
+- [OOBC Calendar](src/templates/common/oobc_calendar.html)
+- [Task Modal Partial](src/templates/common/partials/staff_task_modal.html)
+
+---
+
 ## Navigation Components
 
 ### Breadcrumb
@@ -1026,7 +1182,7 @@ When implementing UI components:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 2.0 | 2025-10-03 | Added 3D Milk White Stat Cards, Quick Action Cards, Form Standards |
+| 2.0 | 2025-10-03 | Added 3D Milk White Stat Cards, Quick Action Cards, Form Standards, **Reusable Modal Component** |
 | 1.0 | 2024-XX-XX | Initial component library |
 
 ---
