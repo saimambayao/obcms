@@ -204,6 +204,72 @@ def dashboard(request):
 
 
 @login_required
+def dashboard_stats_cards(request):
+    """Return just the dashboard stat cards for HTMX auto-refresh."""
+    from communities.models import OBCCommunity
+    from mana.models import Assessment
+    from coordination.models import Partnership
+    from policy_tracking.models import PolicyRecommendation
+
+    # Calculate stats (same as dashboard view but only what's needed for cards)
+    stats = {
+        "communities": {
+            "total": OBCCommunity.objects.count(),
+            "barangay_total": OBCCommunity.objects.filter(
+                barangay__isnull=False
+            ).count(),
+            "municipal_total": OBCCommunity.objects.filter(
+                municipality__isnull=False
+            ).count(),
+        },
+        "mana": {
+            "total_assessments": Assessment.objects.count(),
+        },
+        "coordination": {
+            "active_partnerships": Partnership.objects.filter(status="active").count(),
+            "bmoas": Partnership.objects.filter(
+                status="active", lead_organization__organization_type="bmoa"
+            ).count(),
+            "ngas": Partnership.objects.filter(
+                status="active", lead_organization__organization_type="nga"
+            ).count(),
+            "lgus": Partnership.objects.filter(
+                status="active", lead_organization__organization_type="lgu"
+            ).count(),
+        },
+        "policy_tracking": {
+            "total_recommendations": PolicyRecommendation.objects.count(),
+            "policies": PolicyRecommendation.objects.filter(
+                category__in=["governance", "legal_framework", "administrative"]
+            ).count(),
+            "programs": PolicyRecommendation.objects.filter(
+                category__in=[
+                    "education",
+                    "economic_development",
+                    "social_development",
+                    "cultural_development",
+                ]
+            ).count(),
+            "services": PolicyRecommendation.objects.filter(
+                category__in=[
+                    "healthcare",
+                    "infrastructure",
+                    "environment",
+                    "human_rights",
+                ]
+            ).count(),
+        },
+        "monitoring": {
+            "total": 0,
+            "pending_requests": 0,
+            "avg_progress": 0,
+        },
+    }
+
+    return render(request, "partials/dashboard_stats_cards.html", {"stats": stats})
+
+
+@login_required
 def profile(request):
     """User profile view."""
     context = {

@@ -13,46 +13,98 @@
         </p>
     </div>
 
-    <div class="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+    <!-- Stage Cards - 3D Milk White Design -->
+    <div class="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {% for card in stage_cards %}
-        <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div class="flex items-center justify-between">
-                <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-r {{ card.gradient }} text-white text-xl shadow-inner">
-                    <i class="fa-solid {{ card.icon }}"></i>
-                </span>
-                <span class="text-xs font-semibold uppercase tracking-wide text-gray-400">Stage Total</span>
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <!-- Gradient overlay for depth -->
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <!-- Content -->
+            <div class="relative p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">{{ card.label }}</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ card.count }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fa-solid {{ card.icon }} text-2xl text-blue-600"></i>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500 mt-2">{{ card.description }}</p>
             </div>
-            <p class="mt-6 text-4xl font-semibold text-gray-900">{{ card.count }}</p>
-            <p class="mt-2 text-base font-semibold text-gray-800">{{ card.label }}</p>
-            <p class="mt-1 text-sm text-gray-500">{{ card.description }}</p>
         </div>
         {% endfor %}
     </div>
 
-    <div class="mt-10 grid gap-4 md:grid-cols-3">
-        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
-            <div class="flex items-center justify-between text-amber-600">
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"><i class="fas fa-clock"></i></span>
-                <span class="text-xs font-semibold uppercase tracking-wide">Pending</span>
+    <!-- Status Summary Cards - 3D Milk White Design -->
+    <div class="mt-10 grid gap-6 md:grid-cols-3">
+        <!-- Pending Card -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <!-- Gradient overlay for depth -->
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <!-- Content -->
+            <div class="relative p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Pending</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ total_pending }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-clock text-2xl text-amber-600"></i>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500 mt-2">Total approvals awaiting action across review stages.</p>
             </div>
-            <p class="mt-5 text-4xl font-semibold text-amber-600">{{ total_pending }}</p>
-            <p class="mt-1 text-sm text-amber-700">Total approvals awaiting action across review stages.</p>
         </div>
-        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
-            <div class="flex items-center justify-between text-emerald-600">
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"><i class="fas fa-circle-check"></i></span>
-                <span class="text-xs font-semibold uppercase tracking-wide">Approved (Last 10)</span>
+
+        <!-- Approved Card -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <!-- Gradient overlay for depth -->
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <!-- Content -->
+            <div class="relative p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Approved (Last 10)</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ recently_approved|length }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-circle-check text-2xl text-emerald-600"></i>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500 mt-2">Recently cleared PPAs now ready for enactment.</p>
             </div>
-            <p class="mt-5 text-4xl font-semibold text-emerald-600">{{ recently_approved|length }}</p>
-            <p class="mt-1 text-sm text-emerald-700">Recently cleared PPAs now ready for enactment.</p>
         </div>
-        <div class="rounded-2xl border border-rose-200 bg-rose-50 p-6 shadow-sm">
-            <div class="flex items-center justify-between text-rose-600">
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"><i class="fas fa-circle-xmark"></i></span>
-                <span class="text-xs font-semibold uppercase tracking-wide">Rejected (Last 5)</span>
+
+        <!-- Rejected Card -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <!-- Gradient overlay for depth -->
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <!-- Content -->
+            <div class="relative p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Rejected (Last 5)</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ recently_rejected|length }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-circle-xmark text-2xl text-red-600"></i>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500 mt-2">Items needing revision before they can re-enter the flow.</p>
             </div>
-            <p class="mt-5 text-4xl font-semibold text-rose-600">{{ recently_rejected|length }}</p>
-            <p class="mt-1 text-sm text-rose-700">Items needing revision before they can re-enter the flow.</p>
         </div>
     </div>
 

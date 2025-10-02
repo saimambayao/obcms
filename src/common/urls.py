@@ -122,6 +122,7 @@ urlpatterns = [
     ),
     path("locations/centroid/", views.location_centroid, name="location_centroid"),
     path("mana/", views.mana_home, name="mana_home"),
+    path("mana/stats-cards/", views.mana_stats_cards, name="mana_stats_cards"),
     path("mana/regional/", views.mana_regional_overview, name="mana_regional_overview"),
     path(
         "mana/provincial/",
@@ -245,6 +246,11 @@ urlpatterns = [
         name="coordination_event_edit_instance",
     ),
     path(
+        "coordination/events/<uuid:event_id>/modal/",
+        coordination_views.coordination_event_modal,
+        name="coordination_event_modal",
+    ),
+    path(
         "coordination/events/<uuid:event_id>/attendance/",
         coordination_views.event_attendance_tracker,
         name="coordination_event_attendance",
@@ -261,7 +267,7 @@ urlpatterns = [
     ),
     path(
         "coordination/events/<uuid:event_id>/check-in/",
-        coordination_views.event_check_in,
+        views.event_check_in,
         name="coordination_event_check_in",
     ),
     path("coordination/events/", views.coordination_events, name="coordination_events"),
@@ -281,6 +287,7 @@ urlpatterns = [
         name="coordination_view_all",
     ),
     path("recommendations/", views.recommendations_home, name="recommendations_home"),
+    path("recommendations/stats-cards/", views.recommendations_stats_cards, name="recommendations_stats_cards"),
     path("recommendations/new/", views.recommendations_new, name="recommendations_new"),
     path(
         "recommendations/manage/",
@@ -634,6 +641,7 @@ urlpatterns = [
         name="user_approval_action",
     ),
     # Phase 1: Enhanced Dashboard - HTMX Endpoints
+    path("dashboard/stats-cards/", views.dashboard_stats_cards, name="dashboard_stats_cards"),
     path("dashboard/metrics/", views.dashboard_metrics, name="dashboard_metrics"),
     path("dashboard/activity/", views.dashboard_activity, name="dashboard_activity"),
     path("dashboard/alerts/", views.dashboard_alerts, name="dashboard_alerts"),

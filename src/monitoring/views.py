@@ -88,6 +88,7 @@ def monitoring_dashboard(request):
         "title": "MOA PPAs",
         "subtitle": f"{current_year} Overview",
         "icon": "fas fa-building-columns",
+        "icon_color": "text-blue-600",
         "gradient": "from-blue-500 via-blue-600 to-blue-700",
         "total": moa_year_qs.count(),
         "metrics": [
@@ -110,6 +111,7 @@ def monitoring_dashboard(request):
         "title": "OOBC Initiatives",
         "subtitle": f"{current_year} Overview",
         "icon": "fas fa-hand-holding-heart",
+        "icon_color": "text-emerald-600",
         "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
         "total": oobc_year_qs.count(),
         "metrics": [
@@ -140,6 +142,7 @@ def monitoring_dashboard(request):
         "title": "OBC Requests / Proposals",
         "subtitle": f"{current_year} Overview",
         "icon": "fas fa-file-signature",
+        "icon_color": "text-purple-600",
         "gradient": "from-cyan-500 via-sky-500 to-indigo-500",
         "total": request_year_qs.count(),
         "metrics": [
@@ -593,6 +596,8 @@ def moa_ppas_dashboard(request):
             "title": "Total MOA PPAs",
             "subtitle": f"Active Programs & Projects",
             "icon": "fas fa-building-columns",
+            "icon_color": "text-amber-600",  # Total/General
+
             "gradient": "from-blue-500 via-blue-600 to-blue-700",
             "total": total_moa_ppas,
             "metrics": [
@@ -614,6 +619,7 @@ def moa_ppas_dashboard(request):
             "title": "Budget Allocation",
             "subtitle": f"Total & OBC-Specific (PHP)",
             "icon": "fas fa-peso-sign",
+            "icon_color": "text-emerald-600",  # Success/Financial
             "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
             "total": f"₱{total_budget['total'] or 0:,.0f}",
             "metrics": [
@@ -637,6 +643,7 @@ def moa_ppas_dashboard(request):
             "title": "Geographic Coverage",
             "subtitle": f"Implementation Areas",
             "icon": "fas fa-map-marked-alt",
+            "icon_color": "text-purple-600",  # Info/Geographic
             "gradient": "from-purple-500 via-purple-600 to-purple-700",
             "total": geographic_coverage["regions"],
             "metrics": [
@@ -652,6 +659,7 @@ def moa_ppas_dashboard(request):
             "title": "Timeline Status",
             "subtitle": f"Implementation Schedule",
             "icon": "fas fa-calendar-check",
+            "icon_color": "text-blue-600",  # Info/Schedule
             "gradient": "from-orange-500 via-orange-600 to-orange-700",
             "total": upcoming_deadlines,
             "metrics": [
@@ -1111,8 +1119,7 @@ def oobc_initiatives_dashboard(request):
         {
             "title": "Total OOBC Initiatives",
             "subtitle": f"Office-Led Programs",
-            "icon": "fas fa-hand-holding-heart",
-            "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
+            "icon": "fas fa-hand-holding-heart",            "icon_color": "text-amber-600",  # Total/General - Amber
             "total": total_oobc_initiatives,
             "metrics": [
                 {
@@ -1133,6 +1140,8 @@ def oobc_initiatives_dashboard(request):
             "title": "Budget Investment",
             "subtitle": f"Program Funding (PHP)",
             "icon": "fas fa-hand-holding-usd",
+            "icon_color": "text-blue-600",  # Info - Blue
+            
             "gradient": "from-blue-500 via-blue-600 to-blue-700",
             "total": f"₱{total_budget['total'] or 0:,.0f}",
             "metrics": [
@@ -1158,6 +1167,8 @@ def oobc_initiatives_dashboard(request):
             "title": "Community Impact",
             "subtitle": f"OBC Communities Served",
             "icon": "fas fa-users",
+            "icon_color": "text-purple-600",  # Community/Proposed - Purple
+            
             "gradient": "from-purple-500 via-purple-600 to-purple-700",
             "total": unique_communities,
             "metrics": [
@@ -1180,6 +1191,8 @@ def oobc_initiatives_dashboard(request):
             "title": "Implementation Status",
             "subtitle": f"Progress Overview",
             "icon": "fas fa-chart-line",
+            "icon_color": "text-emerald-600",  # Success/Progress - Emerald
+            
             "gradient": "from-orange-500 via-orange-600 to-orange-700",
             "total": f"{oobc_entries.aggregate(avg=Avg('progress'))['avg'] or 0:.0f}%",
             "metrics": [
@@ -1341,6 +1354,7 @@ def obc_requests_dashboard(request):
             "title": "Total OBC Requests",
             "subtitle": f"Community Proposals",
             "icon": "fas fa-file-signature",
+            "icon_color": "text-blue-600",
             "gradient": "from-cyan-500 via-sky-500 to-indigo-500",
             "total": total_obc_requests,
             "metrics": [
@@ -1353,6 +1367,7 @@ def obc_requests_dashboard(request):
             "title": "Request Priority",
             "subtitle": f"Urgency Classification",
             "icon": "fas fa-exclamation-triangle",
+            "icon_color": "text-orange-600",
             "gradient": "from-red-500 via-orange-500 to-yellow-500",
             "total": urgent_priority + high_priority,
             "metrics": [
@@ -1368,6 +1383,7 @@ def obc_requests_dashboard(request):
             "title": "Community Participation",
             "subtitle": f"Requesting Communities",
             "icon": "fas fa-mosque",
+            "icon_color": "text-emerald-600",
             "gradient": "from-green-500 via-emerald-500 to-teal-500",
             "total": requesting_communities,
             "metrics": [
@@ -1398,6 +1414,7 @@ def obc_requests_dashboard(request):
             "title": "Response Rate",
             "subtitle": f"Processing Efficiency",
             "icon": "fas fa-tachometer-alt",
+            "icon_color": "text-purple-600",
             "gradient": "from-purple-500 via-pink-500 to-rose-500",
             "total": f"{(completed_requests + active_requests) / max(total_obc_requests, 1) * 100:.0f}%",
             "metrics": [

@@ -89,63 +89,95 @@
         </div>
     </section>
 
-    <!-- Statistics Cards -->
-    <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
+    <!-- Statistics Cards - 3D Milk White Design (Auto-refresh every 60s) -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold text-gray-900">Assessment Statistics</h2>
+            <span class="text-xs text-gray-500">
+                <i class="fas fa-sync-alt"></i> Updates every 60s
+            </span>
+        </div>
+
+        <div hx-get="{% url 'common:mana_stats_cards' %}"
+             hx-trigger="load, every 60s"
+             hx-swap="innerHTML swap:300ms"
+             class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Loading state -->
+            <div class="col-span-full flex items-center justify-center py-12">
+                <i class="fas fa-spinner fa-spin text-gray-400 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keep old cards for non-JS fallback (hidden when HTMX loads) -->
+    <div class="hidden mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Assessments -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-blue-100 text-sm font-medium">Total Assessments</p>
-                        <p class="text-3xl font-bold">{{ stats.mana.total_assessments|default:0 }}</p>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total Assessments</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.mana.total_assessments|default:0 }}</p>
                     </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-chart-bar text-2xl"></i>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-chart-bar text-2xl text-blue-600"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
+        <!-- Completed -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-blue-100 text-sm font-medium">Completed</p>
-                        <p class="text-3xl font-bold">{{ stats.mana.completed|default:0 }}</p>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Completed</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.mana.completed|default:0 }}</p>
                     </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-check-circle text-2xl"></i>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-check-circle text-2xl text-emerald-600"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
+        <!-- In Progress -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-blue-100 text-sm font-medium">In Progress</p>
-                        <p class="text-3xl font-bold">{{ stats.mana.in_progress|default:0 }}</p>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">In Progress</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.mana.in_progress|default:0 }}</p>
                     </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-clock text-2xl"></i>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-clock text-2xl text-amber-600"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
+        <!-- Planned -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-blue-100 text-sm font-medium">Planned</p>
-                        <p class="text-3xl font-bold">{{ stats.mana.planned|default:0 }}</p>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Planned</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.mana.planned|default:0 }}</p>
                     </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-calendar-plus text-2xl"></i>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-calendar-plus text-2xl text-purple-600"></i>
                     </div>
                 </div>
             </div>
@@ -291,15 +323,15 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {% if user.is_staff %}
-            <a href="{% url 'common:mana_new_assessment' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
+            <a href="{% url 'common:mana_new_assessment' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-plus text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
                         New Assessment
                     </h3>
-                    <p class="mt-2 text-sm text-gray-600">
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
                         Start a new community needs assessment.
                     </p>
                     <div class="mt-4 flex items-center text-green-600 text-sm font-medium">
@@ -309,15 +341,15 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:mana_manage_assessments' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
+            <a href="{% url 'common:mana_manage_assessments' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-list-alt text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                         Manage Assessments
                     </h3>
-                    <p class="mt-2 text-sm text-gray-600">
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
                         View and edit existing assessments.
                     </p>
                     <div class="mt-4 flex items-center text-blue-600 text-sm font-medium">
@@ -327,15 +359,15 @@
                 </div>
             </a>
 
-            <a href="{% url 'mana:create_account' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
+            <a href="{% url 'mana:create_account' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-user-plus text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
                         Create MANA Facilitator / Participant Account
                     </h3>
-                    <p class="mt-2 text-sm text-gray-600">
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
                         Create and approve facilitator and participant accounts for regional workshops.
                     </p>
                     <div class="mt-4 flex items-center text-emerald-600 text-sm font-medium">
@@ -345,15 +377,15 @@
                 </div>
             </a>
 
-            <a href="{% url 'mana:facilitator_assessments_list' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
+            <a href="{% url 'mana:facilitator_assessments_list' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-users-cog text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors">
                         Group Accounts to Assessment
                     </h3>
-                    <p class="mt-2 text-sm text-gray-600">
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
                         Assign facilitators and participants to specific MANA assessments and manage teams.
                     </p>
                     <div class="mt-4 flex items-center text-cyan-600 text-sm font-medium">

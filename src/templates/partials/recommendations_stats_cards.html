@@ -1,0 +1,132 @@
+<!-- Recommendations Stat Cards Partial (for HTMX auto-refresh) -->
+<!-- Total Recommendations -->
+<div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+     style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+    <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+    <div class="relative p-6 flex flex-col h-full">
+        <div class="flex items-center justify-between mb-3">
+            <div>
+                <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total Recommendations</p>
+                <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.recommendations.total|default:0 }}</p>
+            </div>
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                 style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                <i class="fas fa-lightbulb text-2xl text-amber-600"></i>
+            </div>
+        </div>
+        <div class="flex-grow"></div>
+        <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
+            <div class="text-center">
+                <p class="text-xl font-bold text-gray-700">{{ stats.recommendations.policies|default:0 }}</p>
+                <p class="text-xs text-gray-500 font-medium">Policies</p>
+            </div>
+            <div class="text-center">
+                <p class="text-xl font-bold text-gray-700">{{ stats.recommendations.programs|default:0 }}</p>
+                <p class="text-xs text-gray-500 font-medium">Programs</p>
+            </div>
+            <div class="text-center">
+                <p class="text-xl font-bold text-gray-700">{{ stats.recommendations.services|default:0 }}</p>
+                <p class="text-xs text-gray-500 font-medium">Services</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Total Implemented -->
+<div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+     style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+    <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+    <div class="relative p-6 flex flex-col h-full">
+        <div class="flex items-center justify-between mb-3">
+            <div>
+                <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total Implemented</p>
+                <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.recommendations.implemented|default:0 }}</p>
+            </div>
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                 style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                <i class="fas fa-check-circle text-2xl text-emerald-600"></i>
+            </div>
+        </div>
+        <div class="flex-grow"></div>
+        <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
+            <div class="text-center">
+                <p class="text-xl font-bold text-gray-700">{{ stats.recommendations.implemented_policies|default:0 }}</p>
+                <p class="text-xs text-gray-500 font-medium">Policies</p>
+            </div>
+            <div class="text-center">
+                <p class="text-xl font-bold text-gray-700">{{ stats.recommendations.implemented_programs|default:0 }}</p>
+                <p class="text-xs text-gray-500 font-medium">Programs</p>
+            </div>
+            <div class="text-center">
+                <p class="text-xl font-bold text-gray-700">{{ stats.recommendations.implemented_services|default:0 }}</p>
+                <p class="text-xs text-gray-500 font-medium">Services</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Submitted -->
+<div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+     style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+    <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+    <div class="relative p-6 flex flex-col h-full">
+        <div class="flex items-center justify-between mb-3">
+            <div>
+                <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Submitted</p>
+                <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.recommendations.submitted|default:0 }}</p>
+            </div>
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                 style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                <i class="fas fa-paper-plane text-2xl text-blue-600"></i>
+            </div>
+        </div>
+        <div class="flex-grow"></div>
+        <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
+            <div class="text-center">
+                <p class="text-xl font-bold text-gray-700">{{ stats.recommendations.submitted_policies|default:0 }}</p>
+                <p class="text-xs text-gray-500 font-medium">Policies</p>
+            </div>
+            <div class="text-center">
+                <p class="text-xl font-bold text-gray-700">{{ stats.recommendations.submitted_programs|default:0 }}</p>
+                <p class="text-xs text-gray-500 font-medium">Programs</p>
+            </div>
+            <div class="text-center">
+                <p class="text-xl font-bold text-gray-700">{{ stats.recommendations.submitted_services|default:0 }}</p>
+                <p class="text-xs text-gray-500 font-medium">Services</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Proposed -->
+<div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+     style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+    <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+    <div class="relative p-6 flex flex-col h-full">
+        <div class="flex items-center justify-between mb-3">
+            <div>
+                <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Proposed</p>
+                <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.recommendations.proposed|default:0 }}</p>
+            </div>
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                 style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                <i class="fas fa-edit text-2xl text-purple-600"></i>
+            </div>
+        </div>
+        <div class="flex-grow"></div>
+        <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
+            <div class="text-center">
+                <p class="text-xl font-bold text-gray-700">{{ stats.recommendations.proposed_policies|default:0 }}</p>
+                <p class="text-xs text-gray-500 font-medium">Policies</p>
+            </div>
+            <div class="text-center">
+                <p class="text-xl font-bold text-gray-700">{{ stats.recommendations.proposed_programs|default:0 }}</p>
+                <p class="text-xs text-gray-500 font-medium">Programs</p>
+            </div>
+            <div class="text-center">
+                <p class="text-xl font-bold text-gray-700">{{ stats.recommendations.proposed_services|default:0 }}</p>
+                <p class="text-xs text-gray-500 font-medium">Services</p>
+            </div>
+        </div>
+    </div>
+</div>

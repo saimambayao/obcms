@@ -117,6 +117,76 @@ def recommendations_home(request):
 
 
 @login_required
+def recommendations_stats_cards(request):
+    """Return just the recommendations stat cards for HTMX auto-refresh."""
+    from recommendations.policy_tracking.models import PolicyRecommendation
+
+    recommendations = PolicyRecommendation.objects.all()
+
+    policy_categories = ["governance", "legal_framework", "administrative"]
+    program_categories = [
+        "education",
+        "economic_development",
+        "social_development",
+        "cultural_development",
+    ]
+    service_categories = ["healthcare", "infrastructure", "environment", "human_rights"]
+
+    submitted_statuses = [
+        "submitted",
+        "under_consideration",
+        "approved",
+        "in_implementation",
+        "implemented",
+    ]
+    proposed_statuses = ["draft", "under_review", "needs_revision"]
+
+    total_recommendations = recommendations.count()
+    implemented_recommendations = recommendations.filter(status="implemented").count()
+    submitted_recommendations = recommendations.filter(status__in=submitted_statuses).count()
+    proposed_recommendations = recommendations.filter(status__in=proposed_statuses).count()
+
+    policy_recommendations = recommendations.filter(category__in=policy_categories).count()
+    program_recommendations = recommendations.filter(category__in=program_categories).count()
+    service_recommendations = recommendations.filter(category__in=service_categories).count()
+
+    implemented_policies = recommendations.filter(category__in=policy_categories, status="implemented").count()
+    implemented_programs = recommendations.filter(category__in=program_categories, status="implemented").count()
+    implemented_services = recommendations.filter(category__in=service_categories, status="implemented").count()
+
+    submitted_policies = recommendations.filter(category__in=policy_categories, status__in=submitted_statuses).count()
+    submitted_programs = recommendations.filter(category__in=program_categories, status__in=submitted_statuses).count()
+    submitted_services = recommendations.filter(category__in=service_categories, status__in=submitted_statuses).count()
+
+    proposed_policies = recommendations.filter(category__in=policy_categories, status__in=proposed_statuses).count()
+    proposed_programs = recommendations.filter(category__in=program_categories, status__in=proposed_statuses).count()
+    proposed_services = recommendations.filter(category__in=service_categories, status__in=proposed_statuses).count()
+
+    stats = {
+        "recommendations": {
+            "total": total_recommendations,
+            "implemented": implemented_recommendations,
+            "submitted": submitted_recommendations,
+            "proposed": proposed_recommendations,
+            "policies": policy_recommendations,
+            "programs": program_recommendations,
+            "services": service_recommendations,
+            "implemented_policies": implemented_policies,
+            "implemented_programs": implemented_programs,
+            "implemented_services": implemented_services,
+            "submitted_policies": submitted_policies,
+            "submitted_programs": submitted_programs,
+            "submitted_services": submitted_services,
+            "proposed_policies": proposed_policies,
+            "proposed_programs": proposed_programs,
+            "proposed_services": proposed_services,
+        }
+    }
+
+    return render(request, "partials/recommendations_stats_cards.html", {"stats": stats})
+
+
+@login_required
 def recommendations_new(request):
     """Create new recommendation page."""
     from recommendations.policy_tracking.models import PolicyRecommendation

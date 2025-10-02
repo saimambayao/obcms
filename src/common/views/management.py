@@ -3,7 +3,7 @@
 import json
 import re
 from collections import defaultdict
-from datetime import date, datetime, timedelta, timezone as datetime_timezone
+from datetime import date, datetime, time, timedelta, timezone as datetime_timezone
 
 from django import forms
 from django.contrib import messages
@@ -64,6 +64,75 @@ from monitoring.models import (
 )
 from monitoring.scenario_models import BudgetScenario
 from monitoring.strategic_models import StrategicGoal
+
+
+def _calendar_iso(dt_value):
+    if not dt_value:
+        return None
+    if timezone.is_naive(dt_value):
+        dt_value = timezone.make_aware(dt_value, timezone.get_current_timezone())
+    else:
+        dt_value = timezone.localtime(dt_value)
+    return dt_value.isoformat()
+
+
+def _combine_calendar_datetime(date_part, time_part=None, default_time=time.min):
+    if not date_part:
+        return None
+    selected_time = time_part if time_part is not None else default_time
+    return datetime.combine(date_part, selected_time)
+
+
+def _serialize_staff_task_for_calendar(task):
+    start_dt = _combine_calendar_datetime(task.start_date)
+    due_dt = (
+        _combine_calendar_datetime(task.due_date, default_time=time.max)
+        if task.due_date
+        else None
+    )
+    start_for_sorting = start_dt or due_dt
+
+    if not start_for_sorting:
+        return None
+
+    assignee_names = [
+        member.get_full_name() or member.username
+        for member in task.assignees.all()
+        if member
+    ]
+    task_teams = list(task.teams.all())
+    team_names = [team.name for team in task_teams]
+    team_slugs = [team.slug for team in task_teams]
+
+    return {
+        "id": f"staff-task-{task.pk}",
+        "title": task.title,
+        "start": _calendar_iso(start_for_sorting),
+        "end": _calendar_iso(due_dt),
+        "allDay": True,
+        "backgroundColor": "#7c3aed",
+        "borderColor": "#6d28d9",
+        "textColor": "#f9fafb",
+        "editable": True,
+        "durationEditable": True,
+        "extendedProps": {
+            "module": "staff",
+            "category": "task",
+            "type": "staff_task",
+            "objectId": str(task.pk),
+            "supportsEditing": True,
+            "hasStartDate": bool(task.start_date),
+            "hasDueDate": bool(task.due_date),
+            "modalUrl": reverse("common:staff_task_modal", args=[task.pk]),
+            "status": task.status,
+            "team": ", ".join(team_names) if team_names else "Unassigned",
+            "team_slugs": team_slugs,
+            "assignee": (
+                ", ".join(assignee_names) if assignee_names else "Unassigned"
+            ),
+            "location": None,
+        },
+    }
 
 
 PERFORMANCE_STATUS_WEIGHTS = {
@@ -1796,14 +1865,24 @@ def staff_task_modal(request, task_id: int):
             except OperationalError:
                 pass
 
-            headers = {
-                "HX-Trigger": json.dumps(
-                    {
-                        "task-board-refresh": True,
-                        "task-modal-close": True,
-                    }
-                )
+            updated_task = (
+                StaffTask.objects.select_related("created_by")
+                .prefetch_related("teams", "assignees")
+                .get(pk=updated_task.pk)
+            )
+            payload = _serialize_staff_task_for_calendar(updated_task)
+            trigger_data = {
+                "task-board-refresh": True,
+                "task-modal-close": True,
             }
+            if payload:
+                trigger_data["calendar-event-updated"] = payload
+            else:
+                trigger_data["calendar-event-removed"] = {
+                    "id": f"staff-task-{updated_task.pk}"
+                }
+
+            headers = {"HX-Trigger": json.dumps(trigger_data)}
             return HttpResponse(status=204, headers=headers)
     else:
         form = StaffTaskForm(instance=task, request=request)
@@ -1832,6 +1911,7 @@ def staff_task_delete(request, task_id: int):
             {
                 "task-board-refresh": True,
                 "task-modal-close": True,
+                "calendar-event-removed": {"id": f"staff-task-{task.pk}"},
             }
         )
     }

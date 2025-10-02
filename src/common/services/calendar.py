@@ -8,6 +8,7 @@ from datetime import datetime, time, timedelta
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from django.core.cache import cache
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
@@ -238,6 +239,9 @@ def build_calendar_payload(
                     "type": "event",
                     "objectId": str(event.pk),
                     "supportsEditing": True,
+                    "modalUrl": reverse(
+                        "common:coordination_event_modal", args=[event.pk]
+                    ),
                     "status": event.status,
                     "community": getattr(event.community, "name", ""),
                     "organizer": getattr(event.organizer, "get_full_name", None)
@@ -966,6 +970,7 @@ def build_calendar_payload(
                     "supportsEditing": True,
                     "hasStartDate": bool(task.start_date),
                     "hasDueDate": bool(task.due_date),
+                    "modalUrl": reverse("common:staff_task_modal", args=[task.pk]),
                     "status": task.status,
                     "team": ", ".join(team_names) if team_names else "Unassigned",
                     "team_slugs": team_slugs,

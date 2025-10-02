@@ -1,0 +1,72 @@
+<!-- MANA Stat Cards Partial (for HTMX auto-refresh) -->
+<!-- Total Assessments -->
+<div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+     style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+    <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+    <div class="relative p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total Assessments</p>
+                <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.mana.total_assessments|default:0 }}</p>
+            </div>
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                 style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                <i class="fas fa-chart-bar text-2xl text-blue-600"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Completed -->
+<div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+     style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+    <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+    <div class="relative p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Completed</p>
+                <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.mana.completed|default:0 }}</p>
+            </div>
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                 style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                <i class="fas fa-check-circle text-2xl text-emerald-600"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- In Progress -->
+<div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+     style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+    <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+    <div class="relative p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">In Progress</p>
+                <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.mana.in_progress|default:0 }}</p>
+            </div>
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                 style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                <i class="fas fa-clock text-2xl text-amber-600"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Planned -->
+<div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+     style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+    <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+    <div class="relative p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Planned</p>
+                <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.mana.planned|default:0 }}</p>
+            </div>
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                 style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                <i class="fas fa-calendar-plus text-2xl text-purple-600"></i>
+            </div>
+        </div>
+    </div>
+</div>

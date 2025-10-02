@@ -85,6 +85,7 @@ from .coordination import (
 )
 from .dashboard import (
     dashboard,
+    dashboard_stats_cards,
     dashboard_metrics,
     dashboard_activity,
     dashboard_alerts,
@@ -167,6 +168,7 @@ from .mana import (
     mana_desk_review,
     mana_geographic_data,
     mana_home,
+    mana_stats_cards,
     mana_playbook,
     mana_activity_log,
     mana_activity_planner,
@@ -186,6 +188,7 @@ from .recommendations import (
     recommendations_home,
     recommendations_manage,
     recommendations_new,
+    recommendations_stats_cards,
 )
 
 __all__ = [
@@ -195,6 +198,7 @@ __all__ = [
     "profile",
     "page_restricted",
     "dashboard",
+    "dashboard_stats_cards",
     "dashboard_metrics",
     "dashboard_activity",
     "dashboard_alerts",
@@ -285,6 +289,7 @@ __all__ = [
     "communities_stakeholders",
     "location_centroid",
     "mana_home",
+    "mana_stats_cards",
     "mana_new_assessment",
     "mana_manage_assessments",
     "mana_assessment_delete",
@@ -320,6 +325,7 @@ __all__ = [
     "partnership_update",
     "partnership_delete",
     "recommendations_home",
+    "recommendations_stats_cards",
     "recommendations_new",
     "recommendations_manage",
     "recommendations_by_area",

@@ -64,8 +64,80 @@ Black's defaults (88-character width, four spaces) govern formatting. Modules st
 
 ### List/Table Card Template
 - Use `components/data_table_card.html` for directory/list pages (Barangay & Municipal OBC tables) to keep the gradient header, column layout, and View/Edit/Delete actions consistent.
-- Each row expects `view_url`, `edit_url`, and `delete_preview_url`; the built-in script shows a confirm dialog, then redirects to the detail page with `?review_delete=1` so the red “Review before deletion” banner can render.
+- Each row expects `view_url`, `edit_url`, and `delete_preview_url`; the built-in script shows a confirm dialog, then redirects to the detail page with `?review_delete=1` so the red "Review before deletion" banner can render.
 - Supply `headers` and `rows` collections from the view context; cell content can be HTML snippets to keep layouts rich (icons, stacked metadata, etc.).
+
+## UI Components & Standards ⭐
+
+**CRITICAL**: All UI components MUST follow the official OBCMS UI standards documented in:
+
+**📚 [OBCMS UI Components & Standards Guide](docs/ui/OBCMS_UI_COMPONENTS_STANDARDS.md)**
+
+This comprehensive guide includes:
+
+### 1. **Stat Cards (3D Milk White)** ✅ Official Design
+- **Simple variant**: No breakdown section
+- **Breakdown variant**: 3-column breakdown with bottom alignment
+- **Semantic icon colors**: Amber (total), Emerald (success), Blue (info), Purple (draft), Orange (warning), Red (critical)
+- **Reference**: [STATCARD_TEMPLATE.md](docs/improvements/UI/STATCARD_TEMPLATE.md)
+- **Implementation**: 100% complete across all dashboards
+
+### 2. **Quick Action Cards**
+- Gradient backgrounds with hover effects
+- Icon-driven design
+- Clear call-to-action buttons
+- Consistent spacing and shadows
+
+### 3. **Form Components**
+- **Text Inputs**: Rounded-xl, emerald focus rings, 48px min-height
+- **Dropdowns**: Chevron icons, smooth transitions, proper ARIA labels
+- **Textareas**: Auto-resize, character counters, validation states
+- **Checkboxes & Radios**: Custom styled, accessible
+- **Radio Cards**: Large touch targets, visual selection states
+
+### 4. **Buttons**
+- **Primary**: Emerald gradient with white text
+- **Secondary**: White background with emerald border
+- **Tertiary**: Text-only with hover effects
+- **Icon Buttons**: Consistent sizing and spacing
+
+### 5. **Cards & Containers**
+- White backgrounds with subtle shadows
+- Rounded corners (rounded-xl)
+- Proper padding and spacing
+- Gradient overlays for depth
+
+### 6. **Navigation**
+- **Breadcrumbs**: Home icon, chevron separators
+- **Tabs**: Active state indicators, smooth transitions
+- **Pagination**: Previous/Next with page numbers
+
+### 7. **Alerts & Messages**
+- **Success**: Green background, checkmark icon
+- **Error**: Red background, exclamation icon
+- **Warning**: Yellow background, alert icon
+- **Info**: Blue background, info icon
+
+### 8. **Tables & Data Display**
+- Hover effects on rows
+- Zebra striping
+- Action buttons (View, Edit, Delete)
+- Responsive breakpoints
+
+### 9. **Accessibility**
+- WCAG 2.1 AA compliance
+- Keyboard navigation support
+- Screen reader friendly
+- High contrast ratios
+
+**When creating or modifying UI:**
+1. ✅ **Always check** the UI Components guide first
+2. ✅ **Copy from** existing reference templates
+3. ✅ **Follow** semantic color guidelines
+4. ✅ **Test** on mobile, tablet, desktop
+5. ✅ **Verify** accessibility compliance
+
+**Do NOT create custom UI components** unless absolutely necessary. Reuse existing patterns to maintain visual consistency across the entire application.
 
 ## Testing Guidelines
 Pytest with pytest-django drives the suite, supported by factory fixtures. Name tests `test_<behavior>` and mirror production scenarios, especially for policy logic and data imports. Keep coverage at or above 85% and add regression cases before altering critical flows. Execute `pytest --ds=obc_management.settings` for full suites; organize larger suites under `src/<app>/tests/`.

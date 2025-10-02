@@ -618,6 +618,34 @@ def mana_home(request):
 
 
 @login_required
+def mana_stats_cards(request):
+    """Return just the MANA stat cards for HTMX auto-refresh."""
+    from mana.models import Assessment
+
+    assessments = Assessment.objects.all()
+
+    total_assessments = assessments.count()
+    completed_assessments = assessments.filter(status="completed").count()
+    in_progress_assessments = assessments.filter(
+        status__in=["data_collection", "analysis"]
+    ).count()
+    planned_assessments = assessments.filter(
+        status__in=["planning", "preparation"]
+    ).count()
+
+    stats = {
+        "mana": {
+            "total_assessments": total_assessments,
+            "completed": completed_assessments,
+            "in_progress": in_progress_assessments,
+            "planned": planned_assessments,
+        }
+    }
+
+    return render(request, "partials/mana_stats_cards.html", {"stats": stats})
+
+
+@login_required
 def mana_new_assessment(request):
     """New MANA assessment page."""
     recent_assessments = Assessment.objects.order_by("-created_at")[:5]

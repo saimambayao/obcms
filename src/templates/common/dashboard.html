@@ -134,6 +134,173 @@
         </div>
     </section>
 
+    <!-- System Overview Statistics - Auto-refresh every 60s -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold text-gray-900">System Overview</h2>
+            <span class="text-xs text-gray-500">
+                <i class="fas fa-sync-alt"></i> Updates every 60s
+            </span>
+        </div>
+
+        <div hx-get="{% url 'common:dashboard_stats_cards' %}"
+             hx-trigger="load, every 60s"
+             hx-swap="innerHTML swap:300ms"
+             class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Loading state -->
+            <div class="col-span-full flex items-center justify-center py-12">
+                <i class="fas fa-spinner fa-spin text-gray-400 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden: Original stat cards markup (now loaded via HTMX) -->
+    <div class="hidden">
+        <!-- This ensures the page still works if HTMX fails -->
+    <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total OBC Communities -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total OBC Communities</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.communities.total|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-mosque text-2xl text-blue-600"></i>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-gray-200/60">
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ stats.communities.barangay_total|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">Barangay OBCs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ stats.communities.municipal_total|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">Municipal OBCs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MANA Assessments -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">MANA Assessments</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.mana.total_assessments|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-chart-bar text-2xl text-emerald-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Partnerships -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Active Partnerships</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.coordination.active_partnerships|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-handshake text-2xl text-purple-600"></i>
+                    </div>
+                </div>
+                <div class="flex-grow"></div>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ stats.coordination.bmoas|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">BMOAs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ stats.coordination.ngas|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">NGAs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ stats.coordination.lgus|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">LGUs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Recommendations</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.policy_tracking.total_recommendations|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-lightbulb text-2xl text-amber-600"></i>
+                    </div>
+                </div>
+                <div class="flex-grow"></div>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ stats.policy_tracking.policies|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">Policies</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ stats.policy_tracking.programs|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">Programs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ stats.policy_tracking.services|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">Services</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monitoring & Evaluation -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Monitoring & Evaluation</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.monitoring.total|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-chart-pie text-2xl text-blue-600"></i>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-gray-200/60">
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ stats.monitoring.pending_requests|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">Pending</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ stats.monitoring.avg_progress|default:0|floatformat:0 }}%</p>
+                        <p class="text-xs text-gray-500 font-medium">Progress</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <!-- End hidden fallback -->
+
     <!-- Live Metrics Section (HTMX Auto-refresh every 60s) -->
     <div class="mb-8">
         <div class="flex items-center justify-between mb-4">
@@ -187,143 +354,6 @@
                 <!-- Loading state -->
                 <div class="flex items-center justify-center py-8">
                     <i class="fas fa-spinner fa-spin text-gray-400 text-2xl"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- System Overview Statistics -->
-    <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Total OBC Communities -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div class="w-full">
-                        <div class="flex items-center gap-2 text-blue-100 text-sm font-medium">
-                            <span>Total OBC Communities</span>
-                        </div>
-                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-3xl font-bold">{{ stats.communities.barangay_total|default:0 }}</p>
-                                <p class="text-sm text-blue-100">Barangay OBCs</p>
-                            </div>
-                            <div>
-                                <p class="text-3xl font-bold">{{ stats.communities.municipal_total|default:0 }}</p>
-                                <p class="text-sm text-blue-100">Municipal OBCs</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-mosque text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- MANA Assessments -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-emerald-100 text-sm font-medium">MANA Assessments</p>
-                        <p class="text-3xl font-bold">{{ stats.mana.total_assessments|default:0 }}</p>
-                    </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-chart-bar text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Active Partnerships -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <p class="text-purple-100 text-sm font-medium">Active Partnerships</p>
-                        <p class="text-3xl font-bold">{{ stats.coordination.active_partnerships|default:0 }}</p>
-                    </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-handshake text-2xl"></i>
-                    </div>
-                </div>
-                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-purple-400/30">
-                    <div class="text-center">
-                        <p class="text-xl font-bold">{{ stats.coordination.bmoas|default:0 }}</p>
-                        <p class="text-xs text-purple-100">BMOAs</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-xl font-bold">{{ stats.coordination.ngas|default:0 }}</p>
-                        <p class="text-xs text-purple-100">NGAs</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-xl font-bold">{{ stats.coordination.lgus|default:0 }}</p>
-                        <p class="text-xs text-purple-100">LGUs</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recommendations -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <p class="text-orange-100 text-sm font-medium">Recommendations</p>
-                        <p class="text-3xl font-bold">{{ stats.policy_tracking.total_recommendations|default:0 }}</p>
-                    </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-lightbulb text-2xl"></i>
-                    </div>
-                </div>
-                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-orange-400/30">
-                    <div class="text-center">
-                        <p class="text-xl font-bold">{{ stats.policy_tracking.policies|default:0 }}</p>
-                        <p class="text-xs text-orange-100">Policies</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-xl font-bold">{{ stats.policy_tracking.programs|default:0 }}</p>
-                        <p class="text-xs text-orange-100">Programs</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-xl font-bold">{{ stats.policy_tracking.services|default:0 }}</p>
-                        <p class="text-xs text-orange-100">Services</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Monitoring & Evaluation -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-teal-500 via-cyan-600 to-sky-600 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <p class="text-cyan-100 text-sm font-medium">Monitoring &amp; Evaluation</p>
-                        <p class="text-3xl font-bold">{{ stats.monitoring.total|default:0 }}</p>
-                    </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-chart-pie text-2xl"></i>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-cyan-400/30">
-                    <div class="text-center">
-                        <p class="text-xl font-bold">{{ stats.monitoring.pending_requests|default:0 }}</p>
-                        <p class="text-xs text-cyan-100">Pending Requests</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-xl font-bold">{{ stats.monitoring.avg_progress|default:0|floatformat:0 }}%</p>
-                        <p class="text-xs text-cyan-100">Avg Progress</p>
-                    </div>
-                </div>
-                <div class="mt-3 text-xs text-cyan-100 flex items-center justify-between">
-                    <span>{{ stats.monitoring.moa_ppa|default:0 }} MOA PPAs</span>
-                    <span>{{ stats.monitoring.oobc_ppa|default:0 }} OOBC PPAs</span>
-                    <span>{{ stats.monitoring.obc_requests|default:0 }} Requests</span>
                 </div>
             </div>
         </div>
@@ -488,58 +518,78 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <!-- Planning Dashboard -->
-            <a href="{% url 'common:planning_budgeting' %}" class="group bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
-                <div class="p-6 text-white">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                            <i class="fas fa-chart-line text-2xl"></i>
-                        </div>
-                        <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
+            <a href="{% url 'common:planning_budgeting' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">Planning Dashboard</h3>
-                    <p class="text-sm text-blue-100">Budget tracking & PPA monitoring</p>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                        Planning Dashboard
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
+                        Budget tracking & PPA monitoring
+                    </p>
+                    <div class="mt-4 flex items-center text-blue-600 text-sm font-medium">
+                        <span>View Dashboard</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
                 </div>
             </a>
 
             <!-- Analytics & Forecasting -->
-            <a href="{% url 'common:analytics_dashboard' %}" class="group bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
-                <div class="p-6 text-white">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                            <i class="fas fa-chart-area text-2xl"></i>
-                        </div>
-                        <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
+            <a href="{% url 'common:analytics_dashboard' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
+                    <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-area text-white text-xl"></i>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">Analytics</h3>
-                    <p class="text-sm text-cyan-100">Trends, forecasts & impact metrics</p>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors">
+                        Analytics
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
+                        Trends, forecasts & impact metrics
+                    </p>
+                    <div class="mt-4 flex items-center text-cyan-600 text-sm font-medium">
+                        <span>View Analytics</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
                 </div>
             </a>
 
             <!-- Scenario Planning -->
-            <a href="{% url 'common:scenario_list' %}" class="group bg-gradient-to-br from-orange-500 to-red-600 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
-                <div class="p-6 text-white">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                            <i class="fas fa-project-diagram text-2xl"></i>
-                        </div>
-                        <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
+            <a href="{% url 'common:scenario_list' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
+                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-project-diagram text-white text-xl"></i>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">Scenarios</h3>
-                    <p class="text-sm text-orange-100">Budget optimization & what-if analysis</p>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
+                        Scenarios
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
+                        Budget optimization & what-if analysis
+                    </p>
+                    <div class="mt-4 flex items-center text-orange-600 text-sm font-medium">
+                        <span>Manage Scenarios</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
                 </div>
             </a>
 
             <!-- Strategic Goals -->
-            <a href="{% url 'common:strategic_goals_dashboard' %}" class="group bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
-                <div class="p-6 text-white">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                            <i class="fas fa-bullseye text-2xl"></i>
-                        </div>
-                        <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
+            <a href="{% url 'common:strategic_goals_dashboard' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-bullseye text-white text-xl"></i>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">Strategic Goals</h3>
-                    <p class="text-sm text-purple-100">Multi-year goals & RDP alignment</p>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                        Strategic Goals
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
+                        Multi-year goals & RDP alignment
+                    </p>
+                    <div class="mt-4 flex items-center text-purple-600 text-sm font-medium">
+                        <span>View Goals</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
                 </div>
             </a>
         </div>
@@ -557,20 +607,20 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Community Voting -->
-            <a href="{% url 'common:community_voting_browse' %}" class="group bg-white rounded-lg shadow-lg border-2 border-emerald-200 hover:border-emerald-500 hover:shadow-xl transition-all duration-200">
-                <div class="p-6">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
+            <a href="{% url 'common:community_voting_browse' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
                             <i class="fas fa-vote-yea text-white text-xl"></i>
                         </div>
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
                             <i class="fas fa-users mr-1"></i> Public
                         </span>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors mb-2">
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
                         Vote on Community Needs
                     </h3>
-                    <p class="text-sm text-gray-600">
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
                         Help prioritize community needs by casting your vote. Your voice matters in budget decisions.
                     </p>
                     <div class="mt-4 flex items-center text-emerald-600 text-sm font-medium">
@@ -581,20 +631,20 @@
             </a>
 
             <!-- Budget Transparency -->
-            <a href="{% url 'common:transparency_dashboard' %}" class="group bg-white rounded-lg shadow-lg border-2 border-cyan-200 hover:border-cyan-500 hover:shadow-xl transition-all duration-200">
-                <div class="p-6">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
+            <a href="{% url 'common:transparency_dashboard' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center">
                             <i class="fas fa-eye text-white text-xl"></i>
                         </div>
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
                             <i class="fas fa-globe mr-1"></i> Public
                         </span>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors mb-2">
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors">
                         Budget Transparency
                     </h3>
-                    <p class="text-sm text-gray-600">
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
                         See how community funds are allocated and what outcomes are achieved. Full transparency, full accountability.
                     </p>
                     <div class="mt-4 flex items-center text-cyan-600 text-sm font-medium">
@@ -611,15 +661,15 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Manage Profile -->
-            <a href="{% url 'common:profile' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
+            <a href="{% url 'common:profile' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-user text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-gray-600 transition-colors">
                         Manage Profile
                     </h3>
-                    <p class="mt-2 text-sm text-gray-600">
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
                         Update your personal information and settings.
                     </p>
                     <div class="mt-4 flex items-center text-gray-600 text-sm font-medium">
@@ -631,15 +681,15 @@
 
             {% if user.is_staff %}
             <!-- Admin Panel -->
-            <a href="/admin/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
+            <a href="/admin/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-cogs text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-red-600 transition-colors">
                         Admin Panel
                     </h3>
-                    <p class="mt-2 text-sm text-gray-600">
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
                         System administration and management tools.
                     </p>
                     <div class="mt-4 flex items-center text-red-600 text-sm font-medium">
@@ -651,15 +701,15 @@
             {% endif %}
 
             <!-- Help & Support -->
-            <div class="group bg-white rounded-lg shadow-lg border border-gray-200">
-                <div class="p-6">
+            <div class="group bg-white rounded-lg shadow-lg border border-gray-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-question-circle text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                         Help & Support
                     </h3>
-                    <p class="mt-2 text-sm text-gray-600">
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
                         User guides and documentation resources.
                     </p>
                     <div class="mt-4 flex items-center text-blue-600 text-sm font-medium">

@@ -18,6 +18,7 @@ from common.models import RecurringEventPattern
 
 from .forms import (
     EventForm,
+    EventQuickUpdateForm,
     OrganizationContactFormSet,
     OrganizationForm,
     PartnershipDocumentFormSet,
@@ -31,6 +32,72 @@ from .models import Event, Organization, Partnership, StakeholderEngagement
 
 
 logger = logging.getLogger(__name__)
+
+
+def _calendar_iso(dt_value):
+    if not dt_value:
+        return None
+    if timezone.is_naive(dt_value):
+        dt_value = timezone.make_aware(dt_value, timezone.get_current_timezone())
+    else:
+        dt_value = timezone.localtime(dt_value)
+    return dt_value.isoformat()
+
+
+def _combine_event_datetime(date_part, time_part, default_time=time.min):
+    if not date_part:
+        return None
+    selected_time = time_part if time_part is not None else default_time
+    return datetime.combine(date_part, selected_time)
+
+
+def _serialize_coordination_event(event):
+    start_dt = _combine_event_datetime(event.start_date, event.start_time)
+    all_day = event.start_time is None
+
+    if event.end_date:
+        end_time = (
+            event.end_time
+            if event.end_time
+            else (time.max if not all_day else time.max)
+        )
+        end_dt = _combine_event_datetime(event.end_date, end_time)
+        if all_day and end_dt:
+            end_dt = end_dt + timedelta(days=1)
+    elif event.end_time:
+        end_dt = _combine_event_datetime(event.start_date, event.end_time)
+    elif event.duration_hours and start_dt:
+        end_dt = start_dt + timedelta(hours=float(event.duration_hours))
+    elif all_day and start_dt:
+        end_dt = start_dt + timedelta(days=1)
+    else:
+        end_dt = start_dt
+
+    return {
+        "id": f"coordination-event-{event.pk}",
+        "title": event.title,
+        "start": _calendar_iso(start_dt),
+        "end": _calendar_iso(end_dt),
+        "allDay": all_day,
+        "backgroundColor": "#2563eb",
+        "borderColor": "#1d4ed8",
+        "textColor": "#ffffff" if all_day else None,
+        "editable": True,
+        "extendedProps": {
+            "module": "coordination",
+            "category": "event",
+            "type": "event",
+            "objectId": str(event.pk),
+            "supportsEditing": True,
+            "modalUrl": reverse("common:coordination_event_modal", args=[event.pk]),
+            "status": event.status,
+            "community": getattr(event.community, "name", ""),
+            "organizer": getattr(event.organizer, "get_full_name", None)
+            and event.organizer.get_full_name()
+            or getattr(event.organizer, "username", ""),
+            "location": event.venue,
+        },
+    }
 
 
 def _organization_form(request, organization_id=None):
@@ -502,60 +569,10 @@ def calendar_overview(request):
         "engagement_type",
     )
 
-    def _combine_date_time(date_part, time_part):
-        if not date_part:
-            return None
-        base_time = time_part or time.min
-        return datetime.combine(date_part, base_time)
-
-    def _iso(dt_value):
-        if not dt_value:
-            return None
-        if timezone.is_aware(dt_value):
-            dt_value = timezone.localtime(dt_value)
-        return dt_value.isoformat()
-
     calendar_entries = []
 
     for event in events:
-        start_dt = _combine_date_time(event.start_date, event.start_time)
-        all_day = event.start_time is None
-
-        if event.end_date:
-            end_time = (
-                event.end_time
-                if event.end_time
-                else (time.max if not all_day else time.max)
-            )
-            end_dt = _combine_date_time(event.end_date, end_time)
-            if all_day and end_dt:
-                end_dt = end_dt + timedelta(days=1)
-        elif event.end_time:
-            end_dt = _combine_date_time(event.start_date, event.end_time)
-        elif event.duration_hours and start_dt:
-            end_dt = start_dt + timedelta(hours=float(event.duration_hours))
-        elif all_day and start_dt:
-            end_dt = start_dt + timedelta(days=1)
-        else:
-            end_dt = start_dt
-
-        calendar_entries.append(
-            {
-                "id": str(event.pk),
-                "title": event.title,
-                "start": _iso(start_dt),
-                "end": _iso(end_dt),
-                "allDay": all_day,
-                "backgroundColor": "#2563eb",
-                "borderColor": "#1d4ed8",
-                "textColor": "#ffffff" if all_day else None,
-                "extendedProps": {
-                    "type": "event",
-                    "status": event.status,
-                    "community": getattr(event.community, "name", ""),
-                },
-            }
-        )
+        calendar_entries.append(_serialize_coordination_event(event))
 
     for engagement in engagements:
         start_dt = engagement.planned_date
@@ -565,16 +582,19 @@ def calendar_overview(request):
 
         calendar_entries.append(
             {
-                "id": str(engagement.pk),
+                "id": f"coordination-activity-{engagement.pk}",
                 "title": engagement.title,
-                "start": _iso(start_dt),
-                "end": _iso(end_dt),
+                "start": _calendar_iso(start_dt),
+                "end": _calendar_iso(end_dt),
                 "allDay": False,
                 "backgroundColor": "#059669",
                 "borderColor": "#047857",
                 "extendedProps": {
+                    "module": "coordination",
                     "type": "activity",
                     "status": engagement.status,
+                    "objectId": str(engagement.pk),
+                    "supportsEditing": False,
                     "community": getattr(engagement.community, "name", ""),
                     "engagementType": getattr(engagement.engagement_type, "name", ""),
                 },
@@ -807,6 +827,65 @@ def event_edit_instance(request, event_id):
         "submit_label": "Save Changes",
     }
     return render(request, "coordination/event_edit_instance.html", context)
+
+
+@login_required
+def coordination_event_modal(request, event_id):
+    """Render coordination event quick-update modal."""
+
+    event = get_object_or_404(
+        Event.objects.select_related("community", "organizer")
+        .prefetch_related("organizations", "co_organizers", "facilitators", "staff_tasks__assignees"),
+        pk=event_id,
+    )
+
+    if not (
+        request.user.is_staff
+        or request.user.is_superuser
+        or event.created_by == request.user
+        or request.user.has_perm("coordination.change_event")
+    ):
+        raise PermissionDenied
+
+    if request.method == "POST":
+        form = EventQuickUpdateForm(request.POST, instance=event)
+        if form.is_valid():
+            form.save()
+            event.refresh_from_db()
+            payload = _serialize_coordination_event(event)
+            context = {
+                "event": event,
+                "form": EventQuickUpdateForm(instance=event),
+                "save_success": True,
+                "organizations": event.organizations.all(),
+                "co_organizers": event.co_organizers.all(),
+                "facilitators": event.facilitators.all(),
+                "linked_tasks": event.staff_tasks.all(),
+            }
+            response = render(
+                request, "coordination/partials/event_modal.html", context
+            )
+            trigger_payload = {
+                "show-toast": "Event updated successfully",
+                "calendar-close-modal": True,
+            }
+            if payload:
+                trigger_payload["calendar-event-updated"] = payload
+            response["HX-Trigger"] = json.dumps(trigger_payload)
+            return response
+    else:
+        form = EventQuickUpdateForm(instance=event)
+
+    context = {
+        "event": event,
+        "form": form,
+        "save_success": False,
+        "organizations": event.organizations.all(),
+        "co_organizers": event.co_organizers.all(),
+        "facilitators": event.facilitators.all(),
+        "linked_tasks": event.staff_tasks.all(),
+    }
+    return render(request, "coordination/partials/event_modal.html", context)
 
 
 # ===================================

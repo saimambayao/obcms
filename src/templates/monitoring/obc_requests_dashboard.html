@@ -37,59 +37,65 @@
         </div>
     </header>
 
-    <!-- Statistics Cards Section -->
-    <section class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+    <!-- Statistics Cards - 3D Milk White Design -->
+    <section class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {% for card in stats_cards %}
-        <article class="relative overflow-hidden bg-gradient-to-br {{ card.gradient }} rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 h-64">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white h-full flex flex-col">
-                <div class="flex items-center justify-between mb-4">
+        <!-- Single Stat Card -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <!-- Gradient overlay for depth -->
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <!-- Content - Use flex column to push breakdown to bottom -->
+            <div class="relative p-6 flex flex-col h-full">
+                <!-- Header: Label + Number + Icon -->
+                <div class="flex items-center justify-between mb-3">
                     <div>
-                        <p class="text-sm text-white/75 font-medium">{{ card.subtitle }}</p>
-                        <h2 class="text-xl font-semibold">{{ card.title }}</h2>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">{{ card.subtitle }}</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ card.total }}</p>
                     </div>
-                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="{{ card.icon }} text-xl"></i>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="{{ card.icon }} text-2xl {{ card.icon_color }}"></i>
                     </div>
                 </div>
-                <div class="flex items-baseline gap-2 mb-6 flex-grow">
-                    <p class="text-3xl font-bold leading-none">{{ card.total }}</p>
-                    {% if forloop.first %}
-                        <span class="text-xs uppercase tracking-wide text-white/70">Requests</span>
-                    {% endif %}
-                </div>
-                <div class="grid grid-cols-3 gap-2 mt-auto">
+
+                <!-- Spacer to push breakdown to bottom -->
+                <div class="flex-grow"></div>
+
+                <!-- Breakdown (3 columns) - Always at bottom -->
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
                     {% for metric in card.metrics %}
-                    <div class="bg-white/15 border border-white/20 rounded-lg p-2 text-center min-h-[60px] flex flex-col justify-center">
-                        <p class="text-sm font-semibold truncate mb-1">{{ metric.value }}</p>
-                        <p class="text-[10px] text-white/75 uppercase tracking-tight leading-tight break-words">{{ metric.label }}</p>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ metric.value }}</p>
+                        <p class="text-xs text-gray-500 font-medium">{{ metric.label }}</p>
                     </div>
                     {% endfor %}
                 </div>
             </div>
-        </article>
+        </div>
         {% endfor %}
     </section>
 
     <!-- Quick Actions Section -->
     <section id="quick-actions">
-        <h2 class="text-xl font-semibold text-neutral-800 mb-6 flex items-center">
-            <i class="fas fa-bolt text-blue-500 mr-3"></i>
-            Quick Actions
-        </h2>
-        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for action in quick_actions %}
-            <a href="{{ action.url }}" class="group bg-white rounded-xl border border-neutral-200 shadow hover:shadow-lg transition-all duration-200 block hover-lift">
-                <div class="px-5 py-4 flex items-center gap-4">
-                    <span class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg {{ action.color }}">
-                        <i class="{{ action.icon }}"></i>
-                    </span>
-                    <div class="flex-1 min-w-0">
-                        <h3 class="text-base font-semibold text-neutral-800 group-hover:text-blue-600 transition-colors truncate">{{ action.title }}</h3>
-                        <p class="text-sm text-neutral-500 truncate">{{ action.description }}</p>
-                        <span class="inline-flex items-center text-sm text-blue-600 mt-1 font-medium">
-                            Open <i class="fas fa-arrow-right ml-1 text-xs"></i>
-                        </span>
+            <a href="{{ action.url }}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
+                    <div class="w-12 h-12 {{ action.color }} rounded-lg flex items-center justify-center mb-4">
+                        <i class="{{ action.icon }} text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-violet-600 transition-colors">
+                        {{ action.title }}
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
+                        {{ action.description }}
+                    </p>
+                    <div class="mt-4 flex items-center text-violet-600 text-sm font-medium">
+                        <span>Open</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>
             </a>

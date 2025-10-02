@@ -25,17 +25,30 @@
         </button>
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5 mb-8">
+    <!-- Statistics Cards - 3D Milk White Design -->
+    <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {% for card in severity_cards %}
-        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div class="flex items-start justify-between">
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r {{ card.gradient }} text-white shadow-inner">
-                    <i class="fa-solid {{ card.icon }}"></i>
-                </span>
-                <span class="text-xs font-semibold uppercase tracking-wide text-gray-400">Unacknowledged</span>
+        <!-- Severity Stat Card -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <!-- Gradient overlay for depth -->
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <!-- Content -->
+            <div class="relative p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">{{ card.label }}</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ card.count }}</p>
+                        <p class="text-xs text-gray-500 font-medium mt-1">Unacknowledged</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fa-solid {{ card.icon }} text-2xl"
+                           style="background: linear-gradient(to right, {{ card.gradient }}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+                    </div>
+                </div>
             </div>
-            <p class="mt-6 text-3xl font-semibold text-gray-900">{{ card.count }}</p>
-            <p class="mt-1 text-sm font-medium text-gray-600">{{ card.label }}</p>
         </div>
         {% endfor %}
     </div>

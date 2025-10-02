@@ -1,0 +1,247 @@
+<div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full">
+    <div class="flex items-start justify-between px-6 py-5 border-b border-gray-200">
+        <div class="space-y-1">
+            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                    <i class="fas fa-layer-group"></i>
+                    {{ event.get_event_type_display }}
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full
+                    {% if event.status == 'completed' %}bg-emerald-100 text-emerald-700
+                    {% elif event.status == 'cancelled' or event.status == 'postponed' %}bg-rose-100 text-rose-700
+                    {% elif event.status == 'in_progress' %}bg-blue-100 text-blue-700
+                    {% elif event.status == 'planned' %}bg-amber-100 text-amber-700
+                    {% else %}bg-slate-100 text-slate-700{% endif %}">
+                    <i class="fas fa-flag"></i>
+                    {{ event.get_status_display }}
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full
+                    {% if event.priority == 'critical' %}bg-rose-100 text-rose-700
+                    {% elif event.priority == 'high' %}bg-amber-100 text-amber-700
+                    {% elif event.priority == 'low' %}bg-slate-100 text-slate-600
+                    {% else %}bg-blue-100 text-blue-700{% endif %}">
+                    <i class="fas fa-bolt"></i>
+                    {{ event.get_priority_display }}
+                </span>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900">{{ event.title }}</h2>
+            <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                {% if event.community %}
+                <span class="inline-flex items-center gap-1"><i class="fas fa-location-dot"></i>{{ event.community.display_name|default:event.community.name }}</span>
+                {% endif %}
+                <span class="inline-flex items-center gap-1"><i class="fas fa-user"></i>{{ event.organizer.get_full_name|default:event.organizer.username }}</span>
+                {% if event.expected_participants %}
+                <span class="inline-flex items-center gap-1"><i class="fas fa-people-group"></i>{{ event.expected_participants }} expected</span>
+                {% endif %}
+            </div>
+        </div>
+        <button type="button" class="text-gray-400 hover:text-gray-600" data-close-modal>
+            <span class="sr-only">Close</span>
+            <i class="fas fa-times text-lg"></i>
+        </button>
+    </div>
+
+    <div class="px-6 py-5 space-y-6">
+        {% if save_success %}
+        <div class="border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-xl px-4 py-2">
+            <i class="fas fa-check-circle mr-2"></i>Event details updated successfully.
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+            <div class="border border-gray-200 rounded-xl p-4 bg-gray-50">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Schedule</p>
+                <p class="mt-2 font-semibold text-gray-900">
+                    {{ event.start_date|date:"M d, Y" }}{% if event.start_time %} • {{ event.start_time|time:"g:i A" }}{% endif %}
+                </p>
+                {% if event.end_date or event.end_time %}
+                <p class="text-xs text-gray-500 mt-1">
+                    Until {{ event.end_date|default:event.start_date|date:"M d, Y" }}{% if event.end_time %} • {{ event.end_time|time:"g:i A" }}{% endif %}
+                </p>
+                {% endif %}
+                {% if event.duration_hours %}
+                <p class="text-xs text-gray-500 mt-1">Duration: {{ event.duration_hours }} hrs</p>
+                {% endif %}
+            </div>
+            <div class="border border-gray-200 rounded-xl p-4 bg-gray-50">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Venue</p>
+                <p class="mt-2 font-semibold text-gray-900">{{ event.venue }}</p>
+                {% if event.address %}
+                <p class="text-xs text-gray-500 mt-1">{{ event.address }}</p>
+                {% endif %}
+                {% if event.is_virtual %}
+                <p class="text-xs text-emerald-600 font-semibold mt-1">
+                    <i class="fas fa-globe mr-1"></i>Virtual via {{ event.virtual_platform|default:"Online" }}
+                </p>
+                {% if event.virtual_link %}
+                <a href="{{ event.virtual_link }}" target="_blank" rel="noopener" class="text-xs text-sky-600 hover:text-sky-700 inline-flex items-center gap-1 mt-1">
+                    <i class="fas fa-link"></i>Join link
+                </a>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        {% if event.description %}
+        <div class="border border-gray-200 bg-white rounded-xl p-4 text-sm text-gray-600">
+            {{ event.description }}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+            <div>
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Partner Organizations</p>
+                <ul class="mt-2 space-y-1">
+                    {% if organizations %}
+                        {% for organization in organizations %}
+                        <li class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-medium">{{ organization.name }}</li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="text-xs text-gray-400">No organizations linked</li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div>
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Facilitators &amp; Co-organizers</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    {% for facilitator in facilitators %}
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-medium"><i class="fas fa-user-shield"></i>{{ facilitator.get_full_name|default:facilitator.username }}</span>
+                    {% empty %}
+                    <span class="text-xs text-gray-400">No facilitators assigned</span>
+                    {% endfor %}
+                    {% for co_org in co_organizers %}
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium"><i class="fas fa-user-friends"></i>{{ co_org.get_full_name|default:co_org.username }}</span>
+                    {% empty %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {% if linked_tasks %}
+        <div class="border border-gray-200 rounded-xl p-4 bg-white">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Linked Tasks</p>
+            <ul class="mt-2 space-y-2 text-sm">
+                {% for task in linked_tasks %}
+                <li class="flex items-center justify-between gap-3">
+                    <div>
+                        <p class="font-semibold text-gray-900">{{ task.title }}</p>
+                        <p class="text-xs text-gray-500">Status: {{ task.get_status_display }}</p>
+                    </div>
+                    <a href="{% url 'common:staff_task_modal' task.id %}" class="inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                       onclick="event.preventDefault(); if (typeof window.openCalendarModal === 'function') { window.openCalendarModal(this.getAttribute('href')); } else { window.location.href = this.getAttribute('href'); }">
+                        <i class="fas fa-pen"></i>Manage task
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form hx-post="{% url 'common:coordination_event_modal' event.id %}" hx-target="#calendarModalContent" hx-swap="innerHTML" class="space-y-4">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="border border-rose-200 bg-rose-50 text-rose-700 text-sm rounded-xl px-4 py-2">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.title.id_for_label }}">Title</label>
+                    {{ form.title }}
+                    {{ form.title.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.status.id_for_label }}">Status</label>
+                    {{ form.status }}
+                    {{ form.status.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.priority.id_for_label }}">Priority</label>
+                    {{ form.priority }}
+                    {{ form.priority.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.duration_hours.id_for_label }}">Duration (hours)</label>
+                    {{ form.duration_hours }}
+                    {{ form.duration_hours.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.start_date.id_for_label }}">Start Date</label>
+                    {{ form.start_date }}
+                    {{ form.start_date.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.start_time.id_for_label }}">Start Time</label>
+                    {{ form.start_time }}
+                    {{ form.start_time.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.end_date.id_for_label }}">End Date</label>
+                    {{ form.end_date }}
+                    {{ form.end_date.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.end_time.id_for_label }}">End Time</label>
+                    {{ form.end_time }}
+                    {{ form.end_time.errors }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.venue.id_for_label }}">Venue</label>
+                    {{ form.venue }}
+                    {{ form.venue.errors }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.address.id_for_label }}">Address / Location Notes</label>
+                    {{ form.address }}
+                    {{ form.address.errors }}
+                </div>
+                <div class="md:col-span-2 flex items-center gap-3">
+                    {{ form.is_virtual }}
+                    <label class="text-sm text-gray-700" for="{{ form.is_virtual.id_for_label }}">Virtual session</label>
+                    {{ form.is_virtual.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.virtual_platform.id_for_label }}">Platform</label>
+                    {{ form.virtual_platform }}
+                    {{ form.virtual_platform.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.virtual_link.id_for_label }}">Virtual Link</label>
+                    {{ form.virtual_link }}
+                    {{ form.virtual_link.errors }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.description.id_for_label }}">Description / Notes</label>
+                    {{ form.description }}
+                    {{ form.description.errors }}
+                </div>
+                <div class="md:col-span-2 flex flex-wrap items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        {{ form.follow_up_required }}
+                        <label class="text-sm text-gray-700" for="{{ form.follow_up_required.id_for_label }}">Follow-up required</label>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.follow_up_date.id_for_label }}">Follow-up Date</label>
+                        {{ form.follow_up_date }}
+                        {{ form.follow_up_date.errors }}
+                    </div>
+                    <div class="md:col-span-2 w-full">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.follow_up_notes.id_for_label }}">Follow-up Notes</label>
+                        {{ form.follow_up_notes }}
+                        {{ form.follow_up_notes.errors }}
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-end gap-3 pt-2">
+                <a href="{% url 'common:coordination_event_edit_instance' event.id %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800">
+                    <i class="fas fa-external-link-alt"></i>
+                    Open full editor
+                </a>
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                    <i class="fas fa-save"></i>
+                    Save changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

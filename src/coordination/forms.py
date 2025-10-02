@@ -366,6 +366,52 @@ class EventForm(forms.ModelForm):
                     field.widget.attrs.setdefault("step", "0.25")
 
 
+class EventQuickUpdateForm(forms.ModelForm):
+    """Streamlined update form rendered inside calendar modal."""
+
+    class Meta:
+        model = Event
+        fields = [
+            "title",
+            "status",
+            "priority",
+            "start_date",
+            "start_time",
+            "end_date",
+            "end_time",
+            "duration_hours",
+            "venue",
+            "address",
+            "is_virtual",
+            "virtual_platform",
+            "virtual_link",
+            "follow_up_required",
+            "follow_up_date",
+            "follow_up_notes",
+            "description",
+        ]
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 3}),
+            "address": forms.Textarea(attrs={"rows": 3}),
+            "follow_up_notes": forms.Textarea(attrs={"rows": 3}),
+            "start_date": DATE_WIDGET,
+            "end_date": DATE_WIDGET,
+            "follow_up_date": DATE_WIDGET,
+            "start_time": TIME_WIDGET,
+            "end_time": TIME_WIDGET,
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _apply_field_styles(self.fields)
+        numeric_fields = ["duration_hours"]
+        for field_name in numeric_fields:
+            field = self.fields.get(field_name)
+            if field and isinstance(field.widget, forms.NumberInput):
+                field.widget.attrs.setdefault("min", "0")
+                field.widget.attrs.setdefault("step", "0.25")
+
+
 class StakeholderEngagementForm(forms.ModelForm):
     """Frontend form for logging coordination activities."""
 

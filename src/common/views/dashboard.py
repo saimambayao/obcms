@@ -508,4 +508,11 @@ def dashboard_alerts(request):
     return HttpResponse(html)
 
 
-__all__ = ["dashboard", "dashboard_metrics", "dashboard_activity", "dashboard_alerts"]
+@login_required
+def dashboard_stats_cards(request):
+    """Render dashboard stats cards (HTMX endpoint - not implemented yet)."""
+    from django.http import HttpResponse
+    return HttpResponse("Not implemented", status=501)
+
+
+__all__ = ["dashboard", "dashboard_stats_cards", "dashboard_metrics", "dashboard_activity", "dashboard_alerts"]

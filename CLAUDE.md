@@ -194,6 +194,73 @@ EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
 - Uses Tailwind CSS for responsive, government-appropriate styling
 - Support for dark mode and accessibility (WCAG 2.1 AA)
 
+### UI Components & Standards ⭐
+
+**CRITICAL**: All UI components MUST follow the official OBCMS UI standards documented in:
+
+**📚 [OBCMS UI Components & Standards Guide](docs/ui/OBCMS_UI_COMPONENTS_STANDARDS.md)**
+
+This comprehensive guide includes:
+
+#### 1. **Stat Cards (3D Milk White)** ✅ Official Design
+- **Simple variant**: No breakdown section
+- **Breakdown variant**: 3-column breakdown with bottom alignment
+- **Semantic icon colors**: Amber (total), Emerald (success), Blue (info), Purple (draft), Orange (warning), Red (critical)
+- **Reference**: [STATCARD_TEMPLATE.md](docs/improvements/UI/STATCARD_TEMPLATE.md)
+- **Implementation**: 100% complete across all dashboards
+
+#### 2. **Quick Action Cards**
+- Used in management dashboards for common workflows
+- Gradient icon containers with hover effects
+- Clear call-to-action with arrow indicators
+
+#### 3. **Form Components**
+- **Standard dropdown**: `rounded-xl`, emerald focus ring, chevron icon
+- **Text inputs**: `min-h-[48px]` for accessibility
+- **Radio cards**: Card-based selection with emerald border when selected
+- **Checkboxes**: Standard checkboxes with proper spacing
+
+#### 4. **Buttons**
+- **Primary**: Blue-to-teal gradient for main actions
+- **Secondary**: Outline buttons for cancel/back
+- **Tertiary**: Text-only buttons for inline actions
+- **Icon buttons**: Circular icon-only buttons
+
+#### 5. **Cards & Containers**
+- **White cards**: `rounded-xl`, border, subtle shadow
+- **Card with footer**: Action buttons in gray footer section
+- **Section containers**: Form sections with icon headers
+
+#### 6. **Navigation**
+- **Breadcrumbs**: Chevron-separated path
+- **Tabs**: Bottom-border active state
+- **Pagination**: Numbered pages with prev/next
+
+#### 7. **Alerts & Messages**
+- **Success**: Emerald border-left with icon
+- **Error**: Red border-left with icon
+- **Warning**: Amber border-left with icon
+- **Info**: Blue border-left with icon
+
+#### 8. **Tables**
+- **Header**: Blue-to-teal gradient
+- **Rows**: Hover state, alternating if needed
+- **Status badges**: Rounded-full pills with semantic colors
+
+#### 9. **Accessibility**
+- WCAG 2.1 AA compliant
+- High contrast ratios (4.5:1 minimum)
+- Keyboard navigation support
+- Touch targets minimum 48px
+- Focus indicators on all interactive elements
+
+**When creating or modifying UI:**
+1. ✅ **Always check** the UI Components guide first
+2. ✅ **Copy from** existing reference templates
+3. ✅ **Follow** semantic color guidelines
+4. ✅ **Test** on mobile, tablet, desktop
+5. ✅ **Verify** accessibility compliance
+
 ### Form Component Library
 - Reusable form partials are under `src/templates/components/` (`form_field.html`, `form_field_input.html`, `form_field_select.html`).
 - Include them in templates instead of duplicating markup, e.g. `{% include "components/form_field_select.html" with field=form.municipality placeholder="Select municipality..." %}` to match the Barangay OBC dropdown styling.
@@ -356,3 +423,328 @@ When creating or updating documentation:
 - [ ] Includes metadata (date, status, author if applicable)
 
 **Reference:** See [docs/DOCUMENTATION_ORGANIZATION.md](docs/DOCUMENTATION_ORGANIZATION.md) for organization details.
+
+---
+
+## Production Deployment Guidelines
+
+### ⚠️ CRITICAL: Pre-Deployment Checklist
+
+**Before deploying OBCMS to staging or production, ALL of the following documents MUST be reviewed:**
+
+#### 1. **Database Migration (CRITICAL - START HERE)**
+
+**Primary Documents:**
+- 📚 **[PostgreSQL Migration Summary](docs/deployment/POSTGRESQL_MIGRATION_SUMMARY.md)** ⭐ **READ FIRST**
+  - Executive overview of entire migration process
+  - Complete readiness checklist
+  - Key decisions documented
+  - Migration procedure summary
+
+- 📚 **[PostgreSQL Migration Review](docs/deployment/POSTGRESQL_MIGRATION_REVIEW.md)** ⭐ **TECHNICAL DETAILS**
+  - Comprehensive technical analysis of all 118 migrations
+  - Step-by-step migration procedure
+  - Performance expectations
+  - Rollback procedures
+
+**CRITICAL CONSIDERATIONS:**
+
+**A. Geographic Data Implementation** ✅ **NO POSTGIS REQUIRED**
+- 📚 **[Geographic Data Implementation Guide](docs/improvements/geography/GEOGRAPHIC_DATA_IMPLEMENTATION.md)**
+  - **Decision:** Use JSONField (NOT PostGIS)
+  - **Reason:** Production-ready, sufficient for OBCMS, no extra dependencies
+  - Current implementation stores boundaries in GeoJSON format using PostgreSQL's native `jsonb` type
+  - Perfect for Leaflet.js frontend integration
+  - PostGIS adds complexity without benefit for current use case
+
+- 📚 **[PostGIS Migration Guide](docs/improvements/geography/POSTGIS_MIGRATION_GUIDE.md)** (Reference only - NOT needed)
+  - Only consider PostGIS if spatial queries become required
+  - Migration guide available for future use
+
+**B. Text Search Queries** ✅ **100% COMPATIBLE**
+- 📚 **[Case-Sensitive Query Audit](docs/deployment/CASE_SENSITIVE_QUERY_AUDIT.md)**
+  - Full codebase audit completed
+  - **Result:** 0 case-sensitive queries in production code
+  - All user-facing searches use `__icontains` (case-insensitive)
+  - PostgreSQL migration will work identically to SQLite
+
+**PostgreSQL Migration Specifics:**
+```bash
+# 1. Create PostgreSQL database (NO PostGIS extension needed)
+CREATE DATABASE obcms_prod ENCODING 'UTF8';
+CREATE USER obcms_user WITH PASSWORD 'secure-password';
+GRANT ALL PRIVILEGES ON DATABASE obcms_prod TO obcms_user;
+
+# 2. Update .env
+DATABASE_URL=postgres://obcms_user:password@localhost:5432/obcms_prod
+
+# 3. Run migrations (all 118 migrations are PostgreSQL-compatible)
+cd src
+python manage.py migrate
+
+# Expected: All migrations apply successfully in 2-5 minutes
+```
+
+**Important Notes:**
+- ❌ **DO NOT install PostGIS** - Not needed, adds unnecessary complexity
+- ✅ **JSONField works natively** - PostgreSQL uses `jsonb` type automatically
+- ✅ **Geographic data migration** - Boundaries stored as GeoJSON (human-readable)
+- ✅ **No code changes required** - System is 100% PostgreSQL-compatible
+
+#### 2. **Environment Configuration**
+
+**Required Documents:**
+- 📚 **[Staging Environment Guide](docs/env/staging-complete.md)** ⭐ **12-STEP PROCEDURE**
+  - Complete staging deployment walkthrough
+  - Environment variable templates
+  - Database setup instructions
+  - SSL/TLS configuration
+  - Celery worker setup
+  - Testing and validation procedures
+
+- 📚 **[Pre-Staging Complete Report](docs/deployment/PRE_STAGING_COMPLETE.md)**
+  - UI refinements completed
+  - Performance test results (83% passing)
+  - Code quality standardization
+  - Overall deployment readiness
+
+**Environment Variables Checklist:**
+```env
+# CRITICAL: Update ALL placeholders before deployment
+SECRET_KEY=             # Generate: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+DEBUG=0                 # MUST be 0 in production
+ALLOWED_HOSTS=          # yourdomain.com,www.yourdomain.com
+CSRF_TRUSTED_ORIGINS=   # https://yourdomain.com,https://www.yourdomain.com
+DATABASE_URL=           # postgres://user:pass@host:5432/dbname
+REDIS_URL=              # redis://redis:6379/0
+EMAIL_BACKEND=          # django.core.mail.backends.smtp.EmailBackend (NOT console)
+```
+
+#### 3. **Security & Performance**
+
+**Required Reviews:**
+- 📚 **[Production Settings](src/obc_management/settings/production.py)**
+  - HSTS, SSL redirect, secure cookies configured
+  - Connection pooling enabled (CONN_MAX_AGE = 600)
+  - CSP headers configured
+  - All security warnings addressed
+
+- 📚 **[Performance Test Results](docs/testing/PERFORMANCE_TEST_RESULTS.md)**
+  - Calendar performance: Excellent (< 15ms)
+  - Resource booking: Good (handles 25+ concurrent users)
+  - HTMX rendering: Fast (< 50ms)
+  - 83% test pass rate (10/12 tests)
+
+**Security Checklist:**
+```bash
+# Run deployment checks BEFORE deploying
+cd src
+python manage.py check --deploy
+
+# Expected: All warnings should be addressed in production.py
+# Development warnings are OK (DEBUG=True, etc.)
+```
+
+#### 4. **Testing Strategy**
+
+**Pre-Deployment Testing:**
+```bash
+# 1. Run full test suite
+pytest -v
+# Expected: 254/256 tests passing (99.2%)
+
+# 2. Run performance tests
+pytest tests/performance/ -v
+# Expected: 10/12 tests passing (83%)
+
+# 3. Security audit
+python manage.py check --deploy
+```
+
+**Post-Deployment Verification:**
+```bash
+# 1. Health check
+curl https://staging.obcms.gov.ph/health/
+curl https://staging.obcms.gov.ph/ready/
+
+# 2. Admin panel
+curl -I https://staging.obcms.gov.ph/admin/
+
+# 3. Test user login
+# 4. Test each module (Communities, MANA, Coordination, etc.)
+```
+
+#### 5. **Deployment Platform Guides**
+
+**Choose ONE deployment method:**
+
+**Option A: Coolify (Recommended)**
+- 📚 **[Coolify Deployment Checklist](docs/deployment/deployment-coolify.md)**
+- 📚 **[Coolify Deployment Plan](docs/deployment/coolify-deployment-plan.md)**
+
+**Option B: Docker Compose**
+- 📚 **[Docker Guide](docs/deployment/docker-guide.md)**
+
+#### 6. **UI/UX Verification**
+
+**Review UI Implementation:**
+- 📚 **[UI Refinements Complete](docs/improvements/UI/UI_REFINEMENTS_COMPLETE.md)**
+  - Task deletion instant feedback verified
+  - Code formatting with Black completed
+  - UX pattern consistency checked
+  - Production-ready UI confirmed
+
+---
+
+### Database Query Best Practices (PostgreSQL)
+
+**IMPORTANT: Text Search Queries**
+
+PostgreSQL is **case-sensitive** by default (unlike SQLite). Always use case-insensitive lookups:
+
+```python
+# ❌ BAD: Case-sensitive (different behavior in PostgreSQL)
+Region.objects.filter(name__contains='BARMM')        # Case-sensitive
+User.objects.filter(username__startswith='admin')    # Case-sensitive
+
+# ✅ GOOD: Case-insensitive (consistent across databases)
+Region.objects.filter(name__icontains='BARMM')       # Case-insensitive
+User.objects.filter(username__istartswith='admin')   # Case-insensitive
+User.objects.filter(email__iexact='admin@oobc.gov')  # Case-insensitive exact match
+```
+
+**Lookup Reference:**
+- `__icontains` - Case-insensitive contains
+- `__istartswith` - Case-insensitive starts with
+- `__iendswith` - Case-insensitive ends with
+- `__iexact` - Case-insensitive exact match
+
+**Status:** ✅ OBCMS codebase already follows these patterns (verified via audit)
+
+---
+
+### Geographic Data Guidelines (PostgreSQL)
+
+**Current Implementation: JSONField (Production-Ready)**
+
+OBCMS uses Django's JSONField for geographic data storage:
+
+```python
+# Region, Province, Municipality, Barangay models
+class Region(models.Model):
+    # GeoJSON boundaries (PostgreSQL uses native 'jsonb' type)
+    boundary_geojson = models.JSONField(null=True, blank=True)
+
+    # Center coordinates {"lat": 8.45, "lng": 124.63}
+    center_coordinates = models.JSONField(null=True, blank=True)
+
+    # Bounding box [[south, west], [north, east]]
+    bounding_box = models.JSONField(null=True, blank=True)
+```
+
+**PostgreSQL Storage:**
+- Automatically uses `jsonb` type (efficient, indexed)
+- Supports JSON operators (->>, ->, @>, etc.)
+- Perfect for Leaflet.js (GeoJSON native)
+- Human-readable (easy debugging)
+
+**PostGIS Decision: NOT NEEDED** ✅
+- Current use case: Display boundaries, store coordinates
+- NOT needed: Spatial joins, distance queries, geometric calculations
+- JSONField is production-ready and sufficient
+- Avoid PostGIS complexity unless spatial queries become required
+
+**See:** [Geographic Data Implementation Guide](docs/improvements/geography/GEOGRAPHIC_DATA_IMPLEMENTATION.md)
+
+---
+
+### Deployment Workflow
+
+**Standard Deployment Sequence:**
+
+1. **Development → Staging → Production**
+   ```
+   Development (SQLite)
+         ↓
+   Staging (PostgreSQL) ← Test here first
+         ↓
+   Production (PostgreSQL)
+   ```
+
+2. **Pre-Deployment Steps:**
+   - [ ] Review ALL deployment documentation listed above
+   - [ ] Verify PostgreSQL migration compatibility
+   - [ ] Confirm geographic data implementation (JSONField, no PostGIS)
+   - [ ] Validate case-insensitive query patterns
+   - [ ] Generate production SECRET_KEY
+   - [ ] Configure environment variables
+   - [ ] Set up PostgreSQL database (NO PostGIS extension)
+
+3. **Migration Execution:**
+   ```bash
+   # Staging deployment
+   cd src
+   export DJANGO_SETTINGS_MODULE=obc_management.settings.production
+   python manage.py migrate
+   python manage.py check --deploy
+   python manage.py collectstatic --noinput
+   ```
+
+4. **Post-Deployment Verification:**
+   - [ ] Run health checks
+   - [ ] Execute smoke tests
+   - [ ] Verify all modules functional
+   - [ ] Check performance metrics
+   - [ ] Monitor error logs (first 24 hours)
+
+---
+
+### Critical Reminders
+
+**BEFORE Deployment:**
+1. ✅ **Review PostgreSQL Migration Summary** (comprehensive overview)
+2. ✅ **Confirm NO PostGIS installation** (JSONField is sufficient)
+3. ✅ **Verify case-insensitive queries** (audit already completed - 100% compatible)
+4. ✅ **Generate production SECRET_KEY** (50+ characters, cryptographically random)
+5. ✅ **Update ALL environment variables** (no placeholders in production)
+6. ✅ **Run deployment checks** (`python manage.py check --deploy`)
+7. ✅ **Test in staging first** (NEVER deploy directly to production)
+
+**Database Migration Checklist:**
+- [ ] PostgreSQL database created (ENCODING 'UTF8')
+- [ ] User and privileges configured
+- [ ] DATABASE_URL environment variable set
+- [ ] All 118 migrations reviewed (all PostgreSQL-compatible)
+- [ ] NO PostGIS extension installed (not needed)
+- [ ] JSONField geographic data verified (automatic jsonb type)
+- [ ] Case-sensitive queries audited (100% compatible)
+
+**Rollback Plan:**
+- Option 1: Revert to SQLite (development only)
+- Option 2: Restore PostgreSQL from backup
+- Option 3: Fresh migration with `--fake-initial`
+
+**See:** [PostgreSQL Migration Review](docs/deployment/POSTGRESQL_MIGRATION_REVIEW.md#rollback-plan)
+
+---
+
+### Documentation Index for Deployment
+
+**Must-Read Before Any Deployment:**
+
+1. **[PostgreSQL Migration Summary](docs/deployment/POSTGRESQL_MIGRATION_SUMMARY.md)** ⭐ START HERE
+2. **[PostgreSQL Migration Review](docs/deployment/POSTGRESQL_MIGRATION_REVIEW.md)** ⭐ TECHNICAL
+3. **[Case-Sensitive Query Audit](docs/deployment/CASE_SENSITIVE_QUERY_AUDIT.md)** ✅ VERIFIED
+4. **[Geographic Data Implementation](docs/improvements/geography/GEOGRAPHIC_DATA_IMPLEMENTATION.md)** ✅ NO POSTGIS
+5. **[Staging Environment Guide](docs/env/staging-complete.md)** ⭐ 12-STEP PROCEDURE
+6. **[Pre-Staging Complete Report](docs/deployment/PRE_STAGING_COMPLETE.md)** ✅ READY
+
+**Reference Documents:**
+7. **[PostGIS Migration Guide](docs/improvements/geography/POSTGIS_MIGRATION_GUIDE.md)** 📋 Future reference only
+8. **[Deployment Implementation Status](docs/deployment/DEPLOYMENT_IMPLEMENTATION_STATUS.md)**
+9. **[Performance Test Results](docs/testing/PERFORMANCE_TEST_RESULTS.md)**
+10. **[UI Refinements Complete](docs/improvements/UI/UI_REFINEMENTS_COMPLETE.md)**
+
+**Full Documentation Index:** [docs/README.md](docs/README.md)
+
+---

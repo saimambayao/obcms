@@ -64,10 +64,13 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",  # JWT token blacklisting
     "corsheaders",
     "django_filters",
     "django_extensions",
     "crispy_forms",
+    "auditlog",  # Audit logging for compliance
+    "axes",  # Failed login tracking and account lockout
 ]
 
 LOCAL_APPS = [
@@ -96,6 +99,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "axes.middleware.AxesMiddleware",  # Failed login tracking (after AuthenticationMiddleware)
+    "auditlog.middleware.AuditlogMiddleware",  # Audit logging (after AuthenticationMiddleware)
     "common.middleware.MANAAccessControlMiddleware",  # Restrict MANA user access to authorized pages only
     "mana.middleware.ManaWorkshopContextMiddleware",
     "mana.middleware.ManaParticipantAccessMiddleware",
@@ -148,6 +153,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 12,  # Increased from default 8 to 12 (NIST recommendation)
+        },
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
@@ -211,6 +219,19 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "common.throttling.BurstThrottle",  # Short-term burst protection
+        "common.throttling.AnonThrottle",  # Anonymous user throttling
+        "common.throttling.UserThrottle",  # Authenticated user throttling
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/hour",  # Anonymous users: 100 requests per hour
+        "user": "1000/hour",  # Authenticated users: 1000 requests per hour
+        "auth": "5/minute",  # Authentication endpoints: 5 attempts per minute
+        "burst": "60/minute",  # Burst protection: 60 requests per minute
+        "export": "10/hour",  # Data export operations: 10 per hour
+        "admin": "5000/hour",  # Admin users: 5000 requests per hour
+    },
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_FILTER_BACKENDS": [
@@ -231,6 +252,8 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,  # Blacklist old tokens after rotation
+    "UPDATE_LAST_LOGIN": True,  # Update user's last_login field on token refresh
 }
 
 # CORS settings
@@ -366,3 +389,61 @@ LOGGING = {
 
 # Create logs directory if it doesn't exist
 os.makedirs(BASE_DIR / "logs", exist_ok=True)
+
+# ============================================================================
+# SECURITY CONFIGURATION
+# ============================================================================
+
+# Django Axes: Failed login tracking and account lockout
+# https://django-axes.readthedocs.io/
+AXES_ENABLED = True
+AXES_FAILURE_LIMIT = 5  # Lock account after 5 failed login attempts
+AXES_COOLOFF_TIME = timedelta(minutes=30)  # Lock duration: 30 minutes
+AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True  # More precise lockout
+AXES_RESET_ON_SUCCESS = True  # Reset failure count on successful login
+AXES_LOCKOUT_TEMPLATE = None  # Use default lockout response
+AXES_LOCKOUT_PARAMETERS = [["username"], ["ip_address"]]  # Track by username and IP
+AXES_IPWARE_PROXY_COUNT = 1  # Trust X-Forwarded-For header (behind proxy)
+AXES_IPWARE_META_PRECEDENCE_ORDER = [
+    "HTTP_X_FORWARDED_FOR",
+    "REMOTE_ADDR",
+]
+
+# Django Axes: Configure authentication backend
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",  # Check Axes first
+    "django.contrib.auth.backends.ModelBackend",  # Then Django's default backend
+]
+
+# Django Auditlog: Audit trail for model changes
+# https://django-auditlog.readthedocs.io/
+AUDITLOG_INCLUDE_TRACKING_MODELS = (
+    "common.User",
+    "communities.BarangayOBC",
+    "communities.MunicipalOBC",
+    "communities.ProvincialOBC",
+    "mana.Assessment",
+    "mana.AssessmentResponse",
+    "coordination.Partnership",
+    "project_central.Task",
+    "project_central.Workflow",
+)
+
+# Security Event Logging
+LOGGING["loggers"]["axes"] = {
+    "handlers": ["console", "file"],
+    "level": "WARNING",
+    "propagate": False,
+}
+
+LOGGING["loggers"]["auditlog"] = {
+    "handlers": ["console", "file"],
+    "level": "INFO",
+    "propagate": False,
+}
+
+LOGGING["loggers"]["django.security"] = {
+    "handlers": ["console", "file"],
+    "level": "WARNING",
+    "propagate": False,
+}

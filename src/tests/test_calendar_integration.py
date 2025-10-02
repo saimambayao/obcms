@@ -214,6 +214,7 @@ class CalendarEventWorkflowTests(TestCase):
                 event_found = True
                 self.assertEqual(entry["extendedProps"]["type"], "event")
                 self.assertEqual(entry["extendedProps"]["status"], "planned")
+                self.assertIn("modalUrl", entry["extendedProps"])
                 break
 
         self.assertTrue(event_found, "Event not found in calendar data")
@@ -357,6 +358,65 @@ class CalendarEventWorkflowTests(TestCase):
             engagement.planned_date.replace(microsecond=0),
             timezone.localtime(api_start).replace(microsecond=0),
         )
+
+    def test_calendar_event_modal_updates_event(self):
+        event = Event.objects.create(
+            **build_event_kwargs(
+                self.user,
+                title="Modal Event",
+                start_date=timezone.now().date(),
+                start_time=time(10, 0),
+                duration_hours=1,
+            )
+        )
+
+        modal_url = reverse("common:coordination_event_modal", args=[event.id])
+
+        response = self.client.get(modal_url, HTTP_HX_REQUEST="true")
+        self.assertEqual(response.status_code, 200)
+
+        post_payload = {
+            "title": "Updated Modal Event",
+            "status": "in_progress",
+            "priority": "high",
+            "start_date": event.start_date.isoformat(),
+            "start_time": event.start_time.strftime("%H:%M:%S"),
+            "end_date": "",
+            "end_time": "",
+            "duration_hours": "2",
+            "venue": "Innovation Hub",
+            "address": "123 Strategy Way",
+            "is_virtual": "on",
+            "virtual_platform": "Zoom",
+            "virtual_link": "https://zoom.example.com/meeting",
+            "description": "Updated description for modal test",
+            "follow_up_required": "on",
+            "follow_up_date": (event.start_date + timedelta(days=3)).isoformat(),
+            "follow_up_notes": "Prepare post-engagement brief.",
+        }
+
+        response = self.client.post(
+            modal_url,
+            data=post_payload,
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("HX-Trigger", response.headers)
+        trigger_data = json.loads(response.headers["HX-Trigger"])
+        self.assertIn("calendar-close-modal", trigger_data)
+        self.assertIn("calendar-event-updated", trigger_data)
+        payload = trigger_data["calendar-event-updated"]
+        self.assertEqual(payload["id"], f"coordination-event-{event.id}")
+        self.assertEqual(payload["extendedProps"]["status"], "in_progress")
+
+        event.refresh_from_db()
+        self.assertEqual(event.title, "Updated Modal Event")
+        self.assertEqual(event.status, "in_progress")
+        self.assertEqual(event.priority, "high")
+        self.assertEqual(event.duration_hours, 2)
+        self.assertTrue(event.is_virtual)
+        self.assertEqual(event.follow_up_notes, "Prepare post-engagement brief.")
 
     @patch("common.tasks.send_event_notification.delay")
     def test_event_with_notification(self, mock_send_notification):

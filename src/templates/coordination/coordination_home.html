@@ -89,123 +89,135 @@
         </div>
     </section>
 
-    <!-- Coordination Metrics Cards -->
+    <!-- Statistics Cards - 3D Milk White Design -->
     <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Mapped Partners -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-green-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between mb-4">
+        <!-- Total Partnerships -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
                     <div>
-                        <p class="text-orange-100 text-sm font-medium">Mapped Partners</p>
-                        <p class="text-3xl font-bold">{{ stats.mapped_partners.total|default:0 }}</p>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total Partnerships</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.mapped_partners.total|default:0 }}</p>
                     </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-map-marked-alt text-2xl"></i>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-handshake text-2xl text-amber-600"></i>
                     </div>
                 </div>
-                <div class="grid grid-cols-3 gap-2 text-orange-100">
+                <div class="flex-grow"></div>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
                     <div class="text-center">
-                        <p class="text-lg font-bold">{{ stats.mapped_partners.bmoa|default:0 }}</p>
-                        <p class="text-xs">BMOAs</p>
+                        <p class="text-xl font-bold text-gray-700">{{ stats.mapped_partners.bmoa|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">BMOAs</p>
                     </div>
                     <div class="text-center">
-                        <p class="text-lg font-bold">{{ stats.mapped_partners.nga|default:0 }}</p>
-                        <p class="text-xs">NGAs</p>
+                        <p class="text-xl font-bold text-gray-700">{{ stats.mapped_partners.nga|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">NGAs</p>
                     </div>
                     <div class="text-center">
-                        <p class="text-lg font-bold">{{ stats.mapped_partners.lgu|default:0 }}</p>
-                        <p class="text-xs">LGUs</p>
+                        <p class="text-xl font-bold text-gray-700">{{ stats.mapped_partners.lgu|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">LGUs</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Active Partnerships -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-green-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between mb-4">
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
                     <div>
-                        <p class="text-green-100 text-sm font-medium">Active Partnerships</p>
-                        <p class="text-3xl font-bold">{{ stats.active_partnerships.total|default:0 }}</p>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Active Partnerships</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.active_partnerships.total|default:0 }}</p>
                     </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-handshake text-2xl"></i>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-file-contract text-2xl text-emerald-600"></i>
                     </div>
                 </div>
-                <div class="grid grid-cols-3 gap-2 text-green-100">
+                <div class="flex-grow"></div>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
                     <div class="text-center">
-                        <p class="text-lg font-bold">{{ stats.active_partnerships.bmoa|default:0 }}</p>
-                        <p class="text-xs">BMOAs</p>
+                        <p class="text-xl font-bold text-gray-700">{{ stats.active_partnerships.bmoa|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">BMOAs</p>
                     </div>
                     <div class="text-center">
-                        <p class="text-lg font-bold">{{ stats.active_partnerships.nga|default:0 }}</p>
-                        <p class="text-xs">NGAs</p>
+                        <p class="text-xl font-bold text-gray-700">{{ stats.active_partnerships.nga|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">NGAs</p>
                     </div>
                     <div class="text-center">
-                        <p class="text-lg font-bold">{{ stats.active_partnerships.lgu|default:0 }}</p>
-                        <p class="text-xs">LGUs</p>
+                        <p class="text-xl font-bold text-gray-700">{{ stats.active_partnerships.lgu|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">LGUs</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Coordination Activities Done -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-green-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between mb-4">
+        <!-- Resource Commitments -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
                     <div>
-                        <p class="text-blue-100 text-sm font-medium">Activities Done</p>
-                        <p class="text-3xl font-bold">{{ stats.coordination_activities_done.total|default:0 }}</p>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Resource Commitments</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.coordination_activities_done.total|default:0 }}</p>
                     </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-check-circle text-2xl"></i>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-chart-line text-2xl text-blue-600"></i>
                     </div>
                 </div>
-                <div class="grid grid-cols-3 gap-2 text-blue-100">
+                <div class="flex-grow"></div>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
                     <div class="text-center">
-                        <p class="text-lg font-bold">{{ stats.coordination_activities_done.bmoa|default:0 }}</p>
-                        <p class="text-xs">BMOAs</p>
+                        <p class="text-xl font-bold text-gray-700">{{ stats.coordination_activities_done.bmoa|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">BMOAs</p>
                     </div>
                     <div class="text-center">
-                        <p class="text-lg font-bold">{{ stats.coordination_activities_done.nga|default:0 }}</p>
-                        <p class="text-xs">NGAs</p>
+                        <p class="text-xl font-bold text-gray-700">{{ stats.coordination_activities_done.nga|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">NGAs</p>
                     </div>
                     <div class="text-center">
-                        <p class="text-lg font-bold">{{ stats.coordination_activities_done.lgu|default:0 }}</p>
-                        <p class="text-xs">LGUs</p>
+                        <p class="text-xl font-bold text-gray-700">{{ stats.coordination_activities_done.lgu|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">LGUs</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Planned Coordination Activities -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-green-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between mb-4">
+        <!-- Coordination Meetings -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
                     <div>
-                        <p class="text-purple-100 text-sm font-medium">Planned Activities</p>
-                        <p class="text-3xl font-bold">{{ stats.planned_coordination_activities.total|default:0 }}</p>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Coordination Meetings</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.planned_coordination_activities.total|default:0 }}</p>
                     </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-calendar-plus text-2xl"></i>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-calendar-check text-2xl text-purple-600"></i>
                     </div>
                 </div>
-                <div class="grid grid-cols-3 gap-2 text-purple-100">
+                <div class="flex-grow"></div>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
                     <div class="text-center">
-                        <p class="text-lg font-bold">{{ stats.planned_coordination_activities.bmoa|default:0 }}</p>
-                        <p class="text-xs">BMOAs</p>
+                        <p class="text-xl font-bold text-gray-700">{{ stats.planned_coordination_activities.bmoa|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">BMOAs</p>
                     </div>
                     <div class="text-center">
-                        <p class="text-lg font-bold">{{ stats.planned_coordination_activities.nga|default:0 }}</p>
-                        <p class="text-xs">NGAs</p>
+                        <p class="text-xl font-bold text-gray-700">{{ stats.planned_coordination_activities.nga|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">NGAs</p>
                     </div>
                     <div class="text-center">
-                        <p class="text-lg font-bold">{{ stats.planned_coordination_activities.lgu|default:0 }}</p>
-                        <p class="text-xs">LGUs</p>
+                        <p class="text-xl font-bold text-gray-700">{{ stats.planned_coordination_activities.lgu|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">LGUs</p>
                     </div>
                 </div>
             </div>
@@ -434,15 +446,15 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {% if user.is_staff %}
-            <a href="{% url 'common:coordination_organizations' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
+            <a href="{% url 'common:coordination_organizations' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-building text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                         Organizations
                     </h3>
-                    <p class="mt-2 text-sm text-gray-600">
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
                         Manage partner organizations and contacts.
                     </p>
                     <div class="mt-4 flex items-center text-blue-600 text-sm font-medium">
@@ -452,15 +464,15 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:coordination_partnerships' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
+            <a href="{% url 'common:coordination_partnerships' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-handshake text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
                         Partnerships
                     </h3>
-                    <p class="mt-2 text-sm text-gray-600">
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
                         Create and manage partnership agreements.
                     </p>
                     <div class="mt-4 flex items-center text-green-600 text-sm font-medium">
@@ -470,15 +482,15 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:coordination_events' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
+            <a href="{% url 'common:coordination_events' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-calendar-plus text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
                         Coordination Management
                     </h3>
-                    <p class="mt-2 text-sm text-gray-600">
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
                         Plan coordination events and align follow-through activities.
                     </p>
                     <div class="mt-4 flex items-center text-purple-600 text-sm font-medium">
@@ -488,15 +500,15 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:coordination_view_all' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
+            <a href="{% url 'common:coordination_view_all' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-list-alt text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
                         View All
                     </h3>
-                    <p class="mt-2 text-sm text-gray-600">
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
                         Access all coordination data and reports.
                     </p>
                     <div class="mt-4 flex items-center text-orange-600 text-sm font-medium">
