@@ -101,6 +101,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "axes.middleware.AxesMiddleware",  # Failed login tracking (after AuthenticationMiddleware)
     "auditlog.middleware.AuditlogMiddleware",  # Audit logging (after AuthenticationMiddleware)
+    "common.middleware.APILoggingMiddleware",  # API request/response logging for security audit
     "common.middleware.MANAAccessControlMiddleware",  # Restrict MANA user access to authorized pages only
     "mana.middleware.ManaWorkshopContextMiddleware",
     "mana.middleware.ManaParticipantAccessMiddleware",
@@ -391,6 +392,17 @@ LOGGING = {
 os.makedirs(BASE_DIR / "logs", exist_ok=True)
 
 # ============================================================================
+# REAL-TIME SECURITY ALERTING
+# ============================================================================
+
+# Slack webhook URL for security alerts (optional)
+# Get from: https://api.slack.com/messaging/webhooks
+SLACK_WEBHOOK_URL = env.str('SLACK_WEBHOOK_URL', default='')
+
+# Security team email addresses (for critical alerts)
+SECURITY_TEAM_EMAILS = env.list('SECURITY_TEAM_EMAILS', default=['security@oobc.gov.ph'])
+
+# ============================================================================
 # SECURITY CONFIGURATION
 # ============================================================================
 
@@ -445,5 +457,11 @@ LOGGING["loggers"]["auditlog"] = {
 LOGGING["loggers"]["django.security"] = {
     "handlers": ["console", "file"],
     "level": "WARNING",
+    "propagate": False,
+}
+
+LOGGING["loggers"]["api"] = {
+    "handlers": ["console", "file"],
+    "level": "INFO",
     "propagate": False,
 }

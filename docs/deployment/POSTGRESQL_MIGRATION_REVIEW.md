@@ -1,9 +1,11 @@
 # PostgreSQL Migration Review Report
 
-**Date:** October 2, 2025
+**Date:** October 3, 2025
 **Status:** ✅ MIGRATION READY
 **Reviewer:** Claude Code (AI Assistant)
 **Database Size:** 4.4 MB (SQLite development)
+**PostgreSQL Version:** 16, 17 (Recommended), or 18 (Latest)
+**Python Driver:** psycopg 3.2+ (Upgraded from psycopg2)
 
 ---
 
@@ -102,14 +104,41 @@ DATABASES["default"]["CONN_HEALTH_CHECKS"] = True  # Django 4.1+
 
 ✅ **Status:** Production settings include PostgreSQL-specific optimizations (connection pooling, health checks)
 
-#### PostgreSQL Adapter
+#### PostgreSQL Adapter - UPGRADED TO PSYCOPG3 ✅
 
+**Previous (psycopg2):**
 ```bash
-# From requirements/base.txt
+# Old: requirements/base.txt
 psycopg2>=2.9.9
 ```
 
-✅ **Status:** PostgreSQL adapter properly configured, version 2.9.9+ supports Django 4.2
+**New (psycopg3 - Recommended):**
+```bash
+# Updated: requirements/base.txt
+psycopg[binary]>=3.2.0
+```
+
+**Why Upgrade to psycopg3?**
+- ✅ **Active development** (psycopg2 in maintenance mode, no new features)
+- ✅ **Better performance** (native async support, optimized connection handling)
+- ✅ **Django 5.2 compatible** (requires psycopg 3.1.8+)
+- ✅ **PostgreSQL 18 support** (fully tested with latest PostgreSQL)
+- ✅ **Connection pooling** (Django 5.1+ native support)
+- ✅ **Future-proof** (all new features developed here)
+- ✅ **Zero code changes** (Django detects driver automatically)
+
+**Migration Impact:** None - same `ENGINE = 'django.db.backends.postgresql'`
+
+**Installation:**
+```bash
+# Upgrade to psycopg3
+pip install 'psycopg[binary]>=3.2.0'
+
+# Verify
+pip show psycopg  # Should show version 3.2+
+```
+
+✅ **Status:** Upgraded to psycopg3 for modern PostgreSQL support
 
 ---
 
@@ -352,6 +381,59 @@ Running `python manage.py check --deploy`:
 
 ## Migration Procedure
 
+### Step 0: Install PostgreSQL and Upgrade Driver
+
+**macOS (Homebrew):**
+```bash
+# Install PostgreSQL 17 (recommended for production)
+brew install postgresql@17
+brew services start postgresql@17
+
+# Verify installation
+psql postgres -c "SELECT version();"
+# Expected: PostgreSQL 17.x
+
+# Alternative: PostgreSQL 18 (latest, for testing/staging)
+brew install postgresql@18
+brew services start postgresql@18
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+# Add PostgreSQL repository (for version 17)
+sudo apt install -y postgresql-common
+sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+
+# Install PostgreSQL 17
+sudo apt install -y postgresql-17 postgresql-client-17
+
+# Start service
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+```
+
+**Upgrade Python Driver to psycopg3:**
+```bash
+# Activate virtual environment
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Upgrade to psycopg3
+pip install 'psycopg[binary]>=3.2.0'
+
+# Update requirements file
+# Edit requirements/base.txt:
+# Change: psycopg2>=2.9.9
+# To:     psycopg[binary]>=3.2.0
+
+# Verify installation
+pip show psycopg
+# Expected: Version 3.2.x or higher
+
+# Test psycopg3 works with Django
+cd src
+python -c "import psycopg; print(f'psycopg version: {psycopg.__version__}')"
+```
+
 ### Step 1: PostgreSQL Database Setup
 
 ```bash
@@ -368,7 +450,7 @@ ALTER ROLE obcms_user SET default_transaction_isolation TO 'read committed';
 ALTER ROLE obcms_user SET timezone TO 'Asia/Manila';
 GRANT ALL PRIVILEGES ON DATABASE obcms_prod TO obcms_user;
 
-# PostgreSQL 15+ additional grants
+# PostgreSQL 15+ additional grants (required for 17, 18)
 \c obcms_prod
 GRANT ALL ON SCHEMA public TO obcms_user;
 ```
@@ -760,6 +842,51 @@ curl http://localhost:8000/coordination/
 
 ---
 
+## Development Workflow: SQLite + PostgreSQL ✅
+
+### Recommended Setup
+
+**Keep SQLite for daily development:**
+- Fast, no service dependencies
+- Portable database file
+- Perfect for rapid iteration
+
+**Use PostgreSQL for periodic testing:**
+- Weekly compatibility checks
+- Performance benchmarking
+- Pre-deployment validation
+
+### Switching Between Databases
+
+**Using environment variable:**
+```bash
+# Default: SQLite (no DATABASE_URL in .env)
+cd src
+./manage.py runserver
+
+# Test with PostgreSQL
+DATABASE_URL=postgres://localhost/obcms_test ./manage.py runserver
+```
+
+### Periodic Testing Schedule
+
+**Weekly (Every Friday):**
+```bash
+# Run tests with PostgreSQL
+DATABASE_URL=postgres://localhost/obcms_test pytest -v
+```
+
+**Before staging deployment:**
+```bash
+# Full migration test
+dropdb obcms_test --if-exists
+createdb obcms_test
+DATABASE_URL=postgres://localhost/obcms_test python manage.py migrate
+DATABASE_URL=postgres://localhost/obcms_test pytest -v
+```
+
+---
+
 ## Conclusion
 
 ### Migration Readiness: ✅ 100% READY
@@ -773,7 +900,8 @@ curl http://localhost:8000/coordination/
 - All data migrations use ORM (database-agnostic)
 
 ✅ **Infrastructure Readiness**
-- PostgreSQL adapter configured (psycopg2>=2.9.9)
+- PostgreSQL adapter upgraded (psycopg[binary]>=3.2.0)
+- PostgreSQL 17 recommended (16, 18 also supported)
 - Production settings optimized for PostgreSQL
 - Connection pooling and health checks enabled
 - Environment configuration templates ready
@@ -786,11 +914,13 @@ curl http://localhost:8000/coordination/
 
 ### Recommended Next Steps
 
-1. **Immediate:** Set up PostgreSQL database in staging
-2. **Day 1:** Run migrations in staging environment
-3. **Day 2-3:** Execute smoke tests and performance validation
-4. **Week 2:** User Acceptance Testing (UAT)
-5. **Week 3-4:** Production migration (scheduled maintenance window)
+1. **Immediate:** Install PostgreSQL 17 + psycopg3 locally
+2. **Development:** Use SQLite daily, test PostgreSQL weekly
+3. **Staging Setup:** Set up PostgreSQL database in staging
+4. **Migration Day:** Run migrations in staging environment
+5. **Validation:** Execute smoke tests and performance validation
+6. **UAT:** User Acceptance Testing
+7. **Production:** Production migration (scheduled maintenance window)
 
 ### Critical Success Factors
 

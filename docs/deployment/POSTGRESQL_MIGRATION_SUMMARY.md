@@ -1,8 +1,10 @@
 # PostgreSQL Migration - Complete Summary
 
-**Date:** October 2, 2025
+**Date:** October 3, 2025
 **Status:** ✅ READY FOR MIGRATION
 **Overall Readiness:** 100%
+**PostgreSQL Version:** 16 or 17 (Recommended) | 18 (Latest - Use with Caution)
+**Python Driver:** psycopg 3.2+ (Upgraded from psycopg2)
 
 ---
 
@@ -11,6 +13,66 @@
 The OBCMS database migration from SQLite to PostgreSQL has been **comprehensively reviewed and is 100% ready for deployment**. All documentation, audits, and migration procedures are complete.
 
 **Key Achievement:** Zero code changes required. The system is already PostgreSQL-compatible.
+
+**Latest Updates (Oct 3, 2025):**
+- ✅ **PostgreSQL 16/17 recommended** (proven stability, production-ready)
+- ✅ **PostgreSQL 18 compatible** (latest, released Sep 25, 2025 - staging/testing only)
+- ✅ **Upgraded to psycopg3** (modern driver, active development)
+- ✅ **Development workflow documented** (keep SQLite, test PostgreSQL periodically)
+- ✅ **Dual-database setup guide added** (switch via environment variable)
+
+---
+
+## PostgreSQL Version Selection
+
+### Recommended: PostgreSQL 16 or 17 ✅
+
+**PostgreSQL 17** (Best Choice for OBCMS)
+- **Released:** September 2024 (1 year proven)
+- **Django 5.2 Support:** Full compatibility
+- **psycopg3 Support:** Fully tested and stable
+- **Production Status:** ✅ Ready for production deployment
+- **Performance:** Excellent (up to 2x improvement over SQLite)
+- **Features:** Incremental sort, parallel queries, JSON enhancements
+
+**PostgreSQL 16** (Conservative Choice)
+- **Released:** September 2023 (2 years proven)
+- **Status:** Very stable, widely adopted
+- **Best for:** Organizations preferring battle-tested versions
+
+### Latest: PostgreSQL 18 ⚠️
+
+**PostgreSQL 18** (Released September 25, 2025)
+- **Status:** Very new (8 days old as of Oct 3, 2025)
+- **Django 5.2 Compatibility:** ✅ Technically supported (supports 14+)
+- **Recommendation:**
+  - ✅ **Install locally** for experimentation and testing
+  - ✅ **Use in staging** (Q4 2025)
+  - ⚠️ **Production use:** Wait 3-6 months (Q1 2026)
+- **Reason:** Edge cases may exist that haven't been discovered yet
+- **Features:** 3× I/O performance improvements, virtual generated columns
+
+**OBCMS Recommendation:** Use **PostgreSQL 17** for production deployment now. Install PostgreSQL 18 locally for testing and future migration planning.
+
+---
+
+## Python Database Driver: psycopg3
+
+### Upgrade from psycopg2 to psycopg3 ✅
+
+**Why Upgrade?**
+- ✅ **Active development** (psycopg2 in maintenance mode)
+- ✅ **Better performance** (native async support)
+- ✅ **Modern features** (connection pooling in Django 5.1+)
+- ✅ **Future-proof** (all new features go here)
+- ✅ **Same ENGINE** (no code changes needed)
+
+**Compatibility:**
+- **Django 5.2:** Requires psycopg 3.1.8+ or psycopg2 2.8.4+
+- **PostgreSQL 18:** Both drivers supported, psycopg3 recommended
+- **OBCMS Status:** ✅ Upgraded to `psycopg[binary]>=3.2.0`
+
+**Migration Impact:** Zero code changes - Django automatically detects the driver
 
 ---
 
@@ -107,7 +169,8 @@ The OBCMS database migration from SQLite to PostgreSQL has been **comprehensivel
 - [x] **JSONField implementation verified** - Django native (PostgreSQL-ready)
 - [x] **No SQLite-specific code** - Database-agnostic ORM
 - [x] **Production settings configured** - Connection pooling, health checks
-- [x] **PostgreSQL adapter installed** - psycopg2>=2.9.9
+- [x] **PostgreSQL adapter upgraded** - psycopg[binary]>=3.2.0 (modern driver)
+- [x] **PostgreSQL versions supported** - 16, 17 (recommended), 18 (compatible)
 
 ### ✅ Query Compatibility (100%)
 
@@ -144,19 +207,27 @@ The OBCMS database migration from SQLite to PostgreSQL has been **comprehensivel
 ### Steps Overview
 
 ```bash
-# 1. Create PostgreSQL database
-CREATE DATABASE obcms_prod ENCODING 'UTF8';
-CREATE USER obcms_user WITH PASSWORD 'secure-password';
-GRANT ALL PRIVILEGES ON DATABASE obcms_prod TO obcms_user;
+# 1. Install PostgreSQL (macOS with Homebrew)
+brew install postgresql@17  # Recommended: version 17
+brew services start postgresql@17
 
-# 2. Update .env
-DATABASE_URL=postgres://obcms_user:password@localhost:5432/obcms_prod
+# 2. Upgrade Python driver to psycopg3
+source venv/bin/activate
+pip install 'psycopg[binary]>=3.2.0'
 
-# 3. Run migrations
+# 3. Create PostgreSQL database
+createdb obcms_prod
+# Or with full setup:
+psql postgres -c "CREATE DATABASE obcms_prod ENCODING 'UTF8';"
+
+# 4. Update .env (to switch from SQLite)
+DATABASE_URL=postgres://localhost/obcms_prod
+
+# 5. Run migrations
 cd src
 python manage.py migrate
 
-# 4. Verify
+# 6. Verify
 python manage.py check --deploy
 pytest -v
 ```
@@ -164,6 +235,161 @@ pytest -v
 **Expected Result:** All 118 migrations apply successfully (2-5 minutes)
 
 **Full Procedure:** See [POSTGRESQL_MIGRATION_REVIEW.md](./POSTGRESQL_MIGRATION_REVIEW.md#migration-procedure)
+
+---
+
+## Development Workflow: SQLite + PostgreSQL
+
+### Recommended Setup for OBCMS Development ✅
+
+**Keep SQLite as default for daily development:**
+- ✅ Fast startup, no service management
+- ✅ Portable database file
+- ✅ No installation required
+- ✅ Perfect for rapid iteration
+
+**Install PostgreSQL for periodic testing:**
+- ✅ Verify production compatibility
+- ✅ Test PostgreSQL-specific features
+- ✅ Catch edge cases early
+- ✅ Performance benchmarking
+
+### How to Switch Between Databases
+
+**Option 1: Environment Variable (Recommended)**
+
+```bash
+# Default: SQLite (no DATABASE_URL in .env)
+./manage.py runserver
+# Uses: sqlite:///src/db.sqlite3
+
+# Test with PostgreSQL (add DATABASE_URL to .env)
+echo "DATABASE_URL=postgres://localhost/obcms_test" >> .env
+./manage.py migrate  # Apply migrations to PostgreSQL
+./manage.py runserver
+# Uses: PostgreSQL
+
+# Switch back to SQLite (remove DATABASE_URL)
+# Comment out or delete DATABASE_URL from .env
+./manage.py runserver
+```
+
+**Option 2: Multiple .env Files**
+
+```bash
+# Create separate environment files
+.env.sqlite    # DATABASE_URL commented out
+.env.postgres  # DATABASE_URL=postgres://localhost/obcms_test
+
+# Switch databases
+cp .env.postgres .env && ./manage.py runserver  # Use PostgreSQL
+cp .env.sqlite .env && ./manage.py runserver    # Use SQLite
+```
+
+### Periodic PostgreSQL Testing Schedule ✅
+
+**Weekly Testing (Recommended):**
+```bash
+# Every Friday, test with PostgreSQL
+DATABASE_URL=postgres://localhost/obcms_test pytest -v
+```
+
+**Before Major Releases:**
+```bash
+# Full test suite on PostgreSQL
+DATABASE_URL=postgres://localhost/obcms_test pytest -v --cov
+DATABASE_URL=postgres://localhost/obcms_test python manage.py check --deploy
+```
+
+**Before Staging Deployment:**
+```bash
+# Create fresh PostgreSQL database
+dropdb obcms_test --if-exists
+createdb obcms_test
+
+# Test complete migration
+DATABASE_URL=postgres://localhost/obcms_test python manage.py migrate
+DATABASE_URL=postgres://localhost/obcms_test pytest -v
+```
+
+### Installation Guide: PostgreSQL + psycopg3
+
+**macOS (Homebrew):**
+```bash
+# Install PostgreSQL 17 (recommended)
+brew install postgresql@17
+brew services start postgresql@17
+
+# Verify installation
+psql postgres -c "SELECT version();"
+# Expected: PostgreSQL 17.x
+
+# Install psycopg3
+source venv/bin/activate
+pip install 'psycopg[binary]>=3.2.0'
+pip freeze | grep psycopg  # Verify: psycopg==3.2.x
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+# Install PostgreSQL 17
+sudo apt install postgresql-17 postgresql-client-17
+
+# Start service
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+
+# Install psycopg3
+pip install 'psycopg[binary]>=3.2.0'
+```
+
+**Windows:**
+```bash
+# Download from: https://www.postgresql.org/download/windows/
+# Install PostgreSQL 17 using the installer
+
+# Install psycopg3
+pip install psycopg[binary]>=3.2.0
+```
+
+### Create Test Database
+
+```bash
+# Simple method (uses your OS username)
+createdb obcms_test
+
+# With specific user
+createdb -U postgres obcms_test
+
+# Full setup with user and permissions
+psql postgres <<EOF
+CREATE DATABASE obcms_test ENCODING 'UTF8';
+CREATE USER obcms_dev WITH PASSWORD 'dev-password';
+GRANT ALL PRIVILEGES ON DATABASE obcms_test TO obcms_dev;
+\c obcms_test
+GRANT ALL ON SCHEMA public TO obcms_dev;
+EOF
+```
+
+### Verify Setup
+
+```bash
+# Test PostgreSQL connection
+psql obcms_test -c "SELECT current_database(), version();"
+
+# Test Django connection
+cd src
+python manage.py dbshell --database default
+# Should connect to SQLite (default)
+
+# Test PostgreSQL with Django
+DATABASE_URL=postgres://localhost/obcms_test python manage.py dbshell
+# Should connect to PostgreSQL
+
+# Run migrations
+DATABASE_URL=postgres://localhost/obcms_test python manage.py migrate
+# Expected: All 118 migrations apply successfully
+```
 
 ---
 

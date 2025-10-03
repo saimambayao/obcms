@@ -7,10 +7,14 @@ Provides structured logging for security-relevant events:
 - Permission denials
 - Sensitive data access
 - Administrative actions
+
+Integrated with real-time alerting system for critical events.
 """
 
 import logging
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
 
 # Get security logger
 security_logger = logging.getLogger('django.security')
@@ -19,6 +23,8 @@ security_logger = logging.getLogger('django.security')
 def log_failed_login(request, username, reason="Invalid credentials"):
     """
     Log failed login attempt with IP address and user agent.
+
+    Also checks for brute force attacks and sends alerts.
 
     Args:
         request: HttpRequest object
@@ -32,6 +38,21 @@ def log_failed_login(request, username, reason="Invalid credentials"):
         f"Failed login attempt | Username: {username} | IP: {ip_address} | "
         f"User-Agent: {user_agent} | Reason: {reason}"
     )
+
+    # Check for brute force attack (10+ attempts in 5 minutes)
+    try:
+        from axes.models import AccessAttempt
+        from .alerting import alert_brute_force_attack
+
+        recent_failures = AccessAttempt.objects.filter(
+            ip_address=ip_address,
+            attempt_time__gte=timezone.now() - timedelta(minutes=5)
+        ).count()
+
+        if recent_failures >= 10:
+            alert_brute_force_attack(ip_address, username, recent_failures)
+    except Exception as e:
+        security_logger.error(f"Failed to check brute force attempts: {e}")
 
 
 def log_successful_login(request, user):
@@ -126,6 +147,8 @@ def log_data_export(request, user, export_type, record_count):
     """
     Log data export operation.
 
+    Sends alert for mass exports (>1000 records).
+
     Args:
         request: HttpRequest object
         user: User object
@@ -138,6 +161,14 @@ def log_data_export(request, user, export_type, record_count):
         f"Data export | User: {user.username} (ID: {user.id}) | "
         f"Type: {export_type} | Records: {record_count} | IP: {ip_address}"
     )
+
+    # Alert for mass data exports (potential data exfiltration)
+    if record_count > 1000:
+        try:
+            from .alerting import alert_mass_data_export
+            alert_mass_data_export(user, export_type, record_count)
+        except Exception as e:
+            security_logger.error(f"Failed to send mass export alert: {e}")
 
 
 def log_admin_action(request, user, action, target=None):
