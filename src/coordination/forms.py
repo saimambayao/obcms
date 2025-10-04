@@ -252,6 +252,13 @@ PartnershipDocumentFormSet = inlineformset_factory(
 class EventForm(forms.ModelForm):
     """Frontend form for scheduling coordination events."""
 
+    auto_generate_tasks = forms.BooleanField(
+        required=False,
+        initial=False,
+        label="Auto-create preparation and follow-up tasks",
+        help_text="Automatically generate tasks for event preparation and follow-up",
+    )
+
     class Meta:
         model = Event
         fields = [
@@ -265,6 +272,9 @@ class EventForm(forms.ModelForm):
             "organizations",
             "related_engagement",
             "related_assessment",
+            "is_project_activity",
+            "related_project",
+            "project_activity_type",
             "start_date",
             "start_time",
             "end_date",
@@ -351,6 +361,31 @@ class EventForm(forms.ModelForm):
             "-start_date",
             "-start_time",
         )
+
+        # Filter related_project to only active projects
+        try:
+            from project_central.models import ProjectWorkflow
+
+            self.fields["related_project"].queryset = ProjectWorkflow.objects.filter(
+                current_stage__in=[
+                    "need_identification",
+                    "need_validation",
+                    "policy_linkage",
+                    "mao_coordination",
+                    "budget_planning",
+                    "approval",
+                    "implementation",
+                    "monitoring",
+                ]
+            ).select_related("primary_need").order_by("-initiated_date")
+        except Exception:
+            # Handle case where project_central is not available
+            pass
+
+        # Make project fields conditional
+        self.fields["related_project"].required = False
+        self.fields["project_activity_type"].required = False
+
         numeric_fields = [
             "duration_hours",
             "expected_participants",

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block title %}Monitoring & Evaluation{% endblock %}
 
@@ -127,6 +128,127 @@
             </div>
         </article>
         {% endfor %}
+    </section>
+
+    <!-- Recent Updates Feed -->
+    <section class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Recent Updates</h2>
+                <p class="mt-1 text-sm text-gray-600">Latest MOA PPAs, OOBC initiatives, and OBC requests activity across the portfolio.</p>
+            </div>
+            <div class="flex flex-wrap gap-3 text-sm font-medium">
+                <a href="{% url 'monitoring:moa_ppas' %}" class="inline-flex items-center gap-2 text-violet-600 hover:text-violet-700">
+                    <i class="fas fa-file-contract"></i>
+                    MOA PPAs Dashboard
+                </a>
+                <a href="{% url 'monitoring:oobc_initiatives' %}" class="inline-flex items-center gap-2 text-violet-600 hover:text-violet-700">
+                    <i class="fas fa-diagram-project"></i>
+                    OOBC Initiatives
+                </a>
+                <a href="{% url 'monitoring:obc_requests' %}" class="inline-flex items-center gap-2 text-violet-600 hover:text-violet-700">
+                    <i class="fas fa-inbox"></i>
+                    OBC Requests Queue
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-lg">
+                        <i class="fas fa-building-columns"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">MOA PPAs</h3>
+                        <p class="text-xs text-gray-500">Most recently updated partnership projects</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for entry in recent_feeds.moa|slice:":7" %}
+                    <li class="relative border-l border-blue-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-blue-500 ring-4 ring-blue-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ entry.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">
+                                {{ entry.get_status_display }}
+                            </span>
+                            {% if entry.lead_organization %}
+                                {{ entry.lead_organization.name|truncatechars:40 }}
+                            {% endif %}
+                        </p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ entry.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No MOA PPA updates recorded yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg">
+                        <i class="fas fa-hand-holding-heart"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">OOBC Initiatives</h3>
+                        <p class="text-xs text-gray-500">Community support programmes in motion</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for entry in recent_feeds.oobc|slice:":7" %}
+                    <li class="relative border-l border-emerald-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ entry.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                {{ entry.get_status_display }}
+                            </span>
+                            {% if entry.lead_organization %}
+                                {{ entry.lead_organization.name|truncatechars:40 }}
+                            {% endif %}
+                        </p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ entry.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No OOBC initiative updates recorded yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg">
+                        <i class="fas fa-file-signature"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">OBC Requests</h3>
+                        <p class="text-xs text-gray-500">Latest proposals and support requests</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for entry in recent_feeds.requests|slice:":7" %}
+                    <li class="relative border-l border-purple-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-purple-500 ring-4 ring-purple-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ entry.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-600 border border-purple-100">
+                                {{ entry.get_request_status_display|default:entry.get_status_display }}
+                            </span>
+                            {% if entry.submitted_by_community %}
+                                {{ entry.submitted_by_community.display_name|truncatechars:40 }}
+                            {% elif entry.lead_organization %}
+                                {{ entry.lead_organization.name|truncatechars:40 }}
+                            {% endif %}
+                        </p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ entry.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No OBC request updates recorded yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
     </section>
 
     <section id="quick-actions">

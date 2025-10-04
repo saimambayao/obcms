@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Actions Component Demo - OBCMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .demo-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="min-h-screen py-12 px-4">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-white mb-4">Quick Actions Component Demo</h1>
+            <p class="text-xl text-purple-100">OBCMS UI Component Library</p>
+        </div>
+
+        <!-- Demo Sections -->
+        <div class="space-y-8">
+            <!-- 1. FAB Quick Actions Demo -->
+            <div class="demo-card p-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                    <i class="fas fa-rocket text-blue-600"></i>
+                    FAB Quick Actions (Task Board)
+                </h2>
+                <p class="text-gray-600 mb-6">Floating Action Button pattern - appears in bottom-right corner</p>
+
+                <div class="bg-gray-100 rounded-xl p-8 relative" style="height: 400px;">
+                    <div class="text-center text-gray-500">
+                        <i class="fas fa-tasks text-4xl mb-4"></i>
+                        <p class="text-lg font-semibold">Task Board Content Area</p>
+                        <p class="text-sm">Scroll down to see FAB in bottom-right corner ➡️</p>
+                    </div>
+
+                    <!-- FAB Implementation -->
+                    <div class="absolute bottom-6 right-6 z-50" x-data="{ open: false }">
+                        <!-- Main FAB Button -->
+                        <button
+                            @click="open = !open"
+                            type="button"
+                            class="w-16 h-16 bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-full shadow-2xl hover:shadow-emerald-500/50 hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center group relative"
+                        >
+                            <i class="fas fa-bolt text-2xl transition-transform duration-300"
+                               :class="open ? 'rotate-180' : 'rotate-0'"></i>
+                            <span class="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center" x-show="!open">
+                                4
+                            </span>
+                        </button>
+
+                        <!-- Action Menu -->
+                        <div
+                            x-show="open"
+                            @click.away="open = false"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 scale-90"
+                            x-transition:enter-end="opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 scale-100"
+                            x-transition:leave-end="opacity-0 scale-90"
+                            class="absolute bottom-20 right-0 w-72 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden"
+                            style="display: none;"
+                        >
+                            <div class="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-4">
+                                <h3 class="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2">
+                                    <i class="fas fa-bolt"></i>
+                                    Quick Actions
+                                </h3>
+                            </div>
+                            <div class="py-2">
+                                <button class="w-full px-5 py-3 flex items-center gap-3 hover:bg-blue-50 transition-colors text-left group">
+                                    <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-200">
+                                        <i class="fas fa-filter text-base"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold text-gray-900">Quick Filters</p>
+                                        <p class="text-xs text-gray-500">Jump to filters</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:translate-x-1 transition-transform"></i>
+                                </button>
+                                <button class="w-full px-5 py-3 flex items-center gap-3 hover:bg-purple-50 transition-colors text-left group">
+                                    <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-purple-100 text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all duration-200">
+                                        <i class="fas fa-tasks text-base"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold text-gray-900">Bulk Operations</p>
+                                        <p class="text-xs text-gray-500">Update multiple</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:translate-x-1 transition-transform"></i>
+                                </button>
+                                <button class="w-full px-5 py-3 flex items-center gap-3 hover:bg-emerald-50 transition-colors text-left group">
+                                    <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-200">
+                                        <i class="fas fa-download text-base"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold text-gray-900">Export Tasks</p>
+                                        <p class="text-xs text-gray-500">Download CSV</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:translate-x-1 transition-transform"></i>
+                                </button>
+                                <button class="w-full px-5 py-3 flex items-center gap-3 hover:bg-amber-50 transition-colors text-left group">
+                                    <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-amber-100 text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-all duration-200">
+                                        <i class="fas fa-chart-line text-base"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold text-gray-900">View Analytics</p>
+                                        <p class="text-xs text-gray-500">Performance metrics</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:translate-x-1 transition-transform"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Inline Quick Actions Demo -->
+            <div class="demo-card p-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                    <i class="fas fa-stream text-emerald-600"></i>
+                    Inline Quick Actions (Task Modal)
+                </h2>
+                <p class="text-gray-600 mb-6">Horizontal button row for modal or header actions</p>
+
+                <div class="bg-gray-100 rounded-xl p-6">
+                    <div class="bg-white rounded-2xl shadow-xl max-w-2xl mx-auto">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-xl font-bold text-gray-900">Task: Implement Quick Actions</h3>
+                        </div>
+                        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-emerald-200 text-emerald-600 hover:bg-emerald-50 transition-all">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Mark Complete</span>
+                                </button>
+                                <button class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-blue-200 text-blue-600 hover:bg-blue-50 transition-all">
+                                    <i class="fas fa-user-check"></i>
+                                    <span>Assign to Me</span>
+                                </button>
+                                <div class="relative" x-data="{ open: false }">
+                                    <button @click="open = !open" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-purple-200 text-purple-600 hover:bg-purple-50 transition-all">
+                                        <i class="fas fa-bolt"></i>
+                                        <span>Priority</span>
+                                        <i class="fas fa-chevron-down text-xs"></i>
+                                    </button>
+                                    <div x-show="open" @click.away="open = false" x-transition class="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-10" style="display: none;">
+                                        <button class="w-full px-4 py-2 text-left text-sm text-rose-700 hover:bg-rose-50 first:rounded-t-lg flex items-center gap-2">
+                                            <i class="fas fa-exclamation-circle"></i>Critical
+                                        </button>
+                                        <button class="w-full px-4 py-2 text-left text-sm text-amber-700 hover:bg-amber-50 flex items-center gap-2">
+                                            <i class="fas fa-arrow-up"></i>High
+                                        </button>
+                                        <button class="w-full px-4 py-2 text-left text-sm text-blue-700 hover:bg-blue-50 flex items-center gap-2">
+                                            <i class="fas fa-equals"></i>Normal
+                                        </button>
+                                        <button class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 last:rounded-b-lg flex items-center gap-2">
+                                            <i class="fas fa-arrow-down"></i>Low
+                                        </button>
+                                    </div>
+                                </div>
+                                <button class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-amber-200 text-amber-600 hover:bg-amber-50 transition-all">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span>Set Due Date</span>
+                                </button>
+                                <button class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-all">
+                                    <i class="fas fa-copy"></i>
+                                    <span>Clone Task</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="px-6 py-8 text-center text-gray-500">
+                            <p>Task form content would appear here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Sidebar Quick Actions Demo -->
+            <div class="demo-card p-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                    <i class="fas fa-th-list text-purple-600"></i>
+                    Sidebar Quick Actions (Barangay Detail)
+                </h2>
+                <p class="text-gray-600 mb-6">Sticky sidebar with contextual actions</p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-gray-100 rounded-xl p-6">
+                        <div class="text-center text-gray-500">
+                            <i class="fas fa-map-marker-alt text-4xl mb-4"></i>
+                            <p class="text-lg font-semibold">Barangay Detail Content</p>
+                            <p class="text-sm">Stats, map, tables appear here</p>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-1">
+                        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                            <div class="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-4">
+                                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                    <i class="fas fa-bolt"></i>
+                                    Quick Actions
+                                </h3>
+                            </div>
+                            <div class="p-4 space-y-2">
+                                <a href="#" class="group flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all">
+                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-indigo-100 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                        <i class="fas fa-edit text-sm"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold text-gray-900">Edit Community</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:translate-x-1 transition-all"></i>
+                                </a>
+                                <a href="#" class="group flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all">
+                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                        <i class="fas fa-clipboard-check text-sm"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold text-gray-900">Add MANA Assessment</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:translate-x-1 transition-all"></i>
+                                </a>
+                                <a href="#" class="group flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all">
+                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                                        <i class="fas fa-calendar-plus text-sm"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold text-gray-900">Log Activity</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:translate-x-1 transition-all"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Header Quick Actions Demo -->
+            <div class="demo-card p-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                    <i class="fas fa-grip-horizontal text-amber-600"></i>
+                    Header Quick Actions (Communities List)
+                </h2>
+                <p class="text-gray-600 mb-6">Enhanced header buttons with dropdowns and gradients</p>
+
+                <div class="bg-gray-100 rounded-xl p-6">
+                    <div class="flex flex-wrap items-center gap-3 mb-6">
+                        <button class="inline-flex items-center bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white px-4 py-2.5 rounded-xl font-semibold shadow-lg transition-all group">
+                            <i class="fas fa-plus mr-2 group-hover:rotate-90 transition-transform"></i>
+                            Add Community
+                        </button>
+                        <button class="inline-flex items-center bg-white border-2 border-purple-500 text-purple-600 hover:bg-purple-50 px-4 py-2.5 rounded-xl font-semibold transition-all group">
+                            <i class="fas fa-file-import mr-2 group-hover:scale-110 transition-transform"></i>
+                            Bulk Import
+                        </button>
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="inline-flex items-center bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 px-4 py-2.5 rounded-xl font-semibold transition-all">
+                                <i class="fas fa-download mr-2"></i>
+                                Export
+                                <i class="fas fa-chevron-down ml-2 text-sm"></i>
+                            </button>
+                            <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-2xl z-10 overflow-hidden" style="display: none;">
+                                <a href="#" class="block px-4 py-3 text-sm hover:bg-emerald-50 flex items-center gap-3">
+                                    <i class="fas fa-file-csv text-emerald-600"></i>
+                                    <div>
+                                        <p class="font-semibold text-gray-700">Export as CSV</p>
+                                        <p class="text-xs text-gray-500">Spreadsheet format</p>
+                                    </div>
+                                </a>
+                                <a href="#" class="block px-4 py-3 text-sm hover:bg-blue-50 flex items-center gap-3">
+                                    <i class="fas fa-file-excel text-blue-600"></i>
+                                    <div>
+                                        <p class="font-semibold text-gray-700">Export as Excel</p>
+                                        <p class="text-xs text-gray-500">XLSX format</p>
+                                    </div>
+                                </a>
+                                <a href="#" class="block px-4 py-3 text-sm hover:bg-rose-50 flex items-center gap-3">
+                                    <i class="fas fa-file-pdf text-rose-600"></i>
+                                    <div>
+                                        <p class="font-semibold text-gray-700">Export as PDF</p>
+                                        <p class="text-xs text-gray-500">Report format</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                        <button class="inline-flex items-center bg-white border-2 border-indigo-500 text-indigo-600 hover:bg-indigo-50 px-4 py-2.5 rounded-xl font-semibold transition-all">
+                            <i class="fas fa-map-marked-alt mr-2"></i>
+                            Map View
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-lg p-8 text-center text-gray-500">
+                        <p>Communities table would appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-12 text-white">
+            <p class="text-lg">OBCMS UI Component Library - Quick Actions Demo</p>
+            <p class="text-sm text-purple-200 mt-2">All components are production-ready and fully responsive</p>
+        </div>
+    </div>
+</body>
+</html>

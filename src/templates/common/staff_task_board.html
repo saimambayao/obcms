@@ -35,6 +35,28 @@
                 <i class="fas fa-plus mr-2"></i>
                 New task
             </a>
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" type="button" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                    <i class="fas fa-project-diagram mr-2"></i>
+                    Create Project Task
+                    <i class="fas fa-chevron-down ml-2 text-sm"></i>
+                </button>
+                <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-10" style="display: none;">
+                    <div class="p-2 max-h-64 overflow-y-auto">
+                        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">Select Project</div>
+                        {% if active_projects %}
+                            {% for project in active_projects %}
+                            <a href="{% url 'common:staff_task_modal_create' %}?project={{ project.id }}" data-modal-link class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
+                                <i class="fas fa-folder text-blue-500 mr-2"></i>
+                                {{ project.title }}
+                            </a>
+                            {% endfor %}
+                        {% else %}
+                            <div class="px-3 py-2 text-sm text-gray-500 italic">No active projects</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
             <a href="{% url 'common:staff_profiles_list' %}" class="inline-flex items-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-semibold transition-colors">
                 <i class="fas fa-id-card-alt mr-2"></i>
                 Staff profiles
@@ -67,7 +89,7 @@
                 <i class="fas fa-filter mr-3"></i>
                 Filters & focus
             </h2>
-            {% if filters.status or filters.team or filters.assignee or filters.priority or filters.q %}
+            {% if filters.status or filters.team or filters.assignee or filters.priority or filters.q or filters.task_context or filters.project or filters.activity %}
             <a href="{% url 'common:staff_task_board' %}" class="text-sm text-emerald-200 hover:text-white">Reset filters</a>
             {% endif %}
         </div>
@@ -110,6 +132,34 @@
                         <option value="">All staff</option>
                         {% for user in assignee_options %}
                         <option value="{{ user.id }}" {% if filters.assignee == user.id|stringformat:"s" %}selected{% endif %}>{{ user.get_full_name|default:user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="xl:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Task Type</label>
+                    <select name="task_context" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">All types</option>
+                        <option value="standalone" {% if filters.task_context == 'standalone' %}selected{% endif %}>Standalone</option>
+                        <option value="project" {% if filters.task_context == 'project' %}selected{% endif %}>Project Task</option>
+                        <option value="activity" {% if filters.task_context == 'activity' %}selected{% endif %}>Activity Task</option>
+                        <option value="project_activity" {% if filters.task_context == 'project_activity' %}selected{% endif %}>Project Activity</option>
+                    </select>
+                </div>
+                <div class="xl:col-span-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Project</label>
+                    <select name="project" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">All projects</option>
+                        {% for project in project_options %}
+                        <option value="{{ project.id }}" {% if filters.project == project.id|stringformat:"s" %}selected{% endif %}>{{ project.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="xl:col-span-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Activity</label>
+                    <select name="activity" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">All activities</option>
+                        {% for activity in event_options %}
+                        <option value="{{ activity.id }}" {% if filters.activity == activity.id|stringformat:"s" %}selected{% endif %}>{{ activity.title }}</option>
                         {% endfor %}
                     </select>
                 </div>

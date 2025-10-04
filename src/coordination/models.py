@@ -1941,6 +1941,41 @@ class Event(models.Model):
         help_text="Deadline for MAOs to submit pre-meeting reports",
     )
 
+    # ==========================================
+    # PROJECT-ACTIVITY INTEGRATION FIELDS
+    # (Phase 1 - Database Schema)
+    # ==========================================
+
+    PROJECT_ACTIVITY_TYPES = [
+        ("project_kickoff", "Project Kickoff"),
+        ("milestone_review", "Milestone Review"),
+        ("stakeholder_consultation", "Stakeholder Consultation"),
+        ("technical_review", "Technical Review"),
+        ("progress_review", "Progress Review"),
+        ("closeout", "Project Closeout"),
+    ]
+
+    related_project = models.ForeignKey(
+        "project_central.ProjectWorkflow",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_activities",
+        help_text="Link event to project workflow (for project activities)",
+    )
+
+    is_project_activity = models.BooleanField(
+        default=False,
+        help_text="Whether this event is a project activity",
+    )
+
+    project_activity_type = models.CharField(
+        max_length=30,
+        choices=PROJECT_ACTIVITY_TYPES,
+        blank=True,
+        help_text="Type of project activity (if applicable)",
+    )
+
     # Metadata
     created_by = models.ForeignKey(
         User,
@@ -1959,6 +1994,8 @@ class Event(models.Model):
             models.Index(fields=["start_date", "priority"]),
             models.Index(fields=["community", "status"]),
             models.Index(fields=["organizer", "start_date"]),
+            models.Index(fields=["related_project", "start_date"]),
+            models.Index(fields=["is_project_activity", "status"]),
         ]
 
     def __str__(self):
@@ -1979,8 +2016,235 @@ class Event(models.Model):
         if not self.organizer_id and self.created_by_id:
             self.organizer_id = self.created_by_id
 
+        is_new = self.pk is None
         super().save(*args, **kwargs)
         _invalidate_calendar_cache()
+
+        # Auto-generate tasks for new project activities if enabled
+        if is_new and self.is_project_activity and hasattr(self, "_auto_generate_tasks"):
+            if self._auto_generate_tasks:
+                self._create_activity_tasks()
+
+    def _create_activity_tasks(self):
+        """
+        Helper to create preparation and follow-up tasks for project activities.
+
+        Only creates tasks if:
+        - Event has a start_date
+        - Event has a created_by user
+        - Event is marked as project activity
+
+        Creates activity type-specific task templates based on project_activity_type.
+        """
+        from common.models import StaffTask
+        from datetime import timedelta
+
+        # Only create tasks if we have required data
+        if not self.start_date or not self.created_by:
+            return
+
+        # Determine task context based on project relationship
+        task_context = "project_activity" if self.related_project else "activity"
+
+        # Activity type-specific templates
+        if self.project_activity_type == "project_kickoff":
+            prep_tasks = [
+                {
+                    "title": f"Prepare project charter for {self.title}",
+                    "days_before": 7,
+                },
+                {
+                    "title": f"Prepare presentation materials for {self.title}",
+                    "days_before": 5,
+                },
+                {
+                    "title": f"Send calendar invitations for {self.title}",
+                    "days_before": 5,
+                },
+                {
+                    "title": f"Book venue and arrange logistics for {self.title}",
+                    "days_before": 7,
+                },
+            ]
+            followup_tasks = [
+                {
+                    "title": f"Document kickoff meeting minutes for {self.title}",
+                    "days_after": 1,
+                },
+                {
+                    "title": f"Distribute project charter to stakeholders",
+                    "days_after": 2,
+                },
+            ]
+
+        elif self.project_activity_type == "milestone_review":
+            prep_tasks = [
+                {
+                    "title": f"Prepare milestone progress report for {self.title}",
+                    "days_before": 5,
+                },
+                {
+                    "title": f"Gather stakeholder feedback for {self.title}",
+                    "days_before": 3,
+                },
+                {
+                    "title": f"Send review invitations for {self.title}",
+                    "days_before": 5,
+                },
+            ]
+            followup_tasks = [
+                {
+                    "title": f"Document review decisions for {self.title}",
+                    "days_after": 1,
+                },
+                {
+                    "title": f"Update project timeline based on review",
+                    "days_after": 3,
+                },
+            ]
+
+        elif self.project_activity_type == "stakeholder_consultation":
+            prep_tasks = [
+                {
+                    "title": f"Prepare consultation agenda for {self.title}",
+                    "days_before": 5,
+                },
+                {
+                    "title": f"Identify and invite stakeholders for {self.title}",
+                    "days_before": 7,
+                },
+                {
+                    "title": f"Prepare background materials for {self.title}",
+                    "days_before": 3,
+                },
+            ]
+            followup_tasks = [
+                {
+                    "title": f"Document stakeholder feedback from {self.title}",
+                    "days_after": 1,
+                },
+                {"title": f"Analyze consultation results", "days_after": 3},
+                {
+                    "title": f"Share consultation summary with stakeholders",
+                    "days_after": 5,
+                },
+            ]
+
+        elif self.project_activity_type == "technical_review":
+            prep_tasks = [
+                {
+                    "title": f"Prepare technical documentation for {self.title}",
+                    "days_before": 5,
+                },
+                {
+                    "title": f"Invite technical experts for {self.title}",
+                    "days_before": 7,
+                },
+                {
+                    "title": f"Prepare review checklist for {self.title}",
+                    "days_before": 3,
+                },
+            ]
+            followup_tasks = [
+                {
+                    "title": f"Document technical review findings for {self.title}",
+                    "days_after": 1,
+                },
+                {
+                    "title": f"Address technical review recommendations",
+                    "days_after": 3,
+                },
+            ]
+
+        elif self.project_activity_type == "progress_review":
+            prep_tasks = [
+                {
+                    "title": f"Prepare progress update report for {self.title}",
+                    "days_before": 3,
+                },
+                {
+                    "title": f"Update project status dashboard for {self.title}",
+                    "days_before": 2,
+                },
+            ]
+            followup_tasks = [
+                {
+                    "title": f"Document progress review notes for {self.title}",
+                    "days_after": 1,
+                },
+                {
+                    "title": f"Update action items based on review",
+                    "days_after": 2,
+                },
+            ]
+
+        elif self.project_activity_type == "closeout":
+            prep_tasks = [
+                {
+                    "title": f"Prepare project closeout report for {self.title}",
+                    "days_before": 7,
+                },
+                {
+                    "title": f"Gather final deliverables for {self.title}",
+                    "days_before": 5,
+                },
+                {
+                    "title": f"Prepare lessons learned document for {self.title}",
+                    "days_before": 5,
+                },
+            ]
+            followup_tasks = [
+                {
+                    "title": f"Finalize project closeout documentation",
+                    "days_after": 1,
+                },
+                {
+                    "title": f"Archive project files and documentation",
+                    "days_after": 3,
+                },
+                {
+                    "title": f"Send closeout summary to stakeholders",
+                    "days_after": 5,
+                },
+            ]
+
+        else:
+            # Default generic tasks (for activities without specific type)
+            prep_tasks = [
+                {"title": f"Prepare agenda for {self.title}", "days_before": 2},
+                {"title": f"Send invitations for {self.title}", "days_before": 3},
+            ]
+            followup_tasks = [
+                {"title": f"Document minutes for {self.title}", "days_after": 1},
+            ]
+
+        # Create preparation tasks
+        for task_data in prep_tasks:
+            StaffTask.objects.create(
+                title=task_data["title"],
+                linked_event=self,
+                linked_workflow=(
+                    self.related_project if self.is_project_activity else None
+                ),
+                task_context=task_context,
+                due_date=self.start_date - timedelta(days=task_data["days_before"]),
+                priority="medium",
+                created_by=self.created_by,
+            )
+
+        # Create follow-up tasks
+        for task_data in followup_tasks:
+            StaffTask.objects.create(
+                title=task_data["title"],
+                linked_event=self,
+                linked_workflow=(
+                    self.related_project if self.is_project_activity else None
+                ),
+                task_context=task_context,
+                due_date=self.start_date + timedelta(days=task_data["days_after"]),
+                priority="medium",
+                created_by=self.created_by,
+            )
 
     def delete(self, *args, **kwargs):
         result = super().delete(*args, **kwargs)

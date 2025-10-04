@@ -37,6 +37,17 @@ urlpatterns = [
         views.edit_project_workflow,
         name="edit_project_workflow",
     ),
+    # Project Calendar
+    path(
+        "projects/<uuid:workflow_id>/calendar/",
+        views.project_calendar_view,
+        name="project_calendar",
+    ),
+    path(
+        "projects/<uuid:workflow_id>/calendar-events/",
+        views.project_calendar_events,
+        name="project_calendar_events",
+    ),
     # M&E Analytics
     path("analytics/", views.me_analytics_dashboard, name="me_analytics_dashboard"),
     path(

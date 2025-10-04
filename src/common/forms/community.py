@@ -499,6 +499,30 @@ class OBCCommunityForm(LocationSelectionMixin, forms.ModelForm):
             **COMMUNITY_PROFILE_LABELS,
         }
 
+    def clean(self):
+        """Validate that OBC population does not exceed total barangay population."""
+        cleaned_data = super().clean()
+        estimated_obc_population = cleaned_data.get("estimated_obc_population")
+        total_barangay_population = cleaned_data.get("total_barangay_population")
+
+        # Only validate if both values are provided
+        if (
+            estimated_obc_population is not None
+            and total_barangay_population is not None
+            and estimated_obc_population > 0
+            and total_barangay_population > 0
+        ):
+            if estimated_obc_population > total_barangay_population:
+                raise forms.ValidationError(
+                    {
+                        "estimated_obc_population": "Estimated OBC Population cannot exceed Total Barangay Population. "
+                        f"The total barangay population is {total_barangay_population:,}, "
+                        f"but you entered an OBC population of {estimated_obc_population:,}."
+                    }
+                )
+
+        return cleaned_data
+
 
 __all__ = [
     "COMMUNITY_PROFILE_FIELDS",

@@ -35,6 +35,50 @@
                     {% if task.description %}
                     <p class="text-xs text-gray-500 leading-relaxed">{{ task.description|truncatechars:140 }}</p>
                     {% endif %}
+
+                    <!-- Context Badges and Project/Activity Links -->
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                        {% if task.task_context == 'project_activity' %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                                <i class="fas fa-project-diagram"></i>
+                                Project Activity
+                            </span>
+                        {% elif task.task_context == 'project' %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                                <i class="fas fa-folder"></i>
+                                Project
+                            </span>
+                        {% elif task.task_context == 'activity' %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+                                <i class="fas fa-calendar-check"></i>
+                                Activity
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Project/Activity Links -->
+                    {% if task.linked_workflow or task.linked_event %}
+                    <div class="space-y-1.5 text-xs mb-3">
+                        {% if task.linked_workflow %}
+                            <div class="flex items-center gap-1.5 text-blue-600 hover:text-blue-700">
+                                <i class="fas fa-folder text-blue-500"></i>
+                                <a href="{{ task.linked_workflow.get_absolute_url }}" class="hover:underline" onclick="event.stopPropagation()">
+                                    {{ task.linked_workflow.primary_need.title|truncatewords:6 }}
+                                </a>
+                            </div>
+                        {% endif %}
+
+                        {% if task.linked_event %}
+                            <div class="flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700">
+                                <i class="fas fa-calendar text-emerald-500"></i>
+                                <a href="{% url 'coordination:event_detail' task.linked_event.id %}" class="hover:underline" onclick="event.stopPropagation()">
+                                    {{ task.linked_event.title|truncatewords:6 }}
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
                     <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                         <span class="team-chip inline-flex items-center gap-1 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
                             <i class="fas fa-users"></i>

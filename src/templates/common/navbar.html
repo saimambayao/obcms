@@ -251,6 +251,13 @@
                                 <span class="block text-xs text-gray-500">Organization-wide schedule for coordination, MANA, and staff actions.</span>
                             </span>
                         </a>
+                        <a href="{% url 'project_central:portfolio_dashboard' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
+                            <i class="fas fa-project-diagram text-purple-500 mt-1"></i>
+                            <span>
+                                <span class="block font-semibold text-gray-900">Project Central</span>
+                                <span class="block text-xs text-gray-500">Project-activity-task integration dashboard and workflow management.</span>
+                            </span>
+                        </a>
                         {% if user.is_superuser or user.user_type == 'admin' or user.user_type == 'oobc_staff' and user.position == 'Executive Director' or user.user_type == 'oobc_staff' and user.position == 'Deputy Executive Director' or user.user_type == 'oobc_staff' and user.position == 'DMO IV' or user.user_type == 'oobc_staff' and user.position == 'DMO III' or user.user_type == 'oobc_staff' and user.position == 'Information System Analyst' or user.user_type == 'oobc_staff' and user.position == 'Information System Analyst II' or user.user_type == 'oobc_staff' and user.position == 'Planning Officer I' or user.user_type == 'oobc_staff' and user.position == 'Planning Officer II' or user.user_type == 'oobc_staff' and user.position == 'Community Development Officer I' %}
                         <a href="{% url 'common:user_approvals' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
                             <i class="fas fa-user-check text-amber-500 mt-1"></i>
@@ -533,6 +540,10 @@
                     <a href="{% url 'common:oobc_calendar' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Calendar Management
                         <span class="block text-xs text-white text-opacity-70">Organization-wide schedule for coordination, MANA, and staff actions</span>
+                    </a>
+                    <a href="{% url 'project_central:portfolio_dashboard' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                        Project Central
+                        <span class="block text-xs text-white text-opacity-70">Project-activity-task integration dashboard</span>
                     </a>
                 </div>
             </div>

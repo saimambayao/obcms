@@ -28,6 +28,21 @@ DEFAULT_MAP_CENTER = (7.1907, 125.4553, 6)
 PAGE_SIZE_OPTIONS = (10, 25, 50)
 
 
+def _sync_hierarchical_coverages(municipality):
+    """Ensure municipality and province coverage records reflect barangay changes."""
+
+    if municipality is None:
+        return
+
+    from communities.models import MunicipalityCoverage, ProvinceCoverage
+
+    coverage = MunicipalityCoverage.sync_for_municipality(municipality)
+    province = municipality.province
+    if province:
+        ProvinceCoverage.sync_for_province(province)
+    return coverage
+
+
 def _to_float(value) -> Optional[float]:
     if value in {"", None}:
         return None
@@ -162,6 +177,7 @@ def communities_home(request):
         CommunityInfrastructure,
         MunicipalityCoverage,
         OBCCommunity,
+        ProvinceCoverage,
         Stakeholder,
     )
 
@@ -171,6 +187,10 @@ def communities_home(request):
 
     municipality_coverages = MunicipalityCoverage.objects.select_related(
         "municipality__province__region"
+    )
+
+    province_coverages = ProvinceCoverage.objects.select_related(
+        "province__region"
     )
 
     vulnerable_sectors = communities.aggregate(
@@ -239,6 +259,19 @@ def communities_home(request):
     total_barangay_obcs = communities.count()
     total_municipal_obcs = municipality_coverages.count()
 
+    # Calculate total provincial OBCs from all three sources
+    province_ids = set(
+        communities.values_list("barangay__municipality__province_id", flat=True)
+    )
+    province_ids.update(
+        municipality_coverages.values_list("municipality__province_id", flat=True)
+    )
+    province_ids.update(
+        province_coverages.values_list("province_id", flat=True)
+    )
+    province_ids.discard(None)
+    total_provincial_obcs = Province.objects.filter(pk__in=province_ids).count()
+
     stats = {
         "communities": {
             "total": communities.count(),
@@ -254,7 +287,7 @@ def communities_home(request):
             )
             .annotate(count=Count("id"))
             .order_by("-count"),
-            "recent": communities.order_by("-created_at")[:10],
+            "recent": communities.order_by("-updated_at", "-created_at")[:10],
             "unemployment_rates": unemployment_rates,
             "with_madrasah": communities.filter(madrasah_count__gt=0).count(),
             "with_mosque": communities.filter(mosques_count__gt=0).count(),
@@ -262,6 +295,7 @@ def communities_home(request):
             "total_obc_population_database": total_obc_population,
             "total_barangay_obcs_database": total_barangay_obcs,
             "total_municipal_obcs_database": total_municipal_obcs,
+            "total_provincial_obcs_database": total_provincial_obcs,
         },
         "vulnerable_sectors": vulnerable_sectors,
         "infrastructure_needs": infrastructure_stats,
@@ -285,8 +319,12 @@ def communities_home(request):
             )
             .annotate(count=Count("id"))
             .order_by("-count"),
-            "recent": municipality_coverages.order_by("-created_at")[:5],
+            "recent": municipality_coverages.order_by("-updated_at", "-created_at")[:10],
             "top_performers": province_performance,
+        },
+        "provinces": {
+            "total": province_coverages.count(),
+            "recent": province_coverages.order_by("-updated_at", "-created_at")[:10],
         },
         "stakeholders": stakeholder_stats,
     }
@@ -295,6 +333,7 @@ def communities_home(request):
         "stats": stats,
         "communities": communities[:20],
         "municipality_coverages": municipality_coverages[:20],
+        "province_coverages": province_coverages[:20],
     }
     return render(request, "communities/communities_home.html", context)
 
@@ -302,14 +341,14 @@ def communities_home(request):
 @login_required
 def communities_add(request):
     """Add new community page."""
-    from communities.models import MunicipalityCoverage, OBCCommunity
+    from communities.models import OBCCommunity
 
     if request.method == "POST":
         form = OBCCommunityForm(request.POST)
         if form.is_valid():
             community = form.save(commit=False)
             community.save()
-            MunicipalityCoverage.sync_for_municipality(community.barangay.municipality)
+            _sync_hierarchical_coverages(community.barangay.municipality)
             messages.success(
                 request,
                 f'Community "{community.barangay.name}" has been successfully added.',
@@ -971,6 +1010,7 @@ def communities_manage_provincial(request):
 def communities_view(request, community_id):
     """Display a read-only view of a barangay-level OBC community."""
     from communities.models import MunicipalityCoverage, OBCCommunity
+    from monitoring.models import MonitoringEntry
 
     community = get_object_or_404(
         OBCCommunity.all_objects.select_related(
@@ -998,9 +1038,18 @@ def communities_view(request, community_id):
     except MunicipalityCoverage.DoesNotExist:
         municipality_coverage = None
 
+    # Query MOA/PPAs attributed to this barangay OBC
+    moa_ppas = (
+        MonitoringEntry.objects.filter(communities=community)
+        .select_related("lead_organization", "implementing_moa")
+        .distinct()
+        .order_by("-created_at")[:10]
+    )
+
     context = {
         "community": community,
         "municipality_coverage": municipality_coverage,
+        "moa_ppas": moa_ppas,
         "delete_review_mode": delete_review_mode,
         "is_archived": community.is_deleted,
         "redirect_after_action": redirect_after_action,
@@ -1018,6 +1067,7 @@ def communities_view(request, community_id):
 def communities_view_municipal(request, coverage_id):
     """Display a read-only view of a municipal-level OBC coverage."""
     from communities.models import MunicipalityCoverage, OBCCommunity
+    from monitoring.models import MonitoringEntry
 
     coverage = get_object_or_404(
         MunicipalityCoverage.all_objects.select_related(
@@ -1043,9 +1093,20 @@ def communities_view_municipal(request, coverage_id):
         .order_by("barangay__name")
     )
 
+    # Query MOA/PPAs attributed to this municipality
+    moa_ppas = (
+        MonitoringEntry.objects.filter(
+            communities__barangay__municipality=coverage.municipality
+        )
+        .select_related("lead_organization", "implementing_moa")
+        .distinct()
+        .order_by("-created_at")[:10]
+    )
+
     context = {
         "coverage": coverage,
         "related_communities": related_communities,
+        "moa_ppas": moa_ppas,
         "delete_review_mode": delete_review_mode,
         "is_archived": coverage.is_deleted,
         "redirect_after_action": redirect_after_action,
@@ -1118,10 +1179,23 @@ def communities_view_provincial(request, coverage_id):
         .order_by("barangay__name")
     )
 
+    # Query MOA/PPAs attributed to this province
+    from monitoring.models import MonitoringEntry
+
+    moa_ppas = (
+        MonitoringEntry.objects.filter(
+            communities__barangay__municipality__province=coverage.province
+        )
+        .select_related("lead_organization", "implementing_moa")
+        .distinct()
+        .order_by("-created_at")[:10]
+    )
+
     context = {
         "coverage": coverage,
         "related_municipal_coverages": related_municipal_coverages,
         "related_communities": related_communities,
+        "moa_ppas": moa_ppas,
         "delete_review_mode": delete_review_mode,
         "is_archived": coverage.is_deleted,
         "redirect_after_action": redirect_after_action,
@@ -1209,7 +1283,7 @@ def location_centroid(request):
 @login_required
 def communities_edit(request, community_id):
     """Edit an existing barangay-level community."""
-    from communities.models import MunicipalityCoverage, OBCCommunity
+    from communities.models import OBCCommunity
 
     community = get_object_or_404(
         OBCCommunity.objects.select_related("barangay__municipality__province__region"),
@@ -1220,7 +1294,7 @@ def communities_edit(request, community_id):
         form = OBCCommunityForm(request.POST, instance=community)
         if form.is_valid():
             community = form.save()
-            MunicipalityCoverage.sync_for_municipality(community.barangay.municipality)
+            _sync_hierarchical_coverages(community.barangay.municipality)
             messages.success(
                 request,
                 f'Barangay OBC "{community.display_name}" has been updated successfully.',
@@ -1251,7 +1325,7 @@ def communities_edit(request, community_id):
 @require_POST
 def communities_delete(request, community_id):
     """Delete an existing barangay-level community."""
-    from communities.models import MunicipalityCoverage, OBCCommunity
+    from communities.models import OBCCommunity
 
     community = get_object_or_404(
         OBCCommunity.objects.select_related("barangay__municipality__province__region"),
@@ -1261,8 +1335,7 @@ def communities_delete(request, community_id):
     community_name = community.display_name
     community.soft_delete(user=request.user)
 
-    if municipality:
-        MunicipalityCoverage.sync_for_municipality(municipality)
+    _sync_hierarchical_coverages(municipality)
 
     messages.success(
         request,
@@ -1278,7 +1351,7 @@ def communities_delete(request, community_id):
 @require_POST
 def communities_restore(request, community_id):
     """Restore a previously archived barangay-level community."""
-    from communities.models import MunicipalityCoverage, OBCCommunity
+    from communities.models import OBCCommunity
 
     community = get_object_or_404(
         OBCCommunity.all_objects.select_related(
@@ -1290,8 +1363,7 @@ def communities_restore(request, community_id):
     municipality = community.barangay.municipality if community.barangay else None
     community.restore()
 
-    if municipality:
-        MunicipalityCoverage.sync_for_municipality(municipality)
+    _sync_hierarchical_coverages(municipality)
 
     messages.success(
         request,

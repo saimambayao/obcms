@@ -114,6 +114,23 @@
                     </div>
                 </div>
             </a>
+            <a href="{% url 'project_central:portfolio_dashboard' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-project-diagram text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                        Project Activities
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
+                        Track project-linked activities and auto-generated tasks from your workflows.
+                    </p>
+                    <div class="mt-4 flex items-center text-purple-600 text-sm font-medium">
+                        <span>View Dashboard</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
         </div>
     </section>
 
@@ -283,81 +300,6 @@
             {% else %}
             <p class="text-sm text-gray-600">No staff profiles available yet.</p>
             {% endif %}
-        </div>
-    </section>
-
-    <!-- Team Management -->
-    <section class="space-y-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-                <h2 class="text-2xl font-semibold text-gray-900">Team management</h2>
-                <p class="mt-1 text-sm text-gray-600">
-                    Map staff coverage across OOBC teams, including the Mapping and Needs Assessment (MANA) group,
-                    and track their active workloads.
-                </p>
-            </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {% for team in team_overview %}
-            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 flex flex-col h-full">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900">{{ team.name }}</h3>
-                        <p class="mt-1 text-sm text-gray-600">{{ team.description }}</p>
-                    </div>
-                    <div class="text-right text-sm text-gray-500">
-                        <p><span class="font-semibold text-gray-900">{{ team.member_count }}</span> members</p>
-                        <p><span class="font-semibold text-gray-900">{{ team.active_tasks }}</span> active tasks</p>
-                    </div>
-                </div>
-                <p class="mt-3 text-xs uppercase tracking-wide text-gray-500 font-semibold">Mission</p>
-                <p class="text-sm text-gray-700">{{ team.mission }}</p>
-                <p class="mt-4 text-xs uppercase tracking-wide text-gray-500 font-semibold">Focus areas</p>
-                <ul class="mt-2 space-y-1 text-sm text-gray-700">
-                    {% for focus in team.focus %}
-                        <li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">•</span><span>{{ focus }}</span></li>
-                    {% endfor %}
-                </ul>
-                <div class="mt-4 text-xs uppercase tracking-wide text-gray-500 font-semibold">Members</div>
-                <div class="mt-2 flex flex-wrap gap-2">
-                    {% with team.members|slice:":3" as preview_members %}
-                        {% for member in preview_members %}
-                            <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">{{ member.get_full_name|default:member.username }}</span>
-                        {% endfor %}
-                        {% if team.extra_members > 0 %}
-                            <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">+{{ team.extra_members }} more</span>
-                        {% endif %}
-                    {% endwith %}
-                </div>
-                {% if team.tasks %}
-                <div class="mt-4 space-y-3">
-                    {% for task in team.tasks %}
-                    <div class="border border-gray-200 rounded-xl p-3 bg-gray-50">
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="font-semibold text-gray-900">{{ task.title }}</span>
-                            <span class="text-xs text-gray-500 uppercase">{{ task.get_status_display }}</span>
-                        </div>
-                        <p class="mt-1 text-xs text-gray-600">
-                            {% if task.due_date %}Due {{ task.due_date|date:"M d" }}{% else %}No due date{% endif %}
-                            {% with assignee_label=task.assignee_display_name %}
-                                {% if assignee_label != 'Unassigned' %}
-                                    • {{ assignee_label }}
-                                {% endif %}
-                            {% endwith %}
-                        </p>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-                <div class="mt-4 flex items-center justify-between text-sm text-gray-500">
-                    <span>Completion rate</span>
-                    <span class="font-semibold text-gray-900">{{ team.completion_rate }}%</span>
-                </div>
-                <div class="mt-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div class="h-1.5 rounded-full bg-emerald-500" style="width: {{ team.avg_progress }}%;"></div>
-                </div>
-            </div>
-            {% endfor %}
         </div>
     </section>
 

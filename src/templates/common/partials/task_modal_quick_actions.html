@@ -1,0 +1,200 @@
+{# Task Modal Inline Quick Actions #}
+{# Insert this in staff_task_modal.html after the header section, before the form #}
+
+<div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+    <div class="flex flex-wrap items-center gap-2">
+        <!-- Mark Complete -->
+        <button
+            type="button"
+            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
+            onclick="quickMarkComplete({{ task.id }})"
+        >
+            <i class="fas fa-check-circle"></i>
+            <span>Mark Complete</span>
+        </button>
+
+        <!-- Assign to Me -->
+        <button
+            type="button"
+            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+            onclick="quickAssignToMe({{ task.id }})"
+        >
+            <i class="fas fa-user-check"></i>
+            <span>Assign to Me</span>
+        </button>
+
+        <!-- Change Priority -->
+        <div class="relative" x-data="{ open: false }">
+            <button
+                @click="open = !open"
+                type="button"
+                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
+            >
+                <i class="fas fa-bolt"></i>
+                <span>Priority</span>
+                <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+            <div
+                x-show="open"
+                @click.away="open = false"
+                x-transition
+                class="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-10"
+                style="display: none;"
+            >
+                <button onclick="quickChangePriority({{ task.id }}, 'critical')" class="w-full px-4 py-2 text-left text-sm text-rose-700 hover:bg-rose-50 first:rounded-t-lg flex items-center gap-2">
+                    <i class="fas fa-exclamation-circle"></i>Critical
+                </button>
+                <button onclick="quickChangePriority({{ task.id }}, 'high')" class="w-full px-4 py-2 text-left text-sm text-amber-700 hover:bg-amber-50 flex items-center gap-2">
+                    <i class="fas fa-arrow-up"></i>High
+                </button>
+                <button onclick="quickChangePriority({{ task.id }}, 'normal')" class="w-full px-4 py-2 text-left text-sm text-blue-700 hover:bg-blue-50 flex items-center gap-2">
+                    <i class="fas fa-equals"></i>Normal
+                </button>
+                <button onclick="quickChangePriority({{ task.id }}, 'low')" class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 last:rounded-b-lg flex items-center gap-2">
+                    <i class="fas fa-arrow-down"></i>Low
+                </button>
+            </div>
+        </div>
+
+        <!-- Set Due Date -->
+        <button
+            type="button"
+            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-amber-200 text-amber-600 hover:bg-amber-50 hover:border-amber-300 transition-all duration-200"
+            onclick="document.getElementById('id_due_date').focus(); document.getElementById('id_due_date').showPicker();"
+        >
+            <i class="fas fa-calendar-alt"></i>
+            <span>Set Due Date</span>
+        </button>
+
+        <!-- Clone Task -->
+        <button
+            type="button"
+            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-200"
+            onclick="quickCloneTask({{ task.id }})"
+        >
+            <i class="fas fa-copy"></i>
+            <span>Clone Task</span>
+        </button>
+    </div>
+</div>
+
+<script>
+// Quick Mark Complete
+function quickMarkComplete(taskId) {
+    const statusSelect = document.getElementById('id_status');
+    if (statusSelect) {
+        statusSelect.value = 'completed';
+        const progressInput = document.getElementById('id_progress');
+        if (progressInput) {
+            progressInput.value = 100;
+        }
+        // Trigger change event to update UI
+        statusSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+        // Show toast notification
+        showToast('Task status updated to Completed. Click "Save changes" to apply.', 'success');
+    }
+}
+
+// Quick Assign to Me
+function quickAssignToMe(taskId) {
+    // Get current user ID from meta tag or data attribute
+    const currentUserId = document.querySelector('meta[name="user-id"]')?.content || '{{ request.user.id }}';
+    const assigneeSelect = document.getElementById('id_assignees');
+    if (assigneeSelect && currentUserId) {
+        // Add current user to assignees if not already selected
+        const options = Array.from(assigneeSelect.options);
+        const userOption = options.find(opt => opt.value === currentUserId);
+        if (userOption && !userOption.selected) {
+            userOption.selected = true;
+            assigneeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            showToast('You have been added as an assignee. Click "Save changes" to apply.', 'success');
+        } else if (userOption && userOption.selected) {
+            showToast('You are already assigned to this task.', 'info');
+        }
+    }
+}
+
+// Quick Change Priority
+function quickChangePriority(taskId, priority) {
+    const prioritySelect = document.getElementById('id_priority');
+    if (prioritySelect) {
+        prioritySelect.value = priority;
+        prioritySelect.dispatchEvent(new Event('change', { bubbles: true }));
+        showToast(`Priority changed to ${priority.charAt(0).toUpperCase() + priority.slice(1)}. Click "Save changes" to apply.`, 'success');
+    }
+}
+
+// Quick Clone Task
+function quickCloneTask(taskId) {
+    if (confirm('Clone this task? This will create a new task with the same details.')) {
+        // Create clone via HTMX or fetch
+        fetch(`/oobc-management/staff/tasks/${taskId}/clone/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Task cloned successfully!', 'success');
+                // Refresh task board
+                document.body.dispatchEvent(new CustomEvent('task-board-refresh'));
+                // Close modal and open cloned task
+                setTimeout(() => {
+                    window.location.href = `/oobc-management/staff/tasks/${data.new_task_id}/`;
+                }, 1000);
+            } else {
+                showToast('Failed to clone task: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Clone error:', error);
+            showToast('Failed to clone task. Please try again.', 'error');
+        });
+    }
+}
+
+// Toast notification helper
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-6 left-6 z-50 px-6 py-4 rounded-lg shadow-xl text-white font-semibold text-sm max-w-md transform transition-all duration-300 ${
+        type === 'success' ? 'bg-emerald-600' :
+        type === 'error' ? 'bg-rose-600' :
+        type === 'warning' ? 'bg-amber-600' :
+        'bg-blue-600'
+    }`;
+    toast.innerHTML = `
+        <div class="flex items-center gap-3">
+            <i class="fas ${
+                type === 'success' ? 'fa-check-circle' :
+                type === 'error' ? 'fa-exclamation-circle' :
+                type === 'warning' ? 'fa-exclamation-triangle' :
+                'fa-info-circle'
+            }"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(toast);
+
+    // Fade in
+    setTimeout(() => {
+        toast.style.opacity = '1';
+    }, 10);
+
+    // Remove after 4 seconds
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+</script>
+
+<style>
+/* Toast fade-in animation */
+.fixed.bottom-6.left-6 {
+    opacity: 0;
+}
+</style>

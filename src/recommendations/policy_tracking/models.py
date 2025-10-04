@@ -43,17 +43,56 @@ class PolicyRecommendation(models.Model):
         ("economic_development", "Economic Development"),
         ("social_development", "Social Development"),
         ("cultural_development", "Cultural Development"),
+        ("promotion_of_welfare", "Promotion of Welfare"),
         ("rehabilitation_development", "Rehabilitation & Development"),
         ("protection_of_rights", "Protection of Rights"),
+        ("comprehensive", "Comprehensive (Multiple Categories)"),
     ]
 
     SCOPE_LEVELS = [
         ("national", "National Level"),
-        ("regional", "Regional Level (BARMM)"),
+        ("regional", "Regional Level"),
         ("provincial", "Provincial Level"),
         ("municipal", "Municipal/City Level"),
         ("barangay", "Barangay Level"),
         ("community", "Community Level"),
+    ]
+
+    RECOMMENDATION_TYPES = [
+        ("policy", "Policy Recommendation"),
+        ("program", "Systematic Program"),
+        ("service", "Service Improvement"),
+    ]
+
+    IMPORTANCE_LEVELS = [
+        ("high", "High Importance"),
+        ("low", "Low Importance"),
+    ]
+
+    URGENCY_LEVELS = [
+        ("high", "High Urgency"),
+        ("low", "Low Urgency"),
+    ]
+
+    CORE_RECOMMENDATION_TYPES = [
+        ("scholarships", "Scholarships & Financial Assistance for Higher Education"),
+        ("madaris_support", "Support to OBC Madaris"),
+        ("halal_enterprise", "Support to OBC Halal Enterprise Development"),
+        ("social_services", "Expansion of Social Services (TABANG, AMBAG, KAPYANAN)"),
+        ("cultural_development", "Cultural Development Program"),
+        ("women_youth", "Women and Youth Development Program"),
+        ("tourism", "Tourism Development Program"),
+        ("infrastructure", "Infrastructure Development"),
+        ("governance_participation", "Increased Participation in Governance and Planning"),
+        ("institutional_partnerships", "Institutional Partnerships and Coordination"),
+        ("other", "Other (Please specify)"),
+    ]
+
+    REPORTING_SCHEDULES = [
+        ("monthly", "Monthly"),
+        ("quarterly", "Quarterly"),
+        ("semi_annual", "Semi-Annual"),
+        ("annual", "Annual"),
     ]
 
     # Basic Information
@@ -71,7 +110,13 @@ class PolicyRecommendation(models.Model):
     )
 
     category = models.CharField(
-        max_length=30, choices=POLICY_CATEGORIES, help_text="Policy category"
+        max_length=30, choices=POLICY_CATEGORIES, help_text="Primary policy category"
+    )
+
+    secondary_categories = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Additional categories if Comprehensive is selected"
     )
 
     description = models.TextField(
@@ -287,6 +332,137 @@ class PolicyRecommendation(models.Model):
         blank=True, help_text="Recommendations for future improvements"
     )
 
+    # NEW FIELDS: Recommendation Type and Classification
+    recommendation_type = models.CharField(
+        max_length=10,
+        choices=RECOMMENDATION_TYPES,
+        default="policy",
+        help_text="Type of recommendation: Policy, Program, or Service"
+    )
+
+    importance = models.CharField(
+        max_length=10,
+        choices=IMPORTANCE_LEVELS,
+        default="high",
+        help_text="Importance level (High/Low)"
+    )
+
+    urgency = models.CharField(
+        max_length=10,
+        choices=URGENCY_LEVELS,
+        default="high",
+        help_text="Urgency level (High/Low)"
+    )
+
+    core_recommendation_type = models.CharField(
+        max_length=30,
+        choices=CORE_RECOMMENDATION_TYPES,
+        blank=True,
+        help_text="Select from 10 core OBC recommendation types"
+    )
+
+    core_recommendation_other = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Specify if 'Other' is selected in core recommendation type"
+    )
+
+    # NEW FIELDS: Evidence Base
+    consultation_references = models.TextField(
+        blank=True,
+        help_text="References to consultations held (dates, locations, participants)"
+    )
+
+    research_data = models.TextField(
+        blank=True,
+        help_text="Research data, official statistics, and citations"
+    )
+
+    # NEW FIELDS: M&E Framework
+    performance_indicators = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Array of performance indicator objects with baselines and targets"
+    )
+
+    tracking_mechanisms = models.TextField(
+        blank=True,
+        help_text="How progress will be monitored and tracked"
+    )
+
+    reporting_schedule = models.CharField(
+        max_length=20,
+        choices=REPORTING_SCHEDULES,
+        blank=True,
+        help_text="Reporting frequency for M&E"
+    )
+
+    # NEW FIELDS: Risk Analysis
+    identified_risks = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Array of risk objects with severity, mitigation, and contingency plans"
+    )
+
+    # NEW FIELDS: Stakeholder Engagement
+    consultation_dates = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Array of consultation date objects with location and participant counts"
+    )
+
+    stakeholder_feedback_detailed = models.TextField(
+        blank=True,
+        help_text="Detailed stakeholder feedback from consultations"
+    )
+
+    community_validated = models.BooleanField(
+        default=False,
+        help_text="Whether this recommendation has been validated by the community"
+    )
+
+    # NEW FIELDS: Coordination and Partnerships
+    lgus_involved = models.TextField(
+        blank=True,
+        help_text="Local Government Units involved in implementation"
+    )
+
+    ngas_involved = models.TextField(
+        blank=True,
+        help_text="National Government Agencies involved"
+    )
+
+    cso_partners = models.TextField(
+        blank=True,
+        help_text="Civil Society Organizations and other partners"
+    )
+
+    # NEW FIELDS: Impact Details
+    short_term_benefits = models.TextField(
+        blank=True,
+        help_text="Short-term benefits (1-2 years)"
+    )
+
+    long_term_benefits = models.TextField(
+        blank=True,
+        help_text="Long-term benefits (3+ years)"
+    )
+
+    equity_considerations = models.TextField(
+        blank=True,
+        help_text="How this addresses equity and inclusion"
+    )
+
+    sustainability_measures = models.TextField(
+        blank=True,
+        help_text="Measures to ensure long-term sustainability"
+    )
+
+    cultural_alignment = models.TextField(
+        blank=True,
+        help_text="How this aligns with Bangsamoro cultural values"
+    )
+
     # Metadata
     notes = models.TextField(blank=True, help_text="Additional notes and observations")
 
@@ -311,13 +487,38 @@ class PolicyRecommendation(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.reference_number:
-            # Generate reference number
+            # Generate reference number with type prefix
             year = timezone.now().year
             count = (
                 PolicyRecommendation.objects.filter(created_at__year=year).count() + 1
             )
-            self.reference_number = f"OOBC-PR-{year}-{count:04d}"
+            type_prefix = {
+                'policy': 'POL',
+                'program': 'PRG',
+                'service': 'SVC',
+            }.get(self.recommendation_type, 'REC')
+            self.reference_number = f"OOBC-{type_prefix}-{year}-{count:04d}"
         super().save(*args, **kwargs)
+
+    @property
+    def priority_category(self):
+        """Return A, B, or C based on importance × urgency matrix."""
+        if self.importance == 'high' and self.urgency == 'high':
+            return 'A'  # High Importance – High Urgency (Critical)
+        elif self.importance == 'high' and self.urgency == 'low':
+            return 'B'  # High Importance – Low Urgency (Essential, phased)
+        else:
+            return 'C'  # Low Importance – Low Urgency (Supportive, future)
+
+    @property
+    def priority_category_display(self):
+        """Return full description of priority category."""
+        categories = {
+            'A': 'Category A: High Importance – High Urgency (Critical)',
+            'B': 'Category B: High Importance – Low Urgency (Essential)',
+            'C': 'Category C: Low Importance – Low Urgency (Supportive)'
+        }
+        return categories.get(self.priority_category, 'Unknown')
 
     @property
     def is_overdue(self):

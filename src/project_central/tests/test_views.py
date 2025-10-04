@@ -349,3 +349,108 @@ class GenerateWorkflowTasksResourceBookingTests(TestCase):
             object_id__in=tasks.values_list("pk", flat=True),
         ).exists()
         self.assertTrue(booking_exists)
+
+
+class ProjectCalendarViewTests(TestCase):
+    """Test project-specific calendar view and events API."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = User.objects.create_user(
+            username="testuser",
+            password="testpass123",
+        )
+        self.client.login(username="testuser", password="testpass123")
+
+        # Create test community
+        self.community = create_community(
+            name="Test Barangay",
+            municipality_name="Test Municipality"
+        )
+
+        # Create need category
+        self.category = NeedsCategory.objects.create(
+            name="Education",
+            description="Education needs"
+        )
+
+        # Create need
+        self.need = Need.objects.create(
+            title="Test Need for Calendar",
+            description="Test need description",
+            category=self.category,
+            barangay=self.community,
+            status="identified",
+            priority_score=8.0,
+        )
+
+        # Create workflow
+        self.workflow = ProjectWorkflow.objects.create(
+            primary_need=self.need,
+            project_lead=self.user,
+            current_stage="need_identification",
+            priority_level="high",
+        )
+
+    def test_calendar_view_accessible(self):
+        """Test that calendar view is accessible."""
+        url = reverse('project_central:project_calendar', kwargs={'workflow_id': self.workflow.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'project_central/project_calendar.html')
+        self.assertContains(response, 'Project Calendar')
+        self.assertContains(response, self.workflow.primary_need.title)
+
+    def test_calendar_events_api_returns_json(self):
+        """Test that calendar events API returns valid JSON."""
+        url = reverse('project_central:project_calendar_events', kwargs={'workflow_id': self.workflow.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/json')
+
+        # Should return empty list initially
+        import json
+        events = json.loads(response.content)
+        self.assertIsInstance(events, list)
+
+    def test_calendar_events_includes_tasks(self):
+        """Test that tasks with due dates appear in calendar events."""
+        # Create task with due date
+        task = StaffTask.objects.create(
+            title="Test Calendar Task",
+            description="Test task for calendar",
+            linked_workflow=self.workflow,
+            due_date=date.today() + timedelta(days=7),
+            priority=StaffTask.PRIORITY_HIGH,
+            status=StaffTask.STATUS_NOT_STARTED,
+            created_by=self.user,
+        )
+        task.assignees.add(self.user)
+
+        url = reverse('project_central:project_calendar_events', kwargs={'workflow_id': self.workflow.id})
+        response = self.client.get(url)
+
+        import json
+        events = json.loads(response.content)
+
+        # Should have 1 task event
+        task_events = [e for e in events if e['extendedProps']['type'] == 'task']
+        self.assertEqual(len(task_events), 1)
+        self.assertEqual(task_events[0]['title'], 'Test Calendar Task')
+        self.assertEqual(task_events[0]['backgroundColor'], '#3b82f6')
+
+    def test_calendar_requires_login(self):
+        """Test that calendar views require authentication."""
+        self.client.logout()
+
+        # Test calendar view
+        url = reverse('project_central:project_calendar', kwargs={'workflow_id': self.workflow.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)  # Redirect to login
+
+        # Test events API
+        url = reverse('project_central:project_calendar_events', kwargs={'workflow_id': self.workflow.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)  # Redirect to login

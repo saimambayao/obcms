@@ -247,7 +247,18 @@ def project_workflow_detail(request, workflow_id):
     Display detailed project workflow with stage progression.
     Shows visual timeline of 9 workflow stages with completion status.
     """
-    workflow = get_object_or_404(ProjectWorkflow, id=workflow_id)
+    workflow = get_object_or_404(
+        ProjectWorkflow.objects.select_related(
+            'primary_need',
+            'ppa',
+            'project_lead'
+        ).prefetch_related(
+            'project_activities',  # Related events
+            'tasks__assignees',
+            'ppa__workflow_tasks'
+        ),
+        id=workflow_id
+    )
 
     # Get all stages with completion status
     stages = []
@@ -278,6 +289,13 @@ def project_workflow_detail(request, workflow_id):
         "-severity", "-created_at"
     )
 
+    # Get project activities
+    activities = workflow.project_activities.all()
+    upcoming_activities = workflow.get_upcoming_activities(days=30)
+
+    # Get all project tasks (including activity tasks)
+    all_tasks = workflow.all_project_tasks
+
     # Calculate progress percentage based on stage
     progress_percentage = workflow.get_stage_progress_percentage()
 
@@ -291,6 +309,9 @@ def project_workflow_detail(request, workflow_id):
         "progress_percentage": progress_percentage,
         "tasks": tasks,
         "alerts": alerts,
+        "activities": activities,
+        "upcoming_activities": upcoming_activities,
+        "all_tasks": all_tasks,
     }
 
     return render(request, "project_central/workflow_detail.html", context)
@@ -1392,6 +1413,66 @@ def reject_budget(request, ppa_id):
 
 
 # ========== PHASE 6: M&E ANALYTICS DASHBOARDS ==========
+
+
+@login_required
+def project_calendar_view(request, workflow_id):
+    """Display project-specific calendar view."""
+    workflow = get_object_or_404(
+        ProjectWorkflow.objects.select_related('primary_need', 'project_lead'),
+        pk=workflow_id
+    )
+
+    context = {
+        'workflow': workflow,
+    }
+
+    return render(request, 'project_central/project_calendar.html', context)
+
+
+@login_required
+def project_calendar_events(request, workflow_id):
+    """Return calendar events for a specific project."""
+    workflow = get_object_or_404(ProjectWorkflow, pk=workflow_id)
+
+    events = []
+
+    # Project activities (events)
+    for event in workflow.project_activities.all():
+        events.append({
+            'id': f'event-{event.id}',
+            'title': event.title,
+            'start': event.start_datetime.isoformat() if event.start_datetime else event.start_date.isoformat(),
+            'end': event.end_datetime.isoformat() if event.end_datetime else None,
+            'backgroundColor': '#8b5cf6',  # Purple for project activities
+            'borderColor': '#7c3aed',
+            'url': f'/api/coordination/events/{event.id}/',
+            'extendedProps': {
+                'type': 'activity',
+                'activity_type': event.project_activity_type,
+                'status': event.status,
+            }
+        })
+
+    # Project tasks with due dates
+    for task in workflow.all_project_tasks:
+        if task.due_date:
+            events.append({
+                'id': f'task-{task.id}',
+                'title': task.title,
+                'start': task.due_date.isoformat(),
+                'backgroundColor': '#3b82f6',  # Blue for tasks
+                'borderColor': '#2563eb',
+                'url': f'/oobc-management/staff/tasks/{task.id}/',
+                'extendedProps': {
+                    'type': 'task',
+                    'priority': task.priority,
+                    'status': task.status,
+                    'task_context': task.task_context,
+                }
+            })
+
+    return JsonResponse(events, safe=False)
 
 
 @login_required

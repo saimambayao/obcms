@@ -146,9 +146,7 @@ def coordination_home(request):
         "lgu": lgu_planned,
     }
 
-    recent_events = Event.objects.filter(
-        start_date__gte=now.date() - timedelta(days=30)
-    ).order_by("-start_date")[:5]
+    recent_events = Event.objects.order_by("-updated_at", "-created_at")[:10]
 
     event_by_type = {
         "meeting": Event.objects.filter(event_type="meeting").count(),
@@ -158,18 +156,31 @@ def coordination_home(request):
     }
 
     active_partnerships_list = Partnership.objects.filter(status="active").order_by(
-        "-created_at"
-    )[:5]
+        "-updated_at", "-created_at"
+    )[:10]
+
+    recent_partnerships = Partnership.objects.order_by("-updated_at", "-created_at")[
+        :10
+    ]
+
+    recent_partners = (
+        Organization.objects.filter(is_active=True)
+        .order_by("-updated_at", "-created_at")[:10]
+    )
 
     stats = {
         "mapped_partners": mapped_partners_stats,
         "active_partnerships": active_partnerships_stats,
         "coordination_activities_done": coordination_activities_done_stats,
         "planned_coordination_activities": planned_coordination_activities_stats,
-        "recent_events": recent_events,
         "coordination": {
             "active_partnerships": active_partnerships_list,
             "by_type": event_by_type,
+        },
+        "recent": {
+            "events": recent_events,
+            "partners": recent_partners,
+            "partnerships": recent_partnerships,
         },
     }
 
@@ -397,21 +408,39 @@ def coordination_events(request):
     from django.utils import timezone
 
     from coordination.models import Event, EventParticipant
+    from project_central.models import ProjectWorkflow
 
     events = (
-        Event.objects.select_related("community", "organizer")
+        Event.objects.select_related("community", "organizer", "related_project")
+        .prefetch_related("staff_tasks")
         .annotate(participants_count=Count("participants"))
         .order_by("-start_date")
     )
 
     status_filter = request.GET.get("status")
     type_filter = request.GET.get("type")
+    project_filter = request.GET.get("project")
+    is_project_activity_filter = request.GET.get("is_project_activity")
 
     if status_filter:
         events = events.filter(status=status_filter)
 
     if type_filter:
         events = events.filter(event_type=type_filter)
+
+    # Project-related filters
+    if project_filter:
+        try:
+            project_id = int(project_filter)
+            events = events.filter(related_project_id=project_id)
+        except (TypeError, ValueError):
+            pass
+
+    if is_project_activity_filter:
+        if is_project_activity_filter.lower() == "true":
+            events = events.filter(is_project_activity=True)
+        elif is_project_activity_filter.lower() == "false":
+            events = events.filter(is_project_activity=False)
 
     status_choices = Event.STATUS_CHOICES if hasattr(Event, "STATUS_CHOICES") else []
     type_choices = (
@@ -430,6 +459,14 @@ def coordination_events(request):
         "total_participants": EventParticipant.objects.count(),
     }
 
+    # Get projects with events for filter dropdown
+    project_options = (
+        ProjectWorkflow.objects.filter(events__isnull=False)
+        .annotate(event_count=Count("events"))
+        .order_by("-event_count", "title")
+        .distinct()
+    )
+
     context = {
         "events": events,
         "upcoming_events": upcoming_events[:10],
@@ -438,6 +475,9 @@ def coordination_events(request):
         "type_choices": type_choices,
         "current_status": status_filter,
         "current_type": type_filter,
+        "current_project": project_filter,
+        "current_is_project_activity": is_project_activity_filter,
+        "project_options": project_options,
         "stats": stats,
         "upcoming_coordination_count": stats["upcoming_coordination"],
         "completed_coordination_count": stats["completed_coordination"],

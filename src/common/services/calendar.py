@@ -925,7 +925,12 @@ def build_calendar_payload(
 
     # Staff Tasks -----------------------------------------------------------
     if include_module("staff"):
-        tasks = StaffTask.objects.prefetch_related("teams", "assignees")
+        tasks = StaffTask.objects.prefetch_related(
+            "teams",
+            "assignees",
+            "linked_workflow__primary_need",
+            "linked_event"
+        )
 
         for task in tasks:
             if task.linked_event_id:
@@ -953,14 +958,24 @@ def build_calendar_payload(
             task_teams = list(task.teams.all())
             team_names = [team.name for team in task_teams]
             team_slugs = [team.slug for team in task_teams]
+
+            # Determine task color based on context
+            task_color = "#7c3aed"  # Default purple
+            if task.task_context == StaffTask.TASK_CONTEXT_PROJECT_ACTIVITY:
+                task_color = "#8b5cf6"  # Purple for project activities
+            elif task.task_context == StaffTask.TASK_CONTEXT_PROJECT:
+                task_color = "#2563eb"  # Dark blue for projects
+            elif task.task_context == StaffTask.TASK_CONTEXT_ACTIVITY:
+                task_color = "#10b981"  # Emerald for activities
+
             payload = {
                 "id": f"staff-task-{task.pk}",
                 "title": task.title,
                 "start": _isoformat(start_for_sorting),
                 "end": _isoformat(due_dt),
                 "allDay": True,
-                "backgroundColor": "#7c3aed",
-                "borderColor": "#6d28d9",
+                "backgroundColor": task_color,
+                "borderColor": task_color,
                 "textColor": "#f9fafb",
                 "extendedProps": {
                     "module": "staff",
@@ -978,10 +993,25 @@ def build_calendar_payload(
                         ", ".join(assignee_names) if assignee_names else "Unassigned"
                     ),
                     "location": None,
+                    "task_context": task.task_context,
                 },
                 "editable": True,
                 "durationEditable": True,
             }
+
+            # Add project context if exists
+            if task.linked_workflow:
+                payload["extendedProps"]["project"] = {
+                    "id": str(task.linked_workflow.id),
+                    "name": task.linked_workflow.primary_need.title,
+                }
+
+            # Add event context if exists
+            if task.linked_event:
+                payload["extendedProps"]["event"] = {
+                    "id": str(task.linked_event.id),
+                    "name": task.linked_event.title,
+                }
 
             entries.append(payload)
             workflow_actions_entry: List[Dict] = []

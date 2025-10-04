@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Coordination - OBC Management System{% endblock %}
 
@@ -231,77 +232,121 @@
             Log Coordination Activity
         </a>
     </div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <!-- Recent Events -->
-        <div class="bg-white rounded-lg shadow-lg border border-gray-200">
-            <div class="p-6">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-calendar-check text-blue-600 mr-3"></i>
-                    Recent Events
-                </h2>
-                <div class="space-y-4">
-                    {% for event in stats.recent_events %}
-                    <div class="flex items-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                        <div class="flex-shrink-0">
-                            <div class="p-2 bg-blue-500 rounded-lg">
-                                <i class="fas fa-calendar text-white"></i>
-                            </div>
-                        </div>
-                        <div class="ml-4 flex-1">
-                            <p class="text-sm font-semibold text-gray-900">{{ event.title }}</p>
-                            <p class="text-xs text-gray-600">{{ event.start_date|date:"M d, Y" }} - {{ event.event_type|title }}</p>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {{ event.status|title }}
-                            </span>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="text-center py-8 text-gray-500">
-                        <i class="fas fa-calendar-plus text-3xl mb-4"></i>
-                        <p>No recent events found</p>
-                    </div>
-                    {% endfor %}
-                </div>
+    <section class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Recent Updates</h2>
+                <p class="mt-1 text-sm text-gray-600">Latest coordination events, mapped partner changes, and partnership agreements.</p>
+            </div>
+            <div class="flex flex-wrap gap-3 text-sm font-medium">
+                <a href="{% url 'common:coordination_events' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                    <i class="fas fa-calendar-alt"></i>
+                    View Events
+                </a>
+                <a href="{% url 'common:coordination_organizations' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Map Partners
+                </a>
+                <a href="{% url 'common:coordination_partnerships' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                    <i class="fas fa-file-contract"></i>
+                    Manage Partnerships
+                </a>
             </div>
         </div>
 
-        <!-- Active Partnerships -->
-        <div class="bg-white rounded-lg shadow-lg border border-gray-200">
-            <div class="p-6">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-users text-green-600 mr-3"></i>
-                    Active Partnerships
-                </h2>
-                <div class="space-y-4">
-                    {% for partnership in stats.coordination.active_partnerships|slice:":5" %}
-                    <div class="flex items-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                        <div class="flex-shrink-0">
-                            <div class="p-2 bg-green-500 rounded-lg">
-                                <i class="fas fa-handshake text-white"></i>
-                            </div>
-                        </div>
-                        <div class="ml-4 flex-1">
-                            <p class="text-sm font-semibold text-gray-900">{{ partnership.title }}</p>
-                            <p class="text-xs text-gray-600">{{ partnership.partnership_type|title }}</p>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Active
-                            </span>
-                        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-lg">
+                        <i class="fas fa-calendar-check"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Coordination Events</h3>
+                        <p class="text-xs text-gray-500">Most recently updated meetings and activities</p>
                     </div>
-                    {% empty %}
-                    <div class="text-center py-8 text-gray-500">
-                        <i class="fas fa-handshake text-3xl mb-4"></i>
-                        <p>No active partnerships found</p>
-                    </div>
-                    {% endfor %}
                 </div>
+                <ul class="space-y-4">
+                    {% for event in stats.recent.events|slice:":7" %}
+                    <li class="relative border-l border-blue-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-blue-500 ring-4 ring-blue-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ event.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">
+                                {{ event.get_status_display|default:event.status|capfirst }}
+                            </span>
+                            {{ event.start_date|date:"M d, Y" }} • {{ event.get_event_type_display|default:event.event_type|title }}
+                        </p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ event.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No event activity recorded yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg">
+                        <i class="fas fa-handshake"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Mapped Partners</h3>
+                        <p class="text-xs text-gray-500">Most recently updated partner organizations</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for partner in stats.recent.partners|slice:":7" %}
+                    <li class="relative border-l border-emerald-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ partner.name }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                {{ partner.get_organization_type_display|default:partner.organization_type|title }}
+                            </span>
+                            {{ partner.get_partnership_level_display|default:partner.partnership_level|capfirst }}
+                        </p>
+                        {% if partner.geographic_coverage %}
+                        <p class="text-xs text-gray-500">Coverage: {{ partner.geographic_coverage|truncatechars:60 }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ partner.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No partner updates recorded.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 text-white shadow-lg">
+                        <i class="fas fa-file-signature"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Partnership Agreements</h3>
+                        <p class="text-xs text-gray-500">Latest MOA/MOU actions across partners</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for partnership in stats.recent.partnerships|slice:":7" %}
+                    <li class="relative border-l border-purple-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-purple-500 ring-4 ring-purple-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ partnership.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-600 border border-purple-100">
+                                {{ partnership.get_status_display|default:partnership.status|capfirst }}
+                            </span>
+                            {{ partnership.get_partnership_type_display|default:partnership.partnership_type|title }}
+                        </p>
+                        <p class="text-xs text-gray-500">Lead: {{ partnership.lead_organization.name }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ partnership.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No partnership agreements recorded yet.</li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- Event Categories -->
     <div class="bg-white rounded-lg shadow-lg border border-gray-200 mb-8">
@@ -440,6 +485,42 @@
         </div>
     </div>
     {% endif %}
+
+    <!-- Project-Activity Integration -->
+    <section class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-8">
+        <header class="bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-4 rounded-t-2xl">
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-project-diagram"></i>
+                Project-Activity Integration
+            </h2>
+        </header>
+        <div class="p-6 space-y-4">
+            <p class="text-gray-600">
+                Link coordination events to project workflows for integrated planning and task management.
+            </p>
+
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'project_central:portfolio_dashboard' %}"
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all">
+                    <i class="fas fa-folder-open"></i>
+                    View Portfolio
+                </a>
+
+                <a href="{% url 'common:coordination_event_add' %}?is_project_activity=true"
+                   class="inline-flex items-center gap-2 px-4 py-2 border-2 border-purple-600 text-purple-600 font-medium rounded-lg hover:bg-purple-50 transition-all">
+                    <i class="fas fa-plus"></i>
+                    Create Project Activity
+                </a>
+            </div>
+
+            <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p class="text-sm text-gray-700">
+                    <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                    <strong>Tip:</strong> When creating events, enable "This is a project-specific activity" to auto-generate preparation and follow-up tasks.
+                </p>
+            </div>
+        </div>
+    </section>
 
     <!-- Quick Actions -->
     <div>

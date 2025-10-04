@@ -179,13 +179,47 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex space-x-2">
-                                <button class="text-blue-600 hover:text-blue-900 transition-colors duration-200" title="View Details">
+                                <!-- View Details (Modal) -->
+                                <button
+                                    onclick="if (typeof window.openCalendarModal === 'function') { window.openCalendarModal('{% url 'common:coordination_event_modal' event.id %}'); }"
+                                    class="text-blue-600 hover:text-blue-900 transition-colors duration-200"
+                                    title="View Details">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                <button class="text-green-600 hover:text-green-900 transition-colors duration-200" title="Edit">
+
+                                <!-- Edit -->
+                                <a href="{% url 'common:coordination_event_edit_instance' event.id %}"
+                                   class="text-green-600 hover:text-green-900 transition-colors duration-200"
+                                   title="Edit">
                                     <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="text-red-600 hover:text-red-900 transition-colors duration-200" title="Delete">
+                                </a>
+
+                                <!-- View Project (if project activity) -->
+                                {% if event.is_project_activity and event.related_project %}
+                                <a href="{% url 'project_central:project_workflow_detail' event.related_project.id %}"
+                                   class="text-purple-600 hover:text-purple-900 transition-colors duration-200"
+                                   title="View Project">
+                                    <i class="fas fa-project-diagram"></i>
+                                </a>
+                                {% endif %}
+
+                                <!-- View Tasks (if tasks exist) -->
+                                {% if event.staff_tasks.exists %}
+                                <a href="{% url 'common:staff_task_board' %}?event_id={{ event.id }}"
+                                   class="text-indigo-600 hover:text-indigo-900 transition-colors duration-200"
+                                   title="View Tasks">
+                                    <i class="fas fa-tasks"></i>
+                                </a>
+                                {% endif %}
+
+                                <!-- Delete -->
+                                <button
+                                    hx-post="{% url 'common:coordination_event_delete' event.id %}"
+                                    hx-confirm="Are you sure you want to delete '{{ event.title }}'? This action cannot be undone."
+                                    hx-target="closest tr"
+                                    hx-swap="outerHTML swap:200ms"
+                                    class="text-red-600 hover:text-red-900 transition-colors duration-200"
+                                    title="Delete">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>

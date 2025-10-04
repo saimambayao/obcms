@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}MANA - OBC Management System{% endblock %}
 
@@ -183,6 +184,135 @@
             </div>
         </div>
     </div>
+
+    <!-- Recent Data Feeds -->
+    <section class="mb-10">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Recent Updates</h2>
+                <p class="mt-1 text-sm text-gray-600">Latest assessment activities, priority needs, and baseline study progress.</p>
+            </div>
+            <div class="flex flex-wrap gap-3 text-sm font-medium">
+                <a href="{% url 'common:mana_manage_assessments' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                    <i class="fas fa-list-alt"></i>
+                    Manage Assessments
+                </a>
+                <a href="{% url 'common:mana_activity_planner' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                    <i class="fas fa-calendar-check"></i>
+                    Activity Planner
+                </a>
+                <a href="{% url 'common:mana_playbook' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                    <i class="fas fa-book"></i>
+                    View Playbook
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-lg">
+                        <i class="fas fa-clipboard-check"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Assessments</h3>
+                        <p class="text-xs text-gray-500">Most recently updated assessments</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for assessment in stats.assessments.recent|slice:":7" %}
+                    <li class="relative border-l border-blue-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-blue-500 ring-4 ring-blue-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ assessment.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">
+                                {{ assessment.get_status_display|default:assessment.status|capfirst }}
+                            </span>
+                            {% if assessment.community %}
+                                {{ assessment.community.barangay.municipality.name }}, {{ assessment.community.barangay.municipality.province.name }}
+                            {% elif assessment.province %}
+                                {{ assessment.province.name }} Province
+                            {% elif assessment.region %}
+                                {{ assessment.region.name }}
+                            {% else %}
+                                Multi-location Assessment
+                            {% endif %}
+                        </p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ assessment.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No assessment updates yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg">
+                        <i class="fas fa-hands-helping"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Identified Needs</h3>
+                        <p class="text-xs text-gray-500">Community needs prioritized most recently</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for need in stats.needs.recent|slice:":7" %}
+                    <li class="relative border-l border-emerald-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ need.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                {{ need.get_urgency_level_display|default:need.urgency_level|capfirst }}
+                            </span>
+                            {% if need.community %}
+                                {{ need.community.barangay.municipality.name }}, {{ need.community.barangay.municipality.province.name }}
+                            {% else %}
+                                Linked Assessment
+                            {% endif %}
+                        </p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ need.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No recent needs recorded.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 text-white shadow-lg">
+                        <i class="fas fa-chart-area"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Baseline Studies</h3>
+                        <p class="text-xs text-gray-500">Latest baseline research progress</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for study in stats.baseline_studies.recent|slice:":7" %}
+                    <li class="relative border-l border-purple-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-purple-500 ring-4 ring-purple-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ study.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-600 border border-purple-100">
+                                {{ study.get_status_display|default:study.status|capfirst }}
+                            </span>
+                            {% if study.community %}
+                                {{ study.community.barangay.municipality.name }}, {{ study.community.barangay.municipality.province.name }}
+                            {% else %}
+                                Regional Scope
+                            {% endif %}
+                        </p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ study.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No baseline studies recorded yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </section>
 
     <!-- Assessment Areas -->
     <div class="bg-white rounded-lg shadow-lg border border-gray-200 mb-8">

@@ -618,12 +618,30 @@
         console.log('renderCalendar available:', typeof renderCalendar !== 'undefined');
 
         try {
-            var events = JSON.parse('{{ calendar_events_json|escapejs }}');
+            // Use events function for dynamic refetching
             var options = JSON.parse('{{ calendar_options_json|escapejs }}');
-            console.log('Parsed events:', events.length, 'events');
-            console.log('Parsed options:', options);
+            options.events = function(fetchInfo, successCallback, failureCallback) {
+                // Add timestamp to bypass cache when refetching
+                var url = '{% url "common:oobc_calendar_feed_json" %}?t=' + new Date().getTime();
+                fetch(url)
+                    .then(function(response) {
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch calendar events');
+                        }
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        console.log('Fetched calendar events:', data.events.length);
+                        successCallback(data.events);
+                    })
+                    .catch(function(error) {
+                        console.error('Calendar fetch error:', error);
+                        failureCallback(error);
+                    });
+            };
+            console.log('Configured calendar with events function');
 
-            var calendar = renderCalendar('oobc-calendar', events, options);
+            var calendar = renderCalendar('oobc-calendar', null, options);
             console.log('Calendar instance:', calendar);
 
             if (!calendar) {

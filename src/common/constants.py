@@ -195,6 +195,12 @@ RECOMMENDATIONS_AREAS = {
         "icon": "fas fa-mosque",
         "color": "orange",
     },
+    "promotion-of-welfare": {
+        "name": "Promotion of Welfare",
+        "categories": ["promotion_of_welfare"],
+        "icon": "fas fa-hands-helping",
+        "color": "teal",
+    },
     "rehabilitation-development": {
         "name": "Rehabilitation & Development",
         "categories": ["infrastructure", "environment"],

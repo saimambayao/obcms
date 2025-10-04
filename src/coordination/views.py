@@ -486,6 +486,19 @@ def event_create(request):
         "start_date": timezone.now().date(),
     }
 
+    # Pre-fill project if workflow_id is in GET parameters
+    workflow_id = request.GET.get("workflow_id")
+    if workflow_id:
+        try:
+            from project_central.models import ProjectWorkflow
+            workflow_id_int = int(workflow_id)
+            workflow = ProjectWorkflow.objects.filter(id=workflow_id_int).first()
+            if workflow:
+                initial["related_project"] = workflow.id
+                initial["is_project_activity"] = True
+        except (TypeError, ValueError):
+            pass
+
     if request.method == "POST":
         form = EventForm(request.POST)
         if form.is_valid():
@@ -493,10 +506,30 @@ def event_create(request):
             if not event.organizer_id:
                 event.organizer = request.user
             event.created_by = request.user
+
+            # Set auto-generate flag before save (for signals to use)
+            auto_generate = form.cleaned_data.get("auto_generate_tasks", False)
+            if auto_generate:
+                event._auto_generate_tasks = True
+
             event.save()
             if hasattr(form, "save_m2m"):
                 form.save_m2m()
-            messages.success(request, "Event successfully scheduled.")
+
+            messages.success(request, f'Event "{event.title}" successfully scheduled.')
+            if auto_generate and event.is_project_activity and event.related_project:
+                messages.info(
+                    request,
+                    "Preparation and follow-up tasks will be created for this project activity.",
+                )
+
+            # Handle "Save & Add Another" functionality
+            if request.POST.get("save_and_add"):
+                # Redirect back to form with same workflow_id if it was set
+                if workflow_id:
+                    return redirect(f"{reverse('coordination:event_create')}?workflow_id={workflow_id}")
+                return redirect("coordination:event_create")
+
             return redirect("common:coordination_events")
         messages.error(
             request, "Please correct the highlighted errors before submitting."
@@ -886,6 +919,47 @@ def coordination_event_modal(request, event_id):
         "linked_tasks": event.staff_tasks.all(),
     }
     return render(request, "coordination/partials/event_modal.html", context)
+
+
+@login_required
+def coordination_event_delete(request, event_id):
+    """Delete a coordination event."""
+    logger.info(f"Attempting to delete event {event_id}")
+    event = get_object_or_404(Event, pk=event_id)
+
+    # Check permissions
+    if not (
+        request.user.is_staff
+        or request.user.is_superuser
+        or event.created_by == request.user
+        or request.user.has_perm("coordination.delete_event")
+    ):
+        raise PermissionDenied
+
+    # Check if this is a confirmation request
+    if request.POST.get("confirm") == "yes":
+        event_title = event.title
+        logger.info(f"Deleting event: {event_title}")
+        event.delete()
+        logger.info(f"Event {event_title} deleted successfully")
+
+        # For HTMX requests, return empty response with triggers
+        if request.headers.get("HX-Request"):
+            response = HttpResponse("")
+            response["HX-Trigger"] = json.dumps(
+                {
+                    "task-board-refresh": True,
+                    "task-modal-close": True,
+                    "show-toast": f'Event "{event_title}" deleted successfully',
+                }
+            )
+            return response
+
+        messages.success(request, f'Event "{event_title}" deleted successfully')
+        return redirect("common:oobc_calendar")
+
+    # For non-confirmation POST, redirect to calendar
+    return redirect("common:oobc_calendar")
 
 
 # ===================================

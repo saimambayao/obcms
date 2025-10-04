@@ -320,6 +320,53 @@ class ProjectWorkflow(models.Model):
 
         return stage_weights.get(self.current_stage, 0)
 
+    @property
+    def all_project_tasks(self):
+        """
+        Aggregate tasks from workflow + PPA + activities.
+
+        Returns QuerySet of all tasks related to this project from:
+        - Direct workflow tasks (linked_workflow)
+        - PPA tasks (linked_ppa)
+        - Activity tasks (linked_event for related project_activities)
+        """
+        from common.models import StaffTask
+
+        # Direct workflow tasks
+        workflow_tasks = self.tasks.all()
+
+        # PPA tasks (if PPA exists)
+        ppa_tasks = (
+            StaffTask.objects.filter(linked_ppa=self.ppa)
+            if self.ppa
+            else StaffTask.objects.none()
+        )
+
+        # Activity tasks (via related project_activities events)
+        activity_ids = self.project_activities.values_list("id", flat=True)
+        activity_tasks = StaffTask.objects.filter(linked_event__id__in=activity_ids)
+
+        # Combine and return distinct tasks
+        return (workflow_tasks | ppa_tasks | activity_tasks).distinct()
+
+    def get_upcoming_activities(self, days=30):
+        """
+        Get upcoming project activities within specified days.
+
+        Args:
+            days (int): Number of days to look ahead (default: 30)
+
+        Returns:
+            QuerySet: Upcoming project activities ordered by start_date
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+
+        cutoff_date = timezone.now() + timedelta(days=days)
+        return self.project_activities.filter(
+            start_date__gte=timezone.now().date(), start_date__lte=cutoff_date.date()
+        ).order_by("start_date")
+
 
 class BudgetApprovalStage(models.Model):
     """

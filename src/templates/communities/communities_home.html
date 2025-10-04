@@ -67,17 +67,21 @@
                             <i class="fas fa-tachometer-alt"></i>
                             <span>OBCMS Dashboard</span>
                         </a>
-                        <a href="{% url 'common:communities_add' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
-                            <i class="fas fa-plus-circle"></i>
-                            <span>Add Barangay OBC</span>
+                        <a href="{% url 'common:communities_manage' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                            <i class="fas fa-users"></i>
+                            <span>Barangay OBCs</span>
                         </a>
-                        <a href="{% url 'common:communities_add_municipality' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                        <a href="{% url 'common:communities_manage_municipal' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-city"></i>
-                            <span>Add Municipal</span>
+                            <span>Municipal OBCs</span>
                         </a>
-                        <a href="{% url 'common:mana_regional_overview' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                        <a href="{% url 'common:communities_manage_provincial' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                            <i class="fas fa-landmark"></i>
+                            <span>Provincial OBCs</span>
+                        </a>
+                        <a href="{% url 'common:mana_geographic_data' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-map"></i>
-                            <span>View on Map</span>
+                            <span>Geographic Data</span>
                         </a>
                         <a href="#" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 backdrop-blur-sm text-white font-medium border border-white/20 hover:bg-white/20 transition-all duration-200">
                             <i class="fas fa-file-export"></i>
@@ -91,16 +95,16 @@
     </section>
 
     <!-- Statistics Cards - 3D Milk White Design -->
-    <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Total OBC Population -->
+    <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total OBC Population Recorded -->
         <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
              style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
             <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
             <div class="relative p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total OBC Population</p>
-                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.communities.total_obc_population_database|default:0 }}</p>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total OBC Population Recorded</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.communities.total_obc_population_database|default:0|intcomma }}</p>
                     </div>
                     <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
                          style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
@@ -117,7 +121,7 @@
             <div class="relative p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Barangay OBCs</p>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total Barangay OBCs</p>
                         <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.communities.total_barangay_obcs_database|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
@@ -135,7 +139,7 @@
             <div class="relative p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Municipal OBCs</p>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total Municipal OBCs</p>
                         <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.communities.total_municipal_obcs_database|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
@@ -145,7 +149,123 @@
                 </div>
             </div>
         </div>
+
+        <!-- Total Provincial OBCs -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total Provincial OBCs</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.communities.total_provincial_obcs_database|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-landmark text-2xl text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Recent Data Feeds -->
+    <section class="mb-10">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Recent Updates</h2>
+                <p class="mt-1 text-sm text-gray-600">Latest barangay, municipal, and provincial OBC records added or refreshed.</p>
+            </div>
+            <div class="flex flex-wrap gap-3 text-sm font-medium">
+                <a href="{% url 'common:communities_manage' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                    <i class="fas fa-list"></i>
+                    View Barangay Directory
+                </a>
+                <a href="{% url 'common:communities_manage_municipal' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                    <i class="fas fa-city"></i>
+                    View Municipal Coverage
+                </a>
+                <a href="{% url 'common:communities_manage_provincial' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                    <i class="fas fa-flag"></i>
+                    View Provincial Coverage
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Barangay Communities</h3>
+                        <p class="text-xs text-gray-500">Most recent barangay-level profiles</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for community in stats.communities.recent|slice:":7" %}
+                    <li class="relative border-l border-emerald-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ community.display_name|default:community.barangay.name }}</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ community.barangay.municipality.name }}, {{ community.barangay.municipality.province.name }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ community.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No recent barangay updates yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-sky-600 text-white shadow-lg">
+                        <i class="fas fa-building"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Municipal Coverage</h3>
+                        <p class="text-xs text-gray-500">Latest city or municipal submissions</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for coverage in stats.municipalities.recent|slice:":7" %}
+                    <li class="relative border-l border-sky-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-sky-500 ring-4 ring-sky-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ coverage.municipality.name }}, {{ coverage.municipality.province.name }}</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ coverage.total_obc_communities|default:"0" }} communities • {{ coverage.estimated_obc_population|default:0|intcomma }} population</p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ coverage.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No recent municipal updates recorded.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-lg">
+                        <i class="fas fa-flag"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Provincial Profiles</h3>
+                        <p class="text-xs text-gray-500">Recent provincial coverage submissions</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for province in stats.provinces.recent|slice:":7" %}
+                    <li class="relative border-l border-purple-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-purple-500 ring-4 ring-purple-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ province.province.name }} Province</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ province.total_obc_communities|default:"0" }} communities • {{ province.estimated_obc_population|default:0|intcomma }} population</p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ province.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No recent provincial updates recorded.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </section>
 
     {% if stats.ethnolinguistic_groups %}
     <div class="mb-8">
@@ -246,7 +366,7 @@
     <!-- Quick Actions -->
     <div>
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {% if user.is_staff %}
             <!-- Add Actions First -->
             <a href="{% url 'common:communities_add' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
@@ -280,6 +400,24 @@
                     </p>
                     <div class="mt-4 flex items-center text-sky-600 text-sm font-medium">
                         <span>Open Municipal Form</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{% url 'common:communities_add_province' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <div class="p-6 flex flex-col flex-grow">
+                    <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-flag text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                        Add Provincial OBC
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600 flex-grow">
+                        Capture provincial-level OBC data for consolidated insights.
+                    </p>
+                    <div class="mt-4 flex items-center text-indigo-600 text-sm font-medium">
+                        <span>Open Provincial Form</span>
                         <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>

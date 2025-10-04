@@ -54,7 +54,88 @@
         background: #3b82f6;
         border-radius: 50%;
     }
+
+    /* Task Filter Styles */
+    .task-filter-btn {
+        color: #6b7280;
+    }
+    .task-filter-btn:hover {
+        background-color: #f3f4f6;
+        color: #111827;
+    }
+    .task-filter-btn.active {
+        background-color: #10b981;
+        color: white;
+    }
+
+    /* Badge Styles */
+    .badge {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .badge-purple { background-color: #ede9fe; color: #7c3aed; }
+    .badge-blue { background-color: #dbeafe; color: #2563eb; }
+    .badge-emerald { background-color: #d1fae5; color: #059669; }
+    .badge-gray { background-color: #f3f4f6; color: #6b7280; }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'common/js/task_modal_enhancements.js' %}"></script>
+<script>
+// Task filtering function
+function filterProjectTasks(filterType) {
+    const tasks = document.querySelectorAll('.task-card');
+    const buttons = document.querySelectorAll('.task-filter-btn');
+
+    // Update button states
+    buttons.forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`filter-${filterType}`).classList.add('active');
+
+    // Filter tasks
+    tasks.forEach(task => {
+        const context = task.dataset.taskContext;
+        let shouldShow = false;
+
+        if (filterType === 'all') {
+            shouldShow = true;
+        } else if (filterType === 'direct') {
+            shouldShow = context === 'project' || context === 'standalone';
+        } else if (filterType === 'activity') {
+            shouldShow = context === 'activity' || context === 'project_activity';
+        }
+
+        if (shouldShow) {
+            task.classList.remove('hidden');
+            task.style.display = 'block';
+        } else {
+            task.classList.add('hidden');
+            task.style.display = 'none';
+        }
+    });
+}
+
+// Task modal functionality
+const modal = document.getElementById('taskModal');
+if (modal) {
+    document.body.addEventListener('click', function(event) {
+        const modalLink = event.target.closest('[data-modal-link]');
+        if (modalLink) {
+            event.preventDefault();
+            modal.classList.remove('hidden');
+            htmx.ajax('GET', modalLink.getAttribute('href'), { target: '#taskModalContent' });
+        }
+        if (event.target.closest('[data-close-modal]') || event.target.matches('[data-modal-backdrop]')) {
+            modal.classList.add('hidden');
+        }
+    });
+}
+</script>
 {% endblock %}
 
 {% block content %}
@@ -82,9 +163,16 @@
                 {% endif %}
             </div>
         </div>
-        <div class="text-end">
-            <div class="display-6 text-emerald-600 fw-bold">{{ progress_percentage }}%</div>
-            <p class="text-muted mb-0">Complete</p>
+        <div class="text-end d-flex flex-column align-items-end gap-3">
+            <a href="{% url 'project_central:project_calendar' workflow.id %}"
+               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-2">
+                <i class="fas fa-calendar-alt"></i>
+                Project Calendar
+            </a>
+            <div>
+                <div class="display-6 text-emerald-600 fw-bold">{{ progress_percentage }}%</div>
+                <p class="text-muted mb-0">Complete</p>
+            </div>
         </div>
     </div>
 
@@ -229,36 +317,173 @@
                 </div>
             </div>
 
-            <!-- Related Tasks -->
-            {% if tasks %}
-            <div class="card mb-4">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-tasks"></i> Related Tasks
-                    </h5>
-                    <span class="badge bg-secondary">{{ tasks|length }}</span>
+            <!-- Project Activities Section -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <i class="fas fa-calendar-alt text-emerald-600"></i>
+                        Project Activities
+                        {% if upcoming_activities %}
+                            <span class="ml-2 px-2.5 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+                                {{ upcoming_activities.count }} upcoming
+                            </span>
+                        {% endif %}
+                    </h3>
+
+                    <!-- Add Activity Quick Action -->
+                    <a href="{% url 'common:coordination_event_add' %}?related_project={{ workflow.id }}&is_project_activity=true"
+                       class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all duration-200 shadow-sm">
+                        <i class="fas fa-plus"></i>
+                        Add Activity
+                    </a>
                 </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        {% for task in tasks|slice:":5" %}
-                        <a href="{% url 'staff:task_detail' task.id %}" class="list-group-item list-group-item-action">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h6 class="mb-1">{{ task.title }}</h6>
-                                    <small class="text-muted">
-                                        Due: {{ task.due_date|date:"M d, Y" }}
-                                    </small>
+
+                {% if upcoming_activities %}
+                    <div class="space-y-3">
+                        {% for activity in upcoming_activities %}
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-emerald-300 transition-colors">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <h4 class="font-medium text-gray-900">{{ activity.title }}</h4>
+
+                                        <!-- Activity Type Badge -->
+                                        {% if activity.project_activity_type %}
+                                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                                                {{ activity.get_project_activity_type_display }}
+                                            </span>
+                                        {% endif %}
+
+                                        <!-- Status Badge -->
+                                        <span class="px-2 py-1 {% if activity.status == 'confirmed' %}bg-emerald-100 text-emerald-700{% elif activity.status == 'tentative' %}bg-amber-100 text-amber-700{% else %}bg-gray-100 text-gray-700{% endif %} text-xs font-medium rounded-full">
+                                            {{ activity.get_status_display }}
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center gap-4 text-sm text-gray-600">
+                                        <span class="flex items-center gap-1">
+                                            <i class="fas fa-calendar text-gray-400"></i>
+                                            {{ activity.start_date|date:"M d, Y" }}
+                                            {% if activity.start_time %}
+                                                at {{ activity.start_time|time:"g:i A" }}
+                                            {% endif %}
+                                        </span>
+
+                                        {% if activity.venue %}
+                                            <span class="flex items-center gap-1">
+                                                <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                                {{ activity.venue|truncatewords:5 }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                <span class="badge bg-{{ task.get_status_display|lower }}">
-                                    {{ task.get_status_display }}
-                                </span>
+
+                                <a href="/api/coordination/events/{{ activity.id }}/"
+                                   class="ml-4 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg text-sm font-medium transition-colors">
+                                    View Details
+                                    <i class="fas fa-arrow-right ml-1"></i>
+                                </a>
                             </div>
-                        </a>
                         {% endfor %}
                     </div>
+                {% else %}
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-calendar-times text-4xl text-gray-300 mb-3"></i>
+                        <p class="text-sm">No upcoming activities scheduled</p>
+                        <p class="text-xs mt-1">Click "Add Activity" to schedule project meetings or events</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Task Filters & All Project Tasks -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <i class="fas fa-tasks text-blue-600"></i>
+                        Project Tasks
+                    </h3>
+
+                    <div class="flex items-center gap-3">
+                        <!-- Filter Buttons -->
+                        <div class="inline-flex rounded-lg border border-gray-200 p-1">
+                            <button onclick="filterProjectTasks('all')"
+                                    id="filter-all"
+                                    class="task-filter-btn active px-3 py-1.5 text-sm font-medium rounded-md transition-colors">
+                                All Tasks
+                            </button>
+                            <button onclick="filterProjectTasks('direct')"
+                                    id="filter-direct"
+                                    class="task-filter-btn px-3 py-1.5 text-sm font-medium rounded-md transition-colors">
+                                Direct Only
+                            </button>
+                            <button onclick="filterProjectTasks('activity')"
+                                    id="filter-activity"
+                                    class="task-filter-btn px-3 py-1.5 text-sm font-medium rounded-md transition-colors">
+                                Activity Tasks
+                            </button>
+                        </div>
+
+                        <!-- Create Project Task Button -->
+                        <a href="{% url 'common:staff_task_modal_create' %}?linked_workflow={{ workflow.id }}"
+                           data-modal-link
+                           class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-sm font-medium rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all duration-200 shadow-sm">
+                            <i class="fas fa-plus"></i>
+                            Create Task
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Tasks List -->
+                <div id="tasks-container" class="space-y-3">
+                    {% for task in all_tasks %}
+                        <div class="task-card p-4 bg-gray-50 rounded-lg border border-gray-200"
+                             data-task-context="{{ task.task_context }}">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h4 class="font-medium text-gray-900 mb-2">{{ task.title }}</h4>
+
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <!-- Task Context Badge -->
+                                        {% if task.task_context == 'project_activity' %}
+                                            <span class="badge badge-purple">
+                                                <i class="fas fa-project-diagram"></i> Project Activity
+                                            </span>
+                                        {% elif task.task_context == 'project' %}
+                                            <span class="badge badge-blue">Project</span>
+                                        {% elif task.task_context == 'activity' %}
+                                            <span class="badge badge-emerald">Activity</span>
+                                        {% else %}
+                                            <span class="badge badge-gray">Standalone</span>
+                                        {% endif %}
+
+                                        <!-- Linked Workflow (if exists) -->
+                                        {% if task.linked_workflow %}
+                                            <span class="text-xs text-gray-600 flex items-center gap-1">
+                                                <i class="fas fa-folder text-blue-500"></i>
+                                                {{ task.linked_workflow.primary_need.title|truncatewords:5 }}
+                                            </span>
+                                        {% endif %}
+
+                                        <!-- Linked Event (if exists) -->
+                                        {% if task.linked_event %}
+                                            <a href="/api/coordination/events/{{ task.linked_event.id }}/"
+                                               class="text-xs text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+                                                <i class="fas fa-calendar"></i>
+                                                {{ task.linked_event.title|truncatewords:5 }}
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <a href="{% url 'common:staff_task_modal' task.id %}"
+                                   data-modal-link
+                                   class="ml-4 text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg text-sm font-medium">
+                                    View
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
-            {% endif %}
         </div>
 
         <!-- Right Column: History & Alerts -->
@@ -323,5 +548,11 @@
             {% endif %}
         </div>
     </div>
+</div>
+
+<!-- Task Modal -->
+<div id="taskModal" class="fixed inset-0 hidden z-50 flex items-center justify-center px-4" role="dialog">
+    <div class="absolute inset-0 bg-gray-900 bg-opacity-50" data-modal-backdrop></div>
+    <div class="relative max-h-[90vh] w-full sm:w-auto overflow-y-auto" id="taskModalContent"></div>
 </div>
 {% endblock %}

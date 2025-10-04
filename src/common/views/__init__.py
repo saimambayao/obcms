@@ -188,6 +188,8 @@ from .recommendations import (
     recommendations_home,
     recommendations_manage,
     recommendations_new,
+    recommendations_create,
+    recommendations_autosave,
     recommendations_stats_cards,
 )
 
@@ -327,6 +329,8 @@ __all__ = [
     "recommendations_home",
     "recommendations_stats_cards",
     "recommendations_new",
+    "recommendations_create",
+    "recommendations_autosave",
     "recommendations_manage",
     "recommendations_by_area",
     "calendar_event_update",

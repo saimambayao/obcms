@@ -169,6 +169,16 @@ def monitoring_dashboard(request):
 
     stats_cards = [moa_stats, oobc_stats, request_stats]
 
+    recent_moa_entries = entries.filter(category="moa_ppa").order_by(
+        "-updated_at", "-created_at"
+    )[:10]
+    recent_oobc_entries = entries.filter(category="oobc_ppa").order_by(
+        "-updated_at", "-created_at"
+    )[:10]
+    recent_request_entries = entries.filter(category="obc_request").order_by(
+        "-updated_at", "-created_at"
+    )[:10]
+
     grouped_entries = defaultdict(list)
     for entry in entries:
         grouped_entries[entry.category].append(entry)
@@ -288,6 +298,11 @@ def monitoring_dashboard(request):
         "stats_cards": stats_cards,
         "quick_actions": quick_actions,
         "entries": entries,
+        "recent_feeds": {
+            "moa": recent_moa_entries,
+            "oobc": recent_oobc_entries,
+            "requests": recent_request_entries,
+        },
         "category_sections": category_sections,
         "category_summary": category_summary,
         "status_breakdown": status_breakdown,

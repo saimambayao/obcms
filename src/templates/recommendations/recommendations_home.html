@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Recommendations Tracking - OBC Management System{% endblock %}
 
@@ -244,83 +245,118 @@
         </div>
     </div>
 
-    <!-- Recent Recommendations & Evidence -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <!-- Recent Recommendations -->
-        <div class="bg-white rounded-lg shadow-lg border border-gray-200">
-            <div class="p-6">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-history text-orange-600 mr-3"></i>
-                    Recent Recommendation Updates
-                </h2>
-                <div class="space-y-4">
-                    {% for recommendation in stats.recommendations_tracking.recent_recommendations|slice:":5" %}
-                    <div class="flex items-center p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-200">
-                        <div class="flex-shrink-0">
-                            <div class="p-2 bg-orange-500 rounded-lg">
-                                <i class="fas fa-file-alt text-white"></i>
-                            </div>
-                        </div>
-                        <div class="ml-4 flex-1">
-                            <p class="text-sm font-semibold text-gray-900">{{ recommendation.title }}</p>
-                            <p class="text-xs text-gray-600">{{ recommendation.category|title }} • {{ recommendation.priority|title }} Priority</p>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                         {% if recommendation.status == 'implemented' %}bg-green-100 text-green-800
-                                         {% elif recommendation.status == 'under_review' %}bg-yellow-100 text-yellow-800
-                                         {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                {{ recommendation.status|title }}
-                            </span>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="text-center py-8 text-gray-500">
-                        <i class="fas fa-file-plus text-3xl mb-4"></i>
-                        <p>No recent recommendation updates found</p>
-                    </div>
-                    {% endfor %}
-                </div>
+    <!-- Recent Updates Feed -->
+    <section class="mb-10">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Recent Updates</h2>
+                <p class="mt-1 text-sm text-gray-600">Latest policy, programmatic, and service recommendations logged across the portfolio.</p>
+            </div>
+            <div class="flex flex-wrap gap-3 text-sm font-medium">
+                <a href="{% url 'common:recommendations_manage' %}" class="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700">
+                    <i class="fas fa-lightbulb"></i>
+                    Manage Policies
+                </a>
+                <a href="{% url 'common:recommendations_manage' %}" class="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700">
+                    <i class="fas fa-layer-group"></i>
+                    Systematic Programs
+                </a>
+                <a href="{% url 'common:recommendations_manage' %}" class="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700">
+                    <i class="fas fa-hand-holding-heart"></i>
+                    Service Improvements
+                </a>
             </div>
         </div>
 
-        <!-- Evidence Contributions -->
-        <div class="bg-white rounded-lg shadow-lg border border-gray-200">
-            <div class="p-6">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-chart-line text-blue-600 mr-3"></i>
-                    Evidence Contributions
-                </h2>
-                <div class="space-y-4">
-                    {% for evidence in stats.recommendations_tracking.recent_evidence|slice:":5" %}
-                    <div class="flex items-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                        <div class="flex-shrink-0">
-                            <div class="p-2 bg-blue-500 rounded-lg">
-                                <i class="fas fa-chart-bar text-white"></i>
-                            </div>
-                        </div>
-                        <div class="ml-4 flex-1">
-                            <p class="text-sm font-semibold text-gray-900">{{ evidence.title }}</p>
-                            <p class="text-xs text-gray-600">{{ evidence.evidence_type|title }} • {{ evidence.date_submitted|date:"M d, Y" }}</p>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                         {% if evidence.verified %}bg-green-100 text-green-800
-                                         {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                                {% if evidence.verified %}Verified{% else %}Pending{% endif %}
-                            </span>
-                        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg">
+                        <i class="fas fa-lightbulb"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Policy Recommendations</h3>
+                        <p class="text-xs text-gray-500">Most recently updated proposals</p>
                     </div>
-                    {% empty %}
-                    <div class="text-center py-8 text-gray-500">
-                        <i class="fas fa-chart-plus text-3xl mb-4"></i>
-                        <p>No evidence contributions found</p>
-                    </div>
-                    {% endfor %}
                 </div>
+                <ul class="space-y-4">
+                    {% for recommendation in stats.recent.policies|slice:":7" %}
+                    <li class="relative border-l border-amber-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-amber-500 ring-4 ring-amber-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ recommendation.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-600 border border-amber-100">
+                                {{ recommendation.get_status_display|default:recommendation.status|capfirst }}
+                            </span>
+                            {{ recommendation.category|default:"General"|title }} • {{ recommendation.priority|default:"Normal"|title }} priority
+                        </p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ recommendation.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No recommendation activity recorded yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-lg">
+                        <i class="fas fa-layer-group"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Systematic Programs</h3>
+                        <p class="text-xs text-gray-500">Programmatic recommendations recently updated</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for recommendation in stats.recent.programs|slice:":7" %}
+                    <li class="relative border-l border-indigo-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-indigo-500 ring-4 ring-indigo-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ recommendation.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-600 border border-indigo-100">
+                                {{ recommendation.get_status_display|default:recommendation.status|capfirst }}
+                            </span>
+                            {{ recommendation.category|default:"Program"|title }}
+                        </p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ recommendation.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No program recommendations recorded yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg">
+                        <i class="fas fa-hand-holding-heart"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Services</h3>
+                        <p class="text-xs text-gray-500">Service delivery recommendations recently updated</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for recommendation in stats.recent.services|slice:":7" %}
+                    <li class="relative border-l border-emerald-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ recommendation.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                {{ recommendation.get_status_display|default:recommendation.status|capfirst }}
+                            </span>
+                            {{ recommendation.category|default:"Service"|title }}
+                        </p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ recommendation.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No service recommendations recorded yet.</li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- Recommendations Areas -->
     <div class="bg-white rounded-lg shadow-lg border border-gray-200 mb-8">
@@ -329,101 +365,98 @@
                 <i class="fas fa-layer-group text-orange-600 mr-3"></i>
                 Recommendations Areas
             </h2>
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
-                <!-- Economic Development -->
-                <a href="{% url 'common:recommendations_by_area' 'economic-development' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {% for area_key, area_info in stats.areas.items %}
+                <a href="{% url 'common:recommendations_by_area' area_info.slug %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
                     <div class="p-6 flex flex-col flex-grow">
+                        {% if area_info.color == 'green' %}
                         <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
-                            <i class="fas fa-chart-line text-white text-xl"></i>
+                            <i class="{{ area_info.icon }} text-white text-xl"></i>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
-                            Economic Development
+                            {{ area_info.name }}
                         </h3>
                         <p class="mt-2 text-sm text-gray-600 flex-grow">
-                            View economic development recommendations.
+                            View {{ area_info.name|lower }} recommendations.
                         </p>
                         <div class="mt-4 flex items-center text-green-600 text-sm font-medium">
-                            <span>{{ stats.areas.economic_development|default:0 }} records</span>
+                            <span>{{ area_info.total_recommendations|default:0 }} records</span>
                             <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                         </div>
-                    </div>
-                </a>
-
-                <!-- Social Development -->
-                <a href="{% url 'common:recommendations_by_area' 'social-development' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
-                    <div class="p-6 flex flex-col flex-grow">
+                        {% elif area_info.color == 'purple' %}
                         <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
-                            <i class="fas fa-users text-white text-xl"></i>
+                            <i class="{{ area_info.icon }} text-white text-xl"></i>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                            Social Development
+                            {{ area_info.name }}
                         </h3>
                         <p class="mt-2 text-sm text-gray-600 flex-grow">
-                            View social development recommendations.
+                            View {{ area_info.name|lower }} recommendations.
                         </p>
                         <div class="mt-4 flex items-center text-purple-600 text-sm font-medium">
-                            <span>{{ stats.areas.social_development|default:0 }} records</span>
+                            <span>{{ area_info.total_recommendations|default:0 }} records</span>
                             <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                         </div>
-                    </div>
-                </a>
-
-                <!-- Cultural Development -->
-                <a href="{% url 'common:recommendations_by_area' 'cultural-development' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
-                    <div class="p-6 flex flex-col flex-grow">
+                        {% elif area_info.color == 'orange' %}
                         <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mb-4">
-                            <i class="fas fa-mosque text-white text-xl"></i>
+                            <i class="{{ area_info.icon }} text-white text-xl"></i>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
-                            Cultural Development
+                            {{ area_info.name }}
                         </h3>
                         <p class="mt-2 text-sm text-gray-600 flex-grow">
-                            View cultural development recommendations.
+                            View {{ area_info.name|lower }} recommendations.
                         </p>
                         <div class="mt-4 flex items-center text-orange-600 text-sm font-medium">
-                            <span>{{ stats.areas.cultural_development|default:0 }} records</span>
+                            <span>{{ area_info.total_recommendations|default:0 }} records</span>
                             <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                         </div>
-                    </div>
-                </a>
-
-                <!-- Rehabilitation & Development -->
-                <a href="{% url 'common:recommendations_by_area' 'rehabilitation-development' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
-                    <div class="p-6 flex flex-col flex-grow">
+                        {% elif area_info.color == 'teal' %}
+                        <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center mb-4">
+                            <i class="{{ area_info.icon }} text-white text-xl"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">
+                            {{ area_info.name }}
+                        </h3>
+                        <p class="mt-2 text-sm text-gray-600 flex-grow">
+                            View {{ area_info.name|lower }} recommendations.
+                        </p>
+                        <div class="mt-4 flex items-center text-teal-600 text-sm font-medium">
+                            <span>{{ area_info.total_recommendations|default:0 }} records</span>
+                            <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                        {% elif area_info.color == 'blue' %}
                         <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
-                            <i class="fas fa-hammer text-white text-xl"></i>
+                            <i class="{{ area_info.icon }} text-white text-xl"></i>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                            Rehabilitation & Development
+                            {{ area_info.name }}
                         </h3>
                         <p class="mt-2 text-sm text-gray-600 flex-grow">
-                            View rehabilitation recommendations.
+                            View {{ area_info.name|lower }} recommendations.
                         </p>
                         <div class="mt-4 flex items-center text-blue-600 text-sm font-medium">
-                            <span>{{ stats.areas.rehabilitation_development|default:0 }} records</span>
+                            <span>{{ area_info.total_recommendations|default:0 }} records</span>
                             <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                         </div>
-                    </div>
-                </a>
-
-                <!-- Protection of Rights -->
-                <a href="{% url 'common:recommendations_by_area' 'protection-rights' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
-                    <div class="p-6 flex flex-col flex-grow">
+                        {% elif area_info.color == 'red' %}
                         <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center mb-4">
-                            <i class="fas fa-balance-scale text-white text-xl"></i>
+                            <i class="{{ area_info.icon }} text-white text-xl"></i>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900 group-hover:text-red-600 transition-colors">
-                            Protection of Rights
+                            {{ area_info.name }}
                         </h3>
                         <p class="mt-2 text-sm text-gray-600 flex-grow">
-                            View protection of rights recommendations.
+                            View {{ area_info.name|lower }} recommendations.
                         </p>
                         <div class="mt-4 flex items-center text-red-600 text-sm font-medium">
-                            <span>{{ stats.areas.protection_rights|default:0 }} records</span>
+                            <span>{{ area_info.total_recommendations|default:0 }} records</span>
                             <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                         </div>
+                        {% endif %}
                     </div>
                 </a>
+                {% endfor %}
             </div>
         </div>
     </div>

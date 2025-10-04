@@ -1,0 +1,143 @@
+{# Barangay OBC Detail - Sidebar Quick Actions #}
+{# Insert this in provincial_view.html or barangay detail view as a sidebar #}
+
+<div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden sticky top-6">
+    <div class="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-4">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fas fa-bolt"></i>
+            Quick Actions
+        </h3>
+    </div>
+    <div class="p-4 space-y-2">
+        <!-- Edit Community -->
+        <a
+            href="{% url 'common:communities_edit' coverage.id %}"
+            class="group flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-200"
+        >
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-indigo-100 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-200">
+                <i class="fas fa-edit text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-900 group-hover:text-indigo-700 truncate">
+                    Edit Community
+                </p>
+            </div>
+            <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:translate-x-1 group-hover:text-indigo-600 transition-all duration-200"></i>
+        </a>
+
+        <!-- Add MANA Assessment -->
+        <a
+            href="{% url 'mana:create_assessment' %}?barangay={{ coverage.barangay.id }}"
+            class="group flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
+        >
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-200">
+                <i class="fas fa-clipboard-check text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-900 group-hover:text-blue-700 truncate">
+                    Add MANA Assessment
+                </p>
+            </div>
+            <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:translate-x-1 group-hover:text-blue-600 transition-all duration-200"></i>
+        </a>
+
+        <!-- Log Coordination Activity -->
+        <a
+            href="{% url 'coordination:event_create' %}?barangay={{ coverage.barangay.id }}"
+            class="group flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all duration-200"
+        >
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-200">
+                <i class="fas fa-calendar-plus text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-900 group-hover:text-emerald-700 truncate">
+                    Log Activity
+                </p>
+            </div>
+            <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:translate-x-1 group-hover:text-emerald-600 transition-all duration-200"></i>
+        </a>
+
+        <!-- Create Recommendation -->
+        <a
+            href="{% url 'policies:create_recommendation' %}?barangay={{ coverage.barangay.id }}"
+            class="group flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200"
+        >
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-purple-100 text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all duration-200">
+                <i class="fas fa-lightbulb text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-900 group-hover:text-purple-700 truncate">
+                    Create Recommendation
+                </p>
+            </div>
+            <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:translate-x-1 group-hover:text-purple-600 transition-all duration-200"></i>
+        </a>
+
+        <!-- View Demographics -->
+        <button
+            type="button"
+            onclick="scrollToDemographics()"
+            class="w-full group flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 hover:border-amber-300 hover:bg-amber-50 transition-all duration-200"
+        >
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-amber-100 text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-all duration-200">
+                <i class="fas fa-chart-pie text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0 text-left">
+                <p class="text-sm font-semibold text-gray-900 group-hover:text-amber-700 truncate">
+                    View Demographics
+                </p>
+            </div>
+            <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:translate-x-1 group-hover:text-amber-600 transition-all duration-200"></i>
+        </button>
+
+        <!-- Generate Profile -->
+        <a
+            href="{% url 'common:communities_view' coverage.id %}?export=pdf"
+            class="group flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 hover:border-rose-300 hover:bg-rose-50 transition-all duration-200"
+            target="_blank"
+        >
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-rose-100 text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-all duration-200">
+                <i class="fas fa-file-pdf text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-900 group-hover:text-rose-700 truncate">
+                    Generate Profile
+                </p>
+                <p class="text-xs text-gray-500">Export as PDF</p>
+            </div>
+            <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:translate-x-1 group-hover:text-rose-600 transition-all duration-200"></i>
+        </a>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="border-t border-gray-200 px-5 py-4 bg-gray-50">
+        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Quick Stats</h4>
+        <div class="space-y-2 text-sm">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-600">Population</span>
+                <span class="font-semibold text-gray-900">{{ coverage.estimated_obc_population|default:0 }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-gray-600">Households</span>
+                <span class="font-semibold text-gray-900">{{ coverage.households|default:0 }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-gray-600">Assessments</span>
+                <span class="font-semibold text-gray-900">{{ coverage.assessments.count|default:0 }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function scrollToDemographics() {
+    const demographicsSection = document.querySelector('[data-section="demographics"]') ||
+                                document.querySelector('h2:contains("Demographics")') ||
+                                document.querySelector('.demographics-section');
+    if (demographicsSection) {
+        demographicsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        alert('Demographics section not found on this page.');
+    }
+}
+</script>

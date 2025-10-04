@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}OOBC Management - OBC Management System{% endblock %}
 
@@ -85,6 +86,109 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Updates Feed -->
+    <section class="mb-10">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Recent Updates</h2>
+                <p class="mt-1 text-sm text-gray-600">Latest staff onboarding, pending approvals, and budgeting scenario changes.</p>
+            </div>
+            <div class="flex flex-wrap gap-3 text-sm font-medium">
+                <a href="{% url 'common:staff_management' %}" class="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700">
+                    <i class="fas fa-users"></i>
+                    Staff Directory
+                </a>
+                <a href="{% url 'common:user_approvals' %}" class="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700">
+                    <i class="fas fa-user-check"></i>
+                    Manage Approvals
+                </a>
+                <a href="{% url 'common:planning_budgeting' %}" class="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700">
+                    <i class="fas fa-chart-line"></i>
+                    Budget Scenarios
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg">
+                        <i class="fas fa-user-plus"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">New Staff Members</h3>
+                        <p class="text-xs text-gray-500">Most recent OOBC staff onboarding</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for staff in recent_feeds.staff|slice:":7" %}
+                    <li class="relative border-l border-emerald-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ staff.get_full_name|default:staff.username }}</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ staff.get_user_type_display }}{% if staff.organization %} • {{ staff.organization }}{% endif %}</p>
+                        <p class="text-xs text-gray-400 mt-1">Joined {{ staff.date_joined|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No recent staff onboarding activity.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg">
+                        <i class="fas fa-user-clock"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Pending Approvals</h3>
+                        <p class="text-xs text-gray-500">Requests awaiting verification</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for pending in recent_feeds.pending|slice:":7" %}
+                    <li class="relative border-l border-amber-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-amber-500 ring-4 ring-amber-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ pending.get_full_name|default:pending.username }}</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ pending.get_user_type_display }}{% if pending.organization %} • {{ pending.organization }}{% endif %}</p>
+                        <p class="text-xs text-gray-400 mt-1">Requested {{ pending.date_joined|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No pending approvals at the moment.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-lg">
+                        <i class="fas fa-coins"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Budget Scenarios</h3>
+                        <p class="text-xs text-gray-500">Latest planning scenario iterations</p>
+                    </div>
+                </div>
+                <ul class="space-y-4">
+                    {% for scenario in recent_feeds.scenarios|slice:":7" %}
+                    <li class="relative border-l border-blue-100 pl-6">
+                        <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-blue-500 ring-4 ring-blue-100"></span>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ scenario.name }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">
+                                {{ scenario.get_status_display|default:scenario.status|capfirst }}
+                            </span>
+                            {{ scenario.get_scenario_type_display|default:scenario.scenario_type|title }}
+                        </p>
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ scenario.updated_at|naturaltime }}</p>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No budget scenario changes recorded yet.</li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
     </section>
@@ -235,6 +339,67 @@
                             <i class="fas fa-users text-emerald-300"></i>
                             Staff & Community Tools
                         </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </a>
+
+    <!-- Project-Activity Integration Hub -->
+    <a href="{% url 'project_central:portfolio_dashboard' %}" class="block group">
+        <div class="bg-gradient-to-br from-emerald-500 via-teal-500 to-sky-600 rounded-2xl shadow-2xl border-2 border-emerald-300 overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-3xl">
+            <div class="px-8 py-10 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+
+                <div class="relative z-10">
+                    <div class="flex items-start justify-between mb-6">
+                        <div class="flex items-center gap-4">
+                            <div class="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="fas fa-project-diagram text-white text-3xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-3xl font-bold text-white mb-2">Project-Activity Integration</h2>
+                                <p class="text-emerald-100 text-lg">Connect projects, activities, and staff tasks</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-white">
+                            <span class="text-sm font-medium">View Dashboard</span>
+                            <i class="fas fa-arrow-right transform group-hover:translate-x-2 transition-transform"></i>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/20">
+                            <div class="flex items-center gap-2 mb-1">
+                                <i class="fas fa-calendar-alt text-white"></i>
+                                <span class="text-sm font-semibold text-white">Project Calendar</span>
+                            </div>
+                            <p class="text-xs text-emerald-100">View project timelines</p>
+                        </div>
+
+                        <div class="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/20">
+                            <div class="flex items-center gap-2 mb-1">
+                                <i class="fas fa-tasks text-white"></i>
+                                <span class="text-sm font-semibold text-white">Activities</span>
+                            </div>
+                            <p class="text-xs text-emerald-100">Track project activities</p>
+                        </div>
+
+                        <div class="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/20">
+                            <div class="flex items-center gap-2 mb-1">
+                                <i class="fas fa-link text-white"></i>
+                                <span class="text-sm font-semibold text-white">Staff Tasks</span>
+                            </div>
+                            <p class="text-xs text-emerald-100">Connect to staff board</p>
+                        </div>
+
+                        <div class="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/20">
+                            <div class="flex items-center gap-2 mb-1">
+                                <i class="fas fa-handshake text-white"></i>
+                                <span class="text-sm font-semibold text-white">Coordination</span>
+                            </div>
+                            <p class="text-xs text-emerald-100">Sync coordination events</p>
+                        </div>
                     </div>
                 </div>
             </div>

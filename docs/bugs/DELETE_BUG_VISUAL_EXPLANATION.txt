@@ -1,0 +1,213 @@
+================================================================================
+CALENDAR MODAL DELETE BUG - VISUAL EXPLANATION
+================================================================================
+
+PROBLEM: Event handler gets DESTROYED before it can fire
+--------------------------------------------------------------------------------
+
+CURRENT BROKEN FLOW:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1: INITIAL STATE
+┌─────────────────────────────────────────────────────────────┐
+│ <div id="taskModal">                                        │
+│   <div id="taskModalContent">                               │
+│     <form hx-post="/delete/123/"                            │
+│           hx-target="#taskModalContent"    ← TARGETS PARENT │
+│           hx-swap="innerHTML"                               │
+│           hx-on::after-request="..."       ← HANDLER HERE   │
+│     >                                                        │
+│       <button>Delete</button>                               │
+│     </form>                                                  │
+│   </div>                                                     │
+│ </div>                                                       │
+└─────────────────────────────────────────────────────────────┘
+
+Step 2: USER CLICKS DELETE
+┌─────────────────────────────────────────────────────────────┐
+│ 1. Form submits POST to /delete/123/                        │
+│ 2. Server receives request                                  │
+│ 3. Server deletes task from database ✓                      │
+│ 4. Server returns HTTP 200 (empty body)                     │
+│ 5. HTMX receives response                                   │
+└─────────────────────────────────────────────────────────────┘
+
+Step 3: HTMX BEGINS SWAP (This is where it breaks!)
+┌─────────────────────────────────────────────────────────────┐
+│ HTMX executes: document.getElementById('taskModalContent')  │
+│                        .innerHTML = ""                       │
+│                                                              │
+│ BEFORE:                            AFTER:                   │
+│ ┌──────────────────────┐          ┌──────────────────────┐ │
+│ │ #taskModalContent    │          │ #taskModalContent    │ │
+│ │  ┌────────────────┐  │          │                      │ │
+│ │  │ <form>         │  │    →     │ [EMPTY]              │ │
+│ │  │  handler here  │  │          │                      │ │
+│ │  └────────────────┘  │          │                      │ │
+│ └──────────────────────┘          └──────────────────────┘ │
+│                                                              │
+│ ❌ Form element DESTROYED                                   │
+│ ❌ Event handler DESTROYED (was attached to form)           │
+│ ❌ hx-on::after-request NEVER FIRES                         │
+└─────────────────────────────────────────────────────────────┘
+
+Step 4: WHAT SHOULD HAPPEN (but doesn't)
+┌─────────────────────────────────────────────────────────────┐
+│ ❌ hx-on::after-request should fire                         │
+│ ❌ Should dispatch 'task-modal-close' event                 │
+│ ❌ Should dispatch 'task-board-refresh' event               │
+│ ❌ Modal should close                                       │
+│ ❌ Calendar should refresh                                  │
+│                                                              │
+│ BUT NONE OF THIS HAPPENS!                                   │
+└─────────────────────────────────────────────────────────────┘
+
+Step 5: ACTUAL RESULT
+┌─────────────────────────────────────────────────────────────┐
+│ ❌ Modal stays open (empty content)                         │
+│ ❌ Calendar shows deleted item (stale data)                 │
+│ ❌ User confused - did delete work?                         │
+│ ✓ Database record IS deleted (only success)                │
+└─────────────────────────────────────────────────────────────┘
+
+
+THE FIX: Move handler OUTSIDE the swap target
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1: NEW STRUCTURE (Fixed)
+┌─────────────────────────────────────────────────────────────┐
+│ <div id="taskModal"                                         │
+│      hx-on::htmx:after-request="..."  ← HANDLER MOVED HERE  │
+│ >                                                            │
+│   <div id="taskModalContent">         ← Swap target         │
+│     <form hx-post="/delete/123/"                            │
+│           hx-target="#taskModalContent"                     │
+│           hx-swap="innerHTML"                               │
+│     >                                 ← NO handler on form  │
+│       <button>Delete</button>                               │
+│     </form>                                                  │
+│   </div>                                                     │
+│ </div>                                                       │
+└─────────────────────────────────────────────────────────────┘
+
+Step 2: USER CLICKS DELETE
+┌─────────────────────────────────────────────────────────────┐
+│ Same as before - server deletes successfully                │
+└─────────────────────────────────────────────────────────────┘
+
+Step 3: HTMX SWAPS CONTENT
+┌─────────────────────────────────────────────────────────────┐
+│ HTMX executes: taskModalContent.innerHTML = ""              │
+│                                                              │
+│ ┌──────────────────────────────────────────────────────┐   │
+│ │ #taskModal (handler still here ✓)                    │   │
+│ │  ┌────────────────────────────────────────────────┐  │   │
+│ │  │ #taskModalContent                              │  │   │
+│ │  │  ┌──────────────┐        ┌──────────────┐     │  │   │
+│ │  │  │ <form>       │   →    │              │     │  │   │
+│ │  │  │ (destroyed)  │        │ [EMPTY]      │     │  │   │
+│ │  │  └──────────────┘        └──────────────┘     │  │   │
+│ │  └────────────────────────────────────────────────┘  │   │
+│ └──────────────────────────────────────────────────────┘   │
+│                                                              │
+│ ✓ Form destroyed (expected)                                 │
+│ ✓ Handler on #taskModal SURVIVES (not swapped)             │
+└─────────────────────────────────────────────────────────────┘
+
+Step 4: HANDLER FIRES (because it survived!)
+┌─────────────────────────────────────────────────────────────┐
+│ HTMX fires htmx:after-request event from form               │
+│   ↓ (event bubbles up)                                      │
+│ Event reaches #taskModalContent                             │
+│   ↓ (continues bubbling)                                    │
+│ Event reaches #taskModal                                    │
+│   ✓ Handler catches it!                                     │
+│                                                              │
+│ Handler checks:                                              │
+│   if (event.detail.successful &&                            │
+│       event.detail.pathInfo.requestPath.includes('/delete/'))│
+│                                                              │
+│ ✓ Both conditions TRUE                                      │
+│ ✓ Handler executes                                          │
+└─────────────────────────────────────────────────────────────┘
+
+Step 5: EVENTS DISPATCHED
+┌─────────────────────────────────────────────────────────────┐
+│ document.body.dispatchEvent(new CustomEvent('task-modal-close'));│
+│   ↓                                                          │
+│ closeTaskModal() function runs                              │
+│   ↓                                                          │
+│ Modal hidden, overflow restored                             │
+│                                                              │
+│ document.body.dispatchEvent(new CustomEvent('task-board-refresh'));│
+│   ↓                                                          │
+│ calendar.refetchEvents() runs                               │
+│   ↓                                                          │
+│ Calendar fetches fresh data from server                     │
+│   ↓                                                          │
+│ Deleted item no longer appears                              │
+└─────────────────────────────────────────────────────────────┘
+
+Step 6: SUCCESS!
+┌─────────────────────────────────────────────────────────────┐
+│ ✓ Modal closed                                              │
+│ ✓ Calendar refreshed                                        │
+│ ✓ Item removed from view                                    │
+│ ✓ Toast notification shown                                  │
+│ ✓ User sees immediate feedback                              │
+└─────────────────────────────────────────────────────────────┘
+
+
+KEY INSIGHT: Event Bubbling Saves The Day
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Even though the form is destroyed, the htmx:after-request event is
+dispatched BEFORE the swap completes. The event bubbles up the DOM tree:
+
+Form (destroyed) → taskModalContent → taskModal (handler here!) → body → html
+
+By placing the handler on #taskModal (OUTSIDE the swap target), we catch
+the event BEFORE the form is destroyed.
+
+
+ANTI-PATTERN vs BEST PRACTICE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ ANTI-PATTERN: Self-Destructive Form
+┌─────────────────────────────────────────────────────────────┐
+│ <div id="container">                                        │
+│   <form hx-target="#container"     ← Form targets parent   │
+│         hx-on::after-request="...">← Handler on form        │
+│   </form>                                                    │
+│ </div>                                                       │
+│                                                              │
+│ Problem: Swap destroys form AND handler                     │
+└─────────────────────────────────────────────────────────────┘
+
+✓ BEST PRACTICE: Persistent Handler
+┌─────────────────────────────────────────────────────────────┐
+│ <div id="container"                                         │
+│      hx-on::htmx:after-request="..."> ← Handler on parent   │
+│   <form hx-target="#container">                             │
+│   </form>                                                    │
+│ </div>                                                       │
+│                                                              │
+│ Solution: Handler survives swap                             │
+└─────────────────────────────────────────────────────────────┘
+
+
+IMPLEMENTATION SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Files to change:        3
+Lines to change:        ~10
+Complexity:             LOW
+Risk:                   LOW
+Expected fix time:      30 minutes
+Testing time:           30 minutes
+
+Total effort:           1 hour
+
+Confidence level:       95% (very high)
+
+================================================================================

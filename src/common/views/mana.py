@@ -595,7 +595,7 @@ def mana_home(request):
             "completed": completed_assessments,
             "ongoing": in_progress_assessments,
             "by_status": assessments.values("status").annotate(count=Count("id")),
-            "recent": assessments.order_by("-created_at")[:10],
+            "recent": assessments.order_by("-updated_at", "-created_at")[:10],
         },
         "needs": {
             "total": needs.count(),
@@ -603,7 +603,7 @@ def mana_home(request):
             "by_category": needs.values("category__name").annotate(count=Count("id"))[
                 :10
             ],
-            "recent": needs.order_by("-created_at")[:10],
+            "recent": needs.order_by("-updated_at", "-created_at")[:10],
         },
         "baseline_studies": {
             "total": baseline_studies.count(),
@@ -611,6 +611,7 @@ def mana_home(request):
             "ongoing": baseline_studies.filter(
                 status__in=["data_collection", "analysis"]
             ).count(),
+            "recent": baseline_studies.order_by("-updated_at", "-created_at")[:10],
         },
     }
 

@@ -1074,6 +1074,27 @@ class StaffTask(models.Model):
         help_text="Specific task type within domain",
     )
 
+    # ========== TASK CONTEXT (Phase 1 - Project-Activity Integration) ==========
+
+    TASK_CONTEXT_STANDALONE = "standalone"
+    TASK_CONTEXT_PROJECT = "project"
+    TASK_CONTEXT_ACTIVITY = "activity"
+    TASK_CONTEXT_PROJECT_ACTIVITY = "project_activity"
+    TASK_CONTEXT_CHOICES = [
+        (TASK_CONTEXT_STANDALONE, "Standalone Task"),
+        (TASK_CONTEXT_PROJECT, "Project Task"),
+        (TASK_CONTEXT_ACTIVITY, "Activity/Event Task"),
+        (TASK_CONTEXT_PROJECT_ACTIVITY, "Project Activity Task"),
+    ]
+
+    task_context = models.CharField(
+        max_length=20,
+        choices=TASK_CONTEXT_CHOICES,
+        default=TASK_CONTEXT_STANDALONE,
+        blank=True,
+        help_text="Context in which this task exists (standalone, project, activity, or both)",
+    )
+
     # ========== WORKFLOW-SPECIFIC FIELDS ==========
 
     # MANA-specific
@@ -1220,6 +1241,7 @@ class StaffTask(models.Model):
             models.Index(fields=["related_policy", "policy_phase"]),
             models.Index(fields=["linked_event"]),
             models.Index(fields=["due_date", "status"]),
+            models.Index(fields=["task_context", "status"]),
         ]
 
     def __init__(self, *args, **kwargs):
@@ -1285,6 +1307,27 @@ class StaffTask(models.Model):
                     "start_date": "Recurring tasks must define a start date",
                 }
             )
+
+        # Validate task_context consistency (warnings only, not errors)
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        if self.task_context == self.TASK_CONTEXT_PROJECT and not self.linked_workflow:
+            logger.warning(
+                f"Task {self.id or 'new'} has context 'project' but no linked_workflow"
+            )
+
+        if self.task_context == self.TASK_CONTEXT_ACTIVITY and not self.linked_event:
+            logger.warning(
+                f"Task {self.id or 'new'} has context 'activity' but no linked_event"
+            )
+
+        if self.task_context == self.TASK_CONTEXT_PROJECT_ACTIVITY:
+            if not self.linked_workflow or not self.linked_event:
+                logger.warning(
+                    f"Task {self.id or 'new'} has context 'project_activity' but missing workflow or event"
+                )
 
     def save(self, *args, **kwargs):
         pending_team = getattr(self, "_pending_team_assignment", None)

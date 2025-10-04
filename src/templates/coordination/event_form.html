@@ -70,6 +70,100 @@
             </div>
         </section>
 
+        <!-- Project Activity Section -->
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-project-diagram mr-3"></i>
+                    Project Activity (Optional)
+                </h2>
+            </header>
+            <div class="p-6 space-y-4">
+                <div class="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <!-- Is Project Activity Checkbox -->
+                    <div class="flex items-start gap-3">
+                        <div class="flex items-center h-5">
+                            {{ form.is_project_activity }}
+                        </div>
+                        <label for="id_is_project_activity" class="text-sm font-medium text-gray-700">
+                            This is a project-specific activity
+                            <span class="block text-xs text-gray-500 font-normal mt-1">
+                                Link this event to a specific project workflow
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Project Fields (conditional) -->
+                    <div id="project-fields" class="space-y-4 mt-4 {% if not form.is_project_activity.value %}hidden{% endif %}">
+                        <!-- Related Project Dropdown -->
+                        <div class="space-y-1">
+                            <label for="id_related_project" class="block text-sm font-medium text-gray-700 mb-2">
+                                Related Project
+                            </label>
+                            <div class="relative">
+                                <select id="id_related_project"
+                                        name="related_project"
+                                        class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                    <option value="">Select a project...</option>
+                                    {% for project in form.related_project.field.queryset %}
+                                        <option value="{{ project.pk }}" {% if form.related_project.value == project.pk %}selected{% endif %}>
+                                            {{ project.title }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                </span>
+                            </div>
+                            {% if form.related_project.errors %}
+                                <p class="text-red-500 text-sm">{{ form.related_project.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Activity Type Dropdown -->
+                        <div class="space-y-1">
+                            <label for="id_project_activity_type" class="block text-sm font-medium text-gray-700 mb-2">
+                                Activity Type
+                            </label>
+                            <div class="relative">
+                                <select id="id_project_activity_type"
+                                        name="project_activity_type"
+                                        class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                    <option value="">Select activity type...</option>
+                                    {% for value, label in form.project_activity_type.field.choices %}
+                                        {% if value %}
+                                            <option value="{{ value }}" {% if form.project_activity_type.value == value %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                </span>
+                            </div>
+                            {% if form.project_activity_type.errors %}
+                                <p class="text-red-500 text-sm">{{ form.project_activity_type.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Auto-generate Tasks Checkbox -->
+                        <div class="flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200">
+                            <div class="flex items-center h-5">
+                                {{ form.auto_generate_tasks }}
+                            </div>
+                            <label for="id_auto_generate_tasks" class="text-sm font-medium text-gray-700">
+                                Auto-create preparation and follow-up tasks
+                                <span class="block text-xs text-gray-500 font-normal mt-1">
+                                    Creates tasks for agenda preparation, invitations, and post-event documentation
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
             <header class="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 rounded-t-2xl text-white">
                 <h2 class="text-xl font-semibold flex items-center">
@@ -170,6 +264,10 @@
             <a href="{{ return_url }}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                 Cancel
             </a>
+            <button type="submit" name="save_and_add" value="1" class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-teal-500 to-emerald-600 rounded-lg shadow hover:from-teal-600 hover:to-emerald-700">
+                <i class="fas fa-plus-circle mr-2"></i>
+                Save &amp; Add Another
+            </button>
             <button type="submit" class="px-4 py-2 text-sm font-semibold text-white rounded-lg shadow btn-primary">
                 <i class="fas fa-save mr-2"></i>
                 {{ submit_label|default:"Create Event" }}
@@ -177,4 +275,30 @@
         </div>
     </form>
 </div>
+
+<script>
+// Toggle project fields visibility based on is_project_activity checkbox
+document.addEventListener('DOMContentLoaded', function() {
+    const checkbox = document.getElementById('id_is_project_activity');
+    const projectFields = document.getElementById('project-fields');
+
+    if (checkbox && projectFields) {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                projectFields.classList.remove('hidden');
+            } else {
+                projectFields.classList.add('hidden');
+                // Clear fields when hidden
+                const relatedProject = document.getElementById('id_related_project');
+                const activityType = document.getElementById('id_project_activity_type');
+                const autoGenerate = document.getElementById('id_auto_generate_tasks');
+
+                if (relatedProject) relatedProject.value = '';
+                if (activityType) activityType.value = '';
+                if (autoGenerate) autoGenerate.checked = false;
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

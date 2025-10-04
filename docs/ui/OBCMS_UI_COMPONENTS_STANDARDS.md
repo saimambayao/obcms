@@ -13,7 +13,7 @@
 - [Color Palette](#color-palette)
 - [Typography](#typography)
 - [Stat Cards (3D Milk White)](#stat-cards-3d-milk-white)
-- [Quick Action Cards](#quick-action-cards)
+- [Quick Action Components](#quick-action-components) ⭐ **NEW - COMPREHENSIVE GUIDE**
 - [Forms & Input Components](#forms--input-components)
 - [Buttons](#buttons)
 - [Cards & Containers](#cards--containers)
@@ -279,7 +279,31 @@ The **3D Milk White Stat Card** is the official design for all statistical metri
 
 ---
 
-## Quick Action Cards
+## Quick Action Components
+
+### 📚 Comprehensive Documentation Available
+
+**For complete Quick Action implementation guide, see:**
+- **[Quick Action Components Guide](QUICK_ACTION_COMPONENTS.md)** - Full component templates and patterns
+- **[Quick Action Decision Guide](QUICK_ACTION_DECISION_GUIDE.md)** - Quick reference for choosing patterns
+
+This section provides a brief overview. **Refer to the comprehensive guides above for:**
+- 3 Official Quick Action Patterns (Sidebar, Header, Floating FAB)
+- Complete HTML/CSS templates
+- Context-aware action rules
+- Color guidelines by action type
+- Decision flowcharts
+- Module-specific examples
+
+---
+
+### Quick Action Overview
+
+Quick action components provide instant access to common workflows across OBCMS. There are **three official patterns**:
+
+1. **Sidebar Quick Actions** - Right sidebar for dashboards and detail pages
+2. **Header Quick Actions** - Horizontal grid below page title for list pages
+3. **Floating Quick Actions (FAB)** - Bottom-right floating button for forms and long pages
 
 ### Standard Quick Action Card
 

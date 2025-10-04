@@ -251,6 +251,11 @@ urlpatterns = [
         name="coordination_event_modal",
     ),
     path(
+        "coordination/events/<uuid:event_id>/delete/",
+        coordination_views.coordination_event_delete,
+        name="coordination_event_delete",
+    ),
+    path(
         "coordination/events/<uuid:event_id>/attendance/",
         coordination_views.event_attendance_tracker,
         name="coordination_event_attendance",
@@ -289,6 +294,8 @@ urlpatterns = [
     path("recommendations/", views.recommendations_home, name="recommendations_home"),
     path("recommendations/stats-cards/", views.recommendations_stats_cards, name="recommendations_stats_cards"),
     path("recommendations/new/", views.recommendations_new, name="recommendations_new"),
+    path("recommendations/create/", views.recommendations_create, name="recommendations_create"),
+    path("recommendations/autosave/", views.recommendations_autosave, name="recommendations_autosave"),
     path(
         "recommendations/manage/",
         views.recommendations_manage,

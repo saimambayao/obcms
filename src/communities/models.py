@@ -1513,6 +1513,59 @@ class MunicipalityCoverage(CommunityProfileBase):
         """Return formatted location string for serializers."""
         return f"{self.municipality.name}, {self.province.name}"
 
+    @property
+    def barangay_attributed_population(self):
+        """Calculate total population attributed to barangay OBCs."""
+        from django.db.models import Sum
+
+        return (
+            OBCCommunity.objects.filter(
+                barangay__municipality=self.municipality
+            ).aggregate(total=Sum("estimated_obc_population"))["total"]
+            or 0
+        )
+
+    @property
+    def unattributed_population(self):
+        """
+        Calculate population NOT attributed to any barangay OBC.
+
+        This represents estimated OBC population in the municipality
+        that hasn't been mapped to specific barangays yet.
+
+        Returns 0 if auto_sync is enabled (everything is attributed).
+        """
+        if self.auto_sync:
+            return 0
+
+        municipal_total = self.estimated_obc_population or 0
+        barangay_total = self.barangay_attributed_population
+
+        return max(0, municipal_total - barangay_total)
+
+    @property
+    def population_reconciliation(self):
+        """
+        Return a dict showing population breakdown for reconciliation.
+
+        Useful for displaying in templates and understanding data gaps.
+        """
+        municipal_total = self.estimated_obc_population or 0
+        barangay_total = self.barangay_attributed_population
+        unattributed = self.unattributed_population
+
+        return {
+            "total_municipal": municipal_total,
+            "attributed_to_barangays": barangay_total,
+            "unattributed": unattributed,
+            "attribution_rate": (
+                round((barangay_total / municipal_total * 100), 1)
+                if municipal_total > 0
+                else 0
+            ),
+            "auto_sync_enabled": self.auto_sync,
+        }
+
     def refresh_from_communities(self):
         """Aggregate community data for this municipality when auto-sync is enabled."""
         if self.auto_sync:
@@ -1660,6 +1713,59 @@ class ProvinceCoverage(CommunityProfileBase):
         if region:
             return f"{self.province.name}, Region {region.code}"
         return self.province.name
+
+    @property
+    def municipal_attributed_population(self):
+        """Calculate total population attributed to municipal OBCs."""
+        from django.db.models import Sum
+
+        return (
+            MunicipalityCoverage.objects.filter(
+                municipality__province=self.province, is_deleted=False
+            ).aggregate(total=Sum("estimated_obc_population"))["total"]
+            or 0
+        )
+
+    @property
+    def unattributed_population(self):
+        """
+        Calculate population NOT attributed to any municipal OBC.
+
+        This represents estimated OBC population in the province
+        that hasn't been mapped to specific municipalities yet.
+
+        Returns 0 if auto_sync is enabled (everything is attributed).
+        """
+        if self.auto_sync:
+            return 0
+
+        provincial_total = self.estimated_obc_population or 0
+        municipal_total = self.municipal_attributed_population
+
+        return max(0, provincial_total - municipal_total)
+
+    @property
+    def population_reconciliation(self):
+        """
+        Return a dict showing population breakdown for reconciliation.
+
+        Useful for displaying in templates and understanding data gaps.
+        """
+        provincial_total = self.estimated_obc_population or 0
+        municipal_total = self.municipal_attributed_population
+        unattributed = self.unattributed_population
+
+        return {
+            "total_provincial": provincial_total,
+            "attributed_to_municipalities": municipal_total,
+            "unattributed": unattributed,
+            "attribution_rate": (
+                round((municipal_total / provincial_total * 100), 1)
+                if provincial_total > 0
+                else 0
+            ),
+            "auto_sync_enabled": self.auto_sync,
+        }
 
     def refresh_from_municipalities(self):
         """Aggregate municipal data for this province when auto-sync is enabled."""

@@ -6,7 +6,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.utils import timezone
-from .models import User, Region
+from .models import User, Region, Province, Municipality, Barangay
 from .forms import UserRegistrationForm, CustomLoginForm
 
 # 5 Standard PPS (Policy, Program, Service) Areas for Recommendations
@@ -284,6 +284,7 @@ def communities_home(request):
     from communities.models import (
         OBCCommunity,
         MunicipalityCoverage,
+        ProvinceCoverage,
         Stakeholder,
         CommunityInfrastructure,
     )
@@ -304,9 +305,21 @@ def communities_home(request):
         communities.aggregate(total=Sum("estimated_obc_population"))["total"] or 0
     )
 
-    # Count of barangay and municipal OBCs
+    # Count of barangay, municipal, and provincial OBCs
     total_barangay_obcs = communities.count()
     total_municipal_obcs = municipal_coverages.count()
+    province_ids = set(
+        communities.values_list("barangay__municipality__province_id", flat=True)
+    )
+    province_ids.update(
+        municipal_coverages.values_list("municipality__province_id", flat=True)
+    )
+    province_ids.update(
+        ProvinceCoverage.objects.values_list("province_id", flat=True)
+    )
+    province_ids.discard(None)
+
+    total_provincial_obcs = Province.objects.filter(pk__in=province_ids).count()
 
     # Additional demographic statistics
     vulnerable_sectors = communities.aggregate(
@@ -371,6 +384,7 @@ def communities_home(request):
             "total_obc_population_database": total_obc_population,
             "total_barangay_obcs_database": total_barangay_obcs,
             "total_municipal_obcs_database": total_municipal_obcs,
+            "total_provincial_obcs_database": total_provincial_obcs,
         },
         "vulnerable_sectors": vulnerable_sectors,
         "infrastructure_needs": infrastructure_stats,
@@ -1927,7 +1941,7 @@ def community_needs_summary(request):
 def dashboard_metrics(request):
     """Live metrics HTML (updates every 60s)."""
     from django.http import HttpResponse
-    from django.db.models import Sum
+from django.db.models import Sum
     from datetime import timedelta
 
     try:

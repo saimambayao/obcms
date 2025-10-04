@@ -510,9 +510,202 @@ def dashboard_alerts(request):
 
 @login_required
 def dashboard_stats_cards(request):
-    """Render dashboard stats cards (HTMX endpoint - not implemented yet)."""
+    """Render dashboard stats cards (HTMX endpoint)."""
     from django.http import HttpResponse
-    return HttpResponse("Not implemented", status=501)
+    from django.db.models import Avg, Count
+    from communities.models import MunicipalityCoverage, OBCCommunity
+    from coordination.models import Partnership
+    from mana.models import Assessment
+    from monitoring.models import MonitoringEntry
+    from recommendations.policy_tracking.models import PolicyRecommendation
+
+    # Calculate stats
+    communities_qs = OBCCommunity.objects.all()
+    barangay_total = communities_qs.count()
+    municipal_total = MunicipalityCoverage.objects.count()
+    total_communities = barangay_total + municipal_total
+
+    total_assessments = Assessment.objects.count()
+    active_partnerships = Partnership.objects.filter(status="active").count()
+    bmoas = Partnership.objects.filter(
+        status="active", lead_organization__organization_type="bmoa"
+    ).count()
+    ngas = Partnership.objects.filter(
+        status="active", lead_organization__organization_type="nga"
+    ).count()
+    lgus = Partnership.objects.filter(
+        status="active", lead_organization__organization_type="lgu"
+    ).count()
+
+    total_recommendations = PolicyRecommendation.objects.count()
+    policies = PolicyRecommendation.objects.filter(
+        category__in=["governance", "legal_framework", "administrative"]
+    ).count()
+    programs = PolicyRecommendation.objects.filter(
+        category__in=[
+            "education",
+            "economic_development",
+            "social_development",
+            "cultural_development",
+        ]
+    ).count()
+    services = PolicyRecommendation.objects.filter(
+        category__in=["healthcare", "infrastructure", "environment", "human_rights"]
+    ).count()
+
+    monitoring_total = MonitoringEntry.objects.count()
+    pending_requests = MonitoringEntry.objects.filter(
+        category="obc_request",
+        request_status__in=["submitted", "under_review", "clarification", "endorsed"],
+    ).count()
+    avg_progress = (
+        MonitoringEntry.objects.aggregate(avg=Avg("progress"))["avg"] or 0
+    )
+
+    # Render HTML
+    html = f"""
+    <!-- Total OBC Communities -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total OBC Communities</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{total_communities}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-mosque text-2xl text-blue-600"></i>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-3 border-t border-gray-200/60">
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{barangay_total}</p>
+                    <p class="text-xs text-gray-500 font-medium">Barangay OBCs</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{municipal_total}</p>
+                    <p class="text-xs text-gray-500 font-medium">Municipal OBCs</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MANA Assessments -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">MANA Assessments</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{total_assessments}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-chart-bar text-2xl text-emerald-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Partnerships -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Active Partnerships</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{active_partnerships}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-handshake text-2xl text-purple-600"></i>
+                </div>
+            </div>
+            <div class="flex-grow"></div>
+            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{bmoas}</p>
+                    <p class="text-xs text-gray-500 font-medium">BMOAs</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{ngas}</p>
+                    <p class="text-xs text-gray-500 font-medium">NGAs</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{lgus}</p>
+                    <p class="text-xs text-gray-500 font-medium">LGUs</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Recommendations</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{total_recommendations}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-lightbulb text-2xl text-amber-600"></i>
+                </div>
+            </div>
+            <div class="flex-grow"></div>
+            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{policies}</p>
+                    <p class="text-xs text-gray-500 font-medium">Policies</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{programs}</p>
+                    <p class="text-xs text-gray-500 font-medium">Programs</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{services}</p>
+                    <p class="text-xs text-gray-500 font-medium">Services</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monitoring & Evaluation -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Monitoring & Evaluation</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{monitoring_total}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-chart-pie text-2xl text-blue-600"></i>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-3 border-t border-gray-200/60">
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{pending_requests}</p>
+                    <p class="text-xs text-gray-500 font-medium">Pending</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{avg_progress:.0f}%</p>
+                    <p class="text-xs text-gray-500 font-medium">Progress</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+
+    return HttpResponse(html)
 
 
 __all__ = ["dashboard", "dashboard_stats_cards", "dashboard_metrics", "dashboard_activity", "dashboard_alerts"]

@@ -50,6 +50,8 @@ from common.models import (
     TrainingProgram,
     User,
 )
+from coordination.models import Event
+from project_central.models import ProjectWorkflow
 from common.services.staff import (
     assign_board_position,
     ensure_default_staff_teams,
@@ -64,6 +66,78 @@ from monitoring.models import (
 )
 from monitoring.scenario_models import BudgetScenario
 from monitoring.strategic_models import StrategicGoal
+
+
+def _build_team_overview(today: date):
+    """Aggregate team roster and task insights for dashboard views."""
+
+    teams_qs = StaffTeam.objects.prefetch_related(
+        "tasks__assignees", "memberships__user"
+    ).order_by("name")
+
+    overview_records = []
+    performance_records = []
+
+    for team in teams_qs:
+        members = [
+            membership.user
+            for membership in team.memberships.all()
+            if membership.is_active
+        ]
+
+        tasks = list(team.tasks.all())
+        total_team_tasks = len(tasks)
+        status_counts = defaultdict(int)
+        for task in tasks:
+            status_counts[task.status] += 1
+
+        completed_team_tasks = status_counts.get(StaffTask.STATUS_COMPLETED, 0)
+        avg_progress_team = (
+            round(sum(task.progress for task in tasks) / total_team_tasks)
+            if total_team_tasks
+            else 0
+        )
+        completion_rate_team = (
+            round((completed_team_tasks / total_team_tasks) * 100)
+            if total_team_tasks
+            else 0
+        )
+
+        overview_records.append(
+            {
+                "team": team,
+                "name": team.name,
+                "description": team.description,
+                "mission": team.mission,
+                "focus": team.focus_areas,
+                "members": members,
+                "member_count": len(members),
+                "active_tasks": total_team_tasks - completed_team_tasks,
+                "completion_rate": completion_rate_team,
+                "avg_progress": avg_progress_team,
+                "extra_members": max(len(members) - 3, 0),
+                "tasks": sorted(
+                    tasks,
+                    key=lambda task: (task.due_date or today, task.title),
+                )[:3],
+            }
+        )
+
+        performance_records.append(
+            {
+                "team": team.name,
+                "total": total_team_tasks,
+                "completed": completed_team_tasks,
+                "at_risk": status_counts.get(StaffTask.STATUS_AT_RISK, 0),
+                "in_progress": status_counts.get(StaffTask.STATUS_IN_PROGRESS, 0),
+                "not_started": status_counts.get(StaffTask.STATUS_NOT_STARTED, 0),
+                "completion_rate": completion_rate_team,
+                "avg_progress": avg_progress_team,
+                "member_count": len(members),
+            }
+        )
+
+    return overview_records, performance_records
 
 
 def _calendar_iso(dt_value):
@@ -258,6 +332,11 @@ def oobc_management_home(request):
     else:
         budget_display = "₱0"
 
+    recent_scenarios = (
+        BudgetScenario.objects.select_related("planning_cycle")
+        .order_by("-updated_at", "-created_at")[:10]
+    )
+
     context = {
         "metrics": {
             "staff_total": staff_qs.count(),
@@ -270,6 +349,11 @@ def oobc_management_home(request):
         },
         "recent_staff": staff_qs[:8],
         "pending_users": pending_qs[:8],
+        "recent_feeds": {
+            "staff": staff_qs[:10],
+            "pending": pending_qs[:10],
+            "scenarios": recent_scenarios,
+        },
     }
     return render(request, "common/oobc_management_home.html", context)
 
@@ -832,65 +916,7 @@ def staff_management(request):
         key=lambda item: (item["score"], item["completion_rate"]), reverse=True
     )
 
-    teams_qs = StaffTeam.objects.prefetch_related(
-        "tasks__assignees", "memberships__user"
-    ).order_by("name")
-    team_overview = []
-    team_performance = []
-    for team in teams_qs:
-        members = [
-            membership.user
-            for membership in team.memberships.all()
-            if membership.is_active
-        ]
-        tasks = list(team.tasks.all())
-        total_team_tasks = len(tasks)
-        status_counts = defaultdict(int)
-        for task in tasks:
-            status_counts[task.status] += 1
-        completed_team_tasks = status_counts.get(StaffTask.STATUS_COMPLETED, 0)
-        avg_progress_team = (
-            round(sum(task.progress for task in tasks) / total_team_tasks)
-            if total_team_tasks
-            else 0
-        )
-        completion_rate_team = (
-            round((completed_team_tasks / total_team_tasks) * 100)
-            if total_team_tasks
-            else 0
-        )
-        team_overview.append(
-            {
-                "team": team,
-                "name": team.name,
-                "description": team.description,
-                "mission": team.mission,
-                "focus": team.focus_areas,
-                "members": members,
-                "member_count": len(members),
-                "active_tasks": total_team_tasks - completed_team_tasks,
-                "completion_rate": completion_rate_team,
-                "avg_progress": avg_progress_team,
-                "extra_members": max(len(members) - 3, 0),
-                "tasks": sorted(
-                    tasks,
-                    key=lambda task: (task.due_date or today, task.title),
-                )[:3],
-            }
-        )
-        team_performance.append(
-            {
-                "team": team.name,
-                "total": total_team_tasks,
-                "completed": completed_team_tasks,
-                "at_risk": status_counts.get(StaffTask.STATUS_AT_RISK, 0),
-                "in_progress": status_counts.get(StaffTask.STATUS_IN_PROGRESS, 0),
-                "not_started": status_counts.get(StaffTask.STATUS_NOT_STARTED, 0),
-                "completion_rate": completion_rate_team,
-                "avg_progress": avg_progress_team,
-                "member_count": len(members),
-            }
-        )
+    team_overview, team_performance = _build_team_overview(today)
 
     staff_profiles = sorted(
         staff_profiles_data,
@@ -1344,6 +1370,11 @@ def staff_task_board(request):
     priority_filter = request.GET.get("priority", "")
     search_query = request.GET.get("q", "")
 
+    # Context-aware filters
+    task_context_filter = request.GET.get("task_context", "")
+    project_filter = request.GET.get("project", "")
+    activity_filter = request.GET.get("activity", "")
+
     if status_filter in status_labels:
         tasks_qs = tasks_qs.filter(status=status_filter)
     if team_filter:
@@ -1362,6 +1393,24 @@ def staff_task_board(request):
             | Q(description__icontains=search_query)
             | Q(impact__icontains=search_query)
         )
+
+    # Apply context-aware filters
+    if task_context_filter:
+        tasks_qs = tasks_qs.filter(task_context=task_context_filter)
+
+    if project_filter:
+        try:
+            project_id = int(project_filter)
+            tasks_qs = tasks_qs.filter(linked_workflow_id=project_id)
+        except (TypeError, ValueError):
+            pass
+
+    if activity_filter:
+        try:
+            activity_id = int(activity_filter)
+            tasks_qs = tasks_qs.filter(linked_event_id=activity_id)
+        except (TypeError, ValueError):
+            pass
 
     tasks_list = list(tasks_qs)
 
@@ -1527,6 +1576,26 @@ def staff_task_board(request):
     team_options = StaffTeam.objects.filter(is_active=True).order_by("name")
     assignee_options = staff_queryset().order_by("last_name", "first_name")
 
+    # Context-aware dropdown options
+    project_options = (
+        ProjectWorkflow.objects.filter(staff_tasks__isnull=False)
+        .annotate(task_count=Count("staff_tasks"))
+        .order_by("-task_count", "title")
+        .distinct()
+    )
+
+    event_options = (
+        Event.objects.filter(staff_tasks__isnull=False)
+        .annotate(task_count=Count("staff_tasks"))
+        .order_by("-start_date")
+        .distinct()
+    )
+
+    # Active projects for quick actions
+    active_projects = ProjectWorkflow.objects.filter(
+        status__in=["planning", "in_progress", "on_hold"]
+    ).order_by("title")
+
     view_options = [
         {"value": "board", "label": "Board", "icon": "fa-columns"},
         {"value": "table", "label": "Table", "icon": "fa-table"},
@@ -1608,6 +1677,9 @@ def staff_task_board(request):
         "priority_labels": priority_labels,
         "team_options": team_options,
         "assignee_options": assignee_options,
+        "project_options": project_options,
+        "event_options": event_options,
+        "active_projects": active_projects,
         "view_mode": view_mode,
         "view_options": view_options,
         "group_by": group_by,
@@ -1631,6 +1703,9 @@ def staff_task_board(request):
             "group": group_by,
             "sort": sort_field,
             "order": sort_order,
+            "task_context": task_context_filter,
+            "project": project_filter,
+            "activity": activity_filter,
         },
     }
     if request.headers.get("HX-Request"):
@@ -1887,35 +1962,40 @@ def staff_task_modal(request, task_id: int):
     else:
         form = StaffTaskForm(instance=task, request=request)
 
+    # Get related tasks for context
+    related_project_tasks = []
+    related_activity_tasks = []
+
+    if task.linked_workflow:
+        related_project_tasks = (
+            StaffTask.objects.filter(linked_workflow=task.linked_workflow)
+            .exclude(pk=task.pk)
+            .select_related("created_by")
+            .prefetch_related("teams", "assignees")
+            .order_by("-created_at")[:5]
+        )
+
+    if task.linked_event:
+        related_activity_tasks = (
+            StaffTask.objects.filter(linked_event=task.linked_event)
+            .exclude(pk=task.pk)
+            .select_related("created_by")
+            .prefetch_related("teams", "assignees")
+            .order_by("-created_at")[:5]
+        )
+
     context = {
         "task": task,
         "form": form,
         "status_labels": dict(StaffTask.STATUS_CHOICES),
         "priority_labels": dict(StaffTask.PRIORITY_CHOICES),
+        "related_project_tasks": related_project_tasks,
+        "related_activity_tasks": related_activity_tasks,
     }
     return render(request, "common/partials/staff_task_modal.html", context)
 
 
-@login_required
-@require_POST
-def staff_task_delete(request, task_id: int):
-    """Delete a staff task after explicit confirmation."""
 
-    task = get_object_or_404(StaffTask, pk=task_id)
-    if request.POST.get("confirm") != "yes":
-        return JsonResponse({"error": "Confirmation required."}, status=400)
-
-    task.delete()
-    headers = {
-        "HX-Trigger": json.dumps(
-            {
-                "task-board-refresh": True,
-                "task-modal-close": True,
-                "calendar-event-removed": {"id": f"staff-task-{task.pk}"},
-            }
-        )
-    }
-    return HttpResponse(status=204, headers=headers)
 
 
 @login_required
@@ -2276,6 +2356,7 @@ def staff_team_manage(request):
     """Dedicated interface for creating or updating staff teams."""
 
     ensure_default_staff_teams()
+    team_overview, _ = _build_team_overview(timezone.now().date())
     team = None
     team_id = request.GET.get("team_id")
     if team_id:
@@ -2377,6 +2458,7 @@ def staff_team_manage(request):
         "membership_form": membership_form,
         "assignments": assignments,
         "teams": team_metrics,
+        "team_overview": team_overview,
         "selected_team": team,
         "team_research_snapshot": team_research_snapshot,
         "wide_fields": {"description", "mission", "focus_areas"},
@@ -3168,20 +3250,27 @@ def planning_budgeting(request):
     return render(request, "common/oobc_planning_budgeting.html", context)
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 @login_required
 @require_POST
 def staff_task_delete(request, task_id):
     """Delete a staff task."""
+    logger.info(f"Attempting to delete task {task_id}")
     task = get_object_or_404(StaffTask, pk=task_id)
 
     # Check if this is a confirmation request
     if request.POST.get("confirm") == "yes":
         task_title = task.title
+        logger.info(f"Deleting task: {task_title}")
         task.delete()
+        logger.info(f"Task {task_title} deleted successfully")
 
-        # For HTMX requests, return 204 response to trigger delete swap and close modal
+        # For HTMX requests, return empty response with triggers
         if request.headers.get("HX-Request"):
-            response = HttpResponse(status=204)
+            response = HttpResponse("")
             response["HX-Trigger"] = json.dumps(
                 {
                     "task-board-refresh": True,
@@ -3196,6 +3285,7 @@ def staff_task_delete(request, task_id):
         return redirect("common:staff_task_board")
 
     # If not confirmed, return an error or redirect
+    logger.warning(f"Task deletion not confirmed for task {task_id}")
     if request.headers.get("HX-Request"):
         return JsonResponse({"error": "Confirmation required."}, status=400)
 
