@@ -1,0 +1,3 @@
+dError: Unable to serialize database: 'NoneType' object has no attribute '_meta'
+✅ Auditlog registered for all security-sensitive models
+[
