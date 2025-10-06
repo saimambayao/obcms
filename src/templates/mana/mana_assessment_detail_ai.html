@@ -1,0 +1,119 @@
+{% extends 'mana/mana_assessment_detail.html' %}
+
+{% comment %}
+AI-Enhanced MANA Assessment Detail Page
+This extends the base detail page and adds AI features panel
+{% endcomment %}
+
+{% block content %}
+{{ block.super }}
+
+<!-- AI Insights Panel (inserted at the end of content) -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Insert AI panel after the workshops section
+        const workshopsSection = document.querySelector('section:last-of-type');
+        if (workshopsSection) {
+            const aiPanel = document.getElementById('ai-insights-panel-wrapper');
+            if (aiPanel) {
+                workshopsSection.insertAdjacentElement('afterend', aiPanel);
+            }
+        }
+    });
+</script>
+
+<div id="ai-insights-panel-wrapper" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+    <section class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 p-6 shadow-md">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-brain text-white text-lg"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 flex-1">AI Insights for This Assessment</h3>
+            <span class="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+                Powered by AI
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <!-- Response Analysis -->
+            <div id="ai-response-analysis"
+                 hx-get="{% url 'mana:ai_response_analysis' assessment.id %}"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 class="bg-white/50 rounded-lg p-4 border border-emerald-100">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-comments text-emerald-600"></i>
+                    <h4 class="font-medium text-gray-900">Response Analysis</h4>
+                </div>
+                <div class="flex items-center justify-center py-4">
+                    <i class="fas fa-spinner fa-spin text-emerald-500"></i>
+                    <span class="ml-2 text-sm text-gray-600">Analyzing responses...</span>
+                </div>
+            </div>
+
+            <!-- Theme Extraction -->
+            <div id="ai-theme-extraction"
+                 hx-get="{% url 'mana:ai_theme_extraction' assessment.id %}"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 class="bg-white/50 rounded-lg p-4 border border-emerald-100">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-tags text-emerald-600"></i>
+                    <h4 class="font-medium text-gray-900">Key Themes</h4>
+                </div>
+                <div class="flex items-center justify-center py-4">
+                    <i class="fas fa-spinner fa-spin text-emerald-500"></i>
+                    <span class="ml-2 text-sm text-gray-600">Extracting themes...</span>
+                </div>
+            </div>
+
+            <!-- Cultural Validation -->
+            <div id="ai-cultural-validation"
+                 hx-get="{% url 'mana:ai_cultural_validation' assessment.id %}"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 class="bg-white/50 rounded-lg p-4 border border-emerald-100">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-mosque text-emerald-600"></i>
+                    <h4 class="font-medium text-gray-900">Cultural Appropriateness</h4>
+                </div>
+                <div class="flex items-center justify-center py-4">
+                    <i class="fas fa-spinner fa-spin text-emerald-500"></i>
+                    <span class="ml-2 text-sm text-gray-600">Validating...</span>
+                </div>
+            </div>
+
+            <!-- Similar Assessments -->
+            <div id="ai-similar-assessments"
+                 hx-get="{% url 'mana:ai_similar_assessments' assessment.id %}"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 class="bg-white/50 rounded-lg p-4 border border-emerald-100">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-project-diagram text-emerald-600"></i>
+                    <h4 class="font-medium text-gray-900">Similar Assessments</h4>
+                </div>
+                <div class="flex items-center justify-center py-4">
+                    <i class="fas fa-spinner fa-spin text-emerald-500"></i>
+                    <span class="ml-2 text-sm text-gray-600">Finding matches...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generate AI Report Button -->
+        <div class="border-t border-emerald-200 pt-4">
+            <button
+                hx-post="{% url 'mana:ai_generate_report' assessment.id %}"
+                hx-target="#ai-report-result"
+                hx-swap="innerHTML"
+                hx-indicator="#ai-report-spinner"
+                class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg hover:shadow-lg transition-all duration-200 font-medium flex items-center justify-center gap-2">
+                <i class="fas fa-file-alt"></i>
+                <span>Generate Comprehensive AI Assessment Report</span>
+                <i id="ai-report-spinner" class="fas fa-spinner fa-spin htmx-indicator"></i>
+            </button>
+            <div id="ai-report-result" class="mt-3"></div>
+        </div>
+    </section>
+</div>
+{% endblock %}

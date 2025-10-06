@@ -1,11 +1,86 @@
 <!-- Chat Message Pair (User + Assistant) -->
 <!-- This template is used by HTMX to append new messages -->
+<!-- NOTE: User message is shown optimistically via JavaScript (prepareMessage function) -->
 
-<!-- Assistant Response (hidden data for Alpine.js) -->
-<div style="display:none;" data-assistant-response>{{ assistant_response }}</div>
+<!-- AI Assistant Response -->
+<div class="ai-message-bot bg-white border border-emerald-100 rounded-lg p-3 shadow-sm animate-fade-in">
+    <div class="flex items-start gap-2">
+        <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center">
+            <i class="fas fa-robot text-white text-sm"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+            <p class="text-sm text-gray-700 whitespace-pre-wrap break-words">{{ assistant_response }}</p>
 
-<!-- Suggestions (hidden data for Alpine.js) -->
-<div style="display:none;" data-suggestions>{{ suggestions|safe }}</div>
+            {% if data.error %}
+            <!-- Error State with Helpful Suggestions -->
+            <div class="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <div class="flex items-start gap-2 mb-2">
+                    <i class="fas fa-lightbulb text-amber-600 mt-0.5"></i>
+                    <p class="text-sm font-medium text-amber-900">Try these instead:</p>
+                </div>
+                <div class="space-y-1.5">
+                    <button type="button"
+                            class="clickable-query text-left w-full px-3 py-2 bg-white hover:bg-amber-50 rounded border border-amber-200 text-sm text-gray-700 transition-all duration-200 hover:shadow-sm active:scale-98"
+                            data-query="How many communities are in Region IX?">
+                        <i class="fas fa-users text-emerald-500 mr-2"></i>
+                        "How many communities are in Region IX?"
+                    </button>
+                    <button type="button"
+                            class="clickable-query text-left w-full px-3 py-2 bg-white hover:bg-amber-50 rounded border border-amber-200 text-sm text-gray-700 transition-all duration-200 hover:shadow-sm active:scale-98"
+                            data-query="Show me MANA assessments">
+                        <i class="fas fa-clipboard-check text-blue-500 mr-2"></i>
+                        "Show me MANA assessments"
+                    </button>
+                    <button type="button"
+                            class="clickable-query text-left w-full px-3 py-2 bg-white hover:bg-amber-50 rounded border border-amber-200 text-sm text-gray-700 transition-all duration-200 hover:shadow-sm active:scale-98"
+                            data-query="List coordination activities">
+                        <i class="fas fa-handshake text-purple-500 mr-2"></i>
+                        "List coordination activities"
+                    </button>
+                    <button type="button"
+                            class="clickable-query text-left w-full px-3 py-2 bg-white hover:bg-amber-50 rounded border border-amber-200 text-sm text-gray-700 transition-all duration-200 hover:shadow-sm active:scale-98"
+                            data-query="What can you help me with?">
+                        <i class="fas fa-question-circle text-blue-500 mr-2"></i>
+                        "What can you help me with?"
+                    </button>
+                </div>
+            </div>
+            {% endif %}
 
-<!-- Note: The actual rendering is done by Alpine.js in chat_widget.html -->
-<!-- This template just provides the data structure -->
+            {% if suggestions %}
+            <!-- Follow-up Suggestions -->
+            <div class="mt-3 pt-3 border-t border-gray-100">
+                <p class="text-xs text-gray-500 mb-2 font-medium">
+                    <i class="fas fa-lightbulb mr-1"></i>You might also ask:
+                </p>
+                <div class="space-y-1">
+                    {% for suggestion in suggestions %}
+                    <button type="button"
+                            class="clickable-query text-left w-full px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 rounded text-xs text-emerald-700 transition-colors duration-200 border border-emerald-100"
+                            data-query="{{ suggestion }}">
+                        <i class="fas fa-arrow-right mr-1.5 text-emerald-500"></i>
+                        {{ suggestion }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if intent %}
+            <div class="mt-2 pt-2 border-t border-gray-100">
+                <span class="inline-flex items-center gap-1 text-xs text-gray-500">
+                    <i class="fas fa-tag"></i>
+                    <span>{{ intent|title }}</span>
+                    {% if confidence %}
+                    <span class="ml-1 px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded">
+                        {{ confidence|floatformat:0 }}%
+                    </span>
+                    {% endif %}
+                </span>
+            </div>
+            {% endif %}
+
+            <span class="text-xs text-gray-400 mt-1 block">Just now</span>
+        </div>
+    </div>
+</div>

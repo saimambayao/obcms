@@ -1,0 +1,62 @@
+{% comment %}
+AI Insights Panel Component
+
+Full-featured AI insights panel with multiple features.
+
+Usage:
+{% include "components/ai_insights_panel.html" with object=community module="communities" features=ai_features %}
+
+Parameters:
+- object: The model instance (required)
+- module: Module name for URL routing (required)
+- features: List of feature dicts with 'title', 'icon', 'endpoint', 'description' keys (required)
+- panel_title: Optional custom panel title (default: "AI Insights")
+- show_report_button: Boolean to show/hide generate report button (default: True)
+{% endcomment %}
+
+<div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 p-6 mt-6">
+    <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+            <i class="fas fa-brain text-white text-lg"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 flex-1">{{ panel_title|default:"AI Insights" }}</h3>
+        <span class="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+            Powered by AI
+        </span>
+    </div>
+
+    {% if features %}
+    <div class="space-y-4 mb-4">
+        {% for feature in features %}
+        <div id="ai-{{ feature.title|slugify }}"
+             hx-get="{% url feature.endpoint object.id %}"
+             hx-trigger="load"
+             hx-swap="innerHTML"
+             class="bg-white/50 rounded-lg p-3 border border-emerald-100">
+            <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-{{ feature.icon|default:'circle-notch' }} text-emerald-600 text-sm"></i>
+                <h4 class="font-medium text-gray-900 text-sm">{{ feature.title }}</h4>
+            </div>
+            <div class="flex items-center justify-center py-3">
+                <i class="fas fa-spinner fa-spin text-emerald-500 text-sm"></i>
+                <span class="ml-2 text-xs text-gray-600">{{ feature.loading_text|default:"Analyzing..." }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if show_report_button|default:True %}
+    <button
+        hx-post="{% url module|add:':ai-generate-report' object.id %}"
+        hx-target="#ai-report-result"
+        hx-swap="innerHTML"
+        hx-indicator="#ai-report-spinner"
+        class="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg hover:shadow-lg transition-all duration-200 font-medium text-sm flex items-center justify-center gap-2">
+        <i class="fas fa-file-alt"></i>
+        <span>Generate AI Summary Report</span>
+        <i id="ai-report-spinner" class="fas fa-spinner fa-spin htmx-indicator"></i>
+    </button>
+    <div id="ai-report-result" class="mt-2"></div>
+    {% endif %}
+</div>

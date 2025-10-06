@@ -60,15 +60,15 @@ def match_stakeholders_for_communities():
     This task runs nightly to pre-compute and cache stakeholder matches,
     ensuring instant results when users access the matching feature.
     """
-    from communities.models import BarangayOBC
+    from communities.models import OBCCommunity
     from coordination.ai_services.stakeholder_matcher import StakeholderMatcher
 
     matcher = StakeholderMatcher()
 
     # Get active communities
-    communities = BarangayOBC.objects.filter(
+    communities = OBCCommunity.objects.filter(
         is_active=True
-    ).select_related('municipality__province__region')
+    ).select_related('barangay__municipality__province__region')
 
     # Need categories to match
     need_categories = [

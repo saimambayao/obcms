@@ -17,7 +17,7 @@ from .prompt_templates import PromptTemplates
 # Import existing services if they exist
 try:
     from .embedding_service import EmbeddingService
-    from .similarity_search import SimilaritySearchService
+    from .similarity_search import SimilaritySearchService, get_similarity_search_service
     from .vector_store import VectorStore
 
     __all__ = [
@@ -28,6 +28,7 @@ try:
         'EmbeddingService',
         'VectorStore',
         'SimilaritySearchService',
+        'get_similarity_search_service',
     ]
 except ImportError:
     __all__ = [

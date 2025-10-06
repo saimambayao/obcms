@@ -1,0 +1,41 @@
+{% comment %}
+Reusable AI Feature Card Component
+
+Usage:
+{% include "components/ai_feature_card.html" with title="Feature Name" icon="brain" endpoint="module:ai-endpoint" object_id=object.id description="Optional description" %}
+
+Parameters:
+- title: Feature title (required)
+- icon: FontAwesome icon name without 'fa-' prefix (default: 'brain')
+- endpoint: URL name for the HTMX endpoint (required)
+- object_id: ID to pass to the endpoint (required)
+- description: Optional description text
+- loading_text: Optional custom loading message (default: "Loading AI insights...")
+{% endcomment %}
+
+<div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 p-4 hover:shadow-md transition-shadow duration-200">
+    <div class="flex items-center gap-2 mb-3">
+        <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-{{ icon|default:'brain' }} text-white text-sm"></i>
+        </div>
+        <h4 class="font-medium text-gray-900 flex-1">{{ title }}</h4>
+        <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+            AI
+        </span>
+    </div>
+
+    {% if description %}
+    <p class="text-xs text-gray-600 mb-3">{{ description }}</p>
+    {% endif %}
+
+    <div id="ai-{{ title|slugify }}-{{ object_id }}"
+         hx-get="{% url endpoint object_id %}"
+         hx-trigger="load"
+         hx-swap="innerHTML"
+         class="min-h-[60px]">
+        <div class="flex items-center justify-center py-3">
+            <i class="fas fa-spinner fa-spin text-emerald-500 text-sm"></i>
+            <span class="ml-2 text-xs text-gray-600">{{ loading_text|default:"Loading AI insights..." }}</span>
+        </div>
+    </div>
+</div>

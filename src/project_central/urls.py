@@ -141,4 +141,25 @@ urlpatterns = [
         "approvals/<int:ppa_id>/approve/", views.approve_budget, name="approve_budget"
     ),
     path("approvals/<int:ppa_id>/reject/", views.reject_budget, name="reject_budget"),
+    # AI Intelligence Endpoints - TODO: Implement these views
+    # path(
+    #     'ai/detect-anomalies/<uuid:pk>/',
+    #     views.ai_detect_anomalies,
+    #     name='ai-detect-anomalies'
+    # ),
+    # path(
+    #     'ai/forecast-performance/<uuid:pk>/',
+    #     views.ai_forecast_performance,
+    #     name='ai-forecast-performance'
+    # ),
+    # path(
+    #     'ai/analyze-risks/<uuid:pk>/',
+    #     views.ai_analyze_risks,
+    #     name='ai-analyze-risks'
+    # ),
+    # path(
+    #     'ai/generate-report/<uuid:pk>/',
+    #     views.ai_generate_report,
+    #     name='ai-generate-report'
+    # ),
 ]

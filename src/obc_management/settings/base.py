@@ -326,7 +326,6 @@ CELERY_BEAT_SCHEDULE = {
     # ========================================================================
     # MONITORING & EVALUATION (M&E) AUTOMATION TASKS
     # ========================================================================
-
     # Nightly PPA progress sync from WorkItems at 2:00 AM
     "auto-sync-ppa-progress": {
         "task": "monitoring.auto_sync_ppa_progress",
@@ -342,11 +341,9 @@ CELERY_BEAT_SCHEDULE = {
         "task": "monitoring.send_approval_deadline_reminders",
         "schedule": crontab(hour=8, minute=0),
     },
-
     # ========================================================================
     # PROJECT CENTRAL AUTOMATION TASKS
     # ========================================================================
-
     # Daily alert generation at 6:00 AM
     "generate-daily-alerts": {
         "task": "project_central.generate_daily_alerts",
@@ -372,11 +369,9 @@ CELERY_BEAT_SCHEDULE = {
         "task": "project_central.sync_workflow_ppa_status",
         "schedule": crontab(hour=9, minute=0),
     },
-
     # ========================================================================
     # WORKITEM MAINTENANCE TASKS
     # ========================================================================
-
     # Weekly cleanup of orphaned WorkItems every Sunday at 3:00 AM
     "cleanup-orphaned-workitems": {
         "task": "project_central.cleanup_orphaned_workitems",
@@ -387,11 +382,9 @@ CELERY_BEAT_SCHEDULE = {
         "task": "project_central.recalculate_all_progress",
         "schedule": crontab(hour=4, minute=0, day_of_month=1),
     },
-
     # ========================================================================
     # REPORTING TASKS
     # ========================================================================
-
     # Weekly workflow report every Monday at 9:00 AM
     "generate-weekly-workflow-report": {
         "task": "project_central.generate_weekly_workflow_report",
@@ -402,11 +395,9 @@ CELERY_BEAT_SCHEDULE = {
         "task": "project_central.generate_monthly_budget_report",
         "schedule": crontab(hour=10, minute=0, day_of_month=1),
     },
-
     # ========================================================================
     # CLEANUP TASKS
     # ========================================================================
-
     # Weekly cleanup of expired alerts every Sunday at 2:00 AM
     "cleanup-expired-alerts": {
         "task": "project_central.cleanup_expired_alerts",
@@ -468,10 +459,12 @@ os.makedirs(BASE_DIR / "logs", exist_ok=True)
 
 # Slack webhook URL for security alerts (optional)
 # Get from: https://api.slack.com/messaging/webhooks
-SLACK_WEBHOOK_URL = env.str('SLACK_WEBHOOK_URL', default='')
+SLACK_WEBHOOK_URL = env.str("SLACK_WEBHOOK_URL", default="")
 
 # Security team email addresses (for critical alerts)
-SECURITY_TEAM_EMAILS = env.list('SECURITY_TEAM_EMAILS', default=['security@oobc.gov.ph'])
+SECURITY_TEAM_EMAILS = env.list(
+    "SECURITY_TEAM_EMAILS", default=["security@oobc.gov.ph"]
+)
 
 # ============================================================================
 # SECURITY CONFIGURATION
@@ -502,9 +495,9 @@ AUTHENTICATION_BACKENDS = [
 # https://django-auditlog.readthedocs.io/
 AUDITLOG_INCLUDE_TRACKING_MODELS = (
     "common.User",
-    "communities.BarangayOBC",
-    "communities.MunicipalOBC",
-    "communities.ProvincialOBC",
+    "communities.OBCCommunity",
+    "communities.MunicipalityCoverage",
+    "communities.ProvinceCoverage",
     "mana.Assessment",
     "mana.AssessmentResponse",
     "coordination.Partnership",
@@ -537,15 +530,19 @@ LOGGING["loggers"]["api"] = {
     "propagate": False,
 }
 
+# ========== AI CONFIGURATION ==========
+# Google Gemini API Key for AI features
+GOOGLE_API_KEY = env.str("GOOGLE_API_KEY", default="")
+
 # ========== WORK HIERARCHY CONFIGURATION ==========
 # WorkItem Migration Completed: October 5, 2025
 # See: WORKITEM_MIGRATION_COMPLETE.md
 
 # Feature Flags (controlled via environment variables)
-USE_WORKITEM_MODEL = env.bool('USE_WORKITEM_MODEL', default=True)
-USE_UNIFIED_CALENDAR = env.bool('USE_UNIFIED_CALENDAR', default=True)
-DUAL_WRITE_ENABLED = env.bool('DUAL_WRITE_ENABLED', default=False)
-LEGACY_MODELS_READONLY = env.bool('LEGACY_MODELS_READONLY', default=True)
+USE_WORKITEM_MODEL = env.bool("USE_WORKITEM_MODEL", default=True)
+USE_UNIFIED_CALENDAR = env.bool("USE_UNIFIED_CALENDAR", default=True)
+DUAL_WRITE_ENABLED = env.bool("DUAL_WRITE_ENABLED", default=False)
+LEGACY_MODELS_READONLY = env.bool("LEGACY_MODELS_READONLY", default=True)
 
 # ========== DEPRECATED MODELS ==========
 # The following models are maintained for backward compatibility only:
@@ -583,4 +580,6 @@ if LEGACY_MODELS_READONLY and not DEBUG:
 
 # Migration verification options (deprecated - migration complete)
 WORKITEM_MIGRATION_AUTO_FIX = env.bool("WORKITEM_MIGRATION_AUTO_FIX", default=False)
-WORKITEM_MIGRATION_STRICT_MODE = env.bool("WORKITEM_MIGRATION_STRICT_MODE", default=False)
+WORKITEM_MIGRATION_STRICT_MODE = env.bool(
+    "WORKITEM_MIGRATION_STRICT_MODE", default=False
+)

@@ -919,9 +919,15 @@ def build_calendar_payload(
             work_type__in=['task', 'subtask']
         ).prefetch_related(
             "assignees",
+            "parent",
         )
 
         for task in tasks:
+            # Skip tasks that are linked to activities (to avoid duplication with coordination module)
+            # This replaces the old behavior of skipping tasks with linked_event
+            if task.parent and task.parent.work_type in ['activity', 'sub_activity']:
+                continue
+
             start_dt = _combine(task.start_date) if task.start_date else None
             due_dt = (
                 _combine(task.due_date, default_time=time.max)

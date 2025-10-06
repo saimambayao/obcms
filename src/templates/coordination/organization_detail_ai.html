@@ -1,0 +1,106 @@
+{% extends 'coordination/organization_detail.html' %}
+
+{% comment %}
+AI-Enhanced Coordination Organization Detail Page
+Adds AI features for stakeholder matching and partnership predictions
+{% endcomment %}
+
+{% block extra_content %}
+{{ block.super }}
+
+<!-- AI Insights Panel -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <section class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 p-6 shadow-md">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-brain text-white text-lg"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 flex-1">AI Coordination Insights</h3>
+            <span class="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+                Powered by AI
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <!-- Stakeholder Matching -->
+            <div id="ai-stakeholder-matching"
+                 hx-get="{% url 'coordination:ai_stakeholder_matching' organization.id %}"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 class="bg-white/50 rounded-lg p-4 border border-emerald-100">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-users-cog text-emerald-600"></i>
+                    <h4 class="font-medium text-gray-900">Recommended Stakeholders</h4>
+                </div>
+                <div class="flex items-center justify-center py-4">
+                    <i class="fas fa-spinner fa-spin text-emerald-500"></i>
+                    <span class="ml-2 text-sm text-gray-600">Finding matches...</span>
+                </div>
+            </div>
+
+            <!-- Partnership Predictions -->
+            <div id="ai-partnership-predictions"
+                 hx-get="{% url 'coordination:ai_partnership_predictions' organization.id %}"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 class="bg-white/50 rounded-lg p-4 border border-emerald-100">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-handshake text-emerald-600"></i>
+                    <h4 class="font-medium text-gray-900">Partnership Opportunities</h4>
+                </div>
+                <div class="flex items-center justify-center py-4">
+                    <i class="fas fa-spinner fa-spin text-emerald-500"></i>
+                    <span class="ml-2 text-sm text-gray-600">Analyzing opportunities...</span>
+                </div>
+            </div>
+
+            <!-- Meeting Intelligence -->
+            <div id="ai-meeting-intelligence"
+                 hx-get="{% url 'coordination:ai_meeting_intelligence' organization.id %}"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 class="bg-white/50 rounded-lg p-4 border border-emerald-100">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-calendar-check text-emerald-600"></i>
+                    <h4 class="font-medium text-gray-900">Meeting Insights</h4>
+                </div>
+                <div class="flex items-center justify-center py-4">
+                    <i class="fas fa-spinner fa-spin text-emerald-500"></i>
+                    <span class="ml-2 text-sm text-gray-600">Generating insights...</span>
+                </div>
+            </div>
+
+            <!-- Resource Optimization -->
+            <div id="ai-resource-optimization"
+                 hx-get="{% url 'coordination:ai_resource_optimization' organization.id %}"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 class="bg-white/50 rounded-lg p-4 border border-emerald-100">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-chart-pie text-emerald-600"></i>
+                    <h4 class="font-medium text-gray-900">Resource Recommendations</h4>
+                </div>
+                <div class="flex items-center justify-center py-4">
+                    <i class="fas fa-spinner fa-spin text-emerald-500"></i>
+                    <span class="ml-2 text-sm text-gray-600">Optimizing...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generate Coordination Report -->
+        <div class="border-t border-emerald-200 pt-4">
+            <button
+                hx-post="{% url 'coordination:ai_generate_report' organization.id %}"
+                hx-target="#ai-report-result"
+                hx-swap="innerHTML"
+                hx-indicator="#ai-report-spinner"
+                class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg hover:shadow-lg transition-all duration-200 font-medium flex items-center justify-center gap-2">
+                <i class="fas fa-file-alt"></i>
+                <span>Generate Coordination Strategy Report</span>
+                <i id="ai-report-spinner" class="fas fa-spinner fa-spin htmx-indicator"></i>
+            </button>
+            <div id="ai-report-result" class="mt-3"></div>
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}AI Settings - OBCMS{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        {# Header #}
+        <div class="mb-8">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-teal-600 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-cog text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">AI Configuration</h1>
+                    <p class="text-gray-600">Manage your AI features and preferences</p>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" action="{% url 'common:ai_settings_save' %}" class="space-y-6">
+            {% csrf_token %}
+
+            {# AI Feature Toggles #}
+            <div class="bg-white rounded-xl shadow border border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-toggle-on text-blue-600 mr-3"></i>
+                        AI Feature Controls
+                    </h2>
+                    <p class="text-sm text-gray-600 mt-1">Enable or disable AI features by module</p>
+                </div>
+
+                <div class="p-6 space-y-6">
+                    {# MANA Module #}
+                    <div class="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-map-marked-alt text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">MANA AI Features</h3>
+                                <p class="text-sm text-gray-600">Response analysis, theme extraction, report generation</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ ai_settings.mana_operations_count|default:0 }} operations this month</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="enable_mana_ai" value="true" class="sr-only peer"
+                                   {% if ai_settings.enable_mana_ai %}checked{% endif %}>
+                            <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                    </div>
+
+                    {# Communities Module #}
+                    <div class="flex items-center justify-between p-4 bg-teal-50 rounded-lg border border-teal-200">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-users text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">Communities AI Features</h3>
+                                <p class="text-sm text-gray-600">Needs prediction, community matching, data validation</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ ai_settings.communities_operations_count|default:0 }} operations this month</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="enable_communities_ai" value="true" class="sr-only peer"
+                                   {% if ai_settings.enable_communities_ai %}checked{% endif %}>
+                            <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-teal-600"></div>
+                        </label>
+                    </div>
+
+                    {# Coordination Module #}
+                    <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-handshake text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">Coordination AI Features</h3>
+                                <p class="text-sm text-gray-600">Stakeholder matching, partnership prediction, meeting intelligence</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ ai_settings.coordination_operations_count|default:0 }} operations this month</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="enable_coordination_ai" value="true" class="sr-only peer"
+                                   {% if ai_settings.enable_coordination_ai %}checked{% endif %}>
+                            <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+
+                    {# Policy Module #}
+                    <div class="flex items-center justify-between p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-file-contract text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">Policy AI Features</h3>
+                                <p class="text-sm text-gray-600">Evidence gathering, policy generation, impact simulation</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ ai_settings.policy_operations_count|default:0 }} operations this month</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="enable_policy_ai" value="true" class="sr-only peer"
+                                   {% if ai_settings.enable_policy_ai %}checked{% endif %}>
+                            <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
+                    </div>
+
+                    {# Projects Module #}
+                    <div class="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-project-diagram text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">Projects AI Features</h3>
+                                <p class="text-sm text-gray-600">Performance forecasting, risk analysis, anomaly detection</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ ai_settings.projects_operations_count|default:0 }} operations this month</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="enable_projects_ai" value="true" class="sr-only peer"
+                                   {% if ai_settings.enable_projects_ai %}checked{% endif %}>
+                            <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-orange-600"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            {# AI Response Preferences #}
+            <div class="bg-white rounded-xl shadow border border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-sliders-h text-blue-600 mr-3"></i>
+                        AI Response Preferences
+                    </h2>
+                    <p class="text-sm text-gray-600 mt-1">Customize AI behavior and output</p>
+                </div>
+
+                <div class="p-6 space-y-6">
+                    {# Detail Level #}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Response Detail Level</label>
+                        <div class="grid grid-cols-3 gap-4">
+                            <label class="relative flex items-center p-4 bg-gray-50 rounded-lg border-2 cursor-pointer hover:bg-gray-100 transition-colors
+                                          {% if ai_settings.detail_level == 'concise' %}border-blue-600 bg-blue-50{% else %}border-gray-200{% endif %}">
+                                <input type="radio" name="detail_level" value="concise" class="sr-only"
+                                       {% if ai_settings.detail_level == 'concise' %}checked{% endif %}>
+                                <div class="text-center flex-1">
+                                    <i class="fas fa-compress-alt text-2xl mb-2 {% if ai_settings.detail_level == 'concise' %}text-blue-600{% else %}text-gray-600{% endif %}"></i>
+                                    <p class="font-semibold text-sm">Concise</p>
+                                    <p class="text-xs text-gray-600">Brief summaries</p>
+                                </div>
+                            </label>
+
+                            <label class="relative flex items-center p-4 bg-gray-50 rounded-lg border-2 cursor-pointer hover:bg-gray-100 transition-colors
+                                          {% if ai_settings.detail_level == 'balanced' or not ai_settings.detail_level %}border-blue-600 bg-blue-50{% else %}border-gray-200{% endif %}">
+                                <input type="radio" name="detail_level" value="balanced" class="sr-only"
+                                       {% if ai_settings.detail_level == 'balanced' or not ai_settings.detail_level %}checked{% endif %}>
+                                <div class="text-center flex-1">
+                                    <i class="fas fa-balance-scale text-2xl mb-2 {% if ai_settings.detail_level == 'balanced' or not ai_settings.detail_level %}text-blue-600{% else %}text-gray-600{% endif %}"></i>
+                                    <p class="font-semibold text-sm">Balanced</p>
+                                    <p class="text-xs text-gray-600">Recommended</p>
+                                </div>
+                            </label>
+
+                            <label class="relative flex items-center p-4 bg-gray-50 rounded-lg border-2 cursor-pointer hover:bg-gray-100 transition-colors
+                                          {% if ai_settings.detail_level == 'detailed' %}border-blue-600 bg-blue-50{% else %}border-gray-200{% endif %}">
+                                <input type="radio" name="detail_level" value="detailed" class="sr-only"
+                                       {% if ai_settings.detail_level == 'detailed' %}checked{% endif %}>
+                                <div class="text-center flex-1">
+                                    <i class="fas fa-expand-alt text-2xl mb-2 {% if ai_settings.detail_level == 'detailed' %}text-blue-600{% else %}text-gray-600{% endif %}"></i>
+                                    <p class="font-semibold text-sm">Detailed</p>
+                                    <p class="text-xs text-gray-600">Comprehensive</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {# Auto-Analysis #}
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <h3 class="font-medium text-gray-900">Automatic AI Analysis</h3>
+                            <p class="text-sm text-gray-600">Run AI analysis automatically when creating new assessments</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="auto_analysis" value="true" class="sr-only peer"
+                                   {% if ai_settings.auto_analysis %}checked{% endif %}>
+                            <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+
+                    {# Show Confidence Scores #}
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <h3 class="font-medium text-gray-900">Show Confidence Scores</h3>
+                            <p class="text-sm text-gray-600">Display AI confidence percentages in results</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="show_confidence" value="true" class="sr-only peer"
+                                   {% if ai_settings.show_confidence %}checked{% endif %}>
+                            <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            {# Admin-Only: Cost Management #}
+            {% if user.is_staff %}
+            <div class="bg-white rounded-xl shadow border border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-dollar-sign text-amber-600 mr-3"></i>
+                        Cost Management
+                        <span class="ml-3 text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">Admin Only</span>
+                    </h2>
+                    <p class="text-sm text-gray-600 mt-1">Monitor and control AI usage costs</p>
+                </div>
+
+                <div class="p-6">
+                    <div class="grid md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <p class="text-sm text-gray-600 mb-1">This Month</p>
+                            <p class="text-2xl font-bold text-blue-600">${{ ai_costs.current_month|default:0|floatformat:2 }}</p>
+                        </div>
+                        <div class="bg-emerald-50 rounded-lg p-4">
+                            <p class="text-sm text-gray-600 mb-1">Total Operations</p>
+                            <p class="text-2xl font-bold text-emerald-600">{{ ai_costs.total_operations|default:0|intcomma }}</p>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-4">
+                            <p class="text-sm text-gray-600 mb-1">Avg Cost/Operation</p>
+                            <p class="text-2xl font-bold text-purple-600">${{ ai_costs.avg_cost|default:0|floatformat:3 }}</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Monthly Budget Limit</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                                <input type="number" name="monthly_budget" step="0.01"
+                                       value="{{ ai_settings.monthly_budget|default:100 }}"
+                                       class="block w-full pl-8 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Alert when 80% of budget is reached</p>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-amber-50 rounded-lg border border-amber-200">
+                            <div>
+                                <h3 class="font-medium text-gray-900">Pause AI when budget exceeded</h3>
+                                <p class="text-sm text-gray-600">Automatically disable AI features when monthly budget is reached</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="pause_on_budget" value="true" class="sr-only peer"
+                                       {% if ai_settings.pause_on_budget %}checked{% endif %}>
+                                <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-amber-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {# Save Button #}
+            <div class="flex items-center justify-end space-x-4">
+                <a href="{% url 'common:dashboard' %}"
+                   class="px-6 py-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center space-x-2">
+                    <i class="fas fa-save"></i>
+                    <span>Save Settings</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

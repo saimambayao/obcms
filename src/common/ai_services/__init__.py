@@ -23,10 +23,31 @@ except ImportError:
     SearchAnalytics = None
     HAS_UNIFIED_SEARCH = False
 
+# Conversational AI Chat (requires GeminiService)
+try:
+    from .chat import (
+        ConversationalAssistant,
+        ConversationManager,
+        get_conversational_assistant,
+        get_conversation_manager,
+    )
+    HAS_CHAT = True
+except ImportError:
+    ConversationalAssistant = None
+    ConversationManager = None
+    get_conversational_assistant = None
+    get_conversation_manager = None
+    HAS_CHAT = False
+
 __all__ = [
     'UnifiedSearchEngine',
     'QueryParser',
     'ResultRanker',
     'SearchAnalytics',
     'HAS_UNIFIED_SEARCH',
+    'ConversationalAssistant',
+    'ConversationManager',
+    'get_conversational_assistant',
+    'get_conversation_manager',
+    'HAS_CHAT',
 ]

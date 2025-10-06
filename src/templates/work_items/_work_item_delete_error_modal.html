@@ -1,0 +1,28 @@
+{% load static %}
+{# Delete Error Modal Content - OBCMS UI Standards v2.0 #}
+
+<div class="space-y-6">
+    {# Error Icon and Header #}
+    <div class="text-center">
+        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+            <i class="fas fa-ban text-red-600 text-3xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">
+            Permission Denied
+        </h3>
+        <p class="text-sm text-gray-600">
+            {{ error_message }}
+        </p>
+    </div>
+
+    {# Close Button #}
+    <div class="flex justify-center">
+        <button type="button"
+                @click="show = false; setTimeout(() => $el.closest('.modal-backdrop').remove(), 200)"
+                class="px-6 py-3 bg-gray-600 text-white rounded-xl font-medium hover:bg-gray-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                aria-label="Close modal">
+            <i class="fas fa-times mr-2"></i>
+            Close
+        </button>
+    </div>
+</div>

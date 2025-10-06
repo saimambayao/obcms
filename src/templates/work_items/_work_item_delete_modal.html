@@ -1,0 +1,201 @@
+{% load static %}
+{# Delete Confirmation Modal Content - OBCMS UI Standards v2.0 #}
+
+<div class="space-y-6">
+    {# Warning Icon and Header #}
+    <div class="text-center">
+        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+            <i class="fas fa-exclamation-triangle text-red-600 text-3xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">
+            Delete Work Item?
+        </h3>
+        <p class="text-sm text-gray-600">
+            This action cannot be undone. Please review the details below.
+        </p>
+    </div>
+
+    {# Work Item Details #}
+    <div class="bg-gray-50 rounded-xl p-4 border-l-4 border-red-500">
+        <div class="mb-3">
+            <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Title</span>
+            <p class="text-base font-bold text-gray-900 mt-1">{{ work_item.title }}</p>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Type</span>
+                <p class="text-sm text-gray-900">{{ work_item.get_work_type_display }}</p>
+            </div>
+            <div>
+                <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</span>
+                <p class="text-sm text-gray-900">{{ work_item.get_status_display }}</p>
+            </div>
+        </div>
+    </div>
+
+    {# Impact Warning (if has descendants) #}
+    {% if descendants_count > 0 %}
+    <div class="bg-amber-50 border-l-4 border-amber-500 rounded-r-lg p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-amber-500 text-xl"></i>
+            </div>
+            <div class="ml-3">
+                <h4 class="text-sm font-medium text-amber-800">
+                    Impact Warning
+                </h4>
+                <div class="mt-2 text-sm text-amber-700">
+                    <p class="mb-2">This work item has <strong>{{ descendants_count }} child item{% if descendants_count != 1 %}s{% endif %}</strong>.</p>
+                    <ul class="space-y-1 ml-4">
+                        <li class="flex items-start">
+                            <i class="fas fa-minus-circle mr-2 mt-0.5 text-amber-600"></i>
+                            <span>All descendants will be <strong>permanently deleted</strong></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# What will be deleted #}
+    <div class="bg-red-50 border-l-4 border-red-500 rounded-r-lg p-4">
+        <h4 class="text-sm font-semibold text-red-900 mb-2">
+            <i class="fas fa-info-circle mr-2"></i>
+            What will be deleted:
+        </h4>
+        <ul class="text-sm text-red-800 space-y-1">
+            <li class="flex items-start">
+                <i class="fas fa-times-circle mr-2 mt-0.5"></i>
+                <span>The work item and all its details</span>
+            </li>
+            {% if descendants_count > 0 %}
+            <li class="flex items-start">
+                <i class="fas fa-times-circle mr-2 mt-0.5"></i>
+                <span>All {{ descendants_count }} child item{% if descendants_count != 1 %}s{% endif %} (cascade delete)</span>
+            </li>
+            {% endif %}
+            <li class="flex items-start">
+                <i class="fas fa-times-circle mr-2 mt-0.5"></i>
+                <span>All calendar events and scheduling data</span>
+            </li>
+        </ul>
+    </div>
+
+    {# Action Buttons #}
+    <div class="flex flex-col sm:flex-row gap-3">
+        <button type="button"
+                hx-delete="{% url 'common:work_item_delete' pk=work_item.pk %}"
+                hx-confirm="false"
+                hx-target="[data-work-item-id='{{ work_item.id }}']"
+                hx-swap="delete swap:200ms"
+                class="delete-confirm-btn flex-1 px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-all duration-200 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                aria-label="Confirm deletion">
+            <i class="fas fa-trash mr-2"></i>
+            Yes, Delete Permanently
+        </button>
+        <button type="button"
+                @click="show = false; setTimeout(() => $el.closest('.modal-backdrop').remove(), 200)"
+                class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                aria-label="Cancel deletion">
+            <i class="fas fa-times mr-2"></i>
+            Cancel
+        </button>
+    </div>
+</div>
+
+<script>
+/**
+ * Work Item Delete Modal - HTMX Integration
+ *
+ * Handles:
+ * - Instant UI removal on delete
+ * - Descendant cleanup if rows are expanded
+ * - Success/error toast notifications
+ * - Modal cleanup after deletion
+ */
+(function() {
+    'use strict';
+
+    // Listen for HTMX before delete request
+    document.body.addEventListener('htmx:beforeRequest', function(event) {
+        const deleteBtn = event.detail.elt;
+
+        // Only handle delete confirmation button
+        if (!deleteBtn.classList.contains('delete-confirm-btn')) return;
+
+        // Disable button during request
+        deleteBtn.disabled = true;
+        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Deleting...';
+    });
+
+    // Listen for successful deletion
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        const deleteBtn = event.detail.elt;
+
+        // Only handle delete confirmation button
+        if (!deleteBtn.classList.contains('delete-confirm-btn')) return;
+
+        // Close modal after successful deletion
+        const modal = deleteBtn.closest('.modal-backdrop');
+        if (modal) {
+            setTimeout(() => modal.remove(), 300);
+        }
+    });
+
+    // Listen for workItemDeleted custom event (from HX-Trigger)
+    document.body.addEventListener('workItemDeleted', function(event) {
+        const workItemId = event.detail.id;
+
+        // Find and remove descendant rows if they're expanded
+        const parentRow = document.querySelector(`[data-work-item-id="${workItemId}"]`);
+        if (!parentRow) return;
+
+        // Get all descendant rows
+        const parentLevel = parseInt(parentRow.dataset.level || '0');
+        let currentRow = parentRow.nextElementSibling;
+        const descendantRows = [];
+
+        while (currentRow) {
+            // Skip placeholder and skeleton rows
+            if (!currentRow.dataset.workItemId) {
+                currentRow = currentRow.nextElementSibling;
+                continue;
+            }
+
+            const level = parseInt(currentRow.dataset.level || '0');
+
+            // Stop if we hit a sibling or parent
+            if (level <= parentLevel) break;
+
+            descendantRows.push(currentRow);
+            currentRow = currentRow.nextElementSibling;
+        }
+
+        // Remove descendant rows with animation
+        descendantRows.forEach(row => {
+            row.style.transition = 'opacity 200ms ease-out';
+            row.style.opacity = '0';
+            setTimeout(() => row.remove(), 200);
+        });
+
+        // Also remove skeleton and placeholder rows
+        const skeletonRow = document.getElementById(`skeleton-row-${workItemId}`);
+        const placeholderRow = document.getElementById(`children-placeholder-${workItemId}`);
+        if (skeletonRow) skeletonRow.remove();
+        if (placeholderRow) placeholderRow.remove();
+    });
+
+    // Handle deletion errors
+    document.body.addEventListener('htmx:responseError', function(event) {
+        const deleteBtn = event.detail.elt;
+
+        // Only handle delete confirmation button
+        if (!deleteBtn.classList.contains('delete-confirm-btn')) return;
+
+        // Re-enable button on error
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = '<i class="fas fa-trash mr-2"></i>Yes, Delete Permanently';
+    });
+})();
+</script>

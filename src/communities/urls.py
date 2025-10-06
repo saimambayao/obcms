@@ -13,4 +13,25 @@ urlpatterns = [
         views.create_visualization,
         name="create_visualization",
     ),
+    # AI Intelligence Endpoints - TODO: Implement these views
+    # path(
+    #     'ai/similar/<int:pk>/',
+    #     views.ai_similar_communities,
+    #     name='ai-similar'
+    # ),
+    # path(
+    #     'ai/classify-needs/<int:pk>/',
+    #     views.ai_classify_needs,
+    #     name='ai-classify-needs'
+    # ),
+    # path(
+    #     'ai/generate-report/<int:pk>/',
+    #     views.ai_generate_report,
+    #     name='ai-generate-report'
+    # ),
+    # path(
+    #     'ai/validate-data/<int:pk>/',
+    #     views.ai_validate_data,
+    #     name='ai-validate-data'
+    # ),
 ]

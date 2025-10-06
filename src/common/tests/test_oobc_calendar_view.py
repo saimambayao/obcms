@@ -6,11 +6,11 @@ from django.urls import reverse
 from django.utils import timezone
 from django.core.cache import cache
 
-from common.models import StaffTeam, StaffTask, User
+from common.models import StaffTeam, User
+from common.work_item_model import WorkItem
 from common.services.calendar import build_calendar_payload
 from coordination.models import (
     Communication,
-    Event,
     Organization,
     Partnership,
     PartnershipMilestone,
@@ -55,18 +55,18 @@ def test_build_calendar_payload_handles_staff_tasks():
     team = StaffTeam.objects.create(
         name="Coordination Team", description="", is_active=True
     )
-    task = StaffTask.objects.create(
+    task = WorkItem.objects.create(
         title="Prepare briefing",
         description="",
-        impact="",
-        team=team,
+        work_type=WorkItem.WORK_TYPE_TASK,
         created_by=staff_user,
-        status=StaffTask.STATUS_IN_PROGRESS,
-        priority=StaffTask.PRIORITY_HIGH,
+        status=WorkItem.STATUS_IN_PROGRESS,
+        priority=WorkItem.PRIORITY_HIGH,
         start_date=timezone.now().date(),
         due_date=timezone.now().date(),
     )
     task.assignees.set([staff_user])
+    task.teams.set([team])
 
     payload = build_calendar_payload(filter_modules=["staff"])
 
@@ -176,17 +176,20 @@ def test_build_calendar_payload_skips_tasks_linked_to_events():
         is_approved=True,
     )
 
-    event = Event.objects.create(
+    # Create an activity (replaces old Event model)
+    event = WorkItem.objects.create(
         title="Coordination Meeting",
+        work_type=WorkItem.WORK_TYPE_ACTIVITY,
         start_date=timezone.now().date() + timedelta(days=1),
-        status="scheduled",
+        status=WorkItem.STATUS_IN_PROGRESS,
         created_by=user,
-        organizer=user,
     )
 
-    StaffTask.objects.create(
+    # Create a task with the activity as parent (replaces linked_event)
+    WorkItem.objects.create(
         title="Prepare agenda",
-        linked_event=event,
+        work_type=WorkItem.WORK_TYPE_TASK,
+        parent=event,
         due_date=timezone.now().date() + timedelta(days=1),
         created_by=user,
     )
@@ -221,10 +224,11 @@ def test_calendar_payload_cache_invalidation_on_task_save():
         is_approved=True,
     )
 
-    StaffTask.objects.create(
+    WorkItem.objects.create(
         title="Initial task",
+        work_type=WorkItem.WORK_TYPE_TASK,
         due_date=timezone.now().date() + timedelta(days=2),
-        status=StaffTask.STATUS_IN_PROGRESS,
+        status=WorkItem.STATUS_IN_PROGRESS,
         created_by=user,
     )
 
@@ -236,10 +240,11 @@ def test_calendar_payload_cache_invalidation_on_task_save():
     ]
     assert len(first_staff_entries) == 1
 
-    StaffTask.objects.create(
+    WorkItem.objects.create(
         title="Newly added task",
+        work_type=WorkItem.WORK_TYPE_TASK,
         due_date=timezone.now().date() + timedelta(days=3),
-        status=StaffTask.STATUS_NOT_STARTED,
+        status=WorkItem.STATUS_NOT_STARTED,
         created_by=user,
     )
 

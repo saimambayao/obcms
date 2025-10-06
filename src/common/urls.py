@@ -647,6 +647,11 @@ urlpatterns = [
         name="work_item_delete",
     ),
     path(
+        "oobc-management/work-items/<uuid:pk>/delete/modal/",
+        views.work_item_delete_modal,
+        name="work_item_delete_modal",
+    ),
+    path(
         "oobc-management/work-items/<uuid:pk>/tree/",
         views.work_item_tree_partial,
         name="work_item_tree_partial",
@@ -671,6 +676,18 @@ urlpatterns = [
         "oobc-management/work-items/<uuid:pk>/sidebar/edit/",
         views.work_item_sidebar_edit,
         name="work_item_sidebar_edit",
+    ),
+    # Calendar sidebar quick-create (double-click on date)
+    path(
+        "oobc-management/work-items/sidebar/create/",
+        views.work_item_sidebar_create,
+        name="work_item_sidebar_create",
+    ),
+    # Calendar sidebar actions (duplicate & delete)
+    path(
+        "oobc-management/work-items/<uuid:pk>/duplicate/",
+        views.work_item_duplicate,
+        name="work_item_duplicate",
     ),
     # ============================================================================
     # LEGACY URL REDIRECTS REMOVED

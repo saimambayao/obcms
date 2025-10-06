@@ -1,0 +1,101 @@
+{% comment %}
+AI Insights Section for Policy Detail Pages
+
+Include this in policy_detail.html pages to add AI features.
+
+Usage:
+{% include "recommendations/policy_tracking/ai_insights_section.html" with policy=object %}
+{% endcomment %}
+
+<section class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 p-6 mt-6 shadow-md">
+    <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+            <i class="fas fa-brain text-white text-lg"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 flex-1">AI Policy Insights</h3>
+        <span class="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+            Powered by AI
+        </span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <!-- Evidence Gathering -->
+        <div id="ai-evidence-gathering"
+             hx-get="{% url 'policies:ai_evidence_gathering' policy.id %}"
+             hx-trigger="load"
+             hx-swap="innerHTML"
+             class="bg-white/50 rounded-lg p-4 border border-emerald-100">
+            <div class="flex items-center gap-2 mb-3">
+                <i class="fas fa-search text-emerald-600"></i>
+                <h4 class="font-medium text-gray-900">Supporting Evidence</h4>
+            </div>
+            <div class="flex items-center justify-center py-4">
+                <i class="fas fa-spinner fa-spin text-emerald-500"></i>
+                <span class="ml-2 text-sm text-gray-600">Gathering evidence...</span>
+            </div>
+        </div>
+
+        <!-- Policy Generation Suggestions -->
+        <div id="ai-policy-suggestions"
+             hx-get="{% url 'policies:ai_policy_suggestions' policy.id %}"
+             hx-trigger="load"
+             hx-swap="innerHTML"
+             class="bg-white/50 rounded-lg p-4 border border-emerald-100">
+            <div class="flex items-center gap-2 mb-3">
+                <i class="fas fa-file-signature text-emerald-600"></i>
+                <h4 class="font-medium text-gray-900">Policy Enhancements</h4>
+            </div>
+            <div class="flex items-center justify-center py-4">
+                <i class="fas fa-spinner fa-spin text-emerald-500"></i>
+                <span class="ml-2 text-sm text-gray-600">Analyzing policy...</span>
+            </div>
+        </div>
+
+        <!-- Impact Simulation -->
+        <div id="ai-impact-simulation"
+             hx-get="{% url 'policies:ai_impact_simulation' policy.id %}"
+             hx-trigger="load"
+             hx-swap="innerHTML"
+             class="bg-white/50 rounded-lg p-4 border border-emerald-100">
+            <div class="flex items-center gap-2 mb-3">
+                <i class="fas fa-chart-bar text-emerald-600"></i>
+                <h4 class="font-medium text-gray-900">Predicted Impact</h4>
+            </div>
+            <div class="flex items-center justify-center py-4">
+                <i class="fas fa-spinner fa-spin text-emerald-500"></i>
+                <span class="ml-2 text-sm text-gray-600">Running simulation...</span>
+            </div>
+        </div>
+
+        <!-- Compliance Checker -->
+        <div id="ai-compliance-check"
+             hx-get="{% url 'policies:ai_compliance_check' policy.id %}"
+             hx-trigger="load"
+             hx-swap="innerHTML"
+             class="bg-white/50 rounded-lg p-4 border border-emerald-100">
+            <div class="flex items-center gap-2 mb-3">
+                <i class="fas fa-shield-alt text-emerald-600"></i>
+                <h4 class="font-medium text-gray-900">Compliance Check</h4>
+            </div>
+            <div class="flex items-center justify-center py-4">
+                <i class="fas fa-spinner fa-spin text-emerald-500"></i>
+                <span class="ml-2 text-sm text-gray-600">Checking compliance...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generate Policy Brief -->
+    <div class="border-t border-emerald-200 pt-4">
+        <button
+            hx-post="{% url 'policies:ai_generate_brief' policy.id %}"
+            hx-target="#ai-report-result"
+            hx-swap="innerHTML"
+            hx-indicator="#ai-report-spinner"
+            class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg hover:shadow-lg transition-all duration-200 font-medium flex items-center justify-center gap-2">
+            <i class="fas fa-file-alt"></i>
+            <span>Generate AI Policy Brief</span>
+            <i id="ai-report-spinner" class="fas fa-spinner fa-spin htmx-indicator"></i>
+        </button>
+        <div id="ai-report-result" class="mt-3"></div>
+    </div>
+</section>

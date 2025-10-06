@@ -63,10 +63,13 @@ class ManageBarangayStatCardsTests(TestCase):
             code=f"BRGY-{municipality.code}-{code_suffix}",
             name=f"Barangay {code_suffix}",
         )
-        return OBCCommunity.objects.create(
+        community = OBCCommunity.objects.create(
             barangay=barangay,
             estimated_obc_population=population,
         )
+        # Sync municipality coverage to match production behavior
+        MunicipalityCoverage.sync_for_municipality(municipality)
+        return community
 
     def test_stat_cards_present_expected_totals(self):
         response = self.client.get(reverse("common:communities_manage"))

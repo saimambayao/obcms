@@ -1,0 +1,856 @@
+{% comment %}
+AI Chat Widget Component
+Enhanced with reliable toggle, smooth animations, and excellent UX
+FIXED: Panel positioning issue - now uses fixed positioning for reliable visibility
+Usage: {% include 'components/ai_chat_widget.html' %}
+{% endcomment %}
+
+<!-- AI Chat Widget - Fixed bottom-right -->
+<div id="ai-chat-widget" class="fixed bottom-6 right-6" style="z-index: 999999 !important;">
+    <!-- Chat Toggle Button -->
+    <button id="ai-chat-toggle-btn"
+            onclick="toggleAIChat()"
+            aria-label="Toggle AI Assistant Chat"
+            aria-expanded="false"
+            class="ai-chat-button w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group relative overflow-hidden active:scale-95">
+        <!-- Ripple effect container -->
+        <span class="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
+
+        <!-- Icon with rotation on open -->
+        <i id="ai-chat-icon" class="fas fa-comments text-white text-xl sm:text-2xl group-hover:scale-110 transition-all duration-300 relative z-10"></i>
+
+        <!-- Notification badge (optional - for unread messages) -->
+        <span id="ai-chat-badge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 border-2 border-white rounded-full text-white text-xs font-bold flex items-center justify-center">
+            3
+        </span>
+    </button>
+
+    <!-- Chat Panel - ULTRA-SIMPLE FIXED POSITIONING -->
+    <div id="ai-chat-panel"
+         class="ai-chat-panel bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col transition-all duration-300"
+         style="position: fixed; bottom: 100px; right: 24px; width: 400px; height: 500px; max-height: 500px; z-index: 99999; opacity: 0; visibility: hidden; pointer-events: none; transform-origin: bottom right; transform: scale(0.95);"
+         role="dialog"
+         aria-labelledby="ai-chat-title"
+         aria-hidden="true">
+
+        <!-- Chat Header -->
+        <div class="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-t-xl flex-shrink-0">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-robot text-white animate-pulse"></i>
+                    <h3 id="ai-chat-title" class="text-white font-medium">AI Assistant</h3>
+                    <span class="px-2 py-0.5 bg-white/20 rounded-full text-xs text-white backdrop-blur-sm">Beta</span>
+                </div>
+                <button onclick="toggleAIChat()"
+                        aria-label="Close AI Chat"
+                        class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors duration-200 active:scale-95">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="text-xs text-white/90 mt-1">Ask me anything about OBCMS data</p>
+        </div>
+
+        <!-- Chat Messages Container -->
+        <div id="ai-chat-messages"
+             class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50"
+             role="log"
+             aria-live="polite"
+             aria-relevant="additions">
+            <!-- Welcome Message -->
+            <div class="ai-message-bot bg-white border border-emerald-100 rounded-lg p-3 shadow-sm animate-fade-in">
+                <div class="flex items-start gap-2">
+                    <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center">
+                        <i class="fas fa-robot text-white text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm text-gray-700 mb-2">Hello! I'm your AI assistant. I can help you with:</p>
+                        <ul class="space-y-1.5 text-xs text-gray-600">
+                            <li class="flex items-center gap-2">
+                                <i class="fas fa-check-circle text-emerald-500 text-xs flex-shrink-0"></i>
+                                <span>Finding community data</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i class="fas fa-check-circle text-emerald-500 text-xs flex-shrink-0"></i>
+                                <span>Analyzing assessments</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i class="fas fa-check-circle text-emerald-500 text-xs flex-shrink-0"></i>
+                                <span>Generating reports</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i class="fas fa-check-circle text-emerald-500 text-xs flex-shrink-0"></i>
+                                <span>Answering questions</span>
+                            </li>
+                        </ul>
+
+                        <!-- Quick Query Chips -->
+                        <div class="mt-3 pt-3 border-t border-gray-100">
+                            <p class="text-xs text-gray-500 mb-2 font-medium">
+                                <i class="fas fa-bolt mr-1"></i>Try these quick queries:
+                            </p>
+                            <div class="flex flex-wrap gap-1.5">
+                                <button type="button"
+                                        class="query-chip px-2.5 py-1 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 text-emerald-700 rounded-full text-xs border border-emerald-200 transition-all duration-200 hover:shadow-sm active:scale-95"
+                                        data-query="How many communities are in Region IX?">
+                                    <i class="fas fa-users mr-1"></i> Communities
+                                </button>
+                                <button type="button"
+                                        class="query-chip px-2.5 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-blue-700 rounded-full text-xs border border-blue-200 transition-all duration-200 hover:shadow-sm active:scale-95"
+                                        data-query="Show me recent MANA assessments">
+                                    <i class="fas fa-clipboard-check mr-1"></i> Assessments
+                                </button>
+                                <button type="button"
+                                        class="query-chip px-2.5 py-1 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 text-purple-700 rounded-full text-xs border border-purple-200 transition-all duration-200 hover:shadow-sm active:scale-95"
+                                        data-query="List coordination activities">
+                                    <i class="fas fa-handshake mr-1"></i> Activities
+                                </button>
+                                <button type="button"
+                                        class="query-chip px-2.5 py-1 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-700 rounded-full text-xs border border-amber-200 transition-all duration-200 hover:shadow-sm active:scale-95"
+                                        data-query="What can you help me with?">
+                                    <i class="fas fa-question-circle mr-1"></i> Help
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Input Footer -->
+        <div class="p-4 border-t border-gray-200 bg-white rounded-b-xl flex-shrink-0">
+            <!-- AI Chat Input Form with HTMX -->
+            <form id="ai-chat-form"
+                  class="flex gap-2"
+                  hx-post="{% url 'common:chat_message' %}"
+                  hx-target="#ai-chat-messages"
+                  hx-swap="beforeend scroll:bottom"
+                  hx-indicator="#ai-chat-loading"
+                  hx-on::before-request="prepareMessage(event)"
+                  hx-on::after-request="clearInputAfterSend(event)">
+                {% csrf_token %}
+                <input type="text"
+                       id="ai-chat-input"
+                       name="message"
+                       placeholder="Type your message..."
+                       class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                       autocomplete="off"
+                       required
+                       aria-label="Chat message input">
+                <button type="submit"
+                        id="ai-chat-send-btn"
+                        class="px-4 py-2 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-lg hover:shadow-md transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Send message">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Loading State (hidden by default) -->
+        <div id="ai-chat-loading" class="hidden absolute inset-0 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+            <div class="text-center">
+                <div class="inline-block w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                <p id="ai-chat-loading-text" class="mt-2 text-sm text-gray-600 font-medium">Thinking...</p>
+                <p class="mt-1 text-xs text-gray-500">Processing your query</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backdrop for mobile (closes on click) -->
+    <div id="ai-chat-backdrop"
+         class="fixed inset-0 bg-black/20 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 hidden sm:hidden"
+         onclick="toggleAIChat()"
+         style="z-index: -1;">
+    </div>
+</div>
+
+<!-- AI Chat Widget Styles -->
+<style>
+    /* Animation for panel opening */
+    @keyframes slideUpFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(5px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Panel base state - Hidden by default */
+    .ai-chat-panel {
+        /* Styles defined inline in HTML */
+    }
+
+    /* Panel open state - FORCE VISIBILITY */
+    .ai-chat-panel.chat-open {
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        transform: scale(1) !important;
+        display: flex !important;
+    }
+
+    /* DEBUG MODE - Add class "debug-chat" to #ai-chat-widget to enable */
+    .debug-chat .ai-chat-panel {
+        border: 5px solid red !important;
+        background: rgba(255, 255, 0, 0.3) !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        visibility: visible !important;
+    }
+
+    .debug-chat .ai-chat-panel.chat-open {
+        border: 5px solid green !important;
+        background: white !important;
+    }
+
+    /* Button pulse animation when closed */
+    .ai-chat-button:not(.chat-active)::before {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border-radius: 9999px;
+        background: inherit;
+        opacity: 0;
+        animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse-ring {
+        0%, 100% {
+            opacity: 0;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.3;
+            transform: scale(1.15);
+        }
+    }
+
+    /* Message fade-in animation */
+    .animate-fade-in {
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    /* Smooth scrollbar for chat messages */
+    #ai-chat-messages {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(5, 150, 105, 0.3) transparent;
+    }
+
+    #ai-chat-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #ai-chat-messages::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    #ai-chat-messages::-webkit-scrollbar-thumb {
+        background: rgba(5, 150, 105, 0.3);
+        border-radius: 3px;
+    }
+
+    #ai-chat-messages::-webkit-scrollbar-thumb:hover {
+        background: rgba(5, 150, 105, 0.5);
+    }
+
+    /* Mobile optimizations - Full-width bottom sheet */
+    @media (max-width: 640px) {
+        #ai-chat-panel {
+            /* Full-width bottom sheet on mobile */
+            position: fixed !important;
+            bottom: 0 !important;
+            right: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 80vh !important;
+            max-height: 80vh !important;
+            margin: 0 !important;
+            border-radius: 1rem 1rem 0 0 !important;
+            transform-origin: bottom !important;
+        }
+
+        #ai-chat-panel.chat-open {
+            transform: scale(1) !important;
+        }
+
+        #ai-chat-widget {
+            bottom: 1rem !important;
+            right: 1rem !important;
+        }
+
+        /* Adjust button size on mobile */
+        .ai-chat-button {
+            width: 3.5rem !important; /* 56px */
+            height: 3.5rem !important;
+        }
+    }
+
+    /* Accessibility - Focus visible */
+    .ai-chat-button:focus-visible,
+    #ai-chat-panel button:focus-visible {
+        outline: 2px solid #10b981;
+        outline-offset: 2px;
+    }
+</style>
+
+<!-- AI Chat Widget JavaScript -->
+<script>
+(function() {
+    'use strict';
+
+    // DOM Elements
+    const chatPanel = document.getElementById('ai-chat-panel');
+    const chatButton = document.getElementById('ai-chat-toggle-btn');
+    const chatIcon = document.getElementById('ai-chat-icon');
+    const chatMessages = document.getElementById('ai-chat-messages');
+    const chatBackdrop = document.getElementById('ai-chat-backdrop');
+
+    // State
+    let isChatOpen = false;
+
+    /**
+     * Toggle AI chat panel with smooth animations
+     */
+    window.toggleAIChat = function() {
+        isChatOpen = !isChatOpen;
+
+        if (isChatOpen) {
+            openChat();
+        } else {
+            closeChat();
+        }
+    };
+
+    /**
+     * Open chat panel with positioning validation
+     */
+    function openChat() {
+        // Update state
+        isChatOpen = true;
+
+        // Update panel
+        chatPanel.classList.add('chat-open');
+        chatPanel.setAttribute('aria-hidden', 'false');
+
+        // Update button
+        chatButton.classList.add('chat-active');
+        chatButton.setAttribute('aria-expanded', 'true');
+        chatIcon.classList.remove('fa-comments');
+        chatIcon.classList.add('fa-times');
+
+        // Show backdrop on mobile
+        if (window.innerWidth < 640) {
+            chatBackdrop.classList.remove('hidden');
+            setTimeout(() => {
+                chatBackdrop.classList.remove('opacity-0');
+                chatBackdrop.classList.remove('pointer-events-none');
+            }, 10);
+        }
+
+        // Validate panel position and adjust if needed
+        setTimeout(() => {
+            validatePanelPosition();
+
+            // Auto-scroll to bottom
+            if (chatMessages) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }, 50);
+
+        // Announce to screen readers
+        announceToScreenReader('AI chat opened');
+
+        // Focus first interactive element in panel (close button)
+        setTimeout(() => {
+            const closeButton = chatPanel.querySelector('button[aria-label="Close AI Chat"]');
+            if (closeButton) {
+                closeButton.focus();
+            }
+        }, 150);
+    }
+
+    /**
+     * Close chat panel
+     */
+    function closeChat() {
+        // Update state
+        isChatOpen = false;
+
+        // Update panel
+        chatPanel.classList.remove('chat-open');
+        chatPanel.setAttribute('aria-hidden', 'true');
+
+        // Update button
+        chatButton.classList.remove('chat-active');
+        chatButton.setAttribute('aria-expanded', 'false');
+        chatIcon.classList.remove('fa-times');
+        chatIcon.classList.add('fa-comments');
+
+        // Hide backdrop
+        chatBackdrop.classList.add('opacity-0');
+        chatBackdrop.classList.add('pointer-events-none');
+        setTimeout(() => {
+            chatBackdrop.classList.add('hidden');
+        }, 300);
+
+        // Announce to screen readers
+        announceToScreenReader('AI chat closed');
+
+        // Return focus to toggle button
+        chatButton.focus();
+    }
+
+    /**
+     * Announce message to screen readers
+     */
+    function announceToScreenReader(message) {
+        const announcement = document.createElement('div');
+        announcement.setAttribute('role', 'status');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.className = 'sr-only';
+        announcement.textContent = message;
+        document.body.appendChild(announcement);
+
+        setTimeout(() => {
+            document.body.removeChild(announcement);
+        }, 1000);
+    }
+
+    /**
+     * Close chat on Escape key
+     */
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && isChatOpen) {
+            event.preventDefault();
+            closeChat();
+        }
+    });
+
+    /**
+     * Auto-scroll chat messages when new content arrives via HTMX
+     */
+    if (chatMessages) {
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            if (event.detail.target.id === 'ai-chat-messages' ||
+                event.detail.target.closest('#ai-chat-messages')) {
+                // Smooth scroll to bottom
+                setTimeout(() => {
+                    chatMessages.scrollTo({
+                        top: chatMessages.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }, 100);
+
+                // Announce new message to screen readers
+                announceToScreenReader('New message received');
+            }
+        });
+
+        // Handle HTMX errors
+        document.body.addEventListener('htmx:responseError', function(event) {
+            if (event.detail.target.closest('#ai-chat-form')) {
+                // Show error message in chat
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'ai-message-error bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 animate-fade-in';
+                errorDiv.innerHTML = `
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-exclamation-triangle text-red-500"></i>
+                        <span>Sorry, I encountered an error. Please try again.</span>
+                    </div>
+                `;
+                chatMessages.appendChild(errorDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                // Re-enable form
+                const submitBtn = document.getElementById('ai-chat-send-btn');
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        });
+    }
+
+    /**
+     * Validate panel position (safeguard against off-screen rendering)
+     */
+    function validatePanelPosition() {
+        if (!chatPanel) return;
+
+        const rect = chatPanel.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const viewportWidth = window.innerWidth;
+
+        // Log position for debugging (production-safe - only logs when needed)
+        console.log('AI Chat Panel Position:', {
+            top: Math.round(rect.top),
+            bottom: Math.round(rect.bottom),
+            left: Math.round(rect.left),
+            right: Math.round(rect.right),
+            height: Math.round(rect.height),
+            width: Math.round(rect.width),
+            viewportHeight: viewportHeight,
+            viewportWidth: viewportWidth,
+            isVisible: rect.top >= 0 && rect.bottom <= viewportHeight && rect.left >= 0 && rect.right <= viewportWidth,
+            isOpen: chatPanel.classList.contains('chat-open')
+        });
+
+        // Safeguard: Adjust if panel is outside viewport (desktop only)
+        if (viewportWidth >= 640) {
+            if (rect.bottom > viewportHeight || rect.top < 0) {
+                console.warn('⚠️ Panel outside viewport vertically, adjusting height...');
+                const safeHeight = Math.min(500, viewportHeight - 140);
+                chatPanel.style.height = `${safeHeight}px`;
+                chatPanel.style.maxHeight = `${safeHeight}px`;
+                chatPanel.style.bottom = '88px';
+            }
+
+            if (rect.right > viewportWidth) {
+                console.warn('⚠️ Panel too wide, adjusting...');
+                chatPanel.style.right = '24px';
+                chatPanel.style.maxWidth = `${viewportWidth - 48}px`;
+            }
+
+            // Additional check: Ensure panel is actually visible
+            const computedStyle = getComputedStyle(chatPanel);
+            if (computedStyle.visibility === 'hidden' && chatPanel.classList.contains('chat-open')) {
+                console.warn('⚠️ Panel marked as open but visibility:hidden, forcing visible...');
+                chatPanel.style.visibility = 'visible';
+            }
+        }
+    }
+
+    /**
+     * Handle window resize (adjust mobile layout & revalidate position)
+     */
+    window.addEventListener('resize', function() {
+        if (isChatOpen && window.innerWidth >= 640) {
+            // Hide backdrop on desktop
+            chatBackdrop.classList.add('hidden');
+            // Revalidate position after resize
+            validatePanelPosition();
+        } else if (isChatOpen && window.innerWidth < 640) {
+            // Show backdrop on mobile
+            chatBackdrop.classList.remove('hidden');
+            chatBackdrop.classList.remove('opacity-0');
+            chatBackdrop.classList.remove('pointer-events-none');
+        }
+    });
+
+    /**
+     * Initialize - ensure chat is closed on page load
+     */
+    function init() {
+        closeChat();
+        console.log('✅ AI Chat Widget initialized (fixed positioning)');
+
+        // Log initial panel position for debugging
+        if (chatPanel) {
+            const rect = chatPanel.getBoundingClientRect();
+            const computedStyle = getComputedStyle(chatPanel);
+            console.log('Initial panel state:', {
+                width: Math.round(rect.width),
+                height: Math.round(rect.height),
+                computedPosition: computedStyle.position,
+                computedBottom: computedStyle.bottom,
+                computedRight: computedStyle.right,
+                computedVisibility: computedStyle.visibility,
+                computedOpacity: computedStyle.opacity
+            });
+        }
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    /**
+     * Prepare message before sending (show user message immediately)
+     */
+    window.prepareMessage = function(event) {
+        const form = event.target;
+        const input = form.querySelector('#ai-chat-input');
+        const submitBtn = form.querySelector('#ai-chat-send-btn');
+        const messageText = input.value.trim();
+
+        if (!messageText) {
+            event.preventDefault();
+            return false;
+        }
+
+        // Disable submit button during request
+        if (submitBtn) {
+            submitBtn.disabled = true;
+        }
+
+        // Create user message bubble immediately (optimistic UI)
+        const userMessageDiv = document.createElement('div');
+        userMessageDiv.className = 'ai-message-user flex justify-end animate-fade-in';
+        userMessageDiv.innerHTML = `
+            <div class="max-w-[80%] bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-3 shadow-sm">
+                <p class="text-sm break-words">${escapeHtml(messageText)}</p>
+                <span class="text-xs opacity-75 mt-1 block">Just now</span>
+            </div>
+        `;
+
+        // Append user message to chat
+        chatMessages.appendChild(userMessageDiv);
+
+        // Scroll to bottom
+        chatMessages.scrollTo({
+            top: chatMessages.scrollHeight,
+            behavior: 'smooth'
+        });
+
+        // Show loading state
+        const loadingDiv = document.getElementById('ai-chat-loading');
+        if (loadingDiv) {
+            loadingDiv.classList.remove('hidden');
+        }
+    };
+
+    /**
+     * Clear input after successful send
+     */
+    window.clearInputAfterSend = function(event) {
+        const input = document.getElementById('ai-chat-input');
+        const submitBtn = document.getElementById('ai-chat-send-btn');
+        const loadingDiv = document.getElementById('ai-chat-loading');
+
+        // Hide loading state
+        if (loadingDiv) {
+            loadingDiv.classList.add('hidden');
+        }
+
+        // Only clear and re-enable if request was successful
+        if (event.detail.successful) {
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        // Re-enable submit button
+        if (submitBtn) {
+            submitBtn.disabled = false;
+        }
+    };
+
+    /**
+     * Escape HTML to prevent XSS in user messages
+     */
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
+     * Send a query from clickable suggestion/chip
+     */
+    window.sendQuery = function(query) {
+        const input = document.getElementById('ai-chat-input');
+        const form = document.getElementById('ai-chat-form');
+
+        if (!input || !form || !query) return;
+
+        // Set the query in the input
+        input.value = query;
+
+        // Trigger form submission (will use HTMX)
+        form.requestSubmit();
+    };
+
+    /**
+     * Dynamic loading messages based on query type
+     */
+    function getLoadingMessage(query) {
+        const queryLower = (query || '').toLowerCase();
+
+        if (queryLower.includes('community') || queryLower.includes('communities')) {
+            return 'Searching communities...';
+        } else if (queryLower.includes('assessment') || queryLower.includes('mana')) {
+            return 'Analyzing assessments...';
+        } else if (queryLower.includes('coordination') || queryLower.includes('activity')) {
+            return 'Finding activities...';
+        } else if (queryLower.includes('policy') || queryLower.includes('policies')) {
+            return 'Searching policies...';
+        } else if (queryLower.includes('project') || queryLower.includes('ppa')) {
+            return 'Locating projects...';
+        } else if (queryLower.includes('help') || queryLower.includes('what can you')) {
+            return 'Preparing help...';
+        } else {
+            return 'Thinking...';
+        }
+    }
+
+    /**
+     * Enhanced prepareMessage with dynamic loading states
+     */
+    const originalPrepareMessage = window.prepareMessage;
+    window.prepareMessage = function(event) {
+        // Call original function first
+        const result = originalPrepareMessage(event);
+
+        // Update loading message dynamically
+        const form = event.target;
+        const input = form.querySelector('#ai-chat-input');
+        const loadingText = document.getElementById('ai-chat-loading-text');
+
+        if (loadingText && input) {
+            const query = input.value.trim();
+            loadingText.textContent = getLoadingMessage(query);
+        }
+
+        return result;
+    };
+
+    /**
+     * Initialize clickable query chip handlers
+     */
+    function initClickableQueries() {
+        // Use event delegation for dynamically added elements
+        document.addEventListener('click', function(event) {
+            const target = event.target.closest('.query-chip, .clickable-query');
+
+            if (target) {
+                event.preventDefault();
+                const query = target.getAttribute('data-query');
+
+                if (query) {
+                    sendQuery(query);
+                }
+            }
+        });
+
+        console.log('✅ Clickable query handlers initialized');
+    }
+
+    // Initialize clickable queries when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initClickableQueries);
+    } else {
+        initClickableQueries();
+    }
+
+    // Expose debug function globally (for console testing)
+    window.debugAIChat = function() {
+        console.log('=== AI Chat Debug Info ===');
+        console.log('Chat open:', isChatOpen);
+        console.log('Panel classes:', chatPanel.className);
+        console.log('Panel aria-hidden:', chatPanel.getAttribute('aria-hidden'));
+
+        const rect = chatPanel.getBoundingClientRect();
+        console.log('Panel position:', {
+            top: Math.round(rect.top),
+            bottom: Math.round(rect.bottom),
+            left: Math.round(rect.left),
+            right: Math.round(rect.right),
+            height: Math.round(rect.height),
+            width: Math.round(rect.width)
+        });
+
+        const computedStyle = getComputedStyle(chatPanel);
+        console.log('Computed styles:', {
+            position: computedStyle.position,
+            bottom: computedStyle.bottom,
+            right: computedStyle.right,
+            opacity: computedStyle.opacity,
+            visibility: computedStyle.visibility,
+            transform: computedStyle.transform,
+            zIndex: computedStyle.zIndex
+        });
+
+        console.log('Viewport:', {
+            width: window.innerWidth,
+            height: window.innerHeight
+        });
+
+        console.log('Visibility check:', {
+            inViewportVertically: rect.top >= 0 && rect.bottom <= window.innerHeight,
+            inViewportHorizontally: rect.left >= 0 && rect.right <= window.innerWidth,
+            hasOpenClass: chatPanel.classList.contains('chat-open'),
+            ariaHidden: chatPanel.getAttribute('aria-hidden')
+        });
+
+        // Suggest fixes
+        if (!chatPanel.classList.contains('chat-open') && isChatOpen) {
+            console.error('❌ State mismatch: isChatOpen=true but missing chat-open class');
+        }
+        if (rect.top < 0 || rect.bottom > window.innerHeight) {
+            console.error('❌ Panel is outside viewport vertically');
+        }
+        if (computedStyle.visibility === 'hidden' && isChatOpen) {
+            console.error('❌ Panel visibility:hidden while chat is open');
+        }
+    };
+
+    // Enable debug mode: Run this in console
+    window.enableAIChatDebug = function() {
+        document.getElementById('ai-chat-widget').classList.add('debug-chat');
+        console.log('✅ Debug mode enabled - panel will show with colored borders');
+        console.log('Red border = closed, Green border = open');
+    };
+
+    window.disableAIChatDebug = function() {
+        document.getElementById('ai-chat-widget').classList.remove('debug-chat');
+        console.log('✅ Debug mode disabled');
+    };
+
+    // EMERGENCY: Force show chat panel (for troubleshooting)
+    window.forceShowAIChat = function() {
+        console.log('🚨 FORCE SHOWING AI CHAT PANEL');
+        const panel = document.getElementById('ai-chat-panel');
+
+        // Override ALL styles
+        panel.style.cssText = `
+            position: fixed !important;
+            bottom: 100px !important;
+            right: 24px !important;
+            width: 400px !important;
+            height: 500px !important;
+            max-height: 500px !important;
+            z-index: 999999 !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            transform: scale(1) !important;
+            display: flex !important;
+            background: white !important;
+            border: 5px solid red !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+        `;
+
+        panel.classList.add('chat-open');
+
+        console.log('✅ Panel forced visible with RED BORDER');
+        console.log('👀 Panel should be at bottom-right with red border');
+        console.log('📍 Position: bottom=100px, right=24px');
+
+        // Log position
+        const rect = panel.getBoundingClientRect();
+        console.log('Panel position:', {
+            top: Math.round(rect.top),
+            left: Math.round(rect.left),
+            bottom: Math.round(rect.bottom),
+            right: Math.round(rect.right),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height)
+        });
+    };
+})();
+</script>

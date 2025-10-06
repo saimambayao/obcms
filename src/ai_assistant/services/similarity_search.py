@@ -52,18 +52,16 @@ class SimilaritySearchService:
                 self._stores[store_name] = VectorStore.load(store_name)
                 logger.info(f"Loaded vector store '{store_name}'")
             except FileNotFoundError:
-                logger.warning(f"Vector store '{store_name}' not found. Creating empty store.")
+                logger.warning(
+                    f"Vector store '{store_name}' not found. Creating empty store."
+                )
                 self._stores[store_name] = VectorStore(
-                    store_name,
-                    dimension=self.embedding_service.get_dimension()
+                    store_name, dimension=self.embedding_service.get_dimension()
                 )
         return self._stores[store_name]
 
     def search_communities(
-        self,
-        query: str,
-        limit: int = 10,
-        threshold: float = 0.5
+        self, query: str, limit: int = 10, threshold: float = 0.5
     ) -> List[Dict]:
         """
         Search for similar communities.
@@ -85,7 +83,7 @@ class SimilaritySearchService:
             >>> for result in results:
             ...     print(f"{result['name']}: {result['similarity']:.2f}")
         """
-        store = self._get_store('communities')
+        store = self._get_store("communities")
 
         if store.vector_count == 0:
             logger.warning("Communities index is empty")
@@ -96,29 +94,26 @@ class SimilaritySearchService:
 
         # Search
         raw_results = store.search_by_threshold(
-            query_vector,
-            threshold=threshold,
-            max_results=limit
+            query_vector, threshold=threshold, max_results=limit
         )
 
         # Format results
         results = []
         for pos, similarity, meta in raw_results:
-            results.append({
-                'id': meta.get('id'),
-                'type': meta.get('type'),
-                'similarity': similarity,
-                'metadata': meta.get('data', {})
-            })
+            results.append(
+                {
+                    "id": meta.get("id"),
+                    "type": meta.get("type"),
+                    "similarity": similarity,
+                    "metadata": meta.get("data", {}),
+                }
+            )
 
         logger.info(f"Found {len(results)} communities for query: {query[:50]}...")
         return results
 
     def search_assessments(
-        self,
-        query: str,
-        limit: int = 10,
-        threshold: float = 0.5
+        self, query: str, limit: int = 10, threshold: float = 0.5
     ) -> List[Dict]:
         """
         Search for similar MANA assessments.
@@ -131,7 +126,7 @@ class SimilaritySearchService:
         Returns:
             List of dicts with assessment info and similarity scores
         """
-        store = self._get_store('assessments')
+        store = self._get_store("assessments")
 
         if store.vector_count == 0:
             logger.warning("Assessments index is empty")
@@ -140,28 +135,25 @@ class SimilaritySearchService:
         query_vector = self.embedding_service.generate_embedding(query)
 
         raw_results = store.search_by_threshold(
-            query_vector,
-            threshold=threshold,
-            max_results=limit
+            query_vector, threshold=threshold, max_results=limit
         )
 
         results = []
         for pos, similarity, meta in raw_results:
-            results.append({
-                'id': meta.get('id'),
-                'type': meta.get('type'),
-                'similarity': similarity,
-                'metadata': meta.get('data', {})
-            })
+            results.append(
+                {
+                    "id": meta.get("id"),
+                    "type": meta.get("type"),
+                    "similarity": similarity,
+                    "metadata": meta.get("data", {}),
+                }
+            )
 
         logger.info(f"Found {len(results)} assessments for query: {query[:50]}...")
         return results
 
     def search_policies(
-        self,
-        query: str,
-        limit: int = 10,
-        threshold: float = 0.5
+        self, query: str, limit: int = 10, threshold: float = 0.5
     ) -> List[Dict]:
         """
         Search for similar policy recommendations.
@@ -174,7 +166,7 @@ class SimilaritySearchService:
         Returns:
             List of dicts with policy info and similarity scores
         """
-        store = self._get_store('policies')
+        store = self._get_store("policies")
 
         if store.vector_count == 0:
             logger.warning("Policies index is empty")
@@ -183,28 +175,25 @@ class SimilaritySearchService:
         query_vector = self.embedding_service.generate_embedding(query)
 
         raw_results = store.search_by_threshold(
-            query_vector,
-            threshold=threshold,
-            max_results=limit
+            query_vector, threshold=threshold, max_results=limit
         )
 
         results = []
         for pos, similarity, meta in raw_results:
-            results.append({
-                'id': meta.get('id'),
-                'type': meta.get('type'),
-                'similarity': similarity,
-                'metadata': meta.get('data', {})
-            })
+            results.append(
+                {
+                    "id": meta.get("id"),
+                    "type": meta.get("type"),
+                    "similarity": similarity,
+                    "metadata": meta.get("data", {}),
+                }
+            )
 
         logger.info(f"Found {len(results)} policies for query: {query[:50]}...")
         return results
 
     def search_all(
-        self,
-        query: str,
-        limit: int = 10,
-        threshold: float = 0.5
+        self, query: str, limit: int = 10, threshold: float = 0.5
     ) -> Dict[str, List[Dict]]:
         """
         Unified search across all modules.
@@ -230,16 +219,13 @@ class SimilaritySearchService:
             >>> print(f"Policies: {len(results['policies'])}")
         """
         return {
-            'communities': self.search_communities(query, limit, threshold),
-            'assessments': self.search_assessments(query, limit, threshold),
-            'policies': self.search_policies(query, limit, threshold)
+            "communities": self.search_communities(query, limit, threshold),
+            "assessments": self.search_assessments(query, limit, threshold),
+            "policies": self.search_policies(query, limit, threshold),
         }
 
     def find_similar_communities(
-        self,
-        community_id: int,
-        limit: int = 5,
-        threshold: float = 0.7
+        self, community_id: int, limit: int = 5, threshold: float = 0.7
     ) -> List[Dict]:
         """
         Find communities similar to a given community.
@@ -258,14 +244,14 @@ class SimilaritySearchService:
             >>> for result in similar:
             ...     print(f"Community {result['id']}: {result['similarity']:.2f}")
         """
-        from communities.models import BarangayOBC
+        from communities.models import OBCCommunity
 
-        store = self._get_store('communities')
+        store = self._get_store("communities")
 
         # Find the reference community's embedding
         reference_embedding = None
         for meta in store.metadata:
-            if meta.get('type') == 'community' and meta.get('id') == community_id:
+            if meta.get("type") == "community" and meta.get("id") == community_id:
                 # Get the embedding from the store
                 # Note: We need to search by exact match first
                 break
@@ -276,10 +262,10 @@ class SimilaritySearchService:
 
         # For now, get the community and generate its embedding
         try:
-            community = BarangayOBC.objects.get(id=community_id)
+            community = OBCCommunity.objects.get(id=community_id)
             text = self._format_community_text(community)
             query_vector = self.embedding_service.generate_embedding(text)
-        except BarangayOBC.DoesNotExist:
+        except OBCCommunity.DoesNotExist:
             logger.error(f"Community {community_id} does not exist")
             return []
 
@@ -287,27 +273,26 @@ class SimilaritySearchService:
         raw_results = store.search_by_threshold(
             query_vector,
             threshold=threshold,
-            max_results=limit + 1  # +1 to exclude self
+            max_results=limit + 1,  # +1 to exclude self
         )
 
         # Filter out the reference community itself
         results = []
         for pos, similarity, meta in raw_results:
-            if meta.get('id') != community_id:
-                results.append({
-                    'id': meta.get('id'),
-                    'type': meta.get('type'),
-                    'similarity': similarity,
-                    'metadata': meta.get('data', {})
-                })
+            if meta.get("id") != community_id:
+                results.append(
+                    {
+                        "id": meta.get("id"),
+                        "type": meta.get("type"),
+                        "similarity": similarity,
+                        "metadata": meta.get("data", {}),
+                    }
+                )
 
         return results[:limit]
 
     def find_similar_assessments(
-        self,
-        assessment_id: int,
-        limit: int = 5,
-        threshold: float = 0.7
+        self, assessment_id: int, limit: int = 5, threshold: float = 0.7
     ) -> List[Dict]:
         """
         Find assessments similar to a given assessment.
@@ -326,10 +311,7 @@ class SimilaritySearchService:
         return []
 
     def find_similar_policies(
-        self,
-        policy_id: int,
-        limit: int = 5,
-        threshold: float = 0.7
+        self, policy_id: int, limit: int = 5, threshold: float = 0.7
     ) -> List[Dict]:
         """
         Find policies similar to a given policy.
@@ -344,7 +326,7 @@ class SimilaritySearchService:
         """
         from recommendations.policy_tracking.models import PolicyRecommendation
 
-        store = self._get_store('policies')
+        store = self._get_store("policies")
 
         try:
             policy = PolicyRecommendation.objects.get(id=policy_id)
@@ -355,21 +337,21 @@ class SimilaritySearchService:
             return []
 
         raw_results = store.search_by_threshold(
-            query_vector,
-            threshold=threshold,
-            max_results=limit + 1
+            query_vector, threshold=threshold, max_results=limit + 1
         )
 
         # Filter out the reference policy itself
         results = []
         for pos, similarity, meta in raw_results:
-            if meta.get('id') != policy_id:
-                results.append({
-                    'id': meta.get('id'),
-                    'type': meta.get('type'),
-                    'similarity': similarity,
-                    'metadata': meta.get('data', {})
-                })
+            if meta.get("id") != policy_id:
+                results.append(
+                    {
+                        "id": meta.get("id"),
+                        "type": meta.get("type"),
+                        "similarity": similarity,
+                        "metadata": meta.get("data", {}),
+                    }
+                )
 
         return results[:limit]
 
@@ -378,26 +360,36 @@ class SimilaritySearchService:
         Format community data as text for embedding.
 
         Args:
-            community: BarangayOBC instance
+            community: OBCCommunity instance
 
         Returns:
             Formatted text representation
         """
         parts = [
-            f"Name: {community.name}",
-            f"Municipality: {community.municipality.name}",
-            f"Province: {community.province.name}",
-            f"Region: {community.region.name}",
+            f"Community Names: {community.community_names}",
+            f"Barangay: {community.barangay.name}",
+            f"Municipality: {community.barangay.municipality.name}",
+            f"Province: {community.barangay.municipality.province.name}",
+            f"Region: {community.barangay.municipality.province.region.name}",
         ]
 
-        if community.total_population:
-            parts.append(f"Population: {community.total_population}")
+        if community.estimated_obc_population:
+            parts.append(f"Population: {community.estimated_obc_population}")
 
-        if hasattr(community, 'ethnolinguistic_group') and community.ethnolinguistic_group:
-            parts.append(f"Ethnolinguistic Group: {community.ethnolinguistic_group}")
+        if community.households:
+            parts.append(f"Households: {community.households}")
 
-        if hasattr(community, 'primary_livelihood') and community.primary_livelihood:
-            parts.append(f"Primary Livelihood: {community.primary_livelihood}")
+        if (
+            hasattr(community, "ethnolinguistic_groups")
+            and community.ethnolinguistic_groups
+        ):
+            parts.append(f"Ethnolinguistic Groups: {community.ethnolinguistic_groups}")
+
+        if hasattr(community, "primary_livelihoods") and community.primary_livelihoods:
+            parts.append(f"Primary Livelihoods: {community.primary_livelihoods}")
+
+        if hasattr(community, "notes") and community.notes:
+            parts.append(f"Notes: {community.notes}")
 
         return "\n".join(parts)
 
@@ -425,10 +417,10 @@ class SimilaritySearchService:
         if policy.priority_level:
             parts.append(f"Priority: {policy.get_priority_level_display()}")
 
-        if hasattr(policy, 'target_communities') and policy.target_communities:
+        if hasattr(policy, "target_communities") and policy.target_communities:
             parts.append(f"Target Communities: {policy.target_communities}")
 
-        if hasattr(policy, 'expected_impact') and policy.expected_impact:
+        if hasattr(policy, "expected_impact") and policy.expected_impact:
             parts.append(f"Expected Impact: {policy.expected_impact}")
 
         return "\n".join(parts)
@@ -441,13 +433,13 @@ class SimilaritySearchService:
             Dict with stats for each index
         """
         stats = {}
-        for store_name in ['communities', 'assessments', 'policies']:
+        for store_name in ["communities", "assessments", "policies"]:
             try:
                 store = self._get_store(store_name)
                 stats[store_name] = store.get_stats()
             except Exception as e:
                 logger.error(f"Error getting stats for {store_name}: {e}")
-                stats[store_name] = {'error': str(e)}
+                stats[store_name] = {"error": str(e)}
 
         return stats
 

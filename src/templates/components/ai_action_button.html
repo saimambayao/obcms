@@ -1,0 +1,327 @@
+{% load static %}
+
+{#
+AI Action Button Component
+---------------------------
+Standardized button for triggering AI operations with loading states and feedback.
+
+Required Parameters:
+- action_id: Unique identifier for this button
+- action_url: URL endpoint for the AI operation
+
+Optional Parameters:
+- button_text: Button label (default: "Run AI Analysis")
+- icon: FontAwesome icon class (default: "fa-brain")
+- color: Color scheme - "blue", "emerald", "purple", "teal" (default: "emerald")
+- size: Button size - "sm", "md", "lg" (default: "md")
+- variant: Button style - "primary", "secondary", "outline" (default: "primary")
+- loading_text: Text shown during loading (default: "Processing...")
+- success_text: Text shown on success (default: "Complete")
+- target: HTMX target element ID
+- swap: HTMX swap strategy (default: "innerHTML")
+- confirm: Confirmation message before action (optional)
+- disabled: Boolean - disable button (default: False)
+- full_width: Boolean - make button full width (default: False)
+
+Usage Examples:
+
+1. Basic AI Analysis Button:
+{% include "components/ai_action_button.html" with action_id="analyze-needs" action_url=analysis_url button_text="Analyze Community Needs" %}
+
+2. HTMX-Powered with Target:
+{% include "components/ai_action_button.html" with action_id="generate-report" action_url=report_url target="#report-container" loading_text="Generating report..." %}
+
+3. Confirmation Required:
+{% include "components/ai_action_button.html" with action_id="classify-responses" action_url=classify_url confirm="This will classify all responses. Continue?" %}
+
+4. Secondary Variant:
+{% include "components/ai_action_button.html" with action_id="export-insights" action_url=export_url variant="secondary" icon="fa-download" button_text="Export Insights" %}
+#}
+
+{% with color=color|default:"emerald" %}
+{% with size=size|default:"md" %}
+{% with variant=variant|default:"primary" %}
+{% with icon=icon|default:"fa-brain" %}
+
+{# Size Classes #}
+{% if size == "sm" %}
+    {% with size_classes="py-2 px-3 text-sm" icon_size="text-sm" %}
+{% elif size == "lg" %}
+    {% with size_classes="py-3.5 px-6 text-base" icon_size="text-lg" %}
+{% else %}
+    {% with size_classes="py-2.5 px-4 text-sm" icon_size="text-base" %}
+{% endif %}
+
+{# Variant Classes #}
+{% if variant == "primary" %}
+    {% with variant_classes="bg-gradient-to-r from-"|add:color|add:"-600 to-"|add:color|add:"-700 text-white hover:shadow-lg hover:from-"|add:color|add:"-700 hover:to-"|add:color|add:"-800" %}
+{% elif variant == "secondary" %}
+    {% with variant_classes="bg-white border-2 border-"|add:color|add:"-200 text-"|add:color|add:"-700 hover:bg-"|add:color|add:"-50" %}
+{% elif variant == "outline" %}
+    {% with variant_classes="bg-transparent border border-"|add:color|add:"-600 text-"|add:color|add:"-600 hover:bg-"|add:color|add:"-600 hover:text-white" %}
+{% endif %}
+
+<div class="ai-action-button-container {% if full_width %}w-full{% endif %}">
+    <button
+        id="ai-action-{{ action_id }}"
+        type="button"
+        class="{{ variant_classes }} {{ size_classes }} rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden
+               {% if full_width %}w-full{% endif %}"
+        {% if action_url %}
+        hx-post="{{ action_url }}"
+        {% if target %}hx-target="{{ target }}"{% endif %}
+        hx-swap="{{ swap|default:'innerHTML' }}"
+        hx-indicator="#ai-loading-{{ action_id }}"
+        {% endif %}
+        {% if confirm %}
+        hx-confirm="{{ confirm }}"
+        {% endif %}
+        {% if disabled %}disabled{% endif %}
+        onclick="handleAIAction('{{ action_id }}', this)"
+        aria-label="{{ button_text|default:'Run AI Analysis' }}">
+
+        {# Button Content #}
+        <span id="ai-btn-content-{{ action_id }}" class="flex items-center space-x-2">
+            <i id="ai-btn-icon-{{ action_id }}" class="fas {{ icon }} {{ icon_size }}"></i>
+            <span id="ai-btn-text-{{ action_id }}">{{ button_text|default:"Run AI Analysis" }}</span>
+        </span>
+
+        {# Loading State (Hidden by default) #}
+        <span id="ai-loading-{{ action_id }}" class="htmx-indicator flex items-center space-x-2">
+            <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>{{ loading_text|default:"Processing..." }}</span>
+        </span>
+
+        {# Success State (Hidden by default) #}
+        <span id="ai-success-{{ action_id }}" class="hidden flex items-center space-x-2">
+            <i class="fas fa-check-circle"></i>
+            <span>{{ success_text|default:"Complete" }}</span>
+        </span>
+
+        {# Error State (Hidden by default) #}
+        <span id="ai-error-{{ action_id }}" class="hidden flex items-center space-x-2">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>Error</span>
+        </span>
+
+        {# Ripple Effect #}
+        <span class="ai-ripple absolute inset-0 overflow-hidden rounded-lg pointer-events-none">
+            <span class="ripple-effect"></span>
+        </span>
+    </button>
+
+    {# Progress Bar (Optional) #}
+    <div id="ai-progress-{{ action_id }}" class="hidden mt-2">
+        <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+            <div id="ai-progress-bar-{{ action_id }}"
+                 class="bg-gradient-to-r from-{{ color }}-500 to-{{ color }}-600 h-2 transition-all duration-300"
+                 style="width: 0%">
+            </div>
+        </div>
+        <p class="text-xs text-gray-500 mt-1 text-center" id="ai-progress-text-{{ action_id }}"></p>
+    </div>
+</div>
+
+{% endwith %}
+{% endwith %}
+{% endwith %}
+
+{% endwith %}
+{% endwith %}
+{% endwith %}
+
+<script>
+// AI Action Button Handler
+function handleAIAction(actionId, button) {
+    const btnContent = document.getElementById(`ai-btn-content-${actionId}`);
+    const btnLoading = document.getElementById(`ai-loading-${actionId}`);
+    const btnSuccess = document.getElementById(`ai-success-${actionId}`);
+    const btnError = document.getElementById(`ai-error-${actionId}`);
+
+    // Add ripple effect
+    addRippleEffect(button, event);
+
+    // Listen for HTMX events
+    button.addEventListener('htmx:beforeRequest', function() {
+        btnContent.classList.add('hidden');
+        btnLoading.classList.remove('htmx-indicator');
+        button.disabled = true;
+    });
+
+    button.addEventListener('htmx:afterRequest', function(event) {
+        btnLoading.classList.add('htmx-indicator');
+
+        if (event.detail.successful) {
+            // Success state
+            btnSuccess.classList.remove('hidden');
+            setTimeout(() => {
+                btnSuccess.classList.add('hidden');
+                btnContent.classList.remove('hidden');
+                button.disabled = false;
+            }, 2000);
+
+            // Trigger success notification
+            showAINotification('Operation completed successfully', 'success');
+
+        } else {
+            // Error state
+            btnError.classList.remove('hidden');
+            setTimeout(() => {
+                btnError.classList.add('hidden');
+                btnContent.classList.remove('hidden');
+                button.disabled = false;
+            }, 3000);
+
+            // Trigger error notification
+            showAINotification('Operation failed. Please try again.', 'error');
+        }
+    });
+}
+
+// Ripple Effect
+function addRippleEffect(button, event) {
+    const ripple = button.querySelector('.ripple-effect');
+    if (!ripple) return;
+
+    const rect = button.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = event.clientX - rect.left - size / 2;
+    const y = event.clientY - rect.top - size / 2;
+
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+
+    ripple.classList.remove('ripple-animate');
+    void ripple.offsetWidth; // Trigger reflow
+    ripple.classList.add('ripple-animate');
+}
+
+// Progress Updater (for long-running operations)
+function updateAIProgress(actionId, percentage, statusText) {
+    const progressBar = document.getElementById(`ai-progress-bar-${actionId}`);
+    const progressText = document.getElementById(`ai-progress-text-${actionId}`);
+    const progressContainer = document.getElementById(`ai-progress-${actionId}`);
+
+    if (progressContainer) {
+        progressContainer.classList.remove('hidden');
+    }
+
+    if (progressBar) {
+        progressBar.style.width = `${percentage}%`;
+    }
+
+    if (progressText && statusText) {
+        progressText.textContent = statusText;
+    }
+
+    // Hide progress when complete
+    if (percentage >= 100) {
+        setTimeout(() => {
+            if (progressContainer) {
+                progressContainer.classList.add('hidden');
+            }
+        }, 1000);
+    }
+}
+
+// AI Notification Helper
+function showAINotification(message, type = 'info') {
+    // Check if custom notification system exists
+    if (typeof window.showNotification === 'function') {
+        window.showNotification(message, type);
+        return;
+    }
+
+    // Fallback toast notification
+    const colors = {
+        success: 'bg-emerald-600',
+        error: 'bg-red-600',
+        warning: 'bg-amber-600',
+        info: 'bg-blue-600'
+    };
+
+    const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 z-50 ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3 animate-slide-in-right`;
+    toast.innerHTML = `
+        <i class="fas ${icons[type]}"></i>
+        <span class="text-sm">${message}</span>
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'slide-out-right 0.3s ease-out forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+</script>
+
+<style>
+/* Ripple Animation */
+.ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(0);
+    opacity: 1;
+}
+
+.ripple-animate {
+    animation: ripple-animation 0.6s ease-out;
+}
+
+@keyframes ripple-animation {
+    to {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+/* Slide Animations */
+@keyframes slide-in-right {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slide-out-right {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
+}
+
+/* HTMX Indicator */
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+    display: flex;
+}
+</style>

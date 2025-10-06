@@ -45,11 +45,10 @@ def chat_message(request):
         )
 
         # Render response
-        import json as json_lib
         context = {
             'user_message': message,
             'assistant_response': result.get('response', ''),
-            'suggestions': json_lib.dumps(result.get('suggestions', [])),
+            'suggestions': result.get('suggestions', []),  # Pass as list, not JSON string
             'data': result.get('data', {}),
             'visualization': result.get('visualization'),
             'intent': result.get('intent'),

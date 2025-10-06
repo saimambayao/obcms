@@ -115,7 +115,8 @@ class TestSimilaritySearchService:
 
     def test_format_community_text(self):
         """Test formatting community data as text."""
-        from communities.models import BarangayOBC, Municipality, Province, Region
+        from communities.models import OBCCommunity
+        from common.models import Barangay, Municipality, Province, Region
 
         service = SimilaritySearchService()
 

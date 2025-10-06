@@ -26,80 +26,125 @@ class IntentClassifier:
 
     # Intent patterns with keywords and regex patterns
     INTENT_PATTERNS = {
-        'data_query': {
-            'keywords': [
-                'how many', 'count', 'list', 'show me', 'find', 'get',
-                'which', 'what are', 'total', 'number of', 'display',
+        "data_query": {
+            "keywords": [
+                "how many",
+                "count",
+                "list",
+                "show me",
+                "find",
+                "get",
+                "which",
+                "what are",
+                "total",
+                "number of",
+                "display",
             ],
-            'patterns': [
-                r'how many .+ (are|in|have)',
-                r'(count|total|number of) .+',
-                r'(list|show|display) (all|the) .+',
-                r'which .+ (are|have|in)',
+            "patterns": [
+                r"how many .+ (are|in|have)",
+                r"(count|total|number of) .+",
+                r"(list|show|display) (all|the) .+",
+                r"which .+ (are|have|in)",
             ],
-            'entities': ['communities', 'workshops', 'policies', 'projects', 'organizations'],
+            "entities": [
+                "communities",
+                "workshops",
+                "policies",
+                "projects",
+                "organizations",
+            ],
         },
-        'analysis': {
-            'keywords': [
-                'analyze', 'compare', 'trend', 'insight', 'summary',
-                'top', 'most', 'least', 'average', 'common',
-                'distribution', 'breakdown', 'pattern',
+        "analysis": {
+            "keywords": [
+                "analyze",
+                "compare",
+                "trend",
+                "insight",
+                "summary",
+                "top",
+                "most",
+                "least",
+                "average",
+                "common",
+                "distribution",
+                "breakdown",
+                "pattern",
             ],
-            'patterns': [
-                r'(what|which) (are|is) the (top|most|least) .+',
-                r'(analyze|compare|summarize) .+',
-                r'(trend|pattern|distribution) (of|in|for) .+',
+            "patterns": [
+                r"(what|which) (are|is) the (top|most|least) .+",
+                r"(analyze|compare|summarize) .+",
+                r"(trend|pattern|distribution) (of|in|for) .+",
             ],
-            'entities': ['needs', 'priorities', 'sectors', 'regions'],
+            "entities": ["needs", "priorities", "sectors", "regions"],
         },
-        'navigation': {
-            'keywords': [
-                'go to', 'navigate', 'open', 'take me', 'redirect',
-                'dashboard', 'page', 'view', 'section',
+        "navigation": {
+            "keywords": [
+                "go to",
+                "navigate",
+                "open",
+                "take me",
+                "redirect",
+                "dashboard",
+                "page",
+                "view",
+                "section",
             ],
-            'patterns': [
-                r'(go to|navigate to|open|show) (the )?(dashboard|page|view)',
-                r'(take me to|redirect to) .+',
+            "patterns": [
+                r"(go to|navigate to|open|show) (the )?(dashboard|page|view)",
+                r"(take me to|redirect to) .+",
             ],
-            'entities': ['dashboard', 'communities', 'mana', 'coordination', 'policies'],
+            "entities": [
+                "dashboard",
+                "communities",
+                "mana",
+                "coordination",
+                "policies",
+            ],
         },
-        'help': {
-            'keywords': [
-                'help', 'how do i', 'how to', 'explain', 'what is',
-                'guide', 'tutorial', 'instructions', 'steps',
+        "help": {
+            "keywords": [
+                "help",
+                "how do i",
+                "how to",
+                "explain",
+                "what is",
+                "guide",
+                "tutorial",
+                "instructions",
+                "steps",
             ],
-            'patterns': [
-                r'how (do i|to|can i) .+',
-                r'(what is|explain) .+',
-                r'(help|guide|tutorial) (me with|on|for) .+',
+            "patterns": [
+                r"how (do i|to|can i) .+",
+                r"(what is|explain) .+",
+                r"(help|guide|tutorial) (me with|on|for) .+",
             ],
-            'entities': ['create', 'update', 'delete', 'search', 'filter'],
+            "entities": ["create", "update", "delete", "search", "filter"],
         },
-        'general': {
-            'keywords': ['hi', 'hello', 'thanks', 'thank you', 'okay', 'yes', 'no'],
-            'patterns': [r'^(hi|hello|hey)', r'(thanks|thank you)'],
-            'entities': [],
+        "general": {
+            "keywords": ["hi", "hello", "thanks", "thank you", "okay", "yes", "no"],
+            "patterns": [r"^(hi|hello|hey)", r"(thanks|thank you)"],
+            "entities": [],
         },
     }
 
     # Data entities (models)
     DATA_ENTITIES = {
-        'communities': ['barangay', 'community', 'communities', 'obc'],
-        'workshops': ['workshop', 'assessment', 'mana', 'consultation'],
-        'policies': ['policy', 'recommendation', 'proposal'],
-        'projects': ['project', 'ppa', 'program', 'activity'],
-        'organizations': ['organization', 'partner', 'stakeholder', 'agency'],
-        'regions': ['region', 'province', 'municipality', 'area'],
+        "communities": ["barangay", "community", "communities", "obc"],
+        "workshops": ["workshop", "assessment", "mana", "consultation"],
+        "policies": ["policy", "recommendation", "proposal"],
+        "projects": ["project", "ppa", "program", "activity"],
+        "organizations": ["organization", "partner", "stakeholder", "agency"],
+        "regions": ["region", "province", "municipality", "area", "city", "davao", "zamboanga", "cotabato"],
     }
 
     # Action verbs
     ACTION_VERBS = {
-        'create': ['create', 'add', 'new', 'register'],
-        'read': ['show', 'display', 'view', 'get', 'find', 'list'],
-        'update': ['update', 'edit', 'modify', 'change'],
-        'delete': ['delete', 'remove'],
-        'filter': ['filter', 'search', 'where'],
-        'aggregate': ['count', 'total', 'sum', 'average'],
+        "create": ["create", "add", "new", "register"],
+        "read": ["show", "display", "view", "get", "find", "list"],
+        "update": ["update", "edit", "modify", "change"],
+        "delete": ["delete", "remove"],
+        "filter": ["filter", "search", "where"],
+        "aggregate": ["count", "total", "sum", "average"],
     }
 
     def __init__(self):
@@ -112,7 +157,7 @@ class IntentClassifier:
         for intent, config in self.INTENT_PATTERNS.items():
             self._compiled_patterns[intent] = [
                 re.compile(pattern, re.IGNORECASE)
-                for pattern in config.get('patterns', [])
+                for pattern in config.get("patterns", [])
             ]
 
     def classify(self, message: str, context: Optional[Dict] = None) -> Dict[str, any]:
@@ -156,12 +201,12 @@ class IntentClassifier:
         routing = self._build_routing(best_intent, entities, action)
 
         return {
-            'type': best_intent,
-            'confidence': confidence,
-            'entities': entities,
-            'action': action,
-            'routing': routing,
-            'all_scores': scores,
+            "type": best_intent,
+            "confidence": confidence,
+            "entities": entities,
+            "action": action,
+            "routing": routing,
+            "all_scores": scores,
         }
 
     def _score_intent(self, message: str, intent: str) -> float:
@@ -178,7 +223,7 @@ class IntentClassifier:
         config = self.INTENT_PATTERNS[intent]
 
         # Check keyword matches
-        keywords = config.get('keywords', [])
+        keywords = config.get("keywords", [])
         keyword_matches = sum(1 for kw in keywords if kw in message)
         if keyword_matches > 0:
             score += min(keyword_matches * 0.3, 0.6)
@@ -190,7 +235,7 @@ class IntentClassifier:
             score += min(pattern_matches * 0.5, 0.8)
 
         # Check entity matches
-        entities = config.get('entities', [])
+        entities = config.get("entities", [])
         entity_matches = sum(1 for entity in entities if entity in message)
         if entity_matches > 0:
             score += min(entity_matches * 0.2, 0.4)
@@ -219,7 +264,9 @@ class IntentClassifier:
 
         return None
 
-    def _build_routing(self, intent: str, entities: List[str], action: Optional[str]) -> Dict[str, any]:
+    def _build_routing(
+        self, intent: str, entities: List[str], action: Optional[str]
+    ) -> Dict[str, any]:
         """
         Build routing information for the intent.
 
@@ -227,83 +274,83 @@ class IntentClassifier:
             Dictionary with suggested handling approach
         """
         routing = {
-            'intent': intent,
-            'handler': None,
-            'parameters': {},
+            "intent": intent,
+            "handler": None,
+            "parameters": {},
         }
 
-        if intent == 'data_query':
-            routing['handler'] = 'query_executor'
-            routing['parameters'] = {
-                'entities': entities,
-                'action': action or 'read',
+        if intent == "data_query":
+            routing["handler"] = "query_executor"
+            routing["parameters"] = {
+                "entities": entities,
+                "action": action or "read",
             }
 
-        elif intent == 'analysis':
-            routing['handler'] = 'analysis_engine'
-            routing['parameters'] = {
-                'entities': entities,
-                'analysis_type': 'insights',
+        elif intent == "analysis":
+            routing["handler"] = "analysis_engine"
+            routing["parameters"] = {
+                "entities": entities,
+                "analysis_type": "insights",
             }
 
-        elif intent == 'navigation':
-            routing['handler'] = 'navigation_handler'
-            routing['parameters'] = {
-                'target': entities[0] if entities else 'dashboard',
+        elif intent == "navigation":
+            routing["handler"] = "navigation_handler"
+            routing["parameters"] = {
+                "target": entities[0] if entities else "dashboard",
             }
 
-        elif intent == 'help':
-            routing['handler'] = 'help_system'
-            routing['parameters'] = {
-                'topic': entities[0] if entities else 'general',
+        elif intent == "help":
+            routing["handler"] = "help_system"
+            routing["parameters"] = {
+                "topic": entities[0] if entities else "general",
             }
 
-        elif intent == 'general':
-            routing['handler'] = 'conversational'
-            routing['parameters'] = {}
+        elif intent == "general":
+            routing["handler"] = "conversational"
+            routing["parameters"] = {}
 
         return routing
 
     def get_intent_description(self, intent: str) -> str:
         """Get human-readable description of an intent."""
         descriptions = {
-            'data_query': 'Request for specific data from the system',
-            'analysis': 'Request for analytical insights and patterns',
-            'navigation': 'Request to navigate to a different page',
-            'help': 'Request for help or instructions',
-            'general': 'General conversation or greeting',
+            "data_query": "Request for specific data from the system",
+            "analysis": "Request for analytical insights and patterns",
+            "navigation": "Request to navigate to a different page",
+            "help": "Request for help or instructions",
+            "general": "General conversation or greeting",
         }
-        return descriptions.get(intent, 'Unknown intent')
+        return descriptions.get(intent, "Unknown intent")
 
     def get_example_queries(self, intent: str) -> List[str]:
         """Get example queries for an intent."""
         examples = {
-            'data_query': [
-                'How many communities are in Region IX?',
-                'List all workshops in Zamboanga del Sur',
-                'Show me active policy recommendations',
-                'Count organizations in the coordination network',
+            "data_query": [
+                "How many communities are in Region IX?",
+                "List all workshops in Zamboanga del Sur",
+                "Show me active policy recommendations",
+                "Count organizations in the coordination network",
             ],
-            'analysis': [
-                'What are the top needs in coastal communities?',
-                'Analyze MANA assessment trends',
-                'Compare project completion rates by region',
-                'Show me the most common ethnolinguistic groups',
+            "analysis": [
+                "What are the top needs in coastal communities?",
+                "Analyze MANA assessment trends",
+                "Compare project completion rates by region",
+                "Show me the most common ethnolinguistic groups",
             ],
-            'navigation': [
-                'Take me to the dashboard',
-                'Open the MANA module',
-                'Go to coordination page',
+            "navigation": [
+                "Take me to the dashboard",
+                "Open the MANA module",
+                "Go to coordination page",
             ],
-            'help': [
-                'How do I create a new workshop?',
-                'What is a policy recommendation?',
-                'Help me search for communities',
+            "help": [
+                "How do I create a new workshop?",
+                "What is a policy recommendation?",
+                "Help me search for communities",
             ],
-            'general': [
-                'Hello!',
-                'Thank you',
-                'What can you help me with?',
+            "general": [
+                "Hello!",
+                "Thank you",
+                "What can you help me with?",
             ],
         }
         return examples.get(intent, [])

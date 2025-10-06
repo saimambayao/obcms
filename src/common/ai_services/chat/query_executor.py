@@ -27,35 +27,64 @@ class QueryExecutor:
 
     # Allowed models (read-only access)
     ALLOWED_MODELS = {
-        'BarangayOBC': 'communities.models.BarangayOBC',
-        'Municipality': 'communities.models.Municipality',
-        'Province': 'communities.models.Province',
-        'Region': 'common.models.Region',
-        'Workshop': 'mana.models.Workshop',
-        'PolicyRecommendation': 'policies.models.PolicyRecommendation',
-        'PPA': 'project_central.models.PPA',
-        'Organization': 'coordination.models.Organization',
-        'Partnership': 'coordination.models.Partnership',
-        'Task': 'common.models.Task',
-        'Event': 'common.models.Event',
+        "OBCCommunity": "communities.models.OBCCommunity",
+        "Municipality": "common.models.Municipality",
+        "Province": "common.models.Province",
+        "Region": "common.models.Region",
+        "Barangay": "common.models.Barangay",
+        "Assessment": "mana.models.Assessment",
+        "PolicyRecommendation": "recommendations.policy_tracking.models.PolicyRecommendation",
+        "Organization": "coordination.models.Organization",
+        "Partnership": "coordination.models.Partnership",
+        "WorkItem": "common.work_item_model.WorkItem",
+        "Event": "common.models.Event",
     }
 
     # Allowed QuerySet methods (read-only)
     ALLOWED_METHODS = {
-        'filter', 'exclude', 'get', 'first', 'last', 'exists',
-        'count', 'aggregate', 'annotate', 'values', 'values_list',
-        'order_by', 'distinct', 'select_related', 'prefetch_related',
-        'all', 'none',
+        "filter",
+        "exclude",
+        "get",
+        "first",
+        "last",
+        "exists",
+        "count",
+        "aggregate",
+        "annotate",
+        "values",
+        "values_list",
+        "order_by",
+        "distinct",
+        "select_related",
+        "prefetch_related",
+        "all",
+        "none",
     }
 
     # Allowed aggregation functions
-    ALLOWED_AGGREGATES = {'Count', 'Sum', 'Avg', 'Max', 'Min'}
+    ALLOWED_AGGREGATES = {"Count", "Sum", "Avg", "Max", "Min"}
 
     # Dangerous keywords that should never appear
     DANGEROUS_KEYWORDS = {
-        'delete', 'update', 'create', 'save', 'bulk_create', 'bulk_update',
-        'raw', 'execute', 'cursor', 'eval', 'exec', 'compile', '__import__',
-        'open', 'file', 'input', 'system', 'popen', 'subprocess',
+        "delete",
+        "update",
+        "create",
+        "save",
+        "bulk_create",
+        "bulk_update",
+        "raw",
+        "execute",
+        "cursor",
+        "eval",
+        "exec",
+        "compile",
+        "__import__",
+        "open",
+        "file",
+        "input",
+        "system",
+        "popen",
+        "subprocess",
     }
 
     # Maximum results to return
@@ -82,7 +111,7 @@ class QueryExecutor:
         Example:
             >>> executor = QueryExecutor()
             >>> result = executor.execute(
-            ...     "BarangayOBC.objects.filter(province__name='Zamboanga del Sur').count()"
+            ...     "OBCCommunity.objects.filter(barangay__municipality__province__name='Zamboanga del Sur').count()"
             ... )
             >>> print(result['result'])
             42
@@ -90,12 +119,12 @@ class QueryExecutor:
         try:
             # Step 1: Parse and validate query
             validation = self._validate_query(query_string)
-            if not validation['is_safe']:
+            if not validation["is_safe"]:
                 return {
-                    'success': False,
-                    'result': None,
-                    'error': f"Unsafe query: {validation['reason']}",
-                    'query_info': validation,
+                    "success": False,
+                    "result": None,
+                    "error": f"Unsafe query: {validation['reason']}",
+                    "query_info": validation,
                 }
 
             # Step 2: Execute query in restricted context
@@ -105,23 +134,23 @@ class QueryExecutor:
             processed_result = self._process_result(result)
 
             return {
-                'success': True,
-                'result': processed_result,
-                'error': None,
-                'query_info': {
-                    'query': query_string,
-                    'result_type': type(result).__name__,
-                    'result_count': self._get_result_count(processed_result),
-                }
+                "success": True,
+                "result": processed_result,
+                "error": None,
+                "query_info": {
+                    "query": query_string,
+                    "result_type": type(result).__name__,
+                    "result_count": self._get_result_count(processed_result),
+                },
             }
 
         except Exception as e:
             logger.error(f"Query execution failed: {query_string} - {str(e)}")
             return {
-                'success': False,
-                'result': None,
-                'error': f"Execution error: {str(e)}",
-                'query_info': {'query': query_string},
+                "success": False,
+                "result": None,
+                "error": f"Execution error: {str(e)}",
+                "query_info": {"query": query_string},
             }
 
     def _validate_query(self, query_string: str) -> Dict[str, Any]:
@@ -136,28 +165,28 @@ class QueryExecutor:
         for keyword in self.DANGEROUS_KEYWORDS:
             if keyword in query_lower:
                 return {
-                    'is_safe': False,
-                    'reason': f"Dangerous keyword detected: {keyword}",
+                    "is_safe": False,
+                    "reason": f"Dangerous keyword detected: {keyword}",
                 }
 
         # Check 2: AST parsing to detect dangerous patterns
         try:
-            tree = ast.parse(query_string, mode='eval')
+            tree = ast.parse(query_string, mode="eval")
             ast_validation = self._validate_ast(tree)
-            if not ast_validation['is_safe']:
+            if not ast_validation["is_safe"]:
                 return ast_validation
         except SyntaxError as e:
             return {
-                'is_safe': False,
-                'reason': f"Syntax error: {str(e)}",
+                "is_safe": False,
+                "reason": f"Syntax error: {str(e)}",
             }
 
         # Check 3: Validate model names
         model_validation = self._validate_models(query_string)
-        if not model_validation['is_safe']:
+        if not model_validation["is_safe"]:
             return model_validation
 
-        return {'is_safe': True, 'reason': 'All validations passed'}
+        return {"is_safe": True, "reason": "All validations passed"}
 
     def _validate_ast(self, tree: ast.AST) -> Dict[str, Any]:
         """
@@ -172,15 +201,15 @@ class QueryExecutor:
             # Block assignments
             if isinstance(node, (ast.Assign, ast.AugAssign, ast.Delete)):
                 return {
-                    'is_safe': False,
-                    'reason': 'Assignment or deletion detected',
+                    "is_safe": False,
+                    "reason": "Assignment or deletion detected",
                 }
 
             # Block imports
             if isinstance(node, (ast.Import, ast.ImportFrom)):
                 return {
-                    'is_safe': False,
-                    'reason': 'Import statement detected',
+                    "is_safe": False,
+                    "reason": "Import statement detected",
                 }
 
             # Validate function calls
@@ -189,22 +218,22 @@ class QueryExecutor:
                     func_name = node.func.id
                     if func_name not in self.ALLOWED_AGGREGATES:
                         return {
-                            'is_safe': False,
-                            'reason': f'Unauthorized function call: {func_name}',
+                            "is_safe": False,
+                            "reason": f"Unauthorized function call: {func_name}",
                         }
 
-        return {'is_safe': True, 'reason': 'AST validation passed'}
+        return {"is_safe": True, "reason": "AST validation passed"}
 
     def _validate_models(self, query_string: str) -> Dict[str, Any]:
         """Validate that only allowed models are referenced."""
         for model_name in self.ALLOWED_MODELS.keys():
             if model_name in query_string:
                 # Found an allowed model
-                return {'is_safe': True, 'reason': 'Model validation passed'}
+                return {"is_safe": True, "reason": "Model validation passed"}
 
         return {
-            'is_safe': False,
-            'reason': 'No recognized model found in query',
+            "is_safe": False,
+            "reason": "No recognized model found in query",
         }
 
     def _execute_safe(self, query_string: str) -> Any:
@@ -212,7 +241,7 @@ class QueryExecutor:
         # Use eval with restricted builtins and safe context
         result = eval(
             query_string,
-            {'__builtins__': {}},  # No built-in functions
+            {"__builtins__": {}},  # No built-in functions
             self._context,  # Only our safe context
         )
         return result
@@ -230,7 +259,7 @@ class QueryExecutor:
 
         if isinstance(result, QuerySet):
             # Apply size limit
-            limited_qs = result[:self.MAX_RESULTS]
+            limited_qs = result[: self.MAX_RESULTS]
             # Convert to list of dicts for JSON serialization
             return list(limited_qs.values())
 
@@ -242,12 +271,12 @@ class QueryExecutor:
             # Primitive types
             return result
 
-        elif hasattr(result, '__dict__'):
+        elif hasattr(result, "__dict__"):
             # Single model instance - convert to dict
             return {
-                'id': getattr(result, 'id', None),
-                'str': str(result),
-                'model': result.__class__.__name__,
+                "id": getattr(result, "id", None),
+                "str": str(result),
+                "model": result.__class__.__name__,
             }
 
         else:
@@ -277,19 +306,19 @@ class QueryExecutor:
         # Import and add allowed models
         for model_name, import_path in self.ALLOWED_MODELS.items():
             try:
-                module_path, class_name = import_path.rsplit('.', 1)
+                module_path, class_name = import_path.rsplit(".", 1)
                 module = __import__(module_path, fromlist=[class_name])
                 context[model_name] = getattr(module, class_name)
             except (ImportError, AttributeError) as e:
                 logger.warning(f"Could not import {import_path}: {e}")
 
         # Add aggregation functions
-        context['Count'] = Count
-        context['Sum'] = Sum
-        context['Avg'] = Avg
-        context['Max'] = Max
-        context['Min'] = Min
-        context['Q'] = Q
+        context["Count"] = Count
+        context["Sum"] = Sum
+        context["Avg"] = Avg
+        context["Max"] = Max
+        context["Min"] = Min
+        context["Q"] = Q
 
         return context
 
@@ -304,19 +333,21 @@ class QueryExecutor:
 
         for model_name, import_path in self.ALLOWED_MODELS.items():
             try:
-                module_path, class_name = import_path.rsplit('.', 1)
+                module_path, class_name = import_path.rsplit(".", 1)
                 module = __import__(module_path, fromlist=[class_name])
                 model_class = getattr(module, class_name)
 
                 # Get field names
                 fields = [f.name for f in model_class._meta.get_fields()]
 
-                available.append({
-                    'model_name': model_name,
-                    'import_path': import_path,
-                    'fields': fields,
-                    'verbose_name': model_class._meta.verbose_name,
-                })
+                available.append(
+                    {
+                        "model_name": model_name,
+                        "import_path": import_path,
+                        "fields": fields,
+                        "verbose_name": model_class._meta.verbose_name,
+                    }
+                )
             except Exception as e:
                 logger.warning(f"Could not get info for {model_name}: {e}")
 

@@ -90,12 +90,12 @@ class OBCCommunityViewTestBase(TestCase):
         )
 
 
-class BarangayOBCViewTests(OBCCommunityViewTestBase):
-    """Test views for Barangay OBC CRUD operations."""
+class OBCCommunityViewTests(OBCCommunityViewTestBase):
+    """Test views for OBC Community CRUD operations."""
 
     def test_communities_list_view_authenticated(self):
         """Authenticated users can access the communities list."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
         response = self.client.get(reverse("common:communities_manage"))
 
         self.assertEqual(response.status_code, 200)
@@ -112,52 +112,79 @@ class BarangayOBCViewTests(OBCCommunityViewTestBase):
 
     def test_communities_list_filtering_by_region(self):
         """List view correctly filters by region."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         # Create another region and community
-        region2 = Region.objects.create(code="IX", name="Zamboanga Peninsula", is_active=True)
-        province2 = Province.objects.create(region=region2, code="PROV-002", name="Zamboanga del Sur", is_active=True)
-        municipality2 = Municipality.objects.create(province=province2, code="MUN-002", name="Pagadian", is_active=True)
-        barangay2 = Barangay.objects.create(municipality=municipality2, code="BRGY-003", name="Balangasan", is_active=True)
-        OBCCommunity.objects.create(barangay=barangay2, community_names="Another Community", estimated_obc_population=300)
+        region2 = Region.objects.create(
+            code="IX", name="Zamboanga Peninsula", is_active=True
+        )
+        province2 = Province.objects.create(
+            region=region2, code="PROV-002", name="Zamboanga del Sur", is_active=True
+        )
+        municipality2 = Municipality.objects.create(
+            province=province2, code="MUN-002", name="Pagadian", is_active=True
+        )
+        barangay2 = Barangay.objects.create(
+            municipality=municipality2,
+            code="BRGY-003",
+            name="Balangasan",
+            is_active=True,
+        )
+        OBCCommunity.objects.create(
+            barangay=barangay2,
+            community_names="Another Community",
+            estimated_obc_population=300,
+        )
 
         # Filter by first region
-        response = self.client.get(reverse("common:communities_manage"), {"region": self.region.id})
+        response = self.client.get(
+            reverse("common:communities_manage"), {"region": self.region.id}
+        )
         self.assertEqual(response.context["communities"].paginator.count, 1)
 
         # Filter by second region
-        response = self.client.get(reverse("common:communities_manage"), {"region": region2.id})
+        response = self.client.get(
+            reverse("common:communities_manage"), {"region": region2.id}
+        )
         self.assertEqual(response.context["communities"].paginator.count, 1)
 
     def test_communities_list_filtering_by_province(self):
         """List view correctly filters by province."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
-        response = self.client.get(reverse("common:communities_manage"), {"province": self.province.id})
+        response = self.client.get(
+            reverse("common:communities_manage"), {"province": self.province.id}
+        )
         self.assertEqual(response.context["communities"].paginator.count, 1)
 
     def test_communities_list_filtering_by_municipality(self):
         """List view correctly filters by municipality."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
-        response = self.client.get(reverse("common:communities_manage"), {"municipality": self.municipality.id})
+        response = self.client.get(
+            reverse("common:communities_manage"), {"municipality": self.municipality.id}
+        )
         self.assertEqual(response.context["communities"].paginator.count, 1)
 
     def test_communities_list_search(self):
         """List view supports search functionality."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         # Search by barangay name
-        response = self.client.get(reverse("common:communities_manage"), {"search": "Kudandang"})
+        response = self.client.get(
+            reverse("common:communities_manage"), {"search": "Kudandang"}
+        )
         self.assertEqual(response.context["communities"].paginator.count, 1)
 
         # Search by non-existent name
-        response = self.client.get(reverse("common:communities_manage"), {"search": "NonExistent"})
+        response = self.client.get(
+            reverse("common:communities_manage"), {"search": "NonExistent"}
+        )
         self.assertEqual(response.context["communities"].paginator.count, 0)
 
     def test_communities_list_pagination(self):
         """List view supports pagination."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         # Create 15 more communities
         for i in range(15):
@@ -174,13 +201,15 @@ class BarangayOBCViewTests(OBCCommunityViewTestBase):
             )
 
         # Default page size is 10
-        response = self.client.get(reverse("common:communities_manage"), {"barangay_page_size": 10})
+        response = self.client.get(
+            reverse("common:communities_manage"), {"barangay_page_size": 10}
+        )
         self.assertEqual(len(response.context["communities"]), 10)
         self.assertEqual(response.context["communities"].paginator.count, 16)
 
     def test_communities_list_htmx_partial_render(self):
         """HTMX requests return partial template."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         response = self.client.get(
             reverse("common:communities_manage"),
@@ -188,11 +217,13 @@ class BarangayOBCViewTests(OBCCommunityViewTestBase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "communities/partials/barangay_manage_results.html")
+        self.assertTemplateUsed(
+            response, "communities/partials/barangay_manage_results.html"
+        )
 
     def test_communities_create_view_get(self):
         """GET request displays the create form."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
         response = self.client.get(reverse("common:communities_add"))
 
         self.assertEqual(response.status_code, 200)
@@ -201,7 +232,7 @@ class BarangayOBCViewTests(OBCCommunityViewTestBase):
 
     def test_communities_create_view_post_valid(self):
         """POST request with valid data creates a new community."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         initial_count = OBCCommunity.objects.count()
 
@@ -225,7 +256,7 @@ class BarangayOBCViewTests(OBCCommunityViewTestBase):
 
     def test_communities_create_view_post_invalid(self):
         """POST request with invalid data shows form errors."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         initial_count = OBCCommunity.objects.count()
 
@@ -240,14 +271,18 @@ class BarangayOBCViewTests(OBCCommunityViewTestBase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(OBCCommunity.objects.count(), initial_count)
-        self.assertFormError(response.context["form"], "barangay", "This field is required.")
+        self.assertFormError(
+            response.context["form"], "barangay", "This field is required."
+        )
 
     def test_communities_edit_view(self):
         """Edit view displays and processes form correctly."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         # GET request
-        response = self.client.get(reverse("common:communities_edit", args=[self.community.id]))
+        response = self.client.get(
+            reverse("common:communities_edit", args=[self.community.id])
+        )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "communities/communities_add.html")
 
@@ -270,9 +305,11 @@ class BarangayOBCViewTests(OBCCommunityViewTestBase):
 
     def test_communities_delete_soft_delete(self):
         """Delete view performs soft delete."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
-        response = self.client.post(reverse("common:communities_delete", args=[self.community.id]))
+        response = self.client.post(
+            reverse("common:communities_delete", args=[self.community.id])
+        )
 
         self.assertEqual(response.status_code, 302)
         self.community.refresh_from_db()
@@ -285,14 +322,16 @@ class BarangayOBCViewTests(OBCCommunityViewTestBase):
 
     def test_communities_restore_from_archive(self):
         """Restore view restores soft-deleted community."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         # First, soft delete
         self.community.soft_delete(user=self.user)
         self.assertTrue(self.community.is_deleted)
 
         # Now restore
-        response = self.client.post(reverse("common:communities_restore", args=[self.community.id]))
+        response = self.client.post(
+            reverse("common:communities_restore", args=[self.community.id])
+        )
 
         self.assertEqual(response.status_code, 302)
         self.community.refresh_from_db()
@@ -301,9 +340,11 @@ class BarangayOBCViewTests(OBCCommunityViewTestBase):
 
     def test_communities_detail_view(self):
         """Detail view displays community information."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
-        response = self.client.get(reverse("common:communities_view", args=[self.community.id]))
+        response = self.client.get(
+            reverse("common:communities_view", args=[self.community.id])
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "communities/communities_view.html")
@@ -311,7 +352,7 @@ class BarangayOBCViewTests(OBCCommunityViewTestBase):
 
     def test_communities_detail_view_delete_review_mode(self):
         """Detail view supports delete review mode."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         response = self.client.get(
             reverse("common:communities_view", args=[self.community.id]),
@@ -339,7 +380,7 @@ class MunicipalCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_municipal_list_view(self):
         """Municipal coverage list view works correctly."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         response = self.client.get(reverse("common:communities_manage_municipal"))
 
@@ -350,7 +391,7 @@ class MunicipalCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_municipal_list_filtering(self):
         """Municipal list supports region/province filtering."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         # Filter by region
         response = self.client.get(
@@ -368,7 +409,7 @@ class MunicipalCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_municipal_list_htmx_partial(self):
         """HTMX requests return partial template."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         response = self.client.get(
             reverse("common:communities_manage_municipal"),
@@ -376,11 +417,13 @@ class MunicipalCoverageViewTests(OBCCommunityViewTestBase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "communities/partials/municipal_manage_results.html")
+        self.assertTemplateUsed(
+            response, "communities/partials/municipal_manage_results.html"
+        )
 
     def test_municipal_create_valid(self):
         """Create municipal coverage with valid data."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         # Create another municipality for testing
         municipality2 = Municipality.objects.create(
@@ -408,7 +451,7 @@ class MunicipalCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_municipal_create_prevents_duplicates(self):
         """Cannot create duplicate municipal coverage for same municipality."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         initial_count = MunicipalityCoverage.objects.count()
 
@@ -428,7 +471,7 @@ class MunicipalCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_municipal_edit_view(self):
         """Edit municipal coverage."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         response = self.client.post(
             reverse("common:communities_edit_municipal", args=[self.coverage.id]),
@@ -447,7 +490,7 @@ class MunicipalCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_municipal_delete_cascades_sync(self):
         """Deleting municipal coverage triggers province sync."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         # Create provincial coverage first
         province_coverage = ProvinceCoverage.objects.create(
@@ -467,7 +510,7 @@ class MunicipalCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_municipal_restore(self):
         """Restore archived municipal coverage."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         # Soft delete first
         self.coverage.soft_delete(user=self.user)
@@ -482,7 +525,7 @@ class MunicipalCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_municipal_auto_sync_aggregation(self):
         """Municipal coverage auto-syncs from barangay communities."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         # Create barangay OBC (should trigger auto-sync)
         OBCCommunity.objects.create(
@@ -499,7 +542,7 @@ class MunicipalCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_municipal_detail_view(self):
         """Municipal coverage detail view."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         response = self.client.get(
             reverse("common:communities_view_municipal", args=[self.coverage.id])
@@ -511,7 +554,7 @@ class MunicipalCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_municipal_archived_view(self):
         """Archived municipal coverages are shown in archived view."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         self.coverage.soft_delete(user=self.user)
 
@@ -526,7 +569,7 @@ class MunicipalCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_municipal_pagination(self):
         """Municipal list supports pagination."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         # Create 15 more municipalities with coverage
         for i in range(15):
@@ -580,7 +623,7 @@ class ProvincialCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_provincial_list_view(self):
         """Provincial coverage list view works correctly."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         response = self.client.get(reverse("common:communities_manage_provincial"))
 
@@ -594,7 +637,7 @@ class ProvincialCoverageViewTests(OBCCommunityViewTestBase):
         if not self.participant_account:
             self.skipTest("MANA app not available")
 
-        self.client.login(username="manauser", password="testpass123")
+        self.client.force_login(self.mana_user)
 
         # Create provincial OBC by MANA user
         mana_coverage = ProvinceCoverage.objects.create(
@@ -613,7 +656,7 @@ class ProvincialCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_provincial_create_valid(self):
         """Create provincial coverage with valid data."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         # Create another province
         province2 = Province.objects.create(
@@ -640,7 +683,7 @@ class ProvincialCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_provincial_create_prevents_duplicates(self):
         """Cannot create duplicate provincial coverage for same province."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         initial_count = ProvinceCoverage.objects.count()
 
@@ -661,7 +704,7 @@ class ProvincialCoverageViewTests(OBCCommunityViewTestBase):
         if not self.participant_account:
             self.skipTest("MANA app not available")
 
-        self.client.login(username="manauser", password="testpass123")
+        self.client.force_login(self.mana_user)
 
         # Create coverage by MANA user
         mana_coverage = ProvinceCoverage.objects.create(
@@ -690,7 +733,7 @@ class ProvincialCoverageViewTests(OBCCommunityViewTestBase):
         if not self.participant_account:
             self.skipTest("MANA app not available")
 
-        self.client.login(username="manauser", password="testpass123")
+        self.client.force_login(self.mana_user)
 
         # Try to edit coverage created by staff user
         response = self.client.get(
@@ -704,7 +747,7 @@ class ProvincialCoverageViewTests(OBCCommunityViewTestBase):
         if not self.participant_account:
             self.skipTest("MANA app not available")
 
-        self.client.login(username="manauser", password="testpass123")
+        self.client.force_login(self.mana_user)
 
         mana_coverage = ProvinceCoverage.objects.create(
             province=self.province,
@@ -727,7 +770,7 @@ class ProvincialCoverageViewTests(OBCCommunityViewTestBase):
         if not self.participant_account:
             self.skipTest("MANA app not available")
 
-        self.client.login(username="manauser", password="testpass123")
+        self.client.force_login(self.mana_user)
 
         response = self.client.post(
             reverse("common:communities_delete_provincial", args=[self.coverage.id])
@@ -740,7 +783,7 @@ class ProvincialCoverageViewTests(OBCCommunityViewTestBase):
         if not self.participant_account:
             self.skipTest("MANA app not available")
 
-        self.client.login(username="manauser", password="testpass123")
+        self.client.force_login(self.mana_user)
 
         mana_coverage = ProvinceCoverage.objects.create(
             province=self.province,
@@ -759,7 +802,7 @@ class ProvincialCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_provincial_staff_full_access(self):
         """Staff users have full access to all provincial OBCs."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         response = self.client.post(
             reverse("common:communities_edit_provincial", args=[self.coverage.id]),
@@ -776,7 +819,7 @@ class ProvincialCoverageViewTests(OBCCommunityViewTestBase):
 
     def test_provincial_auto_sync_from_municipal(self):
         """Provincial coverage auto-syncs from municipal coverages."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         # Create municipal coverage
         MunicipalityCoverage.objects.create(
@@ -797,7 +840,7 @@ class ProvincialCoverageViewTests(OBCCommunityViewTestBase):
         if not self.participant_account:
             self.skipTest("MANA app not available")
 
-        self.client.login(username="manauser", password="testpass123")
+        self.client.force_login(self.mana_user)
 
         # Try to view coverage created by staff
         response = self.client.get(
@@ -826,7 +869,7 @@ class ProvincialCoverageViewTests(OBCCommunityViewTestBase):
         if not self.participant_account:
             self.skipTest("MANA app not available")
 
-        self.client.login(username="manauser", password="testpass123")
+        self.client.force_login(self.mana_user)
 
         mana_coverage = ProvinceCoverage.objects.create(
             province=self.province,
@@ -851,7 +894,7 @@ class LocationAPIViewTests(OBCCommunityViewTestBase):
 
     def test_location_centroid_barangay(self):
         """Location centroid API returns barangay coordinates."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         response = self.client.get(
             reverse("common:location_centroid"),
@@ -864,7 +907,7 @@ class LocationAPIViewTests(OBCCommunityViewTestBase):
 
     def test_location_centroid_missing_params(self):
         """Location centroid API requires level and id."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         response = self.client.get(reverse("common:location_centroid"))
 
@@ -874,7 +917,7 @@ class LocationAPIViewTests(OBCCommunityViewTestBase):
 
     def test_location_centroid_invalid_level(self):
         """Location centroid API rejects invalid level."""
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         response = self.client.get(
             reverse("common:location_centroid"),

@@ -19,7 +19,7 @@ from coordination.models import (
     Organization,
     PartnershipMilestone
 )
-from communities.models import BarangayOBC
+from communities.models import OBCCommunity
 
 
 class PartnershipPredictor:
@@ -40,7 +40,7 @@ class PartnershipPredictor:
 
         Args:
             stakeholder_id: Organization UUID
-            community_id: Community ID (BarangayOBC)
+            community_id: Community ID (OBCCommunity)
             project_type: Type of project/intervention
             budget: Proposed budget (optional)
 
@@ -88,10 +88,10 @@ class PartnershipPredictor:
         """Extract features for prediction"""
         try:
             stakeholder = Organization.objects.get(id=stakeholder_id)
-            community = BarangayOBC.objects.select_related(
+            community = OBCCommunity.objects.select_related(
                 'municipality__province__region'
             ).get(id=community_id)
-        except (Organization.DoesNotExist, BarangayOBC.DoesNotExist):
+        except (Organization.DoesNotExist, OBCCommunity.DoesNotExist):
             return {}
 
         # Historical partnerships

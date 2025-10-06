@@ -11,6 +11,49 @@
 <li class="text-neutral-800 font-semibold">Work Items</li>
 {% endblock %}
 
+{% block extra_head %}
+<!-- Alpine.js for modal functionality -->
+<script src="//unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* HTMX Loading Indicator - Hidden by Default */
+    .htmx-indicator {
+        display: none;
+    }
+
+    /* Show loading spinner during HTMX request */
+    .htmx-request .htmx-indicator {
+        display: inline-block;
+    }
+
+    /* Hide chevron when loading */
+    .htmx-request .toggle-icon {
+        display: none;
+    }
+
+    /* Smooth transitions for skeleton rows */
+    .skeleton-row {
+        transition: opacity 200ms ease-in-out;
+    }
+
+    /* Pulsing animation for skeleton placeholders */
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
 
@@ -326,109 +369,622 @@
             </table>
         </div>
     </div>
+
+    {# Delete Modal Container - HTMX will inject modal content here #}
+    <div id="delete-modal-container" aria-live="polite" role="region" aria-label="Delete confirmation modal"></div>
 </div>
 
 <script>
+/**
+ * Work Items Hierarchical Tree Navigation
+ *
+ * Features:
+ * - State-machine based node management (UNLOADED → LOADING → EXPANDED ⇄ COLLAPSED)
+ * - HTMX-powered lazy loading of children
+ * - Optimistic UI updates (< 50ms feedback)
+ * - Expand All / Collapse All functionality
+ * - Error handling with UI rollback
+ *
+ * State Machine Diagram:
+ *
+ *   ┌──────────┐  User Click   ┌─────────┐  HTMX Success  ┌──────────┐
+ *   │ UNLOADED │──────────────>│ LOADING │───────────────>│ EXPANDED │
+ *   └──────────┘               └─────────┘                └──────────┘
+ *                                   │                           │  ▲
+ *                                   │ Error                     │  │
+ *                                   ▼                           │  │
+ *                              ┌──────────┐                     │  │
+ *                              │ UNLOADED │                     │  │
+ *                              └──────────┘                     │  │
+ *                                                               │  │
+ *                                                         Click │  │ Click
+ *                                                               ▼  │
+ *                                                         ┌───────────┐
+ *                                                         │ COLLAPSED │
+ *                                                         └───────────┘
+ *
+ * Event Flow:
+ *   1. User clicks expand button
+ *   2. htmx:beforeRequest → Check state, show optimistic UI (chevron, skeleton)
+ *   3. HTMX loads children from server
+ *   4. htmx:afterSwap → Hide skeleton, mark as EXPANDED, remove placeholder & HTMX attrs
+ *   5. Subsequent clicks toggle EXPANDED ⇄ COLLAPSED (no HTMX)
+ */
 (function() {
     'use strict';
 
-    // Track expanded state
-    const expandedItems = new Set();
+    // ============================================================================
+    // STATE MACHINE
+    // ============================================================================
 
-    // Toggle individual row
-    function toggleRow(button, childrenRow) {
-        const itemId = button.dataset.toggle;
+    /**
+     * Node states in the tree navigation
+     * @enum {string}
+     */
+    const NodeState = {
+        /** Children never loaded, button ready to trigger HTMX load */
+        UNLOADED: 'unloaded',
+        /** HTMX request in flight, skeleton showing */
+        LOADING: 'loading',
+        /** Children loaded and visible */
+        EXPANDED: 'expanded',
+        /** Children loaded but hidden */
+        COLLAPSED: 'collapsed'
+    };
+
+    /**
+     * State storage: itemId → NodeState
+     * @type {Map<string, string>}
+     */
+    const nodeStates = new Map();
+
+    // ============================================================================
+    // STATE MANAGEMENT
+    // ============================================================================
+
+    /**
+     * Get current state of a node
+     * @param {string} itemId - Work item ID
+     * @returns {string} Current NodeState
+     */
+    function getNodeState(itemId) {
+        return nodeStates.get(itemId) || NodeState.UNLOADED;
+    }
+
+    /**
+     * Set state of a node with logging
+     * @param {string} itemId - Work item ID
+     * @param {string} newState - New NodeState
+     */
+    function setNodeState(itemId, newState) {
+        const oldState = getNodeState(itemId);
+        nodeStates.set(itemId, newState);
+        console.log(`[Tree] Node ${itemId}: ${oldState} → ${newState}`);
+    }
+
+    /**
+     * Check if node has children loaded
+     * @param {string} itemId - Work item ID
+     * @returns {boolean} True if children are loaded
+     */
+    function isChildrenLoaded(itemId) {
+        const state = getNodeState(itemId);
+        return state === NodeState.EXPANDED || state === NodeState.COLLAPSED;
+    }
+
+    /**
+     * Check if node is expanded
+     * @param {string} itemId - Work item ID
+     * @returns {boolean} True if node is expanded
+     */
+    function isNodeExpanded(itemId) {
+        return getNodeState(itemId) === NodeState.EXPANDED;
+    }
+
+    // ============================================================================
+    // UI UPDATES - Chevron
+    // ============================================================================
+
+    /**
+     * Update chevron icon to match expansion state
+     * @param {string} itemId - Work item ID
+     * @param {boolean} expanded - True for down chevron, false for right
+     */
+    function updateChevron(itemId, expanded) {
+        const button = document.querySelector(`[data-item-id="${itemId}"]`);
+        if (!button) return;
+
         const icon = button.querySelector('.toggle-icon');
-        const isExpanded = childrenRow.style.display !== 'none';
+        if (!icon) return;
 
-        if (isExpanded) {
-            // Collapse
-            childrenRow.style.display = 'none';
-            icon.classList.remove('fa-chevron-down');
-            icon.classList.add('fa-chevron-right');
-            expandedItems.delete(itemId);
-        } else {
-            // Expand
-            childrenRow.style.display = 'table-row';
+        if (expanded) {
             icon.classList.remove('fa-chevron-right');
             icon.classList.add('fa-chevron-down');
-            expandedItems.add(itemId);
+        } else {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-right');
         }
     }
 
-    // HTMX tree expand/collapse functionality
+    // ============================================================================
+    // UI UPDATES - Skeleton Loading
+    // ============================================================================
+
+    /**
+     * Show skeleton loading row
+     * @param {string} itemId - Work item ID
+     */
+    function showSkeleton(itemId) {
+        const skeletonRow = document.getElementById(`skeleton-row-${itemId}`);
+        if (skeletonRow) {
+            skeletonRow.style.display = '';
+        }
+    }
+
+    /**
+     * Hide skeleton loading row
+     * @param {string} itemId - Work item ID
+     */
+    function hideSkeleton(itemId) {
+        const skeletonRow = document.getElementById(`skeleton-row-${itemId}`);
+        if (skeletonRow) {
+            skeletonRow.style.display = 'none';
+        }
+    }
+
+    // ============================================================================
+    // CHILDREN VISIBILITY MANAGEMENT
+    // ============================================================================
+
+    /**
+     * Get all descendant rows (children, grandchildren, etc.)
+     * @param {string} itemId - Work item ID
+     * @returns {HTMLElement[]} Array of descendant row elements
+     */
+    function getAllDescendantRows(itemId) {
+        const rows = [];
+        const parentRow = document.querySelector(`[data-work-item-id="${itemId}"]`);
+        if (!parentRow) return rows;
+
+        const parentLevel = parseInt(parentRow.dataset.level || '0');
+        let currentRow = parentRow.nextElementSibling;
+
+        while (currentRow) {
+            // Skip placeholder and skeleton rows (they don't have data-work-item-id)
+            if (!currentRow.dataset.workItemId) {
+                currentRow = currentRow.nextElementSibling;
+                continue;
+            }
+
+            const level = parseInt(currentRow.dataset.level || '0');
+
+            // Stop if we hit a sibling or parent (same or lower level)
+            if (level <= parentLevel) {
+                break;
+            }
+
+            rows.push(currentRow);
+            currentRow = currentRow.nextElementSibling;
+        }
+
+        return rows;
+    }
+
+    /**
+     * Show children rows (EXPANDED state)
+     * @param {string} itemId - Work item ID
+     */
+    function showChildren(itemId) {
+        const parentRow = document.querySelector(`[data-work-item-id="${itemId}"]`);
+        if (!parentRow) return;
+
+        const parentLevel = parseInt(parentRow.dataset.level || '0');
+        const childRows = getAllDescendantRows(itemId);
+
+        // Only show direct children (level = parentLevel + 1)
+        childRows.forEach(row => {
+            const rowLevel = parseInt(row.dataset.level);
+            if (rowLevel === parentLevel + 1) {
+                row.style.display = '';
+            }
+        });
+
+        updateChevron(itemId, true);
+        setNodeState(itemId, NodeState.EXPANDED);
+    }
+
+    /**
+     * Hide children rows (COLLAPSED state)
+     * @param {string} itemId - Work item ID
+     */
+    function hideChildren(itemId) {
+        const childRows = getAllDescendantRows(itemId);
+
+        // Hide ALL descendants (children, grandchildren, etc.)
+        childRows.forEach(row => {
+            row.style.display = 'none';
+
+            // Recursively collapse child nodes
+            const childButton = row.querySelector('[data-item-id]');
+            if (childButton) {
+                const childItemId = childButton.dataset.itemId;
+                if (isNodeExpanded(childItemId)) {
+                    setNodeState(childItemId, NodeState.COLLAPSED);
+                    updateChevron(childItemId, false);
+                }
+            }
+        });
+
+        updateChevron(itemId, false);
+        setNodeState(itemId, NodeState.COLLAPSED);
+    }
+
+    // ============================================================================
+    // PLACEHOLDER MANAGEMENT
+    // ============================================================================
+
+    /**
+     * Remove placeholder row after children are loaded
+     * @param {string} itemId - Work item ID
+     */
+    function removePlaceholder(itemId) {
+        const placeholder = document.getElementById(`children-placeholder-${itemId}`);
+        if (placeholder) {
+            placeholder.remove();
+            console.log(`[Tree] Removed placeholder for ${itemId}`);
+        }
+    }
+
+    /**
+     * Remove HTMX attributes after first load to prevent duplicate requests
+     * @param {string} itemId - Work item ID
+     */
+    function removeHtmxAttributes(itemId) {
+        const button = document.querySelector(`[data-item-id="${itemId}"]`);
+        if (!button) return;
+
+        button.removeAttribute('hx-get');
+        button.removeAttribute('hx-target');
+        button.removeAttribute('hx-swap');
+        button.removeAttribute('hx-trigger');
+        button.removeAttribute('hx-indicator');
+        button.removeAttribute('hx-disabled-elt');
+
+        console.log(`[Tree] Removed HTMX attributes for ${itemId}`);
+    }
+
+    // ============================================================================
+    // HTMX EVENT VALIDATION
+    // ============================================================================
+
+    /**
+     * Check if HTMX event is for tree expansion
+     * @param {CustomEvent} event - HTMX event
+     * @returns {boolean} True if this is a tree expansion event
+     */
+    function isTreeExpansionEvent(event) {
+        const targetId = event.detail.target?.id;
+        return targetId && targetId.startsWith('children-placeholder-');
+    }
+
+    /**
+     * Extract item ID from HTMX event
+     * @param {CustomEvent} event - HTMX event
+     * @returns {string|null} Item ID or null if not found
+     */
+    function extractItemId(event) {
+        const targetId = event.detail.target?.id;
+        if (!targetId) return null;
+        return targetId.replace('children-placeholder-', '');
+    }
+
+    // ============================================================================
+    // HTMX EVENT HANDLERS
+    // ============================================================================
+
+    /**
+     * HTMX beforeRequest: Validate request and show optimistic UI
+     */
+    document.body.addEventListener('htmx:beforeRequest', function(event) {
+        if (!isTreeExpansionEvent(event)) return;
+
+        const itemId = extractItemId(event);
+        if (!itemId) return;
+
+        const state = getNodeState(itemId);
+
+        // SAFETY: Prevent duplicate load if already loaded
+        if (isChildrenLoaded(itemId)) {
+            event.preventDefault();
+            console.warn(`[Tree] Prevented duplicate load for ${itemId} (state: ${state})`);
+            console.warn('[Tree] HTMX attributes should have been removed - this is unexpected');
+            return;
+        }
+
+        // SAFETY: Verify target exists
+        const target = event.detail.target;
+        if (!target || !document.body.contains(target)) {
+            event.preventDefault();
+            console.error(`[Tree] Target element missing: ${target?.id}`);
+            return;
+        }
+
+        // OPTIMISTIC UI: Show loading state (< 50ms)
+        console.log(`[Tree] Loading children for ${itemId}`);
+        setNodeState(itemId, NodeState.LOADING);
+        updateChevron(itemId, true);
+        showSkeleton(itemId);
+    });
+
+    /**
+     * HTMX afterSwap: Hide skeleton, mark as loaded
+     */
     document.body.addEventListener('htmx:afterSwap', function(event) {
-        if (event.detail.target.classList.contains('work-item-children')) {
-            const button = event.detail.elt;
-            const toggleIcon = button.querySelector('.toggle-icon');
-            const childrenRow = document.getElementById(button.dataset.toggle);
+        if (!isTreeExpansionEvent(event)) return;
 
-            if (toggleIcon && childrenRow) {
-                childrenRow.style.display = 'table-row';
-                toggleIcon.classList.remove('fa-chevron-right');
-                toggleIcon.classList.add('fa-chevron-down');
-                expandedItems.add(button.dataset.toggle);
-            }
+        const itemId = extractItemId(event);
+        if (!itemId) return;
+
+        console.log(`[Tree] Children loaded for ${itemId}`);
+        hideSkeleton(itemId);
+        setNodeState(itemId, NodeState.EXPANDED);
+        removePlaceholder(itemId);
+        removeHtmxAttributes(itemId);
+    });
+
+    /**
+     * HTMX sendError: Network error, revert UI
+     */
+    document.body.addEventListener('htmx:sendError', function(event) {
+        if (!isTreeExpansionEvent(event)) return;
+
+        const itemId = extractItemId(event);
+        if (!itemId) return;
+
+        console.error(`[Tree] Network error loading ${itemId}`);
+        updateChevron(itemId, false);
+        hideSkeleton(itemId);
+        setNodeState(itemId, NodeState.UNLOADED);
+    });
+
+    /**
+     * HTMX responseError: Server error, revert UI
+     */
+    document.body.addEventListener('htmx:responseError', function(event) {
+        if (!isTreeExpansionEvent(event)) return;
+
+        const itemId = extractItemId(event);
+        if (!itemId) return;
+
+        console.error(`[Tree] Server error loading ${itemId}`);
+        updateChevron(itemId, false);
+        hideSkeleton(itemId);
+        setNodeState(itemId, NodeState.UNLOADED);
+    });
+
+    /**
+     * HTMX swapError: Swap failed, revert UI
+     */
+    document.body.addEventListener('htmx:swapError', function(event) {
+        console.error('[Tree] HTMX Swap Error:', event.detail);
+    });
+
+    /**
+     * HTMX targetError: Target missing, revert UI
+     */
+    document.body.addEventListener('htmx:targetError', function(event) {
+        console.error('[Tree] HTMX Target Error:', event.detail);
+
+        const elt = event.detail.elt;
+        const itemId = elt?.dataset?.itemId;
+
+        if (itemId) {
+            console.log(`[Tree] Reverting UI for ${itemId}`);
+            updateChevron(itemId, false);
+            hideSkeleton(itemId);
+            setNodeState(itemId, NodeState.UNLOADED);
         }
     });
 
-    // Handle toggle button clicks
+    // ============================================================================
+    // USER INTERACTIONS - Click Handler
+    // ============================================================================
+
+    /**
+     * Handle expand/collapse button clicks
+     *
+     * Flow:
+     * - UNLOADED → Let HTMX load children
+     * - LOADING → Ignore (request in flight)
+     * - EXPANDED → Collapse (hide children)
+     * - COLLAPSED → Expand (show children)
+     */
     document.body.addEventListener('click', function(event) {
-        const button = event.target.closest('[data-toggle]');
-        if (button) {
-            const childrenRow = document.getElementById(button.dataset.toggle);
-            if (childrenRow && childrenRow.querySelector('td').innerHTML.trim()) {
-                // Children already loaded
+        const button = event.target.closest('[data-item-id]');
+        if (!button) return;
+
+        const itemId = button.dataset.itemId;
+        const state = getNodeState(itemId);
+
+        console.log(`[Tree] Click on ${itemId} (state: ${state})`);
+
+        switch (state) {
+            case NodeState.UNLOADED:
+                // Let HTMX handle the load
+                console.log(`[Tree] Allowing HTMX to load ${itemId}`);
+                break;
+
+            case NodeState.LOADING:
+                // Ignore clicks during load
                 event.preventDefault();
-                toggleRow(button, childrenRow);
-            }
-            // Otherwise let HTMX handle it
+                event.stopPropagation();
+                console.log(`[Tree] Ignored click during loading: ${itemId}`);
+                break;
+
+            case NodeState.EXPANDED:
+                // Collapse (hide children)
+                event.preventDefault();
+                event.stopPropagation();
+                console.log(`[Tree] Collapsing ${itemId}`);
+                hideChildren(itemId);
+                break;
+
+            case NodeState.COLLAPSED:
+                // Expand (show children)
+                event.preventDefault();
+                event.stopPropagation();
+                console.log(`[Tree] Expanding ${itemId}`);
+                showChildren(itemId);
+                break;
+
+            default:
+                console.warn(`[Tree] Unknown state for ${itemId}: ${state}`);
         }
     });
 
-    // Expand All
+    // ============================================================================
+    // BULK OPERATIONS - Expand All / Collapse All
+    // ============================================================================
+
+    /**
+     * Expand All button handler
+     */
     document.getElementById('expand-all-btn')?.addEventListener('click', function() {
-        const allToggleButtons = document.querySelectorAll('[data-toggle]');
-        allToggleButtons.forEach(button => {
-            const childrenRow = document.getElementById(button.dataset.toggle);
-            if (childrenRow) {
-                if (!childrenRow.querySelector('td').innerHTML.trim()) {
-                    // Load children via HTMX first
-                    button.click();
-                } else if (childrenRow.style.display === 'none') {
-                    // Just expand if already loaded
-                    toggleRow(button, childrenRow);
-                }
+        console.log('[Tree] Expand All triggered');
+        const allButtons = document.querySelectorAll('[data-item-id]');
+        const unloadedButtons = [];
+
+        // First pass: expand already-loaded nodes, collect unloaded nodes
+        allButtons.forEach(button => {
+            const itemId = button.dataset.itemId;
+            const state = getNodeState(itemId);
+
+            if (state === NodeState.UNLOADED) {
+                unloadedButtons.push(button);
+            } else if (state === NodeState.COLLAPSED) {
+                showChildren(itemId);
             }
         });
 
-        // Show feedback
-        this.querySelector('i').classList.add('fa-spin');
-        setTimeout(() => {
-            this.querySelector('i').classList.remove('fa-spin');
-        }, 500);
+        // Second pass: sequentially load unloaded nodes (avoid server overload)
+        if (unloadedButtons.length > 0) {
+            console.log(`[Tree] Loading ${unloadedButtons.length} unloaded nodes`);
+            let index = 0;
+            const loadNext = () => {
+                if (index < unloadedButtons.length) {
+                    unloadedButtons[index].click();
+                    index++;
+                    setTimeout(loadNext, 100); // 100ms delay between requests
+                }
+            };
+            loadNext();
+        }
+
+        // Visual feedback
+        const icon = this.querySelector('i');
+        icon.classList.add('fa-spin');
+        setTimeout(() => icon.classList.remove('fa-spin'), 500);
     });
 
-    // Collapse All
+    /**
+     * Collapse All button handler
+     */
     document.getElementById('collapse-all-btn')?.addEventListener('click', function() {
-        const allChildrenRows = document.querySelectorAll('.work-item-children');
-        allChildrenRows.forEach(row => {
-            if (row.style.display !== 'none') {
-                const button = document.querySelector(`[data-toggle="${row.id}"]`);
-                if (button) {
-                    toggleRow(button, row);
-                }
+        console.log('[Tree] Collapse All triggered');
+        const allButtons = document.querySelectorAll('[data-item-id]');
+
+        allButtons.forEach(button => {
+            const itemId = button.dataset.itemId;
+            const state = getNodeState(itemId);
+
+            if (state === NodeState.EXPANDED) {
+                hideChildren(itemId);
             }
         });
 
-        // Show feedback
-        this.querySelector('i').classList.add('fa-spin');
-        setTimeout(() => {
-            this.querySelector('i').classList.remove('fa-spin');
-        }, 500);
+        // Visual feedback
+        const icon = this.querySelector('i');
+        icon.classList.add('fa-spin');
+        setTimeout(() => icon.classList.remove('fa-spin'), 500);
     });
+
+    // ============================================================================
+    // INITIALIZATION
+    // ============================================================================
 
     console.log('✅ Work Items tree navigation initialized');
+    console.log('   - State machine: UNLOADED → LOADING → EXPANDED ⇄ COLLAPSED');
+    console.log('   - Optimistic UI: < 50ms feedback on user interactions');
+    console.log('   - HTMX "click once" trigger: Prevents duplicate requests');
+    console.log('   - HTMX attributes removed after first load for instant toggle');
+
+    // ============================================================================
+    // TOAST NOTIFICATION SYSTEM
+    // ============================================================================
+
+    /**
+     * Display toast notification
+     * @param {string} message - Notification message
+     * @param {string} level - Notification level (success, error, warning, info)
+     */
+    function showToast(message, level = 'info') {
+        // Remove existing toasts
+        const existingToast = document.getElementById('work-item-toast');
+        if (existingToast) existingToast.remove();
+
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.id = 'work-item-toast';
+        toast.className = 'fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-300 ease-out';
+
+        // Color schemes based on level
+        const colors = {
+            success: 'bg-emerald-600 text-white',
+            error: 'bg-red-600 text-white',
+            warning: 'bg-amber-600 text-white',
+            info: 'bg-blue-600 text-white'
+        };
+
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-times-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
+
+        toast.className += ' ' + (colors[level] || colors.info);
+
+        toast.innerHTML = `
+            <div class="flex items-center gap-3">
+                <i class="fas ${icons[level] || icons.info} text-xl"></i>
+                <span class="font-medium">${message}</span>
+                <button onclick="this.closest('#work-item-toast').remove()" class="ml-4 text-white/80 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+
+        // Add to DOM with animation
+        document.body.appendChild(toast);
+        setTimeout(() => toast.style.transform = 'translateY(0)', 10);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            toast.style.transform = 'translateY(-100%)';
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
+    /**
+     * Listen for showToast events from HTMX responses
+     */
+    document.body.addEventListener('showToast', function(event) {
+        const { message, level } = event.detail;
+        showToast(message, level);
+    });
+
+    console.log('✅ Toast notification system initialized');
 })();
 </script>
 {% endblock %}

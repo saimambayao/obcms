@@ -1122,9 +1122,6 @@ def mana_regional_overview(request):
     if not request.user.is_staff and not request.user.has_perm(
         "mana.can_facilitate_workshop"
     ):
-        from django.contrib import messages
-        from django.shortcuts import redirect
-
         messages.error(
             request,
             "Access denied. This area is restricted to OOBC staff. "

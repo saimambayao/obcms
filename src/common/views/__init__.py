@@ -59,11 +59,14 @@ from .work_items import (
     work_item_create,
     work_item_edit,
     work_item_delete,
+    work_item_delete_modal,
     work_item_tree_partial,
     work_item_update_progress,
     work_item_calendar_feed,
     work_item_sidebar_detail,
     work_item_sidebar_edit,
+    work_item_sidebar_create,
+    work_item_duplicate,
 )
 
 # Import task_detail for calendar integration
@@ -385,9 +388,12 @@ __all__ = [
     "work_item_create",
     "work_item_edit",
     "work_item_delete",
+    "work_item_delete_modal",
     "work_item_tree_partial",
     "work_item_update_progress",
     "work_item_calendar_feed",
     "work_item_sidebar_detail",
     "work_item_sidebar_edit",
+    "work_item_sidebar_create",
+    "work_item_duplicate",
 ]

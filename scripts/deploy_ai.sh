@@ -185,8 +185,8 @@ echo -e "${BLUE}Step 8: Checking for data to index...${NC}"
 
 # Check if we have communities to index
 COMMUNITY_COUNT=$($PYTHON_CMD manage.py shell -c "
-from communities.models import BarangayOBC
-print(BarangayOBC.objects.count())
+from communities.models import OBCCommunity
+print(OBCCommunity.objects.count())
 " 2>/dev/null || echo "0")
 
 if [ "$COMMUNITY_COUNT" -gt 0 ]; then

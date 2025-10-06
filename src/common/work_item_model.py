@@ -291,12 +291,19 @@ class WorkItem(MPTTModel):
         verbose_name = "Work Item"
         verbose_name_plural = "Work Items"
         indexes = [
+            # Filter indexes
             models.Index(fields=["work_type", "status"]),
             models.Index(fields=["start_date", "due_date"]),
             models.Index(fields=["status", "priority"]),
+            # Relationship indexes
             models.Index(fields=["related_ppa"], name="wi_rel_ppa_idx"),
             models.Index(fields=["related_assessment"], name="wi_rel_assessment_idx"),
             models.Index(fields=["related_policy"], name="wi_rel_policy_idx"),
+            # MPTT tree traversal indexes (critical for tree queries)
+            models.Index(fields=["tree_id", "lft", "rght"], name="wi_tree_traversal_idx"),
+            models.Index(fields=["parent_id"], name="wi_parent_idx"),
+            # Calendar query index
+            models.Index(fields=["is_calendar_visible", "start_date", "due_date"], name="wi_calendar_idx"),
         ]
 
     def __str__(self):

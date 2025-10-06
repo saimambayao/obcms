@@ -1,0 +1,416 @@
+{% load static %}
+
+{#
+AI Results Panel Component
+---------------------------
+Displays AI analysis results with formatting, export, and sharing functionality.
+
+Required Parameters:
+- results_id: Unique identifier for this results panel
+- results: Dictionary containing AI analysis results
+
+Optional Parameters:
+- title: Panel title (default: "AI Analysis Results")
+- icon: FontAwesome icon class (default: "fa-chart-line")
+- color: Color scheme - "blue", "emerald", "purple", "teal" (default: "blue")
+- format: Result format - "text", "json", "markdown", "table" (default: "text")
+- show_export: Boolean - show export buttons (default: True)
+- show_copy: Boolean - show copy button (default: True)
+- show_metadata: Boolean - show analysis metadata (default: True)
+- collapsible: Boolean - make panel collapsible (default: False)
+- syntax_highlight: Boolean - enable syntax highlighting for code (default: True)
+
+Results Structure:
+results = {
+    'content': 'Main result content',
+    'format': 'text|json|markdown|table',
+    'metadata': {
+        'model': 'claude-sonnet-4',
+        'timestamp': '2025-10-06 14:30:00',
+        'tokens': 1250,
+        'processing_time': 3.5,
+        'confidence': 0.92
+    },
+    'structured_data': {...},  # For JSON/table formats
+    'highlights': ['Important point 1', ...],  # Key highlights
+    'citations': ['Source 1', ...]  # Data sources
+}
+
+Usage Examples:
+
+1. Text Results:
+{% include "components/ai_results_panel.html" with results_id="analysis-1" results=ai_results %}
+
+2. JSON Results with Syntax Highlighting:
+{% include "components/ai_results_panel.html" with results_id="data-export" results=json_results format="json" %}
+
+3. Collapsible Panel:
+{% include "components/ai_results_panel.html" with results_id="detailed-analysis" results=analysis collapsible=True %}
+#}
+
+{% with color=color|default:"blue" %}
+{% with format=format|default:results.format|default:"text" %}
+{% with show_export=show_export|default:True %}
+{% with show_copy=show_copy|default:True %}
+{% with show_metadata=show_metadata|default:True %}
+
+<div id="ai-results-{{ results_id }}" class="bg-white rounded-xl shadow-lg border border-{{ color }}-200 overflow-hidden">
+    {# Header #}
+    <div class="bg-gradient-to-r from-{{ color }}-600 to-{{ color }}-700 text-white p-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                    <i class="fas {{ icon|default:'fa-chart-line' }}"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg">{{ title|default:"AI Analysis Results" }}</h3>
+                    {% if results.metadata.timestamp %}
+                    <p class="text-xs text-white/80">Generated {{ results.metadata.timestamp }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Action Buttons #}
+            <div class="flex items-center space-x-2">
+                {% if show_copy %}
+                <button
+                    onclick="copyResults('{{ results_id }}')"
+                    class="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                    title="Copy to clipboard">
+                    <i class="fas fa-copy"></i>
+                </button>
+                {% endif %}
+
+                {% if show_export %}
+                <div class="relative" x-data="{ exportOpen: false }">
+                    <button
+                        @click="exportOpen = !exportOpen"
+                        class="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                        title="Export results">
+                        <i class="fas fa-download"></i>
+                    </button>
+
+                    {# Export Dropdown #}
+                    <div
+                        x-show="exportOpen"
+                        @click.away="exportOpen = false"
+                        x-cloak
+                        class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-10">
+                        <button
+                            onclick="exportResults('{{ results_id }}', 'pdf')"
+                            class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                            <i class="fas fa-file-pdf text-red-600"></i>
+                            <span>Export as PDF</span>
+                        </button>
+                        <button
+                            onclick="exportResults('{{ results_id }}', 'docx')"
+                            class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                            <i class="fas fa-file-word text-blue-600"></i>
+                            <span>Export as Word</span>
+                        </button>
+                        <button
+                            onclick="exportResults('{{ results_id }}', 'json')"
+                            class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                            <i class="fas fa-file-code text-green-600"></i>
+                            <span>Export as JSON</span>
+                        </button>
+                        <button
+                            onclick="exportResults('{{ results_id }}', 'csv')"
+                            class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                            <i class="fas fa-file-csv text-emerald-600"></i>
+                            <span>Export as CSV</span>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if collapsible %}
+                <button
+                    onclick="toggleResults('{{ results_id }}')"
+                    id="toggle-{{ results_id }}"
+                    class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Content Area #}
+    <div id="results-content-{{ results_id }}" class="{% if collapsible %}hidden{% endif %}">
+        {# Key Highlights (if available) #}
+        {% if results.highlights %}
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-4">
+            <h4 class="text-sm font-semibold text-amber-900 mb-2 flex items-center">
+                <i class="fas fa-star text-amber-600 mr-2"></i>
+                Key Highlights
+            </h4>
+            <ul class="space-y-1">
+                {% for highlight in results.highlights %}
+                <li class="text-sm text-amber-900 flex items-start">
+                    <i class="fas fa-check text-amber-600 mr-2 mt-0.5 flex-shrink-0"></i>
+                    <span>{{ highlight }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {# Main Results Content #}
+        <div class="p-6">
+            {% if format == "text" %}
+                {# Plain Text Results #}
+                <div class="prose prose-sm max-w-none">
+                    <div id="results-text-{{ results_id }}" class="text-gray-700 whitespace-pre-wrap">{{ results.content }}</div>
+                </div>
+
+            {% elif format == "markdown" %}
+                {# Markdown Results #}
+                <div class="prose prose-sm max-w-none">
+                    <div id="results-text-{{ results_id }}" class="markdown-content">
+                        {{ results.content|safe }}
+                    </div>
+                </div>
+
+            {% elif format == "json" %}
+                {# JSON Results with Syntax Highlighting #}
+                <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                    <pre id="results-text-{{ results_id }}" class="text-sm"><code class="language-json text-gray-100">{{ results.structured_data|safe }}</code></pre>
+                </div>
+
+            {% elif format == "table" %}
+                {# Tabular Results #}
+                <div class="overflow-x-auto">
+                    <table id="results-text-{{ results_id }}" class="w-full text-sm">
+                        <thead class="bg-{{ color }}-50">
+                            <tr>
+                                {% for header in results.structured_data.headers %}
+                                <th class="px-4 py-3 text-left font-semibold text-{{ color }}-900">{{ header }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for row in results.structured_data.rows %}
+                            <tr class="hover:bg-gray-50">
+                                {% for cell in row %}
+                                <td class="px-4 py-3 text-gray-700">{{ cell }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+
+        {# Citations (if available) #}
+        {% if results.citations %}
+        <div class="bg-blue-50 border-t border-blue-200 p-4">
+            <h4 class="text-sm font-semibold text-blue-900 mb-2 flex items-center">
+                <i class="fas fa-quote-left text-blue-600 mr-2"></i>
+                Data Sources
+            </h4>
+            <ul class="space-y-1">
+                {% for citation in results.citations %}
+                <li class="text-xs text-blue-800">{{ citation }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {# Metadata Footer #}
+        {% if show_metadata and results.metadata %}
+        <div class="bg-gray-50 border-t border-gray-200 p-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                {% if results.metadata.model %}
+                <div class="flex items-center space-x-2 text-gray-600">
+                    <i class="fas fa-robot text-{{ color }}-600"></i>
+                    <span class="font-medium">Model:</span>
+                    <span>{{ results.metadata.model }}</span>
+                </div>
+                {% endif %}
+
+                {% if results.metadata.confidence %}
+                <div class="flex items-center space-x-2 text-gray-600">
+                    <i class="fas fa-chart-bar text-{{ color }}-600"></i>
+                    <span class="font-medium">Confidence:</span>
+                    <span>{{ results.metadata.confidence|floatformat:0 }}%</span>
+                </div>
+                {% endif %}
+
+                {% if results.metadata.tokens %}
+                <div class="flex items-center space-x-2 text-gray-600">
+                    <i class="fas fa-coins text-{{ color }}-600"></i>
+                    <span class="font-medium">Tokens:</span>
+                    <span>{{ results.metadata.tokens|intcomma }}</span>
+                </div>
+                {% endif %}
+
+                {% if results.metadata.processing_time %}
+                <div class="flex items-center space-x-2 text-gray-600">
+                    <i class="fas fa-clock text-{{ color }}-600"></i>
+                    <span class="font-medium">Time:</span>
+                    <span>{{ results.metadata.processing_time }}s</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+
+<script>
+// Toggle collapsible results panel
+function toggleResults(resultsId) {
+    const content = document.getElementById(`results-content-${resultsId}`);
+    const toggleBtn = document.getElementById(`toggle-${resultsId}`);
+
+    if (content && toggleBtn) {
+        content.classList.toggle('hidden');
+        const icon = toggleBtn.querySelector('i');
+        icon.classList.toggle('fa-chevron-down');
+        icon.classList.toggle('fa-chevron-up');
+    }
+}
+
+// Copy results to clipboard
+function copyResults(resultsId) {
+    const resultsText = document.getElementById(`results-text-${resultsId}`);
+    if (!resultsText) return;
+
+    const text = resultsText.innerText || resultsText.textContent;
+
+    navigator.clipboard.writeText(text).then(() => {
+        showNotification('Results copied to clipboard', 'success');
+    }).catch(err => {
+        console.error('Copy failed:', err);
+        showNotification('Failed to copy results', 'error');
+    });
+}
+
+// Export results in various formats
+function exportResults(resultsId, format) {
+    const exportUrl = `/api/ai-results/${resultsId}/export/?format=${format}`;
+
+    // Show loading notification
+    showNotification('Preparing export...', 'info');
+
+    fetch(exportUrl, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Export failed');
+        return response.blob();
+    })
+    .then(blob => {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ai-results-${resultsId}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showNotification('Export successful', 'success');
+    })
+    .catch(error => {
+        console.error('Export error:', error);
+        showNotification('Export failed', 'error');
+    });
+}
+
+// Helper functions
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showNotification(message, type) {
+    if (typeof window.showAINotification === 'function') {
+        window.showAINotification(message, type);
+    } else {
+        console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+}
+
+// Syntax highlighting (if Prism.js is available)
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof Prism !== 'undefined') {
+        Prism.highlightAll();
+    }
+});
+</script>
+
+<style>
+/* Markdown Content Styling */
+.markdown-content {
+    line-height: 1.6;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+}
+
+.markdown-content h1 { font-size: 1.5em; }
+.markdown-content h2 { font-size: 1.25em; }
+.markdown-content h3 { font-size: 1.1em; }
+
+.markdown-content p {
+    margin-bottom: 1em;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-left: 1.5em;
+    margin-bottom: 1em;
+}
+
+.markdown-content code {
+    background: #f3f4f6;
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+}
+
+.markdown-content pre {
+    background: #1f2937;
+    color: #f3f4f6;
+    padding: 1em;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin-bottom: 1em;
+}
+
+.markdown-content pre code {
+    background: transparent;
+    padding: 0;
+}
+
+/* Alpine.js cloak */
+[x-cloak] { display: none !important; }
+</style>

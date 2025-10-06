@@ -18,12 +18,8 @@ from coordination.models import (
     StakeholderEngagementType,
     PartnershipMilestone
 )
-from communities.models import (
-    Region,
-    Province,
-    Municipality,
-    BarangayOBC
-)
+from communities.models import OBCCommunity
+from common.models import Region, Province, Municipality, Barangay
 from coordination.ai_services.stakeholder_matcher import StakeholderMatcher
 from coordination.ai_services.partnership_predictor import PartnershipPredictor
 from coordination.ai_services.meeting_intelligence import MeetingIntelligence
@@ -46,28 +42,33 @@ class StakeholderMatcherTestCase(TestCase):
 
         # Create geographic hierarchy
         self.region = Region.objects.create(
-            region_name='Region IX',
-            region_code='09'
+            name='Zamboanga Peninsula',
+            code='09'
         )
 
         self.province = Province.objects.create(
-            province_name='Zamboanga del Sur',
-            province_code='ZDS',
+            name='Zamboanga del Sur',
+            code='ZDS',
             region=self.region
         )
 
         self.municipality = Municipality.objects.create(
-            municipality_name='Pagadian City',
-            municipality_code='PAG',
+            name='Pagadian City',
+            code='PAG',
             province=self.province
         )
 
-        self.community = BarangayOBC.objects.create(
+        self.barangay = Barangay.objects.create(
             name='Balangasan',
-            municipality=self.municipality,
-            total_population=5000,
-            ethnolinguistic_group='Subanen',
-            created_by=self.user
+            code='BAL',
+            municipality=self.municipality
+        )
+
+        self.community = OBCCommunity.objects.create(
+            name='Balangasan OBC',
+            barangay=self.barangay,
+            estimated_obc_population=5000,
+            primary_ethnolinguistic_group='kagan_kalagan'
         )
 
         # Create organizations
@@ -167,27 +168,32 @@ class PartnershipPredictorTestCase(TestCase):
 
         # Create geographic data
         self.region = Region.objects.create(
-            region_name='Region IX',
-            region_code='09'
+            name='Zamboanga Peninsula',
+            code='09'
         )
 
         self.province = Province.objects.create(
-            province_name='Zamboanga del Sur',
-            province_code='ZDS',
+            name='Zamboanga del Sur',
+            code='ZDS',
             region=self.region
         )
 
         self.municipality = Municipality.objects.create(
-            municipality_name='Pagadian City',
-            municipality_code='PAG',
+            name='Pagadian City',
+            code='PAG',
             province=self.province
         )
 
-        self.community = BarangayOBC.objects.create(
+        self.barangay = Barangay.objects.create(
+            name='Test Barangay',
+            code='TST',
+            municipality=self.municipality
+        )
+
+        self.community = OBCCommunity.objects.create(
             name='Test Community',
-            municipality=self.municipality,
-            total_population=3000,
-            created_by=self.user
+            barangay=self.barangay,
+            estimated_obc_population=3000
         )
 
         # Create organization with track record
@@ -276,27 +282,32 @@ class MeetingIntelligenceTestCase(TestCase):
 
         # Create geographic data
         self.region = Region.objects.create(
-            region_name='Region IX',
-            region_code='09'
+            name='Zamboanga Peninsula',
+            code='09'
         )
 
         self.province = Province.objects.create(
-            province_name='Zamboanga del Sur',
-            province_code='ZDS',
+            name='Zamboanga del Sur',
+            code='ZDS',
             region=self.region
         )
 
         self.municipality = Municipality.objects.create(
-            municipality_name='Pagadian City',
-            municipality_code='PAG',
+            name='Pagadian City',
+            code='PAG',
             province=self.province
         )
 
-        self.community = BarangayOBC.objects.create(
+        self.barangay = Barangay.objects.create(
+            name='Test Barangay',
+            code='TST',
+            municipality=self.municipality
+        )
+
+        self.community = OBCCommunity.objects.create(
             name='Test Community',
-            municipality=self.municipality,
-            total_population=3000,
-            created_by=self.user
+            barangay=self.barangay,
+            estimated_obc_population=3000
         )
 
         # Create engagement type
@@ -393,29 +404,33 @@ class ResourceOptimizerTestCase(TestCase):
 
         # Create multiple communities
         self.region = Region.objects.create(
-            region_name='Region IX',
-            region_code='09'
+            name='Zamboanga Peninsula',
+            code='09'
         )
 
         self.province = Province.objects.create(
-            province_name='Zamboanga del Sur',
-            province_code='ZDS',
+            name='Zamboanga del Sur',
+            code='ZDS',
             region=self.region
         )
 
         self.municipality = Municipality.objects.create(
-            municipality_name='Pagadian City',
-            municipality_code='PAG',
+            name='Pagadian City',
+            code='PAG',
             province=self.province
         )
 
         self.communities = []
         for i in range(3):
-            community = BarangayOBC.objects.create(
+            barangay = Barangay.objects.create(
+                name=f'Barangay {i+1}',
+                code=f'BRG{i+1}',
+                municipality=self.municipality
+            )
+            community = OBCCommunity.objects.create(
                 name=f'Community {i+1}',
-                municipality=self.municipality,
-                total_population=5000 + (i * 2000),
-                created_by=self.user
+                barangay=barangay,
+                estimated_obc_population=5000 + (i * 2000)
             )
             self.communities.append(community)
 
@@ -531,8 +546,8 @@ class CeleryTasksTestCase(TestCase):
         mock_matcher.return_value = mock_service
 
         # Mock communities
-        with patch('coordination.tasks.BarangayOBC') as mock_barangay:
-            mock_barangay.objects.filter.return_value.select_related.return_value = []
+        with patch('coordination.tasks.OBCCommunity') as mock_community:
+            mock_community.objects.filter.return_value.select_related.return_value = []
 
             result = match_stakeholders_for_communities()
 

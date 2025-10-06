@@ -443,6 +443,11 @@
         {% endblock %}
     </main>
 
+    <!-- AI Chat Assistant - Fixed bottom-right -->
+    {% if user.is_authenticated %}
+    {% include 'components/ai_chat_widget.html' %}
+    {% endif %}
+
     <!-- Footer -->
     <footer class="bg-gray-800 text-white py-8 mt-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

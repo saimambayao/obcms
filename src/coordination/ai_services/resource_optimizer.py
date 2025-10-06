@@ -14,7 +14,7 @@ from django.utils import timezone
 
 from ai_assistant.services import GeminiService
 from coordination.models import Partnership, Organization
-from communities.models import BarangayOBC
+from communities.models import OBCCommunity
 
 
 class ResourceOptimizer:
@@ -34,7 +34,7 @@ class ResourceOptimizer:
 
         Args:
             total_budget: Total available budget
-            communities: List of BarangayOBC IDs
+            communities: List of OBCCommunity IDs
             priority_weights: Optional weights for criteria
                 {
                     'population': 0.3,
@@ -72,7 +72,7 @@ class ResourceOptimizer:
         community_data = []
         for comm_id in communities:
             try:
-                community = BarangayOBC.objects.select_related(
+                community = OBCCommunity.objects.select_related(
                     'municipality__province__region'
                 ).get(id=comm_id)
 
@@ -90,7 +90,7 @@ class ResourceOptimizer:
                     'score': score,
                     'community': community
                 })
-            except BarangayOBC.DoesNotExist:
+            except OBCCommunity.DoesNotExist:
                 continue
 
         # Calculate total score
@@ -129,7 +129,7 @@ class ResourceOptimizer:
 
     def _calculate_community_priority(
         self,
-        community: BarangayOBC,
+        community: OBCCommunity,
         weights: Dict
     ) -> float:
         """Calculate community priority score"""
@@ -166,7 +166,7 @@ class ResourceOptimizer:
 
     def _generate_allocation_rationale(
         self,
-        community: BarangayOBC,
+        community: OBCCommunity,
         percentage: float,
         weights: Dict
     ) -> str:
@@ -241,8 +241,8 @@ class ResourceOptimizer:
             List of recommended partnership configurations
         """
         try:
-            community = BarangayOBC.objects.get(id=community_id)
-        except BarangayOBC.DoesNotExist:
+            community = OBCCommunity.objects.get(id=community_id)
+        except OBCCommunity.DoesNotExist:
             return []
 
         # Get relevant stakeholders

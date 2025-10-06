@@ -1,0 +1,680 @@
+{% comment %}
+AI Chat Widget Component - ENHANCED VERSION B (RECOMMENDED)
+===============================================================
+Production-ready implementation with comprehensive error handling,
+accessibility features, and compatibility with HTMX/Turbo frameworks.
+
+Features:
+- Event listener approach (best practices)
+- Comprehensive error handling with try-catch
+- Full ARIA accessibility support
+- Screen reader announcements
+- Focus management
+- Console logging for debugging
+- Development-only error alerts
+- HTMX/Turbo compatibility
+- Escape key and outside click support
+- Mobile responsive with backdrop
+
+Usage: {% include 'components/ai_chat_widget_enhanced.html' %}
+{% endcomment %}
+
+<!-- AI Chat Widget - Fixed bottom-right -->
+<div id="ai-chat-widget" class="fixed bottom-6 right-6 z-[9999]">
+    <!-- Chat Toggle Button (NO inline onclick - uses event listener) -->
+    <button id="ai-chat-toggle-btn"
+            class="ai-chat-button w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group relative overflow-hidden active:scale-95"
+            aria-label="Open AI Chat Assistant"
+            aria-expanded="false"
+            aria-controls="ai-chat-panel">
+        <!-- Ripple effect -->
+        <span class="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
+
+        <!-- Icon (changes to X when open) -->
+        <i id="ai-chat-icon" class="fas fa-comments text-white text-xl sm:text-2xl group-hover:scale-110 transition-all duration-300 relative z-10"></i>
+
+        <!-- Notification badge (optional) -->
+        <span id="ai-chat-badge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 border-2 border-white rounded-full text-white text-xs font-bold flex items-center justify-center">
+            3
+        </span>
+    </button>
+
+    <!-- Chat Panel - Opens UPWARD from button -->
+    <div id="ai-chat-panel"
+         class="ai-chat-panel opacity-0 pointer-events-none absolute bottom-full right-0 mb-2 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col transition-all duration-300 transform origin-bottom-right scale-95"
+         style="height: min(500px, calc(100vh - 120px));"
+         role="dialog"
+         aria-labelledby="ai-chat-title"
+         aria-hidden="true">
+
+        <!-- Chat Header -->
+        <div class="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-t-xl flex-shrink-0">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-robot text-white animate-pulse"></i>
+                    <h3 id="ai-chat-title" class="text-white font-medium">AI Assistant</h3>
+                    <span class="px-2 py-0.5 bg-white/20 rounded-full text-xs text-white backdrop-blur-sm">Beta</span>
+                </div>
+                <button id="ai-chat-close-btn"
+                        class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors duration-200 active:scale-95"
+                        aria-label="Close AI Chat">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="text-xs text-white/90 mt-1">Ask me anything about OBCMS data</p>
+        </div>
+
+        <!-- Chat Messages Container -->
+        <div id="ai-chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+            <!-- Welcome Message -->
+            <div class="ai-message-bot bg-white border border-emerald-100 rounded-lg p-3 shadow-sm animate-fade-in">
+                <div class="flex items-start gap-2">
+                    <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center">
+                        <i class="fas fa-robot text-white text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm text-gray-700 mb-2">Hello! I'm your AI assistant. I can help you with:</p>
+                        <ul class="space-y-1.5 text-xs text-gray-600">
+                            <li class="flex items-center gap-2">
+                                <i class="fas fa-check-circle text-emerald-500 text-xs flex-shrink-0"></i>
+                                <span>Finding community data</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i class="fas fa-check-circle text-emerald-500 text-xs flex-shrink-0"></i>
+                                <span>Analyzing assessments</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i class="fas fa-check-circle text-emerald-500 text-xs flex-shrink-0"></i>
+                                <span>Generating reports</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i class="fas fa-check-circle text-emerald-500 text-xs flex-shrink-0"></i>
+                                <span>Answering questions</span>
+                            </li>
+                        </ul>
+                        <div class="mt-3 pt-3 border-t border-gray-100">
+                            <p class="text-xs text-gray-500">Try asking: <span class="font-medium text-emerald-600">"How many communities in Region IX?"</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Input Footer -->
+        <div class="p-4 border-t border-gray-200 bg-white rounded-b-xl flex-shrink-0">
+            <div class="text-center py-2">
+                <div class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
+                    <i class="fas fa-wrench text-gray-400"></i>
+                    <p class="text-sm text-gray-500 font-medium">AI Chat Coming Soon</p>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">Backend integration in progress</p>
+            </div>
+        </div>
+
+        <!-- Loading State (hidden by default) -->
+        <div id="ai-chat-loading" class="hidden absolute inset-0 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+            <div class="text-center">
+                <div class="inline-block w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                <p class="mt-2 text-sm text-gray-600">Thinking...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backdrop for mobile (closes on click) -->
+    <div id="ai-chat-backdrop"
+         class="fixed inset-0 bg-black/20 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 hidden sm:hidden"
+         style="z-index: 9998;">
+    </div>
+
+    <!-- Screen Reader Live Region (for announcements) -->
+    <div id="ai-chat-status" class="sr-only" role="status" aria-live="polite"></div>
+</div>
+
+<!-- AI Chat Widget Styles -->
+<style>
+    /* Animation for panel opening */
+    @keyframes slideUpFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(5px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Panel open state */
+    .ai-chat-panel.chat-open {
+        opacity: 1;
+        pointer-events: auto;
+        transform: scale(1);
+    }
+
+    /* Button pulse animation when closed */
+    .ai-chat-button:not(.chat-active)::before {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border-radius: 9999px;
+        background: inherit;
+        opacity: 0;
+        animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse-ring {
+        0%, 100% {
+            opacity: 0;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.3;
+            transform: scale(1.15);
+        }
+    }
+
+    /* Message fade-in animation */
+    .animate-fade-in {
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    /* Smooth scrollbar for chat messages */
+    #ai-chat-messages {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(5, 150, 105, 0.3) transparent;
+    }
+
+    #ai-chat-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #ai-chat-messages::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    #ai-chat-messages::-webkit-scrollbar-thumb {
+        background: rgba(5, 150, 105, 0.3);
+        border-radius: 3px;
+    }
+
+    #ai-chat-messages::-webkit-scrollbar-thumb:hover {
+        background: rgba(5, 150, 105, 0.5);
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 640px) {
+        #ai-chat-panel {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            left: 0;
+            width: 100%;
+            max-width: 100%;
+            height: 80vh !important;
+            margin: 0;
+            border-radius: 1rem 1rem 0 0;
+            transform-origin: bottom;
+        }
+
+        #ai-chat-panel.chat-open {
+            transform: scale(1) !important;
+        }
+
+        #ai-chat-widget {
+            bottom: 1rem;
+            right: 1rem;
+        }
+    }
+
+    /* Accessibility - Focus visible */
+    .ai-chat-button:focus-visible,
+    #ai-chat-panel button:focus-visible {
+        outline: 2px solid #10b981;
+        outline-offset: 2px;
+    }
+
+    /* Screen reader only utility class */
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+    }
+</style>
+
+<!-- AI Chat Widget JavaScript - VERSION B: Event Listener (RECOMMENDED) -->
+<script>
+(function() {
+    'use strict';
+
+    console.log('[AI Chat] Initializing Version B: Event Listener (Enhanced)...');
+
+    // Initialize when DOM is fully loaded
+    function initAIChat() {
+        try {
+            console.log('[AI Chat] DOM ready, initializing elements...');
+
+            // Get DOM elements with validation
+            const toggleBtn = document.getElementById('ai-chat-toggle-btn');
+            const closeBtn = document.getElementById('ai-chat-close-btn');
+            const panel = document.getElementById('ai-chat-panel');
+            const icon = document.getElementById('ai-chat-icon');
+            const messages = document.getElementById('ai-chat-messages');
+            const backdrop = document.getElementById('ai-chat-backdrop');
+            const statusEl = document.getElementById('ai-chat-status');
+
+            // Validate critical elements
+            if (!toggleBtn) {
+                console.error('[AI Chat] CRITICAL: Toggle button #ai-chat-toggle-btn not found');
+                showDevAlert('AI Chat Error: Toggle button not found');
+                return;
+            }
+
+            if (!panel) {
+                console.error('[AI Chat] CRITICAL: Panel #ai-chat-panel not found');
+                showDevAlert('AI Chat Error: Panel not found');
+                return;
+            }
+
+            console.log('[AI Chat] ✅ All critical elements validated');
+
+            // Warn about optional elements
+            if (!closeBtn) {
+                console.warn('[AI Chat] WARNING: Close button #ai-chat-close-btn not found (close functionality limited)');
+            }
+            if (!icon) {
+                console.warn('[AI Chat] WARNING: Icon #ai-chat-icon not found (icon won\'t animate)');
+            }
+            if (!messages) {
+                console.warn('[AI Chat] WARNING: Messages container #ai-chat-messages not found (auto-scroll disabled)');
+            }
+
+            // State tracking
+            let isChatOpen = false;
+
+            /**
+             * Toggle chat panel
+             */
+            function togglePanel() {
+                try {
+                    isChatOpen = !isChatOpen;
+
+                    if (isChatOpen) {
+                        openChat();
+                    } else {
+                        closeChat();
+                    }
+                } catch (error) {
+                    console.error('[AI Chat] Error in togglePanel():', error);
+                    showDevAlert('AI Chat Error: ' + error.message);
+                }
+            }
+
+            /**
+             * Open chat panel
+             */
+            function openChat() {
+                try {
+                    console.log('[AI Chat] Opening panel...');
+
+                    // Update panel state
+                    panel.classList.add('chat-open');
+                    panel.setAttribute('aria-hidden', 'false');
+
+                    // Update toggle button
+                    toggleBtn.classList.add('chat-active');
+                    toggleBtn.setAttribute('aria-expanded', 'true');
+                    toggleBtn.setAttribute('aria-label', 'Close AI Chat Assistant');
+
+                    // Update icon (if exists)
+                    if (icon) {
+                        icon.classList.remove('fa-comments');
+                        icon.classList.add('fa-times');
+                    }
+
+                    // Show mobile backdrop
+                    if (backdrop && window.innerWidth < 640) {
+                        backdrop.classList.remove('hidden');
+                        setTimeout(function() {
+                            backdrop.classList.remove('opacity-0', 'pointer-events-none');
+                        }, 10);
+                    }
+
+                    // Auto-scroll messages to bottom
+                    if (messages) {
+                        setTimeout(function() {
+                            messages.scrollTop = messages.scrollHeight;
+                            console.log('[AI Chat] Messages scrolled to bottom');
+                        }, 100);
+                    }
+
+                    // Screen reader announcement
+                    announceToScreenReader('AI Chat Assistant opened');
+
+                    // Focus management - move focus to close button
+                    if (closeBtn) {
+                        setTimeout(function() {
+                            closeBtn.focus();
+                            console.log('[AI Chat] Focus moved to close button');
+                        }, 150);
+                    }
+
+                    console.log('[AI Chat] ✅ Panel opened');
+
+                } catch (error) {
+                    console.error('[AI Chat] Error in openChat():', error);
+                    showDevAlert('AI Chat Error: ' + error.message);
+                }
+            }
+
+            /**
+             * Close chat panel
+             */
+            function closeChat() {
+                try {
+                    console.log('[AI Chat] Closing panel...');
+
+                    // Update panel state
+                    panel.classList.remove('chat-open');
+                    panel.setAttribute('aria-hidden', 'true');
+
+                    // Update toggle button
+                    toggleBtn.classList.remove('chat-active');
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                    toggleBtn.setAttribute('aria-label', 'Open AI Chat Assistant');
+
+                    // Update icon (if exists)
+                    if (icon) {
+                        icon.classList.remove('fa-times');
+                        icon.classList.add('fa-comments');
+                    }
+
+                    // Hide mobile backdrop
+                    if (backdrop) {
+                        backdrop.classList.add('opacity-0', 'pointer-events-none');
+                        setTimeout(function() {
+                            backdrop.classList.add('hidden');
+                        }, 300);
+                    }
+
+                    // Screen reader announcement
+                    announceToScreenReader('AI Chat Assistant closed');
+
+                    // Focus management - return focus to toggle button
+                    toggleBtn.focus();
+                    console.log('[AI Chat] Focus returned to toggle button');
+
+                    console.log('[AI Chat] ✅ Panel closed');
+
+                } catch (error) {
+                    console.error('[AI Chat] Error in closeChat():', error);
+                    showDevAlert('AI Chat Error: ' + error.message);
+                }
+            }
+
+            /**
+             * Announce message to screen readers
+             */
+            function announceToScreenReader(message) {
+                try {
+                    if (statusEl) {
+                        statusEl.textContent = message;
+                        console.log('[AI Chat] Screen reader announcement:', message);
+                    }
+                } catch (error) {
+                    console.error('[AI Chat] Error announcing to screen reader:', error);
+                }
+            }
+
+            /**
+             * Handle backdrop click (mobile only)
+             */
+            function handleBackdropClick() {
+                try {
+                    if (isChatOpen) {
+                        closeChat();
+                        console.log('[AI Chat] Closed via backdrop click');
+                    }
+                } catch (error) {
+                    console.error('[AI Chat] Error in backdrop click handler:', error);
+                }
+            }
+
+            // Attach event listeners
+            try {
+                // Toggle button
+                toggleBtn.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    togglePanel();
+                });
+
+                // Close button (if exists)
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function(event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        closeChat();
+                    });
+                }
+
+                // Backdrop (if exists)
+                if (backdrop) {
+                    backdrop.addEventListener('click', handleBackdropClick);
+                }
+
+                console.log('[AI Chat] ✅ Event listeners attached');
+
+            } catch (error) {
+                console.error('[AI Chat] Error attaching event listeners:', error);
+                showDevAlert('AI Chat Error: Failed to attach event listeners');
+            }
+
+            // Ensure chat starts closed
+            try {
+                isChatOpen = false;
+                panel.classList.remove('chat-open');
+                panel.setAttribute('aria-hidden', 'true');
+                toggleBtn.setAttribute('aria-expanded', 'false');
+
+                console.log('[AI Chat] ✅ Initial state set to closed');
+
+            } catch (error) {
+                console.error('[AI Chat] Error setting initial state:', error);
+            }
+
+            console.log('[AI Chat] ✅✅✅ Initialization complete');
+
+        } catch (error) {
+            console.error('[AI Chat] CRITICAL ERROR during initialization:', error);
+            showDevAlert('AI Chat Initialization Error: ' + error.message);
+        }
+    }
+
+    /**
+     * Show alert in development environment only
+     */
+    function showDevAlert(message) {
+        try {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                alert(message);
+            }
+        } catch (error) {
+            // Fail silently if alert fails
+        }
+    }
+
+    // Initialize on DOM ready (multiple approaches for compatibility)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAIChat);
+    } else {
+        // DOM already loaded
+        initAIChat();
+    }
+
+    // Re-initialize on Turbo/HTMX page loads (SPA compatibility)
+    document.addEventListener('turbo:load', function() {
+        console.log('[AI Chat] Turbo page load detected, re-initializing...');
+        initAIChat();
+    });
+
+    document.addEventListener('htmx:afterSettle', function() {
+        console.log('[AI Chat] HTMX afterSettle detected, re-initializing...');
+        initAIChat();
+    });
+
+})();
+
+// Global keyboard handler (Escape key)
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        try {
+            const panel = document.getElementById('ai-chat-panel');
+            const toggleBtn = document.getElementById('ai-chat-toggle-btn');
+            const icon = document.getElementById('ai-chat-icon');
+            const backdrop = document.getElementById('ai-chat-backdrop');
+            const statusEl = document.getElementById('ai-chat-status');
+
+            if (panel && panel.classList.contains('chat-open')) {
+                // Close panel
+                panel.classList.remove('chat-open');
+                panel.setAttribute('aria-hidden', 'true');
+
+                // Update button
+                if (toggleBtn) {
+                    toggleBtn.classList.remove('chat-active');
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                    toggleBtn.setAttribute('aria-label', 'Open AI Chat Assistant');
+                    toggleBtn.focus();
+                }
+
+                // Update icon
+                if (icon) {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-comments');
+                }
+
+                // Hide backdrop
+                if (backdrop) {
+                    backdrop.classList.add('opacity-0', 'pointer-events-none');
+                    setTimeout(function() {
+                        backdrop.classList.add('hidden');
+                    }, 300);
+                }
+
+                // Screen reader announcement
+                if (statusEl) {
+                    statusEl.textContent = 'AI Chat Assistant closed';
+                }
+
+                console.log('[AI Chat] Closed via Escape key');
+            }
+        } catch (error) {
+            console.error('[AI Chat] Error closing on Escape:', error);
+        }
+    }
+});
+
+// HTMX integration - auto-scroll on message updates
+document.body.addEventListener('htmx:afterSwap', function(event) {
+    try {
+        if (event.detail && event.detail.target && event.detail.target.id === 'ai-chat-messages') {
+            event.detail.target.scrollTop = event.detail.target.scrollHeight;
+            console.log('[AI Chat] HTMX: Messages auto-scrolled after swap');
+        }
+    } catch (error) {
+        console.error('[AI Chat] Error in HTMX afterSwap:', error);
+    }
+});
+
+// Click outside to close
+document.addEventListener('click', function(event) {
+    try {
+        const widget = document.getElementById('ai-chat-widget');
+        const panel = document.getElementById('ai-chat-panel');
+        const toggleBtn = document.getElementById('ai-chat-toggle-btn');
+        const icon = document.getElementById('ai-chat-icon');
+        const backdrop = document.getElementById('ai-chat-backdrop');
+        const statusEl = document.getElementById('ai-chat-status');
+
+        if (widget && panel && panel.classList.contains('chat-open')) {
+            // Check if click is outside widget
+            if (!widget.contains(event.target)) {
+                // Close panel
+                panel.classList.remove('chat-open');
+                panel.setAttribute('aria-hidden', 'true');
+
+                // Update button
+                if (toggleBtn) {
+                    toggleBtn.classList.remove('chat-active');
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                    toggleBtn.setAttribute('aria-label', 'Open AI Chat Assistant');
+                }
+
+                // Update icon
+                if (icon) {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-comments');
+                }
+
+                // Hide backdrop
+                if (backdrop) {
+                    backdrop.classList.add('opacity-0', 'pointer-events-none');
+                    setTimeout(function() {
+                        backdrop.classList.add('hidden');
+                    }, 300);
+                }
+
+                // Screen reader announcement
+                if (statusEl) {
+                    statusEl.textContent = 'AI Chat Assistant closed';
+                }
+
+                console.log('[AI Chat] Closed via outside click');
+            }
+        }
+    } catch (error) {
+        console.error('[AI Chat] Error in outside click handler:', error);
+    }
+});
+
+// Handle window resize (adjust mobile layout)
+window.addEventListener('resize', function() {
+    try {
+        const panel = document.getElementById('ai-chat-panel');
+        const backdrop = document.getElementById('ai-chat-backdrop');
+
+        if (panel && panel.classList.contains('chat-open')) {
+            if (window.innerWidth >= 640) {
+                // Desktop - hide backdrop
+                if (backdrop) {
+                    backdrop.classList.add('hidden');
+                }
+            } else {
+                // Mobile - show backdrop
+                if (backdrop) {
+                    backdrop.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                }
+            }
+        }
+    } catch (error) {
+        console.error('[AI Chat] Error in resize handler:', error);
+    }
+});
+</script>

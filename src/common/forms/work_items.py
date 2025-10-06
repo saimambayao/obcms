@@ -237,36 +237,35 @@ class WorkItemForm(forms.ModelForm):
 
 class WorkItemQuickEditForm(forms.ModelForm):
     """
-    Simplified form for quick editing in calendar sidebar.
+    Simplified form for quick editing/creating in calendar sidebar.
 
     This form includes only the most commonly edited fields for inline editing
-    in the calendar detail panel, providing a streamlined UX for quick updates.
+    in the calendar detail panel, providing a streamlined UX for quick updates
+    and calendar-based creation.
     """
 
-    # Override assignees for better UI in sidebar
-    assignees = forms.ModelMultipleChoiceField(
-        queryset=User.objects.filter(is_active=True).order_by('first_name', 'last_name'),
-        required=False,
-        help_text="Assign users",
-        widget=forms.SelectMultiple(attrs={
-            'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[100px]',
-            'size': '4'
-        })
-    )
+    def __init__(self, *args, **kwargs):
+        """Initialize form with user for created_by field."""
+        # Extract user for created_by field
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
 
     class Meta:
         model = WorkItem
         fields = [
+            'work_type',  # Added for calendar creation
             'title',
             'status',
             'priority',
             'start_date',
             'due_date',
             'description',
-            'assignees',
             'progress',
         ]
         widgets = {
+            'work_type': forms.Select(attrs={
+                'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none'
+            }),
             'title': forms.TextInput(attrs={
                 'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500',
                 'placeholder': 'Work item title'
@@ -294,7 +293,7 @@ class WorkItemQuickEditForm(forms.ModelForm):
                 'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500',
                 'min': 0,
                 'max': 100,
-                'step': 5
+                'step': 1  # Allow any integer 0-100
             }),
         }
 
@@ -311,3 +310,16 @@ class WorkItemQuickEditForm(forms.ModelForm):
             })
 
         return cleaned_data
+
+    def save(self, commit=True):
+        """Save with created_by field populated."""
+        instance = super().save(commit=False)
+
+        # Set created_by for new instances
+        if not instance.pk and self.user:
+            instance.created_by = self.user
+
+        if commit:
+            instance.save()
+
+        return instance

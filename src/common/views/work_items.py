@@ -43,6 +43,48 @@ def invalidate_calendar_cache(user_id):
         cache.set(version_key, 1, None)  # Never expire
 
 
+def invalidate_work_item_tree_cache(work_item):
+    """
+    Invalidate tree expansion cache for a work item and its ancestors.
+
+    When a work item is created, updated, or deleted, we need to invalidate:
+    1. Cache for the work item's parent (if it exists)
+    2. Cache for all ancestors up the tree
+    3. Cache for the work item itself (if it has children)
+    4. Cache for all users who might have viewed it
+
+    This ensures that the tree view shows up-to-date data after modifications.
+
+    Args:
+        work_item: WorkItem instance that was modified
+    """
+    from django.core.cache import cache
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+
+    # Get all users (for cache key invalidation)
+    # In production, consider storing active viewers in cache instead
+    user_ids = User.objects.values_list('id', flat=True)
+
+    # Invalidate cache for the work item itself (if it has children)
+    for user_id in user_ids:
+        cache_key = f"work_item_children:{work_item.id}:{user_id}"
+        cache.delete(cache_key)
+
+    # Invalidate cache for parent and all ancestors
+    if work_item.parent:
+        for user_id in user_ids:
+            cache_key = f"work_item_children:{work_item.parent.id}:{user_id}"
+            cache.delete(cache_key)
+
+        # Recursively invalidate ancestors
+        for ancestor in work_item.get_ancestors():
+            for user_id in user_ids:
+                cache_key = f"work_item_children:{ancestor.id}:{user_id}"
+                cache.delete(cache_key)
+
+
 def get_work_item_permissions(user, work_item):
     """
     Check user permissions for work item operations.
@@ -94,6 +136,12 @@ def work_item_list(request):
     - Filter by type, status, priority
     - Search by title
     - Quick actions: view, edit, delete, add child
+
+    Performance optimizations:
+    - select_related() for ForeignKey fields
+    - prefetch_related() for ManyToMany fields
+    - only() to load minimal fields for list view
+    - Database indexes on filter fields (work_type, status, priority)
     """
     # Get filter parameters
     work_type_filter = request.GET.get('work_type', '')
@@ -101,10 +149,23 @@ def work_item_list(request):
     priority_filter = request.GET.get('priority', '')
     search_query = request.GET.get('q', '')
 
-    # Base queryset - root level items first
-    queryset = WorkItem.objects.all()
+    # Base queryset with optimized loading
+    queryset = (
+        WorkItem.objects
+        .select_related('parent', 'created_by')  # Avoid N+1 on FK
+        .prefetch_related('assignees', 'teams')  # Preload M2M
+        .only(
+            # Core fields for list display
+            'id', 'work_type', 'title', 'status', 'priority', 'progress',
+            'start_date', 'due_date',
+            # MPTT fields (required for tree ordering)
+            'level', 'tree_id', 'lft', 'rght',
+            # FK fields (for select_related)
+            'parent_id', 'created_by_id',
+        )
+    )
 
-    # Apply filters
+    # Apply filters (indexes on work_type, status, priority)
     if work_type_filter:
         queryset = queryset.filter(work_type=work_type_filter)
     if status_filter:
@@ -112,17 +173,22 @@ def work_item_list(request):
     if priority_filter:
         queryset = queryset.filter(priority=priority_filter)
     if search_query:
+        # Note: icontains queries on title benefit from pg_trgm index in PostgreSQL
         queryset = queryset.filter(
             Q(title__icontains=search_query) |
             Q(description__icontains=search_query)
         )
+
+    # CRITICAL: Filter to show ONLY root items initially
+    # Children are loaded on-demand via HTMX when user expands
+    queryset = queryset.filter(level=0)
 
     # Annotate with children count
     queryset = queryset.annotate(
         children_count=Count('children')
     )
 
-    # Order by tree structure
+    # Order by tree structure (uses tree_id and lft indexes)
     queryset = queryset.order_by('tree_id', 'lft')
 
     context = {
@@ -152,15 +218,36 @@ def work_item_detail(request, pk):
     - Assigned users and teams
     - Type-specific data (conditionally rendered)
     - Edit/Delete buttons
-    """
-    work_item = get_object_or_404(WorkItem, pk=pk)
 
-    # Get breadcrumb (ancestors)
+    Performance optimizations:
+    - select_related() for parent chain (breadcrumb)
+    - prefetch_related() for M2M relationships
+    - Optimized children queryset with minimal fields
+    """
+    # Load work item with related data
+    work_item = get_object_or_404(
+        WorkItem.objects
+        .select_related('parent', 'created_by')
+        .prefetch_related('assignees', 'teams', 'related_items'),
+        pk=pk
+    )
+
+    # Get breadcrumb (ancestors) - already optimized by select_related on parent
     breadcrumb = work_item.get_ancestors(include_self=True)
 
-    # Get direct children
-    children = work_item.get_children().annotate(
-        children_count=Count('children')
+    # Get direct children with optimized query
+    children = (
+        work_item.get_children()
+        .select_related('parent', 'created_by')
+        .prefetch_related('assignees', 'teams')
+        .only(
+            'id', 'work_type', 'title', 'status', 'priority', 'progress',
+            'start_date', 'due_date',
+            'level', 'tree_id', 'lft', 'rght',
+            'parent_id', 'created_by_id',
+        )
+        .annotate(children_count=Count('children'))
+        .order_by('lft')  # Ensure tree order (left-to-right traversal)
     )
 
     # Get type-specific data
@@ -216,8 +303,9 @@ def work_item_create(request):
             work_item.save()
             form.save_m2m()  # Save many-to-many fields
 
-            # Invalidate calendar cache
+            # Invalidate caches
             invalidate_calendar_cache(request.user.id)
+            invalidate_work_item_tree_cache(work_item)  # Invalidate tree cache
 
             messages.success(
                 request,
@@ -286,8 +374,9 @@ def work_item_edit(request, pk):
             if work_item.parent and work_item.parent.auto_calculate_progress:
                 work_item.parent.update_progress()
 
-            # Invalidate calendar cache
+            # Invalidate caches
             invalidate_calendar_cache(request.user.id)
+            invalidate_work_item_tree_cache(work_item)  # Invalidate tree cache
 
             messages.success(
                 request,
@@ -310,6 +399,47 @@ def work_item_edit(request, pk):
     }
 
     return render(request, 'work_items/work_item_form.html', context)
+
+
+@login_required
+def work_item_delete_modal(request, pk):
+    """
+    HTMX endpoint: Return delete confirmation modal content.
+
+    Used for displaying delete confirmation in a modal dialog.
+    Returns modal HTML with work item details and descendant count.
+    """
+    work_item = get_object_or_404(WorkItem, pk=pk)
+
+    # Check delete permissions
+    permissions = get_work_item_permissions(request.user, work_item)
+    if not permissions['can_delete']:
+        # Return error modal content
+        context = {
+            'error_message': 'You do not have permission to delete this work item.',
+        }
+        return render(request, 'work_items/_work_item_delete_error_modal.html', context)
+
+    # Get descendants count
+    descendants = work_item.get_descendants()
+    descendants_count = descendants.count()
+
+    context = {
+        'work_item': work_item,
+        'descendants': descendants,
+        'descendants_count': descendants_count,
+    }
+
+    # Wrap in modal component
+    return render(request, 'components/modal.html', {
+        'modal_id': 'work-item-delete-modal',
+        'title': 'Delete Work Item',
+        'content_template': 'work_items/_work_item_delete_modal.html',
+        'size': 'md',
+        'closeable': True,
+        'backdrop_dismiss': True,
+        **context
+    })
 
 
 @login_required
@@ -359,6 +489,9 @@ def work_item_delete(request, pk):
         work_title = work_item.title
         work_type_display = work_item.get_work_type_display()
         work_item_id = str(work_item.id)
+
+        # Invalidate tree cache BEFORE deletion (while parent still exists)
+        invalidate_work_item_tree_cache(work_item)
 
         # Cascade delete (MPTT handles this automatically)
         work_item.delete()
@@ -413,8 +546,14 @@ def work_item_delete(request, pk):
                     f'{work_type_display} "{work_title}" and {descendants_count} descendant(s) deleted.'
                 )
 
+            # Invalidate tree cache BEFORE deletion
+            invalidate_work_item_tree_cache(work_item)
+
             # Delete the work item
             work_item.delete()
+
+            # Invalidate calendar cache
+            invalidate_calendar_cache(request.user.id)
 
             return redirect('common:work_item_list')
         else:
@@ -437,10 +576,44 @@ def work_item_tree_partial(request, pk):
     HTMX endpoint: Return children tree for expand/collapse.
 
     Used for interactive tree expansion without full page reload.
+
+    Performance optimizations:
+    - select_related() for ForeignKey fields (parent, created_by)
+    - prefetch_related() for ManyToMany fields (assignees, teams)
+    - only() to load only required fields for template rendering
+    - Caching with 5-minute TTL for frequently accessed children
     """
-    work_item = get_object_or_404(WorkItem, pk=pk)
-    children = work_item.get_children().annotate(
-        children_count=Count('children')
+    from django.core.cache import cache
+    import hashlib
+
+    # Generate cache key based on work item ID and user (for permission-aware caching)
+    cache_key = f"work_item_children:{pk}:{request.user.id}"
+
+    # Try to get from cache
+    cached_html = cache.get(cache_key)
+    if cached_html:
+        return HttpResponse(cached_html)
+
+    # Get parent work item (only need level field)
+    work_item = get_object_or_404(WorkItem.objects.only('id', 'level'), pk=pk)
+
+    # Optimized query: Load only fields needed by template
+    children = (
+        work_item.get_children()
+        .select_related('parent', 'created_by')  # Avoid N+1 on FK fields
+        .prefetch_related('assignees', 'teams')  # Preload M2M relationships
+        .only(
+            # Core fields
+            'id', 'work_type', 'title', 'status', 'priority', 'progress',
+            # Dates
+            'start_date', 'due_date',
+            # MPTT fields
+            'level', 'tree_id', 'lft', 'rght',
+            # Foreign keys (for select_related)
+            'parent_id', 'created_by_id',
+        )
+        .annotate(children_count=Count('children'))
+        .order_by('lft')  # CRITICAL: Ensure tree order (left-to-right traversal)
     )
 
     context = {
@@ -448,7 +621,14 @@ def work_item_tree_partial(request, pk):
         'parent_level': work_item.level + 1,
     }
 
-    return render(request, 'work_items/_work_item_tree_nodes.html', context)
+    # Render and cache the response
+    response = render(request, 'work_items/_work_item_tree_nodes.html', context)
+
+    # Cache for 5 minutes (300 seconds)
+    # Invalidated on work item updates via signal or explicit cache clear
+    cache.set(cache_key, response.content.decode('utf-8'), 300)
+
+    return response
 
 
 @login_required
@@ -538,14 +718,26 @@ def work_item_sidebar_edit(request, pk):
     """
     HTMX endpoint: Handle inline editing in calendar sidebar.
 
-    GET: Return edit form HTML
+    GET: Return edit form HTML (or detail view if no edit permission)
     POST: Process form submission and return updated detail view
     """
     work_item = get_object_or_404(WorkItem, pk=pk)
 
     # Check edit permissions
     permissions = get_work_item_permissions(request.user, work_item)
-    if not permissions['can_edit']:
+
+    # For GET requests: If user can't edit, gracefully show detail view instead
+    if request.method == 'GET' and not permissions['can_edit']:
+        # Fallback to read-only detail view
+        context = {
+            'work_item': work_item,
+            'can_edit': permissions['can_edit'],
+            'can_delete': permissions['can_delete'],
+        }
+        return render(request, 'common/partials/calendar_event_detail.html', context)
+
+    # For POST requests: If user can't edit, return 403 error
+    if request.method == 'POST' and not permissions['can_edit']:
         import json
         return HttpResponse(
             status=403,
@@ -562,7 +754,7 @@ def work_item_sidebar_edit(request, pk):
     if request.method == 'POST':
         from common.forms.work_items import WorkItemQuickEditForm
 
-        form = WorkItemQuickEditForm(request.POST, instance=work_item)
+        form = WorkItemQuickEditForm(request.POST, instance=work_item, user=request.user)
         if form.is_valid():
             work_item = form.save()
 
@@ -599,6 +791,131 @@ def work_item_sidebar_edit(request, pk):
     else:  # GET
         from common.forms.work_items import WorkItemQuickEditForm
 
-        form = WorkItemQuickEditForm(instance=work_item)
+        form = WorkItemQuickEditForm(instance=work_item, user=request.user)
         context = {'form': form, 'work_item': work_item}
         return render(request, 'common/partials/calendar_event_edit_form.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def work_item_duplicate(request, pk):
+    """
+    HTMX endpoint: Duplicate work item.
+
+    Creates a copy of the work item with " (Copy)" suffix and opens it for editing.
+    Returns the edit form for the duplicated item with calendar refresh trigger.
+    """
+    original = get_object_or_404(WorkItem, pk=pk)
+
+    # Check if user has permission to create work items
+    if not request.user.is_staff and not request.user.has_perm('common.add_workitem'):
+        import json
+        return HttpResponse(
+            status=403,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'You do not have permission to duplicate work items.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    # Create duplicate
+    duplicate = WorkItem.objects.get(pk=original.pk)
+    duplicate.pk = None  # Create new instance
+    duplicate.id = None
+    duplicate.title = f"{original.title} (Copy)"
+    duplicate.created_by = request.user
+    duplicate.save()
+
+    # Copy many-to-many relationships
+    duplicate.assignees.set(original.assignees.all())
+    duplicate.teams.set(original.teams.all())
+
+    # Invalidate calendar cache
+    invalidate_calendar_cache(request.user.id)
+
+    # Load edit form for the duplicate
+    from common.forms.work_items import WorkItemQuickEditForm
+    form = WorkItemQuickEditForm(instance=duplicate, user=request.user)
+    context = {'form': form, 'work_item': duplicate}
+
+    response = render(request, 'common/partials/calendar_event_edit_form.html', context)
+
+    # Trigger calendar refresh and success toast
+    import json
+    response['HX-Trigger'] = json.dumps({
+        'calendarRefresh': {'eventId': str(duplicate.pk)},
+        'showToast': {
+            'message': f'Duplicated as "{duplicate.title}"',
+            'level': 'success'
+        }
+    })
+
+    return response
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def work_item_sidebar_create(request):
+    """
+    HTMX endpoint: Create work item from calendar sidebar (double-click on date).
+
+    GET: Return create form HTML with pre-populated date from query params
+    POST: Process form submission and return success response with calendar refresh
+
+    This enables Google Calendar-style quick creation: double-click date → create form opens
+    """
+    if request.method == 'POST':
+        from common.forms.work_items import WorkItemQuickEditForm
+
+        form = WorkItemQuickEditForm(request.POST, user=request.user)
+        if form.is_valid():
+            # Form handles created_by and assignee conversion
+            work_item = form.save()
+
+            # Invalidate caches
+            invalidate_calendar_cache(request.user.id)
+            invalidate_work_item_tree_cache(work_item)
+
+            # Return success response with calendar refresh trigger
+            import json
+            response = HttpResponse(status=200)
+            response['HX-Trigger'] = json.dumps({
+                'calendarRefresh': {'eventId': str(work_item.pk)},
+                'showToast': {
+                    'message': f'{work_item.get_work_type_display()} created successfully',
+                    'level': 'success'
+                },
+                'closeDetailPanel': True  # Custom event to close sidebar
+            })
+            return response
+        else:
+            # Return form with errors
+            context = {'form': form, 'is_create': True}
+            return render(request, 'common/partials/calendar_event_create_form.html', context)
+
+    else:  # GET
+        from common.forms.work_items import WorkItemQuickEditForm
+
+        # Get pre-populated date from query params
+        start_date = request.GET.get('start_date')
+        due_date = request.GET.get('due_date', start_date)  # Default due_date = start_date
+
+        initial = {}
+        if start_date:
+            initial['start_date'] = start_date
+        if due_date:
+            initial['due_date'] = due_date
+
+        # Default values for new work items
+        initial['status'] = 'not_started'
+        initial['priority'] = 'medium'
+        initial['progress'] = 0
+        initial['work_type'] = 'task'  # Default to task
+
+        form = WorkItemQuickEditForm(initial=initial)
+        context = {'form': form, 'is_create': True}
+        return render(request, 'common/partials/calendar_event_create_form.html', context)

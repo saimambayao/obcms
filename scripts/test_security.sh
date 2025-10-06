@@ -243,14 +243,14 @@ print_test "Auditlog model registration"
 python -c "
 from auditlog.models import LogEntry
 from common.models import User
-from communities.models import BarangayOBC
+from communities.models import OBCCommunity
 from mana.models import Assessment
 
 # Check if models are registered
 from auditlog.registry import auditlog
 
 registered_models = auditlog.get_models()
-critical_models = [User, BarangayOBC, Assessment]
+critical_models = [User, OBCCommunity, Assessment]
 
 all_registered = True
 for model in critical_models:

@@ -1923,7 +1923,7 @@ def community_needs_summary(request):
 def dashboard_metrics(request):
     """Live metrics HTML (updates every 60s)."""
     from django.http import HttpResponse
-from django.db.models import Sum
+    from django.db.models import Sum
     from datetime import timedelta
 
     try:

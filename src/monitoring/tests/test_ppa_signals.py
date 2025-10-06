@@ -21,7 +21,7 @@ from coordination.models import Organization
 from monitoring.models import MonitoringEntry
 from monitoring.signals import (
     track_approval_status_change,
-    auto_create_execution_project,
+    handle_ppa_approval_workflow,
 )
 from common.work_item_model import WorkItem
 

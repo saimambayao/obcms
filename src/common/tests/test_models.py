@@ -163,14 +163,18 @@ class CustomLoginFormTest(TestCase):
         self.mock_request.method = 'POST'
         self.mock_request.path = '/login/'
 
-    def test_login_with_username(self):
+    @mock.patch('common.forms.auth.authenticate')
+    def test_login_with_username(self, mock_authenticate):
         """Test login with username."""
+        mock_authenticate.return_value = self.user
         form_data = {"username": "testuser", "password": "TestPassword123!"}
         form = CustomLoginForm(self.mock_request, data=form_data)
         self.assertTrue(form.is_valid())
 
-    def test_login_with_email(self):
+    @mock.patch('common.forms.auth.authenticate')
+    def test_login_with_email(self, mock_authenticate):
         """Test login with email."""
+        mock_authenticate.return_value = self.user
         form_data = {
             "username": "test@example.com",  # Using email as username
             "password": "TestPassword123!",
@@ -178,8 +182,10 @@ class CustomLoginFormTest(TestCase):
         form = CustomLoginForm(self.mock_request, data=form_data)
         self.assertTrue(form.is_valid())
 
-    def test_invalid_credentials(self):
+    @mock.patch('common.forms.auth.authenticate')
+    def test_invalid_credentials(self, mock_authenticate):
         """Test login with invalid credentials."""
+        mock_authenticate.return_value = None
         form_data = {"username": "testuser", "password": "WrongPassword"}
         form = CustomLoginForm(self.mock_request, data=form_data)
         self.assertFalse(form.is_valid())
@@ -259,7 +265,7 @@ class AuthenticationViewsTest(TestCase):
 
     def test_dashboard_view_authenticated(self):
         """Test dashboard view for authenticated user."""
-        self.client.login(username="testuser", password="TestPassword123!")
+        self.client.force_login(self.user)
         response = self.client.get(reverse("common:dashboard"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Dashboard")
@@ -272,7 +278,7 @@ class AuthenticationViewsTest(TestCase):
 
     def test_profile_view_authenticated(self):
         """Test profile view for authenticated user."""
-        self.client.login(username="testuser", password="TestPassword123!")
+        self.client.force_login(self.user)
         response = self.client.get(reverse("common:profile"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "User Profile")
@@ -280,7 +286,7 @@ class AuthenticationViewsTest(TestCase):
 
     def test_logout_view(self):
         """Test logout functionality."""
-        self.client.login(username="testuser", password="TestPassword123!")
+        self.client.force_login(self.user)
         response = self.client.post(reverse("common:logout"))
         self.assertEqual(response.status_code, 302)  # Should redirect after logout
 

@@ -28,7 +28,7 @@ class WorkItemDeleteTest(TestCase):
             email='test@example.com',
             password='testpass123'
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.force_login(self.user)
 
         # Create a test work item (activity)
         self.work_item = WorkItem.objects.create(

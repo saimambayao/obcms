@@ -68,9 +68,9 @@ class ConversationManager:
         # Fetch from database
         from common.models import ChatMessage
 
-        messages = ChatMessage.objects.filter(
-            user_id=user_id
-        ).order_by('-created_at')[:turns]
+        messages = ChatMessage.objects.filter(user_id=user_id).order_by("-created_at")[
+            :turns
+        ]
 
         # Build context
         history = []
@@ -78,11 +78,13 @@ class ConversationManager:
         topics = []
 
         for msg in reversed(list(messages)):
-            history.append({
-                'user': msg.user_message,
-                'assistant': msg.assistant_response,
-                'timestamp': msg.created_at.isoformat(),
-            })
+            history.append(
+                {
+                    "user": msg.user_message,
+                    "assistant": msg.assistant_response,
+                    "timestamp": msg.created_at.isoformat(),
+                }
+            )
 
             # Track entities
             if msg.entities:
@@ -95,11 +97,11 @@ class ConversationManager:
         last_topic = topics[-1] if topics else None
 
         context = {
-            'history': history,
-            'last_topic': last_topic,
-            'entities_mentioned': list(entities),
-            'session_id': self._get_or_create_session(user_id),
-            'turn_count': len(history),
+            "history": history,
+            "last_topic": last_topic,
+            "entities_mentioned": list(entities),
+            "session_id": self._get_or_create_session(user_id),
+            "turn_count": len(history),
         }
 
         # Cache for quick access
@@ -129,6 +131,13 @@ class ConversationManager:
         """
         from common.models import ChatMessage
 
+        # Only save if we have a response (avoid NOT NULL constraint errors)
+        if not assistant_response:
+            logger.warning(
+                f"Skipping chat message save - no assistant response for user {user_id}"
+            )
+            return
+
         # Detect topic
         topic = self._classify_topic(user_message, entities)
 
@@ -137,7 +146,7 @@ class ConversationManager:
             user_id=user_id,
             user_message=user_message,
             assistant_response=assistant_response,
-            intent=intent or 'unknown',
+            intent=intent or "unknown",
             confidence=confidence or 0.0,
             topic=topic,
             entities=entities or [],
@@ -168,11 +177,11 @@ class ConversationManager:
 
         # Topic keywords
         topic_keywords = {
-            'communities': ['barangay', 'community', 'obc', 'municipality', 'province'],
-            'mana': ['workshop', 'assessment', 'mana', 'needs', 'consultation'],
-            'coordination': ['partner', 'stakeholder', 'organization', 'coordination'],
-            'policies': ['policy', 'recommendation', 'proposal'],
-            'projects': ['project', 'ppa', 'program', 'activity', 'budget'],
+            "communities": ["barangay", "community", "obc", "municipality", "province"],
+            "mana": ["workshop", "assessment", "mana", "needs", "consultation"],
+            "coordination": ["partner", "stakeholder", "organization", "coordination"],
+            "policies": ["policy", "recommendation", "proposal"],
+            "projects": ["project", "ppa", "program", "activity", "budget"],
         }
 
         # Score each topic
@@ -190,7 +199,7 @@ class ConversationManager:
         if max(scores.values()) > 0:
             return max(scores, key=scores.get)
         else:
-            return 'general'
+            return "general"
 
     def _get_or_create_session(self, user_id: int) -> str:
         """
@@ -231,20 +240,21 @@ class ConversationManager:
 
         # Calculate stats
         total_messages = messages.count()
-        topics = messages.values('topic').annotate(count=Count('topic')).order_by('-count')
+        topics = (
+            messages.values("topic").annotate(count=Count("topic")).order_by("-count")
+        )
         recent_messages = messages.filter(
             created_at__gte=datetime.now() - timedelta(days=7)
         ).count()
 
         return {
-            'total_messages': total_messages,
-            'recent_messages_7d': recent_messages,
-            'top_topics': [
-                {'topic': t['topic'], 'count': t['count']}
-                for t in topics[:5]
+            "total_messages": total_messages,
+            "recent_messages_7d": recent_messages,
+            "top_topics": [
+                {"topic": t["topic"], "count": t["count"]} for t in topics[:5]
             ],
-            'first_message': messages.order_by('created_at').first(),
-            'last_message': messages.order_by('-created_at').first(),
+            "first_message": messages.order_by("created_at").first(),
+            "last_message": messages.order_by("-created_at").first(),
         }
 
     def clear_context(self, user_id: int):
@@ -268,15 +278,15 @@ class ConversationManager:
         context = self.get_context(user_id)
 
         entities_by_type = {
-            'communities': [],
-            'workshops': [],
-            'policies': [],
-            'projects': [],
-            'organizations': [],
-            'regions': [],
+            "communities": [],
+            "workshops": [],
+            "policies": [],
+            "projects": [],
+            "organizations": [],
+            "regions": [],
         }
 
-        for entity_type in context.get('entities_mentioned', []):
+        for entity_type in context.get("entities_mentioned", []):
             # Map generic entity types to specific ones
             if entity_type in entities_by_type:
                 entities_by_type[entity_type].append(entity_type)
@@ -298,38 +308,41 @@ class ConversationManager:
 
         # Topic-specific suggestions
         topic_suggestions = {
-            'communities': [
+            "communities": [
                 "Show me MANA assessments for these communities",
                 "What are the demographics?",
                 "Which ones have active projects?",
             ],
-            'mana': [
+            "mana": [
                 "What were the key findings?",
                 "Show me the recommendations",
                 "How many participants attended?",
             ],
-            'coordination': [
+            "coordination": [
                 "What sectors do they focus on?",
                 "Show me their partnerships",
                 "What's their coverage area?",
             ],
-            'policies': [
+            "policies": [
                 "Which ones are approved?",
                 "Show me evidence-based policies",
                 "What communities do they target?",
             ],
-            'projects': [
+            "projects": [
                 "What's the total budget?",
                 "Show completion status",
                 "Which ministry is responsible?",
             ],
         }
 
-        suggestions = topic_suggestions.get(current_topic, [
-            "Can you show me more details?",
-            "What else can you tell me?",
-            "How does this compare to other areas?",
-        ])
+        suggestions = topic_suggestions.get(
+            current_topic,
+            [
+                "Can you show me more details?",
+                "What else can you tell me?",
+                "How does this compare to other areas?",
+            ],
+        )
 
         return suggestions[:3]  # Return top 3
 
@@ -351,11 +364,13 @@ class ConversationManager:
             messages = ChatMessage.objects.filter(
                 user_id=user_id,
                 session_id=session_id,
-            ).order_by('created_at')
+            ).order_by("created_at")
         else:
             messages = ChatMessage.objects.filter(
                 user_id=user_id,
-            ).order_by('-created_at')[:self.MAX_CONTEXT_TURNS]
+            ).order_by(
+                "-created_at"
+            )[: self.MAX_CONTEXT_TURNS]
 
         if not messages:
             return "No conversation history available."
@@ -366,7 +381,7 @@ class ConversationManager:
         for msg in messages:
             topics[msg.topic] = topics.get(msg.topic, 0) + 1
 
-        top_topic = max(topics, key=topics.get) if topics else 'general'
+        top_topic = max(topics, key=topics.get) if topics else "general"
 
         summary = f"Conversation with {message_count} exchanges, "
         summary += f"primarily about {top_topic}."

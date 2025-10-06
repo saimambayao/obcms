@@ -13,6 +13,25 @@ This directory contains testing guides, verification reports, and demo setup doc
   - Tools and frameworks for each test type
   - **Start here for all testing guidance**
 
+### E2E Integration Testing (NEW - 2025-10-06)
+- **[E2E_QUICK_START.md](E2E_QUICK_START.md)** - **5-minute quick start guide for E2E tests**
+  - How to run tests
+  - Understanding results
+  - Common issues and fixes
+  - **Start here for E2E testing**
+
+- **[E2E_TEST_RESULTS.md](E2E_TEST_RESULTS.md)** - **Complete E2E test results report**
+  - All 10 scenarios detailed
+  - Performance metrics
+  - Cost analysis
+  - Issues and recommendations
+
+- **[E2E_TEST_VISUAL_SUMMARY.md](E2E_TEST_VISUAL_SUMMARY.md)** - **Visual summary and charts**
+  - Quick reference card
+  - Performance dashboard
+  - Coverage heatmap
+  - Production readiness checklist
+
 ### 🆕 2025 Improvements & Research
 - **[TESTING_IMPROVEMENTS_SUMMARY.md](TESTING_IMPROVEMENTS_SUMMARY.md)** - **Executive Summary of 2025 Research & Improvements**
   - ✅ Phase 1 complete (S3 fix, pytest guidance, markers)

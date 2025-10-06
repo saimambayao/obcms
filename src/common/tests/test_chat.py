@@ -30,7 +30,7 @@ class QueryExecutorTestCase(TestCase):
 
     def test_safe_count_query(self):
         """Test safe count query execution."""
-        result = self.executor.execute("BarangayOBC.objects.all().count()")
+        result = self.executor.execute("OBCCommunity.objects.all().count()")
 
         self.assertTrue(result['success'])
         self.assertIn('result', result)
@@ -38,7 +38,7 @@ class QueryExecutorTestCase(TestCase):
 
     def test_dangerous_delete_blocked(self):
         """Test that delete operations are blocked."""
-        result = self.executor.execute("BarangayOBC.objects.all().delete()")
+        result = self.executor.execute("OBCCommunity.objects.all().delete()")
 
         self.assertFalse(result['success'])
         self.assertIn('Unsafe query', result['error'])
@@ -46,7 +46,7 @@ class QueryExecutorTestCase(TestCase):
     def test_dangerous_update_blocked(self):
         """Test that update operations are blocked."""
         result = self.executor.execute(
-            "BarangayOBC.objects.filter(id=1).update(name='Hacked')"
+            "OBCCommunity.objects.filter(id=1).update(community_names='Hacked')"
         )
 
         self.assertFalse(result['success'])
@@ -55,7 +55,7 @@ class QueryExecutorTestCase(TestCase):
     def test_dangerous_create_blocked(self):
         """Test that create operations are blocked."""
         result = self.executor.execute(
-            "BarangayOBC.objects.create(name='Hacked')"
+            "OBCCommunity.objects.create(community_names='Hacked')"
         )
 
         self.assertFalse(result['success'])
@@ -163,8 +163,8 @@ class ResponseFormatterTestCase(TestCase):
             entities=['communities'],
         )
 
-        self.assertIn('text', result)
-        self.assertIn('42', result['text'])
+        self.assertIn('response', result)
+        self.assertIn('42', result['response'])
         self.assertIn('suggestions', result)
         self.assertTrue(len(result['suggestions']) > 0)
 
@@ -177,7 +177,7 @@ class ResponseFormatterTestCase(TestCase):
             entities=['items'],
         )
 
-        self.assertIn('no', result['text'].lower())
+        self.assertIn('no', result['response'].lower())
 
     def test_format_list_result(self):
         """Test formatting list results."""
@@ -193,7 +193,7 @@ class ResponseFormatterTestCase(TestCase):
             entities=['items'],
         )
 
-        self.assertIn('text', result)
+        self.assertIn('response', result)
         self.assertIn('data', result)
         self.assertEqual(result['data']['count'], 2)
 
@@ -201,16 +201,16 @@ class ResponseFormatterTestCase(TestCase):
         """Test formatting help response."""
         result = self.formatter.format_help()
 
-        self.assertIn('text', result)
-        self.assertIn('OBCMS', result['text'])
+        self.assertIn('response', result)
+        self.assertIn('OBCMS', result['response'])
         self.assertIn('suggestions', result)
 
     def test_format_greeting(self):
         """Test formatting greeting."""
         result = self.formatter.format_greeting()
 
-        self.assertIn('text', result)
-        self.assertIn('Hello', result['text'])
+        self.assertIn('response', result)
+        self.assertIn('Hello', result['response'])
 
     def test_format_error(self):
         """Test formatting errors."""
@@ -219,8 +219,8 @@ class ResponseFormatterTestCase(TestCase):
             query="Test query",
         )
 
-        self.assertIn('text', result)
-        self.assertIn('Something went wrong', result['text'])
+        self.assertIn('response', result)
+        self.assertIn('Something went wrong', result['response'])
 
 
 class ConversationManagerTestCase(TestCase):
@@ -375,7 +375,8 @@ class ChatViewsTestCase(TestCase):
             password='testpass',
             user_type='oobc_staff',
         )
-        self.client.login(username='testuser', password='testpass')
+        # Use force_login to bypass axes backend authentication requirement
+        self.client.force_login(self.user)
 
     def test_chat_message_view(self):
         """Test chat message endpoint."""

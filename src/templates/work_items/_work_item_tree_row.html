@@ -6,11 +6,11 @@
     data-level="{{ work_item.level }}">
 
     {# Title column with hierarchy #}
-    <td class="px-4 py-3 align-middle">
-        <div class="flex items-center gap-2">
-            {# Hierarchy indentation #}
+    <td class="px-4 py-3 align-middle overflow-hidden">
+        <div class="flex items-center gap-2 min-w-0">
+            {# Subtle hierarchy indentation - 1.25rem per level #}
             {% if work_item.level > 0 %}
-                <div style="width: {{ work_item.level|add:work_item.level }}rem;"></div>
+                <div class="flex-shrink-0" style="width: calc({{ work_item.level }} * 1.25rem);"></div>
             {% endif %}
 
             {# Expand/Collapse button #}
@@ -18,13 +18,17 @@
                 <button
                     hx-get="{% url 'common:work_item_tree_partial' pk=work_item.pk %}"
                     hx-target="#children-placeholder-{{ work_item.id }}"
-                    hx-swap="outerHTML swap:300ms"
+                    hx-swap="afterend swap:300ms"
+                    hx-trigger="click once"
+                    hx-indicator="#loading-indicator-{{ work_item.id }}"
+                    hx-disabled-elt="this"
                     class="flex-shrink-0 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors duration-150"
                     aria-label="Expand/Collapse"
                     data-toggle="children-{{ work_item.id }}"
                     data-item-id="{{ work_item.id }}"
                     title="Click to expand/collapse">
                     <i class="fas fa-chevron-right toggle-icon text-xs"></i>
+                    <i id="loading-indicator-{{ work_item.id }}" class="fas fa-spinner fa-spin text-xs htmx-indicator"></i>
                 </button>
             {% else %}
                 <span class="flex-shrink-0 w-6 h-6"></span>
@@ -44,7 +48,7 @@
             {# Title link #}
             <div class="flex-1 min-w-0 flex items-center gap-2">
                 <a href="{% url 'common:work_item_detail' pk=work_item.pk %}"
-                   class="text-gray-900 hover:text-blue-600 font-medium transition-colors duration-150 truncate"
+                   class="text-gray-900 hover:text-blue-600 font-medium transition-colors duration-150 truncate block"
                    title="{{ work_item.title }}">
                     {{ work_item.title }}
                 </a>
@@ -60,7 +64,7 @@
     </td>
 
     {# Type Badge - Semantic Colors #}
-    <td class="px-3 py-3 whitespace-nowrap align-middle">
+    <td class="px-3 py-3 whitespace-nowrap align-middle text-left">
         {% if work_item.work_type == 'project' %}
             <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                 <i class="fas fa-folder mr-1"></i>Project
@@ -89,7 +93,7 @@
     </td>
 
     {# Status Badge - Semantic Colors #}
-    <td class="px-3 py-3 whitespace-nowrap align-middle">
+    <td class="px-3 py-3 whitespace-nowrap align-middle text-left">
         {% if work_item.status == 'not_started' %}
             <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
                 <i class="fas fa-circle mr-1"></i>Not Started
@@ -118,7 +122,7 @@
     </td>
 
     {# Priority Badge - Semantic Colors #}
-    <td class="px-3 py-3 whitespace-nowrap align-middle">
+    <td class="px-3 py-3 whitespace-nowrap align-middle text-left">
         {% if work_item.priority == 'low' %}
             <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
                 Low
@@ -143,7 +147,7 @@
     </td>
 
     {# Progress Bar #}
-    <td class="px-3 py-3 whitespace-nowrap align-middle">
+    <td class="px-3 py-3 whitespace-nowrap align-middle text-left">
         <div class="flex items-center gap-2">
             <div class="w-20 bg-gray-200 rounded-full h-2">
                 <div class="bg-emerald-600 h-2 rounded-full transition-all duration-300"
@@ -155,7 +159,7 @@
     </td>
 
     {# Dates #}
-    <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-500 align-middle">
+    <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-500 align-middle text-left">
         {% if work_item.start_date or work_item.due_date %}
             <div class="flex flex-col gap-1">
                 {% if work_item.start_date %}
@@ -194,21 +198,35 @@
                title="Add Child Item">
                 <i class="fas fa-plus-circle text-sm"></i>
             </a>
-            <a href="{% url 'common:work_item_delete' pk=work_item.pk %}"
-               class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition-colors duration-150"
-               title="Delete">
+            <button type="button"
+                    hx-get="{% url 'common:work_item_delete_modal' pk=work_item.pk %}"
+                    hx-target="#delete-modal-container"
+                    hx-swap="innerHTML"
+                    class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition-colors duration-150"
+                    title="Delete"
+                    aria-label="Delete work item">
                 <i class="fas fa-trash-alt text-sm"></i>
-            </a>
+            </button>
         </div>
     </td>
 </tr>
 
-{# Children placeholder row (will be replaced by actual children via HTMX) #}
+{# Children placeholder row (child rows will be inserted after this via HTMX afterend swap) #}
 {% if work_item.children_count > 0 %}
 <tr id="children-placeholder-{{ work_item.id }}"
     class="work-item-children-placeholder hidden"
     data-parent-id="{{ work_item.id }}"
     style="display: none;">
-    {# This placeholder row will be replaced by actual child rows via HTMX outerHTML swap #}
+    {# Child rows will be inserted after this placeholder, then it will be removed via JavaScript #}
+</tr>
+
+{# Skeleton loading row - shown during HTMX request #}
+<tr id="skeleton-row-{{ work_item.id }}" class="skeleton-row" style="display: none;" data-parent-id="{{ work_item.id }}">
+    <td colspan="7" class="px-4 py-3">
+        <div class="flex items-center gap-2 pl-8 animate-pulse">
+            <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+            <div class="h-4 bg-gray-100 rounded w-20"></div>
+        </div>
+    </td>
 </tr>
 {% endif %}

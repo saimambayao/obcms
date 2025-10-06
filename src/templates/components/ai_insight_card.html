@@ -1,0 +1,304 @@
+{% load static %}
+
+{#
+AI Insight Card Component
+--------------------------
+Displays AI-generated insights with loading states, error handling, and consistent styling.
+
+Required Parameters:
+- insight_id: Unique identifier for this insight card
+- title: Card title (default: "AI Analysis")
+- icon: FontAwesome icon class (default: "fa-brain")
+- api_endpoint: URL for fetching AI insights (optional - for HTMX loading)
+
+Optional Parameters:
+- data: Pre-loaded insight data (dict with summary, confidence, key_points, etc.)
+- loading: Boolean - show loading state initially
+- color: Color scheme - "purple", "blue", "emerald", "teal" (default: "emerald")
+- show_confidence: Boolean - display confidence score (default: True)
+- show_actions: Boolean - show action buttons (default: True)
+- compact: Boolean - compact layout (default: False)
+
+Context Data Structure:
+data = {
+    'summary': 'Text summary of insights',
+    'confidence': 0.85,  # 0-1 float
+    'sentiment': 'positive',  # positive|negative|neutral|mixed
+    'key_points': ['Point 1', 'Point 2', ...],
+    'recommendations': ['Recommendation 1', ...],
+    'metrics': {
+        'label': 'Response Count',
+        'value': 42,
+        'icon': 'fa-chart-bar'
+    },
+    'error': False,
+    'error_message': 'Error details if error=True'
+}
+
+Usage Example:
+{% include "components/ai_insight_card.html" with insight_id="community-analysis" title="Community Needs Analysis" data=ai_insights color="emerald" %}
+
+HTMX Loading Example:
+{% include "components/ai_insight_card.html" with insight_id="assessment-insights" title="Assessment Analysis" api_endpoint=analysis_url loading=True %}
+#}
+
+{% with color=color|default:"emerald" %}
+{% with show_confidence=show_confidence|default:True %}
+{% with show_actions=show_actions|default:True %}
+
+<div
+    id="ai-insight-{{ insight_id }}"
+    class="bg-white rounded-xl shadow border border-{{ color }}-100 overflow-hidden transition-all duration-300 hover:shadow-lg
+           {% if compact %}p-4{% else %}p-6{% endif %}"
+    {% if api_endpoint %}
+    hx-get="{{ api_endpoint }}"
+    hx-trigger="load delay:100ms"
+    hx-swap="innerHTML"
+    hx-indicator="#ai-loading-{{ insight_id }}"
+    {% endif %}>
+
+    {# Header #}
+    <div class="flex items-center justify-between {% if not compact %}mb-6{% else %}mb-4{% endif %}">
+        <h3 class="{% if compact %}text-base{% else %}text-lg{% endif %} font-semibold text-gray-900 flex items-center">
+            <div class="w-10 h-10 bg-gradient-to-br from-{{ color }}-500 to-{{ color }}-600 rounded-lg flex items-center justify-center mr-3 shadow-sm">
+                <i class="fas {{ icon|default:'fa-brain' }} text-white"></i>
+            </div>
+            {{ title|default:"AI Analysis" }}
+        </h3>
+
+        {# Confidence Badge #}
+        {% if show_confidence and data.confidence and not data.error %}
+        <div class="flex items-center space-x-2 bg-{{ color }}-50 px-3 py-1.5 rounded-lg">
+            <i class="fas fa-check-circle text-{{ color }}-600 text-sm"></i>
+            <span class="text-sm text-gray-500">Confidence:</span>
+            <span class="text-sm font-bold text-{{ color }}-600">{{ data.confidence|floatformat:0 }}%</span>
+        </div>
+        {% endif %}
+    </div>
+
+    {# Loading State #}
+    {% if loading or not data %}
+    <div id="ai-loading-{{ insight_id }}" class="py-8">
+        <div class="flex flex-col items-center justify-center space-y-4">
+            {# Animated AI Icon #}
+            <div class="relative">
+                <div class="w-16 h-16 bg-gradient-to-br from-{{ color }}-500 to-{{ color }}-600 rounded-full flex items-center justify-center animate-pulse">
+                    <i class="fas fa-robot text-white text-2xl"></i>
+                </div>
+                <div class="absolute inset-0 rounded-full border-4 border-{{ color }}-300 border-t-transparent animate-spin"></div>
+            </div>
+
+            {# Loading Message #}
+            <div class="text-center">
+                <p class="text-sm font-medium text-gray-700">AI Analysis in Progress</p>
+                <p class="text-xs text-gray-500 mt-1">Processing data and generating insights...</p>
+            </div>
+
+            {# Progress Steps #}
+            <div class="flex items-center space-x-2">
+                <span class="w-2 h-2 bg-{{ color }}-500 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
+                <span class="w-2 h-2 bg-{{ color }}-500 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
+                <span class="w-2 h-2 bg-{{ color }}-500 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Error State #}
+    {% if data.error %}
+    <div class="py-8">
+        <div class="text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            <p class="text-sm font-medium text-gray-900 mb-2">AI Analysis Unavailable</p>
+            <p class="text-xs text-gray-500 mb-4">{{ data.error_message|default:"An error occurred while processing your request." }}</p>
+
+            {# Retry Button #}
+            <button
+                onclick="retryAIInsight('{{ insight_id }}')"
+                class="px-4 py-2 bg-gradient-to-r from-{{ color }}-600 to-{{ color }}-700 text-white text-sm rounded-lg hover:shadow-lg transition-all duration-200 flex items-center justify-center mx-auto space-x-2">
+                <i class="fas fa-redo"></i>
+                <span>Retry Analysis</span>
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Success State - Show Insights #}
+    {% if data and not data.error and not loading %}
+
+    {# Summary Section #}
+    {% if data.summary %}
+    <div class="bg-gradient-to-r from-{{ color }}-50 to-blue-50 rounded-lg p-4 mb-4 border border-{{ color }}-100">
+        <div class="flex items-start space-x-3">
+            <i class="fas fa-lightbulb text-{{ color }}-600 mt-1"></i>
+            <p class="text-sm text-gray-700 leading-relaxed">{{ data.summary }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Metrics Grid #}
+    {% if data.sentiment or data.metrics %}
+    <div class="grid {% if compact %}grid-cols-1{% else %}grid-cols-2{% endif %} gap-4 mb-4">
+        {# Sentiment #}
+        {% if data.sentiment %}
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
+            <p class="text-xs text-gray-500 mb-2 font-medium">Overall Sentiment</p>
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-smile-beam text-xl
+                    {% if data.sentiment == 'positive' %}text-emerald-600
+                    {% elif data.sentiment == 'negative' %}text-red-600
+                    {% elif data.sentiment == 'mixed' %}text-amber-600
+                    {% else %}text-gray-600{% endif %}"></i>
+                <p class="text-lg font-bold
+                    {% if data.sentiment == 'positive' %}text-emerald-600
+                    {% elif data.sentiment == 'negative' %}text-red-600
+                    {% elif data.sentiment == 'mixed' %}text-amber-600
+                    {% else %}text-gray-600{% endif %}">
+                    {{ data.sentiment|title }}
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Custom Metric #}
+        {% if data.metrics %}
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
+            <p class="text-xs text-gray-500 mb-2 font-medium">{{ data.metrics.label }}</p>
+            <div class="flex items-center space-x-2">
+                {% if data.metrics.icon %}
+                <i class="fas {{ data.metrics.icon }} text-xl text-{{ color }}-600"></i>
+                {% endif %}
+                <p class="text-2xl font-bold text-{{ color }}-600">{{ data.metrics.value }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {# Key Points #}
+    {% if data.key_points %}
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+        <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+            <i class="fas fa-list-check text-{{ color }}-600 mr-2"></i>
+            Key Findings
+        </h4>
+        <ul class="space-y-2">
+            {% for point in data.key_points %}
+            <li class="flex items-start space-x-2">
+                <i class="fas fa-circle-check text-emerald-500 mt-0.5 flex-shrink-0"></i>
+                <span class="text-sm text-gray-700">{{ point }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {# Recommendations #}
+    {% if data.recommendations %}
+    <div class="bg-amber-50 rounded-lg border border-amber-200 p-4 mb-4">
+        <h4 class="text-sm font-semibold text-amber-900 mb-3 flex items-center">
+            <i class="fas fa-lightbulb text-amber-600 mr-2"></i>
+            AI Recommendations
+        </h4>
+        <ul class="space-y-2">
+            {% for recommendation in data.recommendations %}
+            <li class="flex items-start space-x-2">
+                <i class="fas fa-arrow-right text-amber-600 mt-0.5 flex-shrink-0"></i>
+                <span class="text-sm text-gray-700">{{ recommendation }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {# Action Buttons #}
+    {% if show_actions %}
+    <div class="flex items-center {% if compact %}space-x-2{% else %}space-x-3{% endif %} pt-4 border-t border-gray-200">
+        <button
+            onclick="exportAIInsights('{{ insight_id }}')"
+            class="flex-1 bg-gradient-to-r from-{{ color }}-600 to-{{ color }}-700 text-white py-2.5 px-4 rounded-lg hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2 text-sm">
+            <i class="fas fa-download"></i>
+            <span>Export</span>
+        </button>
+
+        <button
+            onclick="shareAIInsights('{{ insight_id }}')"
+            class="bg-white border border-gray-200 text-gray-700 py-2.5 px-4 rounded-lg hover:bg-gray-50 transition-all duration-200 flex items-center justify-center space-x-2 text-sm">
+            <i class="fas fa-share-alt"></i>
+            <span>Share</span>
+        </button>
+
+        <button
+            onclick="refreshAIInsights('{{ insight_id }}')"
+            class="bg-white border border-gray-200 text-gray-700 py-2.5 px-4 rounded-lg hover:bg-gray-50 transition-all duration-200"
+            title="Refresh analysis">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+    </div>
+    {% endif %}
+
+    {# Info Footer #}
+    <div class="mt-4 pt-4 border-t border-gray-200">
+        <p class="text-xs text-gray-500 flex items-start">
+            <i class="fas fa-info-circle mr-2 mt-0.5 flex-shrink-0"></i>
+            <span>
+                AI-generated insights are based on available data and patterns.
+                Always verify important findings with subject matter experts.
+            </span>
+        </p>
+    </div>
+
+    {% endif %}
+</div>
+
+{% endwith %}
+{% endwith %}
+{% endwith %}
+
+<script>
+// AI Insight Card JavaScript Functions
+function retryAIInsight(insightId) {
+    const card = document.getElementById(`ai-insight-${insightId}`);
+    if (card && card.hasAttribute('hx-get')) {
+        htmx.trigger(card, 'load');
+    } else {
+        location.reload();
+    }
+}
+
+function refreshAIInsights(insightId) {
+    retryAIInsight(insightId);
+}
+
+function exportAIInsights(insightId) {
+    // Trigger export endpoint
+    const exportUrl = `/api/ai-insights/${insightId}/export/`;
+    window.open(exportUrl, '_blank');
+}
+
+function shareAIInsights(insightId) {
+    // Copy share link to clipboard
+    const shareUrl = `${window.location.origin}/insights/${insightId}/`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+        showToast('Share link copied to clipboard', 'success');
+    });
+}
+
+function showToast(message, type = 'info') {
+    // Simple toast notification
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white text-sm ${
+        type === 'success' ? 'bg-emerald-600' :
+        type === 'error' ? 'bg-red-600' :
+        'bg-blue-600'
+    }`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+</script>

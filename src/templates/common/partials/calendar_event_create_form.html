@@ -1,0 +1,181 @@
+<!-- Calendar Event Create Form (for sidebar panel) -->
+<form hx-post="{% url 'common:work_item_sidebar_create' %}"
+      hx-target="#detailPanelBody"
+      hx-swap="innerHTML"
+      hx-indicator="#formSubmitIndicator"
+      hx-disabled-elt="find button[type='submit']"
+      hx-on::after-request="
+          if(event.detail.successful) {
+              console.log('✅ Create successful, closing sidebar and refreshing calendar...');
+
+              // Close sidebar
+              const detailPanel = document.getElementById('detailPanel');
+              const detailBackdrop = document.getElementById('detailBackdrop');
+              const calendarContainer = document.getElementById('calendarContainer');
+
+              if (detailPanel) detailPanel.classList.remove('open');
+              if (detailBackdrop) detailBackdrop.classList.remove('open');
+              if (calendarContainer) calendarContainer.classList.remove('detail-open');
+
+              // Smooth calendar refresh
+              setTimeout(() => {
+                  if (window.calendar) {
+                      const calendarEl = document.getElementById('calendar');
+                      if (calendarEl) {
+                          calendarEl.style.transition = 'opacity 150ms ease-in-out';
+                          calendarEl.style.opacity = '0.97';
+                      }
+
+                      window.calendar.refetchEvents();
+
+                      setTimeout(() => {
+                          if (calendarEl) {
+                              calendarEl.style.opacity = '1';
+                          }
+                          window.calendar.updateSize();
+                      }, 200);
+                  }
+              }, 350);
+          }
+      "
+      class="space-y-4">
+    {% csrf_token %}
+
+    <!-- Header -->
+    <div class="flex items-center justify-between pb-3 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900">
+            <i class="fas fa-plus-circle text-emerald-500 mr-2"></i>
+            Create New Work Item
+        </h3>
+        <button type="button"
+                onclick="closeDetailPanel()"
+                class="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Form Errors (if any) -->
+    {% if form.non_field_errors %}
+    <div class="rounded-lg bg-red-50 border border-red-200 p-3">
+        <div class="flex items-start gap-2">
+            <i class="fas fa-exclamation-circle text-red-600 mt-0.5"></i>
+            <div class="text-sm text-red-800">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Work Type -->
+    <div>
+        <label for="{{ form.work_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Type <span class="text-red-500">*</span>
+        </label>
+        {{ form.work_type }}
+        {% if form.work_type.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ form.work_type.errors.0 }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Title -->
+    <div>
+        <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Title <span class="text-red-500">*</span>
+        </label>
+        {{ form.title }}
+        {% if form.title.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ form.title.errors.0 }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Status & Priority (side by side) -->
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+            <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Status
+            </label>
+            {{ form.status }}
+            {% if form.status.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ form.status.errors.0 }}</p>
+            {% endif %}
+        </div>
+        <div>
+            <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Priority
+            </label>
+            {{ form.priority }}
+            {% if form.priority.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ form.priority.errors.0 }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Date Range -->
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+            <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Start Date <span class="text-red-500">*</span>
+            </label>
+            {{ form.start_date }}
+            {% if form.start_date.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ form.start_date.errors.0 }}</p>
+            {% endif %}
+        </div>
+        <div>
+            <label for="{{ form.due_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Due Date
+            </label>
+            {{ form.due_date }}
+            {% if form.due_date.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ form.due_date.errors.0 }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Description -->
+    <div>
+        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Description
+        </label>
+        {{ form.description }}
+        {% if form.description.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ form.description.errors.0 }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Form Actions -->
+    <div class="pt-4 border-t border-gray-200 flex gap-3">
+        <button type="submit"
+                class="flex-1 inline-flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-blue-500 text-white font-medium rounded-lg hover:from-emerald-600 hover:to-blue-600 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-check mr-2"></i>
+            Create Work Item
+        </button>
+        <button type="button"
+                onclick="closeDetailPanel()"
+                class="inline-flex items-center justify-center px-4 py-2.5 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-all shadow-sm">
+            <i class="fas fa-times mr-2"></i>
+            Cancel
+        </button>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="formSubmitIndicator" class="htmx-indicator text-center py-2">
+        <i class="fas fa-spinner fa-spin text-emerald-500"></i>
+        <span class="ml-2 text-sm text-gray-600">Creating...</span>
+    </div>
+</form>
+
+<!-- JavaScript for better UX -->
+<script>
+(function() {
+    'use strict';
+
+    // Auto-focus on title field
+    const titleInput = document.querySelector('#detailPanelBody input[name="title"]');
+    if (titleInput) {
+        setTimeout(() => titleInput.focus(), 100);
+    }
+})();
+</script>

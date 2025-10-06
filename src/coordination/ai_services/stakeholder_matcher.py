@@ -14,7 +14,7 @@ from django.core.cache import cache
 
 from ai_assistant.services import EmbeddingService, SimilaritySearchService, GeminiService
 from coordination.models import Organization
-from communities.models import BarangayOBC
+from communities.models import OBCCommunity
 
 
 class StakeholderMatcher:
@@ -36,7 +36,7 @@ class StakeholderMatcher:
         Find stakeholders best suited for community need
 
         Args:
-            community_id: ID of the community (BarangayOBC)
+            community_id: ID of the community (OBCCommunity)
             need_category: Category of need (e.g., 'Health', 'Education', 'Livelihood')
             top_k: Maximum number of matches to return
             min_score: Minimum matching score threshold (0-1)
@@ -61,10 +61,10 @@ class StakeholderMatcher:
 
         # Get community details
         try:
-            community = BarangayOBC.objects.select_related(
-                'municipality__province__region'
+            community = OBCCommunity.objects.select_related(
+                'barangay__municipality__province__region'
             ).get(id=community_id)
-        except BarangayOBC.DoesNotExist:
+        except OBCCommunity.DoesNotExist:
             return []
 
         # Create need profile for semantic matching
@@ -98,7 +98,7 @@ class StakeholderMatcher:
 
         return matches
 
-    def _create_need_profile(self, community: BarangayOBC, need_category: str) -> str:
+    def _create_need_profile(self, community: OBCCommunity, need_category: str) -> str:
         """Create a textual profile of the community need"""
         return f"""
         Community: {community.name}
@@ -112,7 +112,7 @@ class StakeholderMatcher:
 
     def _calculate_match_score(
         self,
-        community: BarangayOBC,
+        community: OBCCommunity,
         org: Organization,
         need_category: str
     ) -> Tuple[float, List[str]]:
@@ -155,7 +155,7 @@ class StakeholderMatcher:
 
         return min(score, 1.0), criteria
 
-    def _calculate_geographic_score(self, community: BarangayOBC, org: Organization) -> float:
+    def _calculate_geographic_score(self, community: OBCCommunity, org: Organization) -> float:
         """Calculate geographic proximity score"""
         score = 0.0
 
@@ -255,7 +255,7 @@ class StakeholderMatcher:
 
     def _generate_rationale(
         self,
-        community: BarangayOBC,
+        community: OBCCommunity,
         org: Organization,
         need_category: str,
         criteria: List[str]
@@ -316,7 +316,7 @@ class StakeholderMatcher:
         """
         # Get stakeholders
         stakeholders = Organization.objects.filter(id__in=stakeholder_ids)
-        community = BarangayOBC.objects.get(id=community_id)
+        community = OBCCommunity.objects.get(id=community_id)
 
         # Create partnership profile
         profile = self._create_partnership_profile(stakeholders, community, need_category)
@@ -354,7 +354,7 @@ class StakeholderMatcher:
     def _create_partnership_profile(
         self,
         stakeholders,
-        community: BarangayOBC,
+        community: OBCCommunity,
         need_category: str
     ) -> str:
         """Create partnership profile for AI analysis"""

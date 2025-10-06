@@ -1,0 +1,374 @@
+{% load static %}
+
+{#
+AI Status Indicator Component
+------------------------------
+Shows AI operation status with progress tracking, cancellation, and real-time updates.
+
+Required Parameters:
+- operation_id: Unique identifier for this operation
+- status: Current status - "queued", "processing", "complete", "error", "cancelled"
+
+Optional Parameters:
+- title: Operation title (default: "AI Operation")
+- progress: Progress percentage 0-100 (default: 0)
+- eta: Estimated time remaining in seconds (optional)
+- message: Status message (optional)
+- cancellable: Boolean - show cancel button (default: True)
+- compact: Boolean - compact layout (default: False)
+- auto_refresh: Boolean - auto-refresh status via HTMX (default: False)
+- refresh_url: URL for status polling (required if auto_refresh=True)
+- refresh_interval: Polling interval in milliseconds (default: 2000)
+
+Usage Examples:
+
+1. Basic Status Display:
+{% include "components/ai_status_indicator.html" with operation_id="analyze-123" status="processing" progress=45 %}
+
+2. Auto-Refreshing Status:
+{% include "components/ai_status_indicator.html" with operation_id="report-gen" status="processing" auto_refresh=True refresh_url=status_url %}
+
+3. Compact Mode:
+{% include "components/ai_status_indicator.html" with operation_id="classify" status="complete" compact=True %}
+
+Status Values:
+- "queued": Waiting to start
+- "processing": Currently running
+- "complete": Successfully finished
+- "error": Failed with error
+- "cancelled": User cancelled
+#}
+
+{% with status=status|default:"queued" %}
+{% with progress=progress|default:0 %}
+{% with cancellable=cancellable|default:True %}
+
+{# Status Configuration #}
+{% if status == "queued" %}
+    {% with status_color="blue" status_icon="fa-clock" status_label="Queued" %}
+{% elif status == "processing" %}
+    {% with status_color="emerald" status_icon="fa-cog fa-spin" status_label="Processing" %}
+{% elif status == "complete" %}
+    {% with status_color="green" status_icon="fa-check-circle" status_label="Complete" %}
+{% elif status == "error" %}
+    {% with status_color="red" status_icon="fa-exclamation-circle" status_label="Error" %}
+{% elif status == "cancelled" %}
+    {% with status_color="gray" status_icon="fa-ban" status_label="Cancelled" %}
+{% else %}
+    {% with status_color="gray" status_icon="fa-question-circle" status_label="Unknown" %}
+{% endif %}
+
+<div
+    id="ai-status-{{ operation_id }}"
+    class="bg-white rounded-lg border border-{{ status_color }}-200 overflow-hidden transition-all duration-300
+           {% if compact %}p-3{% else %}p-4{% endif %}"
+    {% if auto_refresh and refresh_url %}
+    hx-get="{{ refresh_url }}"
+    hx-trigger="every {{ refresh_interval|default:2000 }}ms"
+    hx-swap="outerHTML"
+    {% if status == "complete" or status == "error" or status == "cancelled" %}
+    hx-swap="none"
+    {% endif %}
+    {% endif %}>
+
+    {# Header #}
+    <div class="flex items-center justify-between {% if not compact %}mb-3{% else %}mb-2{% endif %}">
+        {# Status Badge #}
+        <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 bg-{{ status_color }}-100 rounded-full flex items-center justify-center">
+                <i class="fas {{ status_icon }} text-{{ status_color }}-600 {% if compact %}text-sm{% endif %}"></i>
+            </div>
+            <div>
+                <h4 class="{% if compact %}text-sm{% else %}text-base{% endif %} font-semibold text-gray-900">
+                    {{ title|default:"AI Operation" }}
+                </h4>
+                <p class="text-xs text-{{ status_color }}-600 font-medium">{{ status_label }}</p>
+            </div>
+        </div>
+
+        {# Cancel Button #}
+        {% if cancellable and status == "processing" or status == "queued" %}
+        <button
+            onclick="cancelAIOperation('{{ operation_id }}')"
+            class="text-gray-400 hover:text-red-600 transition-colors p-2"
+            title="Cancel operation">
+            <i class="fas fa-times"></i>
+        </button>
+        {% endif %}
+    </div>
+
+    {# Progress Bar (for processing status) #}
+    {% if status == "processing" %}
+    <div class="{% if not compact %}mb-3{% else %}mb-2{% endif %}">
+        {# Progress Percentage #}
+        <div class="flex justify-between mb-1">
+            <span class="text-xs text-gray-600">Progress</span>
+            <span class="text-xs font-bold text-{{ status_color }}-600">{{ progress }}%</span>
+        </div>
+
+        {# Progress Bar #}
+        <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+            <div
+                class="bg-gradient-to-r from-{{ status_color }}-500 to-{{ status_color }}-600 h-2 rounded-full transition-all duration-500 relative overflow-hidden"
+                style="width: {{ progress }}%">
+                {# Shimmer Effect #}
+                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer"></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Status Message #}
+    {% if message %}
+    <div class="bg-{{ status_color }}-50 rounded-lg p-3 {% if not compact %}mb-3{% else %}mb-2{% endif %}">
+        <p class="text-sm text-gray-700">{{ message }}</p>
+    </div>
+    {% endif %}
+
+    {# Processing Details #}
+    {% if status == "processing" %}
+    <div class="grid {% if compact %}grid-cols-1 gap-2{% else %}grid-cols-2 gap-3{% endif %}">
+        {# ETA #}
+        {% if eta %}
+        <div class="flex items-center space-x-2 text-xs text-gray-600">
+            <i class="fas fa-clock text-{{ status_color }}-600"></i>
+            <span>ETA: <span id="eta-{{ operation_id }}" class="font-medium">{{ eta }}s</span></span>
+        </div>
+        {% endif %}
+
+        {# Processing Stage #}
+        <div class="flex items-center space-x-2 text-xs text-gray-600">
+            <i class="fas fa-tasks text-{{ status_color }}-600"></i>
+            <span id="stage-{{ operation_id }}">Processing data...</span>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Queued Details #}
+    {% if status == "queued" %}
+    <div class="flex items-center space-x-2 text-xs text-gray-600 bg-{{ status_color }}-50 rounded-lg p-2">
+        <div class="flex space-x-1">
+            <span class="w-2 h-2 bg-{{ status_color }}-500 rounded-full animate-pulse"></span>
+            <span class="w-2 h-2 bg-{{ status_color }}-500 rounded-full animate-pulse" style="animation-delay: 0.2s"></span>
+            <span class="w-2 h-2 bg-{{ status_color }}-500 rounded-full animate-pulse" style="animation-delay: 0.4s"></span>
+        </div>
+        <span>Waiting in queue...</span>
+    </div>
+    {% endif %}
+
+    {# Complete State #}
+    {% if status == "complete" %}
+    <div class="flex items-center space-x-2 bg-{{ status_color }}-50 rounded-lg p-3">
+        <i class="fas fa-check-circle text-{{ status_color }}-600 text-xl"></i>
+        <div class="flex-1">
+            <p class="text-sm font-medium text-{{ status_color }}-900">Operation completed successfully</p>
+            <p class="text-xs text-{{ status_color }}-700 mt-0.5">Results are ready for review</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Error State #}
+    {% if status == "error" %}
+    <div class="bg-{{ status_color }}-50 rounded-lg p-3">
+        <div class="flex items-start space-x-2">
+            <i class="fas fa-exclamation-circle text-{{ status_color }}-600 mt-0.5"></i>
+            <div class="flex-1">
+                <p class="text-sm font-medium text-{{ status_color }}-900">Operation failed</p>
+                <p class="text-xs text-{{ status_color }}-700 mt-1">
+                    {{ message|default:"An error occurred during processing. Please try again." }}
+                </p>
+            </div>
+        </div>
+
+        {# Retry Button #}
+        <button
+            onclick="retryAIOperation('{{ operation_id }}')"
+            class="mt-3 w-full bg-{{ status_color }}-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-{{ status_color }}-700 transition-colors flex items-center justify-center space-x-2">
+            <i class="fas fa-redo"></i>
+            <span>Retry Operation</span>
+        </button>
+    </div>
+    {% endif %}
+
+    {# Cancelled State #}
+    {% if status == "cancelled" %}
+    <div class="flex items-center space-x-2 bg-{{ status_color }}-100 rounded-lg p-3">
+        <i class="fas fa-ban text-{{ status_color }}-600"></i>
+        <p class="text-sm text-{{ status_color }}-800">Operation was cancelled</p>
+    </div>
+    {% endif %}
+
+    {# Activity Log (expandable) #}
+    {% if not compact %}
+    <details class="mt-3 pt-3 border-t border-gray-200">
+        <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-700 flex items-center space-x-2">
+            <i class="fas fa-history"></i>
+            <span>View Activity Log</span>
+        </summary>
+        <div id="activity-log-{{ operation_id }}" class="mt-2 space-y-1 max-h-32 overflow-y-auto">
+            <div class="text-xs text-gray-600 flex items-start space-x-2">
+                <i class="fas fa-circle text-blue-500 text-xs mt-1"></i>
+                <div>
+                    <span class="font-medium">Operation queued</span>
+                    <span class="text-gray-500">• Just now</span>
+                </div>
+            </div>
+        </div>
+    </details>
+    {% endif %}
+</div>
+
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+
+<script>
+// Cancel AI Operation
+function cancelAIOperation(operationId) {
+    if (!confirm('Are you sure you want to cancel this operation?')) {
+        return;
+    }
+
+    fetch(`/api/ai-operations/${operationId}/cancel/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update status indicator
+            const statusEl = document.getElementById(`ai-status-${operationId}`);
+            if (statusEl) {
+                htmx.trigger(statusEl, 'htmx:abort');
+            }
+            showNotification('Operation cancelled', 'info');
+        }
+    })
+    .catch(error => {
+        console.error('Cancel failed:', error);
+        showNotification('Failed to cancel operation', 'error');
+    });
+}
+
+// Retry AI Operation
+function retryAIOperation(operationId) {
+    fetch(`/api/ai-operations/${operationId}/retry/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload status indicator
+            const statusEl = document.getElementById(`ai-status-${operationId}`);
+            if (statusEl && statusEl.hasAttribute('hx-get')) {
+                htmx.trigger(statusEl, 'load');
+            } else {
+                location.reload();
+            }
+            showNotification('Operation restarted', 'success');
+        }
+    })
+    .catch(error => {
+        console.error('Retry failed:', error);
+        showNotification('Failed to retry operation', 'error');
+    });
+}
+
+// Update ETA countdown
+function updateETA(operationId, seconds) {
+    const etaEl = document.getElementById(`eta-${operationId}`);
+    if (etaEl) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        etaEl.textContent = minutes > 0 ? `${minutes}m ${secs}s` : `${secs}s`;
+    }
+}
+
+// Update processing stage
+function updateStage(operationId, stage) {
+    const stageEl = document.getElementById(`stage-${operationId}`);
+    if (stageEl) {
+        stageEl.textContent = stage;
+    }
+}
+
+// Add activity log entry
+function addActivityLog(operationId, message, timestamp) {
+    const logEl = document.getElementById(`activity-log-${operationId}`);
+    if (logEl) {
+        const entry = document.createElement('div');
+        entry.className = 'text-xs text-gray-600 flex items-start space-x-2';
+        entry.innerHTML = `
+            <i class="fas fa-circle text-blue-500 text-xs mt-1"></i>
+            <div>
+                <span class="font-medium">${message}</span>
+                <span class="text-gray-500">• ${timestamp}</span>
+            </div>
+        `;
+        logEl.insertBefore(entry, logEl.firstChild);
+    }
+}
+
+// Helper to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Notification helper
+function showNotification(message, type = 'info') {
+    if (typeof window.showAINotification === 'function') {
+        window.showAINotification(message, type);
+    } else {
+        console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+}
+</script>
+
+<style>
+/* Shimmer Animation for Progress Bar */
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.animate-shimmer {
+    animation: shimmer 2s infinite;
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.animate-pulse {
+    animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+</style>

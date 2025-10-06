@@ -47,6 +47,8 @@ urlpatterns = [
     # Main application URLs
     path("", include("common.urls")),
     path("communities/", include("communities.urls")),
+    path("coordination/", include("coordination.urls")),
+    path("policies/", include("recommendations.policies.urls")),
     path("monitoring/", include("monitoring.urls")),
     # =========================================================================
     # PROJECT MANAGEMENT PORTAL URL MIGRATION

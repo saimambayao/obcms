@@ -11,14 +11,14 @@ from .query_executor import QueryExecutor, get_query_executor
 from .response_formatter import ResponseFormatter, get_response_formatter
 
 __all__ = [
-    'ConversationalAssistant',
-    'get_conversational_assistant',
-    'ConversationManager',
-    'get_conversation_manager',
-    'IntentClassifier',
-    'get_intent_classifier',
-    'QueryExecutor',
-    'get_query_executor',
-    'ResponseFormatter',
-    'get_response_formatter',
+    "ConversationalAssistant",
+    "get_conversational_assistant",
+    "ConversationManager",
+    "get_conversation_manager",
+    "IntentClassifier",
+    "get_intent_classifier",
+    "QueryExecutor",
+    "get_query_executor",
+    "ResponseFormatter",
+    "get_response_formatter",
 ]
