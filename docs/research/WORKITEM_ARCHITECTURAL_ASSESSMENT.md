@@ -7,7 +7,7 @@
 **References**:
 - Research: `/docs/research/obcms_unified_pm_research.md`
 - Implementation: `/src/common/work_item_model.py`
-- Context: Monitoring (PPAs), Project Central, Communities modules
+- Context: Monitoring (PPAs), Project Management Portal, Communities modules
 
 ---
 

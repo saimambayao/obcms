@@ -51,6 +51,8 @@ from .calendar import (
     work_items_calendar_feed,
     work_item_modal,
 )
+# Alias for unified calendar feed (used by URL name)
+work_items_feed = work_items_calendar_feed
 from .work_items import (
     work_item_list,
     work_item_detail,
@@ -60,6 +62,8 @@ from .work_items import (
     work_item_tree_partial,
     work_item_update_progress,
     work_item_calendar_feed,
+    work_item_sidebar_detail,
+    work_item_sidebar_edit,
 )
 
 # Import task_detail for calendar integration
@@ -116,6 +120,8 @@ from .dashboard import (
 from .management import (
     oobc_management_home,
     oobc_calendar,
+    oobc_calendar_modern,
+    oobc_calendar_advanced_modern,
     oobc_calendar_feed_json,
     oobc_calendar_feed_ics,
     oobc_calendar_brief,
@@ -247,6 +253,8 @@ __all__ = [
     "staff_leave_approve",
     "oobc_management_home",
     "oobc_calendar",
+    "oobc_calendar_modern",
+    "oobc_calendar_advanced_modern",
     "oobc_calendar_feed_json",
     "oobc_calendar_feed_ics",
     "oobc_calendar_brief",
@@ -368,6 +376,9 @@ __all__ = [
     "recommendations_delete",
     "recommendations_by_area",
     "calendar_event_update",
+    # Unified calendar feed (WorkItem hierarchy)
+    "work_items_calendar_feed",
+    "work_item_modal",
     # WorkItem views (Phase 3)
     "work_item_list",
     "work_item_detail",
@@ -377,4 +388,6 @@ __all__ = [
     "work_item_tree_partial",
     "work_item_update_progress",
     "work_item_calendar_feed",
+    "work_item_sidebar_detail",
+    "work_item_sidebar_edit",
 ]

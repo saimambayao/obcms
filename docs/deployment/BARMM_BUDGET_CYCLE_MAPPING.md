@@ -1238,7 +1238,7 @@ CELERY_BEAT_SCHEDULE = {
 - [BARMM Governance Compliance Framework](../research/BARMM_GOVERNANCE_COMPLIANCE_FRAMEWORK.md)
 - [Phase 5 Workflow & Budget Implementation](../improvements/PHASE_5_WORKFLOW_BUDGET_IMPLEMENTATION.md)
 - [Monitoring Models Reference](../../src/monitoring/models.py)
-- [Project Central Models Reference](../../src/project_central/models.py)
+- [Project Management Portal Models Reference](../../src/project_central/models.py)
 
 ---
 

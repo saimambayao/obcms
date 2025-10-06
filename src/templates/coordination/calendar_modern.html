@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Modern Calendar View{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:coordination_home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:coordination_calendar' %}" class="text-neutral-500 hover:text-neutral-700">Calendar</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Modern View</li>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'common/vendor/fullcalendar/main.min.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <a href="{% url 'common:coordination_calendar' %}"
+                   class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Classic View
+                </a>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-calendar-alt text-purple-600 mr-4"></i>
+                Modern Calendar View
+            </h1>
+            <p class="mt-2 text-gray-600 max-w-2xl">
+                Enhanced calendar with multiple views, mini calendar sidebar, and advanced search. Switch between Day, Week, Month, and Year views.
+            </p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <a href="{% url 'common:coordination_event_add' %}"
+               class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg shadow btn-primary">
+                <i class="fas fa-plus mr-2"></i>
+                New Event
+            </a>
+            <a href="{% url 'common:coordination_activity_add' %}"
+               class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg shadow bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700">
+                <i class="fas fa-handshake mr-2"></i>
+                Log Activity
+            </a>
+        </div>
+    </div>
+
+    <!-- Modern Calendar Component -->
+    {% include "components/calendar_modern.html" %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'common/vendor/fullcalendar/index.global.min.js' %}"></script>
+<script src="{% static 'common/js/calendar.js' %}"></script>
+<script src="{% static 'common/js/calendar_modern.js' %}"></script>
+{% endblock %}

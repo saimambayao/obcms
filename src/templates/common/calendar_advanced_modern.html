@@ -1,0 +1,1427 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Advanced Modern Calendar - OBCMS{% endblock %}
+
+{% block breadcrumb %}
+<li class="flex items-center">
+    <a href="{% url 'common:dashboard' %}" class="text-gray-500 hover:text-gray-700">
+        <i class="fas fa-home"></i>
+    </a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'common:work_item_list' %}" class="text-gray-500 hover:text-gray-700">Calendar</a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <span class="text-gray-900 font-medium">Advanced Modern View</span>
+</li>
+{% endblock %}
+
+{% block extra_css %}
+<!-- FullCalendar CSS is embedded in index.global.min.js (no separate CSS file needed) -->
+
+<style>
+/* Custom styles for modern calendar */
+.calendar-container {
+    /* Navbar (64px) + Breadcrumb (42px) = 106px to subtract */
+    height: calc(100vh - 106px);
+    display: grid;
+    grid-template-columns: 280px 1fr 0px;
+    grid-template-rows: auto 1fr;
+    gap: 0;
+    overflow: hidden;
+    transition: grid-template-columns 300ms ease-in-out;
+}
+
+.calendar-sidebar {
+    grid-row: 1 / 3;
+    background: linear-gradient(180deg, #f0f9ff 0%, #f1f5f9 100%);
+    border-right: 1px solid #e2e8f0;
+    overflow-y: auto;
+    z-index: 10;
+    transition: transform 300ms ease-in-out;
+}
+
+/* Desktop sidebar toggle */
+@media (min-width: 1024px) {
+    .calendar-container.sidebar-collapsed {
+        grid-template-columns: 0px 1fr 0px;
+    }
+
+    .calendar-container.sidebar-collapsed .calendar-sidebar {
+        transform: translateX(-100%);
+    }
+}
+
+.calendar-header {
+    grid-column: 2 / 3;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.calendar-main {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+    background: #fafafa;
+    overflow: auto;
+    padding: 1.5rem;
+    min-height: 0; /* Allow grid child to shrink properly */
+    display: flex;
+    flex-direction: column;
+}
+
+#calendar {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+.calendar-detail-panel {
+    grid-row: 1 / 3;
+    grid-column: 3 / 4;
+    background: white;
+    border-left: 1px solid #e2e8f0;
+    overflow-y: auto;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+    transition: all 300ms ease-in-out;
+    width: 0;
+    opacity: 0;
+    z-index: 20;
+}
+
+.calendar-detail-panel.open {
+    width: 380px;
+    opacity: 1;
+}
+
+.calendar-container.detail-open {
+    grid-template-columns: 280px 1fr 380px;
+}
+
+/* Mini Calendar Styles */
+.mini-calendar {
+    background: white;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mini-calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.mini-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.25rem;
+}
+
+.mini-calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 150ms;
+}
+
+.mini-calendar-day.header {
+    font-weight: 600;
+    color: #64748b;
+    cursor: default;
+}
+
+.mini-calendar-day.other-month {
+    color: #cbd5e1;
+}
+
+.mini-calendar-day.today {
+    background: #3b82f6;
+    color: white;
+    font-weight: 600;
+}
+
+.mini-calendar-day.selected {
+    background: #10b981;
+    color: white;
+}
+
+.mini-calendar-day:not(.header):not(.other-month):hover {
+    background: #f1f5f9;
+}
+
+/* Event Type Legend with Integrated Filters */
+.event-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.5rem;
+    transition: all 200ms;
+    cursor: pointer;
+    user-select: none;
+}
+
+.event-legend-item:hover {
+    background: rgba(255, 255, 255, 0.6);
+    transform: translateX(2px);
+}
+
+.event-legend-item.active {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.event-type-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    transition: transform 200ms;
+}
+
+.event-legend-item:hover .event-type-icon {
+    transform: scale(1.1);
+}
+
+.event-legend-checkbox {
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 0.25rem;
+    border: 2px solid #cbd5e1;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 200ms;
+    appearance: none;
+    position: relative;
+    margin-left: auto;
+}
+
+.event-legend-checkbox:checked {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+.event-legend-checkbox:checked::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    color: white;
+    font-size: 0.625rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.event-color-swatch {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+    display: none; /* Hidden now that we have icons */
+}
+
+/* Filter Checkbox (for Show Completed toggle) */
+.filter-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 200ms;
+    user-select: none;
+}
+
+.filter-checkbox:hover {
+    background: rgba(255, 255, 255, 0.6);
+    transform: translateX(2px);
+}
+
+.filter-checkbox input[type="checkbox"] {
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 0.25rem;
+    border: 2px solid #cbd5e1;
+    cursor: pointer;
+    transition: all 200ms;
+    appearance: none;
+    position: relative;
+}
+
+.filter-checkbox input[type="checkbox"]:checked {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+.filter-checkbox input[type="checkbox"]:checked::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    color: white;
+    font-size: 0.625rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* View Mode Buttons */
+.view-mode-buttons {
+    display: flex;
+    gap: 0.25rem;
+    background: #f1f5f9;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+}
+
+.view-mode-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 150ms;
+}
+
+.view-mode-btn:hover {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.view-mode-btn.active {
+    background: white;
+    color: #0f172a;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Sidebar Toggle Button */
+.sidebar-toggle-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 200ms;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-toggle-btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #334155;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-toggle-btn i {
+    transition: transform 200ms;
+}
+
+/* Navigation Buttons */
+.nav-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.nav-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 150ms;
+}
+
+.nav-btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+
+.nav-btn.today {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+.nav-btn.today:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+/* Detail Panel Styles */
+.detail-panel-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 15;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 300ms ease-in-out;
+}
+
+.detail-panel-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.detail-panel-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-panel-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.detail-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+.detail-panel-close {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 150ms;
+}
+
+.detail-panel-close:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+/* FullCalendar Customizations */
+.fc {
+    background: white;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.fc .fc-toolbar-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.fc .fc-button {
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    text-transform: capitalize;
+    font-weight: 500;
+}
+
+.fc .fc-button:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+}
+
+.fc .fc-event {
+    border: none;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    transition: all 150ms;
+    font-size: 0.9375rem; /* 15px - improved readability */
+    font-weight: 500;
+}
+
+.fc .fc-event:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Event text readability */
+.fc .fc-event-title {
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.fc .fc-event-time {
+    font-weight: 500;
+    opacity: 0.95;
+}
+
+/* Work Type Colors */
+.work-type-project { background-color: #3b82f6; }    /* Blue */
+.work-type-activity { background-color: #10b981; }   /* Green */
+.work-type-task { background-color: #d97706; }       /* Darker Gold */
+.work-type-coordination { background-color: #14b8a6; } /* Teal */
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    .calendar-container {
+        grid-template-columns: 0px 1fr 0px;
+    }
+
+    .calendar-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 280px;
+        transform: translateX(-100%);
+        transition: transform 300ms ease-in-out;
+        z-index: 30;
+    }
+
+    .calendar-sidebar.open {
+        transform: translateX(0);
+    }
+
+    .calendar-detail-panel {
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(100%);
+    }
+
+    .calendar-detail-panel.open {
+        transform: translateX(0);
+    }
+
+    .calendar-container.detail-open {
+        grid-template-columns: 0px 1fr 0px;
+    }
+}
+
+@media (max-width: 640px) {
+    .calendar-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .view-mode-buttons {
+        width: 100%;
+    }
+
+    .nav-buttons {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .calendar-detail-panel.open {
+        width: 100%;
+    }
+
+    .calendar-main {
+        padding: 0.75rem;
+    }
+}
+
+/* Loading Spinner */
+.calendar-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 50;
+}
+
+.spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 4px solid #e2e8f0;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calendar-container" id="calendarContainer">
+    <!-- Left Sidebar -->
+    <aside class="calendar-sidebar" id="calendarSidebar">
+        <div class="p-4 space-y-6">
+            <!-- Sidebar Header -->
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold text-gray-800">
+                    <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>
+                    Calendar
+                </h2>
+                <button class="lg:hidden p-2 rounded-lg hover:bg-white/50 transition-colors" id="closeSidebarBtn" aria-label="Close sidebar">
+                    <i class="fas fa-times text-gray-600"></i>
+                </button>
+            </div>
+
+            <!-- Mini Calendar -->
+            <div class="mini-calendar">
+                <div class="mini-calendar-header">
+                    <button class="p-1 rounded hover:bg-gray-100" id="miniPrevMonth" aria-label="Previous month">
+                        <i class="fas fa-chevron-left text-gray-600 text-sm"></i>
+                    </button>
+                    <h3 class="text-sm font-semibold text-gray-800" id="miniCalendarTitle">
+                        January 2025
+                    </h3>
+                    <button class="p-1 rounded hover:bg-gray-100" id="miniNextMonth" aria-label="Next month">
+                        <i class="fas fa-chevron-right text-gray-600 text-sm"></i>
+                    </button>
+                </div>
+                <div class="mini-calendar-grid" id="miniCalendarGrid">
+                    <!-- Generated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Event Type Filters (Integrated) -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-700 mb-3 px-2">Event Types</h3>
+                <div class="space-y-1">
+                    <!-- Projects -->
+                    <label class="event-legend-item" for="filterProjects">
+                        <i class="fas fa-folder event-type-icon" style="color: #3b82f6;"></i>
+                        <span class="text-sm text-gray-700 flex-1">Projects</span>
+                        <input type="checkbox" id="filterProjects" class="event-legend-checkbox" checked data-work-type="project">
+                    </label>
+
+                    <!-- Activities -->
+                    <label class="event-legend-item" for="filterActivities">
+                        <i class="fas fa-calendar-check event-type-icon" style="color: #10b981;"></i>
+                        <span class="text-sm text-gray-700 flex-1">Activities</span>
+                        <input type="checkbox" id="filterActivities" class="event-legend-checkbox" checked data-work-type="activity">
+                    </label>
+
+                    <!-- Tasks -->
+                    <label class="event-legend-item" for="filterTasks">
+                        <i class="fas fa-tasks event-type-icon" style="color: #d97706;"></i>
+                        <span class="text-sm text-gray-700 flex-1">Tasks</span>
+                        <input type="checkbox" id="filterTasks" class="event-legend-checkbox" checked data-work-type="task">
+                    </label>
+
+                    <!-- Coordination -->
+                    <label class="event-legend-item" for="filterCoordination">
+                        <i class="fas fa-handshake event-type-icon" style="color: #14b8a6;"></i>
+                        <span class="text-sm text-gray-700 flex-1">Coordination</span>
+                        <input type="checkbox" id="filterCoordination" class="event-legend-checkbox" checked data-work-type="coordination">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Additional Filters -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-700 mb-3 px-2">Options</h3>
+                <div class="space-y-1">
+                    <label class="filter-checkbox">
+                        <i class="fas fa-check-circle text-emerald-500 text-sm"></i>
+                        <span class="text-sm text-gray-700 flex-1">Show Completed Items</span>
+                        <input type="checkbox" id="filterCompleted" data-filter-type="completed">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Back to Classic View -->
+            <a href="{% url 'common:oobc_calendar' %}" class="block text-center py-2 px-4 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Classic View
+            </a>
+        </div>
+    </aside>
+
+    <!-- Top Header -->
+    <header class="calendar-header">
+        <div class="flex items-center gap-4">
+            <!-- Sidebar Toggle Button (Desktop & Mobile) -->
+            <button class="sidebar-toggle-btn" id="toggleSidebarBtn" aria-label="Toggle sidebar">
+                <i class="fas fa-bars text-gray-600" id="sidebarToggleIcon"></i>
+            </button>
+
+            <h1 class="text-xl font-bold text-gray-900">Advanced Modern Calendar</h1>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap">
+            <!-- View Mode Buttons -->
+            <div class="view-mode-buttons">
+                <button class="view-mode-btn active" data-view="dayGridMonth" aria-label="Month view">
+                    <i class="fas fa-calendar-alt mr-1"></i>
+                    Month
+                </button>
+                <button class="view-mode-btn" data-view="timeGridWeek" aria-label="Week view">
+                    <i class="fas fa-calendar-week mr-1"></i>
+                    Week
+                </button>
+                <button class="view-mode-btn" data-view="timeGridDay" aria-label="Day view">
+                    <i class="fas fa-calendar-day mr-1"></i>
+                    Day
+                </button>
+                <button class="view-mode-btn" data-view="multiMonthYear" aria-label="Year view">
+                    <i class="fas fa-calendar mr-1"></i>
+                    Year
+                </button>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="nav-buttons">
+                <button class="nav-btn" id="prevBtn" aria-label="Previous">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="nav-btn today" id="todayBtn">Today</button>
+                <button class="nav-btn" id="nextBtn" aria-label="Next">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="flex items-center gap-2">
+                <a href="{% url 'common:work_item_list' %}" class="inline-flex items-center px-4 py-2 bg-white text-gray-700 font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-all shadow-sm">
+                    <i class="fas fa-list mr-2"></i>
+                    List View
+                </a>
+                <a href="{% url 'common:work_item_create' %}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-emerald-600 transition-all shadow-sm">
+                    <i class="fas fa-plus mr-2"></i>
+                    Create Work Item
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Calendar Area -->
+    <main class="calendar-main">
+        <!-- Loading spinner (outside calendar element) -->
+        <div class="calendar-loading" id="calendarLoading" style="position: absolute; inset: 0; z-index: 50;">
+            <div class="spinner"></div>
+        </div>
+        <div id="calendar"></div>
+    </main>
+
+    <!-- Right Detail Panel -->
+    <aside class="calendar-detail-panel" id="detailPanel">
+        <div class="detail-panel-content">
+            <div class="detail-panel-header">
+                <h3 class="text-lg font-bold text-gray-900">Event Details</h3>
+                <button class="detail-panel-close" id="closeDetailBtn" aria-label="Close detail panel">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="detail-panel-body" id="detailPanelBody">
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-calendar-check text-4xl mb-3"></i>
+                    <p>Click an event to view details</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<!-- Backdrop for mobile -->
+<div class="detail-panel-backdrop" id="detailBackdrop"></div>
+<div class="detail-panel-backdrop" id="sidebarBackdrop"></div>
+
+<!-- HTMX Modal Container (for full details) -->
+<div id="modal-container"></div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- FullCalendar JS -->
+<script src="{% static 'common/vendor/fullcalendar/index.global.min.js' %}"></script>
+
+<script>
+(function() {
+    'use strict';
+
+    // DOM Elements
+    const calendarEl = document.getElementById('calendar');
+    const calendarContainer = document.getElementById('calendarContainer');
+    const detailPanel = document.getElementById('detailPanel');
+    const detailPanelBody = document.getElementById('detailPanelBody');
+    const detailBackdrop = document.getElementById('detailBackdrop');
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+    const calendarSidebar = document.getElementById('calendarSidebar');
+    const loadingEl = document.getElementById('calendarLoading');
+
+    // State
+    let calendar;
+    let allEvents = [];
+    let activeFilters = {
+        project: true,
+        activity: true,
+        task: true,
+        coordination: true,
+        completed: false
+    };
+    let selectedDate = new Date();
+    let miniCalendarDate = new Date();
+    let sidebarCollapsed = false;
+
+    // Work type color mapping
+    const workTypeColors = {
+        'project': '#3b82f6',      // Blue
+        'activity': '#10b981',     // Green
+        'task': '#d97706',         // Darker Gold
+        'coordination': '#14b8a6'  // Teal
+    };
+
+    // Work type icon mapping
+    const workTypeIcons = {
+        'project': 'fa-folder',
+        'activity': 'fa-calendar-check',
+        'task': 'fa-tasks',
+        'coordination': 'fa-handshake'
+    };
+
+    // Initialize calendar
+    function initCalendar() {
+        // Safety check: ensure calendar element exists and has dimensions
+        if (!calendarEl) {
+            console.error('Calendar element not found');
+            return;
+        }
+
+        if (calendarEl.offsetHeight === 0) {
+            console.warn('Calendar container has no height, retrying...');
+            setTimeout(initCalendar, 100);
+            return;
+        }
+
+        const savedView = localStorage.getItem('calendarView') || 'dayGridMonth';
+
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: savedView,
+            headerToolbar: false, // Custom header
+            height: '100%', // Fill parent container
+            events: fetchEvents,
+            eventClick: handleEventClick,
+            eventDidMount: function(info) {
+                // FullCalendar moves non-standard fields to extendedProps
+                // Our API returns 'workType' at top level, but FullCalendar moves it to extendedProps
+                const workType = info.event.extendedProps.workType;
+
+                if (workType && workTypeColors[workType]) {
+                    info.el.style.backgroundColor = workTypeColors[workType];
+                    info.el.style.borderColor = workTypeColors[workType];
+                }
+
+                // Add icon to event
+                if (workType && workTypeIcons[workType]) {
+                    const iconClass = workTypeIcons[workType];
+
+                    // Try to find the event title container
+                    const eventTitle = info.el.querySelector('.fc-event-title');
+                    const eventContent = info.el.querySelector('.fc-event-main');
+
+                    if (eventTitle) {
+                        // Month/Week/Day view - title exists
+                        const icon = document.createElement('i');
+                        icon.className = `fas ${iconClass}`;
+                        icon.style.marginRight = '4px';
+                        eventTitle.insertBefore(icon, eventTitle.firstChild);
+                    } else if (eventContent) {
+                        // Alternative: insert at the beginning of event content
+                        const icon = document.createElement('i');
+                        icon.className = `fas ${iconClass}`;
+                        icon.style.marginRight = '4px';
+                        eventContent.insertBefore(icon, eventContent.firstChild);
+                    } else {
+                        // Fallback: insert at the beginning of the event element
+                        const icon = document.createElement('i');
+                        icon.className = `fas ${iconClass}`;
+                        icon.style.marginRight = '4px';
+                        info.el.insertBefore(icon, info.el.firstChild);
+                    }
+                }
+            },
+            loading: function(isLoading) {
+                if (loadingEl) {
+                    loadingEl.style.display = isLoading ? 'flex' : 'none';
+                }
+            },
+            datesSet: function(dateInfo) {
+                updateMiniCalendar();
+            }
+        });
+
+        console.log('Rendering FullCalendar...', {
+            containerHeight: calendarEl.offsetHeight,
+            containerWidth: calendarEl.offsetWidth,
+            view: savedView
+        });
+
+        calendar.render();
+
+        // Immediately hide loading spinner
+        if (loadingEl) {
+            loadingEl.style.display = 'none';
+            console.log('Loading spinner hidden');
+        }
+
+        console.log('FullCalendar rendered successfully', {
+            calendarExists: !!calendar,
+            calendarEl: calendarEl,
+            fcElement: document.querySelector('.fc')
+        });
+    }
+
+    // Fetch events from server
+    function fetchEvents(fetchInfo, successCallback, failureCallback) {
+        fetch('{% url "common:work_items_calendar_feed" %}')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                allEvents = data;
+
+                // 🔍 DEBUG: Log first event to see structure
+                if (data.length > 0) {
+                    console.log('📊 FIRST EVENT STRUCTURE:', JSON.stringify(data[0], null, 2));
+                    console.log('📊 Event keys:', Object.keys(data[0]));
+                    if (data[0].extendedProps) {
+                        console.log('📊 ExtendedProps keys:', Object.keys(data[0].extendedProps));
+                    }
+                }
+
+                const filteredEvents = applyFilters(data);
+                successCallback(filteredEvents);
+            })
+            .catch(error => {
+                console.error('Error fetching events:', error);
+
+                // Show user-facing error in calendar
+                const calendarEl = document.getElementById('calendar');
+                if (calendarEl) {
+                    calendarEl.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-12 px-4 text-center">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-5xl mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Failed to Load Calendar</h3>
+                            <p class="text-gray-600 mb-6 max-w-md">
+                                Unable to fetch calendar events. Please check your connection and try again.
+                            </p>
+                            <button onclick="location.reload()"
+                                    class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-emerald-600 transition-all shadow-lg">
+                                <i class="fas fa-sync-alt mr-2"></i>
+                                Retry
+                            </button>
+                        </div>
+                    `;
+                }
+
+                failureCallback(error);
+            });
+    }
+
+    // Apply filters to events
+    function applyFilters(events) {
+        console.log('Applying filters. Total events:', events.length);
+        console.log('Active filters:', JSON.stringify(activeFilters));
+
+        // Track statistics for debugging
+        let filterStats = {
+            total: events.length,
+            filteredByType: 0,
+            filteredByCompletion: 0,
+            kept: 0
+        };
+
+        const filtered = events.filter((event, index) => {
+            // FIX: workType is at TOP LEVEL in raw API data, not in extendedProps
+            const workType = event.workType || event.extendedProps?.work_type;
+
+            // FIX: Check status field for completion (status === 'completed')
+            const isCompleted = event.status === 'completed';
+
+            // 🔍 DEBUG: Log ALL events (not just first 3) to see the pattern
+            if (index < 5) {  // First 5 events for debugging
+                console.log(`🔍 Event #${index + 1}:`, event.title);
+                console.log('  - workType (from event.workType):', event.workType);
+                console.log('  - workType (from extendedProps):', event.extendedProps?.work_type);
+                console.log('  - status:', event.status);
+                console.log('  - isCompleted:', isCompleted);
+                console.log('  - activeFilters[workType]:', activeFilters[workType]);
+                console.log('  - activeFilters.completed:', activeFilters.completed);
+            }
+
+            // Check work type filter
+            if (workType && !activeFilters[workType]) {
+                if (index < 5) console.log('  ❌ Filtering OUT:', event.title, '(type:', workType, ')');
+                filterStats.filteredByType++;
+                return false;
+            }
+
+            // Check completed filter
+            if (isCompleted && !activeFilters.completed) {
+                if (index < 5) console.log('  ❌ Filtering OUT:', event.title, '(completed)');
+                filterStats.filteredByCompletion++;
+                return false;
+            }
+
+            if (index < 5) console.log('  ✅ Keeping:', event.title);
+            filterStats.kept++;
+            return true;
+        });
+
+        console.log('📊 Filter Statistics:', filterStats);
+        console.log('Filtered events:', filtered.length);
+        return filtered;
+    }
+
+    // Handle event click - Load detail view via HTMX
+    function handleEventClick(info) {
+        info.jsEvent.preventDefault();
+
+        const event = info.event;
+        const workItemId = event.id.replace('work-item-', '');
+        const detailUrl = `/oobc-management/work-items/${workItemId}/sidebar/detail/`;
+
+        // Show loading state
+        detailPanelBody.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-blue-500 text-2xl mb-3"></i>
+                <p class="text-sm text-gray-600">Loading details...</p>
+            </div>
+        `;
+
+        // Load detail view via HTMX
+        htmx.ajax('GET', detailUrl, {
+            target: '#detailPanelBody',
+            swap: 'innerHTML'
+        }).then(() => {
+            openDetailPanel();
+        }).catch(error => {
+            console.error('Error loading work item details:', error);
+            detailPanelBody.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-circle text-red-500 text-2xl mb-3"></i>
+                    <p class="text-sm text-red-600">Failed to load details</p>
+                    <button onclick="closeDetailPanel()" class="mt-3 text-sm text-blue-600 hover:underline">Close</button>
+                </div>
+            `;
+        });
+    }
+
+    // Open detail panel
+    function openDetailPanel() {
+        detailPanel.classList.add('open');
+        detailBackdrop.classList.add('open');
+        calendarContainer.classList.add('detail-open');
+    }
+
+    // Close detail panel
+    function closeDetailPanel() {
+        detailPanel.classList.remove('open');
+        detailBackdrop.classList.remove('open');
+        calendarContainer.classList.remove('detail-open');
+    }
+
+    // View mode switching
+    document.querySelectorAll('.view-mode-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const view = this.dataset.view;
+
+            // Update active state
+            document.querySelectorAll('.view-mode-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            // Change calendar view
+            calendar.changeView(view);
+
+            // Save preference
+            localStorage.setItem('calendarView', view);
+        });
+    });
+
+    // Navigation buttons
+    document.getElementById('prevBtn').addEventListener('click', () => calendar.prev());
+    document.getElementById('nextBtn').addEventListener('click', () => calendar.next());
+    document.getElementById('todayBtn').addEventListener('click', () => calendar.today());
+
+    // Event type filter checkboxes (integrated legend items)
+    document.querySelectorAll('.event-legend-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const workType = this.dataset.workType;
+
+            if (workType) {
+                activeFilters[workType] = this.checked;
+                console.log('Filter updated:', workType, '=', this.checked);
+                console.log('Active filters:', JSON.stringify(activeFilters));
+
+                // Update parent label active state
+                const label = this.closest('.event-legend-item');
+                if (this.checked) {
+                    label.classList.add('active');
+                } else {
+                    label.classList.remove('active');
+                }
+            }
+
+            // Refresh calendar with filtered events
+            console.log('Refetching events...');
+            calendar.refetchEvents();
+        });
+
+        // Set initial active state
+        if (checkbox.checked) {
+            checkbox.closest('.event-legend-item').classList.add('active');
+        }
+    });
+
+    // Completed items filter
+    document.getElementById('filterCompleted').addEventListener('change', function() {
+        activeFilters.completed = this.checked;
+        calendar.refetchEvents();
+    });
+
+    // Detail panel close button
+    document.getElementById('closeDetailBtn').addEventListener('click', closeDetailPanel);
+    detailBackdrop.addEventListener('click', closeDetailPanel);
+
+    // Unified Sidebar Toggle (Desktop & Mobile)
+    const toggleBtn = document.getElementById('toggleSidebarBtn');
+    const toggleIcon = document.getElementById('sidebarToggleIcon');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+
+    function toggleSidebar() {
+        const isMobile = window.innerWidth < 1024;
+
+        if (isMobile) {
+            // Mobile: Toggle overlay sidebar
+            const isOpen = calendarSidebar.classList.contains('open');
+
+            if (isOpen) {
+                calendarSidebar.classList.remove('open');
+                sidebarBackdrop.classList.remove('open');
+                toggleIcon.className = 'fas fa-bars text-gray-600';
+            } else {
+                calendarSidebar.classList.add('open');
+                sidebarBackdrop.classList.add('open');
+                toggleIcon.className = 'fas fa-times text-gray-600';
+            }
+        } else {
+            // Desktop: Toggle collapsed state
+            sidebarCollapsed = !sidebarCollapsed;
+
+            if (sidebarCollapsed) {
+                // Sidebar is now HIDDEN (collapsed)
+                calendarContainer.classList.add('sidebar-collapsed');
+                toggleIcon.className = 'fas fa-chevron-right text-gray-600'; // Arrow pointing right = "expand sidebar"
+
+                // Resize calendar after grid transition completes
+                setTimeout(() => {
+                    if (calendar) calendar.updateSize();
+                }, 350);
+            } else {
+                // Sidebar is now VISIBLE (expanded)
+                calendarContainer.classList.remove('sidebar-collapsed');
+                toggleIcon.className = 'fas fa-chevron-left text-gray-600'; // Arrow pointing left = "collapse sidebar"
+
+                // Resize calendar after grid transition completes
+                setTimeout(() => {
+                    if (calendar) calendar.updateSize();
+                }, 350);
+            }
+        }
+    }
+
+    toggleBtn.addEventListener('click', toggleSidebar);
+
+    // Set initial icon state on page load
+    function setInitialToggleIcon() {
+        const isMobile = window.innerWidth < 1024;
+        if (isMobile) {
+            // Mobile: sidebar is hidden by default
+            toggleIcon.className = 'fas fa-bars text-gray-600';
+        } else {
+            // Desktop: sidebar is visible by default (sidebarCollapsed = false)
+            toggleIcon.className = 'fas fa-chevron-left text-gray-600';
+        }
+    }
+    setInitialToggleIcon();
+
+    // Mobile: Close sidebar button
+    closeSidebarBtn.addEventListener('click', function() {
+        calendarSidebar.classList.remove('open');
+        sidebarBackdrop.classList.remove('open');
+        toggleIcon.className = 'fas fa-bars text-gray-600';
+    });
+
+    // Mobile: Close on backdrop click
+    sidebarBackdrop.addEventListener('click', function() {
+        calendarSidebar.classList.remove('open');
+        sidebarBackdrop.classList.remove('open');
+        toggleIcon.className = 'fas fa-bars text-gray-600';
+    });
+
+    // Update toggle icon on window resize
+    window.addEventListener('resize', function() {
+        const isMobile = window.innerWidth < 1024;
+
+        if (isMobile) {
+            // Reset desktop classes on mobile
+            calendarContainer.classList.remove('sidebar-collapsed');
+            sidebarCollapsed = false;
+
+            // Set mobile icon based on sidebar state
+            const isOpen = calendarSidebar.classList.contains('open');
+            toggleIcon.className = isOpen ? 'fas fa-times text-gray-600' : 'fas fa-bars text-gray-600';
+        } else {
+            // Reset mobile classes on desktop
+            calendarSidebar.classList.remove('open');
+            sidebarBackdrop.classList.remove('open');
+
+            // Set desktop icon based on collapsed state (chevrons for desktop)
+            toggleIcon.className = sidebarCollapsed ? 'fas fa-chevron-right text-gray-600' : 'fas fa-chevron-left text-gray-600';
+        }
+
+        // Resize calendar after layout changes
+        if (calendar) {
+            setTimeout(() => calendar.updateSize(), 100);
+        }
+    });
+
+    // Mini Calendar
+    function updateMiniCalendar() {
+        const year = miniCalendarDate.getFullYear();
+        const month = miniCalendarDate.getMonth();
+
+        // Update title
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        document.getElementById('miniCalendarTitle').textContent = `${monthNames[month]} ${year}`;
+
+        // Generate calendar grid
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        const grid = document.getElementById('miniCalendarGrid');
+        grid.innerHTML = '';
+
+        // Day headers
+        const dayHeaders = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+        dayHeaders.forEach(day => {
+            const header = document.createElement('div');
+            header.className = 'mini-calendar-day header';
+            header.textContent = day;
+            grid.appendChild(header);
+        });
+
+        // Previous month days
+        for (let i = firstDay - 1; i >= 0; i--) {
+            const day = document.createElement('div');
+            day.className = 'mini-calendar-day other-month';
+            day.textContent = daysInPrevMonth - i;
+            grid.appendChild(day);
+        }
+
+        // Current month days
+        const today = new Date();
+        for (let i = 1; i <= daysInMonth; i++) {
+            const day = document.createElement('div');
+            day.className = 'mini-calendar-day';
+            day.textContent = i;
+
+            const currentDate = new Date(year, month, i);
+
+            // Check if today
+            if (currentDate.toDateString() === today.toDateString()) {
+                day.classList.add('today');
+            }
+
+            // Check if selected
+            if (currentDate.toDateString() === selectedDate.toDateString()) {
+                day.classList.add('selected');
+            }
+
+            // Click handler
+            day.addEventListener('click', function() {
+                selectedDate = currentDate;
+                calendar.gotoDate(currentDate);
+                updateMiniCalendar();
+            });
+
+            grid.appendChild(day);
+        }
+
+        // Next month days to fill grid
+        const totalCells = grid.children.length - 7; // Exclude headers
+        const remainingCells = (7 - (totalCells % 7)) % 7;
+        for (let i = 1; i <= remainingCells; i++) {
+            const day = document.createElement('div');
+            day.className = 'mini-calendar-day other-month';
+            day.textContent = i;
+            grid.appendChild(day);
+        }
+    }
+
+    // Mini calendar navigation
+    document.getElementById('miniPrevMonth').addEventListener('click', function() {
+        miniCalendarDate.setMonth(miniCalendarDate.getMonth() - 1);
+        updateMiniCalendar();
+    });
+
+    document.getElementById('miniNextMonth').addEventListener('click', function() {
+        miniCalendarDate.setMonth(miniCalendarDate.getMonth() + 1);
+        updateMiniCalendar();
+    });
+
+    // Utility functions
+    function formatEventDate(start, end) {
+        const options = { month: 'long', day: 'numeric', year: 'numeric' };
+
+        if (!end || start.toDateString() === end.toDateString()) {
+            return start.toLocaleDateString('en-US', options);
+        }
+
+        return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}`;
+    }
+
+    function capitalizeFirst(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function hideLoading() {
+        setTimeout(() => {
+            if (loadingEl) {
+                loadingEl.style.display = 'none';
+            }
+        }, 500);
+    }
+
+    // Initialize after DOM is fully painted and has dimensions
+    if (document.readyState === 'loading') {
+        // DOM not ready yet, wait for DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            requestAnimationFrame(() => {
+                initCalendar();
+                updateMiniCalendar();
+            });
+        });
+    } else {
+        // DOM already loaded, use requestAnimationFrame to ensure paint is complete
+        requestAnimationFrame(() => {
+            initCalendar();
+            updateMiniCalendar();
+        });
+    }
+
+    // HTMX after swap hook (for modals and detail panel)
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        if (event.detail.target.id === 'modal-container') {
+            // Modal loaded, could add additional initialization here
+        }
+
+        // Process HTMX attributes in detail panel after content swap
+        if (event.detail.target.id === 'detailPanelBody') {
+            htmx.process(event.detail.target);
+        }
+    });
+
+    // Calendar refresh event listener (triggered after work item save)
+    document.body.addEventListener('calendarRefresh', function(event) {
+        console.log('Calendar refresh triggered:', event.detail);
+        if (calendar) {
+            calendar.refetchEvents();
+        }
+    });
+
+    // Toast notification event listener
+    document.body.addEventListener('showToast', function(event) {
+        const detail = event.detail;
+        showToast(detail.message || detail.value?.message, detail.level || detail.value?.level || 'info');
+    });
+
+    // Simple toast notification function
+    function showToast(message, level = 'info') {
+        const toastContainer = document.getElementById('toast-container') || createToastContainer();
+
+        const toast = document.createElement('div');
+        toast.className = `
+            flex items-start gap-3 p-4 rounded-lg shadow-lg mb-3 transform transition-all duration-300
+            ${level === 'success' ? 'bg-emerald-50 border border-emerald-200' : ''}
+            ${level === 'error' ? 'bg-red-50 border border-red-200' : ''}
+            ${level === 'warning' ? 'bg-amber-50 border border-amber-200' : ''}
+            ${level === 'info' ? 'bg-blue-50 border border-blue-200' : ''}
+        `;
+
+        const icon = {
+            success: 'fa-check-circle text-emerald-600',
+            error: 'fa-exclamation-circle text-red-600',
+            warning: 'fa-exclamation-triangle text-amber-600',
+            info: 'fa-info-circle text-blue-600'
+        }[level] || 'fa-info-circle text-blue-600';
+
+        toast.innerHTML = `
+            <i class="fas ${icon} mt-0.5"></i>
+            <p class="flex-1 text-sm font-medium text-gray-800">${message}</p>
+            <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+
+        toastContainer.appendChild(toast);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'fixed top-20 right-4 z-50 max-w-md';
+        document.body.appendChild(container);
+        return container;
+    }
+
+})();
+</script>
+{% endblock %}

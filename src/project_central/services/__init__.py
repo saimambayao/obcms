@@ -1,5 +1,5 @@
 """
-Project Central Services
+Project Management Portal Services
 
 Core business logic for the integrated project management system.
 """

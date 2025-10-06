@@ -9,7 +9,7 @@
 ## 🎯 EXECUTIVE SUMMARY
 
 ### Current State
-The OBCMS has **6 primary navigation sections** with **130+ URLs** across multiple modules. Recent improvements consolidated Project Central into MOA PPAs Management for better contextual access.
+The OBCMS has **6 primary navigation sections** with **130+ URLs** across multiple modules. Recent improvements consolidated Project Management Portal into MOA PPAs Management for better contextual access.
 
 ### Key Findings
 - ✅ **Well-organized**: Clear module separation
@@ -269,13 +269,13 @@ M&E (dropdown hover)
 
 **URLs**: 44 total
 **Main Templates**:
-- `moa_ppas_dashboard.html` (MOA dashboard + Project Central CTA)
+- `moa_ppas_dashboard.html` (MOA dashboard + Project Management Portal CTA)
 - `oobc_initiatives_dashboard.html` (OOBC dashboard)
 - `obc_requests_dashboard.html` (OBC requests)
 - `me_analytics_dashboard.html` (analytics)
 
 **Current Issues**:
-- ✅ **Excellent integration**: Project Central CTA on MOA PPAs page
+- ✅ **Excellent integration**: Project Management Portal CTA on MOA PPAs page
 - ✅ **Good structure**: Clear separation of MOA vs OOBC vs OBC
 - ⚠️ **Hidden tools**: Prioritization Matrix, Scenario Planning not surfaced
 - ⚠️ **Duplicate patterns**: Each sub-module has export, report, bulk-update
@@ -417,7 +417,7 @@ OOBC Mgt (dropdown hover)
   → But task management is only in OOBC Mgt
 - **Calendar**: Events from Coordination, MANA, Staff tasks, Calendar events
   → But calendar is only in OOBC Mgt
-- **Budget**: Appears in Planning & Budgeting, MOA PPAs, Project Central, OOBC Initiatives
+- **Budget**: Appears in Planning & Budgeting, MOA PPAs, Project Management Portal, OOBC Initiatives
   → No unified budget view
 
 **Impact**: ⚠️ **HIGH** - Cross-module workflows are difficult
@@ -537,7 +537,7 @@ M&E (click) → Monitoring Dashboard
 
 8. **Budget Scenario Planning** (currently hidden)
    - **Add**: To M&E → MOA PPAs as "Scenario Planning"
-   - **Show**: On Project Central Budget dashboard
+   - **Show**: On Project Management Portal Budget dashboard
 
 9. **Task Templates** (currently hidden)
    - **Add**: To OOBC Mgt → Staff Management as "Templates"
@@ -577,7 +577,7 @@ Every dashboard should have:
 
 <!-- CTA / Integration Section -->
 <section class="integration-cta">
-  <!-- Like the Project Central CTA on MOA PPAs page -->
+  <!-- Like the Project Management Portal CTA on MOA PPAs page -->
   <h2>Related Module or Tool</h2>
   <p>Description of integration</p>
   <div class="quick-links">
@@ -667,7 +667,7 @@ Every dashboard should have:
 
 <header>Stats cards</header>
 
-<!-- Project Central CTA ✅ -->
+<!-- Project Management Portal CTA ✅ -->
 <section class="integration-cta">
   <h2>Project Management Platform</h2>
   [PPA Management] [Budget Approvals] [Alerts] [Reports]
@@ -1266,7 +1266,7 @@ M&E (hover)
 - Status Distribution: Progress across all types
 - Quick Actions: [Add MOA PPA] [Add Initiative] [Add Request] [Prioritization Tool]
 - Integration CTAs:
-  - "Project Management" → Project Central Portfolio (from MOA PPAs page)
+  - "Project Management" → Project Management Portal Portfolio (from MOA PPAs page)
   - "Budget Scenario Planning" → Budget scenarios
   - "Link to Community Needs" → Community Needs Summary
 
@@ -1364,7 +1364,7 @@ Tabs: [Overview] [Gap Analysis] [Policy-Budget Matrix] [Strategic Goals] [Commun
    - Impact: 🔥🔥🔥 (User onboarding)
 
 6. ✅ **Add Integration CTAs to key templates**
-   - MOA PPAs → Project Central ✅ (already done)
+   - MOA PPAs → Project Management Portal ✅ (already done)
    - Communities → MANA Map
    - MANA → Task Board (by domain)
    - Coordination Events → Task Board (by event)
@@ -1452,7 +1452,7 @@ Tabs: [Overview] [Gap Analysis] [Policy-Budget Matrix] [Strategic Goals] [Commun
 - [ ] Assessment detail links to: Tasks (by assessment), Calendar (by assessment), Partners
 - [ ] Event detail links to: Tasks (by event), QR Check-in, Attendance Report, Calendar
 - [ ] Policy detail links to: Budget Matrix, Tasks (by policy), Analytics
-- [ ] PPA detail links to: Project Central (Portfolio, Budget, Alerts, Reports)
+- [ ] PPA detail links to: Project Management Portal (Portfolio, Budget, Alerts, Reports)
 
 ### Documentation
 - [ ] Navigation guide for users
@@ -1523,8 +1523,8 @@ Minimize clicks for common tasks.
 | MANA Assessment | Tasks, Calendar, Partners | Related Actions on Assessment Detail |
 | Coordination Event | Tasks, Calendar, QR Check-in | Related Actions on Event Detail |
 | Policy | Budget, Tasks, Analytics | Related Actions on Policy Detail |
-| MOA PPA | Project Central | CTA on MOA PPAs Dashboard ✅ (done) |
-| Project Central | MOA PPAs, Policies, Tasks | Filters and cross-links |
+| MOA PPA | Project Management Portal | CTA on MOA PPAs Dashboard ✅ (done) |
+| Project Management Portal | MOA PPAs, Policies, Tasks | Filters and cross-links |
 
 ---
 

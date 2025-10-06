@@ -1,0 +1,124 @@
+{% load static %}
+
+<div class="bg-white rounded-xl shadow border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold flex items-center">
+            <i class="fas fa-brain text-purple-600 mr-2"></i>
+            AI-Predicted Community Needs
+        </h3>
+        {% if predicted_needs.error %}
+        <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+            <i class="fas fa-exclamation-triangle"></i> Prediction unavailable
+        </span>
+        {% else %}
+        <span class="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+            <i class="fas fa-sparkles"></i> AI Analysis
+        </span>
+        {% endif %}
+    </div>
+
+    {% if predicted_needs.error %}
+    <div class="text-center py-6 text-gray-500">
+        <i class="fas fa-robot text-4xl mb-2 opacity-30"></i>
+        <p class="text-sm">AI prediction temporarily unavailable</p>
+        <p class="text-xs mt-1">{{ predicted_needs.recommendations.0 }}</p>
+    </div>
+    {% else %}
+
+    <!-- Top Priorities Section -->
+    {% if predicted_needs.top_priorities %}
+    <div class="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+        <h4 class="text-sm font-semibold text-purple-900 mb-3 flex items-center">
+            <i class="fas fa-star text-purple-600 mr-2"></i>
+            Top Priority Needs
+        </h4>
+        <div class="space-y-3">
+            {% for priority in predicted_needs.top_priorities|slice:":3" %}
+            <div class="bg-white rounded-lg p-3 border border-purple-100">
+                <div class="flex justify-between items-start mb-1">
+                    <span class="text-sm font-medium text-gray-900">{{ priority.category }}</span>
+                    <span class="text-xs font-bold text-purple-600">{{ priority.score|floatformat:0 }}%</span>
+                </div>
+                <p class="text-xs text-gray-600 leading-relaxed">{{ priority.rationale }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- All Needs Progress Bars -->
+    <div class="space-y-3">
+        {% for need_category in need_categories %}
+        {% with score=predicted_needs|get_item:need_category.key %}
+        {% if score %}
+        <div>
+            <div class="flex justify-between mb-1">
+                <span class="text-sm text-gray-700">
+                    <i class="{{ need_category.icon }} text-{{ need_category.color }}-600 mr-1"></i>
+                    {{ need_category.label }}
+                </span>
+                <span class="text-sm font-medium text-{{ need_category.color }}-600">
+                    {{ score|floatformat:0 }}%
+                </span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-{{ need_category.color }}-600 h-2 rounded-full transition-all duration-500"
+                     style="width: {{ score|floatformat:0 }}%"></div>
+            </div>
+        </div>
+        {% endif %}
+        {% endwith %}
+        {% endfor %}
+    </div>
+
+    <!-- Recommendations Section -->
+    {% if predicted_needs.recommendations %}
+    <div class="mt-6 pt-6 border-t border-gray-200">
+        <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+            <i class="fas fa-lightbulb text-amber-500 mr-2"></i>
+            AI Recommendations
+        </h4>
+        <ul class="space-y-2">
+            {% for recommendation in predicted_needs.recommendations|slice:":5" %}
+            <li class="text-xs text-gray-700 flex items-start">
+                <i class="fas fa-check-circle text-emerald-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                <span>{{ recommendation }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Info Footer -->
+    <div class="mt-6 pt-4 border-t border-gray-200">
+        <p class="text-xs text-gray-500 flex items-start">
+            <i class="fas fa-info-circle mr-2 mt-0.5"></i>
+            <span>
+                Predictions based on community profile, infrastructure access, demographics, and
+                patterns from similar Bangsamoro communities. Use this as guidance for needs
+                assessment planning.
+            </span>
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Template filter to access dict items -->
+{% comment %}
+This widget requires predicted_needs dict and need_categories list in context.
+
+Example context:
+predicted_needs = {
+    'health_infrastructure': 0.85,
+    'education_facilities': 0.72,
+    ...
+    'top_priorities': [...],
+    'recommendations': [...]
+}
+
+need_categories = [
+    {'key': 'health_infrastructure', 'label': 'Health Infrastructure', 'icon': 'fa-hospital', 'color': 'red'},
+    {'key': 'education_facilities', 'label': 'Education Facilities', 'icon': 'fa-school', 'color': 'blue'},
+    ...
+]
+{% endcomment %}

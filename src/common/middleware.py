@@ -314,7 +314,7 @@ class DeprecationLoggingMiddleware(MiddlewareMixin):
     DEPRECATED_PATTERNS = [
         '/oobc-management/staff/tasks/',
         '/oobc-management/staff/task-templates/',
-        '/project-central/workflows/',
+        '/project-central/',  # Old URL pattern (now redirects to /project-management/)
         '/coordination/events/legacy/',
     ]
 

@@ -622,9 +622,9 @@ Currently tracked at PPA level (`budget_ceiling` field in MonitoringEntry)
 
 ## Integrated Project Management Features
 
-### Proposed Architecture: "Project Central"
+### Proposed Architecture: "Project Management Portal"
 
-**Concept**: Create an **integrated project management layer** called **"Project Central"** that provides:
+**Concept**: Create an **integrated project management layer** called **"Project Management Portal"** that provides:
 - Unified project lifecycle management (**with budget planning integrated at every stage**)
 - Cross-module workflow orchestration (**including budget approval gates**)
 - Centralized monitoring, evaluation, **and financial tracking**
@@ -2227,7 +2227,7 @@ class ReportGenerator:
 
 ### Phase 1: Foundation 
 
-**Goal**: Create core Project Central infrastructure **with budget tracking integration**
+**Goal**: Create core Project Management Portal infrastructure **with budget tracking integration**
 
 #### Deliverables
 
@@ -2257,7 +2257,7 @@ class ReportGenerator:
 
 #### Success Criteria
 
-- ✅ Project Central app installed and accessible
+- ✅ Project Management Portal app installed and accessible
 - ✅ ProjectWorkflow model can be created and linked to Need + PPA
 - ✅ Portfolio dashboard shows summary metrics **including budget allocation and utilization**
 - ✅ Users can view project workflow details **with budget approval status**
@@ -2526,7 +2526,7 @@ class ReportGenerator:
 
 ### Phase 8: Deployment & Training 
 
-**Goal**: Launch Project Central and train users
+**Goal**: Launch Project Management Portal and train users
 
 #### Deliverables
 
@@ -2552,7 +2552,7 @@ class ReportGenerator:
 
 #### Success Criteria
 
-- ✅ Project Central live in production
+- ✅ Project Management Portal live in production
 - ✅ All users trained
 - ✅ Support plan in place
 - ✅ Positive user feedback
@@ -2761,8 +2761,8 @@ workflows = ProjectWorkflow.objects.select_related(
 ### Quantitative Metrics
 
 **System Adoption**:
-- ✅ 90%+ of OOBC staff use Project Central regularly
-- ✅ 80%+ of MAO focal persons access Project Central monthly
+- ✅ 90%+ of OOBC staff use Project Management Portal regularly
+- ✅ 80%+ of MAO focal persons access Project Management Portal monthly
 - ✅ 70%+ of active PPAs have associated ProjectWorkflow
 - ✅ **100% of PPAs go through budget approval workflow** (after Phase 2)
 
@@ -2831,7 +2831,7 @@ The OBCMS codebase has **exceptional foundations** for integrated project manage
 - ✅ Excellent MAO coordination framework
 - ✅ Robust policy tracking and M&E capabilities
 
-**The missing piece**: A **unified project management layer** (Project Central) that:
+**The missing piece**: A **unified project management layer** (Project Management Portal) that:
 1. Provides a single interface for project lifecycle management **with integrated budgeting**
 2. Orchestrates cross-module workflows **including budget approval gates**
 3. Consolidates monitoring, evaluation, **and financial reporting**
@@ -2840,7 +2840,7 @@ The OBCMS codebase has **exceptional foundations** for integrated project manage
 
 ### Strategic Value
 
-**Project Central with Integrated Planning & Budgeting** will transform OBCMS from a **collection of excellent modules** into a **fully integrated project management system** that:
+**Project Management Portal with Integrated Planning & Budgeting** will transform OBCMS from a **collection of excellent modules** into a **fully integrated project management system** that:
 
 - **Improves Transparency**: Stakeholders see complete project lifecycle **from need → budget → implementation → financial results**
 - **Enhances Coordination**: MAOs, communities, and OOBC work seamlessly **with clear budget commitments**

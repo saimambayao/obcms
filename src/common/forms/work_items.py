@@ -233,3 +233,81 @@ class WorkItemForm(forms.ModelForm):
             self.save_m2m()
 
         return instance
+
+
+class WorkItemQuickEditForm(forms.ModelForm):
+    """
+    Simplified form for quick editing in calendar sidebar.
+
+    This form includes only the most commonly edited fields for inline editing
+    in the calendar detail panel, providing a streamlined UX for quick updates.
+    """
+
+    # Override assignees for better UI in sidebar
+    assignees = forms.ModelMultipleChoiceField(
+        queryset=User.objects.filter(is_active=True).order_by('first_name', 'last_name'),
+        required=False,
+        help_text="Assign users",
+        widget=forms.SelectMultiple(attrs={
+            'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[100px]',
+            'size': '4'
+        })
+    )
+
+    class Meta:
+        model = WorkItem
+        fields = [
+            'title',
+            'status',
+            'priority',
+            'start_date',
+            'due_date',
+            'description',
+            'assignees',
+            'progress',
+        ]
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500',
+                'placeholder': 'Work item title'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none'
+            }),
+            'priority': forms.Select(attrs={
+                'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none'
+            }),
+            'start_date': forms.DateInput(attrs={
+                'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500',
+                'type': 'date'
+            }),
+            'due_date': forms.DateInput(attrs={
+                'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500',
+                'type': 'date'
+            }),
+            'description': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500',
+                'placeholder': 'Description...'
+            }),
+            'progress': forms.NumberInput(attrs={
+                'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500',
+                'min': 0,
+                'max': 100,
+                'step': 5
+            }),
+        }
+
+    def clean(self):
+        """Validate form data."""
+        cleaned_data = super().clean()
+
+        # Validate dates
+        start_date = cleaned_data.get('start_date')
+        due_date = cleaned_data.get('due_date')
+        if start_date and due_date and start_date > due_date:
+            raise ValidationError({
+                'due_date': 'Due date must be after start date'
+            })
+
+        return cleaned_data

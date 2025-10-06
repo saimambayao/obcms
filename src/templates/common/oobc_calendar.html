@@ -3,846 +3,1368 @@
 
 {% block title %}OOBC Calendar{% endblock %}
 
-{% block extra_css %}
-{{ block.super }}
-<link rel="stylesheet" href="{% static 'common/css/calendar-enhanced.css' %}">
+{% block breadcrumb %}
+<li class="flex items-center">
+    <a href="{% url 'common:dashboard' %}" class="text-gray-500 hover:text-gray-700">
+        <i class="fas fa-home"></i>
+    </a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-gray-500 hover:text-gray-700">OOBC Management</a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <span class="text-gray-900 font-medium">Calendar</span>
+</li>
 {% endblock %}
 
-{% block breadcrumb %}
-<li><a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a></li>
-<li><span class="text-neutral-400 mx-1">/</span></li>
-<li><a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a></li>
-<li><span class="text-neutral-400 mx-1">/</span></li>
-<li class="text-neutral-800 font-semibold">Calendar</li>
+{% block extra_css %}
+<style>
+/* ============================================
+   HYBRID CALENDAR LAYOUT
+   Combines Hero/Stats with Advanced Sidebar/Detail Panel
+   ============================================ */
+
+.calendar-page-container {
+    /* Navbar (64px) + Breadcrumb (42px) = 106px */
+    height: calc(100vh - 106px);
+    display: grid;
+    grid-template-columns: 280px 1fr 0px;
+    grid-template-rows: auto auto auto 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    overflow: hidden;
+    transition: grid-template-columns 300ms ease-in-out;
+}
+
+/* Hero Section - Spans full width */
+.compact-hero {
+    grid-column: 1 / 4;
+    grid-row: 1 / 2;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    border-radius: 1rem;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Stats Bar - Spans full width */
+.stats-bar {
+    grid-column: 1 / 4;
+    grid-row: 2 / 3;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 200ms, box-shadow 200ms;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Sidebar - Spans header + calendar rows */
+.calendar-sidebar {
+    grid-column: 1 / 2;
+    grid-row: 3 / 5;
+    background: linear-gradient(180deg, #f0f9ff 0%, #f1f5f9 100%);
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    overflow-y: auto;
+    z-index: 10;
+    transition: transform 300ms ease-in-out;
+}
+
+/* Header - Middle column only */
+.calendar-header {
+    grid-column: 2 / 3;
+    grid-row: 3 / 4;
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+/* Main Calendar - Middle column */
+.calendar-main {
+    grid-column: 2 / 3;
+    grid-row: 4 / 5;
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    overflow: auto;
+    padding: 1.5rem;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+#calendar {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+/* Detail Panel - Spans header + calendar rows */
+.calendar-detail-panel {
+    grid-column: 3 / 4;
+    grid-row: 3 / 5;
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    overflow-y: auto;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+    transition: all 300ms ease-in-out;
+    width: 0;
+    opacity: 0;
+    z-index: 20;
+}
+
+.calendar-detail-panel.open {
+    width: 380px;
+    opacity: 1;
+}
+
+.calendar-page-container.detail-open {
+    grid-template-columns: 280px 1fr 380px;
+}
+
+/* Desktop sidebar collapse */
+@media (min-width: 1024px) {
+    .calendar-page-container.sidebar-collapsed {
+        grid-template-columns: 0px 1fr 0px;
+    }
+
+    .calendar-page-container.sidebar-collapsed .calendar-sidebar {
+        transform: translateX(-100%);
+    }
+}
+
+/* Mini Calendar */
+.mini-calendar {
+    background: white;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mini-calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.mini-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.25rem;
+}
+
+.mini-calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 150ms;
+}
+
+.mini-calendar-day.header {
+    font-weight: 600;
+    color: #64748b;
+    cursor: default;
+}
+
+.mini-calendar-day.other-month {
+    color: #cbd5e1;
+}
+
+.mini-calendar-day.today {
+    background: #3b82f6;
+    color: white;
+    font-weight: 600;
+}
+
+.mini-calendar-day.selected {
+    background: #10b981;
+    color: white;
+}
+
+.mini-calendar-day:not(.header):not(.other-month):hover {
+    background: #f1f5f9;
+}
+
+/* Event Type Legend with Integrated Filters */
+.event-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.5rem;
+    transition: all 200ms;
+    cursor: pointer;
+    user-select: none;
+}
+
+.event-legend-item:hover {
+    background: rgba(255, 255, 255, 0.6);
+    transform: translateX(2px);
+}
+
+.event-legend-item.active {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.event-type-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    transition: transform 200ms;
+}
+
+.event-legend-item:hover .event-type-icon {
+    transform: scale(1.1);
+}
+
+.event-legend-checkbox {
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 0.25rem;
+    border: 2px solid #cbd5e1;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 200ms;
+    appearance: none;
+    position: relative;
+    margin-left: auto;
+}
+
+.event-legend-checkbox:checked {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+.event-legend-checkbox:checked::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    color: white;
+    font-size: 0.625rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Filter Checkbox (for Show Completed toggle) */
+.filter-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 200ms;
+    user-select: none;
+}
+
+.filter-checkbox:hover {
+    background: rgba(255, 255, 255, 0.6);
+    transform: translateX(2px);
+}
+
+.filter-checkbox input[type="checkbox"] {
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 0.25rem;
+    border: 2px solid #cbd5e1;
+    cursor: pointer;
+    transition: all 200ms;
+    appearance: none;
+    position: relative;
+}
+
+.filter-checkbox input[type="checkbox"]:checked {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+.filter-checkbox input[type="checkbox"]:checked::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    color: white;
+    font-size: 0.625rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* View Mode Buttons */
+.view-mode-buttons {
+    display: flex;
+    gap: 0.25rem;
+    background: #f1f5f9;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+}
+
+.view-mode-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 150ms;
+    font-size: 0.875rem;
+}
+
+.view-mode-btn:hover {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.view-mode-btn.active {
+    background: white;
+    color: #0f172a;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Sidebar Toggle Button */
+.sidebar-toggle-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 200ms;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-toggle-btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #334155;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Navigation Buttons */
+.nav-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.nav-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #64748b;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 150ms;
+    font-size: 0.875rem;
+}
+
+.nav-btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+
+.nav-btn.today {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+.nav-btn.today:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+/* Detail Panel Styles */
+.detail-panel-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 15;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 300ms ease-in-out;
+}
+
+.detail-panel-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.detail-panel-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-panel-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.detail-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+.detail-panel-close {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 150ms;
+}
+
+.detail-panel-close:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+/* FullCalendar Customizations */
+.fc {
+    background: transparent;
+    height: 100%;
+}
+
+.fc .fc-toolbar {
+    display: none; /* Using custom header */
+}
+
+.fc .fc-event {
+    border: none;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    transition: all 150ms;
+    font-size: 0.9375rem;
+    font-weight: 500;
+}
+
+.fc .fc-event:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Work Type Colors */
+.work-type-project { background-color: #3b82f6; }    /* Blue */
+.work-type-activity { background-color: #10b981; }   /* Green */
+.work-type-task { background-color: #d97706; }       /* Gold */
+.work-type-coordination { background-color: #14b8a6; } /* Teal */
+
+/* Loading Spinner */
+.calendar-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 50;
+}
+
+.spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 4px solid #e2e8f0;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    .calendar-page-container {
+        grid-template-columns: 0px 1fr 0px;
+    }
+
+    .calendar-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 280px;
+        transform: translateX(-100%);
+        transition: transform 300ms ease-in-out;
+        z-index: 30;
+        border-radius: 0;
+    }
+
+    .calendar-sidebar.open {
+        transform: translateX(0);
+    }
+
+    .calendar-detail-panel {
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(100%);
+        border-radius: 0;
+    }
+
+    .calendar-detail-panel.open {
+        transform: translateX(0);
+    }
+
+    .calendar-page-container.detail-open {
+        grid-template-columns: 0px 1fr 0px;
+    }
+}
+
+@media (max-width: 768px) {
+    .calendar-page-container {
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+
+    .compact-hero {
+        padding: 1rem;
+    }
+
+    .stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .calendar-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .view-mode-buttons {
+        width: 100%;
+    }
+
+    .nav-buttons {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .calendar-detail-panel.open {
+        width: 100%;
+    }
+
+    .calendar-main {
+        padding: 0.75rem;
+    }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-
-    {# Hero Section #}
-    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 shadow-2xl">
-        <div class="absolute inset-0 bg-white/10 opacity-20 mix-blend-overlay"></div>
-        <div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48"></div>
-
-        <div class="relative px-6 sm:px-10 py-8 sm:py-10">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-                <div class="flex-1 space-y-4">
-                    <div class="inline-flex items-center rounded-lg bg-white/20 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold text-white border border-white/30">
-                        <i class="fas fa-calendar-alt mr-2"></i>
-                        ORGANIZATION CALENDAR
-                    </div>
-
-                    <h1 class="text-3xl sm:text-4xl font-bold text-white leading-tight">
-                        OOBC Calendar
-                    </h1>
-
-                    <p class="text-white/90 text-base sm:text-lg max-w-2xl leading-relaxed">
-                        {% if USE_UNIFIED_CALENDAR %}
-                        View hierarchical work items across Projects, Activities, and Tasks in a unified calendar view
-                        {% else %}
-                        View and manage all tasks, events, and activities in one centralized calendar
-                        {% endif %}
-                    </p>
+<div class="calendar-page-container" id="calendarContainer">
+    <!-- Compact Hero Banner -->
+    <div class="compact-hero">
+        <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <i class="fas fa-calendar-alt text-white text-lg"></i>
                 </div>
-
-                <div class="flex-shrink-0">
-                    <div class="flex flex-col gap-3 min-w-[220px]">
-                        <a href="{% url 'common:work_item_create' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-purple-600 font-semibold shadow-lg hover:bg-purple-50 hover:shadow-xl transition-all duration-200">
-                            <i class="fas fa-plus-circle"></i>
-                            <span>Create Work Item</span>
-                        </a>
-                        <a href="{% url 'common:work_item_list' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
-                            <i class="fas fa-th-list"></i>
-                            <span>List View</span>
-                        </a>
-                    </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-white">OOBC Calendar</h1>
+                    <p class="text-white/80 text-sm">Organization-wide schedule view</p>
                 </div>
             </div>
+            <div class="flex gap-2">
+                <a href="{% url 'common:work_item_create' %}" class="px-4 py-2 bg-white text-purple-600 rounded-lg font-medium hover:bg-purple-50 transition-colors text-sm">
+                    <i class="fas fa-plus mr-2"></i>
+                    Create
+                </a>
+                <a href="{% url 'common:oobc_calendar_advanced_modern' %}" class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg font-medium hover:bg-white/30 transition-colors text-sm border border-white/30">
+                    <i class="fas fa-star mr-2"></i>
+                    Advanced
+                </a>
+            </div>
         </div>
-    </section>
+    </div>
 
-    {# Statistics Cards - 3D Milk White Design #}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Total Work Items -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
-             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
-            <div class="relative p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total Work Items</p>
-                        <p class="text-4xl font-extrabold text-gray-800 mt-1" id="stat-total-items">0</p>
-                    </div>
-                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
-                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
-                        <i class="fas fa-tasks text-2xl text-amber-600"></i>
-                    </div>
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <!-- Total -->
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Total</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1" id="stat-total">0</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                    <i class="fas fa-tasks text-amber-600 text-xl"></i>
                 </div>
             </div>
         </div>
 
-        <!-- Upcoming Events -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
-             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
-            <div class="relative p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Upcoming Events</p>
-                        <p class="text-4xl font-extrabold text-gray-800 mt-1" id="stat-upcoming">0</p>
-                    </div>
-                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
-                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
-                        <i class="fas fa-calendar-day text-2xl text-blue-600"></i>
-                    </div>
+        <!-- Upcoming -->
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Upcoming</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1" id="stat-upcoming">0</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                    <i class="fas fa-calendar-day text-blue-600 text-xl"></i>
                 </div>
             </div>
         </div>
 
         <!-- In Progress -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
-             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
-            <div class="relative p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">In Progress</p>
-                        <p class="text-4xl font-extrabold text-gray-800 mt-1" id="stat-in-progress">0</p>
-                    </div>
-                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
-                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
-                        <i class="fas fa-spinner text-2xl text-purple-600"></i>
-                    </div>
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">In Progress</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1" id="stat-progress">0</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                    <i class="fas fa-spinner text-purple-600 text-xl"></i>
                 </div>
             </div>
         </div>
 
         <!-- Completed -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
-             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
-            <div class="relative p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Completed</p>
-                        <p class="text-4xl font-extrabold text-gray-800 mt-1" id="stat-completed">0</p>
-                    </div>
-                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
-                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
-                        <i class="fas fa-check-circle text-2xl text-emerald-600"></i>
-                    </div>
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Completed</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1" id="stat-completed">0</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+                    <i class="fas fa-check-circle text-emerald-600 text-xl"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    {# Type Filters (only for unified calendar) #}
-    {% if USE_UNIFIED_CALENDAR %}
-    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-        <div class="flex flex-wrap items-center gap-4">
-            <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <i class="fas fa-filter text-gray-400"></i>
-                <span>Show:</span>
+    <!-- Left Sidebar -->
+    <aside class="calendar-sidebar" id="calendarSidebar">
+        <div class="p-4 space-y-6">
+            <!-- Sidebar Header -->
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold text-gray-800">
+                    <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>
+                    Calendar
+                </h2>
+                <button class="lg:hidden p-2 rounded-lg hover:bg-white/50 transition-colors" id="closeSidebarBtn" aria-label="Close sidebar">
+                    <i class="fas fa-times text-gray-600"></i>
+                </button>
             </div>
-            <label class="inline-flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-                <input type="checkbox" checked data-filter="project" class="rounded text-blue-600 focus:ring-blue-500">
-                <i class="fas fa-project-diagram text-blue-600"></i>
-                <span class="text-gray-700 font-medium">Projects</span>
-            </label>
-            <label class="inline-flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-                <input type="checkbox" checked data-filter="activity" class="rounded text-emerald-600 focus:ring-emerald-500">
-                <i class="fas fa-clipboard-list text-emerald-600"></i>
-                <span class="text-gray-700 font-medium">Activities</span>
-            </label>
-            <label class="inline-flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-                <input type="checkbox" checked data-filter="task" class="rounded text-purple-600 focus:ring-purple-500">
-                <i class="fas fa-check-square text-purple-600"></i>
-                <span class="text-gray-700 font-medium">Tasks</span>
-            </label>
-            <div class="ml-auto">
-                <label class="inline-flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-                    <input type="checkbox" data-filter="completed" class="rounded text-gray-600 focus:ring-gray-500">
-                    <i class="fas fa-eye text-gray-600"></i>
-                    <span class="text-gray-700 font-medium">Show Completed</span>
-                </label>
+
+            <!-- Mini Calendar -->
+            <div class="mini-calendar">
+                <div class="mini-calendar-header">
+                    <button class="p-1 rounded hover:bg-gray-100" id="miniPrevMonth" aria-label="Previous month">
+                        <i class="fas fa-chevron-left text-gray-600 text-sm"></i>
+                    </button>
+                    <h3 class="text-sm font-semibold text-gray-800" id="miniCalendarTitle">
+                        January 2025
+                    </h3>
+                    <button class="p-1 rounded hover:bg-gray-100" id="miniNextMonth" aria-label="Next month">
+                        <i class="fas fa-chevron-right text-gray-600 text-sm"></i>
+                    </button>
+                </div>
+                <div class="mini-calendar-grid" id="miniCalendarGrid">
+                    <!-- Generated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Event Type Filters (Integrated) -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-700 mb-3 px-2">Event Types</h3>
+                <div class="space-y-1">
+                    <!-- Projects -->
+                    <label class="event-legend-item" for="filterProjects">
+                        <i class="fas fa-folder event-type-icon" style="color: #3b82f6;"></i>
+                        <span class="text-sm text-gray-700 flex-1">Projects</span>
+                        <input type="checkbox" id="filterProjects" class="event-legend-checkbox" checked data-work-type="project">
+                    </label>
+
+                    <!-- Activities -->
+                    <label class="event-legend-item" for="filterActivities">
+                        <i class="fas fa-calendar-check event-type-icon" style="color: #10b981;"></i>
+                        <span class="text-sm text-gray-700 flex-1">Activities</span>
+                        <input type="checkbox" id="filterActivities" class="event-legend-checkbox" checked data-work-type="activity">
+                    </label>
+
+                    <!-- Tasks -->
+                    <label class="event-legend-item" for="filterTasks">
+                        <i class="fas fa-tasks event-type-icon" style="color: #d97706;"></i>
+                        <span class="text-sm text-gray-700 flex-1">Tasks</span>
+                        <input type="checkbox" id="filterTasks" class="event-legend-checkbox" checked data-work-type="task">
+                    </label>
+
+                    <!-- Coordination -->
+                    <label class="event-legend-item" for="filterCoordination">
+                        <i class="fas fa-handshake event-type-icon" style="color: #14b8a6;"></i>
+                        <span class="text-sm text-gray-700 flex-1">Coordination</span>
+                        <input type="checkbox" id="filterCoordination" class="event-legend-checkbox" checked data-work-type="coordination">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Additional Filters -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-700 mb-3 px-2">Options</h3>
+                <div class="space-y-1">
+                    <label class="filter-checkbox">
+                        <i class="fas fa-check-circle text-emerald-500 text-sm"></i>
+                        <span class="text-sm text-gray-700 flex-1">Show Completed Items</span>
+                        <input type="checkbox" id="filterCompleted" data-filter-type="completed">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Back to List View -->
+            <a href="{% url 'common:work_item_list' %}" class="block text-center py-2 px-4 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors">
+                <i class="fas fa-list mr-2"></i>
+                List View
+            </a>
+        </div>
+    </aside>
+
+    <!-- Top Header -->
+    <header class="calendar-header">
+        <div class="flex items-center gap-4">
+            <!-- Sidebar Toggle Button (Desktop & Mobile) -->
+            <button class="sidebar-toggle-btn" id="toggleSidebarBtn" aria-label="Toggle sidebar">
+                <i class="fas fa-chevron-left text-gray-600" id="sidebarToggleIcon"></i>
+            </button>
+
+            <h2 class="text-lg font-bold text-gray-900">Calendar View</h2>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap">
+            <!-- View Mode Buttons -->
+            <div class="view-mode-buttons">
+                <button class="view-mode-btn active" data-view="dayGridMonth" aria-label="Month view">
+                    <i class="fas fa-calendar-alt mr-1"></i>
+                    Month
+                </button>
+                <button class="view-mode-btn" data-view="timeGridWeek" aria-label="Week view">
+                    <i class="fas fa-calendar-week mr-1"></i>
+                    Week
+                </button>
+                <button class="view-mode-btn" data-view="timeGridDay" aria-label="Day view">
+                    <i class="fas fa-calendar-day mr-1"></i>
+                    Day
+                </button>
+                <button class="view-mode-btn" data-view="multiMonthYear" aria-label="Year view">
+                    <i class="fas fa-calendar mr-1"></i>
+                    Year
+                </button>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="nav-buttons">
+                <button class="nav-btn" id="prevBtn" aria-label="Previous">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="nav-btn today" id="todayBtn">Today</button>
+                <button class="nav-btn" id="nextBtn" aria-label="Next">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
             </div>
         </div>
-    </div>
-    {% endif %}
+    </header>
 
-    {# Calendar Container #}
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+    <!-- Main Calendar Area -->
+    <main class="calendar-main">
+        <div class="calendar-loading" id="calendarLoading" style="display: none;">
+            <div class="spinner"></div>
+        </div>
         <div id="calendar"></div>
-    </div>
+    </main>
 
-</div>
-
-{# Simple Modal for Event/Task Details #}
-<div id="eventModal" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 bg-gray-900 bg-opacity-50">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div id="modalContent" class="p-6">
-            {# Content loaded via fetch #}
+    <!-- Right Detail Panel -->
+    <aside class="calendar-detail-panel" id="detailPanel">
+        <div class="detail-panel-content">
+            <div class="detail-panel-header">
+                <h3 class="text-lg font-bold text-gray-900">Event Details</h3>
+                <button class="detail-panel-close" id="closeDetailBtn" aria-label="Close detail panel">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="detail-panel-body" id="detailPanelBody">
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-calendar-check text-4xl mb-3"></i>
+                    <p>Click an event to view details</p>
+                </div>
+            </div>
         </div>
-    </div>
+    </aside>
 </div>
 
+<!-- Backdrop for mobile -->
+<div class="detail-panel-backdrop" id="detailBackdrop"></div>
+<div class="detail-panel-backdrop" id="sidebarBackdrop"></div>
+
+<!-- Modal Container -->
+<div id="modal-container"></div>
 {% endblock %}
 
 {% block extra_js %}
-{{ block.super }}
-
-{# FullCalendar #}
+<!-- FullCalendar JS -->
 <script src="{% static 'common/vendor/fullcalendar/index.global.min.js' %}"></script>
 
 <script>
 (function() {
     'use strict';
 
-    // ============================================
-    // SIMPLE CALENDAR IMPLEMENTATION
-    // ============================================
+    // DOM Elements
+    const calendarEl = document.getElementById('calendar');
+    const calendarContainer = document.getElementById('calendarContainer');
+    const loadingEl = document.getElementById('calendarLoading');
+    const detailPanel = document.getElementById('detailPanel');
+    const detailPanelBody = document.getElementById('detailPanelBody');
+    const detailBackdrop = document.getElementById('detailBackdrop');
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+    const calendarSidebar = document.getElementById('calendarSidebar');
 
-    var calendarEl = document.getElementById('calendar');
-    var modal = document.getElementById('eventModal');
-    var modalContent = document.getElementById('modalContent');
+    // State
+    let calendar;
+    let allEvents = [];
+    let activeFilters = {
+        project: true,
+        activity: true,
+        task: true,
+        coordination: true,
+        completed: false
+    };
+    let selectedDate = new Date();
+    let miniCalendarDate = new Date();
+    let sidebarCollapsed = false;
+
+    // Work type colors
+    const workTypeColors = {
+        'project': '#3b82f6',      // Blue
+        'activity': '#10b981',     // Green
+        'task': '#d97706',         // Gold (changed from purple)
+        'coordination': '#14b8a6'  // Teal
+    };
+
+    // Work type icon mapping
+    const workTypeIcons = {
+        'project': 'fa-folder',
+        'activity': 'fa-calendar-check',
+        'task': 'fa-tasks',
+        'coordination': 'fa-handshake'
+    };
 
     // Initialize FullCalendar
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,listWeek'
-        },
-        height: 'auto',
+    function initCalendar() {
+        if (!calendarEl) {
+            console.error('Calendar element not found');
+            return;
+        }
 
-        // Event overflow handling (Google Calendar pattern)
-        dayMaxEvents: 4,  // Show max 4 events per day
-        moreLinkClick: 'popover',  // Show "+N more" in popover
+        if (calendarEl.offsetHeight === 0) {
+            console.warn('Calendar container has no height, retrying...');
+            setTimeout(initCalendar, 100);
+            return;
+        }
 
-        // Compact view settings
-        eventDisplay: 'block',
-        displayEventTime: true,
-        displayEventEnd: false,
-        {% if USE_UNIFIED_CALENDAR %}
-        events: function(info, successCallback, failureCallback) {
-            fetch('{% url "common:work_items_calendar_feed" %}?start=' + info.startStr + '&end=' + info.endStr)
-                .then(response => {
-                    console.log('📡 Response status:', response.status, response.statusText);
-                    if (!response.ok) {
-                        throw new Error('HTTP error ' + response.status);
+        const savedView = localStorage.getItem('calendarView') || 'dayGridMonth';
+
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: savedView,
+            headerToolbar: false, // Using custom header
+            height: '100%', // Fill parent container
+            events: fetchEvents,
+            eventClick: handleEventClick,
+            eventDidMount: function(info) {
+                // Apply work type colors
+                const workType = info.event.extendedProps.workType;
+                if (workType && workTypeColors[workType]) {
+                    info.el.style.backgroundColor = workTypeColors[workType];
+                    info.el.style.borderColor = workTypeColors[workType];
+                }
+
+                // Add icon to event
+                if (workType && workTypeIcons[workType]) {
+                    const iconClass = workTypeIcons[workType];
+                    const eventTitle = info.el.querySelector('.fc-event-title');
+                    const eventContent = info.el.querySelector('.fc-event-main');
+
+                    if (eventTitle) {
+                        // Month/Week/Day view - title exists
+                        const icon = document.createElement('i');
+                        icon.className = `fas ${iconClass}`;
+                        icon.style.marginRight = '4px';
+                        eventTitle.insertBefore(icon, eventTitle.firstChild);
+                    } else if (eventContent) {
+                        // Alternative: insert at the beginning of event content
+                        const icon = document.createElement('i');
+                        icon.className = `fas ${iconClass}`;
+                        icon.style.marginRight = '4px';
+                        eventContent.insertBefore(icon, eventContent.firstChild);
+                    } else {
+                        // Fallback: insert at the beginning of the event element
+                        const icon = document.createElement('i');
+                        icon.className = `fas ${iconClass}`;
+                        icon.style.marginRight = '4px';
+                        info.el.insertBefore(icon, info.el.firstChild);
                     }
-                    return response.text(); // Get as text first to debug
-                })
-                .then(text => {
-                    console.log('📄 Raw response:', text.substring(0, 200)); // Log first 200 chars
-                    try {
-                        const data = JSON.parse(text);
-                        console.log('📊 Parsed data:', Array.isArray(data) ? data.length + ' items' : typeof data);
-                        if (Array.isArray(data)) {
-                            console.log('✅ Passing', data.length, 'events to calendar');
-                            successCallback(data);
-                        } else if (data && data.workItems && Array.isArray(data.workItems)) {
-                            // Handle legacy format with workItems key
-                            console.log('✅ Passing', data.workItems.length, 'events from workItems key');
-                            successCallback(data.workItems);
-                        } else {
-                            console.error('❌ Data is not an array:', data);
-                            failureCallback(new Error('Invalid data format'));
-                        }
-                    } catch (e) {
-                        console.error('❌ JSON parse error:', e);
-                        failureCallback(e);
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ Fetch error:', error);
-                    failureCallback(error);
-                });
-        },
-        {% else %}
-        events: '{% url "common:oobc_calendar_feed_json" %}',
-        {% endif %}
-
-        // When user clicks an event
-        eventClick: function(info) {
-            info.jsEvent.preventDefault();
-
-            // Get the modal URL from event's URL property
-            var modalUrl = info.event.url;
-            if (!modalUrl) {
-                console.error('No modal URL for event');
-                return;
-            }
-
-            // Open modal and load content
-            openModal(modalUrl);
-        },
-
-        // Styling
-        eventClassNames: function(arg) {
-            return ['rounded-lg', 'px-2', 'py-1'];
-        },
-
-        {% if USE_UNIFIED_CALENDAR %}
-        // CRITICAL: Use eventContent for rendering (fires on every render, prevents duplication)
-        // This callback defines what content should be displayed
-        // Unlike eventDidMount, this fires on view switches and data updates
-        eventContent: function(arg) {
-            var viewType = arg.view.type || '';
-
-            // List view: Let FullCalendar handle default rendering
-            // We'll customize the icon in eventDidMount
-            if (viewType.indexOf('list') !== -1) {
-                return true; // Use default content rendering
-            }
-
-            // Month/Week views: Use custom compact layout
-            var workItem = arg.event.extendedProps || {};
-            var contentHTML = buildEventContentHTML(arg.event, workItem);
-
-            return { html: contentHTML };
-        },
-
-        // Compact Google Calendar-style rendering
-        // CRITICAL: eventDidMount is now only for SIDE EFFECTS (attributes, tooltips)
-        // Content rendering moved to eventContent to prevent duplication on view switches
-        eventDidMount: function(info) {
-            var workItem = info.event.extendedProps || {};
-            var workType = info.event.extendedProps.workType || '';
-            var status = info.event.extendedProps.status || 'not_started';
-            var priority = info.event.extendedProps.priority || 'medium';
-            var level = workItem.level || 0;
-            var originalTitle = info.event.title;
-
-            // Add data attributes for CSS targeting
-            info.el.setAttribute('data-work-type', workType);
-            info.el.setAttribute('data-status', status);
-            info.el.setAttribute('data-priority', priority);
-            info.el.setAttribute('data-event-id', info.event.id);
-
-            // Add hierarchy level class
-            if (level > 0) {
-                info.el.classList.add('hierarchy-level-' + level);
-            }
-
-            // CRITICAL: Custom rendering for list views - replace dot with work type icon
-            var viewType = info.view.type || '';
-            if (viewType.indexOf('list') !== -1) {
-                // For list view, replace the colored dot with work type icon
-                var graphicEl = info.el.querySelector('.fc-list-event-graphic');
-                if (graphicEl && !graphicEl.hasAttribute('data-icon-set')) {
-                    // Replace entire content with Font Awesome icon
-                    var iconHtml = getWorkItemIconListView(workType);
-                    graphicEl.innerHTML = iconHtml;
-                    graphicEl.setAttribute('data-icon-set', 'true');
-
-                    // Force compact styling immediately
-                    graphicEl.style.padding = '4px';
-                    graphicEl.style.width = '32px';
-                    graphicEl.style.minWidth = '32px';
-                    graphicEl.style.maxWidth = '32px';
-                    graphicEl.style.textAlign = 'center';
                 }
-
-                // Apply styling to the title cell
-                var titleCell = info.el.querySelector('.fc-list-event-title');
-                if (titleCell) {
-                    titleCell.style.paddingLeft = '4px';
+            },
+            loading: function(isLoading) {
+                if (loadingEl) {
+                    loadingEl.style.display = isLoading ? 'flex' : 'none';
                 }
+            },
+            datesSet: function() {
+                updateMiniCalendar();
+            },
+            eventsSet: function(events) {
+                updateStats(events);
             }
+        });
 
-            // Build comprehensive tooltip with all metadata
-            var tooltipParts = [workType.replace('_', ' ').toUpperCase() + ': ' + originalTitle];
-            if (status) tooltipParts.push('Status: ' + status.replace('_', ' '));
-            if (priority && priority !== 'medium') tooltipParts.push('Priority: ' + priority);
-            if (workItem.is_recurring || workItem.isRecurring) tooltipParts.push('Recurring event');
-            if (workItem.project && workItem.project.name && workType !== 'project') {
-                tooltipParts.push('Project: ' + workItem.project.name);
-            }
+        console.log('Rendering FullCalendar...');
+        calendar.render();
 
-            // Add time to tooltip if present
-            var hasTime = workItem.start_time || (info.event.start && !info.event.allDay);
-            if (hasTime) {
-                var timeText = '';
-                if (workItem.start_time) {
-                    timeText = workItem.start_time;
-                } else if (info.event.start && !info.event.allDay) {
-                    timeText = info.event.start.toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit'
-                    });
+        // Immediately hide loading spinner
+        if (loadingEl) {
+            loadingEl.style.display = 'none';
+        }
+
+        console.log('FullCalendar rendered successfully');
+    }
+
+    // Fetch events
+    function fetchEvents(fetchInfo, successCallback, failureCallback) {
+        fetch('{% url "common:work_items_calendar_feed" %}')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
                 }
-                if (timeText) {
-                    tooltipParts.push('Time: ' + timeText);
-                }
+                return response.json();
+            })
+            .then(data => {
+                allEvents = data;
+                const filteredEvents = applyFilters(data);
+                successCallback(filteredEvents);
+            })
+            .catch(error => {
+                console.error('Error fetching events:', error);
+                failureCallback(error);
+            });
+    }
+
+    // Apply filters
+    function applyFilters(events) {
+        return events.filter(event => {
+            // FIX: workType is at TOP LEVEL in raw API data, not in extendedProps
+            const workType = event.workType || event.extendedProps?.work_type;
+
+            // Check work type filter
+            if (workType && !activeFilters[workType]) {
+                return false;
             }
 
-            // Set title attribute for native browser tooltip
-            info.el.setAttribute('title', tooltipParts.join('\n'));
-
-            // Accessibility: Add comprehensive ARIA label
-            info.el.setAttribute('aria-label', tooltipParts.join(', '));
-
-            // Keyboard navigation support
-            info.el.setAttribute('tabindex', '0');
-            info.el.setAttribute('role', 'button');
-        },
-
-        // Breadcrumb tooltip on hover
-        eventMouseEnter: function(info) {
-            var breadcrumb = info.event.extendedProps.breadcrumb;
-            if (breadcrumb) {
-                var tooltip = document.createElement('div');
-                tooltip.id = 'calendar-tooltip';
-                tooltip.className = 'fixed z-50 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg shadow-lg max-w-sm';
-                tooltip.textContent = breadcrumb;
-                tooltip.style.left = info.jsEvent.pageX + 10 + 'px';
-                tooltip.style.top = info.jsEvent.pageY + 10 + 'px';
-                document.body.appendChild(tooltip);
-            }
-        },
-
-        eventMouseLeave: function() {
-            var tooltip = document.getElementById('calendar-tooltip');
-            if (tooltip) {
-                tooltip.remove();
-            }
-        },
-        {% endif %}
-    });
-
-    calendar.render();
-
-    // ============================================
-    // MODAL FUNCTIONS
-    // ============================================
-
-    function openModal(url) {
-        modal.classList.remove('hidden');
-        modalContent.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-3xl text-gray-400"></i><p class="mt-4 text-gray-600">Loading...</p></div>';
-
-        fetch(url, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(function(response) {
-            if (!response.ok) throw new Error('Failed to load');
-            return response.text();
-        })
-        .then(function(html) {
-            modalContent.innerHTML = html;
-
-            // CRITICAL: Initialize HTMX on dynamically loaded content
-            // This makes hx-delete, hx-confirm, and other HTMX attributes work
-            if (window.htmx) {
-                htmx.process(modalContent);
-                console.log('✅ HTMX initialized on modal content');
+            // Check completed filter
+            const isCompleted = event.status === 'completed';
+            if (isCompleted && !activeFilters.completed) {
+                return false;
             }
 
-            attachModalHandlers();
-        })
-        .catch(function(error) {
-            console.error(error);
-            modalContent.innerHTML = '<div class="text-center py-10 text-red-600"><i class="fas fa-exclamation-circle text-3xl"></i><p class="mt-4">Failed to load. Please try again.</p></div>';
+            return true;
         });
     }
 
-    function closeModal() {
-        modal.classList.add('hidden');
-        modalContent.innerHTML = '';
-    }
+    // Handle event click - Load detail view via HTMX
+    function handleEventClick(info) {
+        info.jsEvent.preventDefault();
 
-    function attachModalHandlers() {
-        // Close button
-        var closeBtn = modalContent.querySelector('[data-close-modal]');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', closeModal);
-        }
+        const event = info.event;
+        const workItemId = event.id.replace('work-item-', '');
+        const detailUrl = `/oobc-management/work-items/${workItemId}/sidebar/detail/`;
 
-        // Note: Delete button now handled by HTMX (hx-delete attribute)
-        // HTMX is initialized via htmx.process() after modal content loads
-        // No additional JavaScript needed here
-    }
+        // Show loading state
+        detailPanelBody.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-blue-500 text-2xl mb-3"></i>
+                <p class="text-sm text-gray-600">Loading details...</p>
+            </div>
+        `;
 
-    // Close modal on backdrop click
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            closeModal();
-        }
-    });
-
-    // Close modal on Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-            closeModal();
-        }
-    });
-
-    // Store calendar globally for debugging
-    window.__calendar = calendar;
-
-    {% if USE_UNIFIED_CALENDAR %}
-    // ============================================
-    // HIERARCHY HELPER FUNCTIONS
-    // ============================================
-
-    /**
-     * Get Font Awesome icon for work item type (replaces emojis)
-     * @param {string} workType - Type of work item
-     * @returns {string} HTML string with Font Awesome icon
-     */
-    function getWorkItemIcon(workType) {
-        var icons = {
-            'project': '<i class="fas fa-project-diagram mr-1" style="color: #2563EB;"></i>',
-            'sub_project': '<i class="fas fa-folder-tree mr-1" style="color: #0284C7;"></i>',
-            'activity': '<i class="fas fa-clipboard-list mr-1" style="color: #10B981;"></i>',
-            'sub_activity': '<i class="fas fa-list-check mr-1" style="color: #22C55E;"></i>',
-            'task': '<i class="fas fa-tasks mr-1" style="color: #8B5CF6;"></i>',
-            'subtask': '<i class="fas fa-check-square mr-1" style="color: #A855F7;"></i>'
-        };
-        return icons[workType] || '<i class="fas fa-circle mr-1" style="color: #9CA3AF;"></i>';
-    }
-
-    /**
-     * Build event content HTML for month/week views
-     * This function generates the complete HTML structure for calendar events
-     * Called by eventContent callback (fires on every render, preventing duplication)
-     *
-     * @param {Object} event - FullCalendar event object
-     * @param {Object} workItem - Extended properties from event
-     * @returns {string} Complete HTML string for event content
-     */
-    function buildEventContentHTML(event, workItem) {
-        var workType = workItem.workType || '';
-        var status = workItem.status || 'not_started';
-        var priority = workItem.priority || 'medium';
-        var level = workItem.level || 0;
-        var originalTitle = event.title;
-
-        // Build compact single-row layout
-        var html = '<div class="flex items-center gap-1 text-sm text-gray-900" style="color: inherit;">';
-
-        // Hierarchy indicator (compact)
-        if (level > 0) {
-            html += '<span class="text-gray-400 text-xs leading-none" aria-hidden="true">└</span>';
-        }
-
-        // Work type icon (inline, no margin)
-        var workIcon = getWorkItemIcon(workType).replace('mr-1', '');
-        html += '<span class="leading-none" aria-hidden="true">' + workIcon + '</span>';
-
-        // Title text (truncated, flex-1 to take available space)
-        html += '<span class="flex-1 truncate font-medium leading-tight text-gray-900" style="color: inherit;">';
-        html += originalTitle;
-        html += '</span>';
-
-        // Status icon (inline)
-        var statusIcon = getStatusIcon(status).replace('ml-1', '');
-        html += '<span class="leading-none flex-shrink-0" aria-label="Status: ' + status.replace('_', ' ') + '">';
-        html += statusIcon;
-        html += '</span>';
-
-        // Priority indicator (critical only, inline)
-        if (priority === 'critical') {
-            html += '<span class="leading-none flex-shrink-0" aria-label="Critical priority">';
-            html += '<i class="fas fa-exclamation-circle text-xs" style="color: #EF4444;" title="Critical"></i>';
-            html += '</span>';
-        }
-
-        // Time display (inline, only if has specific time)
-        var hasTime = workItem.start_time || (event.start && !event.allDay);
-        if (hasTime) {
-            var timeText = '';
-            if (workItem.start_time) {
-                timeText = workItem.start_time;
-            } else if (event.start && !event.allDay) {
-                timeText = event.start.toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit'
-                });
-            }
-
-            if (timeText) {
-                html += '<span class="text-xs text-gray-700 flex-shrink-0" style="color: #374151;" aria-label="Time: ' + timeText + '">';
-                html += timeText;
-                html += '</span>';
-            }
-        }
-
-        html += '</div>';
-        return html;
-    }
-
-    /**
-     * Get Font Awesome icon for list view (larger, no margins)
-     * @param {string} workType - Type of work item
-     * @returns {string} HTML string with Font Awesome icon sized for list view
-     */
-    function getWorkItemIconListView(workType) {
-        var icons = {
-            'project': '<i class="fas fa-project-diagram" style="color: #3B82F6; font-size: 16px;"></i>',
-            'sub_project': '<i class="fas fa-folder-tree" style="color: #0EA5E9; font-size: 16px;"></i>',
-            'activity': '<i class="fas fa-clipboard-list" style="color: #059669; font-size: 16px;"></i>',
-            'sub_activity': '<i class="fas fa-list-check" style="color: #16A34A; font-size: 16px;"></i>',
-            'task': '<i class="fas fa-tasks" style="color: #7C3AED; font-size: 16px;"></i>',
-            'subtask': '<i class="fas fa-check-square" style="color: #9333EA; font-size: 16px;"></i>'
-        };
-        return icons[workType] || '<i class="fas fa-circle" style="color: #9CA3AF; font-size: 16px;"></i>';
-    }
-
-    /**
-     * Get status indicator icon
-     * @param {string} status - Current status of work item
-     * @returns {string} HTML string with status icon
-     */
-    function getStatusIcon(status) {
-        var icons = {
-            'not_started': '<i class="far fa-circle text-xs ml-1" style="color: #9CA3AF;" title="Not Started"></i>',
-            'in_progress': '<i class="fas fa-spinner text-xs ml-1" style="color: #3B82F6;" title="In Progress"></i>',
-            'at_risk': '<i class="fas fa-exclamation-triangle text-xs ml-1" style="color: #F59E0B;" title="At Risk"></i>',
-            'blocked': '<i class="fas fa-ban text-xs ml-1" style="color: #EF4444;" title="Blocked"></i>',
-            'completed': '<i class="fas fa-check-circle text-xs ml-1" style="color: #10B981;" title="Completed"></i>',
-            'cancelled': '<i class="fas fa-times-circle text-xs ml-1" style="color: #6B7280;" title="Cancelled"></i>'
-        };
-        return icons[status] || '';
-    }
-
-    /**
-     * Get priority badge (only for critical/urgent)
-     * @param {string} priority - Priority level
-     * @returns {string} HTML string for priority badge
-     */
-    function getPriorityBadge(priority) {
-        if (priority === 'critical') {
-            return '<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 ml-1 border border-red-200">CRITICAL</span>';
-        }
-        if (priority === 'urgent') {
-            return '<i class="fas fa-flag text-xs ml-1" style="color: #F59E0B;" title="Urgent"></i>';
-        }
-        return '';
-    }
-
-    function toggleWorkItemChildren(parentId) {
-        var allEvents = calendar.getEvents();
-        var parent = allEvents.find(function(e) { return e.id === parentId; });
-        if (!parent) return;
-
-        var parentExtended = parent.extendedProps;
-        var isExpanded = parentExtended.expanded || false;
-
-        // Find all direct children
-        var children = allEvents.filter(function(e) {
-            return e.extendedProps.parentId === parentId;
-        });
-
-        // Toggle visibility
-        children.forEach(function(child) {
-            child.setProp('display', isExpanded ? 'none' : 'auto');
-        });
-
-        // Update parent state
-        parent.setExtendedProp('expanded', !isExpanded);
-
-        // Update expand button icon
-        var parentEl = document.querySelector('[data-event-id="' + parentId + '"] .expand-btn');
-        if (parentEl) {
-            parentEl.innerHTML = isExpanded ? '<i class="fas fa-chevron-right text-xs"></i>' : '<i class="fas fa-chevron-down text-xs"></i>';
-        }
-    }
-
-    // ============================================
-    // TYPE FILTERING
-    // ============================================
-
-    function applyCalendarFilters() {
-        var projectChecked = document.querySelector('[data-filter="project"]').checked;
-        var activityChecked = document.querySelector('[data-filter="activity"]').checked;
-        var taskChecked = document.querySelector('[data-filter="task"]').checked;
-        var showCompleted = document.querySelector('[data-filter="completed"]').checked;
-
-        var allEvents = calendar.getEvents();
-        allEvents.forEach(function(event) {
-            var workType = event.extendedProps.workType || '';
-            var status = event.extendedProps.status || '';
-            var show = true;
-
-            // Type filter
-            if (workType.includes('project')) {
-                show = show && projectChecked;
-            } else if (workType.includes('activity')) {
-                show = show && activityChecked;
-            } else if (workType.includes('task')) {
-                show = show && taskChecked;
-            }
-
-            // Completed filter
-            if (!showCompleted && status === 'completed') {
-                show = false;
-            }
-
-            event.setProp('display', show ? 'auto' : 'none');
+        // Load detail view via HTMX
+        htmx.ajax('GET', detailUrl, {
+            target: '#detailPanelBody',
+            swap: 'innerHTML'
+        }).then(() => {
+            openDetailPanel();
+        }).catch(error => {
+            console.error('Error loading work item details:', error);
+            detailPanelBody.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-circle text-red-500 text-2xl mb-3"></i>
+                    <p class="text-sm text-red-600">Failed to load details</p>
+                    <button onclick="closeDetailPanel()" class="mt-3 text-sm text-blue-600 hover:underline">Close</button>
+                </div>
+            `;
         });
     }
 
-    // Attach filter listeners
-    document.querySelectorAll('[data-filter]').forEach(function(checkbox) {
-        checkbox.addEventListener('change', applyCalendarFilters);
-    });
-    {% endif %}
+    // Open detail panel
+    function openDetailPanel() {
+        detailPanel.classList.add('open');
+        detailBackdrop.classList.add('open');
+        calendarContainer.classList.add('detail-open');
+    }
 
-    console.log('✅ {% if USE_UNIFIED_CALENDAR %}Unified hierarchy{% else %}Simple{% endif %} calendar initialized');
+    // Close detail panel
+    function closeDetailPanel() {
+        detailPanel.classList.remove('open');
+        detailBackdrop.classList.remove('open');
+        calendarContainer.classList.remove('detail-open');
+    }
 
-    // Debug: Log when events are loaded and update stats
-    calendar.on('eventsSet', function(events) {
-        console.log('📅 Calendar events loaded:', events.length, 'events');
-        if (events.length === 0) {
-            console.warn('⚠️  No events to display! Check the feed endpoint.');
-        }
+    // Make closeDetailPanel globally accessible
+    window.closeDetailPanel = closeDetailPanel;
 
-        // Update stat cards
-        updateStatCards(events);
-    });
+    // Update statistics
+    function updateStats(events) {
+        const now = new Date();
+        const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    // Update stat cards based on events
-    function updateStatCards(events) {
-        var totalItems = events.length;
-        var upcoming = 0;
-        var inProgress = 0;
-        var completed = 0;
-        var now = new Date();
-        var weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        let upcoming = 0;
+        let inProgress = 0;
+        let completed = 0;
 
-        events.forEach(function(event) {
-            var status = event.extendedProps.status || '';
-            var startDate = event.start ? new Date(event.start) : null;
+        events.forEach(event => {
+            const status = event.extendedProps?.status || '';
+            const startDate = event.start ? new Date(event.start) : null;
 
-            // Count completed
             if (status === 'completed') {
                 completed++;
-            }
-            // Count in progress
-            else if (status === 'in_progress' || status === 'ongoing') {
+            } else if (status === 'in_progress' || status === 'ongoing') {
                 inProgress++;
             }
-            // Count upcoming (events in next 7 days)
+
             if (startDate && startDate >= now && startDate <= weekFromNow) {
                 upcoming++;
             }
         });
 
-        // Update DOM
-        document.getElementById('stat-total-items').textContent = totalItems;
+        document.getElementById('stat-total').textContent = events.length;
         document.getElementById('stat-upcoming').textContent = upcoming;
-        document.getElementById('stat-in-progress').textContent = inProgress;
+        document.getElementById('stat-progress').textContent = inProgress;
         document.getElementById('stat-completed').textContent = completed;
     }
 
-    // ============================================
-    // CRITICAL: Manual HX-Trigger Header Processing
-    // ============================================
-    // HTMX should dispatch HX-Trigger events automatically, but we manually
-    // process them to ensure reliability across all HTMX versions and scenarios
-    document.body.addEventListener('htmx:afterRequest', function(event) {
-        var xhr = event.detail.xhr;
-        var triggerHeader = xhr.getResponseHeader('HX-Trigger');
+    // View mode switching
+    document.querySelectorAll('.view-mode-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const view = this.dataset.view;
 
-        if (triggerHeader) {
-            console.log('📨 HX-Trigger header received:', triggerHeader);
+            // Update active state
+            document.querySelectorAll('.view-mode-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
 
-            try {
-                var triggers = JSON.parse(triggerHeader);
-                Object.keys(triggers).forEach(function(triggerName) {
-                    var triggerData = triggers[triggerName];
+            // Change calendar view
+            calendar.changeView(view);
 
-                    console.log('🔔 Dispatching event:', triggerName, triggerData);
-
-                    document.body.dispatchEvent(new CustomEvent(triggerName, {
-                        detail: triggerData
-                    }));
-                });
-            } catch (e) {
-                console.error('❌ Failed to parse HX-Trigger header:', e);
-            }
-        }
+            // Save preference
+            localStorage.setItem('calendarView', view);
+        });
     });
 
-    // ============================================
-    // HTMX event listeners for work item actions
-    // ============================================
-    // These listen to custom events dispatched from HX-Trigger headers
-    document.body.addEventListener('workItemDeleted', function(event) {
-        console.log('🗑️  Work item deleted:', event.detail);
+    // Navigation buttons
+    document.getElementById('prevBtn').addEventListener('click', () => calendar.prev());
+    document.getElementById('nextBtn').addEventListener('click', () => calendar.next());
+    document.getElementById('todayBtn').addEventListener('click', () => calendar.today());
 
-        var workItemId = String(event.detail.id);
-        var allEvents = calendar.getEvents();
+    // Event type filter checkboxes (integrated legend items)
+    document.querySelectorAll('.event-legend-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const workType = this.dataset.workType;
 
-        console.log('🔍 Searching for work item ID:', workItemId);
-        console.log('📊 Total events in calendar:', allEvents.length);
+            if (workType) {
+                activeFilters[workType] = this.checked;
 
-        // Build all possible ID formats (current and legacy)
-        var possibleIds = [
-            workItemId,                           // Raw UUID
-            'work-item-' + workItemId,           // Current WorkItem format
-            'coordination-event-' + workItemId,  // Legacy coordination format
-            'staff-task-' + workItemId           // Legacy staff task format
-        ];
-
-        console.log('🔎 Searching for IDs:', possibleIds);
-
-        // Use Array.find() instead of getEventById() for reliable matching
-        // This bypasses FullCalendar's getEventById() which may have version-specific issues
-        var calendarEvent = allEvents.find(function(evt) {
-            var isMatch = possibleIds.indexOf(evt.id) !== -1;
-            if (isMatch) {
-                console.log('✅ Found match:', evt.id);
+                // Update parent label active state
+                const label = this.closest('.event-legend-item');
+                if (this.checked) {
+                    label.classList.add('active');
+                } else {
+                    label.classList.remove('active');
+                }
             }
-            return isMatch;
+
+            // Refresh calendar with filtered events
+            calendar.refetchEvents();
         });
 
-        if (calendarEvent) {
-            calendarEvent.remove();
-            console.log('✅ Removed event from calendar with ID:', calendarEvent.id);
-        } else {
-            console.warn('⚠️  Could not find calendar event, triggering full refresh');
-            console.warn('⚠️  Searched for IDs:', possibleIds.join(', '));
-            console.warn('⚠️  Available event IDs:', allEvents.map(function(e) { return e.id; }).join(', '));
-            // Fallback: Refresh entire calendar
-            calendar.refetchEvents();
+        // Set initial active state
+        if (checkbox.checked) {
+            checkbox.closest('.event-legend-item').classList.add('active');
         }
-
-        // Close modal
-        closeModal();
-
-        // Show success message
-        var message = event.detail.type + ' "' + event.detail.title + '" deleted successfully';
-        console.log('✅', message);
     });
 
-    document.body.addEventListener('refreshCalendar', function() {
-        console.log('🔄 Refreshing calendar...');
+    // Completed items filter
+    document.getElementById('filterCompleted').addEventListener('change', function() {
+        activeFilters.completed = this.checked;
         calendar.refetchEvents();
     });
 
-    document.body.addEventListener('showToast', function(event) {
-        var detail = event.detail;
-        var message = detail.message || 'Action completed';
-        var level = detail.level || 'info';
+    // Detail panel close button
+    document.getElementById('closeDetailBtn').addEventListener('click', closeDetailPanel);
+    detailBackdrop.addEventListener('click', closeDetailPanel);
 
-        console.log('📬 Toast:', level.toUpperCase(), '-', message);
+    // Unified Sidebar Toggle (Desktop & Mobile)
+    const toggleBtn = document.getElementById('toggleSidebarBtn');
+    const toggleIcon = document.getElementById('sidebarToggleIcon');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 
-        // Simple alert for now (replace with proper toast UI later)
-        if (level === 'success') {
-            alert('✅ ' + message);
-        } else if (level === 'error') {
-            alert('❌ ' + message);
+    function toggleSidebar() {
+        const isMobile = window.innerWidth < 1024;
+
+        if (isMobile) {
+            // Mobile: Toggle overlay sidebar
+            const isOpen = calendarSidebar.classList.contains('open');
+
+            if (isOpen) {
+                calendarSidebar.classList.remove('open');
+                sidebarBackdrop.classList.remove('open');
+                toggleIcon.className = 'fas fa-bars text-gray-600';
+            } else {
+                calendarSidebar.classList.add('open');
+                sidebarBackdrop.classList.add('open');
+                toggleIcon.className = 'fas fa-times text-gray-600';
+            }
         } else {
-            alert(message);
+            // Desktop: Toggle collapsed state
+            sidebarCollapsed = !sidebarCollapsed;
+
+            if (sidebarCollapsed) {
+                // Sidebar is now HIDDEN (collapsed)
+                calendarContainer.classList.add('sidebar-collapsed');
+                toggleIcon.className = 'fas fa-chevron-right text-gray-600'; // Arrow pointing right = "expand sidebar"
+
+                // Resize calendar after grid transition completes
+                setTimeout(() => {
+                    if (calendar) calendar.updateSize();
+                }, 350);
+            } else {
+                // Sidebar is now VISIBLE (expanded)
+                calendarContainer.classList.remove('sidebar-collapsed');
+                toggleIcon.className = 'fas fa-chevron-left text-gray-600'; // Arrow pointing left = "collapse sidebar"
+
+                // Resize calendar after grid transition completes
+                setTimeout(() => {
+                    if (calendar) calendar.updateSize();
+                }, 350);
+            }
+        }
+    }
+
+    toggleBtn.addEventListener('click', toggleSidebar);
+
+    // Set initial icon state on page load
+    function setInitialToggleIcon() {
+        const isMobile = window.innerWidth < 1024;
+        if (isMobile) {
+            // Mobile: sidebar is hidden by default
+            toggleIcon.className = 'fas fa-bars text-gray-600';
+        } else {
+            // Desktop: sidebar is visible by default (sidebarCollapsed = false)
+            toggleIcon.className = 'fas fa-chevron-left text-gray-600';
+        }
+    }
+    setInitialToggleIcon();
+
+    // Mobile: Close sidebar button
+    closeSidebarBtn.addEventListener('click', function() {
+        calendarSidebar.classList.remove('open');
+        sidebarBackdrop.classList.remove('open');
+        toggleIcon.className = 'fas fa-bars text-gray-600';
+    });
+
+    // Mobile: Close on backdrop click
+    sidebarBackdrop.addEventListener('click', function() {
+        calendarSidebar.classList.remove('open');
+        sidebarBackdrop.classList.remove('open');
+        toggleIcon.className = 'fas fa-bars text-gray-600';
+    });
+
+    // Update toggle icon on window resize
+    window.addEventListener('resize', function() {
+        const isMobile = window.innerWidth < 1024;
+
+        if (isMobile) {
+            // Reset desktop classes on mobile
+            calendarContainer.classList.remove('sidebar-collapsed');
+            sidebarCollapsed = false;
+
+            // Set mobile icon based on sidebar state
+            const isOpen = calendarSidebar.classList.contains('open');
+            toggleIcon.className = isOpen ? 'fas fa-times text-gray-600' : 'fas fa-bars text-gray-600';
+        } else {
+            // Reset mobile classes on desktop
+            calendarSidebar.classList.remove('open');
+            sidebarBackdrop.classList.remove('open');
+
+            // Set desktop icon based on collapsed state (chevrons for desktop)
+            toggleIcon.className = sidebarCollapsed ? 'fas fa-chevron-right text-gray-600' : 'fas fa-chevron-left text-gray-600';
+        }
+
+        // Resize calendar after layout changes
+        if (calendar) {
+            setTimeout(() => calendar.updateSize(), 100);
         }
     });
 
+    // Mini Calendar
+    function updateMiniCalendar() {
+        const year = miniCalendarDate.getFullYear();
+        const month = miniCalendarDate.getMonth();
+
+        // Update title
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        document.getElementById('miniCalendarTitle').textContent = `${monthNames[month]} ${year}`;
+
+        // Generate calendar grid
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        const grid = document.getElementById('miniCalendarGrid');
+        grid.innerHTML = '';
+
+        // Day headers
+        const dayHeaders = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+        dayHeaders.forEach(day => {
+            const header = document.createElement('div');
+            header.className = 'mini-calendar-day header';
+            header.textContent = day;
+            grid.appendChild(header);
+        });
+
+        // Previous month days
+        for (let i = firstDay - 1; i >= 0; i--) {
+            const day = document.createElement('div');
+            day.className = 'mini-calendar-day other-month';
+            day.textContent = daysInPrevMonth - i;
+            grid.appendChild(day);
+        }
+
+        // Current month days
+        const today = new Date();
+        for (let i = 1; i <= daysInMonth; i++) {
+            const day = document.createElement('div');
+            day.className = 'mini-calendar-day';
+            day.textContent = i;
+
+            const currentDate = new Date(year, month, i);
+
+            // Check if today
+            if (currentDate.toDateString() === today.toDateString()) {
+                day.classList.add('today');
+            }
+
+            // Check if selected
+            if (currentDate.toDateString() === selectedDate.toDateString()) {
+                day.classList.add('selected');
+            }
+
+            // Click handler
+            day.addEventListener('click', function() {
+                selectedDate = currentDate;
+                calendar.gotoDate(currentDate);
+                updateMiniCalendar();
+            });
+
+            grid.appendChild(day);
+        }
+
+        // Next month days to fill grid
+        const totalCells = grid.children.length - 7; // Exclude headers
+        const remainingCells = (7 - (totalCells % 7)) % 7;
+        for (let i = 1; i <= remainingCells; i++) {
+            const day = document.createElement('div');
+            day.className = 'mini-calendar-day other-month';
+            day.textContent = i;
+            grid.appendChild(day);
+        }
+    }
+
+    // Mini calendar navigation
+    document.getElementById('miniPrevMonth').addEventListener('click', function() {
+        miniCalendarDate.setMonth(miniCalendarDate.getMonth() - 1);
+        updateMiniCalendar();
+    });
+
+    document.getElementById('miniNextMonth').addEventListener('click', function() {
+        miniCalendarDate.setMonth(miniCalendarDate.getMonth() + 1);
+        updateMiniCalendar();
+    });
+
+    // Initialize
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            requestAnimationFrame(() => {
+                initCalendar();
+                updateMiniCalendar();
+            });
+        });
+    } else {
+        requestAnimationFrame(() => {
+            initCalendar();
+            updateMiniCalendar();
+        });
+    }
+
+    console.log('✅ OOBC Calendar initialized');
 })();
 </script>
-
 {% endblock %}

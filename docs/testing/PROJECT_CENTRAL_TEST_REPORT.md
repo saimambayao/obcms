@@ -1,4 +1,4 @@
-# Project Central Test Suite Report
+# Project Management Portal Test Suite Report
 
 **Date:** 2025-10-02
 **Status:** ✅ ALL TESTS PASSING

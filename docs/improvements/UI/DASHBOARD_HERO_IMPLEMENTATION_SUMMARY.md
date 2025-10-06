@@ -245,12 +245,12 @@ Ensure these URL names exist in `urls.py`:
 
 ### Phase 4: Related Modules Integration CTAs
 - Add cross-module integration banners (similar to MOA PPAs dashboard style)
-- **Main Dashboard**: Link to Project Central
+- **Main Dashboard**: Link to Project Management Portal
 - **Communities**: Link to MANA integration
 - **MANA**: Link to Task Management
 - **Coordination**: Link to Task/QR integration
 - **Recommendations**: Link to Budget integration
-- **M&E**: Link to Project Central
+- **M&E**: Link to Project Management Portal
 - **OOBC Management**: Link to cross-module task integration
 
 ### Phase 5: Backend View Updates

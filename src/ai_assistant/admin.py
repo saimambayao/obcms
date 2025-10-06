@@ -5,7 +5,13 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import AIConversation, AIGeneratedDocument, AIInsight, AIUsageMetrics
+from .models import (
+    AIConversation,
+    AIGeneratedDocument,
+    AIInsight,
+    AIOperation,
+    AIUsageMetrics,
+)
 
 
 @admin.register(AIConversation)
@@ -342,3 +348,149 @@ class AIUsageMetricsAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("user")
+
+
+@admin.register(AIOperation)
+class AIOperationAdmin(admin.ModelAdmin):
+    """Admin interface for AI operation logs."""
+
+    list_display = [
+        "created_at",
+        "operation_type",
+        "module",
+        "user",
+        "success_icon",
+        "cached_icon",
+        "tokens_used",
+        "cost_display",
+        "response_time_display",
+        "model_used",
+    ]
+    list_filter = [
+        "success",
+        "cached",
+        "operation_type",
+        "module",
+        "model_used",
+        "created_at",
+    ]
+    search_fields = [
+        "user__username",
+        "user__email",
+        "operation_type",
+        "module",
+        "error",
+    ]
+    readonly_fields = [
+        "id",
+        "created_at",
+        "prompt_hash",
+        "tokens_used",
+        "cost",
+        "response_time",
+    ]
+    date_hierarchy = "created_at"
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {"fields": ("id", "operation_type", "module", "user", "created_at")},
+        ),
+        (
+            "Technical Details",
+            {
+                "fields": ("model_used", "prompt_hash", "cached"),
+            },
+        ),
+        (
+            "Performance Metrics",
+            {
+                "fields": ("tokens_used", "cost", "response_time"),
+            },
+        ),
+        (
+            "Status",
+            {
+                "fields": ("success", "error", "error_category"),
+            },
+        ),
+    )
+
+    def success_icon(self, obj):
+        if obj.success:
+            return format_html(
+                '<span style="color: green; font-size: 16px;">✓</span>'
+            )
+        return format_html('<span style="color: red; font-size: 16px;">✗</span>')
+
+    success_icon.short_description = "Success"
+
+    def cached_icon(self, obj):
+        if obj.cached:
+            return format_html(
+                '<span style="color: blue;" title="Cached response">⚡</span>'
+            )
+        return "-"
+
+    cached_icon.short_description = "Cache"
+
+    def cost_display(self, obj):
+        return f"${obj.cost:.4f}"
+
+    cost_display.short_description = "Cost"
+    cost_display.admin_order_field = "cost"
+
+    def response_time_display(self, obj):
+        return f"{obj.response_time:.2f}s"
+
+    response_time_display.short_description = "Response Time"
+    response_time_display.admin_order_field = "response_time"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("user")
+
+    # Add custom actions
+    actions = ["export_to_csv"]
+
+    def export_to_csv(self, request, queryset):
+        import csv
+        from django.http import HttpResponse
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="ai_operations.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(
+            [
+                "Date",
+                "Operation Type",
+                "Module",
+                "User",
+                "Success",
+                "Cached",
+                "Tokens",
+                "Cost",
+                "Response Time",
+                "Model",
+            ]
+        )
+
+        for op in queryset:
+            writer.writerow(
+                [
+                    op.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    op.operation_type,
+                    op.module,
+                    op.user.username if op.user else "Anonymous",
+                    "Yes" if op.success else "No",
+                    "Yes" if op.cached else "No",
+                    op.tokens_used,
+                    f"${op.cost:.4f}",
+                    f"{op.response_time:.2f}s",
+                    op.model_used,
+                ]
+            )
+
+        return response
+
+    export_to_csv.short_description = "Export selected operations to CSV"

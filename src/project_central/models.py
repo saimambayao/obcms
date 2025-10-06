@@ -1,5 +1,5 @@
 """
-Project Central Models
+Project Management Portal Models
 
 Core models for the integrated project management system.
 """

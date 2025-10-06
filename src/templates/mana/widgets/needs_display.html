@@ -1,0 +1,163 @@
+{% load static %}
+
+<!-- Needs Display Widget -->
+<div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="fas fa-hands-helping text-emerald-600 mr-2"></i>
+            Identified Community Needs
+        </h3>
+
+        {% if ranked_needs %}
+        <span class="text-sm text-gray-500">{{ ranked_needs|length }} categories</span>
+        {% endif %}
+    </div>
+
+    {% if ranked_needs %}
+    <!-- Priority Matrix Quick View -->
+    <div class="grid grid-cols-4 gap-2 mb-6">
+        {% for need in ranked_needs %}
+        {% if forloop.counter <= 4 %}
+        <div class="text-center p-3 rounded-lg border-2
+            {% if need.priority == 'CRITICAL' %}border-red-500 bg-red-50
+            {% elif need.priority == 'HIGH' %}border-orange-500 bg-orange-50
+            {% elif need.priority == 'MEDIUM' %}border-blue-500 bg-blue-50
+            {% else %}border-gray-500 bg-gray-50{% endif %}">
+            <i class="fas {{ need.icon }} text-2xl mb-1
+                {% if need.priority == 'CRITICAL' %}text-red-600
+                {% elif need.priority == 'HIGH' %}text-orange-600
+                {% elif need.priority == 'MEDIUM' %}text-blue-600
+                {% else %}text-gray-600{% endif %}"></i>
+            <p class="text-xs font-medium text-gray-700">{{ need.category_name }}</p>
+            <p class="text-xs text-gray-500">{{ need.priority }}</p>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Detailed Needs List -->
+    <div class="space-y-4">
+        {% for need in ranked_needs %}
+        <div class="border-l-4 rounded-r-lg p-4 bg-gray-50
+            {% if need.priority == 'CRITICAL' %}border-red-500
+            {% elif need.priority == 'HIGH' %}border-orange-500
+            {% elif need.priority == 'MEDIUM' %}border-blue-500
+            {% else %}border-gray-500{% endif %}">
+
+            <!-- Need Header -->
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center"
+                            style="background-color: {{ need.color }}20; color: {{ need.color }};">
+                            <i class="fas {{ need.icon }}"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-base font-semibold text-gray-900">{{ need.category_name }}</h4>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <!-- Priority Badge -->
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                {% if need.priority == 'CRITICAL' %}bg-red-100 text-red-800
+                                {% elif need.priority == 'HIGH' %}bg-orange-100 text-orange-800
+                                {% elif need.priority == 'MEDIUM' %}bg-blue-100 text-blue-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ need.priority }}
+                            </span>
+
+                            <!-- Urgency Score -->
+                            {% if need.urgency %}
+                            <span class="text-xs text-gray-600">
+                                Urgency: {{ need.urgency|floatformat:2 }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Composite Score -->
+                {% if need.composite_score %}
+                <div class="text-right">
+                    <p class="text-lg font-bold" style="color: {{ need.color }};">
+                        {{ need.composite_score|floatformat:1 }}
+                    </p>
+                    <p class="text-xs text-gray-500">Score</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Specific Needs -->
+            {% if need.needs %}
+            <div class="mb-3">
+                <p class="text-xs font-medium text-gray-700 mb-2">Specific needs identified:</p>
+                <ul class="space-y-1">
+                    {% for specific_need in need.needs %}
+                    <li class="flex items-start space-x-2">
+                        <i class="fas fa-caret-right text-gray-400 mt-1"></i>
+                        <span class="text-sm text-gray-700">{{ specific_need }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- Beneficiaries -->
+            {% if need.beneficiaries %}
+            <div class="flex items-center space-x-4 text-sm">
+                <div class="flex items-center space-x-1">
+                    <i class="fas fa-users text-emerald-600"></i>
+                    <span class="text-gray-700">
+                        <strong>~{{ need.beneficiaries|floatformat:0 }}</strong> estimated beneficiaries
+                    </span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="mt-6 pt-6 border-t border-gray-200 grid grid-cols-3 gap-4">
+        <div class="text-center">
+            <p class="text-2xl font-bold text-emerald-600">
+                {{ ranked_needs|length }}
+            </p>
+            <p class="text-xs text-gray-500">Need Categories</p>
+        </div>
+
+        <div class="text-center">
+            <p class="text-2xl font-bold text-amber-600">
+                {% with critical_count=0 %}
+                    {% for need in ranked_needs %}
+                        {% if need.priority == 'CRITICAL' or need.priority == 'HIGH' %}
+                            {% widthratio forloop.counter 1 1 as temp %}
+                            {% if temp %}{% endif %}
+                        {% endif %}
+                    {% endfor %}
+                {% endwith %}
+                {{ ranked_needs|length }}
+            </p>
+            <p class="text-xs text-gray-500">High Priority</p>
+        </div>
+
+        <div class="text-center">
+            <p class="text-2xl font-bold text-blue-600">
+                {% for need in ranked_needs %}
+                    {% if forloop.first %}
+                        {{ need.beneficiaries|default:0|floatformat:0 }}
+                    {% endif %}
+                {% endfor %}
+            </p>
+            <p class="text-xs text-gray-500">Top Beneficiaries</p>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="text-center py-8">
+        <i class="fas fa-clipboard-list text-4xl text-gray-300 mb-3"></i>
+        <p class="text-gray-500">No needs identified yet</p>
+        <p class="text-sm text-gray-400">Needs will appear after workshop responses are analyzed</p>
+    </div>
+    {% endif %}
+</div>

@@ -26,7 +26,7 @@ paths remain healthy.
 - [ ] `pytest src/common/tests/test_tasks_notifications.py` (Celery notification batching).
 
 ## 4. Functional Checks
-- [ ] Create/refresh Project Central workflow and verify tasks render with filters.
+- [ ] Create/refresh Project Management Portal workflow and verify tasks render with filters.
 - [ ] Trigger `generate_workflow_tasks` and confirm no duplicate tasks on re-run.
 - [ ] Create a StaffTask with resource booking spec and confirm booking appears.
 - [ ] Run `send_calendar_notifications_batch.delay()` and confirm pending notifications change status.

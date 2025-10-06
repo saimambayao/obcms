@@ -11,18 +11,24 @@
                 <nav aria-label="breadcrumb" class="mb-2 text-sm">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{% url 'project_central:project_list' %}">Projects</a></li>
+                        {% if workflow.work_item_id %}
                         <li class="breadcrumb-item"><a href="{% url 'common:work_item_detail' pk=workflow.work_item_id %}">{{ workflow.primary_need.title|truncatechars:40 }}</a></li>
+                        {% else %}
+                        <li class="breadcrumb-item">{{ workflow.primary_need.title|truncatechars:40 }}</li>
+                        {% endif %}
                         <li class="breadcrumb-item active" aria-current="page">Edit Workflow</li>
                     </ol>
                 </nav>
                 <h1 class="text-2xl font-bold text-gray-900">Edit Project Workflow</h1>
                 <p class="text-sm text-gray-600">Adjust priority, focal persons, and timeline while keeping the MOA PPA linkage intact.</p>
             </div>
+            {% if workflow.work_item_id %}
             <a href="{% url 'common:work_item_detail' pk=workflow.work_item_id %}"
                class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow hover:bg-gray-50 transition">
                 <i class="fas fa-arrow-left"></i>
                 Back to workflow
             </a>
+            {% endif %}
         </div>
 
         <!-- DEPRECATION NOTICE -->

@@ -1,0 +1,226 @@
+{% comment %}
+Impact Simulation Widget
+
+Displays multi-scenario impact simulation results for policy recommendations.
+Shows best case, realistic, worst case, and pilot scenarios.
+{% endcomment %}
+
+<div class="bg-white rounded-xl shadow border p-6 mb-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center space-x-3">
+            <div class="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">
+                <i class="fas fa-chart-line text-white text-xl"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">Impact Simulation</h3>
+                <p class="text-sm text-gray-600">Multi-scenario analysis</p>
+            </div>
+        </div>
+
+        {% if simulation.recommendation %}
+        <button type="button"
+                onclick="toggleRecommendation()"
+                class="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-lightbulb mr-1"></i>
+            View Recommendation
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Scenario Tabs -->
+    <div class="mb-6">
+        <div class="border-b border-gray-200">
+            <nav class="flex space-x-4">
+                {% for scenario_key, scenario_data in simulation.scenarios.items %}
+                <button type="button"
+                        onclick="showScenario('{{ scenario_key }}')"
+                        class="scenario-tab px-4 py-2 text-sm font-medium border-b-2 transition-colors {% if forloop.first %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}"
+                        data-scenario="{{ scenario_key }}">
+                    {{ scenario_key|title|replace:"_"," " }}
+                </button>
+                {% endfor %}
+            </nav>
+        </div>
+    </div>
+
+    <!-- Scenario Content -->
+    {% for scenario_key, scenario_data in simulation.scenarios.items %}
+    <div class="scenario-content {% if not forloop.first %}hidden{% endif %}"
+         data-scenario="{{ scenario_key }}">
+
+        <!-- Key Metrics Grid -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+                <p class="text-sm text-blue-600 font-medium mb-1">Beneficiaries</p>
+                <p class="text-2xl font-bold text-blue-900">
+                    {{ scenario_data.beneficiaries_reached|default:0|floatformat:0 }}
+                </p>
+            </div>
+            <div class="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
+                <p class="text-sm text-green-600 font-medium mb-1">Cost/Beneficiary</p>
+                <p class="text-2xl font-bold text-green-900">
+                    ₱{{ scenario_data.cost_per_beneficiary|default:0|floatformat:0 }}
+                </p>
+            </div>
+            <div class="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
+                <p class="text-sm text-purple-600 font-medium mb-1">Timeline</p>
+                <p class="text-2xl font-bold text-purple-900">
+                    {{ scenario_data.timeline_months|default:0 }} months
+                </p>
+            </div>
+            <div class="p-4 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg">
+                <p class="text-sm text-amber-600 font-medium mb-1">Success Probability</p>
+                <p class="text-2xl font-bold text-amber-900">
+                    {{ scenario_data.success_probability|floatformat:0 }}%
+                </p>
+            </div>
+        </div>
+
+        <!-- Impact Metrics -->
+        {% if scenario_data.impact_metrics %}
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="p-4 border rounded-lg">
+                <h5 class="text-sm font-semibold text-gray-700 mb-2">Economic Impact</h5>
+                <p class="text-xl font-bold text-gray-900">
+                    ₱{{ scenario_data.impact_metrics.economic_impact_php|default:0|floatformat:0 }}
+                </p>
+            </div>
+            <div class="p-4 border rounded-lg">
+                <h5 class="text-sm font-semibold text-gray-700 mb-2">Social Impact</h5>
+                <div class="flex items-center space-x-2">
+                    <div class="flex-1 bg-gray-200 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-blue-500 to-teal-500 h-2 rounded-full"
+                             style="width: {{ scenario_data.impact_metrics.social_impact_score|default:0 }}%"></div>
+                    </div>
+                    <span class="text-sm font-medium text-gray-700">
+                        {{ scenario_data.impact_metrics.social_impact_score|default:0 }}%
+                    </span>
+                </div>
+            </div>
+            <div class="p-4 border rounded-lg">
+                <h5 class="text-sm font-semibold text-gray-700 mb-2">Community Satisfaction</h5>
+                <div class="flex items-center space-x-2">
+                    <div class="flex-1 bg-gray-200 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full"
+                             style="width: {{ scenario_data.impact_metrics.community_satisfaction|default:0 }}%"></div>
+                    </div>
+                    <span class="text-sm font-medium text-gray-700">
+                        {{ scenario_data.impact_metrics.community_satisfaction|default:0 }}%
+                    </span>
+                </div>
+            </div>
+            <div class="p-4 border rounded-lg">
+                <h5 class="text-sm font-semibold text-gray-700 mb-2">Sustainability</h5>
+                <div class="flex items-center space-x-2">
+                    <div class="flex-1 bg-gray-200 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full"
+                             style="width: {{ scenario_data.impact_metrics.sustainability_score|default:0 }}%"></div>
+                    </div>
+                    <span class="text-sm font-medium text-gray-700">
+                        {{ scenario_data.impact_metrics.sustainability_score|default:0 }}%
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Risk Factors -->
+        {% if scenario_data.risk_factors %}
+        <div class="mb-6">
+            <h5 class="text-sm font-semibold text-gray-900 mb-3">Risk Factors</h5>
+            <ul class="space-y-2">
+                {% for risk in scenario_data.risk_factors %}
+                <li class="flex items-start">
+                    <i class="fas fa-exclamation-triangle text-amber-500 mt-1 mr-2"></i>
+                    <span class="text-sm text-gray-700">{{ risk }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Critical Success Factors -->
+        {% if scenario_data.critical_success_factors %}
+        <div class="mb-6">
+            <h5 class="text-sm font-semibold text-gray-900 mb-3">Critical Success Factors</h5>
+            <ul class="space-y-2">
+                {% for csf in scenario_data.critical_success_factors %}
+                <li class="flex items-start">
+                    <i class="fas fa-check-circle text-emerald-500 mt-1 mr-2"></i>
+                    <span class="text-sm text-gray-700">{{ csf }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <!-- Strategic Recommendation (Collapsible) -->
+    {% if simulation.recommendation %}
+    <div id="strategic-recommendation" class="hidden mt-6 p-4 bg-gradient-to-br from-blue-50 to-teal-50 border-l-4 border-blue-500 rounded-lg">
+        <h5 class="text-sm font-semibold text-gray-900 mb-2 flex items-center">
+            <i class="fas fa-lightbulb text-blue-500 mr-2"></i>
+            Strategic Recommendation
+        </h5>
+        <div class="prose prose-sm max-w-none text-gray-700">
+            {{ simulation.recommendation|linebreaks }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Scenario Comparison Summary -->
+    {% if simulation.comparison %}
+    <div class="mt-6 pt-6 border-t">
+        <h5 class="text-sm font-semibold text-gray-900 mb-3">Scenario Comparison</h5>
+        <div class="grid grid-cols-3 gap-4">
+            <div class="p-3 bg-green-50 rounded-lg">
+                <p class="text-xs text-green-600 font-medium mb-1">Best Reach</p>
+                <p class="text-sm font-semibold text-green-900">
+                    {{ simulation.comparison.best_reach|title|replace:"_"," " }}
+                </p>
+            </div>
+            <div class="p-3 bg-blue-50 rounded-lg">
+                <p class="text-xs text-blue-600 font-medium mb-1">Best Efficiency</p>
+                <p class="text-sm font-semibold text-blue-900">
+                    {{ simulation.comparison.best_efficiency|title|replace:"_"," " }}
+                </p>
+            </div>
+            <div class="p-3 bg-purple-50 rounded-lg">
+                <p class="text-xs text-purple-600 font-medium mb-1">Best Risk-Adjusted</p>
+                <p class="text-sm font-semibold text-purple-900">
+                    {{ simulation.comparison.best_risk_adjusted|title|replace:"_"," " }}
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function showScenario(scenarioKey) {
+    // Hide all scenario content
+    document.querySelectorAll('.scenario-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+
+    // Show selected scenario
+    document.querySelector(`.scenario-content[data-scenario="${scenarioKey}"]`).classList.remove('hidden');
+
+    // Update tabs
+    document.querySelectorAll('.scenario-tab').forEach(tab => {
+        tab.classList.remove('border-blue-500', 'text-blue-600');
+        tab.classList.add('border-transparent', 'text-gray-500');
+    });
+
+    const activeTab = document.querySelector(`.scenario-tab[data-scenario="${scenarioKey}"]`);
+    activeTab.classList.remove('border-transparent', 'text-gray-500');
+    activeTab.classList.add('border-blue-500', 'text-blue-600');
+}
+
+function toggleRecommendation() {
+    const recommendation = document.getElementById('strategic-recommendation');
+    recommendation.classList.toggle('hidden');
+}
+</script>

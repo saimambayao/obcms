@@ -134,7 +134,7 @@ OBC Community Development Initiative 2025 (Project)
 1. **Coordination (3 files)**
    - Event modals, event lists, event forms
 
-2. **Project Central (6 files)**
+2. **Project Management Portal (6 files)**
    - Workflow details, portfolio dashboard, project calendar, project lists
 
 3. **Common Tasks (6 files)**

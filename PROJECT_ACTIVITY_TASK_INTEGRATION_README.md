@@ -49,7 +49,7 @@ A unified system that connects **Projects**, **Activities**, and **Tasks** acros
 
 #### View Project Dashboard
 
-1. Navigate to **Project Central > Workflows > [Select Project]**
+1. Navigate to **Project Management Portal > Workflows > [Select Project]**
 2. See **"Upcoming Activities"** section
 3. Use **task filters**:
    - **All Tasks** - Everything

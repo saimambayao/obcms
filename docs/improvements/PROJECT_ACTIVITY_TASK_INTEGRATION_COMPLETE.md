@@ -491,7 +491,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
 
 #### 2. View Project Dashboard
 
-1. Navigate to **Project Central > Workflows**
+1. Navigate to **Project Management Portal > Workflows**
 2. Click on a project to view details
 3. See **"Project Activities"** section with upcoming events
 4. Use **task filters** to view:

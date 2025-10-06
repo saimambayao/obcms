@@ -247,7 +247,7 @@ START: What type of page are you designing?
 - **Assessment Detail**: Sidebar - Edit, View Needs, Generate Report
 - **Form**: FAB - Save Draft, Preview, Help
 
-### Project Central Module
+### Project Management Portal Module
 - **Portfolio Dashboard**: Sidebar - Active Alerts, Workflows, Budget Approvals
 - **Workflow Detail**: Sidebar + FAB - Calendar, Tasks, Activities (Sidebar); Save, Help (FAB)
 - **Budget Dashboard**: Header - Create Budget, Manage Approvals, Reports

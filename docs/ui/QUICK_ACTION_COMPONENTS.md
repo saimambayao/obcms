@@ -791,7 +791,7 @@ When implementing Quick Actions:
 - Upload Documents
 - View Organizations
 
-### Project Central Module
+### Project Management Portal Module
 
 **Portfolio Dashboard (Sidebar Quick Actions):**
 - Active Alerts

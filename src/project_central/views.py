@@ -1,4 +1,4 @@
-"""Project Central Views provide integrated project management interfaces."""
+"""Project Management Portal Views provide integrated project management interfaces."""
 
 from datetime import date
 
@@ -319,7 +319,7 @@ def _format_currency(value):
 
 @login_required
 def moa_ppa_list_view(request):
-    """List MOA PPAs so users can transition them into Project Central workflows."""
+    """List MOA PPAs so users can transition them into Project Management Portal workflows."""
 
     search_query = request.GET.get("q", "").strip()
     status_filter = request.GET.get("status", "").strip()
@@ -477,7 +477,7 @@ def moa_ppa_list_view(request):
 
 @login_required
 def create_moa_ppa_view(request):
-    """Create a new MOA PPA entry from Project Central."""
+    """Create a new MOA PPA entry from Project Management Portal."""
 
     if request.method == "POST":
         form = MonitoringMOAEntryForm(request.POST)
@@ -594,7 +594,7 @@ def moa_ppa_detail_view(request, ppa_id):
 @login_required
 @deprecated_workflow_view("Use WorkItem(work_type='project') instead")
 def create_workflow_from_ppa(request, ppa_id):
-    """Bind a MOA PPA to a new Project Central workflow."""
+    """Bind a MOA PPA to a new Project Management Portal workflow."""
 
     ppa = get_object_or_404(MonitoringEntry, id=ppa_id, category="moa_ppa")
 
@@ -742,7 +742,7 @@ def _get_stage_icon(stage_key):
 @deprecated_workflow_view("Use WorkItem list view with work_type filter instead")
 def project_list_view(request):
     """List all project workflows."""
-    workflows = ProjectWorkflow.objects.all().order_by("-initiated_date")
+    workflows = ProjectWorkflow.objects.all().order_by("-start_date")
 
     stage_filter = request.GET.get("stage")
     if stage_filter:

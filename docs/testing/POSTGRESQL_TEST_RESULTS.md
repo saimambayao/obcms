@@ -33,7 +33,7 @@ All migrations applied successfully, test results are identical between SQLite a
 - MANA: 21 migrations
 - Coordination: 10 migrations
 - Monitoring: 16 migrations
-- Project Central: 3 migrations
+- Project Management Portal: 3 migrations
 - Other apps: 12 migrations
 
 ### Database Schema Verification ✅

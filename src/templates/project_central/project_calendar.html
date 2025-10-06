@@ -70,7 +70,11 @@
                 <span class="mx-2">/</span>
                 <a href="{% url 'project_central:project_list' %}" class="hover:text-emerald-600">Projects</a>
                 <span class="mx-2">/</span>
+                {% if workflow.work_item_id %}
                 <a href="{% url 'common:work_item_detail' pk=workflow.work_item_id %}" class="hover:text-emerald-600">{{ workflow.primary_need.title|truncatewords:5 }}</a>
+                {% else %}
+                <span class="text-gray-600">{{ workflow.primary_need.title|truncatewords:5 }}</span>
+                {% endif %}
                 <span class="mx-2">/</span>
                 <span>Calendar</span>
             </nav>
@@ -97,11 +101,13 @@
                 <i class="fa-solid fa-table-columns"></i>
                 View Work Items
             </a>
+            {% if workflow.work_item_id %}
             <a href="{% url 'common:work_item_detail' pk=workflow.work_item_id %}"
                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-all duration-200">
                 <i class="fa-solid fa-arrow-left"></i>
                 Back to Project
             </a>
+            {% endif %}
         </div>
     </div>
 
@@ -288,7 +294,7 @@ document.getElementById('event-modal').addEventListener('click', function(e) {
 // Export calendar to .ics file
 function exportCalendar() {
     const projectId = '{{ workflow.id }}';
-    const exportUrl = `/project-central/projects/${projectId}/calendar/export.ics`;
+    const exportUrl = `/project-management/projects/${projectId}/calendar/export.ics`;
     window.location.href = exportUrl;
 }
 

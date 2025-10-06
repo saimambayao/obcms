@@ -1,0 +1,184 @@
+<!-- Meeting Summary Widget -->
+<div class="bg-white rounded-xl shadow border p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold flex items-center">
+            <i class="fas fa-brain text-indigo-600 mr-2"></i>
+            AI Meeting Summary
+        </h3>
+        {% if summary.sentiment %}
+        <span class="px-3 py-1 text-xs rounded-full {% if summary.sentiment == 'positive' %}bg-emerald-100 text-emerald-700{% elif summary.sentiment == 'negative' %}bg-red-100 text-red-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+            {{ summary.sentiment|title }}
+        </span>
+        {% endif %}
+    </div>
+
+    {% if summary %}
+    <!-- Executive Summary -->
+    <div class="mb-4 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+        <h4 class="text-sm font-semibold text-indigo-800 mb-2">Executive Summary</h4>
+        <p class="text-sm text-indigo-700">{{ summary.summary }}</p>
+    </div>
+
+    <!-- Key Decisions -->
+    {% if summary.key_decisions %}
+    <div class="mb-4">
+        <h4 class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+            <i class="fas fa-gavel text-blue-500 mr-2"></i>
+            Key Decisions
+        </h4>
+        <ul class="space-y-2">
+            {% for decision in summary.key_decisions %}
+            <li class="flex items-start">
+                <i class="fas fa-check-circle text-blue-500 mr-2 mt-1"></i>
+                <span class="text-sm text-gray-600">{{ decision }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Action Items -->
+    {% if summary.action_items %}
+    <div class="mb-4">
+        <h4 class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+            <i class="fas fa-tasks text-emerald-500 mr-2"></i>
+            Action Items
+        </h4>
+        <div class="space-y-2">
+            {% for item in summary.action_items %}
+            <div class="flex items-start p-2 bg-gray-50 rounded border border-gray-200">
+                <input type="checkbox" class="mt-1 mr-2" id="action-{{ forloop.counter }}">
+                <label for="action-{{ forloop.counter }}" class="text-sm text-gray-700 flex-1">
+                    {% if item.task %}
+                        <strong>{{ item.task }}</strong>
+                        {% if item.owner %}<br><span class="text-xs text-gray-500">Owner: {{ item.owner }}</span>{% endif %}
+                        {% if item.deadline %}<br><span class="text-xs text-gray-500">Due: {{ item.deadline }}</span>{% endif %}
+                    {% else %}
+                        {{ item }}
+                    {% endif %}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+        <button
+            onclick="createTasksFromActions()"
+            class="mt-3 w-full text-sm bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 transition-colors duration-200">
+            <i class="fas fa-magic mr-2"></i>Create Tasks Automatically
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- Next Steps -->
+    {% if summary.next_steps %}
+    <div class="mb-4">
+        <h4 class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+            <i class="fas fa-forward text-purple-500 mr-2"></i>
+            Next Steps
+        </h4>
+        <ol class="space-y-1 list-decimal list-inside">
+            {% for step in summary.next_steps %}
+            <li class="text-sm text-gray-600">{{ step }}</li>
+            {% endfor %}
+        </ol>
+    </div>
+    {% endif %}
+
+    <!-- Topics Discussed -->
+    {% if summary.topics_discussed %}
+    <div class="mb-4">
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">Topics Discussed</h4>
+        <div class="flex flex-wrap gap-2">
+            {% for topic in summary.topics_discussed %}
+            <span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                {{ topic }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Attendees Summary -->
+    {% if summary.attendees_summary %}
+    <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+        <h4 class="text-sm font-semibold text-gray-700 mb-1">Participation</h4>
+        <p class="text-sm text-gray-600">{{ summary.attendees_summary }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="mt-6 flex gap-2">
+        <button
+            onclick="downloadReport()"
+            class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium">
+            <i class="fas fa-download mr-2"></i>Download Report
+        </button>
+        <button
+            onclick="shareSummary()"
+            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 text-sm font-medium">
+            <i class="fas fa-share-alt"></i>
+        </button>
+    </div>
+
+    {% else %}
+    <div class="text-center py-8">
+        <i class="fas fa-comments text-gray-300 text-4xl mb-3"></i>
+        <p class="text-gray-500 mb-4">No summary available</p>
+        <button
+            onclick="generateSummary()"
+            class="bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors duration-200 text-sm font-medium">
+            <i class="fas fa-magic mr-2"></i>Generate AI Summary
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function createTasksFromActions() {
+    if (confirm('Create tasks from all action items?')) {
+        fetch(`/coordination/api/meetings/{{ meeting_id }}/create-tasks/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(`Created ${data.count} tasks successfully!`);
+            location.reload();
+        })
+        .catch(error => {
+            alert('Error creating tasks. Please try again.');
+        });
+    }
+}
+
+function downloadReport() {
+    window.open(`/coordination/api/meetings/{{ meeting_id }}/report/`, '_blank');
+}
+
+function shareSummary() {
+    // Copy summary link to clipboard
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Summary link copied to clipboard!');
+    });
+}
+
+function generateSummary() {
+    // Trigger AI summary generation
+    fetch(`/coordination/api/meetings/{{ meeting_id }}/summarize/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        location.reload();
+    })
+    .catch(error => {
+        alert('Error generating summary. Please try again.');
+    });
+}
+</script>

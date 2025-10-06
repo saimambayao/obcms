@@ -1,5 +1,5 @@
 """
-Context processors for Project Central app.
+Context processors for Project Management Portal app.
 
 Adds project-related data to all templates.
 """
@@ -7,7 +7,7 @@ Adds project-related data to all templates.
 
 def project_central_context(request):
     """
-    Add Project Central data to all templates.
+    Add Project Management Portal data to all templates.
 
     Provides:
     - unacknowledged_alerts_count: Count of unacknowledged alerts

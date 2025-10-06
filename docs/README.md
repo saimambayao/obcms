@@ -178,6 +178,9 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [Coordination Calendar Improvement Plan](improvements/coordination-calendar-improvement-plan.md)
   - [Instant UI Improvements Plan](improvements/instant_ui_improvements_plan.md)
 
+- **Calendar System:**
+  - [Advanced Calendar Architecture](improvements/CALENDAR_ADVANCED_ARCHITECTURE.md) ⭐ **NEW - Google Calendar-Inspired UI Design**
+
 - **Task Management System:** ⭐ **NEW - 100% COMPLETE** ✅
   - [Integrated Task Management Evaluation Plan](improvements/integrated_staff_task_management_evaluation_plan.md) - Original plan
   - [Implementation Status](improvements/TASK_MANAGEMENT_IMPLEMENTATION_STATUS.md) - Initial progress
@@ -206,6 +209,40 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 - [System Requirements](reports/obc-system-requirements.md)
 - [Staff Task Board Research](reports/staff_task_board_research.md)
 
+### 🤖 AI Strategy & Integration ⭐ **NEW - Complete AI Ecosystem**
+- **Strategic Planning:**
+  - [AI Strategy Comprehensive](ai/AI_STRATEGY_COMPREHENSIVE.md) ⭐ **START HERE - Complete AI Integration Strategy** (135+ pages)
+    - **Executive Summary**: Vision for AI-enhanced OBCMS (first AI government platform for Bangsamoro)
+    - **Module-Specific Plans**: AI implementation for all 8 modules (Communities, MANA, Coordination, Policy, M&E, etc.)
+    - **Cross-Module Features**: Semantic search, intelligent insights, conversational AI, automated evidence synthesis
+    - **Technical Architecture**: Claude/Gemini integration, Vector DB (FAISS/Pinecone), ML pipelines, caching strategy
+    - **Implementation Roadmap**: 4-phase plan (39 weeks, Foundation → Intelligence → Analytics → Conversational AI)
+    - **Use Cases**: 5 detailed before/after scenarios (MANA workflows, policy development, stakeholder matching, M&E reporting, semantic search)
+    - **Responsible AI**: Cultural sensitivity framework, bias mitigation, privacy safeguards, ethics guidelines
+    - **ROI Analysis**: 2,857% return, $5.4M annual value, 12-day payback period
+
+- **Developer Resources:**
+  - [AI Quick Start Guide](ai/AI_QUICK_START.md) ⚡ **NEW - Get Started in 30 Minutes**
+    - 5-minute AI integration tutorial
+    - Common AI tasks (summarization, classification, validation, Q&A)
+    - Cultural context integration (Bangsamoro-specific)
+    - Async processing with Celery
+    - Cost optimization and caching strategies
+    - Module-specific quick wins (MANA, Communities, Coordination)
+    - Testing and error handling
+    - Production deployment checklist
+
+- **Implementation Tracking:**
+  - [AI Implementation Checklist](ai/AI_IMPLEMENTATION_CHECKLIST.md) 📋 **NEW - Track Your Progress**
+    - Phase-by-phase task checklist (Foundation, Intelligence, Analytics, Conversational AI)
+    - Infrastructure setup tasks (API config, vector DB, monitoring)
+    - Module-specific implementation tasks (Communities, MANA, Coordination, Policy, M&E)
+    - Cultural sensitivity and ethics checklist
+    - Security and privacy requirements
+    - Success metrics dashboard
+    - Risk register and budget tracker
+    - Developer commands and quick reference
+
 ### 🎨 UI & Experience
 - **Dashboard Consistency:** ⭐ **NEW - Standardization Initiative**
   - [Consistent Dashboard Implementation Plan](improvements/UI/CONSISTENT_DASHBOARD_IMPLEMENTATION_PLAN.md) - 7-module standardization
@@ -222,12 +259,26 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [Stat Card Implementation Tracker](improvements/ui/STATCARD_IMPLEMENTATION_TRACKER.md) 🚧 **In Progress (3/15 Complete)**
   - [Stat Card Implementation Progress](improvements/ui/STATCARD_IMPLEMENTATION_PROGRESS.md) 📊 **20% Complete**
 
-- **Calendar Event Overflow:** 🆕 **NEW - Google Calendar Pattern**
-  - [Calendar Overflow Strategy](improvements/UI/CALENDAR_EVENT_OVERFLOW_STRATEGY.md) ⭐ **Complete Implementation Guide**
+- **Calendar Architecture & Fixes:** 🆕 **NEW - Clean Architecture for FullCalendar v6**
+  - [Calendar Architecture Clean](improvements/UI/CALENDAR_ARCHITECTURE_CLEAN.md) ⭐ **START HERE - Complete Architecture Guide**
+  - [Calendar Architecture Diagrams](improvements/UI/CALENDAR_ARCHITECTURE_DIAGRAMS.md) 📊 **Visual Layout Diagrams**
+  - [Calendar Fix Implementation Steps](improvements/UI/CALENDAR_FIX_IMPLEMENTATION_STEPS.md) 🚀 **Step-by-Step Implementation**
+  - [Calendar Event Filtering and Icons Fix](improvements/UI/CALENDAR_EVENT_FILTERING_AND_ICONS_FIX.md) ✅ **NEW - Event Filtering & Icons Working**
+  - [Calendar Overflow Strategy](improvements/UI/CALENDAR_EVENT_OVERFLOW_STRATEGY.md) ⭐ **Google Calendar Pattern**
   - [Implementation Code](improvements/UI/CALENDAR_OVERFLOW_IMPLEMENTATION_CODE.md) ✅ **Ready-to-Use Code Snippets**
   - [UX Flow Diagram](improvements/UI/CALENDAR_OVERFLOW_UX_FLOW.md) 📊 **Visual UX Guide**
   - [Visual Comparison](improvements/UI/CALENDAR_OVERFLOW_VISUAL_COMPARISON.md) 📸 **Before/After Analysis**
   - [Quick Reference](improvements/UI/CALENDAR_OVERFLOW_QUICK_REFERENCE.md) 🚀 **One-Page Setup Guide**
+  - [Advanced Modern Calendar Fix](improvements/UI/CALENDAR_ADVANCED_MODERN_FIX.md) ✅ **NEW - Full-Height Layout Fix**
+  - [Advanced Calendar Before/After](improvements/UI/CALENDAR_ADVANCED_BEFORE_AFTER.md) 📸 **NEW - Visual Comparison**
+  - [Full-Screen Calendar Pattern](ui/FULL_SCREEN_CALENDAR_PATTERN.md) 📋 **NEW - Reusable Pattern Guide**
+
+- **Calendar Sidebar & Inline Editing:** ✅ **Production Ready**
+  - [Work Item Sidebar Implementation Complete](improvements/UI/WORK_ITEM_SIDEBAR_IMPLEMENTATION_COMPLETE.md) ✅ **NEW - Detail View in Sidebar**
+  - [Calendar Sidebar Detail Quick Reference](ui/CALENDAR_SIDEBAR_DETAIL_QUICK_REFERENCE.md) 🚀 **NEW - Developer Guide**
+  - [Calendar Inline Editing Implementation](improvements/UI/CALENDAR_INLINE_EDITING_IMPLEMENTATION.md) ✅ **Full Inline Edit Feature**
+  - [Calendar Inline Editing Quick Reference](improvements/UI/CALENDAR_INLINE_EDITING_QUICK_REFERENCE.md) 🚀 **Developer Quick Start**
+  - [Calendar Inline Editing Summary](improvements/UI/CALENDAR_INLINE_EDITING_SUMMARY.md) 📋 **Feature Overview**
 
 - **Admin Panel:**
   - [Admin Panel UI Evaluation](ui/admin_panel_ui_evaluation.md) ⭐ **NEW - Comprehensive Analysis**
@@ -349,6 +400,7 @@ The OBC Management System is built using modern web technologies:
 docs/
 ├── README.md                      # This file
 ├── admin-guide/                   # Administrator operations
+├── ai/                           # AI strategy & implementation (NEW)
 ├── deployment/                    # Deployment & infrastructure guides
 ├── development/                   # Development tools & AI configuration
 ├── env/                          # Environment-specific configuration

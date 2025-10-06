@@ -1566,3 +1566,73 @@ from common.proxies import (
     ProjectWorkflowProxy as ProjectWorkflow,
     EventProxy as Event,
 )
+
+
+# ========== AI ASSISTANT ==========
+
+
+class ChatMessage(models.Model):
+    """
+    Store conversation history for the AI chat assistant.
+
+    Enables multi-turn conversations with context tracking.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='chat_messages',
+        help_text="User who sent the message"
+    )
+
+    user_message = models.TextField(
+        help_text="User's natural language question"
+    )
+
+    assistant_response = models.TextField(
+        help_text="Assistant's response"
+    )
+
+    intent = models.CharField(
+        max_length=50,
+        help_text="Classified intent (data_query, analysis, help, etc.)"
+    )
+
+    confidence = models.FloatField(
+        default=0.0,
+        help_text="Intent classification confidence (0.0-1.0)"
+    )
+
+    topic = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Topic of conversation (communities, mana, policies, etc.)"
+    )
+
+    entities = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Detected entities in the message"
+    )
+
+    session_id = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Session ID for grouping conversations"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'common_chat_message'
+        ordering = ['-created_at']
+        verbose_name = 'Chat Message'
+        verbose_name_plural = 'Chat Messages'
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['session_id', '-created_at']),
+            models.Index(fields=['topic']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.get_full_name()}: {self.user_message[:50]}..."

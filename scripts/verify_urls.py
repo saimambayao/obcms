@@ -28,9 +28,9 @@ def check_urls():
         ('common:dashboard_activity', 'Dashboard Activity Feed (if exists)'),
         ('common:dashboard_alerts', 'Dashboard Alerts (if exists)'),
 
-        # Phase 4: Project Central Foundation
+        # Phase 4: Project Management Portal Foundation
         ('project_central:portfolio_dashboard', 'Portfolio Dashboard'),
-        ('project_central:dashboard', 'Project Central Dashboard (alias)'),
+        ('project_central:dashboard', 'Project Management Portal Dashboard (alias)'),
         ('project_central:project_list', 'Project List'),
         ('project_central:create_project_workflow', 'Create Project Workflow'),
 

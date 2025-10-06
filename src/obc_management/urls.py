@@ -20,6 +20,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import redirect
+from django.views.generic import RedirectView
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -47,8 +48,30 @@ urlpatterns = [
     path("", include("common.urls")),
     path("communities/", include("communities.urls")),
     path("monitoring/", include("monitoring.urls")),
-    # Project Central (Integrated Project Management)
-    path("project-central/", include("project_central.urls")),
+    # =========================================================================
+    # PROJECT MANAGEMENT PORTAL URL MIGRATION
+    # =========================================================================
+    # Redirect old /project-central/ URLs to new /project-management/ URLs
+    # This maintains backward compatibility for bookmarks and external links
+    path(
+        "project-central/<path:remaining_path>",
+        RedirectView.as_view(
+            url="/project-management/%(remaining_path)s",
+            permanent=False  # 302 redirect (change to True for 301 after testing)
+        ),
+        name="project_central_legacy_redirect"
+    ),
+    # Special case: redirect root /project-central/ to /project-management/
+    path(
+        "project-central/",
+        RedirectView.as_view(
+            url="/project-management/",
+            permanent=False
+        ),
+        name="project_central_root_redirect"
+    ),
+    # Project Management Portal (Integrated Project Management)
+    path("project-management/", include("project_central.urls")),
     # Documents and MANA
     path(
         "documents/",

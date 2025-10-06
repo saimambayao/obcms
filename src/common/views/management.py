@@ -7,6 +7,7 @@ from collections import defaultdict
 from datetime import date, datetime, time, timedelta, timezone as datetime_timezone
 
 from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import OperationalError, transaction
@@ -423,7 +424,8 @@ def oobc_management_home(request):
         .order_by("-updated_at", "-created_at")[:10]
     )
     recent_calendar_events = (
-        Event.objects.select_related("created_by", "organizer")
+        WorkItem.objects.filter(work_type='activity', is_calendar_visible=True)
+        .select_related("created_by")
         .order_by("-updated_at", "-start_date", "-created_at")[:10]
     )
     recent_ppas = (
@@ -641,6 +643,39 @@ def oobc_calendar(request):
         "workflow_escalations": workflow_escalations,
     }
     return render(request, "common/oobc_calendar.html", context)
+
+
+@login_required
+def oobc_calendar_modern(request):
+    """
+    Modern calendar view with multi-view support (Month/Week/Day/Year),
+    light-colored sidebar, filters, and event detail panel.
+    """
+    context = {
+        "USE_UNIFIED_CALENDAR": getattr(settings, "USE_UNIFIED_CALENDAR", True),
+    }
+    return render(request, "common/calendar_modern.html", context)
+
+
+@login_required
+def oobc_calendar_advanced_modern(request):
+    """
+    Advanced modern calendar view (Calendar #3) with Google Calendar-inspired design.
+
+    Features:
+    - Three-panel layout: Left sidebar | Main calendar | Right detail panel
+    - Mini calendar with date navigation
+    - Event type legend with color swatches
+    - Client-side filtering (Projects, Activities, Tasks, Completed items)
+    - View mode switching (Month/Week/Day/Year) with localStorage persistence
+    - Slide-in detail panel with event information
+    - HTMX modal integration for full details
+    - Responsive design (collapsible sidebar on mobile/tablet)
+    """
+    context = {
+        "USE_UNIFIED_CALENDAR": getattr(settings, "USE_UNIFIED_CALENDAR", True),
+    }
+    return render(request, "common/calendar_advanced_modern.html", context)
 
 
 @login_required
@@ -1701,23 +1736,24 @@ def staff_task_board(request):
 
     # Context-aware dropdown options
     project_options = (
-        ProjectWorkflow.objects.filter(tasks__isnull=False)
-        .annotate(task_count=Count("tasks"))
-        .order_by("-task_count", "primary_need__title")
+        WorkItem.objects.filter(work_type='project')
+        .annotate(task_count=Count("children"))
+        .order_by("-task_count", "title")
         .distinct()
     )
 
     event_options = (
-        Event.objects.filter(staff_tasks__isnull=False)
-        .annotate(task_count=Count("staff_tasks"))
+        WorkItem.objects.filter(work_type='activity', is_calendar_visible=True)
+        .annotate(task_count=Count("children"))
         .order_by("-start_date")
         .distinct()
     )
 
     # Active projects for quick actions
     active_projects = (
-        ProjectWorkflow.objects.exclude(current_stage="completion")
-        .order_by("primary_need__title")
+        WorkItem.objects.filter(work_type='project')
+        .exclude(status='completed')
+        .order_by("title")
     )
 
     view_options = [

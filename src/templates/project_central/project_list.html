@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static humanize %}
 
-{% block title %}All Projects - Project Central{% endblock %}
+{% block title %}All Projects - Project Management Portal{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -161,11 +161,18 @@
                     <!-- Card Footer -->
                     <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl">
                         <div class="flex items-center justify-between gap-3">
+                            {% if workflow.work_item_id %}
                             <a href="{% url 'common:work_item_detail' pk=workflow.work_item_id %}"
                                class="flex-1 text-center px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all">
                                 <i class="fas fa-eye mr-1"></i>
                                 View Details
                             </a>
+                            {% else %}
+                            <span class="flex-1 text-center px-4 py-2 bg-gray-300 text-gray-500 text-sm font-medium rounded-lg cursor-not-allowed">
+                                <i class="fas fa-eye mr-1"></i>
+                                No Work Item
+                            </span>
+                            {% endif %}
                             <a href="{% url 'project_central:project_calendar' workflow.id %}"
                                class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-all"
                                title="Project Calendar">

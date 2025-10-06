@@ -266,7 +266,7 @@ After updating each template, verify:
 ### Breakdown by Category:
 - ✅ **Core Dashboards:** 5/5 complete (dashboard, mana, communities, coordination, management)
 - ✅ **Monitoring Dashboards:** 4/4 complete (dashboard, moa_ppas, obc_requests, initiatives)
-- ✅ **Project Central:** 2/2 complete (budget_approval, alert_list)
+- ✅ **Project Management Portal:** 2/2 complete (budget_approval, alert_list)
 - ⏭️ **Skipped:** 3 templates without stat cards
 
 ### Time Statistics:

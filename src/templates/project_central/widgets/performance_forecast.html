@@ -1,0 +1,232 @@
+{% comment %}
+Performance Forecast Widget
+
+Displays AI-powered forecasts for PPA completion and budget.
+Can be embedded in PPA detail pages or dashboards.
+
+Context variables:
+- forecast: Dict from PerformanceForecaster (timeline or budget forecast)
+- forecast_type: 'timeline' or 'budget'
+- ppa: MonitoringEntry object
+{% endcomment %}
+
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                    <i class="fas {% if forecast_type == 'timeline' %}fa-calendar-alt{% else %}fa-chart-line{% endif %} text-white text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">
+                        {% if forecast_type == 'timeline' %}
+                            Completion Date Forecast
+                        {% else %}
+                            Budget Utilization Forecast
+                        {% endif %}
+                    </h3>
+                    <p class="text-blue-50 text-sm">AI-powered prediction</p>
+                </div>
+            </div>
+            <div class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full">
+                <span class="text-xs font-semibold
+                            {% if forecast.confidence_level == 'HIGH' %}text-emerald-600
+                            {% elif forecast.confidence_level == 'MEDIUM' %}text-yellow-600
+                            {% else %}text-orange-600{% endif %}">
+                    {{ forecast.confidence_level }} CONFIDENCE
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forecast Content -->
+    <div class="p-6">
+        {% if 'error' in forecast %}
+            <!-- Error State -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 mt-1 mr-3"></i>
+                    <div>
+                        <p class="font-semibold text-yellow-900 mb-1">Cannot Generate Forecast</p>
+                        <p class="text-sm text-yellow-800">{{ forecast.error }}</p>
+                    </div>
+                </div>
+            </div>
+
+        {% elif forecast_type == 'timeline' %}
+            <!-- Timeline Forecast -->
+            <div class="space-y-4">
+                <!-- Key Metrics -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
+                        <p class="text-sm text-blue-700 mb-1">Predicted Completion</p>
+                        <p class="text-2xl font-bold text-blue-900">
+                            {{ forecast.predicted_completion|date:"M d, Y" }}
+                        </p>
+                    </div>
+                    <div class="bg-gradient-to-br {% if forecast.is_on_time %}from-emerald-50 to-emerald-100{% else %}from-red-50 to-red-100{% endif %} rounded-lg p-4">
+                        <p class="text-sm {% if forecast.is_on_time %}text-emerald-700{% else %}text-red-700{% endif %} mb-1">
+                            {% if forecast.is_on_time %}On Time{% else %}Delay{% endif %}
+                        </p>
+                        <p class="text-2xl font-bold {% if forecast.is_on_time %}text-emerald-900{% else %}text-red-900{% endif %}">
+                            {% if forecast.delay_days > 0 %}
+                                +{{ forecast.delay_days }} days
+                            {% else %}
+                                <i class="fas fa-check-circle"></i> On Track
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-700">Current Progress</span>
+                        <span class="text-sm font-bold text-gray-900">{{ forecast.current_progress|floatformat:0|mul:100 }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
+                             style="width: {{ forecast.current_progress|floatformat:0|mul:100 }}%"></div>
+                    </div>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="grid grid-cols-3 gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">Velocity</p>
+                        <p class="text-sm font-semibold text-gray-900">
+                            {{ forecast.velocity|floatformat:3|mul:100 }}% /day
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">Confidence</p>
+                        <p class="text-sm font-semibold text-gray-900">
+                            {{ forecast.confidence|floatformat:0|mul:100 }}%
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">Planned Date</p>
+                        <p class="text-sm font-semibold text-gray-900">
+                            {{ forecast.planned_completion|date:"M d" }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Factors -->
+                {% if forecast.factors %}
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-sm font-semibold text-blue-900 mb-3 flex items-center">
+                        <i class="fas fa-brain text-blue-600 mr-2"></i>
+                        AI Analysis - Key Factors:
+                    </p>
+                    <ul class="space-y-2">
+                        {% for factor in forecast.factors %}
+                        <li class="text-sm text-blue-800 flex items-start">
+                            <i class="fas fa-arrow-right text-blue-500 mr-2 mt-1 flex-shrink-0"></i>
+                            <span>{{ factor }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
+        {% else %}
+            <!-- Budget Forecast -->
+            <div class="space-y-4">
+                <!-- Key Metrics -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4">
+                        <p class="text-sm text-purple-700 mb-1">Predicted Spending</p>
+                        <p class="text-2xl font-bold text-purple-900">
+                            ₱{{ forecast.predicted_total_spending|floatformat:0|intcomma }}
+                        </p>
+                    </div>
+                    <div class="bg-gradient-to-br {% if forecast.is_within_budget %}from-emerald-50 to-emerald-100{% else %}from-red-50 to-red-100{% endif %} rounded-lg p-4">
+                        <p class="text-sm {% if forecast.is_within_budget %}text-emerald-700{% else %}text-red-700{% endif %} mb-1">
+                            Variance
+                        </p>
+                        <p class="text-2xl font-bold {% if forecast.is_within_budget %}text-emerald-900{% else %}text-red-900{% endif %}">
+                            {% if forecast.variance > 0 %}+{% endif %}{{ forecast.variance_percent|floatformat:1 }}%
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Budget Bar -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-700">Budget Allocation</span>
+                        <span class="text-sm font-bold text-gray-900">₱{{ forecast.budget_allocation|floatformat:0|intcomma }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        {% with util_percent=forecast.current_spending|div:forecast.budget_allocation|mul:100 %}
+                        <div class="h-full {% if util_percent > 100 %}bg-gradient-to-r from-red-500 to-red-600{% else %}bg-gradient-to-r from-purple-500 to-blue-500{% endif %} rounded-full transition-all duration-500"
+                             style="width: {{ util_percent|floatformat:0 }}%"></div>
+                        {% endwith %}
+                    </div>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="grid grid-cols-3 gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">Current Spending</p>
+                        <p class="text-sm font-semibold text-gray-900">
+                            ₱{{ forecast.current_spending|floatformat:0|intcomma }}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">Spending Rate</p>
+                        <p class="text-sm font-semibold text-gray-900">
+                            ₱{{ forecast.spending_rate|floatformat:0|intcomma }}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">Trend</p>
+                        <p class="text-xs font-semibold text-gray-900">
+                            {{ forecast.spending_trend }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Status Indicator -->
+                <div class="flex items-center justify-center p-4 rounded-lg
+                            {% if forecast.is_within_budget %}bg-emerald-50 border border-emerald-200
+                            {% else %}bg-red-50 border border-red-200{% endif %}">
+                    <i class="fas {% if forecast.is_within_budget %}fa-check-circle text-emerald-600{% else %}fa-exclamation-triangle text-red-600{% endif %} text-2xl mr-3"></i>
+                    <div>
+                        <p class="font-semibold {% if forecast.is_within_budget %}text-emerald-900{% else %}text-red-900{% endif %}">
+                            {% if forecast.is_within_budget %}
+                                Within Budget
+                            {% else %}
+                                Budget Overrun Predicted
+                            {% endif %}
+                        </p>
+                        <p class="text-sm {% if forecast.is_within_budget %}text-emerald-700{% else %}text-red-700{% endif %}">
+                            {% if forecast.is_within_budget %}
+                                Project on track to complete within allocated budget
+                            {% else %}
+                                Predicted to exceed budget by ₱{{ forecast.variance|floatformat:0|intcomma }}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-gray-50 px-6 py-3 border-t border-gray-200">
+        <div class="flex items-center justify-between text-xs text-gray-600">
+            <p>
+                <i class="fas fa-robot mr-1"></i>
+                AI-powered forecast • {{ forecast.confidence_level|lower }} confidence ({{ forecast.confidence|floatformat:0|mul:100 }}%)
+            </p>
+            <p>
+                Updated: {{ forecast.forecast_date|date:"M d, Y" }}
+            </p>
+        </div>
+    </div>
+</div>
+
+{% load humanize %}

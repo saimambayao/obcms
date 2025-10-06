@@ -1,0 +1,11 @@
+<!-- Chat Message Pair (User + Assistant) -->
+<!-- This template is used by HTMX to append new messages -->
+
+<!-- Assistant Response (hidden data for Alpine.js) -->
+<div style="display:none;" data-assistant-response>{{ assistant_response }}</div>
+
+<!-- Suggestions (hidden data for Alpine.js) -->
+<div style="display:none;" data-suggestions>{{ suggestions|safe }}</div>
+
+<!-- Note: The actual rendering is done by Alpine.js in chat_widget.html -->
+<!-- This template just provides the data structure -->

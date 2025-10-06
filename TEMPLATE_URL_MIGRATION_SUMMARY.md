@@ -46,7 +46,7 @@ Successfully migrated all templates from legacy StaffTask, ProjectWorkflow, and 
 
 ---
 
-### 2. Project Central Templates (6 files)
+### 2. Project Management Portal Templates (6 files)
 
 #### `/src/templates/project_central/workflow_detail.html`
 - **Line 502:** Updated task view link in task list
@@ -289,7 +289,7 @@ git checkout HEAD -- src/templates/
 ## Files Changed Summary
 
 - **Coordination:** 3 files
-- **Project Central:** 6 files
+- **Project Management Portal:** 6 files
 - **Common Tasks:** 6 files
 - **Staff Task Board:** 7 files
 - **Staff Profile:** 1 file

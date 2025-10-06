@@ -17,11 +17,12 @@
             {% if work_item.children_count > 0 %}
                 <button
                     hx-get="{% url 'common:work_item_tree_partial' pk=work_item.pk %}"
-                    hx-target="#children-{{ work_item.id }}"
-                    hx-swap="innerHTML"
+                    hx-target="#children-placeholder-{{ work_item.id }}"
+                    hx-swap="outerHTML swap:300ms"
                     class="flex-shrink-0 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors duration-150"
                     aria-label="Expand/Collapse"
                     data-toggle="children-{{ work_item.id }}"
+                    data-item-id="{{ work_item.id }}"
                     title="Click to expand/collapse">
                     <i class="fas fa-chevron-right toggle-icon text-xs"></i>
                 </button>
@@ -202,11 +203,12 @@
     </td>
 </tr>
 
-{# Children container (loaded via HTMX) #}
+{# Children placeholder row (will be replaced by actual children via HTMX) #}
 {% if work_item.children_count > 0 %}
-<tr id="children-{{ work_item.id }}" class="work-item-children" style="display: none;">
-    <td colspan="7" class="p-0 bg-gray-50">
-        {# Children will be loaded here via HTMX #}
-    </td>
+<tr id="children-placeholder-{{ work_item.id }}"
+    class="work-item-children-placeholder hidden"
+    data-parent-id="{{ work_item.id }}"
+    style="display: none;">
+    {# This placeholder row will be replaced by actual child rows via HTMX outerHTML swap #}
 </tr>
 {% endif %}

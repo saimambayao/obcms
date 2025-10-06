@@ -1,0 +1,188 @@
+{% comment %}
+Evidence Dashboard Widget
+
+Displays cross-module evidence base for policy recommendations.
+Shows evidence sources from MANA, Communities, Projects, and existing Policies.
+{% endcomment %}
+
+<div class="bg-white rounded-xl shadow border p-6 mb-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center space-x-3">
+            <div class="p-2 bg-gradient-to-br from-blue-500 to-teal-500 rounded-lg">
+                <i class="fas fa-database text-white text-xl"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">Evidence Base</h3>
+                <p class="text-sm text-gray-600">Cross-module evidence synthesis</p>
+            </div>
+        </div>
+
+        {% if evidence_synthesis.strength_of_evidence %}
+        <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-600">Evidence Strength:</span>
+            {% if evidence_synthesis.strength_of_evidence == 'strong' %}
+                <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm font-semibold">
+                    <i class="fas fa-check-circle mr-1"></i>Strong
+                </span>
+            {% elif evidence_synthesis.strength_of_evidence == 'moderate' %}
+                <span class="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm font-semibold">
+                    <i class="fas fa-exclamation-circle mr-1"></i>Moderate
+                </span>
+            {% else %}
+                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">
+                    <i class="fas fa-times-circle mr-1"></i>Weak
+                </span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Evidence Source Counts -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+        <div class="text-center p-4 bg-blue-50 rounded-lg">
+            <p class="text-3xl font-bold text-blue-600">{{ evidence.mana_assessments|length }}</p>
+            <p class="text-sm text-gray-600 mt-1">MANA Assessments</p>
+        </div>
+        <div class="text-center p-4 bg-green-50 rounded-lg">
+            <p class="text-3xl font-bold text-green-600">{{ evidence.community_data|length }}</p>
+            <p class="text-sm text-gray-600 mt-1">Communities</p>
+        </div>
+        <div class="text-center p-4 bg-purple-50 rounded-lg">
+            <p class="text-3xl font-bold text-purple-600">{{ evidence.project_outcomes|length }}</p>
+            <p class="text-sm text-gray-600 mt-1">Projects</p>
+        </div>
+        <div class="text-center p-4 bg-orange-50 rounded-lg">
+            <p class="text-3xl font-bold text-orange-600">{{ evidence.total_citations }}</p>
+            <p class="text-sm text-gray-600 mt-1">Total Citations</p>
+        </div>
+    </div>
+
+    <!-- Evidence Synthesis -->
+    {% if evidence_synthesis.synthesis %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-gray-900 mb-3">Evidence Synthesis</h4>
+        <div class="prose prose-sm max-w-none text-gray-700 leading-relaxed">
+            {{ evidence_synthesis.synthesis|linebreaks }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Key Findings -->
+    {% if evidence_synthesis.key_findings %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-gray-900 mb-3">Key Findings</h4>
+        <ul class="space-y-2">
+            {% for finding in evidence_synthesis.key_findings %}
+            <li class="flex items-start">
+                <i class="fas fa-check-circle text-emerald-500 mt-1 mr-2"></i>
+                <span class="text-gray-700">{{ finding }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Data Gaps -->
+    {% if evidence_synthesis.data_gaps %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-gray-900 mb-3">Data Gaps Identified</h4>
+        <ul class="space-y-2">
+            {% for gap in evidence_synthesis.data_gaps %}
+            <li class="flex items-start">
+                <i class="fas fa-exclamation-triangle text-amber-500 mt-1 mr-2"></i>
+                <span class="text-gray-700">{{ gap }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Confidence Score -->
+    {% if evidence_synthesis.confidence_score %}
+    <div class="mt-6 pt-4 border-t">
+        <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-gray-700">Confidence Score</span>
+            <span class="text-lg font-bold text-blue-600">{{ evidence_synthesis.confidence_score|floatformat:0 }}%</span>
+        </div>
+        <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-gradient-to-r from-blue-500 to-teal-500 h-2 rounded-full"
+                 style="width: {{ evidence_synthesis.confidence_score|floatformat:0 }}%"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Detailed Sources (Collapsible) -->
+    <div class="mt-6">
+        <button type="button"
+                onclick="toggleEvidenceSources()"
+                class="w-full flex items-center justify-between px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+            <span class="text-sm font-medium text-gray-700">View Detailed Sources</span>
+            <i class="fas fa-chevron-down text-gray-400" id="evidence-sources-icon"></i>
+        </button>
+
+        <div id="evidence-sources-detail" class="hidden mt-4 space-y-4">
+            <!-- MANA Assessments -->
+            {% if evidence.mana_assessments %}
+            <div class="border-l-4 border-blue-500 pl-4">
+                <h5 class="text-sm font-semibold text-gray-900 mb-2">MANA Assessments</h5>
+                <ul class="space-y-2">
+                    {% for source in evidence.mana_assessments|slice:":5" %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">{{ source.source.title|default:"Assessment" }}</span>
+                        <span class="text-xs text-gray-400">(Relevance: {{ source.similarity|floatformat:2 }})</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- Communities -->
+            {% if evidence.community_data %}
+            <div class="border-l-4 border-green-500 pl-4">
+                <h5 class="text-sm font-semibold text-gray-900 mb-2">Community Data</h5>
+                <ul class="space-y-2">
+                    {% for source in evidence.community_data|slice:":5" %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">{{ source.source.name|default:"Community" }}</span>
+                        <span class="text-xs text-gray-400">(Relevance: {{ source.similarity|floatformat:2 }})</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- Projects -->
+            {% if evidence.project_outcomes %}
+            <div class="border-l-4 border-purple-500 pl-4">
+                <h5 class="text-sm font-semibold text-gray-900 mb-2">Project Outcomes</h5>
+                <ul class="space-y-2">
+                    {% for source in evidence.project_outcomes|slice:":5" %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">{{ source.source.title|default:"Project" }}</span>
+                        <span class="text-xs text-gray-400">(Relevance: {{ source.similarity|floatformat:2 }})</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleEvidenceSources() {
+    const detail = document.getElementById('evidence-sources-detail');
+    const icon = document.getElementById('evidence-sources-icon');
+
+    detail.classList.toggle('hidden');
+
+    if (detail.classList.contains('hidden')) {
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+    } else {
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+    }
+}
+</script>

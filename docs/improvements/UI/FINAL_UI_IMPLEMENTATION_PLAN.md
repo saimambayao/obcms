@@ -3,7 +3,7 @@
 **Document Status**: Approved Implementation Roadmap - **FULLY IMPLEMENTED** ✅
 **Date Created**: January 2, 2025
 **Version**: 3.1 (Navigation Architecture Updated - October 2, 2025)
-**Last Updated**: October 2, 2025 - Project Central navigation consolidated into MOA PPAs Management
+**Last Updated**: October 2, 2025 - Project Management Portal navigation consolidated into MOA PPAs Management
 **Related Documents**:
 - [Integrated Calendar System Evaluation Plan](../integrated_calendar_system_evaluation_plan.md) (88 tasks)
 - [Integrated Staff Task Management Evaluation Plan](../integrated_staff_task_management_evaluation_plan.md) (40 tasks)
@@ -41,7 +41,7 @@
 
 **Parallel Agent Deployment** - All phases implemented simultaneously using 6 specialized htmx-ui-engineer agents:
 - **Agent 1**: Foundation & Dashboard (Enhanced dashboard with HTMX, task deletion fix)
-- **Agent 2**: Phase 4 - Project Central Foundation (Django app, 5 models, portfolio dashboard)
+- **Agent 2**: Phase 4 - Project Management Portal Foundation (Django app, 5 models, portfolio dashboard)
 - **Agent 3**: Phase 5 - Workflow & Budget Approval (9-stage visual timeline, approval dashboard)
 - **Agent 4**: Phase 6 - M&E Analytics (SVG progress gauges, outcome frameworks)
 - **Agent 5**: Phase 7 - Alert System & Reporting (Celery Beat scheduling, 9 alert types)
@@ -120,14 +120,14 @@ Three complete implementation guides:
 
 All systems verified operational:
 1. ✅ **Dashboard**: Live metrics, activity feed, alerts working with HTMX auto-refresh
-2. ✅ **URLs**: All 24 Project Central + 4 Dashboard URLs registered and accessible
+2. ✅ **URLs**: All 24 Project Management Portal + 4 Dashboard URLs registered and accessible
 3. ✅ **Migrations**: All database migrations applied successfully
 4. ✅ **Django Check**: System check passes with 0 issues
 5. ✅ **Navigation Architecture (Updated Oct 2, 2025)**:
-   - **Project Central standalone navigation removed from navbar**
+   - **Project Management Portal standalone navigation removed from navbar**
    - **Integration point**: MOA PPAs Management (`/monitoring/moa-ppas/`) now serves as gateway
    - **Quick access panel**: Portfolio Dashboard, Budget Approvals, Alerts, and Reports accessible via dedicated CTA section
-   - **URL paths unchanged**: All Project Central URLs remain functional, accessed through new entry point
+   - **URL paths unchanged**: All Project Management Portal URLs remain functional, accessed through new entry point
 6. ✅ **Context Processors**: Alert count badge available for embedding where needed
 7. ✅ **Coordination**: Resource booking with conflict detection, QR attendance scanning
 8. ✅ **Component Library**: 4 reusable components + comprehensive documentation
@@ -170,7 +170,7 @@ All systems verified operational:
 
 ---
 
-#### **Agent 2: Project Central Foundation (Phase 4)** ✅ COMPLETE
+#### **Agent 2: Project Management Portal Foundation (Phase 4)** ✅ COMPLETE
 **Scope**: Django app creation, core models, portfolio dashboard
 
 **Deliverables**:
@@ -316,8 +316,8 @@ All systems verified operational:
 
 2. ✅ **Navigation Enhancement**
    - File: `src/templates/common/navbar.html` (streamlined)
-   - Removed Project Central dropdown from global navigation
-   - Project Central shortcuts relocated to MOA PPAs Management quick snapshot panel
+   - Removed Project Management Portal dropdown from global navigation
+   - Project Management Portal shortcuts relocated to MOA PPAs Management quick snapshot panel
    - Quick snapshot provides buttons for Portfolio Dashboard, Budget Approvals, Alerts, and Reports
    - Alert badge support remains available for future placements
 
@@ -367,7 +367,7 @@ All systems verified operational:
 /dashboard/alerts/          → common:dashboard_alerts
 ```
 
-**Project Central URLs** (24):
+**Project Management Portal URLs** (24):
 ```python
 /project-central/                                    → portfolio_dashboard
 /project-central/dashboard/                          → dashboard (alias)
@@ -421,7 +421,7 @@ src/templates/
 │       └── project_row.html            (Table row partial)
 ├── common/
 │   ├── dashboard.html                  (Enhanced with HTMX)
-│   └── navbar.html                     (Project Central links streamlined)
+│   └── navbar.html                     (Project Management Portal links streamlined)
 └── components/
     ├── kanban_board.html               (Reusable kanban)
     ├── calendar_full.html              (FullCalendar wrapper)
@@ -647,7 +647,7 @@ sudo systemctl restart celery-beat
 
 #### **Feature Coverage**
 - ✅ **Dashboard**: Enhanced with live HTMX updates
-- ✅ **Project Central**: Complete 7-phase module
+- ✅ **Project Management Portal**: Complete 7-phase module
 - ✅ **M&E Analytics**: Full PPA tracking + cross-PPA insights
 - ✅ **Workflow Management**: 9-stage visual pipeline
 - ✅ **Budget Approvals**: HTMX-enabled approval queue
@@ -715,7 +715,7 @@ All phases of the OBCMS UI Implementation Plan have been successfully completed 
 **Three Systems, One Platform**:
 - **Calendar** = **WHEN** (scheduling, deadlines, events)
 - **Task Management** = **WHAT** (actionable work items)
-- **Project Central** = **WHY and HOW** (strategic alignment, workflows, budgets)
+- **Project Management Portal** = **WHY and HOW** (strategic alignment, workflows, budgets)
 
 These integrate seamlessly across all 7 OBCMS navigation sections.
 
@@ -726,7 +726,7 @@ These integrate seamlessly across all 7 OBCMS navigation sections.
 ### Implementation Scope: **76 Items**
 
 **Breakdown**:
-- **25 NEW pages** (Project Central module - entirely new)
+- **25 NEW pages** (Project Management Portal module - entirely new)
 - **35 ENHANCEMENTS** (existing pages with better integration)
 - **15 FEATURES** (complete partial implementations)
 - **1 CRITICAL FIX** (task deletion bug in kanban view)
@@ -736,7 +736,7 @@ These integrate seamlessly across all 7 OBCMS navigation sections.
 - ✅ **Calendar System**: 80% complete (resource booking, sharing, attendance exist)
 - ✅ **Task Management**: 70% complete (enhanced dashboard, domain views, templates exist)
 - ✅ **Planning & Budgeting**: 75% complete (strategic goals, scenarios, analytics exist)
-- ❌ **Project Central**: 0% complete (NEW module needed)
+- ❌ **Project Management Portal**: 0% complete (NEW module needed)
 
 ### Integration Philosophy
 
@@ -1489,7 +1489,7 @@ def event_attendance_count(request, event_id):
 *Due to length, I'm showing the pattern for sections 1-4. The full document would continue with:*
 - Section 5: Recommendations (2 new pages: Programs Dashboard, Services Catalog)
 - Section 6: Monitoring (PPA enhancements with tabs)
-- Section 7: OOBC Management (25 new Project Central pages)
+- Section 7: OOBC Management (25 new Project Management Portal pages)
 
 ---
 
@@ -2269,7 +2269,7 @@ python manage.py migrate coordination
 
 ---
 
-### Phase 4: Project Central Foundation ✅ **IMPLEMENTED**
+### Phase 4: Project Management Portal Foundation ✅ **IMPLEMENTED**
 
 **Priority**: HIGH
 **Dependencies**: Phases 1-3 complete ✅
@@ -2282,7 +2282,7 @@ This is the **core new module** that integrates all OBCMS functionality. **FULLY
 
 **Complexity**: Simple
 **Dependencies**: None
-**Blocks**: All Project Central features
+**Blocks**: All Project Management Portal features
 
 ```bash
 cd src
@@ -2420,7 +2420,7 @@ def portfolio_dashboard(request):
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Project Central - Portfolio Dashboard{% endblock %}
+{% block title %}Project Management Portal - Portfolio Dashboard{% endblock %}
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2432,7 +2432,7 @@ def portfolio_dashboard(request):
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900">
             <i class="fas fa-project-diagram text-purple-600 mr-2"></i>
-            Project Central
+            Project Management Portal
         </h1>
         <p class="text-gray-600 mt-1">Integrated portfolio management and strategic oversight</p>
     </div>
@@ -3258,7 +3258,7 @@ def generate_daily_alerts():
 ## Summary: Implementation Scope
 
 ### NEW Pages (25)
-- Project Central Module: 25 pages (entirely new)
+- Project Management Portal Module: 25 pages (entirely new)
 
 ### ENHANCEMENTS (35)
 - Dashboard: 1
@@ -3324,7 +3324,7 @@ def generate_daily_alerts():
 ### ⏳ Pending Implementation (26 items - 69%)
 
 8. **Task Dashboard Polish** (Phase 1.3)
-9. **Project Central Module** (Phase 4-7) - 25 pages
+9. **Project Management Portal Module** (Phase 4-7) - 25 pages
    - Portfolio dashboard
    - Workflow management
    - Budget approval system
@@ -3371,7 +3371,7 @@ python manage.py migrate coordination
 
 ### Priority 3: Future Enhancements
 
-**Project Central** (Phase 4-7):
+**Project Management Portal** (Phase 4-7):
 - 25 new pages for portfolio management
 - Strategic alignment tracking
 - Budget approval workflows
@@ -3405,7 +3405,7 @@ python manage.py migrate coordination
 
 **Agent Outputs**:
 - Agent 1 (Foundation & Dashboard): Enhanced dashboard + HTMX integration
-- Agent 2 (Project Central Foundation): Django app, 5 models, portfolio dashboard
+- Agent 2 (Project Management Portal Foundation): Django app, 5 models, portfolio dashboard
 - Agent 3 (Workflow & Budget Approval): 9-stage timeline, approval dashboard
 - Agent 4 (M&E Analytics): SVG gauges, outcome frameworks, cross-PPA analytics
 - Agent 5 (Alert System): Celery Beat, 9 alert types, 7 report types
@@ -3431,12 +3431,12 @@ python manage.py migrate coordination
 ## 🔄 NAVIGATION ARCHITECTURE UPDATE (October 2, 2025)
 
 ### Change Summary
-**Project Central navigation has been consolidated into the MOA PPAs Management page** for better information architecture and user flow.
+**Project Management Portal navigation has been consolidated into the MOA PPAs Management page** for better information architecture and user flow.
 
 ### What Changed
 
 #### **Before (Removed)**
-- Standalone "Project Central" dropdown in main navbar
+- Standalone "Project Management Portal" dropdown in main navbar
 - Direct access to Portfolio Dashboard, Budget Approvals, Alerts, Reports from navbar
 
 #### **After (Current)**
@@ -3452,7 +3452,7 @@ python manage.py migrate coordination
 
 #### Files Modified
 1. **`src/templates/common/navbar.html`**
-   - Removed: Project Central dropdown (desktop & mobile)
+   - Removed: Project Management Portal dropdown (desktop & mobile)
    - Kept: M&E Analytics link in M&E dropdown (still accessible)
 
 2. **`src/templates/monitoring/moa_ppas_dashboard.html`**
@@ -3493,11 +3493,11 @@ Dashboard
 ```
 
 **Navbar Update** ([navbar.html:189-224](src/templates/common/navbar.html#L189))
-- Project Central dropdown removed entirely
+- Project Management Portal dropdown removed entirely
 - M&E Analytics link preserved in M&E section
 
 ### Impact Assessment
-- ✅ **No broken links**: All Project Central URLs remain functional
+- ✅ **No broken links**: All Project Management Portal URLs remain functional
 - ✅ **Improved UX**: Contextual access from relevant workflow page
 - ✅ **Cleaner navbar**: Reduced from 6 to 5 main sections
 - ✅ **Better mobile experience**: Less dropdown nesting in mobile menu
@@ -3516,7 +3516,7 @@ Dashboard
 - ✅ Phase 1: Foundation & Dashboard (100%)
 - ✅ Phase 2: MANA Integration (100%)
 - ✅ Phase 3: Coordination Enhancements (100%)
-- ✅ Phase 4: Project Central Foundation (100%)
+- ✅ Phase 4: Project Management Portal Foundation (100%)
 - ✅ Phase 5: Workflow & Budget Approval (100%)
 - ✅ Phase 6: M&E Analytics (100%)
 - ✅ Phase 7: Alert System & Reporting (100%)

@@ -65,28 +65,28 @@ Additional tasks:
 Added 4 new scheduled tasks:
 
 ```python
-# Project Central: Generate daily alerts at 6:00 AM
+# Project Management Portal: Generate daily alerts at 6:00 AM
 'generate-daily-alerts': {
     'task': 'project_central.generate_daily_alerts',
     'schedule': crontab(hour=6, minute=0),
     'options': {'expires': 3600}
 },
 
-# Project Central: Deactivate resolved alerts at 6:30 AM
+# Project Management Portal: Deactivate resolved alerts at 6:30 AM
 'deactivate-resolved-alerts': {
     'task': 'project_central.deactivate_resolved_alerts',
     'schedule': crontab(hour=6, minute=30),
     'options': {'expires': 3600}
 },
 
-# Project Central: Update budget ceiling allocations at 5:00 AM
+# Project Management Portal: Update budget ceiling allocations at 5:00 AM
 'update-budget-ceilings': {
     'task': 'project_central.update_budget_ceiling_allocations',
     'schedule': crontab(hour=5, minute=0),
     'options': {'expires': 3600}
 },
 
-# Project Central: Check workflow deadlines at 7:00 AM
+# Project Management Portal: Check workflow deadlines at 7:00 AM
 'check-workflow-deadlines': {
     'task': 'project_central.check_workflow_deadlines',
     'schedule': crontab(hour=7, minute=0),

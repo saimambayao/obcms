@@ -11,7 +11,7 @@
 OBCMS offers two complementary systems for tracking activities:
 
 1. **Event Model** (Coordination Module) - Full-featured coordination meetings with participant management
-2. **WorkItem Activity** (Project Central) - Simple project activities with task integration
+2. **WorkItem Activity** (Project Management Portal) - Simple project activities with task integration
 
 Both systems are **fully supported** and serve different use cases. This guide helps you choose the right tool for your needs.
 
@@ -135,7 +135,7 @@ Use **Event** when you need:
 
 ---
 
-## WorkItem Activity (Project Central)
+## WorkItem Activity (Project Management Portal)
 
 ### When to Use WorkItem Activity
 
@@ -327,7 +327,7 @@ Alternatively, use the built-in **Action Item** model for meeting action items.
 
 **A:** Yes! The OOBC Calendar (`/oobc-management/calendar/`) displays both:
 - Events from the Coordination module
-- WorkItem Activities from Project Central
+- WorkItem Activities from Project Management Portal
 - Staff Tasks
 - Personal calendar events
 

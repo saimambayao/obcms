@@ -143,6 +143,11 @@ def work_items_calendar_feed(request):
         has_children = item.get_children().exists()
         child_count = item.get_children().count()
 
+        # Generate action URLs
+        from django.urls import reverse
+        edit_url = reverse('common:work_item_edit', kwargs={'pk': item.pk})
+        delete_url = reverse('common:work_item_delete', kwargs={'pk': item.pk})
+
         work_items.append({
             'id': f'work-item-{item.pk}',
             'title': item.title,
@@ -155,6 +160,8 @@ def work_items_calendar_feed(request):
             'parentId': f'work-item-{item.parent.pk}' if item.parent else None,
             'breadcrumb': breadcrumb,
             'url': f'/oobc-management/work-items/{item.pk}/modal/',
+            'editUrl': edit_url,
+            'deleteUrl': delete_url,
             'hasChildren': has_children,
             'childCount': child_count,
             'status': item.status,

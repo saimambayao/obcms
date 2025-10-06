@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The **Integrated Project Management System (Project Central)** foundation has been successfully implemented. Phase 1 (Weeks 1-4) is now **100% complete**, representing approximately **17% of the total 8-phase, 32-week project**.
+The **Integrated Project Management System (Project Management Portal)** foundation has been successfully implemented. Phase 1 (Weeks 1-4) is now **100% complete**, representing approximately **17% of the total 8-phase, 32-week project**.
 
 ### What Has Been Accomplished (Phase 1)
 

@@ -254,9 +254,11 @@
                 </a>
             </header>
             {% if budget_by_sector %}
-            <canvas id="sectorChart" class="mt-6 h-80"></canvas>
+            <div class="mt-6" style="height: 280px;">
+                <canvas id="sectorChart"></canvas>
+            </div>
             {% else %}
-            <div class="mt-8 flex h-48 flex-col items-center justify-center text-center text-sm text-gray-500">
+            <div class="mt-6 flex flex-col items-center justify-center text-center text-sm text-gray-500" style="height: 280px;">
                 <i class="fa-solid fa-chart-pie text-2xl mb-3 text-gray-400"></i>
                 No budget records available yet.
             </div>
@@ -271,9 +273,11 @@
                 </div>
             </header>
             {% if budget_by_source %}
-            <canvas id="sourceChart" class="mt-6 h-80"></canvas>
+            <div class="mt-6" style="height: 280px;">
+                <canvas id="sourceChart"></canvas>
+            </div>
             {% else %}
-            <div class="mt-8 flex h-48 flex-col items-center justify-center text-center text-sm text-gray-500">
+            <div class="mt-6 flex flex-col items-center justify-center text-center text-sm text-gray-500" style="height: 280px;">
                 <i class="fa-solid fa-chart-column text-2xl mb-3 text-gray-400"></i>
                 Funding source data will appear once budgets are loaded.
             </div>
@@ -364,11 +368,13 @@
                         Priority {{ workflow.primary_need.priority_score|floatformat:1 }}
                     </span>
                     {% endif %}
+                    {% if workflow.work_item_id %}
                     <a href="{% url 'common:work_item_detail' pk=workflow.work_item_id %}"
                        class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-3 py-1.5 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 transition-all duration-200">
                         Open
                         <i class="fa-solid fa-arrow-right"></i>
                     </a>
+                    {% endif %}
                 </div>
             </div>
             {% empty %}

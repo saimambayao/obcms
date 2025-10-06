@@ -178,7 +178,7 @@ Errors: 16 (2.2%)
 - Communities: 19/25 (76%)
 - Coordination: 20/24 (83%) ← Session focus
 - Monitoring: Status unknown
-- Project Central: Status unknown
+- Project Management Portal: Status unknown
 - WorkItem System: 78 failures (highest concentration)
 
 ### 2.2 Remaining Test Failures (196 total)

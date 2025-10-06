@@ -459,7 +459,7 @@ pip-audit --requirement requirements/base.txt --format json --output audit-repor
        assert entry.source_need_id == need.id
    ```
 
-5. **Project Central HTMX Dashboards & Task Automation**
+5. **Project Management Portal HTMX Dashboards & Task Automation**
    ```python
    # src/project_central/tests/test_views.py
    class MyTasksWithProjectsViewTests(TestCase):

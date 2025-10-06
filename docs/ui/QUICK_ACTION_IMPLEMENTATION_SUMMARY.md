@@ -23,7 +23,7 @@ I've designed **3 comprehensive Quick Action component patterns** for OBCMS with
 - Context-aware action rules (what actions appear where)
 - Implementation checklists
 - Accessibility guidelines (WCAG 2.1 AA compliant)
-- Module-specific examples (Communities, Coordination, MANA, Project Central)
+- Module-specific examples (Communities, Coordination, MANA, Project Management Portal)
 - Color/icon guidelines for different action types
 
 **Sections:**
@@ -407,7 +407,7 @@ I've designed **3 comprehensive Quick Action component patterns** for OBCMS with
 
 ---
 
-### Project Central Module
+### Project Management Portal Module
 
 **Portfolio Dashboard (Sidebar Quick Actions):**
 ```
@@ -504,7 +504,7 @@ All documentation is in `/docs/ui/`:
 3. ✅ **Context-Aware Rules** defined for each page type
 4. ✅ **Color Guidelines** established for action types
 5. ✅ **Decision Flowchart** for pattern selection
-6. ✅ **Module Examples** for Communities, Coordination, MANA, Project Central
+6. ✅ **Module Examples** for Communities, Coordination, MANA, Project Management Portal
 7. ✅ **Accessibility Compliance** WCAG 2.1 AA verified
 8. ✅ **Responsive Design** mobile, tablet, desktop optimized
 9. ✅ **Reusable Components** consistent across all modules

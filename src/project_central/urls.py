@@ -1,5 +1,5 @@
 """
-Project Central URL Configuration
+Project Management Portal URL Configuration
 
 URL patterns for the integrated project management system.
 """

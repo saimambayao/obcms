@@ -531,7 +531,7 @@ supporting_orgs = ppa.supporting_organizations.all()[:10]
 </a>
 ```
 
-**From Project Central Portfolio**:
+**From Project Management Portal Portfolio**:
 ```python
 # In portfolio_dashboard.html
 {% for ppa in recent_ppas %}

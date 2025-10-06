@@ -282,6 +282,8 @@ urlpatterns = [
     ),
     path("oobc-management/", views.oobc_management_home, name="oobc_management_home"),
     path("oobc-management/calendar/", views.oobc_calendar, name="oobc_calendar"),
+    path("oobc-management/calendar/modern/", views.oobc_calendar_modern, name="oobc_calendar_modern"),
+    path("oobc-management/calendar/advanced-modern/", views.oobc_calendar_advanced_modern, name="oobc_calendar_advanced_modern"),
     path(
         "oobc-management/calendar/feed/json/",
         views.oobc_calendar_feed_json,
@@ -659,6 +661,17 @@ urlpatterns = [
         views.work_item_calendar_feed,
         name="work_item_calendar_feed",
     ),
+    # Calendar sidebar inline editing
+    path(
+        "oobc-management/work-items/<uuid:pk>/sidebar/detail/",
+        views.work_item_sidebar_detail,
+        name="work_item_sidebar_detail",
+    ),
+    path(
+        "oobc-management/work-items/<uuid:pk>/sidebar/edit/",
+        views.work_item_sidebar_edit,
+        name="work_item_sidebar_edit",
+    ),
     # ============================================================================
     # LEGACY URL REDIRECTS REMOVED
     # ============================================================================
@@ -675,4 +688,38 @@ urlpatterns = [
     # ============================================================================
 
     path("", views.dashboard, name="home"),  # Default to dashboard
+]
+
+# Unified Search URLs
+from common.views.search import (
+    unified_search_view,
+    search_autocomplete,
+    search_stats,
+    reindex_module,
+)
+
+urlpatterns += [
+    path('search/', unified_search_view, name='unified_search'),
+    path('search/autocomplete/', search_autocomplete, name='search_autocomplete'),
+    path('search/stats/', search_stats, name='search_stats'),
+    path('search/reindex/<str:module>/', reindex_module, name='reindex_module'),
+]
+
+# AI Chat Assistant URLs
+from common.views.chat import (
+    chat_message,
+    chat_history,
+    clear_chat_history,
+    chat_stats,
+    chat_capabilities,
+    chat_suggestion,
+)
+
+urlpatterns += [
+    path('chat/message/', chat_message, name='chat_message'),
+    path('chat/history/', chat_history, name='chat_history'),
+    path('chat/clear/', clear_chat_history, name='chat_clear'),
+    path('chat/stats/', chat_stats, name='chat_stats'),
+    path('chat/capabilities/', chat_capabilities, name='chat_capabilities'),
+    path('chat/suggestion/', chat_suggestion, name='chat_suggestion'),
 ]

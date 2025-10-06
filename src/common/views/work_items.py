@@ -509,3 +509,96 @@ def work_item_calendar_feed(request):
     events = [work_item.get_calendar_event() for work_item in queryset]
 
     return JsonResponse(events, safe=False)
+
+
+@login_required
+def work_item_sidebar_detail(request, pk):
+    """
+    HTMX endpoint: Return work item detail view for calendar sidebar.
+
+    Used for displaying work item information in the calendar detail panel.
+    """
+    work_item = get_object_or_404(WorkItem, pk=pk)
+
+    # Get permissions for current user
+    permissions = get_work_item_permissions(request.user, work_item)
+
+    context = {
+        'work_item': work_item,
+        'can_edit': permissions['can_edit'],
+        'can_delete': permissions['can_delete'],
+    }
+
+    return render(request, 'common/partials/calendar_event_detail.html', context)
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def work_item_sidebar_edit(request, pk):
+    """
+    HTMX endpoint: Handle inline editing in calendar sidebar.
+
+    GET: Return edit form HTML
+    POST: Process form submission and return updated detail view
+    """
+    work_item = get_object_or_404(WorkItem, pk=pk)
+
+    # Check edit permissions
+    permissions = get_work_item_permissions(request.user, work_item)
+    if not permissions['can_edit']:
+        import json
+        return HttpResponse(
+            status=403,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'You do not have permission to edit this work item.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    if request.method == 'POST':
+        from common.forms.work_items import WorkItemQuickEditForm
+
+        form = WorkItemQuickEditForm(request.POST, instance=work_item)
+        if form.is_valid():
+            work_item = form.save()
+
+            # Update progress of parent if auto_calculate is enabled
+            if work_item.parent and work_item.parent.auto_calculate_progress:
+                work_item.parent.update_progress()
+
+            # Invalidate calendar cache
+            invalidate_calendar_cache(request.user.id)
+
+            # Return updated detail view HTML
+            context = {
+                'work_item': work_item,
+                'can_edit': permissions['can_edit'],
+                'can_delete': permissions['can_delete'],
+            }
+            response = render(request, 'common/partials/calendar_event_detail.html', context)
+
+            # Trigger calendar refresh
+            import json
+            response['HX-Trigger'] = json.dumps({
+                'calendarRefresh': {'eventId': str(work_item.pk)},
+                'showToast': {
+                    'message': f'{work_item.get_work_type_display()} updated successfully',
+                    'level': 'success'
+                }
+            })
+            return response
+        else:
+            # Return form with errors
+            context = {'form': form, 'work_item': work_item}
+            return render(request, 'common/partials/calendar_event_edit_form.html', context)
+
+    else:  # GET
+        from common.forms.work_items import WorkItemQuickEditForm
+
+        form = WorkItemQuickEditForm(instance=work_item)
+        context = {'form': form, 'work_item': work_item}
+        return render(request, 'common/partials/calendar_event_edit_form.html', context)

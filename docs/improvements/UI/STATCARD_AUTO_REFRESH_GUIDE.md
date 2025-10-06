@@ -338,7 +338,7 @@ Implement auto-refresh in this order:
 7. **Monitoring Dashboard** (`monitoring/dashboard.html`) - Dynamic cards
 
 ### Phase 3: Specialized Dashboards (LOW)
-8. **Project Central** dashboards
+8. **Project Management Portal** dashboards
 9. **Calendar** views with stats
 10. **Staff Management** views
 

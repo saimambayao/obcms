@@ -753,7 +753,7 @@
   - MANA (Mapping & Needs Assessment)
   - Coordination
   - Monitoring (PPAs)
-  - Project Central
+  - Project Management Portal
 
 - [ ] Test creating new PPA with WorkItem tracking
   - Enable WorkItem tracking

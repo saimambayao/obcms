@@ -1,0 +1,90 @@
+{% load static %}
+
+<!-- Themes Display Widget -->
+<div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="fas fa-lightbulb text-amber-500 mr-2"></i>
+            Major Themes Identified
+        </h3>
+
+        {% if themes %}
+        <span class="text-sm text-gray-500">{{ themes|length }} themes</span>
+        {% endif %}
+    </div>
+
+    {% if themes %}
+    <div class="space-y-4">
+        {% for theme in themes %}
+        <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors duration-200">
+            <!-- Theme Header -->
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                    <h4 class="text-base font-semibold text-gray-900 mb-1">
+                        {{ forloop.counter }}. {{ theme.theme }}
+                    </h4>
+
+                    <!-- Priority Badge -->
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        {% if theme.priority == 'critical' %}bg-red-100 text-red-800
+                        {% elif theme.priority == 'high' %}bg-orange-100 text-orange-800
+                        {% elif theme.priority == 'medium' %}bg-blue-100 text-blue-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        <i class="fas fa-flag mr-1"></i>
+                        {{ theme.priority|upper }} PRIORITY
+                    </span>
+                </div>
+
+                <!-- Frequency Badge -->
+                {% if theme.frequency %}
+                <div class="ml-4 flex flex-col items-end">
+                    <span class="text-2xl font-bold text-emerald-600">{{ theme.frequency }}</span>
+                    <span class="text-xs text-gray-500">mentions</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sub-themes -->
+            {% if theme.sub_themes %}
+            <div class="mb-3">
+                <p class="text-xs text-gray-500 mb-1">Related sub-themes:</p>
+                <div class="flex flex-wrap gap-1">
+                    {% for sub_theme in theme.sub_themes %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs bg-blue-50 text-blue-700 border border-blue-200">
+                        {{ sub_theme }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Example Quotes -->
+            {% if theme.example_quotes %}
+            <div class="border-l-4 border-gray-300 pl-3 mt-2">
+                <p class="text-xs text-gray-500 mb-1">Example quotes:</p>
+                {% for quote in theme.example_quotes %}
+                <p class="text-sm text-gray-600 italic mb-1">"{{ quote }}"</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Category Tag -->
+            {% if theme.category %}
+            <div class="mt-2">
+                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs bg-purple-50 text-purple-700">
+                    <i class="fas fa-tag mr-1"></i>
+                    {{ theme.category }}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-8">
+        <i class="fas fa-search text-4xl text-gray-300 mb-3"></i>
+        <p class="text-gray-500">No themes identified yet</p>
+        <p class="text-sm text-gray-400">Themes will appear after workshop responses are analyzed</p>
+    </div>
+    {% endif %}
+</div>

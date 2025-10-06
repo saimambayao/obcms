@@ -264,7 +264,16 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="divide-y divide-gray-200 border-collapse" style="width: auto;">
+            <table class="w-full divide-y divide-gray-200 border-collapse" style="table-layout: fixed; min-width: 1200px;">
+                <colgroup>
+                    <col style="width: 40%;">  <!-- Title & Hierarchy -->
+                    <col style="width: 10%;">  <!-- Type -->
+                    <col style="width: 10%;">  <!-- Status -->
+                    <col style="width: 8%;">   <!-- Priority -->
+                    <col style="width: 12%;">  <!-- Progress -->
+                    <col style="width: 12%;">  <!-- Dates -->
+                    <col style="width: 8%;">   <!-- Actions -->
+                </colgroup>
                 <thead class="bg-gradient-to-r from-blue-600 to-teal-600">
                     <tr>
                         <th scope="col" class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
@@ -273,22 +282,22 @@
                                 Title & Hierarchy
                             </div>
                         </th>
-                        <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap" style="width: 1%;">
+                        <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
                             Type
                         </th>
-                        <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap" style="width: 1%;">
+                        <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
                             Status
                         </th>
-                        <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap" style="width: 1%;">
+                        <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
                             Priority
                         </th>
-                        <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap" style="width: 1%;">
+                        <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
                             Progress
                         </th>
-                        <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap" style="width: 1%;">
+                        <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
                             Dates
                         </th>
-                        <th scope="col" class="px-3 py-4 text-right text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap" style="width: 1%;">
+                        <th scope="col" class="px-3 py-4 text-right text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
                             Actions
                         </th>
                     </tr>

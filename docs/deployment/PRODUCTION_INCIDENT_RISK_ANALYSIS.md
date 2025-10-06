@@ -49,7 +49,7 @@ Based on production incidents from similar Django applications, this document an
    - Attendance tracking ([src/templates/coordination/event_attendance_tracker.html](../../src/templates/coordination/event_attendance_tracker.html))
    - **Impact:** Cannot coordinate multi-stakeholder activities. All inter-agency work halted.
 
-5. **Project Central** ❌
+5. **Project Management Portal** ❌
    - Workflow creation/editing ([src/templates/project_central/workflow_form.html](../../src/templates/project_central/workflow_form.html))
    - PPA management ([src/templates/project_central/ppas/form.html](../../src/templates/project_central/ppas/form.html))
    - **Impact:** Cannot track projects, PPAs, or budget allocations.

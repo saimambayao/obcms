@@ -7,6 +7,7 @@ Automated alert generation for project management and budget monitoring.
 import logging
 from datetime import timedelta
 from django.utils import timezone
+from django.urls import reverse
 from django.db.models import Q, Sum, Count, F
 from decimal import Decimal
 
@@ -288,7 +289,7 @@ class AlertService:
                     title=f"Approval Bottleneck: {ppa.title}",
                     description=f"PPA has been in {ppa.get_approval_status_display()} stage for {days_in_approval} days. Budget: ₱{ppa.budget_allocation:,.2f}",
                     related_ppa=ppa,
-                    action_url=f"/project-central/approvals/{ppa.id}/review/",
+                    action_url=reverse("monitoring:monitoring_entry_detail", kwargs={"entry_id": ppa.id}),
                     alert_data={
                         "ppa_id": ppa.id,
                         "days_in_approval": days_in_approval,

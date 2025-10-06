@@ -598,7 +598,7 @@ class MonitoringEntry(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # ========== BUDGET APPROVAL WORKFLOW (Project Central Integration) ==========
+    # ========== BUDGET APPROVAL WORKFLOW (Project Management Portal Integration) ==========
     APPROVAL_STATUS_DRAFT = "draft"
     APPROVAL_STATUS_TECHNICAL_REVIEW = "technical_review"
     APPROVAL_STATUS_BUDGET_REVIEW = "budget_review"

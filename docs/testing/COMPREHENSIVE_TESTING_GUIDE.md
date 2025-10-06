@@ -12,7 +12,7 @@
 2. [Phase 1: Foundation & Dashboard](#phase-1-foundation--dashboard)
 3. [Phase 2: MANA Integration](#phase-2-mana-integration)
 4. [Phase 3: Coordination](#phase-3-coordination)
-5. [Phase 4: Project Central Foundation](#phase-4-project-central-foundation)
+5. [Phase 4: Project Management Portal Foundation](#phase-4-project-central-foundation)
 6. [Phase 5: Workflow & Budget Approval](#phase-5-workflow--budget-approval)
 7. [Phase 6: M&E Analytics](#phase-6-me-analytics)
 8. [Phase 7: Alert System & Reporting](#phase-7-alert-system--reporting)
@@ -301,7 +301,7 @@ ls -la src/templates/components/
 
 ---
 
-## Phase 4: Project Central Foundation
+## Phase 4: Project Management Portal Foundation
 
 ### Test 4.1: Portfolio Dashboard
 
@@ -346,11 +346,11 @@ ls -la src/templates/components/
 
 **Django Admin**: `http://localhost:8000/admin/`
 
-**Objective**: Verify all Project Central models are registered in admin
+**Objective**: Verify all Project Management Portal models are registered in admin
 
 **Steps**:
 1. Login to admin interface
-2. Navigate to "Project Central" section
+2. Navigate to "Project Management Portal" section
 3. Check all models appear:
    - ProjectWorkflow
    - BudgetApprovalStage
@@ -627,7 +627,7 @@ ls -la src/templates/components/
 
 ### Test INT-1: Navigation Bar
 
-**Objective**: Verify navigation bar includes Project Central with alert badge
+**Objective**: Verify navigation bar includes Project Management Portal with alert badge
 
 **Steps**:
 1. Load any authenticated page
@@ -637,9 +637,9 @@ ls -la src/templates/components/
    - Coordination dropdown
    - Recommendations dropdown
    - M&E dropdown
-   - **Project Central dropdown** (NEW)
+   - **Project Management Portal dropdown** (NEW)
    - OOBC Mgt dropdown
-3. Click "Project Central" dropdown
+3. Click "Project Management Portal" dropdown
 4. Verify 5 submenu items appear:
    - Portfolio Dashboard
    - Budget Approvals
@@ -649,12 +649,12 @@ ls -la src/templates/components/
 5. Check alert badge shows count (if alerts exist)
 
 **Expected Results**:
-- ✅ Project Central dropdown in navbar
+- ✅ Project Management Portal dropdown in navbar
 - ✅ 5 submenu items visible on hover
 - ✅ Alert badge shows count (red circle)
 - ✅ All links functional
 - ✅ Dropdown closes on click outside
-- ✅ Mobile menu includes Project Central
+- ✅ Mobile menu includes Project Management Portal
 
 ---
 

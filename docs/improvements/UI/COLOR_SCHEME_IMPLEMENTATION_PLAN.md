@@ -628,7 +628,7 @@ Use complementary gradients for integration banners:
 </section>
 ```
 
-**M&E → Project Central Integration**:
+**M&E → Project Management Portal Integration**:
 ```html
 <section class="bg-gradient-to-r from-ocean-600 via-indigo-600 to-violet-600">
     <h2>Integrated Project Management</h2>
@@ -764,7 +764,7 @@ Use module colors for icon accents:
 - [ ] MANA → Task Management (Primary gradient)
 - [ ] Coordination → Task/QR (Purple-Pink gradient)
 - [ ] Recommendations → Budget (Gold-Orange-Red gradient)
-- [ ] M&E → Project Central (Ocean-Indigo-Violet gradient)
+- [ ] M&E → Project Management Portal (Ocean-Indigo-Violet gradient)
 - [ ] OOBC Management → Cross-module tasks (Mixed)
 
 ### **Testing**

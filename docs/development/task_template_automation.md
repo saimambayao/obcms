@@ -8,7 +8,7 @@
 
 `common.services.task_automation.create_tasks_from_template` orchestrates the
 creation of `StaffTask` records from declarative templates. The service powers
-Project Central workflow generation, MANA automation, coordination events, and
+Project Management Portal workflow generation, MANA automation, coordination events, and
 monitoring migrations. This guide documents the function contract, idempotency
 model, resource booking support, and testing expectations so new automation
 flows remain consistent.

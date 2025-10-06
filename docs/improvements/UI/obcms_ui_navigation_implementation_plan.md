@@ -16,12 +16,12 @@
 - ✅ **Calendar System**: ~80% complete (resource booking, sharing, attendance implemented)
 - ✅ **Task Management**: ~70% complete (enhanced dashboard, domain views, templates implemented)
 - ✅ **Planning & Budgeting**: ~75% complete (strategic goals, scenarios, analytics implemented)
-- ❌ **Project Central**: 0% complete (entirely NEW module needed)
+- ❌ **Project Management Portal**: 0% complete (entirely NEW module needed)
 - ⚠️ **Integration Gaps**: Domain-specific views need better integration with core modules
 
 **Key Finding:**
 Rather than creating 87 entirely new pages, we need to:
-1. **Create 1 NEW module** (Project Central - 25 pages)
+1. **Create 1 NEW module** (Project Management Portal - 25 pages)
 2. **Enhance 35 existing pages** with better integration
 3. **Add 15 missing features** to complete the three integration systems
 
@@ -465,8 +465,8 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
 
 ### 7. OOBC Management (/oobc-management/)
 **Current**: 4 subpages
-**Status**: ⚠️ Core exists, needs Project Central module
-**Enhancement Needed**: Add Project Central submenu, enhance existing pages
+**Status**: ⚠️ Core exists, needs Project Management Portal module
+**Enhancement Needed**: Add Project Management Portal submenu, enhance existing pages
 
 #### Existing Pages (4)
 1. ✅ **Staff Management** - `/oobc-management/staff/`
@@ -503,9 +503,9 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
 - `/oobc-management/calendar/preferences/` - User preferences
 - `/coordination/calendar/` - Coordination calendar (duplicate?)
 
-#### NEW Module Needed: Project Central (25 pages)
+#### NEW Module Needed: Project Management Portal (25 pages)
 
-##### 7.1 Add "Project Central" to OOBC Mgt Dropdown
+##### 7.1 Add "Project Management Portal" to OOBC Mgt Dropdown
 
 **Navbar Enhancement**:
 ```html
@@ -523,7 +523,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
         <a href="{% url 'project_central:dashboard' %}" class="new-badge">
             <i class="fas fa-project-diagram text-purple-500"></i>
             <span>
-                <span class="block font-semibold">Project Central</span>
+                <span class="block font-semibold">Project Management Portal</span>
                 <span class="block text-xs">Integrated project lifecycle management</span>
             </span>
         </a>
@@ -533,7 +533,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
 </div>
 ```
 
-##### Project Central Pages (25 NEW)
+##### Project Management Portal Pages (25 NEW)
 
 **1. Portfolio Dashboard** (NEW)
 **URL**: `/oobc-management/project-central/`
@@ -682,7 +682,7 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
 - **Underspending Alerts** (PPAs with low obligation rates)
 - **Overspending Warnings** (PPAs exceeding budget allocation)
 
-**10-25. Additional Project Central Pages**:
+**10-25. Additional Project Management Portal Pages**:
 - Budget Ceiling Management (`/budget/ceilings/`)
 - Budget Scenario Planner (`/budget/scenarios/`)
 - Participatory Budgeting Interface (`/budget/participatory/`)
@@ -796,9 +796,9 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
 
 ---
 
-### Phase 4: Project Central Foundation (Weeks 13-16) ⭐ **CORE NEW MODULE**
+### Phase 4: Project Management Portal Foundation (Weeks 13-16) ⭐ **CORE NEW MODULE**
 
-**Goal**: Create Project Central module with core pages
+**Goal**: Create Project Management Portal module with core pages
 
 **Deliverables**:
 1. **Create Django App** (Week 13)
@@ -827,14 +827,14 @@ var calendar = new FullCalendar.Calendar(calendarEl, {
    - Add approve/reject actions
 
 **Success Criteria**:
-- ✅ Project Central app installed and accessible
+- ✅ Project Management Portal app installed and accessible
 - ✅ Portfolio dashboard shows summary metrics
 - ✅ Can create and view project workflows
 - ✅ Can approve/reject PPAs in budget approval workflow
 
 ---
 
-### Phase 5: Project Central - PPA Enhancements (Weeks 17-20)
+### Phase 5: Project Management Portal - PPA Enhancements (Weeks 17-20)
 
 **Goal**: Add PPA-specific dashboards for budget and M&E
 
@@ -1268,8 +1268,8 @@ function handleDrop(event) {
 
 **Integration Points**:
 1. **Calendar ↔ Tasks**: Calendar events automatically create tasks; task due dates appear on calendar
-2. **Tasks ↔ Project Central**: Project workflows auto-generate tasks; task completion advances project stages
-3. **Calendar ↔ Project Central**: Project milestones appear on calendar; budget approval deadlines tracked
+2. **Tasks ↔ Project Management Portal**: Project workflows auto-generate tasks; task completion advances project stages
+3. **Calendar ↔ Project Management Portal**: Project milestones appear on calendar; budget approval deadlines tracked
 4. **All Three ↔ Core Modules**: Integration with MANA, Coordination, Monitoring, Recommendations
 
 ---
@@ -1452,7 +1452,7 @@ def test_kanban_drag_drop(page):
 
 ## Summary: What to Build
 
-### NEW Pages (25 from Project Central)
+### NEW Pages (25 from Project Management Portal)
 1. Portfolio Dashboard
 2. Project Workflow List
 3. Project Workflow Detail
@@ -1493,12 +1493,12 @@ def test_kanban_drag_drop(page):
 This plan provides a **realistic, actionable roadmap** for completing the OBCMS UI and fully demonstrating its capabilities. By focusing on:
 1. **Fixing critical bugs first** (Week 1)
 2. **Enhancing existing pages** (35 pages over 12 weeks)
-3. **Creating one new module** (Project Central - 25 pages over 12 weeks)
+3. **Creating one new module** (Project Management Portal - 25 pages over 12 weeks)
 
 We can achieve a **fully integrated OBCMS** in **24 weeks** with:
 - ✅ Calendar System (88 tasks) - Complete
 - ✅ Task Management (40 tasks) - Complete
-- ✅ Project Central (63 tasks) - Complete
+- ✅ Project Management Portal (63 tasks) - Complete
 
 **Total Implementation**: **75 items (25 new + 35 enhancements + 15 features) over 24 weeks**
 

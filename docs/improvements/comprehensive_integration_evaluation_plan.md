@@ -546,7 +546,7 @@ def update_ppa_progress(sender, instance, **kwargs):
 ```
 
 **Conflict 3: Duplicate Task Creation**
-- **Issue**: Project Central might auto-create tasks, Task Management also creates via templates
+- **Issue**: Project Management Portal might auto-create tasks, Task Management also creates via templates
 - **Solution**: Check for existing tasks before creation
 
 ```python
@@ -626,7 +626,7 @@ python manage.py makemigrations monitoring --empty
 python manage.py migrate monitoring
 ```
 
-**Phase 4: Project Central** (Depends on all previous)
+**Phase 4: Project Management Portal** (Depends on all previous)
 ```bash
 # Create project_central app
 python manage.py startapp project_central
@@ -976,7 +976,7 @@ def enable_signals():
 ---
 
 ### Phase 7: Project Management
-**Goal**: Deploy Project Central infrastructure
+**Goal**: Deploy Project Management Portal infrastructure
 
 #### Deliverables
 1. ✅ Create project_central app

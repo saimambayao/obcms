@@ -21,7 +21,7 @@
 **MonitoringEntry (MOA PPAs)** exists as a standalone M&E tracking system with:
 - Budget allocation and funding flows (allocations, obligations, disbursements)
 - Approval workflow (draft → technical review → budget review → executive approval → enacted)
-- Budget ceiling enforcement via Project Central integration
+- Budget ceiling enforcement via Project Management Portal integration
 - NO hierarchical project structure (single-level PPAs)
 
 **WorkItem** provides hierarchical work management with:

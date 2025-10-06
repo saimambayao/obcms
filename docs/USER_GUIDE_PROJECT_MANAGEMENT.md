@@ -50,7 +50,7 @@ The Integrated Project Management System connects the entire project lifecycle f
 
 1. **Navigate to Portfolio Dashboard**
    - URL: `http://your-server/project-central/portfolio/`
-   - Or click "Project Central" in the main navigation menu
+   - Or click "Project Management Portal" in the main navigation menu
 
 2. **Login Required**
    - All features require authentication

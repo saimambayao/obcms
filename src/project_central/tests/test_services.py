@@ -1,5 +1,5 @@
 """
-Unit Tests for Project Central Services
+Unit Tests for Project Management Portal Services
 
 Focused tests for core project_central functionality.
 All tests pass without complex dependencies.

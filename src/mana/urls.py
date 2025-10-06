@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import facilitator_views, participant_views, views
+from . import ai_views, facilitator_views, participant_views, views
 
 app_name = "mana"
 
@@ -135,5 +135,51 @@ urlpatterns = [
         "needs/export/",
         views.needs_export,
         name="mana_needs_export",
+    ),
+    # AI Analysis URLs
+    path(
+        "workshop/<int:workshop_id>/ai-analysis/",
+        ai_views.workshop_ai_analysis,
+        name="workshop_ai_analysis",
+    ),
+    path(
+        "workshop/<int:workshop_id>/analyze/",
+        ai_views.trigger_workshop_analysis,
+        name="trigger_workshop_analysis",
+    ),
+    path(
+        "workshop/<int:workshop_id>/analysis/status/",
+        ai_views.analysis_status,
+        name="analysis_status",
+    ),
+    path(
+        "workshop/<int:workshop_id>/generate-report/",
+        ai_views.generate_report,
+        name="generate_report",
+    ),
+    path(
+        "workshop/<int:workshop_id>/report/status/",
+        ai_views.report_status,
+        name="report_status",
+    ),
+    path(
+        "workshop/<int:workshop_id>/themes/",
+        ai_views.theme_analysis,
+        name="theme_analysis",
+    ),
+    path(
+        "workshop/<int:workshop_id>/needs/",
+        ai_views.needs_analysis,
+        name="needs_analysis",
+    ),
+    path(
+        "workshop/<int:workshop_id>/export-analysis/",
+        ai_views.export_analysis_json,
+        name="export_analysis_json",
+    ),
+    path(
+        "validate-content/",
+        ai_views.validate_content,
+        name="validate_content",
     ),
 ]

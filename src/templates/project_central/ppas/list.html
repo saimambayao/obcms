@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static humanize %}
 
-{% block title %}MOA PPAs - Project Central{% endblock %}
+{% block title %}MOA PPAs - Project Management Portal{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-6 space-y-8">
@@ -14,7 +14,7 @@
                 </ol>
             </nav>
             <h1 class="text-3xl font-bold text-gray-900">MOA PPAs</h1>
-            <p class="text-sm text-gray-600 max-w-2xl">Track Ministry-led programs and seamlessly launch Project Central workflows. Start by registering the MOA PPA, then convert it into a project to manage budgets, activities, and tasks.</p>
+            <p class="text-sm text-gray-600 max-w-2xl">Track Ministry-led programs and seamlessly launch Project Management Portal workflows. Start by registering the MOA PPA, then convert it into a project to manage budgets, activities, and tasks.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <a href="{% url 'project_central:moa_ppa_create' %}"

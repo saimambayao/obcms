@@ -1,5 +1,5 @@
 """
-Celery Tasks for Project Central
+Celery Tasks for Project Management Portal
 
 Automated background tasks for project management and monitoring.
 """
@@ -603,3 +603,420 @@ def recalculate_all_progress_task(self):
             "total_errors": 0,
             "errors": [str(e)]
         }
+
+
+# ========== AI-POWERED M&E TASKS ==========
+
+
+@shared_task(name="project_central.detect_daily_anomalies")
+def detect_daily_anomalies_task():
+    """
+    Daily task: Detect PPA anomalies using AI.
+
+    Detects budget overruns, underspending, and timeline delays
+    across all active PPAs. Caches results for dashboard display.
+
+    Returns:
+        dict: Summary of anomalies detected
+    """
+    from project_central.ai_services import PPAAnomalyDetector
+    from django.core.cache import cache
+
+    logger.info("[AI ANOMALY] Starting daily anomaly detection")
+
+    try:
+        detector = PPAAnomalyDetector()
+
+        # Detect budget anomalies
+        budget_anomalies = detector.detect_budget_anomalies()
+
+        # Detect timeline delays
+        timeline_delays = detector.detect_timeline_delays()
+
+        # Get summary
+        summary = detector.get_anomaly_summary()
+
+        # Cache results for dashboard (24 hours)
+        cache.set('ppa_budget_anomalies', budget_anomalies, timeout=86400)
+        cache.set('ppa_timeline_delays', timeline_delays, timeout=86400)
+        cache.set('ppa_anomaly_summary', summary, timeout=86400)
+
+        # Create alerts for critical anomalies
+        critical_count = _create_anomaly_alerts(budget_anomalies, timeline_delays)
+
+        result = {
+            'status': 'completed',
+            'budget_anomalies': len(budget_anomalies),
+            'timeline_delays': len(timeline_delays),
+            'critical_alerts_created': critical_count,
+            'summary': summary,
+        }
+
+        logger.info(
+            f"[AI ANOMALY] Completed: {len(budget_anomalies)} budget anomalies, "
+            f"{len(timeline_delays)} timeline delays, {critical_count} alerts created"
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"[AI ANOMALY] Error in anomaly detection: {e}", exc_info=True)
+        return {
+            'status': 'failed',
+            'error': str(e),
+            'budget_anomalies': 0,
+            'timeline_delays': 0,
+            'critical_alerts_created': 0,
+        }
+
+
+@shared_task(name="project_central.generate_monthly_me_report")
+def generate_monthly_me_report_task(year: int = None, month: int = None):
+    """
+    Monthly task: Generate automated M&E report.
+
+    Uses AI to create comprehensive monthly M&E report with
+    executive summary, performance analysis, and recommendations.
+
+    Args:
+        year: Year (defaults to current year)
+        month: Month (defaults to previous month)
+
+    Returns:
+        dict: Report summary
+    """
+    from project_central.ai_services import MEReportGenerator
+    from django.core.cache import cache
+    import datetime
+
+    logger.info("[AI REPORT] Starting monthly M&E report generation")
+
+    try:
+        # Default to previous month
+        if not year or not month:
+            today = datetime.date.today()
+            first_day_this_month = today.replace(day=1)
+            last_month = first_day_this_month - datetime.timedelta(days=1)
+            year = last_month.year
+            month = last_month.month
+
+        generator = MEReportGenerator()
+
+        # Generate report
+        report = generator.generate_monthly_report(year, month)
+
+        # Cache report (30 days)
+        cache_key = f'me_report_{year}_{month:02d}'
+        cache.set(cache_key, report, timeout=2592000)  # 30 days
+
+        # TODO: Save report to database
+        # TODO: Generate PDF
+        # TODO: Email to stakeholders
+
+        result = {
+            'status': 'completed',
+            'year': year,
+            'month': month,
+            'total_ppas': report['statistics']['total_ppas'],
+            'disbursement_rate': report['statistics']['disbursement_rate'],
+        }
+
+        logger.info(
+            f"[AI REPORT] Generated M&E report for {year}-{month:02d}: "
+            f"{report['statistics']['total_ppas']} PPAs"
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"[AI REPORT] Error generating M&E report: {e}", exc_info=True)
+        return {
+            'status': 'failed',
+            'error': str(e),
+            'year': year,
+            'month': month,
+        }
+
+
+@shared_task(name="project_central.generate_quarterly_me_report")
+def generate_quarterly_me_report_task(quarter: str = None, year: int = None):
+    """
+    Quarterly task: Generate comprehensive quarterly M&E report.
+
+    Uses AI to create detailed quarterly report with executive summary,
+    performance metrics, budget analysis, achievements, and recommendations.
+
+    Args:
+        quarter: 'Q1', 'Q2', 'Q3', 'Q4' (defaults to current quarter)
+        year: Year (defaults to current year)
+
+    Returns:
+        dict: Report summary
+    """
+    from project_central.ai_services import MEReportGenerator
+    from django.core.cache import cache
+    import datetime
+
+    logger.info("[AI REPORT] Starting quarterly M&E report generation")
+
+    try:
+        # Default to current quarter
+        if not quarter or not year:
+            today = datetime.date.today()
+            year = today.year
+            month = today.month
+            quarter = f'Q{(month - 1) // 3 + 1}'
+
+        generator = MEReportGenerator()
+
+        # Generate report
+        report = generator.generate_quarterly_report(quarter, year)
+
+        # Cache report (90 days)
+        cache_key = f'me_quarterly_report_{quarter}_{year}'
+        cache.set(cache_key, report, timeout=7776000)  # 90 days
+
+        # TODO: Save report to database
+        # TODO: Generate PDF
+        # TODO: Email to stakeholders
+
+        result = {
+            'status': 'completed',
+            'quarter': quarter,
+            'year': year,
+            'total_ppas': report['statistics']['total_ppas'],
+            'disbursement_rate': report['statistics']['disbursement_rate'],
+            'key_achievements': len(report['key_achievements']),
+        }
+
+        logger.info(
+            f"[AI REPORT] Generated quarterly report for {quarter} {year}: "
+            f"{report['statistics']['total_ppas']} PPAs"
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(
+            f"[AI REPORT] Error generating quarterly report: {e}",
+            exc_info=True
+        )
+        return {
+            'status': 'failed',
+            'error': str(e),
+            'quarter': quarter,
+            'year': year,
+        }
+
+
+@shared_task(name="project_central.update_ppa_forecasts")
+def update_ppa_forecasts_task():
+    """
+    Weekly task: Update performance forecasts for all active PPAs.
+
+    Generates timeline and budget forecasts for all ongoing PPAs.
+    Caches results for quick dashboard access.
+
+    Returns:
+        dict: Summary of forecasts updated
+    """
+    from project_central.ai_services import PerformanceForecaster
+    from monitoring.models import MonitoringEntry
+    from django.core.cache import cache
+
+    logger.info("[AI FORECAST] Starting PPA forecast updates")
+
+    try:
+        forecaster = PerformanceForecaster()
+
+        # Get active PPAs
+        ppas = MonitoringEntry.objects.filter(
+            status__in=['planning', 'ongoing']
+        )
+
+        timeline_forecasts = {}
+        budget_forecasts = {}
+        success_estimates = {}
+
+        for ppa in ppas:
+            try:
+                # Generate forecasts
+                timeline_forecasts[ppa.id] = forecaster.forecast_completion_date(ppa.id)
+                budget_forecasts[ppa.id] = forecaster.forecast_budget_utilization(ppa.id)
+                success_estimates[ppa.id] = forecaster.estimate_success_probability(ppa.id)
+
+            except Exception as e:
+                logger.error(f"[AI FORECAST] Error forecasting PPA {ppa.id}: {e}")
+
+        # Cache forecasts (7 days)
+        cache.set('ppa_timeline_forecasts', timeline_forecasts, timeout=604800)
+        cache.set('ppa_budget_forecasts', budget_forecasts, timeout=604800)
+        cache.set('ppa_success_estimates', success_estimates, timeout=604800)
+
+        result = {
+            'status': 'completed',
+            'total_ppas': ppas.count(),
+            'timeline_forecasts': len(timeline_forecasts),
+            'budget_forecasts': len(budget_forecasts),
+            'success_estimates': len(success_estimates),
+        }
+
+        logger.info(
+            f"[AI FORECAST] Updated forecasts for {len(timeline_forecasts)} PPAs"
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"[AI FORECAST] Error updating forecasts: {e}", exc_info=True)
+        return {
+            'status': 'failed',
+            'error': str(e),
+            'total_ppas': 0,
+        }
+
+
+@shared_task(name="project_central.analyze_portfolio_risks")
+def analyze_portfolio_risks_task():
+    """
+    Weekly task: Analyze risks across entire PPA portfolio.
+
+    Uses AI to identify high-risk projects and generate
+    mitigation recommendations.
+
+    Returns:
+        dict: Risk analysis summary
+    """
+    from project_central.ai_services import RiskAnalyzer
+    from django.core.cache import cache
+
+    logger.info("[AI RISK] Starting portfolio risk analysis")
+
+    try:
+        analyzer = RiskAnalyzer()
+
+        # Analyze portfolio
+        portfolio_analysis = analyzer.analyze_portfolio_risks()
+
+        # Cache results (7 days)
+        cache.set('portfolio_risk_analysis', portfolio_analysis, timeout=604800)
+
+        # Create alerts for critical/high-risk PPAs
+        alert_count = _create_risk_alerts(portfolio_analysis['high_risk_ppas'])
+
+        result = {
+            'status': 'completed',
+            'total_ppas_analyzed': portfolio_analysis['total_ppas_analyzed'],
+            'high_risk_count': portfolio_analysis['high_risk_count'],
+            'average_risk_score': portfolio_analysis['average_risk_score'],
+            'alerts_created': alert_count,
+        }
+
+        logger.info(
+            f"[AI RISK] Analyzed {portfolio_analysis['total_ppas_analyzed']} PPAs, "
+            f"found {portfolio_analysis['high_risk_count']} high-risk projects"
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"[AI RISK] Error in risk analysis: {e}", exc_info=True)
+        return {
+            'status': 'failed',
+            'error': str(e),
+            'total_ppas_analyzed': 0,
+            'high_risk_count': 0,
+        }
+
+
+# ========== HELPER FUNCTIONS ==========
+
+
+def _create_anomaly_alerts(budget_anomalies, timeline_delays):
+    """
+    Create Alert objects for critical anomalies.
+
+    Returns:
+        int: Number of alerts created
+    """
+    from project_central.models import Alert
+
+    count = 0
+
+    # Budget anomalies
+    for anomaly in budget_anomalies:
+        if anomaly['severity'] in ['CRITICAL', 'HIGH']:
+            # Check if alert already exists
+            existing = Alert.objects.filter(
+                alert_type='budget_anomaly',
+                related_ppa_id=anomaly['ppa_id'],
+                is_active=True,
+            ).exists()
+
+            if not existing:
+                Alert.create_alert(
+                    alert_type='overspending' if anomaly['anomaly_type'] == 'budget_overrun' else 'underspending',
+                    severity=anomaly['severity'].lower(),
+                    title=f"{anomaly['anomaly_type'].replace('_', ' ').title()}: {anomaly['ppa_name']}",
+                    description=anomaly['alert_message'],
+                    related_ppa_id=anomaly['ppa_id'],
+                    alert_data=anomaly,
+                )
+                count += 1
+
+    # Timeline delays
+    for delay in timeline_delays:
+        if delay['severity'] in ['CRITICAL', 'HIGH']:
+            existing = Alert.objects.filter(
+                alert_type='timeline_delay',
+                related_ppa_id=delay['ppa_id'],
+                is_active=True,
+            ).exists()
+
+            if not existing:
+                Alert.create_alert(
+                    alert_type='overdue_ppa',
+                    severity=delay['severity'].lower(),
+                    title=f"Timeline Delay: {delay['ppa_name']}",
+                    description=f"Project predicted to be delayed by {delay['predicted_delay_days']} days",
+                    related_ppa_id=delay['ppa_id'],
+                    alert_data=delay,
+                )
+                count += 1
+
+    return count
+
+
+def _create_risk_alerts(high_risk_ppas):
+    """
+    Create Alert objects for high-risk PPAs.
+
+    Returns:
+        int: Number of alerts created
+    """
+    from project_central.models import Alert
+
+    count = 0
+
+    for risk_ppa in high_risk_ppas[:5]:  # Top 5 only
+        # Check if alert already exists
+        existing = Alert.objects.filter(
+            alert_type='high_risk_ppa',
+            related_ppa_id=risk_ppa['ppa_id'],
+            is_active=True,
+        ).exists()
+
+        if not existing:
+            top_risks = ', '.join(r['description'] for r in risk_ppa['top_risks'][:2])
+
+            Alert.create_alert(
+                alert_type='workflow_blocked',  # Using existing type
+                severity='critical' if risk_ppa['risk_level'] == 'CRITICAL' else 'high',
+                title=f"High Risk Project: {risk_ppa['ppa_name']}",
+                description=f"Project identified as {risk_ppa['risk_level']} risk. Key issues: {top_risks}",
+                related_ppa_id=risk_ppa['ppa_id'],
+                alert_data=risk_ppa,
+            )
+            count += 1
+
+    return count

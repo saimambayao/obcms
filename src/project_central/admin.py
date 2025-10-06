@@ -1,5 +1,5 @@
 """
-Project Central Admin Configuration
+Project Management Portal Admin Configuration
 """
 
 from django.contrib import admin

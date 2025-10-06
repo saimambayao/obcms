@@ -325,7 +325,7 @@ path('approvals/<int:ppa_id>/reject/', views.reject_budget, name='reject_budget'
    - Display related tasks in workflow detail
    - Link to task detail pages
 
-4. **Alerts** (Project Central):
+4. **Alerts** (Project Management Portal):
    - `Alert` model
    - Display active alerts for workflows
 
@@ -438,7 +438,7 @@ Phase 5 is considered successful if:
 ## Related Documentation
 
 - [Phase 4 Implementation Report](./TASK_COMPLETION_REPORT.md)
-- [Project Central Architecture](../product/project_central_architecture.md)
+- [Project Management Portal Architecture](../product/project_central_architecture.md)
 - [HTMX Best Practices](./instant_ui_improvements_plan.md)
 - [UI/UX Standards](./UI/)
 

@@ -88,6 +88,7 @@ LOCAL_APPS = [
     "data_imports",
     "services",  # Phase 3: Service catalog and applications
     "project_central",  # Integrated project management system
+    "ai_assistant",  # AI assistant with vector search and semantic similarity
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

@@ -1350,7 +1350,7 @@ upcoming_events = Event.objects.filter(
 
 #### **Related Modules** (❌ Create)
 ```html
-<!-- Integration with Project Central (Already done via MOA PPAs page ✅) -->
+<!-- Integration with Project Management Portal (Already done via MOA PPAs page ✅) -->
 <!-- But add unified M&E dashboard integration -->
 <section class="bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-500">
     <h2>Integrated Project Management</h2>

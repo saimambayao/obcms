@@ -1,0 +1,152 @@
+<!-- Partnership Success Prediction Widget -->
+<div class="bg-white rounded-xl shadow border p-6">
+    <h3 class="text-lg font-semibold mb-4 flex items-center">
+        <i class="fas fa-chart-line text-purple-600 mr-2"></i>
+        Partnership Success Prediction
+    </h3>
+
+    {% if prediction %}
+    <!-- Success Probability -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-gray-700">Success Probability</span>
+            <span class="text-sm text-gray-500">{{ prediction.confidence_level|title }} Confidence</span>
+        </div>
+
+        <div class="relative pt-1">
+            <div class="flex mb-2 items-center justify-between">
+                <div>
+                    <span class="text-3xl font-bold {% if prediction.success_probability >= 0.7 %}text-emerald-600{% elif prediction.success_probability >= 0.5 %}text-amber-600{% else %}text-red-600{% endif %}">
+                        {{ prediction.success_probability|floatformat:0|multiply:100 }}%
+                    </span>
+                </div>
+            </div>
+            <div class="overflow-hidden h-4 mb-4 text-xs flex rounded-full bg-gray-200">
+                <div
+                    style="width:{{ prediction.success_probability|floatformat:2|multiply:100 }}%"
+                    class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center {% if prediction.success_probability >= 0.7 %}bg-emerald-500{% elif prediction.success_probability >= 0.5 %}bg-amber-500{% else %}bg-red-500{% endif %} transition-all duration-500">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Factors -->
+    {% if prediction.success_factors %}
+    <div class="mb-4">
+        <h4 class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+            <i class="fas fa-check-circle text-emerald-500 mr-2"></i>
+            Success Factors
+        </h4>
+        <ul class="space-y-1">
+            {% for factor in prediction.success_factors %}
+            <li class="text-sm text-gray-600 flex items-start">
+                <i class="fas fa-chevron-right text-emerald-500 mr-2 mt-1 text-xs"></i>
+                <span>{{ factor }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Risk Factors -->
+    {% if prediction.risk_factors %}
+    <div class="mb-4">
+        <h4 class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+            <i class="fas fa-exclamation-triangle text-amber-500 mr-2"></i>
+            Risk Factors
+        </h4>
+        <ul class="space-y-1">
+            {% for risk in prediction.risk_factors %}
+            <li class="text-sm text-gray-600 flex items-start">
+                <i class="fas fa-chevron-right text-amber-500 mr-2 mt-1 text-xs"></i>
+                <span>{{ risk }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Recommendations -->
+    {% if prediction.recommendations %}
+    <div class="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <h4 class="text-sm font-semibold text-blue-800 mb-2 flex items-center">
+            <i class="fas fa-lightbulb text-blue-600 mr-2"></i>
+            Recommendations
+        </h4>
+        <ul class="space-y-1">
+            {% for rec in prediction.recommendations %}
+            <li class="text-sm text-blue-700">
+                {{ forloop.counter }}. {{ rec }}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Historical Context -->
+    {% if prediction.historical_context %}
+    <div class="mt-4 pt-4 border-t border-gray-200">
+        <h4 class="text-sm font-semibold text-gray-700 mb-3">Historical Context</h4>
+        <div class="grid grid-cols-3 gap-3">
+            <div class="text-center">
+                <div class="text-2xl font-bold text-gray-900">{{ prediction.historical_context.past_projects }}</div>
+                <div class="text-xs text-gray-500">Past Projects</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-gray-900">{{ prediction.historical_context.success_rate }}%</div>
+                <div class="text-xs text-gray-500">Success Rate</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-gray-900">{{ prediction.historical_context.similar_projects }}</div>
+                <div class="text-xs text-gray-500">Similar Projects</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="mt-6 flex gap-2">
+        <button
+            onclick="proceedWithPartnership()"
+            class="flex-1 bg-gradient-to-r from-blue-600 to-teal-500 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-teal-600 transition-all duration-200 text-sm font-medium">
+            Proceed with Partnership
+        </button>
+        <button
+            onclick="requestDetailedAnalysis()"
+            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 text-sm font-medium">
+            <i class="fas fa-chart-bar"></i>
+        </button>
+    </div>
+
+    {% else %}
+    <div class="text-center py-8">
+        <i class="fas fa-brain text-gray-300 text-4xl mb-3"></i>
+        <p class="text-gray-500 mb-4">No prediction available</p>
+        <button
+            onclick="generatePrediction()"
+            class="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium">
+            Generate Prediction
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function proceedWithPartnership() {
+    // Proceed to partnership creation
+    window.location.href = '/coordination/partnerships/create/';
+}
+
+function requestDetailedAnalysis() {
+    // Request more detailed AI analysis
+    alert('Detailed analysis feature coming soon!');
+}
+
+function generatePrediction() {
+    // Trigger prediction generation
+    alert('Prediction generation triggered!');
+}
+</script>
+
+<!-- Template Filter for multiply (add to templatetags if needed) -->
+{% load custom_filters %}
