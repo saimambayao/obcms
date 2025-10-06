@@ -199,6 +199,7 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 - **Work Items Tree Navigation:** ✅ **NEW - Refactored & Production-Ready**
   - [Work Items Tree Refactoring](improvements/WORK_ITEMS_TREE_REFACTORING.md) ⭐ **Complete Refactoring Documentation**
   - [Work Items Tree Quick Reference](development/WORK_ITEMS_TREE_QUICK_REFERENCE.md) 🚀 **Developer Quick Start**
+  - [Subtask Nesting Implementation](improvements/SUBTASK_NESTING_IMPLEMENTATION.md) ✅ **NEW - Subtasks Can Have Children (Up to Level 5 = 3 Nested Levels)**
 
 - **Calendar System:**
   - [Advanced Calendar Architecture](improvements/CALENDAR_ADVANCED_ARCHITECTURE.md) ⭐ **NEW - Google Calendar-Inspired UI Design**

@@ -87,8 +87,6 @@
         <button type="button"
                 hx-delete="{% url 'common:work_item_delete' pk=work_item.pk %}"
                 hx-confirm="false"
-                hx-target="[data-work-item-id='{{ work_item.id }}']"
-                hx-swap="delete swap:200ms"
                 class="delete-confirm-btn flex-1 px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-all duration-200 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                 aria-label="Confirm deletion">
             <i class="fas fa-trash mr-2"></i>
@@ -109,7 +107,8 @@
  * Work Item Delete Modal - HTMX Integration
  *
  * Handles:
- * - Instant UI removal on delete
+ * - Instant UI removal on delete (list page)
+ * - Page reload after deletion (edit page)
  * - Descendant cleanup if rows are expanded
  * - Success/error toast notifications
  * - Modal cleanup after deletion
@@ -129,61 +128,64 @@
         deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Deleting...';
     });
 
-    // Listen for successful deletion
-    document.body.addEventListener('htmx:afterSwap', function(event) {
-        const deleteBtn = event.detail.elt;
-
-        // Only handle delete confirmation button
-        if (!deleteBtn.classList.contains('delete-confirm-btn')) return;
-
-        // Close modal after successful deletion
-        const modal = deleteBtn.closest('.modal-backdrop');
-        if (modal) {
-            setTimeout(() => modal.remove(), 300);
-        }
-    });
-
     // Listen for workItemDeleted custom event (from HX-Trigger)
     document.body.addEventListener('workItemDeleted', function(event) {
         const workItemId = event.detail.id;
 
-        // Find and remove descendant rows if they're expanded
+        // Find the target row on list page
         const parentRow = document.querySelector(`[data-work-item-id="${workItemId}"]`);
-        if (!parentRow) return;
 
-        // Get all descendant rows
-        const parentLevel = parseInt(parentRow.dataset.level || '0');
-        let currentRow = parentRow.nextElementSibling;
-        const descendantRows = [];
+        if (parentRow) {
+            // LIST PAGE: Remove the item from list instantly
+            const parentLevel = parseInt(parentRow.dataset.level || '0');
+            let currentRow = parentRow.nextElementSibling;
+            const descendantRows = [];
 
-        while (currentRow) {
-            // Skip placeholder and skeleton rows
-            if (!currentRow.dataset.workItemId) {
+            while (currentRow) {
+                // Skip placeholder and skeleton rows
+                if (!currentRow.dataset.workItemId) {
+                    currentRow = currentRow.nextElementSibling;
+                    continue;
+                }
+
+                const level = parseInt(currentRow.dataset.level || '0');
+
+                // Stop if we hit a sibling or parent
+                if (level <= parentLevel) break;
+
+                descendantRows.push(currentRow);
                 currentRow = currentRow.nextElementSibling;
-                continue;
             }
 
-            const level = parseInt(currentRow.dataset.level || '0');
+            // Remove parent row with animation
+            parentRow.style.transition = 'opacity 200ms ease-out';
+            parentRow.style.opacity = '0';
+            setTimeout(() => parentRow.remove(), 200);
 
-            // Stop if we hit a sibling or parent
-            if (level <= parentLevel) break;
+            // Remove descendant rows with animation
+            descendantRows.forEach(row => {
+                row.style.transition = 'opacity 200ms ease-out';
+                row.style.opacity = '0';
+                setTimeout(() => row.remove(), 200);
+            });
 
-            descendantRows.push(currentRow);
-            currentRow = currentRow.nextElementSibling;
+            // Also remove skeleton and placeholder rows
+            const skeletonRow = document.getElementById(`skeleton-row-${workItemId}`);
+            const placeholderRow = document.getElementById(`children-placeholder-${workItemId}`);
+            if (skeletonRow) skeletonRow.remove();
+            if (placeholderRow) placeholderRow.remove();
+
+            // Close modal after successful deletion
+            const modal = document.querySelector('.modal-backdrop');
+            if (modal) {
+                setTimeout(() => modal.remove(), 300);
+            }
+        } else {
+            // EDIT PAGE: Reload the page to refresh the lists
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
         }
-
-        // Remove descendant rows with animation
-        descendantRows.forEach(row => {
-            row.style.transition = 'opacity 200ms ease-out';
-            row.style.opacity = '0';
-            setTimeout(() => row.remove(), 200);
-        });
-
-        // Also remove skeleton and placeholder rows
-        const skeletonRow = document.getElementById(`skeleton-row-${workItemId}`);
-        const placeholderRow = document.getElementById(`children-placeholder-${workItemId}`);
-        if (skeletonRow) skeletonRow.remove();
-        if (placeholderRow) placeholderRow.remove();
     });
 
     // Handle deletion errors

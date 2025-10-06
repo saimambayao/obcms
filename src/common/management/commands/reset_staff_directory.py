@@ -15,11 +15,13 @@ STAFF_DIRECTORY_ENTRIES = [
         "name": "Noron S. Andan, MPA, MAEd",
         "credentials": "",
         "position": "Executive Director",
+        "user_type": "oobc_executive",
     },
     {
-        "name": "Qurash D. Langcap",
+        "name": "Quraish D. Langcap",
         "credentials": "",
         "position": "Deputy Executive Director",
+        "user_type": "oobc_executive",
     },
     {
         "name": "Norhan B. Hadji Abdullah",
@@ -178,7 +180,7 @@ class Command(BaseCommand):
                     username=username,
                     first_name=first_name,
                     last_name=last_name,
-                    user_type="oobc_staff",
+                    user_type=entry.get("user_type", "oobc_staff"),
                     email=f"{username}@oobc.local",
                     position=display_position,
                     organization=(

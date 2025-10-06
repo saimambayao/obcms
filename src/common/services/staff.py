@@ -9,7 +9,7 @@ from django.db import OperationalError, transaction
 from django.db.models import Max
 from django.utils import timezone
 
-from common.constants import STAFF_TEAM_DEFINITIONS
+from common.constants import STAFF_TEAM_DEFINITIONS, STAFF_USER_TYPES
 from common.models import (
     StaffProfile,
     WorkItem,
@@ -165,7 +165,7 @@ def seed_staff_demo_data(created_by: User | None = None) -> list[WorkItem]:
 
     ensure_default_staff_teams()
     staff_users = list(
-        User.objects.filter(user_type__in=("oobc_staff", "admin"), is_active=True)
+        User.objects.filter(user_type__in=STAFF_USER_TYPES, is_active=True)
     )
     if created_by and created_by not in staff_users:
         staff_users.insert(0, created_by)

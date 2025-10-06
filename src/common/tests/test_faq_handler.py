@@ -437,3 +437,352 @@ class TestFAQPerformance:
         avg_time = sum(times) / len(times)
 
         assert avg_time < 5, f"Average cache retrieval {avg_time}ms exceeds 5ms"
+
+
+# =============================================================================
+# ENHANCED FAQ TESTS (Phase 1: System Identity)
+# =============================================================================
+
+@pytest.mark.django_db
+class TestEnhancedFAQHandler:
+    """Test enhanced FAQ handler with Phase 1 system identity FAQs."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Set up test fixtures."""
+        cache.clear()
+        self.handler = FAQHandler()
+        yield
+        cache.clear()
+
+    # ========== System Identity Core Tests ==========
+
+    def test_what_is_obcms(self):
+        """Test 'What is OBCMS?' matching."""
+        result = self.handler.try_faq("What is OBCMS?")
+
+        assert result is not None
+        assert result['source'] == 'faq_enhanced'
+        assert result['faq_id'] == 'faq_001_obcms_definition'
+        assert result['priority'] == 20
+        assert result['confidence'] == 1.0
+        assert 'Office for Other Bangsamoro Communities' in result['answer']
+        assert 'CLAUDE.md - Architecture Overview' == result['source_doc']
+
+    def test_obcms_variants(self):
+        """Test variant matching for OBCMS question."""
+        variants = [
+            "what's obcms",
+            "obcms meaning",
+            "define obcms",
+            "tell me about obcms",
+            "obcms",
+        ]
+
+        for variant in variants:
+            result = self.handler.try_faq(variant)
+            assert result is not None, f"Failed for variant: {variant}"
+            assert result['faq_id'] == 'faq_001_obcms_definition'
+            assert result['source'] == 'faq_enhanced'
+
+    def test_what_is_oobc(self):
+        """Test 'What is OOBC?' matching."""
+        result = self.handler.try_faq("What is OOBC?")
+
+        assert result is not None
+        assert result['faq_id'] == 'faq_002_oobc_definition'
+        assert result['priority'] == 20
+        assert 'Office for Other Bangsamoro Communities' in result['answer']
+        assert 'Region IX' in result['answer']
+
+    def test_what_is_obc(self):
+        """Test 'What is OBC?' matching."""
+        result = self.handler.try_faq("What is OBC?")
+
+        assert result is not None
+        assert result['faq_id'] == 'faq_003_obc_definition'
+        assert 'Other Bangsamoro Communities' in result['answer']
+
+    def test_what_is_barmm(self):
+        """Test 'What is BARMM?' matching."""
+        result = self.handler.try_faq("What is BARMM?")
+
+        assert result is not None
+        assert result['faq_id'] == 'faq_004_barmm_definition'
+        assert 'Bangsamoro Autonomous Region' in result['answer']
+        assert 'OUTSIDE BARMM' in result['answer']
+
+    # ========== Module Abbreviation Tests ==========
+
+    def test_what_is_mana(self):
+        """Test 'What is MANA?' matching."""
+        result = self.handler.try_faq("What is MANA?")
+
+        assert result is not None
+        assert result['faq_id'] == 'faq_005_mana_definition'
+        assert result['priority'] == 19
+        assert 'Mapping and Needs Assessment' in result['answer']
+
+    def test_what_is_me(self):
+        """Test 'What is M&E?' matching."""
+        result = self.handler.try_faq("What is M&E?")
+
+        assert result is not None
+        assert result['faq_id'] == 'faq_006_me_definition'
+        assert 'Monitoring and Evaluation' in result['answer']
+
+    def test_what_are_ppas(self):
+        """Test 'What are PPAs?' matching."""
+        result = self.handler.try_faq("What are PPAs?")
+
+        assert result is not None
+        assert result['faq_id'] == 'faq_007_ppa_definition'
+        assert 'Projects, Programs, and Activities' in result['answer']
+
+    def test_what_are_moas(self):
+        """Test 'What are MOAs?' matching."""
+        result = self.handler.try_faq("What are MOAs?")
+
+        assert result is not None
+        assert result['faq_id'] == 'faq_008_moa_definition'
+        assert 'Ministries, Offices, and Agencies' in result['answer']
+
+    # ========== Simple Question Handling Tests ==========
+
+    def test_help_simple(self):
+        """Test ultra-simple 'Help' query."""
+        result = self.handler.try_faq("Help")
+
+        assert result is not None
+        assert result['source'] == 'faq_enhanced'
+        assert result['faq_id'] == 'faq_012_help_simple'
+        assert 'How can I help you?' in result['answer']
+        assert 'Try asking:' in result['answer']
+
+    def test_where_simple(self):
+        """Test ultra-simple 'Where?' query."""
+        result = self.handler.try_faq("Where?")
+
+        assert result is not None
+        assert result['faq_id'] == 'faq_013_where_simple'
+        assert 'Where would you like information about?' in result['answer']
+
+    def test_what_simple(self):
+        """Test ultra-simple 'What?' query."""
+        result = self.handler.try_faq("What?")
+
+        assert result is not None
+        assert result['faq_id'] == 'faq_014_what_simple'
+        assert 'What would you like to know?' in result['answer']
+
+    # ========== Regional Context Tests ==========
+
+    def test_what_regions_covered(self):
+        """Test 'What regions does OOBC serve?' matching."""
+        result = self.handler.try_faq("What regions does OOBC serve?")
+
+        assert result is not None
+        assert result['faq_id'] == 'faq_011_coverage_regions'
+        assert 'Region IX' in result['answer']
+        assert 'Region XII' in result['answer']
+        assert 'SOCCSKSARGEN' in result['answer']
+
+    def test_region_definitions(self):
+        """Test regional definition queries."""
+        test_cases = [
+            ('What is Region IX?', 'faq_015_region_ix', 'Zamboanga Peninsula'),
+            ('What is Region X?', 'faq_016_region_x', 'Northern Mindanao'),
+            ('What is Region XI?', 'faq_017_region_xi', 'Davao Region'),
+            ('What is Region XII?', 'faq_018_region_xii', 'SOCCSKSARGEN'),
+        ]
+
+        for query, expected_id, expected_text in test_cases:
+            result = self.handler.try_faq(query)
+            assert result is not None, f"Failed for: {query}"
+            assert result['faq_id'] == expected_id
+            assert expected_text in result['answer']
+
+    # ========== Priority-Based Matching Tests ==========
+
+    def test_enhanced_takes_precedence_over_legacy(self):
+        """Test that enhanced FAQs take precedence over legacy."""
+        result = self.handler.try_faq("Help")
+
+        # Should match enhanced, not legacy
+        assert result['source'] == 'faq_enhanced'
+        assert result['faq_id'] == 'faq_012_help_simple'
+        assert result['priority'] == 18
+
+    def test_priority_20_matches_first(self):
+        """Test that priority 20 FAQs match first."""
+        result = self.handler.try_faq("What is OBCMS?")
+
+        assert result['priority'] == 20
+        assert result['faq_id'] == 'faq_001_obcms_definition'
+
+    def test_priority_ordering(self):
+        """Test correct priority ordering."""
+        # Priority 20 (system_identity)
+        r1 = self.handler.try_faq("What is OBCMS?")
+        # Priority 19 (module abbreviations)
+        r2 = self.handler.try_faq("What is MANA?")
+        # Priority 18 (purpose/getting started)
+        r3 = self.handler.try_faq("How do I get started?")
+
+        assert r1['priority'] == 20
+        assert r2['priority'] == 19
+        assert r3['priority'] == 18
+
+    # ========== Fuzzy Matching & Typo Tolerance Tests ==========
+
+    def test_fuzzy_match_with_typo(self):
+        """Test fuzzy matching with typo."""
+        result = self.handler.try_faq("What is OBCSM?")  # Transposed letters
+
+        assert result is not None
+        assert result['confidence'] > 0.7
+
+    def test_critical_faq_lenient_threshold(self):
+        """Test that critical FAQs (18-20) have more lenient matching."""
+        result = self.handler.try_faq("What is OBCM")  # Missing 'S'
+
+        # Should still match due to lenient threshold for priority >= 18
+        assert result is not None
+        assert result['priority'] >= 18
+
+    # ========== Performance Tests ==========
+
+    def test_enhanced_response_under_50ms(self):
+        """Test that enhanced FAQ responses are < 50ms."""
+        start_time = time.time()
+        result = self.handler.try_faq("What is OBCMS?")
+        elapsed_ms = (time.time() - start_time) * 1000
+
+        assert result is not None
+        assert elapsed_ms < 50, f"Response took {elapsed_ms}ms, expected < 50ms"
+        assert result['response_time'] < 50
+
+    # ========== Analytics Tests ==========
+
+    def test_enhanced_hit_tracking(self):
+        """Test that enhanced FAQ hits are tracked separately."""
+        cache.clear()
+
+        self.handler.try_faq("What is OBCMS?")
+
+        enhanced_hits_key = f"{self.handler.FAQ_HITS_KEY}_enhanced"
+        hits = cache.get(enhanced_hits_key, {})
+
+        assert 'faq_001_obcms_definition' in hits
+        assert hits['faq_001_obcms_definition'] == 1
+
+    def test_enhanced_multiple_hits(self):
+        """Test multiple hit tracking for enhanced FAQs."""
+        cache.clear()
+
+        for _ in range(3):
+            self.handler.try_faq("What is OBCMS?")
+
+        enhanced_hits_key = f"{self.handler.FAQ_HITS_KEY}_enhanced"
+        hits = cache.get(enhanced_hits_key, {})
+
+        assert hits['faq_001_obcms_definition'] == 3
+
+    def test_enhanced_faq_stats(self):
+        """Test enhanced FAQ statistics."""
+        stats = self.handler.get_faq_stats()
+
+        # Check structure
+        assert 'enhanced_faqs' in stats
+        enhanced = stats['enhanced_faqs']
+
+        assert enhanced['total'] == 20  # Phase 1 has 20 FAQs
+        assert 'by_category' in enhanced
+        assert 'by_priority' in enhanced
+        assert 'popular' in enhanced
+
+        # Check category stats
+        categories = enhanced['by_category']
+        assert 'system_identity' in categories
+        assert categories['system_identity']['total'] == 20
+
+    def test_popular_enhanced_faqs(self):
+        """Test retrieval of popular enhanced FAQs."""
+        cache.clear()
+
+        # Generate hits
+        self.handler.try_faq("What is OBCMS?")
+        self.handler.try_faq("What is OBCMS?")
+        self.handler.try_faq("What is OOBC?")
+
+        popular = self.handler.get_popular_enhanced_faqs(5)
+
+        assert isinstance(popular, list)
+        assert len(popular) > 0
+        assert 'id' in popular[0]
+        assert 'question' in popular[0]
+        assert 'hit_count' in popular[0]
+
+    # ========== Response Structure Tests ==========
+
+    def test_enhanced_response_structure(self):
+        """Test enhanced FAQ response has all required fields."""
+        result = self.handler.try_faq("What is OBCMS?")
+
+        required_fields = [
+            'answer', 'confidence', 'source', 'response_time',
+            'related_queries', 'examples', 'category', 'priority',
+            'faq_id', 'matched_pattern', 'source_doc', 'source_url',
+        ]
+
+        for field in required_fields:
+            assert field in result, f"Missing field: {field}"
+
+    def test_source_verification_present(self):
+        """Test that source verification is included."""
+        result = self.handler.try_faq("What is OBCMS?")
+
+        assert result['source_doc'] == 'CLAUDE.md - Architecture Overview'
+        assert result['source_url'] == 'CLAUDE.md#architecture-overview'
+
+    def test_related_queries_present(self):
+        """Test that related queries are included."""
+        result = self.handler.try_faq("What is OBCMS?")
+
+        assert isinstance(result['related_queries'], list)
+        assert len(result['related_queries']) > 0
+
+    # ========== Backward Compatibility Tests ==========
+
+    def test_legacy_faqs_still_work(self):
+        """Test that legacy FAQs still work (backward compatibility)."""
+        result = self.handler.try_faq("How many regions?")
+
+        assert result is not None
+        assert result['source'] == 'faq'  # Legacy source
+        assert '4 regions' in result['answer']
+
+    def test_total_faq_count(self):
+        """Test total FAQ count includes both legacy and enhanced."""
+        stats = self.handler.get_faq_stats()
+
+        # Should have legacy FAQs + 20 enhanced FAQs
+        assert stats['total_faqs'] > 20
+        assert stats['enhanced_faqs']['total'] == 20
+
+    # ========== Edge Cases ==========
+
+    def test_empty_query_returns_none(self):
+        """Test empty query handling."""
+        result = self.handler.try_faq("")
+        assert result is None
+
+    def test_whitespace_query_returns_none(self):
+        """Test whitespace-only query."""
+        result = self.handler.try_faq("   ")
+        assert result is None
+
+    def test_no_match_query(self):
+        """Test query that should not match."""
+        result = self.handler.try_faq("Completely random unmatched query xyz123")
+        assert result is None

@@ -4,8 +4,14 @@ FAQ Handler Service for OBCMS Chat System
 This module provides instant responses to common questions using pre-computed
 answers and fuzzy matching. No AI fallback required.
 
+Version: 2.0 - Enhanced FAQ System
+- Priority-based matching (5-20 range, higher = more important)
+- Enhanced metadata (source verification, analytics, maintenance)
+- 100+ FAQs across 5 categories
+- Simple question handling
+
 Performance Target: <10ms response time
-Hit Rate Target: 30%
+Hit Rate Target: 80%
 """
 
 from datetime import datetime, timedelta
@@ -16,6 +22,13 @@ from django.db.models import Count, Sum, Q
 from django.utils import timezone
 import logging
 import time
+
+from .faq_data import (
+    get_all_faqs,
+    get_faq_by_id,
+    PATTERN_TO_FAQ_MAP,
+    EnhancedFAQ,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +55,8 @@ class FAQHandler:
     def __init__(self):
         """Initialize FAQ handler with base responses."""
         self.base_faqs = self._get_base_faqs()
+        self.enhanced_faqs = get_all_faqs()  # Load enhanced FAQs from faq_data
+        self.pattern_map = PATTERN_TO_FAQ_MAP  # Pre-built pattern map
 
     def _get_base_faqs(self) -> Dict[str, Dict]:
         """
@@ -278,6 +293,10 @@ class FAQHandler:
         """
         Try to match query against FAQ database.
 
+        Enhanced matching with priority:
+        1. Enhanced FAQs (priority 18-20 first, then descending)
+        2. Legacy FAQs (backward compatibility)
+
         Args:
             query: User's natural language query
 
@@ -289,7 +308,9 @@ class FAQHandler:
                 'source': 'faq',
                 'response_time': float (ms),
                 'related_queries': List[str],
-                'examples': List[str]
+                'examples': List[str],
+                'faq_id': str (enhanced FAQs only),
+                'priority': int (enhanced FAQs only)
             }
         """
         start_time = time.time()
@@ -301,6 +322,19 @@ class FAQHandler:
         if not normalized_query or normalized_query.strip() == '':
             return None
 
+        # STEP 1: Try enhanced FAQs first (priority-based)
+        enhanced_match = self._try_enhanced_faq(normalized_query)
+        if enhanced_match:
+            response = self._build_enhanced_response(
+                enhanced_match['faq'],
+                enhanced_match['confidence'],
+                start_time,
+                matched_pattern=enhanced_match['pattern']
+            )
+            self._track_enhanced_hit(enhanced_match['faq'].id)
+            return response
+
+        # STEP 2: Fall back to legacy FAQs (backward compatibility)
         # Try exact match first
         exact_match = self._exact_match(normalized_query)
         if exact_match:
@@ -702,26 +736,244 @@ class FAQHandler:
 
         return popular_faqs
 
-    def get_faq_stats(self) -> Dict:
+    def _try_enhanced_faq(self, normalized_query: str) -> Optional[Dict]:
         """
-        Get FAQ handler statistics.
+        Try matching against enhanced FAQs (priority-based).
+
+        Args:
+            normalized_query: Normalized query string
 
         Returns:
-            Dict with FAQ stats
+            Dict with matched FAQ and confidence, or None
         """
-        hits = cache.get(self.FAQ_HITS_KEY, {})
+        best_match = None
+        best_confidence = 0.0
+        best_priority = -1
 
-        total_hits = sum(hits.values())
-        total_faqs = len(self.base_faqs)
-        faqs_with_hits = len([p for p in hits if hits[p] > 0])
+        # Sort enhanced FAQs by priority (highest first)
+        sorted_faqs = sorted(self.enhanced_faqs, key=lambda f: f.priority, reverse=True)
+
+        for faq in sorted_faqs:
+            # Try exact match against all patterns
+            for pattern in faq.get_all_patterns():
+                if normalized_query == pattern or pattern in normalized_query or normalized_query in pattern:
+                    # Exact match - return immediately
+                    return {
+                        'faq': faq,
+                        'confidence': 1.0,
+                        'pattern': pattern,
+                    }
+
+            # Try fuzzy match
+            for pattern in faq.get_all_patterns():
+                confidence = self._similarity_score(normalized_query, pattern)
+
+                # Consider both confidence and priority
+                # Higher priority FAQs can match with slightly lower confidence
+                adjusted_threshold = self.FUZZY_THRESHOLD
+                if faq.priority >= 18:
+                    adjusted_threshold -= 0.05  # More lenient for critical FAQs
+
+                if confidence >= adjusted_threshold:
+                    # Prefer higher priority, then higher confidence
+                    if (faq.priority > best_priority or
+                        (faq.priority == best_priority and confidence > best_confidence)):
+                        best_match = {
+                            'faq': faq,
+                            'confidence': confidence,
+                            'pattern': pattern,
+                        }
+                        best_confidence = confidence
+                        best_priority = faq.priority
+
+        return best_match
+
+    def _build_enhanced_response(
+        self,
+        faq: EnhancedFAQ,
+        confidence: float,
+        start_time: float,
+        matched_pattern: str
+    ) -> Dict:
+        """
+        Build response from enhanced FAQ.
+
+        Args:
+            faq: EnhancedFAQ object
+            confidence: Match confidence score
+            start_time: Request start time
+            matched_pattern: The pattern that was matched
+
+        Returns:
+            Response dictionary with enhanced metadata
+        """
+        response_time_ms = (time.time() - start_time) * 1000
 
         return {
+            'answer': faq.response,
+            'confidence': confidence,
+            'source': 'faq_enhanced',
+            'response_time': round(response_time_ms, 2),
+            'related_queries': faq.related_queries,
+            'examples': faq.examples,
+            'category': faq.category,
+            'priority': faq.priority,
+            'faq_id': faq.id,
+            'matched_pattern': matched_pattern,
+            'source_doc': faq.source,
+            'source_url': faq.source_url,
+        }
+
+    def _track_enhanced_hit(self, faq_id: str):
+        """
+        Track enhanced FAQ hit for analytics.
+
+        Args:
+            faq_id: The enhanced FAQ ID that was matched
+        """
+        try:
+            # Get current hits for enhanced FAQs
+            enhanced_hits_key = f"{self.FAQ_HITS_KEY}_enhanced"
+            hits = cache.get(enhanced_hits_key, {})
+
+            # Increment hit count
+            hits[faq_id] = hits.get(faq_id, 0) + 1
+
+            # Store back (24h TTL)
+            cache.set(enhanced_hits_key, hits, 86400)
+
+            logger.info(f"Enhanced FAQ hit tracked: {faq_id} (total: {hits[faq_id]})")
+        except Exception as e:
+            logger.error(f"Error tracking enhanced FAQ hit: {e}")
+
+    def get_faq_stats(self) -> Dict:
+        """
+        Get FAQ handler statistics (legacy + enhanced).
+
+        Returns:
+            Dict with FAQ stats including enhanced FAQs
+        """
+        # Legacy FAQ stats
+        legacy_hits = cache.get(self.FAQ_HITS_KEY, {})
+        legacy_total_hits = sum(legacy_hits.values())
+        legacy_total_faqs = len(self.base_faqs)
+        legacy_faqs_with_hits = len([p for p in legacy_hits if legacy_hits[p] > 0])
+
+        # Enhanced FAQ stats
+        enhanced_hits_key = f"{self.FAQ_HITS_KEY}_enhanced"
+        enhanced_hits = cache.get(enhanced_hits_key, {})
+        enhanced_total_hits = sum(enhanced_hits.values())
+        enhanced_total_faqs = len(self.enhanced_faqs)
+        enhanced_faqs_with_hits = len([p for p in enhanced_hits if enhanced_hits[p] > 0])
+
+        # Combined stats
+        total_faqs = legacy_total_faqs + enhanced_total_faqs
+        total_hits = legacy_total_hits + enhanced_total_hits
+        total_faqs_with_hits = legacy_faqs_with_hits + enhanced_faqs_with_hits
+
+        return {
+            # Overall stats
             'total_faqs': total_faqs,
             'total_hits': total_hits,
-            'faqs_with_hits': faqs_with_hits,
-            'hit_rate': round(faqs_with_hits / total_faqs * 100, 2) if total_faqs > 0 else 0,
-            'popular_faqs': self.get_popular_faqs(5)
+            'faqs_with_hits': total_faqs_with_hits,
+            'hit_rate': round(total_faqs_with_hits / total_faqs * 100, 2) if total_faqs > 0 else 0,
+
+            # Legacy FAQs
+            'legacy_faqs': {
+                'total': legacy_total_faqs,
+                'hits': legacy_total_hits,
+                'with_hits': legacy_faqs_with_hits,
+                'popular': self.get_popular_faqs(5),
+            },
+
+            # Enhanced FAQs
+            'enhanced_faqs': {
+                'total': enhanced_total_faqs,
+                'hits': enhanced_total_hits,
+                'with_hits': enhanced_faqs_with_hits,
+                'popular': self.get_popular_enhanced_faqs(5),
+                'by_category': self._get_enhanced_stats_by_category(),
+                'by_priority': self._get_enhanced_stats_by_priority(),
+            },
         }
+
+    def get_popular_enhanced_faqs(self, limit: int = 10) -> List[Dict]:
+        """
+        Get most popular enhanced FAQs by hit count.
+
+        Args:
+            limit: Maximum number of FAQs to return
+
+        Returns:
+            List of enhanced FAQ dicts sorted by popularity
+        """
+        enhanced_hits_key = f"{self.FAQ_HITS_KEY}_enhanced"
+        hits = cache.get(enhanced_hits_key, {})
+
+        # Sort by hit count
+        sorted_faq_ids = sorted(
+            hits.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )[:limit]
+
+        popular_faqs = []
+        for faq_id, hit_count in sorted_faq_ids:
+            faq = get_faq_by_id(faq_id)
+            if faq:
+                popular_faqs.append({
+                    'id': faq.id,
+                    'question': faq.primary_question,
+                    'category': faq.category,
+                    'priority': faq.priority,
+                    'hit_count': hit_count,
+                })
+
+        return popular_faqs
+
+    def _get_enhanced_stats_by_category(self) -> Dict[str, Dict]:
+        """Get enhanced FAQ statistics grouped by category."""
+        enhanced_hits_key = f"{self.FAQ_HITS_KEY}_enhanced"
+        hits = cache.get(enhanced_hits_key, {})
+
+        categories = {}
+        for faq in self.enhanced_faqs:
+            if faq.category not in categories:
+                categories[faq.category] = {
+                    'total': 0,
+                    'hits': 0,
+                    'with_hits': 0,
+                }
+
+            categories[faq.category]['total'] += 1
+            hit_count = hits.get(faq.id, 0)
+            categories[faq.category]['hits'] += hit_count
+            if hit_count > 0:
+                categories[faq.category]['with_hits'] += 1
+
+        return categories
+
+    def _get_enhanced_stats_by_priority(self) -> Dict[str, Dict]:
+        """Get enhanced FAQ statistics grouped by priority range."""
+        enhanced_hits_key = f"{self.FAQ_HITS_KEY}_enhanced"
+        hits = cache.get(enhanced_hits_key, {})
+
+        priority_ranges = {
+            'critical_18_20': {'min': 18, 'max': 20, 'total': 0, 'hits': 0},
+            'high_15_17': {'min': 15, 'max': 17, 'total': 0, 'hits': 0},
+            'medium_12_14': {'min': 12, 'max': 14, 'total': 0, 'hits': 0},
+            'standard_10_11': {'min': 10, 'max': 11, 'total': 0, 'hits': 0},
+            'low_5_9': {'min': 5, 'max': 9, 'total': 0, 'hits': 0},
+        }
+
+        for faq in self.enhanced_faqs:
+            for range_key, range_data in priority_ranges.items():
+                if range_data['min'] <= faq.priority <= range_data['max']:
+                    range_data['total'] += 1
+                    range_data['hits'] += hits.get(faq.id, 0)
+                    break
+
+        return priority_ranges
 
 
 # Singleton instance

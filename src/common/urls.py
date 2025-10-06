@@ -689,6 +689,28 @@ urlpatterns = [
         views.work_item_duplicate,
         name="work_item_duplicate",
     ),
+    # Related Items management
+    path(
+        "oobc-management/work-items/<uuid:pk>/search-related/",
+        views.work_item_search_related,
+        name="work_item_search_related",
+    ),
+    path(
+        "oobc-management/work-items/<uuid:pk>/add-related/",
+        views.work_item_add_related,
+        name="work_item_add_related",
+    ),
+    path(
+        "oobc-management/work-items/<uuid:pk>/remove-related/<uuid:related_id>/",
+        views.work_item_remove_related,
+        name="work_item_remove_related",
+    ),
+    # Quick child creation
+    path(
+        "oobc-management/work-items/<uuid:pk>/quick-create-child/",
+        views.work_item_quick_create_child,
+        name="work_item_quick_create_child",
+    ),
     # ============================================================================
     # LEGACY URL REDIRECTS REMOVED
     # ============================================================================

@@ -36,7 +36,6 @@
             <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
                 <i class="fas fa-tasks text-blue-600"></i>
                 <span>{{ work_item.title }}</span>
-                <!-- Status Badge with Semantic Colors -->
                 {% if work_item.status == 'active' %}
                 <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
                     <i class="fas fa-check-circle mr-1"></i>
@@ -78,12 +77,11 @@
         </div>
     </div>
 
-    <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Left Column - Main Content (2/3 width) -->
-        <div class="lg:col-span-2 space-y-6">
-
-            <!-- 1. Basic Information Section -->
+    <!-- Main Content Grid (mirrors edit form layout) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Left Column -->
+        <div class="space-y-6">
+            <!-- Basic Information -->
             <section class="bg-white rounded-xl p-6 border border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <i class="fas fa-info-circle text-blue-500 mr-2"></i>
@@ -91,156 +89,52 @@
                 </h2>
                 <div class="space-y-4">
                     <div>
+                        <h3 class="text-sm font-medium text-gray-600 mb-1">Title</h3>
+                        <p class="text-base font-semibold text-gray-900">{{ work_item.title }}</p>
+                    </div>
+                    <div>
                         <h3 class="text-sm font-medium text-gray-600 mb-1">Description</h3>
                         <p class="text-gray-700 whitespace-pre-wrap">{{ work_item.description|default:"No description provided." }}</p>
                     </div>
-
                     {% if work_item.notes %}
                     <div class="pt-3 border-t border-gray-200">
                         <h3 class="text-sm font-medium text-gray-600 mb-1">Notes</h3>
                         <p class="text-gray-700 whitespace-pre-wrap">{{ work_item.notes }}</p>
                     </div>
                     {% endif %}
+                    {% if parent %}
+                    <div class="pt-3 border-t border-gray-200">
+                        <h3 class="text-sm font-medium text-gray-600 mb-1">Parent Work Item</h3>
+                        <a href="{% url 'common:work_item_detail' pk=parent.pk %}"
+                           class="inline-flex items-center px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-sm font-medium hover:bg-blue-100 transition-colors">
+                            <i class="fas fa-sitemap mr-2"></i>
+                            {{ parent.title }}
+                        </a>
+                    </div>
+                    {% endif %}
+                    <div class="pt-3 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-600">Work Type</h3>
+                            <p class="mt-1 text-sm text-gray-900">{{ work_item.get_work_type_display }}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-600">Auto Progress</h3>
+                            <p class="mt-1 text-sm text-gray-900">{% if work_item.auto_calculate_progress %}Enabled{% else %}Disabled{% endif %}</p>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            <!-- 2. Type-specific Data Section -->
-            {% if work_item.type_specific_data %}
+            <!-- Status & Priority -->
             <section class="bg-white rounded-xl p-6 border border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-cog text-purple-500 mr-2"></i>
-                    {{ work_item.get_work_type_display }} Data
+                    <i class="fas fa-tasks text-emerald-500 mr-2"></i>
+                    Status & Priority
                 </h2>
-                <div class="space-y-3">
-                    {% for key, value in work_item.type_specific_data.items %}
-                    <div class="flex justify-between">
-                        <dt class="text-sm font-medium text-gray-600">{{ key|title }}</dt>
-                        <dd class="text-sm text-gray-900">{{ value }}</dd>
-                    </div>
-                    {% endfor %}
-                </div>
-            </section>
-            {% endif %}
-
-            <!-- 3. Children/Sub-items Section -->
-            {% if children %}
-            <section class="bg-white rounded-xl p-6 border border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-sitemap text-emerald-500 mr-2"></i>
-                    Sub-Items
-                    <span class="ml-2 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">{{ children.count }}</span>
-                </h2>
-                <div class="overflow-hidden border border-gray-200 rounded-lg">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gradient-to-r from-blue-600 to-emerald-600">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
-                                    Title
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
-                                    Type
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
-                                    Status
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
-                                    Progress
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {% for child in children %}
-                            <tr class="hover:bg-gray-50 transition-colors duration-200">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <a href="{% url 'common:work_item_detail' pk=child.pk %}" class="text-blue-600 hover:text-blue-800 font-medium">
-                                        {{ child.title }}
-                                    </a>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {{ child.get_work_type_display }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    {% if child.status == 'active' %}
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
-                                        Active
-                                    </span>
-                                    {% elif child.status == 'pending' %}
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
-                                        Pending
-                                    </span>
-                                    {% elif child.status == 'completed' %}
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                        Completed
-                                    </span>
-                                    {% else %}
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                        {{ child.get_status_display }}
-                                    </span>
-                                    {% endif %}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <span class="text-sm text-gray-900 mr-2">{{ child.progress }}%</span>
-                                        <div class="w-16 bg-gray-200 rounded-full h-2">
-                                            <div class="bg-emerald-600 h-2 rounded-full" style="width: {{ child.progress }}%"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-            {% endif %}
-        </div>
-
-        <!-- Right Column - Metadata & Timeline (1/3 width) -->
-        <div class="space-y-6">
-
-            <!-- 4. Schedule & Timeline Section -->
-            <section class="bg-white rounded-xl p-6 border border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-calendar text-purple-500 mr-2"></i>
-                    Schedule & Timeline
-                </h3>
-                <dl class="space-y-3">
-                    {% if work_item.start_date %}
+                <dl class="space-y-4">
                     <div>
-                        <dt class="text-sm font-medium text-gray-600">Start Date</dt>
-                        <dd class="mt-1 text-sm text-gray-900">
-                            <i class="fas fa-calendar-plus text-gray-400 mr-1"></i>
-                            {{ work_item.start_date|date:"M d, Y" }}
-                        </dd>
-                    </div>
-                    {% endif %}
-
-                    {% if work_item.due_date %}
-                    <div>
-                        <dt class="text-sm font-medium text-gray-600">Due Date</dt>
-                        <dd class="mt-1 text-sm text-gray-900">
-                            <i class="fas fa-calendar-check text-gray-400 mr-1"></i>
-                            {{ work_item.due_date|date:"M d, Y" }}
-                        </dd>
-                    </div>
-                    {% endif %}
-
-                    {% if not work_item.start_date and not work_item.due_date %}
-                    <p class="text-sm text-gray-500 italic">No dates specified</p>
-                    {% endif %}
-                </dl>
-            </section>
-
-            <!-- 5. Status & Progress Section -->
-            <section class="bg-white rounded-xl p-6 border border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-chart-line text-blue-500 mr-2"></i>
-                    Status & Progress
-                </h3>
-                <dl class="space-y-3">
-                    <div>
-                        <dt class="text-sm font-medium text-gray-600">Status</dt>
-                        <dd class="mt-1">
+                        <dt class="text-sm font-medium text-gray-600 mb-1">Status</dt>
+                        <dd>
                             {% if work_item.status == 'active' %}
                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
                                 <i class="fas fa-check-circle mr-1"></i>
@@ -265,8 +159,8 @@
                     </div>
 
                     <div>
-                        <dt class="text-sm font-medium text-gray-600">Priority</dt>
-                        <dd class="mt-1">
+                        <dt class="text-sm font-medium text-gray-600 mb-1">Priority</dt>
+                        <dd>
                             {% if work_item.priority == 'critical' %}
                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                                 <i class="fas fa-exclamation-circle mr-1"></i>
@@ -292,83 +186,241 @@
                     </div>
 
                     <div>
-                        <dt class="text-sm font-medium text-gray-600 mb-2">Progress</dt>
+                        <dt class="text-sm font-medium text-gray-600 mb-1">Progress</dt>
                         <dd>
                             <div class="flex justify-between text-sm text-gray-600 mb-1">
                                 <span class="font-medium">Completion</span>
                                 <span>{{ work_item.progress }}%</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                <div class="bg-emerald-600 h-2.5 rounded-full transition-all duration-300"
-                                     style="width: {{ work_item.progress }}%"></div>
+                                <div class="bg-emerald-600 h-2.5 rounded-full transition-all duration-300" style="width: {{ work_item.progress }}%"></div>
                             </div>
                         </dd>
                     </div>
                 </dl>
             </section>
 
-            <!-- 6. Assignment Section -->
+            <!-- Schedule & Timeline -->
             <section class="bg-white rounded-xl p-6 border border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-users text-amber-500 mr-2"></i>
-                    Assignment
-                </h3>
-                <dl class="space-y-3">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-calendar-alt text-purple-500 mr-2"></i>
+                    Schedule & Timeline
+                </h2>
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <dt class="text-sm font-medium text-gray-600 mb-2">Assignees</dt>
-                        <dd>
-                            {% if work_item.assignees.all %}
-                                <ul class="space-y-2">
-                                    {% for assignee in work_item.assignees.all %}
-                                        <li class="flex items-center text-sm text-gray-900">
-                                            <i class="fas fa-user text-gray-400 mr-2"></i>
-                                            {{ assignee.get_full_name }}
-                                        </li>
-                                    {% endfor %}
-                                </ul>
+                        <dt class="text-sm font-medium text-gray-600 mb-1">Start Date</dt>
+                        <dd class="text-sm text-gray-900">
+                            {% if work_item.start_date %}
+                                <i class="fas fa-calendar-plus text-gray-400 mr-1"></i>
+                                {{ work_item.start_date|date:"M d, Y" }}
                             {% else %}
-                                <span class="inline-flex items-center px-3 py-1 rounded-full border border-gray-200 bg-gray-100 text-gray-500 text-sm">
-                                    <i class="fas fa-user-slash mr-1"></i>
-                                    Not assigned
-                                </span>
+                                <span class="italic text-gray-500">Not set</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-600 mb-1">Due Date</dt>
+                        <dd class="text-sm text-gray-900">
+                            {% if work_item.due_date %}
+                                <i class="fas fa-calendar-check text-gray-400 mr-1"></i>
+                                {{ work_item.due_date|date:"M d, Y" }}
+                            {% else %}
+                                <span class="italic text-gray-500">Not set</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-600 mb-1">Start Time</dt>
+                        <dd class="text-sm text-gray-900">
+                            {% if work_item.start_time %}
+                                <i class="fas fa-clock text-gray-400 mr-1"></i>
+                                {{ work_item.start_time|time:"g:i A" }}
+                            {% else %}
+                                <span class="italic text-gray-500">Not set</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-600 mb-1">End Time</dt>
+                        <dd class="text-sm text-gray-900">
+                            {% if work_item.end_time %}
+                                <i class="fas fa-clock text-gray-400 mr-1"></i>
+                                {{ work_item.end_time|time:"g:i A" }}
+                            {% else %}
+                                <span class="italic text-gray-500">Not set</span>
                             {% endif %}
                         </dd>
                     </div>
                 </dl>
             </section>
+        </div>
 
-            <!-- 7. Metadata Section -->
+        <!-- Right Column -->
+        <div class="space-y-6">
+            <!-- Assignment -->
             <section class="bg-white rounded-xl p-6 border border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-database text-gray-500 mr-2"></i>
-                    Metadata
-                </h3>
-                <dl class="space-y-3 text-sm">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-users text-amber-500 mr-2"></i>
+                    Assignment
+                </h2>
+                <div class="space-y-4">
                     <div>
-                        <dt class="font-medium text-gray-600">Work Type</dt>
-                        <dd class="mt-1 text-gray-900">{{ work_item.get_work_type_display }}</dd>
+                        <h3 class="text-sm font-medium text-gray-600 mb-2">Assigned Users</h3>
+                        {% if work_item.assignees.exists %}
+                            <ul class="space-y-2">
+                                {% for assignee in work_item.assignees.all %}
+                                <li class="flex items-center gap-2 text-sm text-gray-900">
+                                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                    {{ assignee.get_full_name }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-sm text-gray-500 italic">No users assigned.</p>
+                        {% endif %}
                     </div>
+                    <div class="pt-3 border-t border-gray-200">
+                        <h3 class="text-sm font-medium text-gray-600 mb-2">Assigned Teams</h3>
+                        {% if work_item.teams.exists %}
+                            <ul class="space-y-2">
+                                {% for team in work_item.teams.all %}
+                                <li class="flex items-center gap-2 text-sm text-gray-900">
+                                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                                        <i class="fas fa-users"></i>
+                                    </span>
+                                    {{ team.name }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-sm text-gray-500 italic">No teams assigned.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
 
-                    {% if work_item.created_at %}
-                    <div>
-                        <dt class="font-medium text-gray-600">Created</dt>
-                        <dd class="mt-1 text-gray-900">
-                            <i class="fas fa-calendar-plus text-gray-400 mr-1"></i>
-                            {{ work_item.created_at|date:"M d, Y, g:i A" }}
-                        </dd>
-                    </div>
-                    {% endif %}
+            <!-- Related Items -->
+            <section class="bg-white rounded-xl p-6 border border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-link text-blue-500 mr-2"></i>
+                    Related Items
+                </h2>
+                {% if related_items %}
+                    <ul class="space-y-3">
+                        {% for related in related_items %}
+                        <li class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">{{ related.title }}</p>
+                                <p class="text-xs text-gray-500">{{ related.get_work_type_display }}</p>
+                            </div>
+                            <a href="{% url 'common:work_item_detail' pk=related.pk %}"
+                               class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-external-link-alt text-xs"></i>
+                                Open
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-sm text-gray-500 italic">No related items linked yet.</p>
+                {% endif %}
+            </section>
 
-                    {% if work_item.updated_at %}
-                    <div>
-                        <dt class="font-medium text-gray-600">Last Updated</dt>
-                        <dd class="mt-1 text-gray-900">
-                            <i class="fas fa-calendar-check text-gray-400 mr-1"></i>
-                            {{ work_item.updated_at|date:"M d, Y, g:i A" }}
-                        </dd>
-                    </div>
+            <!-- Children Items -->
+            <section class="bg-white rounded-xl p-6 border border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-sitemap text-purple-500 mr-2"></i>
+                    Children Items
+                    {% if children %}
+                        <span class="ml-2 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">{{ children.count }}</span>
                     {% endif %}
-                </dl>
+                </h2>
+                {% if children %}
+                <div class="space-y-3">
+                    {% for child in children %}
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <a href="{% url 'common:work_item_detail' pk=child.pk %}"
+                               class="font-semibold text-sm text-blue-600 hover:text-blue-800">
+                                {{ child.title }}
+                            </a>
+                            <span class="text-xs font-semibold uppercase text-gray-500">{{ child.get_work_type_display }}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-gray-500">
+                            <span>
+                                {% if child.status == 'active' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">
+                                    <i class="fas fa-check-circle"></i>
+                                    Active
+                                </span>
+                                {% elif child.status == 'pending' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-700">
+                                    <i class="fas fa-clock"></i>
+                                    Pending
+                                </span>
+                                {% elif child.status == 'completed' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                                    <i class="fas fa-check-double"></i>
+                                    Completed
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                                    {{ child.get_status_display }}
+                                </span>
+                                {% endif %}
+                            </span>
+                            <span class="inline-flex items-center gap-2">
+                                <span class="font-medium text-gray-700">{{ child.progress }}%</span>
+                                <span class="block w-20 h-1.5 bg-gray-200 rounded-full">
+                                    <span class="block h-full bg-emerald-600 rounded-full" style="width: {{ child.progress }}%"></span>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                    <p class="text-sm text-gray-500 italic">No child items created yet.</p>
+                {% endif %}
+            </section>
+
+            <!-- Calendar Settings -->
+            <section class="bg-white rounded-xl p-6 border border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-cog text-gray-500 mr-2"></i>
+                    Calendar Settings
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-600 mb-1">Show in calendar</h3>
+                        <p class="text-sm text-gray-900 flex items-center gap-2">
+                            {% if work_item.is_calendar_visible %}
+                                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                                    <i class="fas fa-check"></i>
+                                </span>
+                                Enabled
+                            {% else %}
+                                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                                    <i class="fas fa-times"></i>
+                                </span>
+                                Disabled
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-600 mb-1">Calendar Color</h3>
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex h-8 w-8 rounded-xl border border-gray-200" style="background-color: {{ work_item.calendar_color|default:'#A0AEC0' }};"></span>
+                            <span class="text-sm text-gray-900">{{ work_item.calendar_color|default:"Not set" }}</span>
+                        </div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <h3 class="text-sm font-medium text-gray-600 mb-1">Audit Trail</h3>
+                        <p class="text-xs text-gray-500">Created {{ work_item.created_at|date:"M d, Y, g:i A" }} · Updated {{ work_item.updated_at|date:"M d, Y, g:i A" }}</p>
+                    </div>
+                </div>
             </section>
         </div>
     </div>

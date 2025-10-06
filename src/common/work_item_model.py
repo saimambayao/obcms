@@ -311,22 +311,72 @@ class WorkItem(MPTTModel):
 
     # ========== HIERARCHY VALIDATION ==========
 
+    # Maximum nesting level for subtasks (None = unlimited, or set to specific number)
+    MAX_SUBTASK_LEVEL = 5  # Allow subtasks up to level 5 (3 levels below initial subtask)
+
     ALLOWED_CHILD_TYPES = {
-        WORK_TYPE_PROJECT: [WORK_TYPE_SUB_PROJECT, WORK_TYPE_ACTIVITY, WORK_TYPE_TASK],
+        WORK_TYPE_PROJECT: [
+            WORK_TYPE_SUB_PROJECT,
+            WORK_TYPE_ACTIVITY,
+            WORK_TYPE_SUB_ACTIVITY,
+            WORK_TYPE_TASK,
+            WORK_TYPE_SUBTASK,
+        ],
         WORK_TYPE_SUB_PROJECT: [
             WORK_TYPE_SUB_PROJECT,
             WORK_TYPE_ACTIVITY,
+            WORK_TYPE_SUB_ACTIVITY,
             WORK_TYPE_TASK,
+            WORK_TYPE_SUBTASK,
         ],
-        WORK_TYPE_ACTIVITY: [WORK_TYPE_SUB_ACTIVITY, WORK_TYPE_TASK],
-        WORK_TYPE_SUB_ACTIVITY: [WORK_TYPE_SUB_ACTIVITY, WORK_TYPE_TASK],
+        WORK_TYPE_ACTIVITY: [
+            WORK_TYPE_SUB_ACTIVITY,
+            WORK_TYPE_TASK,
+            WORK_TYPE_SUBTASK,
+        ],
+        WORK_TYPE_SUB_ACTIVITY: [
+            WORK_TYPE_TASK,
+            WORK_TYPE_SUBTASK,
+        ],
         WORK_TYPE_TASK: [WORK_TYPE_SUBTASK],
-        WORK_TYPE_SUBTASK: [],  # No children allowed
+        WORK_TYPE_SUBTASK: [WORK_TYPE_SUBTASK],  # ✅ Subtasks can have subtasks (up to level 5 = 3 nested levels)
     }
 
     def can_have_child_type(self, child_type):
-        """Check if this work item can have the specified child type."""
-        return child_type in self.ALLOWED_CHILD_TYPES.get(self.work_type, [])
+        """
+        Check if this work item can have the specified child type.
+
+        Enforces MAX_SUBTASK_LEVEL constraint for nested subtasks.
+        """
+        # Check if child type is allowed based on work type
+        if child_type not in self.ALLOWED_CHILD_TYPES.get(self.work_type, []):
+            return False
+
+        # Additional validation for subtask nesting limit
+        if self.work_type == self.WORK_TYPE_SUBTASK and child_type == self.WORK_TYPE_SUBTASK:
+            # Check current level against MAX_SUBTASK_LEVEL
+            # Level calculation: project=0, activity=1, task=2, subtask=3, sub-subtask=4, etc.
+            # Only check if item is saved (level is populated)
+            if self.level is not None and self.level >= self.MAX_SUBTASK_LEVEL:
+                return False
+
+        return True
+
+    @classmethod
+    def get_allowed_child_types(cls, work_type):
+        """Return list of allowed child work types for given work type."""
+        return cls.ALLOWED_CHILD_TYPES.get(work_type, [])
+
+    @classmethod
+    def get_valid_parent_types(cls, child_type):
+        """Return list of work types that may serve as parent for the given child type."""
+        if not child_type:
+            return []
+        return [
+            parent_type
+            for parent_type, allowed_children in cls.ALLOWED_CHILD_TYPES.items()
+            if child_type in allowed_children
+        ]
 
     def clean(self):
         """Model validation."""

@@ -67,6 +67,10 @@ from .work_items import (
     work_item_sidebar_edit,
     work_item_sidebar_create,
     work_item_duplicate,
+    work_item_search_related,
+    work_item_add_related,
+    work_item_remove_related,
+    work_item_quick_create_child,
 )
 
 # Import task_detail for calendar integration
@@ -396,4 +400,8 @@ __all__ = [
     "work_item_sidebar_edit",
     "work_item_sidebar_create",
     "work_item_duplicate",
+    "work_item_search_related",
+    "work_item_add_related",
+    "work_item_remove_related",
+    "work_item_quick_create_child",
 ]

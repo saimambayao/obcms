@@ -11,7 +11,18 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import OperationalError, transaction
-from django.db.models import Avg, Count, DecimalField, FloatField, Q, Sum, Value
+from django.db.models import (
+    Avg,
+    Case,
+    Count,
+    DecimalField,
+    FloatField,
+    IntegerField,
+    Q,
+    Sum,
+    Value,
+    When,
+)
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -28,6 +39,7 @@ from common.constants import (
     CALENDAR_MODULE_ORDER,
     STAFF_COMPETENCY_CATEGORIES,
     STAFF_COMPETENCY_PROFICIENCY_LEVELS,
+    STAFF_DIRECTORY_PRIORITY,
     STAFF_USER_TYPES,
 )
 from common.forms import (
@@ -324,6 +336,7 @@ def _can_approve_users(user):
     Authorized roles:
     - Superusers
     - Users with user_type="admin" (OBCMS System Administrators)
+    - OOBC Executives
     - OOBC Staff with specific positions: Executive Director, Deputy Executive Director,
       DMO IV, DMO III, Information System Analyst, Planning Officers, Community Development Officer I
 
@@ -339,6 +352,10 @@ def _can_approve_users(user):
 
     # System administrators (user_type="admin") can approve
     if user.user_type == "admin":
+        return True
+
+    # Executives have standing approval authority
+    if user.user_type == "oobc_executive":
         return True
 
     # OOBC staff with authorized positions can approve
@@ -893,7 +910,43 @@ def staff_management(request):
 
     ensure_default_staff_teams()
 
-    staff_qs = staff_queryset().order_by("last_name", "first_name")
+    preferred_whens = [
+        When(username=username, then=Value(idx))
+        for idx, username in enumerate(STAFF_DIRECTORY_PRIORITY)
+    ]
+
+    staff_qs = (
+        staff_queryset()
+        .annotate(
+            preferred_order=Case(
+                *preferred_whens,
+                default=Value(len(STAFF_DIRECTORY_PRIORITY)),
+                output_field=IntegerField(),
+            ),
+            user_type_order=Case(
+                When(user_type="oobc_executive", then=Value(0)),
+                When(user_type="oobc_staff", then=Value(1)),
+                When(user_type="admin", then=Value(2)),
+                default=Value(3),
+                output_field=IntegerField(),
+            ),
+            leadership_order=Case(
+                When(position__iexact="Executive Director", then=Value(0)),
+                When(position__iexact="Deputy Executive Director", then=Value(1)),
+                When(position__icontains="DMO IV", then=Value(2)),
+                When(position__icontains="DMO III", then=Value(3)),
+                default=Value(4),
+                output_field=IntegerField(),
+            ),
+        )
+        .order_by(
+            "preferred_order",
+            "user_type_order",
+            "leadership_order",
+            "last_name",
+            "first_name",
+        )
+    )
     pending_staff_qs = staff_qs.filter(is_approved=False)
     inactive_staff_qs = staff_qs.filter(is_active=False)
     today = timezone.now().date()
@@ -2353,12 +2406,42 @@ def staff_task_update_field(request, task_id: int):
 @login_required
 def staff_api_assignees(request):
     """API endpoint to get staff members for assignee dropdown."""
-    # Define staff user types
-    STAFF_USER_TYPES = ["admin", "oobc_staff"]
-
-    staff_members = User.objects.filter(
-        user_type__in=STAFF_USER_TYPES, is_active=True
-    ).order_by("last_name", "first_name")
+    staff_members = (
+        User.objects.filter(user_type__in=STAFF_USER_TYPES, is_active=True)
+        .annotate(
+            preferred_order=Case(
+                *[
+                    When(username=username, then=Value(idx))
+                    for idx, username in enumerate(STAFF_DIRECTORY_PRIORITY)
+                ],
+                default=Value(len(STAFF_DIRECTORY_PRIORITY)),
+                output_field=IntegerField(),
+            ),
+            user_type_order=Case(
+                When(user_type="oobc_executive", then=Value(0)),
+                When(user_type="oobc_staff", then=Value(1)),
+                When(user_type="admin", then=Value(2)),
+                default=Value(3),
+                output_field=IntegerField(),
+            ),
+            leadership_order=Case(
+                When(position__iexact="Executive Director", then=Value(0)),
+                When(position__iexact="Deputy Executive Director", then=Value(1)),
+                When(position__icontains="DMO IV", then=Value(2)),
+                When(position__icontains="DMO III", then=Value(3)),
+                default=Value(4),
+                output_field=IntegerField(),
+            ),
+        )
+        .order_by(
+            "preferred_order",
+            "user_type_order",
+            "leadership_order",
+            "last_name",
+            "first_name",
+            "username",
+        )
+    )
 
     data = []
     for member in staff_members:
@@ -2693,6 +2776,51 @@ def staff_profiles_list(request):
                 profile.directory_position_display = raw_position
         else:
             profile.directory_position_display = None
+
+    def _profile_sort_key(profile: StaffProfile):
+        """Ensure leadership is surfaced first in directory listings."""
+        user = profile.user
+        user_type = (user.user_type or "").strip()
+        position = (user.position or "").strip()
+
+        preferred_ranks = {
+            username: idx for idx, username in enumerate(STAFF_DIRECTORY_PRIORITY)
+        }
+
+        preferred_rank = preferred_ranks.get(
+            user.username, len(STAFF_DIRECTORY_PRIORITY)
+        )
+
+        user_type_priority = {
+            "oobc_executive": 0,
+            "oobc_staff": 1,
+            "admin": 2,
+        }
+        leadership_priority = {
+            "executive director": 0,
+            "deputy executive director": 1,
+            "dmo iv": 2,
+            "development management officer iv": 2,
+            "dmo iii": 3,
+            "development management officer iii": 3,
+        }
+
+        user_type_rank = user_type_priority.get(user_type, 3)
+        leadership_rank = leadership_priority.get(position.lower(), 4)
+        last_name = (user.last_name or "").casefold()
+        first_name = (user.first_name or "").casefold()
+        username = (user.username or "").casefold()
+
+        return (
+            preferred_rank,
+            user_type_rank,
+            leadership_rank,
+            last_name,
+            first_name,
+            username,
+        )
+
+    profiles.sort(key=_profile_sort_key)
 
     status_totals = (
         StaffProfile.objects.values("employment_status")

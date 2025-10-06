@@ -364,18 +364,70 @@ class TestWorkItemValidation:
         task = WorkItem(work_type=WorkItem.WORK_TYPE_TASK, title="Task")
         subtask = WorkItem(work_type=WorkItem.WORK_TYPE_SUBTASK, title="Subtask")
 
-        # Project can have Sub-Project, Activity, Task
+        # Project can have Sub-Project, Activity, Task, Subtask
         assert project.can_have_child_type(WorkItem.WORK_TYPE_SUB_PROJECT)
         assert project.can_have_child_type(WorkItem.WORK_TYPE_ACTIVITY)
         assert project.can_have_child_type(WorkItem.WORK_TYPE_TASK)
-        assert not project.can_have_child_type(WorkItem.WORK_TYPE_SUBTASK)
+        assert project.can_have_child_type(WorkItem.WORK_TYPE_SUBTASK)
 
         # Task can have Subtask
         assert task.can_have_child_type(WorkItem.WORK_TYPE_SUBTASK)
         assert not task.can_have_child_type(WorkItem.WORK_TYPE_TASK)
 
-        # Subtask cannot have children
-        assert not subtask.can_have_child_type(WorkItem.WORK_TYPE_SUBTASK)
+        # Subtask CAN have child subtasks (up to level 5)
+        assert subtask.can_have_child_type(WorkItem.WORK_TYPE_SUBTASK)
+
+    def test_subtask_max_level_constraint(self):
+        """Test that subtasks can nest up to level 5 (3 levels below initial subtask)."""
+        # Create a hierarchy: Project > Task > Subtask > Sub-subtask... up to level 5
+        project = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_PROJECT,
+            title="Project",
+            status=WorkItem.STATUS_NOT_STARTED
+        )  # Level 0
+
+        task = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Task",
+            parent=project,
+            status=WorkItem.STATUS_NOT_STARTED
+        )  # Level 1
+
+        subtask_l2 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_SUBTASK,
+            title="Subtask L2",
+            parent=task,
+            status=WorkItem.STATUS_NOT_STARTED
+        )  # Level 2
+
+        subtask_l3 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_SUBTASK,
+            title="Subtask L3 (1st level below)",
+            parent=subtask_l2,
+            status=WorkItem.STATUS_NOT_STARTED
+        )  # Level 3
+
+        subtask_l4 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_SUBTASK,
+            title="Subtask L4 (2nd level below)",
+            parent=subtask_l3,
+            status=WorkItem.STATUS_NOT_STARTED
+        )  # Level 4
+
+        subtask_l5 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_SUBTASK,
+            title="Subtask L5 (3rd level below)",
+            parent=subtask_l4,
+            status=WorkItem.STATUS_NOT_STARTED
+        )  # Level 5 (MAX)
+
+        # Verify levels 2-4 can have children
+        assert subtask_l2.can_have_child_type(WorkItem.WORK_TYPE_SUBTASK)
+        assert subtask_l3.can_have_child_type(WorkItem.WORK_TYPE_SUBTASK)
+        assert subtask_l4.can_have_child_type(WorkItem.WORK_TYPE_SUBTASK)
+
+        # Verify level 5 CANNOT have children (max level reached)
+        assert not subtask_l5.can_have_child_type(WorkItem.WORK_TYPE_SUBTASK)
 
 
 @pytest.mark.django_db

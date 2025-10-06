@@ -185,28 +185,25 @@
     <td class="px-3 py-3 whitespace-nowrap text-right text-sm font-medium align-middle">
         <div class="flex justify-end gap-1.5">
             <button type="button"
-                    hx-get="{% url 'common:work_item_sidebar_detail' pk=work_item.pk %}"
-                    hx-target="#sidebar-content"
-                    hx-swap="innerHTML"
-                    onclick="openSidebar()"
+                    data-hx-get="{% url 'common:work_item_sidebar_detail' pk=work_item.pk %}"
+                    data-hx-target="#sidebar-content"
+                    onclick="openSidebarAndLoad(this)"
                     class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1.5 rounded transition-colors duration-150"
                     title="View Details">
                 <i class="fas fa-eye text-sm"></i>
             </button>
             <button type="button"
-                    hx-get="{% url 'common:work_item_sidebar_edit' pk=work_item.pk %}"
-                    hx-target="#sidebar-content"
-                    hx-swap="innerHTML"
-                    onclick="openSidebar()"
+                    data-hx-get="{% url 'common:work_item_sidebar_edit' pk=work_item.pk %}"
+                    data-hx-target="#sidebar-content"
+                    onclick="openSidebarAndLoad(this)"
                     class="text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 p-1.5 rounded transition-colors duration-150"
                     title="Edit">
                 <i class="fas fa-edit text-sm"></i>
             </button>
             <button type="button"
-                    hx-get="{% url 'common:work_item_sidebar_create' %}?parent={{ work_item.pk }}"
-                    hx-target="#sidebar-content"
-                    hx-swap="innerHTML"
-                    onclick="openSidebar()"
+                    data-hx-get="{% url 'common:work_item_sidebar_create' %}?parent={{ work_item.pk }}"
+                    data-hx-target="#sidebar-content"
+                    onclick="openSidebarAndLoad(this)"
                     class="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-1.5 rounded transition-colors duration-150"
                     title="Add Child Item">
                 <i class="fas fa-plus-circle text-sm"></i>

@@ -3,89 +3,23 @@
       hx-target="#detailPanelBody"
       hx-swap="innerHTML"
       hx-indicator="#formSubmitIndicator"
-      hx-disabled-elt="find button[type='submit']"
-      hx-on::before-request="
-          console.log('📤 SAVE: Submitting form...');
-          const formData = new FormData(event.target);
-          const entries = {};
-          for (let [key, value] of formData.entries()) {
-              entries[key] = value;
-          }
-          console.log('Form data entries:', entries);
-          console.log('Form data size:', formData.entries().toString());
-      "
-      hx-on::after-request="
-          console.log('📥 SAVE: Response received', {
-              status: event.detail.xhr.status,
-              successful: event.detail.successful,
-              responseLength: event.detail.xhr.responseText.length
-          });
-
-          if(event.detail.successful) {
-              console.log('✅ Save successful, refreshing calendar smoothly...');
-
-              // Smooth calendar refresh after save
-              setTimeout(() => {
-                  if (window.calendar) {
-                      const calendarEl = document.getElementById('calendar');
-                      if (calendarEl) {
-                          // Subtle fade during refresh
-                          calendarEl.style.transition = 'opacity 150ms ease-in-out';
-                          calendarEl.style.opacity = '0.97';
-                      }
-
-                      window.calendar.refetchEvents();
-
-                      // Restore opacity after refresh
-                      setTimeout(() => {
-                          if (calendarEl) {
-                              calendarEl.style.opacity = '1';
-                          }
-                      }, 200);
-                  }
-              }, 100);
-
-              // Show success toast
-              document.body.dispatchEvent(new CustomEvent('showToast', {
-                  detail: { message: 'Work item saved successfully', level: 'success' }
-              }));
-          } else {
-              console.error('❌ Save failed:', {
-                  status: event.detail.xhr.status,
-                  statusText: event.detail.xhr.statusText,
-                  response: event.detail.xhr.responseText.substring(0, 500)
-              });
-
-              // Show error toast
-              document.body.dispatchEvent(new CustomEvent('showToast', {
-                  detail: {
-                      message: 'Failed to save. Please check the form for errors.',
-                      level: 'error'
-                  }
-              }));
-          }
-      "
       class="space-y-4">
     {% csrf_token %}
 
     <!-- Hidden work_type field (required but not editable in quick edit) -->
     {{ form.work_type.as_hidden }}
 
-    <!-- Header with View Details toggle -->
+    <!-- Header with View Full Details link -->
     <div class="flex items-center justify-between pb-3 border-b border-gray-200">
         <h3 class="text-lg font-semibold text-gray-900">
             <i class="fas fa-edit text-blue-500 mr-2"></i>
             Edit Event
         </h3>
-        <button type="button"
-                hx-get="{% url 'common:work_item_sidebar_detail' pk=work_item.pk %}"
-                hx-target="#detailPanelBody"
-                hx-swap="innerHTML"
-                hx-indicator="#viewDetailsLoading"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all">
+        <a href="{% url 'common:work_item_detail' pk=work_item.pk %}"
+           class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all">
             <i class="fas fa-eye text-xs"></i>
-            View Details
-        </button>
+            View Full Details
+        </a>
     </div>
 
     <!-- Loading indicator for View Details button -->
@@ -190,6 +124,61 @@
     <!-- Form Actions -->
     <div class="pt-4 border-t border-gray-200 flex gap-3">
         <button type="submit"
+                hx-disabled-elt="this"
+                hx-on::before-request="
+                    console.log('📤 SAVE: Submitting form...');
+                    const form = event.target.closest('form');
+                    if (form instanceof HTMLFormElement) {
+                        const formData = new FormData(form);
+                        const entries = {};
+                        for (let [key, value] of formData.entries()) {
+                            entries[key] = value;
+                        }
+                        console.log('Form data entries:', entries);
+                    }
+                "
+                hx-on::after-request="
+                    console.log('📥 SAVE: Response received', {
+                        status: event.detail.xhr.status,
+                        successful: event.detail.successful,
+                        responseLength: event.detail.xhr.responseText.length
+                    });
+
+                    if(event.detail.successful) {
+                        console.log('✅ Save successful, refreshing calendar smoothly...');
+
+                        // Smooth calendar refresh after save
+                        setTimeout(() => {
+                            if (window.calendar) {
+                                const calendarEl = document.getElementById('calendar');
+                                if (calendarEl) {
+                                    calendarEl.style.transition = 'opacity 150ms ease-in-out';
+                                    calendarEl.style.opacity = '0.97';
+                                }
+
+                                window.calendar.refetchEvents();
+
+                                setTimeout(() => {
+                                    if (calendarEl) {
+                                        calendarEl.style.opacity = '1';
+                                    }
+                                }, 200);
+                            }
+                        }, 100);
+
+                        document.body.dispatchEvent(new CustomEvent('showToast', {
+                            detail: { message: 'Work item saved successfully', level: 'success' }
+                        }));
+                    } else {
+                        console.error('❌ Save failed:', event.detail);
+                        document.body.dispatchEvent(new CustomEvent('showToast', {
+                            detail: {
+                                message: 'Failed to save. Please check the form for errors.',
+                                level: 'error'
+                            }
+                        }));
+                    }
+                "
                 class="flex-1 inline-flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-emerald-600 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
             <i class="fas fa-save mr-2"></i>
             Save Changes

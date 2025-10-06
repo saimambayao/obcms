@@ -1,0 +1,18 @@
+{% comment %}
+Partial template: Related items dropdown options for search results.
+Updated dynamically via HTMX as user types in search field.
+{% endcomment %}
+
+<option value="">{% if search_query %}Search results for "{{ search_query }}"{% else %}Select work item to link...{% endif %}</option>
+{% for item in work_items %}
+    <option value="{{ item.id }}">
+        {{ item.get_work_type_display }} - {{ item.title }}
+        {% if item.created_by %}(by {{ item.created_by.get_full_name|default:item.created_by.username }}){% endif %}
+    </option>
+{% empty %}
+    {% if search_query %}
+        <option value="" disabled>No results found for "{{ search_query }}"</option>
+    {% else %}
+        <option value="" disabled>No work items available</option>
+    {% endif %}
+{% endfor %}

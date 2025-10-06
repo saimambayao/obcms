@@ -594,7 +594,7 @@ CROSS_DOMAIN_PIPELINE_TEMPLATES = [
         tags=['cross_domain', 'pipeline', 'needs', 'sector', 'coverage']
     ),
     QueryTemplate(
-        id='policy_implementation_rate',
+        id='policy_to_ppa_conversion_rate',
         category='cross_domain',
         pattern=r'\bpolic(y|ies)\s+implementation\s+rate',
         query_template='PolicyRecommendation.objects.values("status").annotate(total=Count("id"), with_ppas=Count("id", filter=Q(implementing_ppas__isnull=False))).annotate(implementation_rate=100.0 * F("with_ppas") / F("total"))',
@@ -607,7 +607,7 @@ CROSS_DOMAIN_PIPELINE_TEMPLATES = [
             'Policy to action conversion'
         ],
         priority=8,
-        description='Policy implementation rate',
+        description='Policy implementation rate based on implementing PPAs',
         tags=['cross_domain', 'pipeline', 'policies', 'rate']
     ),
     QueryTemplate(

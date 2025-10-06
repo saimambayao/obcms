@@ -13,6 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
+from django.db import models
 from django.db.models import Q, Count
 from django.views.decorators.http import require_POST, require_http_methods
 from django.core.exceptions import PermissionDenied
@@ -339,6 +340,7 @@ def work_item_create(request):
         'action': 'Create',
         'parent': parent,
         'breadcrumb': breadcrumb,
+        'allowed_child_type_choices': [],
     }
 
     return render(request, 'work_items/work_item_form.html', context)
@@ -391,11 +393,32 @@ def work_item_edit(request, pk):
     # Build breadcrumb from work item ancestors
     breadcrumb = list(work_item.get_ancestors(include_self=True))
 
+    # Allowed child type options for quick add widget
+    work_type_labels = dict(WorkItem.WORK_TYPE_CHOICES)
+    allowed_child_type_codes = WorkItem.get_allowed_child_types(work_item.work_type)
+    allowed_child_type_choices = [
+        (code, work_type_labels.get(code, code.replace('_', ' ').title()))
+        for code in allowed_child_type_codes
+    ]
+
+    # Get related items limited to same level within same parent
+    related_parent_id = work_item.parent_id
+    related_queryset = (
+        WorkItem.objects
+        .filter(work_type=work_item.work_type, parent_id=related_parent_id)
+        .exclude(pk=work_item.pk)
+        .exclude(pk__in=work_item.related_items.values_list('pk', flat=True))
+        .only('id', 'work_type', 'title')
+        .order_by('title')[:100]
+    )
+
     context = {
         'form': form,
         'action': 'Edit',
         'work_item': work_item,
         'breadcrumb': breadcrumb,
+        'all_work_items': related_queryset,
+        'allowed_child_type_choices': allowed_child_type_choices,
     }
 
     return render(request, 'work_items/work_item_form.html', context)
@@ -809,23 +832,32 @@ def work_item_sidebar_edit(request, pk):
                 if match:
                     # Successfully extracted just the main row
                     main_row_only = match.group(1)
+                    # Add hx-swap-oob attribute right after the opening <tr tag
                     row_html_with_oob = main_row_only.replace(
-                        f'id="work-item-row-{work_item.id}"',
-                        f'id="work-item-row-{work_item.id}" hx-swap-oob="true"',
+                        '<tr ',
+                        '<tr hx-swap-oob="true" ',
                         1
                     )
                 else:
                     # Fallback: add hx-swap-oob to entire template output
-                    # This includes placeholder/skeleton rows, but HTMX will only swap the matching ID
                     row_html_with_oob = row_html.replace(
-                        f'id="work-item-row-{work_item.id}"',
-                        f'id="work-item-row-{work_item.id}" hx-swap-oob="true"',
+                        '<tr ',
+                        '<tr hx-swap-oob="true" ',
                         1
                     )
 
-                # Combine both: edit form stays in sidebar + row updates instantly
+                # Wrap form in div container for proper HTML structure
+                # Wrap row in table structure to prevent browser from stripping it
+                # HTMX will process OOB swaps before the main innerHTML swap
                 from django.http import HttpResponse
-                combined_html = edit_form_html + '\n' + row_html_with_oob
+                combined_html = f'''
+                <div>{edit_form_html}</div>
+                <table style="display:none;">
+                    <tbody>
+                        {row_html_with_oob}
+                    </tbody>
+                </table>
+                '''
 
                 response = HttpResponse(combined_html)
                 response['HX-Trigger'] = json.dumps({
@@ -1027,3 +1059,330 @@ def work_item_sidebar_create(request):
         form = WorkItemQuickEditForm(initial=initial, user=request.user)
         context = {'form': form, 'is_create': True}
         return render(request, create_template, context)
+
+
+@login_required
+@require_http_methods(["GET"])
+def work_item_search_related(request, pk):
+    """
+    HTMX endpoint: Search for work items to add as related items.
+
+    Returns filtered dropdown options based on search query.
+    """
+    work_item = get_object_or_404(WorkItem, pk=pk)
+    search_query = request.GET.get('q', '').strip()
+
+    # Get work items at same level and parent, excluding current or already related
+    work_items = (
+        WorkItem.objects
+        .filter(work_type=work_item.work_type, parent_id=work_item.parent_id)
+        .exclude(pk=work_item.pk)
+        .exclude(pk__in=work_item.related_items.values_list('pk', flat=True))
+    )
+
+    # Apply search filter if query provided
+    if search_query:
+        work_items = work_items.filter(
+            models.Q(title__icontains=search_query) |
+            models.Q(work_type__icontains=search_query)
+        )
+
+    # Limit results and order by recent
+    work_items = work_items.select_related('created_by').order_by('-created_at')[:50]
+
+    # Return HTML options
+    context = {
+        'work_items': work_items,
+        'search_query': search_query
+    }
+    return render(request, 'work_items/partials/_related_items_options.html', context)
+
+
+@login_required
+@require_POST
+def work_item_add_related(request, pk):
+    """
+    HTMX endpoint: Add a related item to the work item.
+
+    Returns updated related items list HTML for instant update.
+    """
+    import json
+
+    work_item = get_object_or_404(WorkItem, pk=pk)
+
+    # Check edit permissions
+    permissions = get_work_item_permissions(request.user, work_item)
+    if not permissions['can_edit']:
+        return HttpResponse(
+            status=403,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'You do not have permission to modify this work item.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    related_item_id = request.POST.get('related_item_id')
+    if not related_item_id:
+        return HttpResponse(
+            status=400,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'Please select a work item to link.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    try:
+        related_item = WorkItem.objects.get(pk=related_item_id)
+
+        # Prevent linking to self
+        if related_item == work_item:
+            return HttpResponse(
+                status=400,
+                headers={
+                    'HX-Trigger': json.dumps({
+                        'showToast': {
+                            'message': 'Cannot link a work item to itself.',
+                            'level': 'error'
+                        }
+                })
+            }
+        )
+
+        # Enforce same level (work type) and parent linkage rules
+        if (
+            related_item.work_type != work_item.work_type
+            or related_item.parent_id != work_item.parent_id
+        ):
+            return HttpResponse(
+                status=400,
+                headers={
+                    'HX-Trigger': json.dumps({
+                        'showToast': {
+                            'message': 'Related items must share the same level and parent.',
+                            'level': 'error'
+                        }
+                    })
+                }
+            )
+
+        # Add to related items
+        work_item.related_items.add(related_item)
+
+        # Return updated related items list
+        context = {'work_item': work_item}
+        return render(request, 'work_items/partials/_related_items_list.html', context,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': f'Linked to "{related_item.title}"',
+                        'level': 'success'
+                    }
+                })
+            })
+
+    except WorkItem.DoesNotExist:
+        return HttpResponse(
+            status=404,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'Work item not found.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+
+@login_required
+@require_POST
+def work_item_remove_related(request, pk, related_id):
+    """
+    HTMX endpoint: Remove a related item from the work item.
+
+    Returns updated related items list HTML for instant update.
+    """
+    import json
+
+    work_item = get_object_or_404(WorkItem, pk=pk)
+
+    # Check edit permissions
+    permissions = get_work_item_permissions(request.user, work_item)
+    if not permissions['can_edit']:
+        return HttpResponse(
+            status=403,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'You do not have permission to modify this work item.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    try:
+        related_item = WorkItem.objects.get(pk=related_id)
+        work_item.related_items.remove(related_item)
+
+        # Return updated related items list
+        context = {'work_item': work_item}
+        return render(request, 'work_items/partials/_related_items_list.html', context,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': f'Unlinked from "{related_item.title}"',
+                        'level': 'success'
+                    }
+                })
+            })
+
+    except WorkItem.DoesNotExist:
+        return HttpResponse(
+            status=404,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'Related item not found.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+
+@login_required
+@require_POST
+def work_item_quick_create_child(request, pk):
+    """
+    HTMX endpoint: Quickly create a child work item.
+
+    Used by the "Add Child Item" quick creation form on the edit page.
+    Returns updated children list HTML for instant update.
+    """
+    import json
+
+    parent = get_object_or_404(WorkItem, pk=pk)
+
+    # Check if user has permission to create work items
+    if not request.user.is_staff and not request.user.has_perm('common.add_workitem'):
+        return HttpResponse(
+            status=403,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'You do not have permission to create work items.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    # Get form data
+    child_work_type = request.POST.get('child_work_type')
+    child_title = request.POST.get('child_title', '').strip()
+    child_status = request.POST.get('child_status', WorkItem.STATUS_NOT_STARTED)
+    child_priority = request.POST.get('child_priority', WorkItem.PRIORITY_MEDIUM)
+    child_start_date = request.POST.get('child_start_date')
+    child_end_date = request.POST.get('child_end_date')
+
+    # Validation
+    if not child_work_type or child_work_type == 'Select type...':
+        return HttpResponse(
+            status=400,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'Please select a work type for the child item.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    if not child_title:
+        return HttpResponse(
+            status=400,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'Please enter a title for the child item.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    # Validate parent-child relationship
+    if not parent.can_have_child_type(child_work_type):
+        return HttpResponse(
+            status=400,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': f'{parent.get_work_type_display()} cannot have {dict(WorkItem.WORK_TYPE_CHOICES)[child_work_type]} as child.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    # Create the child work item with enhanced fields
+    child = WorkItem(
+        parent=parent,
+        work_type=child_work_type,
+        title=child_title,
+        created_by=request.user,
+        status=child_status,
+        priority=child_priority,
+        progress=0
+    )
+
+    # Add dates if provided
+    if child_start_date:
+        from datetime import datetime
+        child.start_date = datetime.strptime(child_start_date, '%Y-%m-%d').date()
+    if child_end_date:
+        from datetime import datetime
+        child.end_date = datetime.strptime(child_end_date, '%Y-%m-%d').date()
+
+    try:
+        child.full_clean()  # Validate model
+        child.save()
+
+        # Invalidate caches
+        invalidate_calendar_cache(request.user.id)
+        invalidate_work_item_tree_cache(child)
+
+        # Return updated children list
+        context = {'work_item': parent}
+        response = render(request, 'work_items/partials/_children_items_list.html', context)
+        response['HX-Trigger'] = json.dumps({
+            'showToast': {
+                'message': f'{child.get_work_type_display()} "{child.title}" created successfully',
+                'level': 'success'
+            },
+            'childCreated': {'childId': str(child.id)}
+        })
+        return response
+
+    except Exception as e:
+        return HttpResponse(
+            status=400,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': f'Error creating child item: {str(e)}',
+                        'level': 'error'
+                    }
+                })
+            }
+        )

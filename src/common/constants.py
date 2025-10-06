@@ -1,6 +1,14 @@
 """Shared constants for the common app."""
 
-STAFF_USER_TYPES = ("oobc_staff", "admin")
+STAFF_USER_TYPES = ("oobc_executive", "oobc_staff", "admin")
+
+# Explicit ordering for leadership visibility across directories and dashboards.
+STAFF_DIRECTORY_PRIORITY = (
+    "noron.oobc",
+    "qurash.oobc",
+    "norhan.oobc",
+    "rusman.oobc",
+)
 
 # Suggested competency groupings surfaced by OOBC HR leads.
 STAFF_COMPETENCY_CATEGORIES = {

@@ -16,14 +16,16 @@ STAFF_ACCOUNTS = [
         "position": "Executive Director",
         "username": "noron.oobc",
         "password": "Noron123",
+        "user_type": "oobc_executive",
     },
     {
-        "first_name": "Qurash",
+        "first_name": "Quraish",
         "last_name": "Langcap",
-        "full_name": "Qurash D. Langcap",
+        "full_name": "Quraish D. Langcap",
         "position": "Deputy Executive Director",
         "username": "qurash.oobc",
         "password": "Qurash123",
+        "user_type": "oobc_executive",
     },
     {
         "first_name": "Norhan",
@@ -257,7 +259,7 @@ class Command(BaseCommand):
                         existing_user.first_name = staff["first_name"]
                         existing_user.last_name = staff["last_name"]
                         existing_user.position = staff["position"]
-                        existing_user.user_type = "oobc_staff"
+                        existing_user.user_type = staff.get("user_type", "oobc_staff")
                         existing_user.organization = (
                             "Office for Other Bangsamoro Communities, Office of the Chief "
                             "Minister (Bangsamoro Autonomous Region in Muslim Mindanao)"
@@ -284,7 +286,7 @@ class Command(BaseCommand):
                             first_name=staff["first_name"],
                             last_name=staff["last_name"],
                             email=f"{username}@oobc.gov.ph",
-                            user_type="oobc_staff",
+                            user_type=staff.get("user_type", "oobc_staff"),
                             position=staff["position"],
                             organization=(
                                 "Office for Other Bangsamoro Communities, Office of the Chief "

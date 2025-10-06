@@ -10,6 +10,8 @@ Supports:
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Case, IntegerField, Value, When
+from common.constants import STAFF_DIRECTORY_PRIORITY
 from common.work_item_model import WorkItem
 from common.models import User, StaffTeam
 
@@ -42,7 +44,7 @@ class WorkItemForm(forms.ModelForm):
         required=False,
         help_text="Select assigned users",
         widget=forms.SelectMultiple(attrs={
-            'class': 'block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[120px]',
+            'class': 'searchable-multi-select block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[200px] transition-all duration-200',
             'size': '5'
         })
     )
@@ -53,7 +55,7 @@ class WorkItemForm(forms.ModelForm):
         required=False,
         help_text="Select assigned teams",
         widget=forms.SelectMultiple(attrs={
-            'class': 'block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[100px]',
+            'class': 'searchable-multi-select block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[180px] transition-all duration-200',
             'size': '4'
         })
     )
@@ -138,6 +140,47 @@ class WorkItemForm(forms.ModelForm):
         """Initialize form with dynamic parent queryset."""
         super().__init__(*args, **kwargs)
 
+        # Surface OOBC leaders ahead of broader staff roster for assignments
+        self.fields['assignees'].queryset = (
+            User.objects.filter(is_active=True)
+            .annotate(
+                preferred_order=Case(
+                    *[
+                        When(username=username, then=Value(idx))
+                        for idx, username in enumerate(STAFF_DIRECTORY_PRIORITY)
+                    ],
+                    default=Value(len(STAFF_DIRECTORY_PRIORITY)),
+                    output_field=IntegerField(),
+                ),
+                user_type_order=Case(
+                    When(user_type="oobc_executive", then=Value(0)),
+                    When(user_type="oobc_staff", then=Value(1)),
+                    When(user_type="admin", then=Value(2)),
+                    default=Value(3),
+                    output_field=IntegerField(),
+                ),
+                leadership_order=Case(
+                    When(position__iexact="Executive Director", then=Value(0)),
+                    When(
+                        position__iexact="Deputy Executive Director",
+                        then=Value(1),
+                    ),
+                    When(position__icontains="DMO IV", then=Value(2)),
+                    When(position__icontains="DMO III", then=Value(3)),
+                    default=Value(4),
+                    output_field=IntegerField(),
+                ),
+            )
+            .order_by(
+                "preferred_order",
+                "user_type_order",
+                "leadership_order",
+                "last_name",
+                "first_name",
+                "username",
+            )
+        )
+
         # Filter parent queryset based on work_type
         if (
             self.instance
@@ -170,31 +213,7 @@ class WorkItemForm(forms.ModelForm):
 
     def _get_valid_parent_types(self, child_type):
         """Get list of valid parent types for a given child type."""
-        # Inverse of ALLOWED_CHILD_TYPES
-        valid_parents = {
-            WorkItem.WORK_TYPE_PROJECT: [],  # Projects have no parents
-            WorkItem.WORK_TYPE_SUB_PROJECT: [
-                WorkItem.WORK_TYPE_PROJECT,
-                WorkItem.WORK_TYPE_SUB_PROJECT
-            ],
-            WorkItem.WORK_TYPE_ACTIVITY: [
-                WorkItem.WORK_TYPE_PROJECT,
-                WorkItem.WORK_TYPE_SUB_PROJECT
-            ],
-            WorkItem.WORK_TYPE_SUB_ACTIVITY: [
-                WorkItem.WORK_TYPE_ACTIVITY,
-                WorkItem.WORK_TYPE_SUB_ACTIVITY
-            ],
-            WorkItem.WORK_TYPE_TASK: [
-                WorkItem.WORK_TYPE_PROJECT,
-                WorkItem.WORK_TYPE_SUB_PROJECT,
-                WorkItem.WORK_TYPE_ACTIVITY,
-                WorkItem.WORK_TYPE_SUB_ACTIVITY,
-                WorkItem.WORK_TYPE_TASK
-            ],
-            WorkItem.WORK_TYPE_SUBTASK: [WorkItem.WORK_TYPE_TASK],
-        }
-        return valid_parents.get(child_type, [])
+        return WorkItem.get_valid_parent_types(child_type)
 
     def clean(self):
         """Validate form data."""

@@ -965,7 +965,7 @@
         // Create toast element
         const toast = document.createElement('div');
         toast.id = 'work-item-toast';
-        toast.className = 'fixed top-20 right-4 z-[60] px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-300 ease-out';
+        toast.className = 'fixed top-20 right-4 z-[9999] px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-300 ease-out';
 
         // Color schemes based on level
         const colors = {
@@ -1036,6 +1036,32 @@
     };
 
     /**
+     * Open sidebar and load content via HTMX
+     * @param {HTMLElement} button - Button element with data-hx-get and data-hx-target attributes
+     */
+    window.openSidebarAndLoad = function(button) {
+        // First, open the sidebar
+        openSidebar();
+
+        // Get HTMX attributes from button
+        const url = button.getAttribute('data-hx-get');
+        const target = button.getAttribute('data-hx-target');
+
+        if (!url || !target) {
+            console.error('[Sidebar] Missing data-hx-get or data-hx-target attribute');
+            return;
+        }
+
+        // Wait a tiny bit for sidebar animation to start, then trigger HTMX
+        setTimeout(() => {
+            htmx.ajax('GET', url, {
+                target: target,
+                swap: 'innerHTML'
+            });
+        }, 50);
+    };
+
+    /**
      * Close the sidebar panel and clear content
      */
     window.closeSidebar = function() {
@@ -1058,6 +1084,35 @@
             console.log('[Sidebar] Content loaded');
             // Process HTMX attributes in the new content
             htmx.process(event.detail.target);
+        }
+    });
+
+    /**
+     * Listen for HTMX oobBeforeSwap to log OOB swap events
+     */
+    document.body.addEventListener('htmx:oobBeforeSwap', function(event) {
+        console.log('[OOB] Before swap:', {
+            target: event.detail.target,
+            fragment: event.detail.fragment,
+            shouldSwap: event.detail.shouldSwap
+        });
+    });
+
+    /**
+     * Listen for HTMX oobAfterSwap to confirm OOB swap success
+     */
+    document.body.addEventListener('htmx:oobAfterSwap', function(event) {
+        console.log('[OOB] After swap:', {
+            target: event.detail.target,
+            fragment: event.detail.fragment
+        });
+        // Visual feedback: briefly highlight the updated row
+        if (event.detail.target && event.detail.target.tagName === 'TR') {
+            const row = event.detail.target;
+            row.style.backgroundColor = '#d1fae5'; // Emerald-100
+            setTimeout(() => {
+                row.style.backgroundColor = '';
+            }, 1000);
         }
     });
 

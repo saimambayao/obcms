@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
+from common.constants import STAFF_USER_TYPES
+
 
 @login_required
 def dashboard(request):
@@ -51,7 +53,7 @@ def dashboard(request):
     municipal_total = MunicipalityCoverage.objects.count()
     combined_total = barangay_total + municipal_total
 
-    oobc_staff_qs = User.objects.filter(user_type__in=["oobc_staff", "admin"])
+    oobc_staff_qs = User.objects.filter(user_type__in=STAFF_USER_TYPES)
 
     stats = {
         "communities": {

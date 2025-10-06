@@ -28,6 +28,7 @@ class User(AbstractUser):
 
     USER_TYPES = (
         ("admin", "Administrator"),
+        ("oobc_executive", "OOBC Executive"),
         ("oobc_staff", "OOBC Staff"),
         ("cm_office", "Chief Minister Office"),
         ("bmoa", "BARMM Ministry/Agency/Office"),
@@ -83,7 +84,12 @@ class User(AbstractUser):
     @property
     def is_oobc_staff(self):
         """Check if user is OOBC staff."""
-        return self.user_type == "oobc_staff"
+        return self.user_type in {"oobc_staff", "oobc_executive"}
+
+    @property
+    def is_oobc_executive(self):
+        """Check if user is an OOBC executive."""
+        return self.user_type == "oobc_executive"
 
     @property
     def is_community_leader(self):
@@ -93,7 +99,10 @@ class User(AbstractUser):
     @property
     def can_approve_users(self):
         """Check if user can approve other users."""
-        return self.user_type in ["admin", "oobc_staff"] and self.is_superuser
+        return (
+            self.user_type in ["admin", "oobc_staff", "oobc_executive"]
+            and self.is_superuser
+        )
 
 
 class Region(models.Model):

@@ -31,12 +31,11 @@ Or with inline content:
 #}
 {% load static %}
 
-{% if not modal_id %}
-    {% now "U" as timestamp %}
-    {% with modal_id="modal-"|add:timestamp %}
-{% endif %}
+{# Generate unique modal ID if not provided #}
+{% now "U" as timestamp %}
+{% firstof modal_id "modal-"|add:timestamp as use_modal_id %}
 
-<div id="{{ modal_id }}"
+<div id="{{ use_modal_id }}"
      class="modal-backdrop fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 p-4"
      x-data="{ show: true }"
      x-show="show"
@@ -50,7 +49,7 @@ Or with inline content:
      @keydown.escape.window="show = false; setTimeout(() => $el.remove(), 200)"
      role="dialog"
      aria-modal="true"
-     aria-labelledby="{{ modal_id }}-title">
+     aria-labelledby="{{ use_modal_id }}-title">
 
     <div class="modal-content bg-white rounded-xl shadow-2xl
                 {% if size == 'sm' %}max-w-md
@@ -71,7 +70,7 @@ Or with inline content:
 
         {# Modal Header #}
         <div class="modal-header flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
-            <h2 id="{{ modal_id }}-title" class="text-xl font-semibold text-gray-900">
+            <h2 id="{{ use_modal_id }}-title" class="text-xl font-semibold text-gray-900">
                 {{ title }}
             </h2>
             {% if closeable|default:True %}
@@ -113,10 +112,6 @@ Or with inline content:
         {% endif %}
     </div>
 </div>
-
-{% if not modal_id %}
-    {% endwith %}
-{% endif %}
 
 {# Alpine.js initialization check #}
 <script>
