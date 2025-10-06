@@ -1,14 +1,1194 @@
-<div class="{{ wrapper_class|default:'bg-white rounded-2xl shadow-lg border border-gray-200' }}">
-    <div id="{{ widget_id }}" class="{{ calendar_class|default:'p-4' }}"></div>
+{% comment %}
+===============================================================================
+OBCMS Calendar Widget Component
+===============================================================================
+
+A reusable, self-contained calendar widget using FullCalendar, HTMX, and Tailwind CSS.
+
+USAGE:
+------
+{% include 'components/calendar_widget.html' with
+    calendar_id='myCalendar'
+    events_endpoint='/api/calendar/events/'
+    event_types=event_types_list
+    show_sidebar=True
+    calendar_height='calc(100vh - 200px)'
+    enable_event_creation=True
+    enable_drag_drop=True
+%}
+
+REQUIRED CONTEXT VARIABLES:
+---------------------------
+- events_endpoint: URL endpoint that returns calendar events in FullCalendar format
+
+OPTIONAL CONTEXT VARIABLES:
+---------------------------
+- calendar_id: Unique ID for this calendar instance (default: 'calendarWidget')
+- event_types: List of event type configurations (default: standard work types)
+  Format: [
+      {'value': 'project', 'label': 'Projects', 'icon': 'fa-folder', 'color': '#3b82f6'},
+      {'value': 'activity', 'label': 'Activities', 'icon': 'fa-calendar-check', 'color': '#10b981'},
+      ...
+  ]
+- show_sidebar: Boolean to show/hide sidebar (default: True)
+- calendar_height: CSS height value (default: 'calc(100vh - 200px)')
+- enable_event_creation: Boolean to enable double-click event creation (default: True)
+- enable_drag_drop: Boolean to enable drag-and-drop (default: True)
+- default_view: Initial view mode (default: 'dayGridMonth')
+- show_mini_calendar: Boolean to show mini calendar in sidebar (default: True)
+- show_completed_filter: Boolean to show completed items filter (default: True)
+- update_endpoint: URL endpoint for event updates (default: uses common:calendar_event_update)
+
+EVENTS ENDPOINT RESPONSE FORMAT:
+---------------------------------
+The events_endpoint should return JSON in FullCalendar event format:
+[
+    {
+        "id": "work-item-123",
+        "title": "Project Title",
+        "start": "2025-10-01",
+        "end": "2025-12-31",
+        "allDay": true,
+        "backgroundColor": "#3b82f6",
+        "borderColor": "#3b82f6",
+        "extendedProps": {
+            "workType": "project",
+            "status": "in_progress",
+            "url": "/work-items/123/",
+            ...
+        }
+    },
+    ...
+]
+
+JAVASCRIPT EVENTS:
+------------------
+The widget dispatches custom events:
+- 'calendarRefresh': Trigger this to refresh calendar data
+  Example: document.body.dispatchEvent(new CustomEvent('calendarRefresh'));
+
+- 'calendarEventClick': Fired when an event is clicked
+  Example: document.body.addEventListener('calendarEventClick', (e) => {
+      console.log('Event clicked:', e.detail);
+  });
+
+STYLING:
+--------
+All styles are scoped using the calendar_id to prevent conflicts when multiple
+calendars are on the same page.
+
+DEPENDENCIES:
+-------------
+- FullCalendar 6.x (loaded via static files)
+- HTMX (for dynamic content loading)
+- Tailwind CSS (for styling)
+- Font Awesome (for icons)
+
+{% endcomment %}
+
+{% load static %}
+
+{# Default context values #}
+{% firstof calendar_id 'calendarWidget' as widget_id %}
+{% firstof events_endpoint '/oobc-management/work-items/calendar/feed/' as feed_url %}
+{% firstof calendar_height 'calc(100vh - 200px)' as height %}
+{% firstof show_sidebar True as sidebar_enabled %}
+{% firstof enable_event_creation True as can_create %}
+{% firstof enable_drag_drop True as can_drag %}
+{% firstof default_view 'dayGridMonth' as initial_view %}
+{% firstof show_mini_calendar True as mini_cal_enabled %}
+{% firstof show_completed_filter True as completed_filter_enabled %}
+{% firstof update_endpoint '/oobc-management/calendar/event/update/' as update_url %}
+
+{# Default event types if not provided #}
+{% if not event_types %}
+    {% with event_types='[{"value": "project", "label": "Projects", "icon": "fa-folder", "color": "#3b82f6"}, {"value": "activity", "label": "Activities", "icon": "fa-calendar-check", "color": "#10b981"}, {"value": "task", "label": "Tasks", "icon": "fa-tasks", "color": "#d97706"}, {"value": "coordination", "label": "Coordination", "icon": "fa-handshake", "color": "#14b8a6"}]'|safe %}
+    {% endwith %}
+{% endif %}
+
+{# Component Styles - Scoped to this calendar instance #}
+<style>
+/* Calendar Container - Scoped to {{ widget_id }} */
+#{{ widget_id }}-container {
+    height: {{ height }};
+    display: grid;
+    grid-template-columns: {% if sidebar_enabled %}280px 1fr 0px{% else %}0px 1fr 0px{% endif %};
+    grid-template-rows: auto 1fr;
+    gap: 0;
+    overflow: hidden;
+    transition: grid-template-columns 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#{{ widget_id }}-sidebar {
+    grid-row: 1 / 3;
+    background: linear-gradient(180deg, #f0f9ff 0%, #f1f5f9 100%);
+    border-right: 1px solid #e2e8f0;
+    overflow-y: auto;
+    z-index: 10;
+    transition: transform 300ms ease-in-out;
+}
+
+/* Desktop sidebar toggle */
+@media (min-width: 1024px) {
+    #{{ widget_id }}-container.sidebar-collapsed {
+        grid-template-columns: 0px 1fr 0px;
+    }
+
+    #{{ widget_id }}-container.sidebar-collapsed #{{ widget_id }}-sidebar {
+        transform: translateX(-100%);
+    }
+}
+
+#{{ widget_id }}-header {
+    grid-column: 2 / 3;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+#{{ widget_id }}-main {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+    background: #fafafa;
+    overflow: auto;
+    padding: 1.5rem;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+#{{ widget_id }}-calendar {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+#{{ widget_id }}-detail-panel {
+    grid-row: 1 / 3;
+    grid-column: 3 / 4;
+    background: white;
+    border-left: 1px solid #e2e8f0;
+    overflow-y: auto;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0;
+    opacity: 0;
+    z-index: 20;
+}
+
+#{{ widget_id }}-detail-panel.open {
+    width: 380px;
+    opacity: 1;
+}
+
+#{{ widget_id }}-container.detail-open {
+    grid-template-columns: {% if sidebar_enabled %}280px 1fr 380px{% else %}0px 1fr 380px{% endif %};
+}
+
+/* Mini Calendar Styles */
+.{{ widget_id }}-mini-calendar {
+    background: white;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.{{ widget_id }}-mini-calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.{{ widget_id }}-mini-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.25rem;
+}
+
+.{{ widget_id }}-mini-calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 150ms;
+}
+
+.{{ widget_id }}-mini-calendar-day.header {
+    font-weight: 600;
+    color: #64748b;
+    cursor: default;
+}
+
+.{{ widget_id }}-mini-calendar-day.other-month {
+    color: #cbd5e1;
+}
+
+.{{ widget_id }}-mini-calendar-day.today {
+    background: #3b82f6;
+    color: white;
+    font-weight: 600;
+}
+
+.{{ widget_id }}-mini-calendar-day.selected {
+    background: #10b981;
+    color: white;
+}
+
+.{{ widget_id }}-mini-calendar-day:not(.header):not(.other-month):hover {
+    background: #f1f5f9;
+}
+
+/* Event Type Legend */
+.{{ widget_id }}-event-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.5rem;
+    transition: all 200ms;
+    cursor: pointer;
+    user-select: none;
+}
+
+.{{ widget_id }}-event-legend-item:hover {
+    background: rgba(255, 255, 255, 0.6);
+    transform: translateX(2px);
+}
+
+.{{ widget_id }}-event-legend-item.active {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.{{ widget_id }}-event-type-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    transition: transform 200ms;
+}
+
+.{{ widget_id }}-event-legend-item:hover .{{ widget_id }}-event-type-icon {
+    transform: scale(1.1);
+}
+
+.{{ widget_id }}-event-legend-checkbox {
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 0.25rem;
+    border: 2px solid #cbd5e1;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 200ms;
+    appearance: none;
+    position: relative;
+    margin-left: auto;
+}
+
+.{{ widget_id }}-event-legend-checkbox:checked {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+.{{ widget_id }}-event-legend-checkbox:checked::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    color: white;
+    font-size: 0.625rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* View Mode Buttons */
+.{{ widget_id }}-view-mode-buttons {
+    display: flex;
+    gap: 0.25rem;
+    background: #f1f5f9;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+}
+
+.{{ widget_id }}-view-mode-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 150ms;
+}
+
+.{{ widget_id }}-view-mode-btn:hover {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.{{ widget_id }}-view-mode-btn.active {
+    background: white;
+    color: #0f172a;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading Spinner */
+.{{ widget_id }}-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 50;
+}
+
+.{{ widget_id }}-spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 4px solid #e2e8f0;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: {{ widget_id }}-spin 1s linear infinite;
+}
+
+@keyframes {{ widget_id }}-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* FullCalendar Customizations */
+#{{ widget_id }}-calendar .fc {
+    background: white;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#{{ widget_id }}-calendar .fc-event {
+    border: none;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    cursor: grab;
+    transition: all 150ms;
+    font-size: 0.9375rem;
+    font-weight: 500;
+}
+
+#{{ widget_id }}-calendar .fc-event:active {
+    cursor: grabbing;
+}
+
+#{{ widget_id }}-calendar .fc-event:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    #{{ widget_id }}-container {
+        grid-template-columns: 0px 1fr 0px;
+    }
+
+    #{{ widget_id }}-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 280px;
+        transform: translateX(-100%);
+        z-index: 30;
+    }
+
+    #{{ widget_id }}-sidebar.open {
+        transform: translateX(0);
+    }
+
+    #{{ widget_id }}-detail-panel {
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(100%);
+    }
+
+    #{{ widget_id }}-detail-panel.open {
+        transform: translateX(0);
+    }
+}
+
+@media (max-width: 640px) {
+    #{{ widget_id }}-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #{{ widget_id }}-detail-panel.open {
+        width: 100%;
+    }
+
+    #{{ widget_id }}-main {
+        padding: 0.75rem;
+    }
+}
+</style>
+
+{# Calendar HTML Structure #}
+<div class="calendar-container" id="{{ widget_id }}-container">
+    {# Left Sidebar #}
+    {% if sidebar_enabled %}
+    <aside class="calendar-sidebar" id="{{ widget_id }}-sidebar">
+        <div class="p-4 space-y-6">
+            {# Sidebar Header #}
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold text-gray-800">
+                    <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>
+                    Calendar
+                </h2>
+                <button class="lg:hidden p-2 rounded-lg hover:bg-white/50 transition-colors" id="{{ widget_id }}-closeSidebarBtn" aria-label="Close sidebar">
+                    <i class="fas fa-times text-gray-600"></i>
+                </button>
+            </div>
+
+            {# Mini Calendar #}
+            {% if mini_cal_enabled %}
+            <div class="{{ widget_id }}-mini-calendar">
+                <div class="{{ widget_id }}-mini-calendar-header">
+                    <button class="p-1 rounded hover:bg-gray-100" id="{{ widget_id }}-miniPrevMonth" aria-label="Previous month">
+                        <i class="fas fa-chevron-left text-gray-600 text-sm"></i>
+                    </button>
+                    <h3 class="text-sm font-semibold text-gray-800" id="{{ widget_id }}-miniCalendarTitle">
+                        January 2025
+                    </h3>
+                    <button class="p-1 rounded hover:bg-gray-100" id="{{ widget_id }}-miniNextMonth" aria-label="Next month">
+                        <i class="fas fa-chevron-right text-gray-600 text-sm"></i>
+                    </button>
+                </div>
+                <div class="{{ widget_id }}-mini-calendar-grid" id="{{ widget_id }}-miniCalendarGrid">
+                    {# Generated by JavaScript #}
+                </div>
+            </div>
+            {% endif %}
+
+            {# Event Type Filters #}
+            <div>
+                <h3 class="text-sm font-semibold text-gray-700 mb-3 px-2">Event Types</h3>
+                <div class="space-y-1" id="{{ widget_id }}-eventTypeFilters">
+                    {% for event_type in event_types %}
+                    <label class="{{ widget_id }}-event-legend-item" for="{{ widget_id }}-filter-{{ event_type.value }}">
+                        <i class="fas {{ event_type.icon }} {{ widget_id }}-event-type-icon" style="color: {{ event_type.color }};"></i>
+                        <span class="text-sm text-gray-700 flex-1">{{ event_type.label }}</span>
+                        <input type="checkbox" id="{{ widget_id }}-filter-{{ event_type.value }}" class="{{ widget_id }}-event-legend-checkbox" checked data-work-type="{{ event_type.value }}">
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {# Additional Filters #}
+            {% if completed_filter_enabled %}
+            <div>
+                <h3 class="text-sm font-semibold text-gray-700 mb-3 px-2">Options</h3>
+                <div class="space-y-1">
+                    <label class="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-white/50 transition-colors">
+                        <i class="fas fa-check-circle text-emerald-500 text-sm"></i>
+                        <span class="text-sm text-gray-700 flex-1">Show Completed Items</span>
+                        <input type="checkbox" id="{{ widget_id }}-filterCompleted" class="{{ widget_id }}-event-legend-checkbox" data-filter-type="completed">
+                    </label>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </aside>
+    {% endif %}
+
+    {# Top Header #}
+    <header id="{{ widget_id }}-header">
+        <div class="flex items-center gap-4">
+            {% if sidebar_enabled %}
+            <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors" id="{{ widget_id }}-toggleSidebarBtn" aria-label="Toggle sidebar">
+                <i class="fas fa-bars text-gray-600" id="{{ widget_id }}-sidebarToggleIcon"></i>
+            </button>
+            {% endif %}
+            <h1 class="text-xl font-bold text-gray-900">Calendar</h1>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap">
+            {# View Mode Buttons #}
+            <div class="{{ widget_id }}-view-mode-buttons">
+                <button class="{{ widget_id }}-view-mode-btn active" data-view="dayGridMonth" aria-label="Month view">
+                    <i class="fas fa-calendar-alt mr-1"></i>
+                    Month
+                </button>
+                <button class="{{ widget_id }}-view-mode-btn" data-view="timeGridWeek" aria-label="Week view">
+                    <i class="fas fa-calendar-week mr-1"></i>
+                    Week
+                </button>
+                <button class="{{ widget_id }}-view-mode-btn" data-view="timeGridDay" aria-label="Day view">
+                    <i class="fas fa-calendar-day mr-1"></i>
+                    Day
+                </button>
+                <button class="{{ widget_id }}-view-mode-btn" data-view="multiMonthYear" aria-label="Year view">
+                    <i class="fas fa-calendar mr-1"></i>
+                    Year
+                </button>
+            </div>
+
+            {# Navigation Buttons #}
+            <div class="flex items-center gap-2">
+                <button class="px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-all" id="{{ widget_id }}-prevBtn" aria-label="Previous">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="px-4 py-2 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-all" id="{{ widget_id }}-todayBtn">Today</button>
+                <button class="px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-all" id="{{ widget_id }}-nextBtn" aria-label="Next">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    {# Main Calendar Area #}
+    <main id="{{ widget_id }}-main">
+        <div class="{{ widget_id }}-loading" id="{{ widget_id }}-loading" style="display: none;">
+            <div class="{{ widget_id }}-spinner"></div>
+        </div>
+        <div id="{{ widget_id }}-calendar"></div>
+    </main>
+
+    {# Right Detail Panel #}
+    <aside id="{{ widget_id }}-detail-panel">
+        <div class="h-full flex flex-col">
+            <div class="flex-1 overflow-y-auto p-6" id="{{ widget_id }}-detailPanelBody">
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-calendar-check text-4xl mb-3"></i>
+                    <p>Click an event to view details</p>
+                </div>
+            </div>
+        </div>
+    </aside>
 </div>
+
+{# Backdrop for mobile #}
+<div class="detail-panel-backdrop fixed inset-0 bg-black/30 z-15 opacity-0 pointer-events-none transition-opacity" id="{{ widget_id }}-detailBackdrop"></div>
+<div class="detail-panel-backdrop fixed inset-0 bg-black/30 z-15 opacity-0 pointer-events-none transition-opacity" id="{{ widget_id }}-sidebarBackdrop"></div>
+
+{# Modal Container for HTMX #}
+<div id="{{ widget_id }}-modal-container"></div>
+
+{# Calendar JavaScript - Scoped to this instance #}
 <script>
-    window.addEventListener('DOMContentLoaded', function () {
-        if (typeof window.renderCalendar !== 'function') {
-            console.warn('renderCalendar helper is not available yet.');
+(function() {
+    'use strict';
+
+    const WIDGET_ID = '{{ widget_id }}';
+    const EVENTS_ENDPOINT = '{{ feed_url }}';
+    const UPDATE_ENDPOINT = '{{ update_url }}';
+    const CAN_CREATE = {{ can_create|yesno:"true,false" }};
+    const CAN_DRAG = {{ can_drag|yesno:"true,false" }};
+    const INITIAL_VIEW = '{{ initial_view }}';
+
+    // DOM Elements
+    const calendarEl = document.getElementById(`${WIDGET_ID}-calendar`);
+    const calendarContainer = document.getElementById(`${WIDGET_ID}-container`);
+    const detailPanel = document.getElementById(`${WIDGET_ID}-detail-panel`);
+    const detailPanelBody = document.getElementById(`${WIDGET_ID}-detailPanelBody`);
+    const detailBackdrop = document.getElementById(`${WIDGET_ID}-detailBackdrop`);
+    const sidebarBackdrop = document.getElementById(`${WIDGET_ID}-sidebarBackdrop`);
+    const calendarSidebar = document.getElementById(`${WIDGET_ID}-sidebar`);
+    const loadingEl = document.getElementById(`${WIDGET_ID}-loading`);
+
+    // Event type configuration
+    const eventTypes = {{ event_types|safe }};
+
+    // Work type colors and icons
+    const workTypeColors = {};
+    const workTypeIcons = {};
+    eventTypes.forEach(type => {
+        workTypeColors[type.value] = type.color;
+        workTypeIcons[type.value] = type.icon;
+    });
+
+    // State
+    let calendar;
+    let allEvents = [];
+    let activeFilters = {};
+    let selectedDate = new Date();
+    let miniCalendarDate = new Date();
+    let sidebarCollapsed = false;
+
+    // Initialize active filters (all enabled by default)
+    eventTypes.forEach(type => {
+        activeFilters[type.value] = true;
+    });
+    activeFilters.completed = false;
+
+    // Initialize calendar
+    function initCalendar() {
+        if (!calendarEl) {
+            console.error(`Calendar element #${WIDGET_ID}-calendar not found`);
             return;
         }
-        var events = {{ events_json|default:'[]'|safe }};
-        var options = {{ options_json|default:'{}'|safe }};
-        window.renderCalendar("{{ widget_id }}", events, options);
+
+        if (calendarEl.offsetHeight === 0) {
+            console.warn('Calendar container has no height, retrying...');
+            setTimeout(initCalendar, 100);
+            return;
+        }
+
+        const savedView = localStorage.getItem(`${WIDGET_ID}_calendarView`) || INITIAL_VIEW;
+
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: savedView,
+            headerToolbar: false,
+            height: '100%',
+            editable: CAN_DRAG,
+            events: fetchEvents,
+            eventClick: handleEventClick,
+            eventDrop: CAN_DRAG ? handleEventDrop : undefined,
+            eventResize: CAN_DRAG ? handleEventResize : undefined,
+            dateClick: function(info) {
+                if (CAN_CREATE && info.jsEvent.detail === 2) {
+                    handleDateDoubleClick(info);
+                }
+            },
+            eventDidMount: function(info) {
+                const workType = info.event.extendedProps.workType;
+
+                if (workType && workTypeColors[workType]) {
+                    info.el.style.backgroundColor = workTypeColors[workType];
+                    info.el.style.borderColor = workTypeColors[workType];
+                }
+
+                if (workType && workTypeIcons[workType]) {
+                    const existingIcon = info.el.querySelector('.event-type-icon');
+                    if (existingIcon) return;
+
+                    const iconClass = workTypeIcons[workType];
+                    const eventTitle = info.el.querySelector('.fc-event-title');
+                    const eventContent = info.el.querySelector('.fc-event-main');
+
+                    if (eventTitle) {
+                        const icon = document.createElement('i');
+                        icon.className = `fas ${iconClass} event-type-icon`;
+                        icon.style.marginRight = '4px';
+                        icon.style.display = 'inline';
+                        eventTitle.insertBefore(icon, eventTitle.firstChild);
+                    } else if (eventContent) {
+                        const icon = document.createElement('i');
+                        icon.className = `fas ${iconClass} event-type-icon`;
+                        icon.style.marginRight = '4px';
+                        icon.style.display = 'inline';
+                        eventContent.insertBefore(icon, eventContent.firstChild);
+                    }
+                }
+            },
+            loading: function(isLoading) {
+                if (loadingEl) {
+                    loadingEl.style.display = isLoading ? 'flex' : 'none';
+                }
+            },
+            datesSet: function(dateInfo) {
+                if (typeof updateMiniCalendar === 'function') {
+                    updateMiniCalendar();
+                }
+            }
+        });
+
+        calendar.render();
+
+        // Expose calendar instance globally for this widget
+        window[`${WIDGET_ID}_calendar`] = calendar;
+
+        if (loadingEl) {
+            loadingEl.style.display = 'none';
+        }
+
+        console.log(`✅ Calendar ${WIDGET_ID} initialized`);
+    }
+
+    // Fetch events from server
+    function fetchEvents(fetchInfo, successCallback, failureCallback) {
+        const cacheBuster = Date.now();
+        const url = `${EVENTS_ENDPOINT}?_=${cacheBuster}`;
+
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin',
+            cache: 'no-store'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            allEvents = data;
+            const filteredEvents = applyFilters(data);
+            successCallback(filteredEvents);
+        })
+        .catch(error => {
+            console.error('Error fetching events:', error);
+            failureCallback(error);
+        });
+    }
+
+    // Apply filters to events
+    function applyFilters(events) {
+        return events.filter(event => {
+            const workType = event.extendedProps?.workType;
+            const isCompleted = event.extendedProps?.status === 'completed';
+
+            if (workType && !activeFilters[workType]) {
+                return false;
+            }
+
+            if (isCompleted && !activeFilters.completed) {
+                return false;
+            }
+
+            return true;
+        });
+    }
+
+    // Handle event drop
+    function handleEventDrop(info) {
+        info.el.style.opacity = '0.6';
+        updateEventDates(info.event, info.revert, info.el);
+    }
+
+    // Handle event resize
+    function handleEventResize(info) {
+        info.el.style.opacity = '0.6';
+        updateEventDates(info.event, info.revert, info.el);
+    }
+
+    // Update event dates via API
+    function updateEventDates(event, revertFunc, eventEl) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value
+            || document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+
+        const data = {
+            id: event.id,
+            type: 'work_item',
+            start: event.start ? event.start.toISOString() : null,
+            end: event.end ? event.end.toISOString() : null,
+            allDay: event.allDay
+        };
+
+        fetch(UPDATE_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => Promise.reject(err));
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (eventEl) {
+                eventEl.style.opacity = '1';
+            }
+            showToast(result.message || 'Event updated successfully', 'success');
+        })
+        .catch(error => {
+            if (eventEl) {
+                eventEl.style.opacity = '1';
+            }
+            showToast(error.error || 'Failed to update event', 'error');
+            if (revertFunc) {
+                revertFunc();
+            }
+        });
+    }
+
+    // Handle event click
+    function handleEventClick(info) {
+        info.jsEvent.preventDefault();
+
+        const event = info.event;
+
+        // Dispatch custom event for external listeners
+        document.body.dispatchEvent(new CustomEvent('calendarEventClick', {
+            detail: {
+                event: event,
+                widgetId: WIDGET_ID
+            }
+        }));
+
+        // Load event details in detail panel
+        const workItemId = event.id.replace('work-item-', '');
+        const editUrl = `/oobc-management/work-items/${workItemId}/sidebar/edit/`;
+
+        detailPanelBody.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-blue-500 text-2xl mb-3"></i>
+                <p class="text-sm text-gray-600">Loading...</p>
+            </div>
+        `;
+
+        if (typeof htmx !== 'undefined') {
+            htmx.ajax('GET', editUrl, {
+                target: `#${WIDGET_ID}-detailPanelBody`,
+                swap: 'innerHTML'
+            }).then(() => {
+                openDetailPanel();
+            }).catch(error => {
+                console.error('Error loading work item:', error);
+            });
+        } else {
+            openDetailPanel();
+        }
+    }
+
+    // Handle double-click on date
+    function handleDateDoubleClick(info) {
+        const createUrl = `/oobc-management/work-items/sidebar/create/?start_date=${info.dateStr}&due_date=${info.dateStr}`;
+
+        detailPanelBody.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-emerald-500 text-2xl mb-3"></i>
+                <p class="text-sm text-gray-600">Loading create form...</p>
+            </div>
+        `;
+
+        if (typeof htmx !== 'undefined') {
+            htmx.ajax('GET', createUrl, {
+                target: `#${WIDGET_ID}-detailPanelBody`,
+                swap: 'innerHTML'
+            }).then(() => {
+                openDetailPanel();
+            });
+        }
+    }
+
+    // Open detail panel
+    function openDetailPanel() {
+        detailPanel.classList.add('open');
+        detailBackdrop.classList.add('open');
+        detailBackdrop.style.opacity = '1';
+        detailBackdrop.style.pointerEvents = 'auto';
+        calendarContainer.classList.add('detail-open');
+    }
+
+    // Close detail panel
+    function closeDetailPanel() {
+        detailPanel.classList.remove('open');
+        detailBackdrop.classList.remove('open');
+        detailBackdrop.style.opacity = '0';
+        detailBackdrop.style.pointerEvents = 'none';
+        calendarContainer.classList.remove('detail-open');
+
+        setTimeout(() => {
+            if (calendar) {
+                calendar.updateSize();
+            }
+        }, 350);
+    }
+
+    // View mode switching
+    document.querySelectorAll(`.${WIDGET_ID}-view-mode-btn`).forEach(btn => {
+        btn.addEventListener('click', function() {
+            const view = this.dataset.view;
+
+            document.querySelectorAll(`.${WIDGET_ID}-view-mode-btn`).forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            calendar.changeView(view);
+            localStorage.setItem(`${WIDGET_ID}_calendarView`, view);
+        });
     });
+
+    // Navigation buttons
+    const prevBtn = document.getElementById(`${WIDGET_ID}-prevBtn`);
+    const nextBtn = document.getElementById(`${WIDGET_ID}-nextBtn`);
+    const todayBtn = document.getElementById(`${WIDGET_ID}-todayBtn`);
+
+    if (prevBtn) prevBtn.addEventListener('click', () => calendar.prev());
+    if (nextBtn) nextBtn.addEventListener('click', () => calendar.next());
+    if (todayBtn) todayBtn.addEventListener('click', () => calendar.today());
+
+    // Event type filters
+    document.querySelectorAll(`.${WIDGET_ID}-event-legend-checkbox`).forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const workType = this.dataset.workType;
+            const filterType = this.dataset.filterType;
+
+            if (workType) {
+                activeFilters[workType] = this.checked;
+                const label = this.closest(`.${WIDGET_ID}-event-legend-item`);
+                if (this.checked) {
+                    label.classList.add('active');
+                } else {
+                    label.classList.remove('active');
+                }
+            } else if (filterType === 'completed') {
+                activeFilters.completed = this.checked;
+            }
+
+            calendar.refetchEvents();
+        });
+
+        if (checkbox.checked) {
+            checkbox.closest(`.${WIDGET_ID}-event-legend-item`)?.classList.add('active');
+        }
+    });
+
+    // Detail panel backdrop close
+    if (detailBackdrop) {
+        detailBackdrop.addEventListener('click', closeDetailPanel);
+    }
+
+    // Sidebar toggle
+    const toggleBtn = document.getElementById(`${WIDGET_ID}-toggleSidebarBtn`);
+    const toggleIcon = document.getElementById(`${WIDGET_ID}-sidebarToggleIcon`);
+    const closeSidebarBtn = document.getElementById(`${WIDGET_ID}-closeSidebarBtn`);
+
+    if (toggleBtn && calendarSidebar) {
+        toggleBtn.addEventListener('click', function() {
+            const isMobile = window.innerWidth < 1024;
+
+            if (isMobile) {
+                const isOpen = calendarSidebar.classList.contains('open');
+                if (isOpen) {
+                    calendarSidebar.classList.remove('open');
+                    sidebarBackdrop.classList.remove('open');
+                    sidebarBackdrop.style.opacity = '0';
+                    sidebarBackdrop.style.pointerEvents = 'none';
+                    if (toggleIcon) toggleIcon.className = 'fas fa-bars text-gray-600';
+                } else {
+                    calendarSidebar.classList.add('open');
+                    sidebarBackdrop.classList.add('open');
+                    sidebarBackdrop.style.opacity = '1';
+                    sidebarBackdrop.style.pointerEvents = 'auto';
+                    if (toggleIcon) toggleIcon.className = 'fas fa-times text-gray-600';
+                }
+            } else {
+                sidebarCollapsed = !sidebarCollapsed;
+                if (sidebarCollapsed) {
+                    calendarContainer.classList.add('sidebar-collapsed');
+                    if (toggleIcon) toggleIcon.className = 'fas fa-chevron-right text-gray-600';
+                } else {
+                    calendarContainer.classList.remove('sidebar-collapsed');
+                    if (toggleIcon) toggleIcon.className = 'fas fa-chevron-left text-gray-600';
+                }
+
+                setTimeout(() => {
+                    if (calendar) calendar.updateSize();
+                }, 350);
+            }
+        });
+    }
+
+    if (closeSidebarBtn && calendarSidebar) {
+        closeSidebarBtn.addEventListener('click', function() {
+            calendarSidebar.classList.remove('open');
+            sidebarBackdrop.classList.remove('open');
+            sidebarBackdrop.style.opacity = '0';
+            sidebarBackdrop.style.pointerEvents = 'none';
+            if (toggleIcon) toggleIcon.className = 'fas fa-bars text-gray-600';
+        });
+    }
+
+    if (sidebarBackdrop && calendarSidebar) {
+        sidebarBackdrop.addEventListener('click', function() {
+            calendarSidebar.classList.remove('open');
+            sidebarBackdrop.classList.remove('open');
+            sidebarBackdrop.style.opacity = '0';
+            sidebarBackdrop.style.pointerEvents = 'none';
+            if (toggleIcon) toggleIcon.className = 'fas fa-bars text-gray-600';
+        });
+    }
+
+    // Mini Calendar (if enabled)
+    {% if mini_cal_enabled %}
+    function updateMiniCalendar() {
+        const year = miniCalendarDate.getFullYear();
+        const month = miniCalendarDate.getMonth();
+
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        const titleEl = document.getElementById(`${WIDGET_ID}-miniCalendarTitle`);
+        if (titleEl) {
+            titleEl.textContent = `${monthNames[month]} ${year}`;
+        }
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        const grid = document.getElementById(`${WIDGET_ID}-miniCalendarGrid`);
+        if (!grid) return;
+
+        grid.innerHTML = '';
+
+        const dayHeaders = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+        dayHeaders.forEach(day => {
+            const header = document.createElement('div');
+            header.className = `${WIDGET_ID}-mini-calendar-day header`;
+            header.textContent = day;
+            grid.appendChild(header);
+        });
+
+        for (let i = firstDay - 1; i >= 0; i--) {
+            const day = document.createElement('div');
+            day.className = `${WIDGET_ID}-mini-calendar-day other-month`;
+            day.textContent = daysInPrevMonth - i;
+            grid.appendChild(day);
+        }
+
+        const today = new Date();
+        for (let i = 1; i <= daysInMonth; i++) {
+            const day = document.createElement('div');
+            day.className = `${WIDGET_ID}-mini-calendar-day`;
+            day.textContent = i;
+
+            const currentDate = new Date(year, month, i);
+
+            if (currentDate.toDateString() === today.toDateString()) {
+                day.classList.add('today');
+            }
+
+            if (currentDate.toDateString() === selectedDate.toDateString()) {
+                day.classList.add('selected');
+            }
+
+            day.addEventListener('click', function() {
+                selectedDate = currentDate;
+                calendar.gotoDate(currentDate);
+                updateMiniCalendar();
+            });
+
+            grid.appendChild(day);
+        }
+
+        const totalCells = grid.children.length - 7;
+        const remainingCells = (7 - (totalCells % 7)) % 7;
+        for (let i = 1; i <= remainingCells; i++) {
+            const day = document.createElement('div');
+            day.className = `${WIDGET_ID}-mini-calendar-day other-month`;
+            day.textContent = i;
+            grid.appendChild(day);
+        }
+    }
+
+    const miniPrevBtn = document.getElementById(`${WIDGET_ID}-miniPrevMonth`);
+    const miniNextBtn = document.getElementById(`${WIDGET_ID}-miniNextMonth`);
+
+    if (miniPrevBtn) {
+        miniPrevBtn.addEventListener('click', function() {
+            miniCalendarDate.setMonth(miniCalendarDate.getMonth() - 1);
+            updateMiniCalendar();
+        });
+    }
+
+    if (miniNextBtn) {
+        miniNextBtn.addEventListener('click', function() {
+            miniCalendarDate.setMonth(miniCalendarDate.getMonth() + 1);
+            updateMiniCalendar();
+        });
+    }
+    {% endif %}
+
+    // Toast notification
+    function showToast(message, level = 'info') {
+        let toastContainer = document.getElementById(`${WIDGET_ID}-toast-container`);
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = `${WIDGET_ID}-toast-container`;
+            toastContainer.className = 'fixed top-20 right-4 z-50 max-w-md';
+            document.body.appendChild(toastContainer);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `
+            flex items-start gap-3 p-4 rounded-lg shadow-lg mb-3 transform transition-all duration-300
+            ${level === 'success' ? 'bg-emerald-50 border border-emerald-200' : ''}
+            ${level === 'error' ? 'bg-red-50 border border-red-200' : ''}
+            ${level === 'warning' ? 'bg-amber-50 border border-amber-200' : ''}
+            ${level === 'info' ? 'bg-blue-50 border border-blue-200' : ''}
+        `;
+
+        const icon = {
+            success: 'fa-check-circle text-emerald-600',
+            error: 'fa-exclamation-circle text-red-600',
+            warning: 'fa-exclamation-triangle text-amber-600',
+            info: 'fa-info-circle text-blue-600'
+        }[level] || 'fa-info-circle text-blue-600';
+
+        toast.innerHTML = `
+            <i class="fas ${icon} mt-0.5"></i>
+            <p class="flex-1 text-sm font-medium text-gray-800">${message}</p>
+            <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+
+        toastContainer.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
+    // Calendar refresh event listener
+    document.body.addEventListener('calendarRefresh', function(event) {
+        console.log(`🔄 Calendar ${WIDGET_ID} refresh event triggered`);
+        if (calendar) {
+            calendar.refetchEvents();
+        }
+    });
+
+    // Initialize
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            requestAnimationFrame(() => {
+                initCalendar();
+                {% if mini_cal_enabled %}
+                updateMiniCalendar();
+                {% endif %}
+            });
+        });
+    } else {
+        requestAnimationFrame(() => {
+            initCalendar();
+            {% if mini_cal_enabled %}
+            updateMiniCalendar();
+            {% endif %}
+        });
+    }
+
+    // Expose utility functions
+    window[`${WIDGET_ID}_refresh`] = function() {
+        if (calendar) {
+            calendar.refetchEvents();
+        }
+    };
+
+    window[`${WIDGET_ID}_closeDetailPanel`] = closeDetailPanel;
+    window[`${WIDGET_ID}_showToast`] = showToast;
+
+})();
 </script>

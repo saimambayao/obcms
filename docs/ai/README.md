@@ -31,6 +31,26 @@ This directory contains comprehensive AI integration strategy and implementation
 - Risk register and budget tracker
 - Success metrics dashboard
 
+### 🔧 For Operations & Troubleshooting
+**Chat System Status:** [chat/STATUS.md](chat/STATUS.md) ⭐ **CHECK HERE FIRST**
+- Current system status (✅ Working / ⚠️ Issues / ❌ Blocked)
+- CSRF authentication: ✅ FIXED
+- Gemini API quota: ⚠️ EXHAUSTED (250/day limit)
+- Troubleshooting: [chat/TROUBLESHOOTING_GUIDE.md](chat/TROUBLESHOOTING_GUIDE.md)
+- Complete documentation: [chat/README.md](chat/README.md)
+
+### 🔍 For Query Template System
+**Query Templates:** [queries/README.md](queries/README.md) ⭐ **PATTERN-BASED QUERIES**
+- **COMPLETE:** [Query Template Expansion Final Report](queries/QUERY_TEMPLATE_EXPANSION_FINAL_REPORT.md) ✅
+- **Current:** 559 templates across 18 categories (270% growth)
+- **Coverage:** 95%+ of user queries (up from 60%)
+- **Performance:** <10ms match time maintained at 3.7× scale
+- **Cost:** $0 operational cost (pattern-matching, no AI required)
+- **Test Coverage:** 98%+ (220+ tests passing)
+- **Usage Guide:** [queries/USAGE_GUIDE.md](queries/USAGE_GUIDE.md) - For end users
+- **Authoring Guide:** [queries/TEMPLATE_AUTHORING_GUIDE.md](queries/TEMPLATE_AUTHORING_GUIDE.md) - For developers
+- **Deployment:** [queries/DEPLOYMENT_CHECKLIST.md](queries/DEPLOYMENT_CHECKLIST.md) - Production ready
+
 ---
 
 ## Document Summary
@@ -162,6 +182,48 @@ This directory contains comprehensive AI integration strategy and implementation
 - **Appendix: Quick Commands**
 
 **Key Takeaway**: Comprehensive checklist to track AI integration progress across all phases.
+
+---
+
+### 4. Chat System Documentation (chat/)
+
+**Operational Guides | Troubleshooting | Status Tracking**
+
+**Contents:**
+- **[STATUS.md](chat/STATUS.md)** ⭐ Current system status
+  - Component status table (UI, CSRF, API, Database)
+  - Active issues and blockers
+  - What's working vs. what's broken
+  - Testing results
+  - Production readiness assessment
+  - Decision matrix (Upgrade API vs Local fallback vs Wait)
+- **[TROUBLESHOOTING_GUIDE.md](chat/TROUBLESHOOTING_GUIDE.md)** 🔧 Detailed solutions
+  - Fixed issues (CSRF token authentication ✅)
+  - Active issues (Gemini API quota exhausted ⚠️)
+  - Three solution paths with implementation details
+  - CSRF fix code walkthrough
+  - Retry logic and error handling
+  - Production readiness checklist
+  - Cost estimation for paid tier (~$24/month)
+- **[README.md](chat/README.md)** 📚 Quick reference
+  - Quick links to status and troubleshooting
+  - Common issues and solutions
+  - Testing quick start
+  - Production deployment checklist
+  - Support escalation path
+
+**Current Status (2025-10-06):**
+- ✅ Chat UI: WORKING
+- ✅ CSRF Auth: FIXED
+- ⚠️ Gemini API: QUOTA EXCEEDED (250/day free tier limit)
+- ❌ Data Queries: BLOCKED (requires API upgrade or local fallback)
+
+**Critical Issue:** Gemini API quota exhausted. System needs either:
+1. Upgrade to paid tier (~$24/month) ← RECOMMENDED for production
+2. Implement local database fallback (free, limited functionality)
+3. Wait 24 hours for quota reset (testing only)
+
+**Key Takeaway**: Chat system architecture complete, blocked by API quota limit. Documentation provides three clear paths forward with implementation details.
 
 ---
 

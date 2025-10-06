@@ -9,9 +9,16 @@ import json
 import logging
 from typing import Dict, Optional
 
+from django.conf import settings
+
+from .clarification import get_clarification_handler
 from .conversation_manager import get_conversation_manager
+from .entity_extractor import EntityExtractor
+from .fallback_handler import get_fallback_handler
+from .faq_handler import get_faq_handler
 from .intent_classifier import get_intent_classifier
 from .query_executor import get_query_executor
+from .query_templates import get_template_matcher
 from .response_formatter import get_response_formatter
 
 logger = logging.getLogger(__name__)
@@ -31,29 +38,53 @@ class ConversationalAssistant:
 
     def __init__(self):
         """Initialize conversational assistant with all components."""
+        # Core components (NEW PIPELINE - NO AI FALLBACK BY DEFAULT)
+        self.faq_handler = get_faq_handler()
+        self.entity_extractor = EntityExtractor()
         self.conversation_manager = get_conversation_manager()
         self.intent_classifier = get_intent_classifier()
+        self.clarification_handler = get_clarification_handler()
+        self.template_matcher = get_template_matcher()
         self.query_executor = get_query_executor()
         self.response_formatter = get_response_formatter()
+        self.fallback_handler = get_fallback_handler()
 
-        # Try to import Gemini service (optional for enhanced responses)
-        try:
-            from ai_assistant.services.gemini_service import GeminiService
+        # Feature flag for AI fallback (DEPRECATED - set to False by default)
+        self.use_ai_fallback = getattr(settings, 'CHAT_USE_AI_FALLBACK', False)
 
-            # Higher temperature (0.8) for more natural conversational responses
-            self.gemini = GeminiService(temperature=0.8)
-            self.has_gemini = True
-            logger.info("Gemini service initialized for conversational chat")
-        except (ImportError, ValueError) as e:
+        # Legacy AI service (DEPRECATED - only if explicitly enabled)
+        if self.use_ai_fallback:
+            try:
+                from ai_assistant.services.gemini_service import GeminiService
+
+                # Higher temperature (0.8) for more natural conversational responses
+                self.gemini = GeminiService(temperature=0.8)
+                self.has_gemini = True
+                logger.warning(
+                    "AI fallback enabled (DEPRECATED) - consider using rule-based pipeline only"
+                )
+            except (ImportError, ValueError) as e:
+                self.gemini = None
+                self.has_gemini = False
+                logger.info(
+                    f"Gemini service not available - using rule-based responses only: {e}"
+                )
+        else:
             self.gemini = None
             self.has_gemini = False
-            logger.warning(
-                f"Gemini service not available - using rule-based responses only: {e}"
-            )
+            logger.info("Chat engine initialized with NO AI FALLBACK (production mode)")
 
     def chat(self, user_id: int, message: str) -> Dict[str, any]:
         """
-        Process user message and generate response.
+        Process user message and generate response using NEW UNIFIED PIPELINE.
+
+        Pipeline Flow (NO AI FALLBACK):
+        1. Try FAQ instant response
+        2. Extract entities from query
+        3. Classify intent
+        4. Check if clarification needed
+        5. Try template-based query execution
+        6. Fallback with helpful suggestions (NO AI)
 
         Args:
             user_id: User ID
@@ -67,6 +98,7 @@ class ConversationalAssistant:
                 - intent: Detected intent type
                 - confidence: Intent confidence score
                 - visualization: Suggested visualization type
+                - source: Response source (faq, template, fallback, etc.)
 
         Example:
             >>> assistant = ConversationalAssistant()
@@ -77,22 +109,94 @@ class ConversationalAssistant:
             >>> print(result['response'])
             'There are 47 communities in Region IX.'
         """
-        try:
-            # Step 1: Get conversation context
-            context = self.conversation_manager.get_context(user_id)
+        import time
 
-            # Step 2: Classify intent
+        pipeline_start = time.time()
+
+        try:
+            # =====================================================
+            # STAGE 1: Try FAQ instant response (< 10ms target)
+            # =====================================================
+            stage_start = time.time()
+            faq_result = self.faq_handler.try_faq(message)
+            stage_time = (time.time() - stage_start) * 1000
+
+            if faq_result:
+                total_time = (time.time() - pipeline_start) * 1000
+                logger.info(
+                    f"User {user_id} query: '{message}' | "
+                    f"Source: FAQ | "
+                    f"Stage time: {stage_time:.2f}ms | "
+                    f"Total time: {total_time:.2f}ms"
+                )
+                return self._format_faq_response(faq_result, user_id, message)
+
+            # =====================================================
+            # STAGE 2: Extract entities from query
+            # =====================================================
+            stage_start = time.time()
+            entities = self.entity_extractor.extract_entities(message)
+            stage_time = (time.time() - stage_start) * 1000
+
+            logger.info(
+                f"User {user_id} query: '{message}' | "
+                f"Entities extracted: {list(entities.keys())} | "
+                f"Stage time: {stage_time:.2f}ms"
+            )
+
+            # =====================================================
+            # STAGE 3: Classify intent
+            # =====================================================
+            stage_start = time.time()
+            context = self.conversation_manager.get_context(user_id)
             intent_result = self.intent_classifier.classify(message, context)
+            stage_time = (time.time() - stage_start) * 1000
 
             logger.info(
                 f"User {user_id} query: '{message}' | "
                 f"Intent: {intent_result['type']} "
-                f"(confidence: {intent_result['confidence']:.2f})"
+                f"(confidence: {intent_result['confidence']:.2f}) | "
+                f"Stage time: {stage_time:.2f}ms"
             )
 
-            # Step 3: Route to appropriate handler
+            # =====================================================
+            # STAGE 4: Check if clarification needed
+            # =====================================================
+            stage_start = time.time()
+            clarification_needed = self.clarification_handler.needs_clarification(
+                query=message, entities=entities, intent=intent_result["type"]
+            )
+            stage_time = (time.time() - stage_start) * 1000
+
+            if clarification_needed:
+                total_time = (time.time() - pipeline_start) * 1000
+                logger.info(
+                    f"User {user_id} query: '{message}' | "
+                    f"Source: Clarification | "
+                    f"Issue: {clarification_needed.get('issue_type')} | "
+                    f"Stage time: {stage_time:.2f}ms | "
+                    f"Total time: {total_time:.2f}ms"
+                )
+                return {
+                    "type": "clarification",
+                    "response": clarification_needed["message"],
+                    "clarification": clarification_needed,
+                    "data": {},
+                    "suggestions": [],
+                    "visualization": None,
+                    "intent": intent_result["type"],
+                    "confidence": intent_result["confidence"],
+                    "source": "clarification",
+                }
+
+            # =====================================================
+            # STAGE 5: Route to appropriate handler
+            # =====================================================
+            stage_start = time.time()
             if intent_result["type"] == "data_query":
-                result = self._handle_data_query(message, intent_result, context)
+                result = self._handle_data_query_new_pipeline(
+                    message, intent_result, entities, context
+                )
             elif intent_result["type"] == "analysis":
                 result = self._handle_analysis(message, intent_result, context)
             elif intent_result["type"] == "navigation":
@@ -104,19 +208,31 @@ class ConversationalAssistant:
             else:
                 result = self._handle_unknown(message)
 
-            # Step 4: Store conversation exchange
+            stage_time = (time.time() - stage_start) * 1000
+            total_time = (time.time() - pipeline_start) * 1000
+
+            logger.info(
+                f"User {user_id} query: '{message}' | "
+                f"Handler stage time: {stage_time:.2f}ms | "
+                f"Total time: {total_time:.2f}ms"
+            )
+
+            # =====================================================
+            # STAGE 6: Store conversation exchange
+            # =====================================================
             self.conversation_manager.add_exchange(
                 user_id=user_id,
                 user_message=message,
                 assistant_response=result["response"],
                 intent=intent_result["type"],
                 confidence=intent_result["confidence"],
-                entities=intent_result.get("entities", []),
+                entities=list(entities.keys()),
             )
 
-            # Step 5: Add metadata
+            # Add metadata
             result["intent"] = intent_result["type"]
             result["confidence"] = intent_result["confidence"]
+            result["response_time"] = total_time
 
             return result
 
@@ -127,137 +243,261 @@ class ConversationalAssistant:
                 query=message,
             )
 
-    def _handle_data_query(
+    def _format_faq_response(
+        self, faq_result: Dict, user_id: int, message: str
+    ) -> Dict[str, any]:
+        """
+        Format FAQ response for chat interface.
+
+        Args:
+            faq_result: FAQ handler result
+            user_id: User ID
+            message: Original message
+
+        Returns:
+            Formatted response dict
+        """
+        # Store FAQ hit in conversation history
+        self.conversation_manager.add_exchange(
+            user_id=user_id,
+            user_message=message,
+            assistant_response=faq_result['answer'],
+            intent='faq',
+            confidence=faq_result.get('confidence', 1.0),
+            entities=[],
+        )
+
+        return {
+            "response": faq_result['answer'],
+            "data": {},
+            "suggestions": faq_result.get('related_queries', [])
+            or faq_result.get('examples', []),
+            "visualization": None,
+            "intent": "faq",
+            "confidence": faq_result.get('confidence', 1.0),
+            "source": "faq",
+            "response_time": faq_result.get('response_time', 0),
+        }
+
+    def _handle_data_query_new_pipeline(
         self,
         message: str,
         intent_result: Dict,
+        entities: Dict,
         context: Dict,
     ) -> Dict[str, any]:
         """
-        Handle data query intent.
+        Handle data query using NEW TEMPLATE-BASED PIPELINE (NO AI).
 
-        Converts natural language to Django ORM query and executes it.
-        Falls back to Gemini AI for conversational response if query fails.
+        Pipeline:
+        1. Find matching query templates
+        2. Generate Django ORM query from template
+        3. Execute query safely
+        4. Format result
+        5. If all fails, use fallback handler (NO AI)
+
+        Args:
+            message: User's query
+            intent_result: Intent classification result
+            entities: Extracted entities
+            context: Conversation context
+
+        Returns:
+            Response dictionary
         """
-        entities = intent_result.get("entities", [])
-
-        # Generate ORM query using AI or rule-based approach
-        if self.has_gemini:
-            query_string = self._generate_query_with_ai(message, entities, context)
-        else:
-            query_string = self._generate_query_rule_based(message, entities)
-
-        # If query generation failed, fallback to Gemini conversational AI
-        if not query_string:
-            if self.has_gemini:
-                logger.info(
-                    "Structured query failed, falling back to Gemini conversational AI"
-                )
-                return self._fallback_to_gemini(message, context)
-            else:
-                return self.response_formatter.format_error(
-                    error_message="Could not understand your data query",
-                    query=message,
-                )
-
-        logger.info(f"Generated query: {query_string}")
-
-        # Execute query
-        exec_result = self.query_executor.execute(query_string)
-
-        # If query execution failed, fallback to Gemini conversational AI
-        if not exec_result["success"]:
-            if self.has_gemini:
-                logger.info(
-                    f"Query execution failed ({exec_result['error']}), "
-                    f"falling back to Gemini conversational AI"
-                )
-                return self._fallback_to_gemini(message, context)
-            else:
-                return self.response_formatter.format_error(
-                    error_message=exec_result["error"],
-                    query=message,
-                )
-
-        # Format response
-        result_type = exec_result["query_info"].get("result_type", "unknown")
-        formatted = self.response_formatter.format_query_result(
-            result=exec_result["result"],
-            result_type=result_type,
-            original_question=message,
-            entities=entities,
+        # =====================================================
+        # STEP 1: Find matching query templates
+        # =====================================================
+        matching_templates = self.template_matcher.find_matching_templates(
+            message, entities, intent_result["type"]
         )
 
-        return formatted
+        if not matching_templates:
+            logger.info(
+                f"No matching templates for query: '{message}' | "
+                f"Intent: {intent_result['type']} | "
+                f"Entities: {list(entities.keys())}"
+            )
+            # Fallback to old rule-based approach or fallback handler
+            return self._handle_data_query_fallback(message, entities, context)
 
-    def _generate_query_with_ai(
+        # =====================================================
+        # STEP 2: Try each matching template (priority order)
+        # =====================================================
+        for template in matching_templates:
+            try:
+                logger.info(
+                    f"Trying template: {template.id} (priority: {template.priority})"
+                )
+
+                # Generate query from template
+                query_string = self.template_matcher.generate_query(template, entities)
+
+                # Execute query
+                exec_result = self.query_executor.execute(query_string)
+
+                if exec_result["success"]:
+                    # Format response
+                    formatted = self.response_formatter.format_query_result(
+                        result=exec_result["result"],
+                        result_type=template.result_type,
+                        original_question=message,
+                        entities=entities,
+                    )
+
+                    # Add source metadata
+                    formatted["source"] = "template"
+                    formatted["template_id"] = template.id
+
+                    logger.info(
+                        f"Query successful | Template: {template.id} | "
+                        f"Result type: {template.result_type}"
+                    )
+
+                    return formatted
+                else:
+                    logger.warning(
+                        f"Template {template.id} query failed: {exec_result.get('error')}"
+                    )
+                    # Try next template
+
+            except Exception as e:
+                logger.error(
+                    f"Template {template.id} execution error: {str(e)}", exc_info=True
+                )
+                # Try next template
+                continue
+
+        # =====================================================
+        # STEP 3: All templates failed - use fallback handler
+        # =====================================================
+        logger.warning(
+            f"All templates failed for query: '{message}' | "
+            f"Tried {len(matching_templates)} templates"
+        )
+        return self._handle_data_query_fallback(message, entities, context)
+
+    def _handle_data_query_fallback(
         self,
         message: str,
-        entities: list,
+        entities: Dict,
         context: Dict,
-    ) -> Optional[str]:
-        """Generate Django ORM query using Gemini AI."""
-        # Get available models
-        available_models = self.query_executor.get_available_models()
+    ) -> Dict[str, any]:
+        """
+        Fallback handler when template-based approach fails.
 
-        # Build prompt
-        prompt = self._build_query_generation_prompt(
-            message, entities, available_models
+        Uses:
+        1. Legacy rule-based query generation (if applicable)
+        2. Fallback handler with suggestions (NO AI)
+
+        Args:
+            message: User's query
+            entities: Extracted entities
+            context: Conversation context
+
+        Returns:
+            Response dictionary
+        """
+        # Try legacy rule-based approach
+        legacy_query = self._generate_query_rule_based(message, list(entities.keys()))
+
+        if legacy_query:
+            try:
+                exec_result = self.query_executor.execute(legacy_query)
+
+                if exec_result["success"]:
+                    formatted = self.response_formatter.format_query_result(
+                        result=exec_result["result"],
+                        result_type=exec_result["query_info"].get("result_type", "unknown"),
+                        original_question=message,
+                        entities=entities,
+                    )
+                    formatted["source"] = "rule_based"
+                    return formatted
+            except Exception as e:
+                logger.error(f"Legacy query execution error: {str(e)}", exc_info=True)
+
+        # =====================================================
+        # FINAL FALLBACK: Use fallback handler (NO AI)
+        # =====================================================
+        logger.info("Using rule-based fallback handler")
+        fallback_result = self.fallback_handler.handle_failed_query(
+            query=message,
+            intent='data_query',
+            entities=entities
         )
 
-        try:
-            # Generate query
-            response = self.gemini.generate_text(prompt)
+        return self._format_fallback_response(fallback_result, message)
 
-            # Extract text from Gemini response
-            if not response.get("success"):
-                logger.error(f"Gemini query generation failed: {response.get('error')}")
-                return None
+    def _format_fallback_response(
+        self, fallback_result: Dict, message: str
+    ) -> Dict[str, any]:
+        """
+        Format fallback handler result for chat interface.
 
-            response_text = response.get("text", "")
+        Args:
+            fallback_result: Fallback handler result
+            message: Original query
 
-            # Parse JSON response
-            query_data = json.loads(response_text)
-            query_string = query_data.get("query")
+        Returns:
+            Formatted response dict
+        """
+        error_analysis = fallback_result.get('error_analysis', {})
+        suggestions = fallback_result.get('suggestions', {})
+        alternatives = fallback_result.get('alternatives', [])
 
-            return query_string
+        # Build response message
+        response_parts = [
+            f"I couldn't process your query: \"{message}\"",
+            "",
+            f"**Issue**: {error_analysis.get('explanation', 'Query could not be processed')}",
+            "",
+        ]
 
-        except Exception as e:
-            logger.error(f"AI query generation failed: {e}")
-            return None
+        # Add corrected queries
+        corrected = suggestions.get('corrected_queries', [])
+        if corrected:
+            response_parts.append("**Did you mean:**")
+            for query in corrected[:3]:
+                response_parts.append(f"• {query}")
+            response_parts.append("")
 
-    def _build_query_generation_prompt(
-        self,
-        message: str,
-        entities: list,
-        available_models: list,
-    ) -> str:
-        """Build prompt for AI query generation."""
-        prompt = f"""Convert this natural language question to a Django ORM query.
+        # Add similar successful queries
+        similar = suggestions.get('similar_queries', [])
+        if similar:
+            response_parts.append("**Similar queries that worked:**")
+            for query in similar[:3]:
+                response_parts.append(f"• {query}")
+            response_parts.append("")
 
-Question: "{message}"
-Detected Entities: {entities}
+        # Add template examples
+        templates = suggestions.get('template_examples', [])
+        if templates:
+            response_parts.append("**Example queries you can try:**")
+            for query in templates[:3]:
+                response_parts.append(f"• {query}")
 
-Available Models:
-"""
-        for model in available_models:
-            prompt += f"\n- {model['model_name']}: {model.get('verbose_name', '')}"
-            prompt += f"\n  Fields: {', '.join(model['fields'][:10])}"
+        response_text = "\n".join(response_parts)
 
-        prompt += """
+        # Combine all suggestions
+        all_suggestions = (
+            corrected[:3] + similar[:3] + templates[:3]
+        )
 
-Requirements:
-1. Return ONLY a valid Django ORM query as a string
-2. Use only READ operations (filter, count, aggregate, values)
-3. NO write operations (create, update, delete, save)
-4. Return JSON format: {"query": "ModelName.objects.filter(...).count()", "explanation": "..."}
+        return {
+            "response": response_text,
+            "data": {
+                "error_analysis": error_analysis,
+                "alternatives": alternatives,
+            },
+            "suggestions": all_suggestions[:5],
+            "visualization": None,
+            "source": "fallback",
+            "confidence": 0.0,
+        }
 
-Example:
-{"query": "OBCCommunity.objects.filter(barangay__municipality__province__name__icontains='Zamboanga').count()", "explanation": "Count communities in Zamboanga"}
-
-Your response (JSON only):
-"""
-        return prompt
+    # REMOVED: _handle_data_query (old AI-based method)
+    # Now uses _handle_data_query_new_pipeline exclusively
 
     def _generate_query_rule_based(self, message: str, entities: list) -> Optional[str]:
         """
@@ -437,76 +677,11 @@ Your response (JSON only):
             "visualization": None,
         }
 
-    def _fallback_to_gemini(self, message: str, context: Dict) -> Dict[str, any]:
-        """
-        Fallback to Gemini conversational AI when structured query fails.
+    # REMOVED: _fallback_to_gemini (deprecated AI fallback)
+    # Now uses fallback_handler.handle_failed_query() exclusively
 
-        Used when:
-        - Query generation fails
-        - Query execution fails
-        - User asks questions that don't fit structured data queries
-
-        Returns a natural language response using Gemini's conversational capabilities.
-        """
-        try:
-            # Build conversational prompt with OBCMS context
-            prompt = self._build_conversational_prompt(message, context)
-
-            # Generate response using Gemini
-            response = self.gemini.generate_text(prompt)
-
-            # Extract text from Gemini response dict
-            if not response.get("success"):
-                logger.error(f"Gemini fallback failed: {response.get('error')}")
-                return self.response_formatter.format_error(
-                    error_message="I couldn't process your question. Please try rephrasing it.",
-                    query=message,
-                )
-
-            response_text = response.get("text", "")
-
-            return {
-                "response": response_text,
-                "data": {},
-                "suggestions": [
-                    "Tell me more",
-                    "What else can you help with?",
-                    "Show me some data",
-                ],
-                "visualization": None,
-            }
-
-        except Exception as e:
-            logger.error(f"Gemini fallback failed: {e}", exc_info=True)
-            return self.response_formatter.format_error(
-                error_message="I couldn't process your question. Please try rephrasing it.",
-                query=message,
-            )
-
-    def _build_conversational_prompt(self, message: str, context: Dict) -> str:
-        """
-        Build prompt for Gemini conversational response.
-
-        Provides OBCMS context to help Gemini give relevant answers.
-        """
-        prompt = f"""You are the OBCMS AI Assistant helping users with the Office for Other Bangsamoro Communities system.
-
-User Question: "{message}"
-
-Context: OBCMS manages data about Bangsamoro communities outside BARMM, including:
-- Community profiles (demographics, needs, services)
-- MANA assessments (Mapping and Needs Assessment)
-- Coordination activities (partnerships, workshops)
-- Policy recommendations
-- Project management
-
-Please provide a helpful, conversational response to the user's question. If you don't have specific data, guide them on what they can ask or where they can find the information in the system.
-
-Keep your response concise (2-3 sentences) and friendly.
-
-Response:"""
-
-        return prompt
+    # REMOVED: _build_conversational_prompt (deprecated AI prompt builder)
+    # Replaced with rule-based fallback handler
 
     def get_capabilities(self) -> Dict[str, any]:
         """

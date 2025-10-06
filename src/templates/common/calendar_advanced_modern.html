@@ -483,10 +483,14 @@
     border: none;
     border-radius: 0.375rem;
     padding: 0.25rem 0.5rem;
-    cursor: pointer;
+    cursor: grab;  /* Show drag cursor */
     transition: all 150ms;
     font-size: 0.9375rem; /* 15px - improved readability */
     font-weight: 500;
+}
+
+.fc .fc-event:active {
+    cursor: grabbing;  /* Show grabbing cursor while dragging */
 }
 
 .fc .fc-event:hover {
@@ -511,6 +515,12 @@
 .work-type-activity { background-color: #10b981; }   /* Green */
 .work-type-task { background-color: #d97706; }       /* Darker Gold */
 .work-type-coordination { background-color: #14b8a6; } /* Teal */
+
+/* Event Type Icons - Force inline display */
+.fc .event-type-icon {
+    display: inline !important;
+    margin-right: 4px;
+}
 
 /* Responsive Styles */
 @media (max-width: 1024px) {
@@ -843,8 +853,11 @@
             initialView: savedView,
             headerToolbar: false, // Custom header
             height: '100%', // Fill parent container
+            editable: true, // Enable drag-and-drop and resizing
             events: fetchEvents,
             eventClick: handleEventClick,
+            eventDrop: handleEventDrop,
+            eventResize: handleEventResize,
             dateClick: function(info) {
                 // Detect double-click using jsEvent.detail
                 if (info.jsEvent.detail === 2) {
@@ -854,17 +867,21 @@
                 // Single-click does nothing (empty dates have no action)
             },
             eventDidMount: function(info) {
-                // FullCalendar moves non-standard fields to extendedProps
-                // Our API returns 'workType' at top level, but FullCalendar moves it to extendedProps
+                // FullCalendar stores custom properties in extendedProps
                 const workType = info.event.extendedProps.workType;
 
+                // Set event colors based on work type
                 if (workType && workTypeColors[workType]) {
                     info.el.style.backgroundColor = workTypeColors[workType];
                     info.el.style.borderColor = workTypeColors[workType];
                 }
 
-                // Add icon to event
+                // Add icon to event (only once, check if icon already exists)
                 if (workType && workTypeIcons[workType]) {
+                    // Check if icon already added (prevent duplicates on re-render)
+                    const existingIcon = info.el.querySelector('.event-type-icon');
+                    if (existingIcon) return;
+
                     const iconClass = workTypeIcons[workType];
 
                     // Try to find the event title container
@@ -874,20 +891,23 @@
                     if (eventTitle) {
                         // Month/Week/Day view - title exists
                         const icon = document.createElement('i');
-                        icon.className = `fas ${iconClass}`;
+                        icon.className = `fas ${iconClass} event-type-icon`;
                         icon.style.marginRight = '4px';
+                        icon.style.display = 'inline';  // Force inline display
                         eventTitle.insertBefore(icon, eventTitle.firstChild);
                     } else if (eventContent) {
                         // Alternative: insert at the beginning of event content
                         const icon = document.createElement('i');
-                        icon.className = `fas ${iconClass}`;
+                        icon.className = `fas ${iconClass} event-type-icon`;
                         icon.style.marginRight = '4px';
+                        icon.style.display = 'inline';  // Force inline display
                         eventContent.insertBefore(icon, eventContent.firstChild);
                     } else {
                         // Fallback: insert at the beginning of the event element
                         const icon = document.createElement('i');
-                        icon.className = `fas ${iconClass}`;
+                        icon.className = `fas ${iconClass} event-type-icon`;
                         icon.style.marginRight = '4px';
+                        icon.style.display = 'inline';  // Force inline display
                         info.el.insertBefore(icon, info.el.firstChild);
                     }
                 }
@@ -1002,38 +1022,32 @@
         };
 
         const filtered = events.filter((event, index) => {
-            // FIX: workType is at TOP LEVEL in raw API data, not in extendedProps
-            const workType = event.workType || event.extendedProps?.work_type;
+            // Get workType from extendedProps (where it's properly placed by the API)
+            const workType = event.extendedProps?.workType;
 
-            // FIX: Check status field for completion (status === 'completed')
-            const isCompleted = event.status === 'completed';
+            // Check status field for completion (status === 'completed')
+            const isCompleted = event.extendedProps?.status === 'completed';
 
-            // 🔍 DEBUG: Log ALL events (not just first 3) to see the pattern
-            if (index < 5) {  // First 5 events for debugging
+            // 🔍 DEBUG: Log events to verify structure
+            if (index < 3) {  // First 3 events for debugging
                 console.log(`🔍 Event #${index + 1}:`, event.title);
-                console.log('  - workType (from event.workType):', event.workType);
-                console.log('  - workType (from extendedProps):', event.extendedProps?.work_type);
-                console.log('  - status:', event.status);
+                console.log('  - workType:', workType);
+                console.log('  - status:', event.extendedProps?.status);
                 console.log('  - isCompleted:', isCompleted);
-                console.log('  - activeFilters[workType]:', activeFilters[workType]);
-                console.log('  - activeFilters.completed:', activeFilters.completed);
             }
 
             // Check work type filter
             if (workType && !activeFilters[workType]) {
-                if (index < 5) console.log('  ❌ Filtering OUT:', event.title, '(type:', workType, ')');
                 filterStats.filteredByType++;
                 return false;
             }
 
             // Check completed filter
             if (isCompleted && !activeFilters.completed) {
-                if (index < 5) console.log('  ❌ Filtering OUT:', event.title, '(completed)');
                 filterStats.filteredByCompletion++;
                 return false;
             }
 
-            if (index < 5) console.log('  ✅ Keeping:', event.title);
             filterStats.kept++;
             return true;
         });
@@ -1041,6 +1055,115 @@
         console.log('📊 Filter Statistics:', filterStats);
         console.log('Filtered events:', filtered.length);
         return filtered;
+    }
+
+    // Handle event drop (drag-and-drop)
+    function handleEventDrop(info) {
+        const event = info.event;
+        const oldEvent = info.oldEvent;
+
+        console.log('📅 Event dropped:', {
+            id: event.id,
+            oldStart: oldEvent.start,
+            oldEnd: oldEvent.end,
+            newStart: event.start,
+            newEnd: event.end,
+            allDay: event.allDay
+        });
+
+        // Show loading state on the event
+        info.el.style.opacity = '0.6';
+        info.el.style.cursor = 'wait';
+
+        // Send update to server
+        updateEventDates(event, info.revert, info.el);
+    }
+
+    // Handle event resize (change duration)
+    function handleEventResize(info) {
+        const event = info.event;
+        const oldEvent = info.oldEvent;
+
+        console.log('📅 Event resized:', {
+            id: event.id,
+            oldEnd: oldEvent.end,
+            newEnd: event.end,
+        });
+
+        // Show loading state on the event
+        info.el.style.opacity = '0.6';
+        info.el.style.cursor = 'wait';
+
+        // Send update to server
+        updateEventDates(event, info.revert, info.el);
+    }
+
+    // Send event date update to API
+    function updateEventDates(event, revertFunc, eventEl) {
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value
+            || document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+
+        // Prepare data for API
+        const data = {
+            id: event.id,
+            type: 'work_item',  // Generic type for all work items
+            start: event.start ? event.start.toISOString() : null,
+            end: event.end ? event.end.toISOString() : null,
+            allDay: event.allDay
+        };
+
+        console.log('📤 Sending update to API:', data);
+
+        // Send POST request
+        fetch('{% url "common:calendar_event_update" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => Promise.reject(err));
+            }
+            return response.json();
+        })
+        .then(result => {
+            console.log('✅ Update successful:', result);
+
+            // Reset visual state
+            if (eventEl) {
+                eventEl.style.opacity = '1';
+                eventEl.style.cursor = 'grab';
+            }
+
+            // Show success toast
+            showToast(result.message || 'Event updated successfully', 'success');
+
+            // Note: We don't refetch here because FullCalendar already updated the UI optimistically.
+            // The event is already in its new position. Refetching would cause unnecessary loading.
+        })
+        .catch(error => {
+            console.error('❌ Update failed:', error);
+
+            // Reset visual state
+            if (eventEl) {
+                eventEl.style.opacity = '1';
+                eventEl.style.cursor = 'grab';
+            }
+
+            // Show error toast
+            showToast(error.error || 'Failed to update event', 'error');
+
+            // Revert the event to its original position/size
+            if (revertFunc) {
+                revertFunc();
+            }
+        });
     }
 
     // Handle event click - Load edit form directly (Notion Calendar style)

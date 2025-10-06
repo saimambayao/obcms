@@ -70,7 +70,7 @@ def work_items_calendar_feed(request):
     end_date_str = request.GET.get('end')
 
     # Parse ISO 8601 datetime strings to dates (FullCalendar sends timezone-aware strings)
-    from datetime import datetime
+    from datetime import datetime, timedelta
     start_date = None
     end_date = None
 
@@ -148,28 +148,35 @@ def work_items_calendar_feed(request):
         edit_url = reverse('common:work_item_edit', kwargs={'pk': item.pk})
         delete_url = reverse('common:work_item_delete', kwargs={'pk': item.pk})
 
+        # FullCalendar's 'end' is EXCLUSIVE - add 1 day to due_date for correct multi-day display
+        # E.g., event Oct 7-8 needs start="2025-10-07", end="2025-10-09"
+        end_date = None
+        if item.due_date:
+            end_date = (item.due_date + timedelta(days=1)).isoformat()
+
         work_items.append({
             'id': f'work-item-{item.pk}',
             'title': item.title,
-            'type': item.get_work_type_display(),  # "Project", "Activity", "Task"
-            'workType': item.work_type,  # Raw value for filtering
             'start': item.start_date.isoformat() if item.start_date else None,
-            'end': item.due_date.isoformat() if item.due_date else None,
+            'end': end_date,
             'color': item.calendar_color,
-            'level': item.level,  # MPTT tree level
-            'parentId': f'work-item-{item.parent.pk}' if item.parent else None,
-            'breadcrumb': breadcrumb,
-            'url': f'/oobc-management/work-items/{item.pk}/modal/',
-            'editUrl': edit_url,
-            'deleteUrl': delete_url,
-            'hasChildren': has_children,
-            'childCount': child_count,
-            'status': item.status,
-            'statusDisplay': item.get_status_display(),
-            'priority': item.priority,
-            'priorityDisplay': item.get_priority_display(),
-            'progress': item.progress,
             'extendedProps': {
+                # Core work item properties
+                'workType': item.work_type,  # Raw value for filtering (project, activity, task)
+                'type': item.get_work_type_display(),  # Display name ("Project", "Activity", "Task")
+                'level': item.level,  # MPTT tree level
+                'parentId': f'work-item-{item.parent.pk}' if item.parent else None,
+                'breadcrumb': breadcrumb,
+                'url': f'/oobc-management/work-items/{item.pk}/modal/',
+                'editUrl': edit_url,
+                'deleteUrl': delete_url,
+                'hasChildren': has_children,
+                'childCount': child_count,
+                'status': item.status,
+                'statusDisplay': item.get_status_display(),
+                'priority': item.priority,
+                'priorityDisplay': item.get_priority_display(),
+                'progress': item.progress,
                 'assignees': [u.get_full_name() for u in item.assignees.all()],
                 'teams': [t.name for t in item.teams.all()],
             }

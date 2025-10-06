@@ -374,6 +374,36 @@
     <div id="delete-modal-container" aria-live="polite" role="region" aria-label="Delete confirmation modal"></div>
 </div>
 
+<!-- Right Sidebar Panel -->
+<aside id="work-item-sidebar"
+       class="fixed top-0 right-0 h-full w-96 bg-white border-l border-gray-200 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+    <div class="h-full flex flex-col">
+        <!-- Sidebar Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Work Item Details</h2>
+            <button id="sidebar-close-btn"
+                    onclick="closeSidebar()"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+                    aria-label="Close sidebar">
+                <i class="fas fa-times text-gray-600"></i>
+            </button>
+        </div>
+
+        <!-- Sidebar Content (HTMX target) -->
+        <div id="sidebar-content" class="flex-1 overflow-y-auto p-6">
+            <div class="text-center text-gray-500 py-8">
+                <i class="fas fa-tasks text-4xl mb-3"></i>
+                <p>Click an action button to view details</p>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- Sidebar Backdrop -->
+<div id="sidebar-backdrop"
+     class="fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none transition-opacity duration-300"
+     onclick="closeSidebar()"></div>
+
 <script>
 /**
  * Work Items Hierarchical Tree Navigation
@@ -935,7 +965,7 @@
         // Create toast element
         const toast = document.createElement('div');
         toast.id = 'work-item-toast';
-        toast.className = 'fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-300 ease-out';
+        toast.className = 'fixed top-20 right-4 z-[60] px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-300 ease-out';
 
         // Color schemes based on level
         const colors = {
@@ -985,6 +1015,82 @@
     });
 
     console.log('✅ Toast notification system initialized');
+
+    // ============================================================================
+    // SIDEBAR PANEL FUNCTIONALITY
+    // ============================================================================
+
+    /**
+     * Open the sidebar panel with smooth transition
+     */
+    window.openSidebar = function() {
+        const sidebar = document.getElementById('work-item-sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+
+        if (sidebar && backdrop) {
+            sidebar.classList.remove('translate-x-full');
+            backdrop.classList.remove('opacity-0', 'pointer-events-none');
+            backdrop.classList.add('opacity-100', 'pointer-events-auto');
+            console.log('[Sidebar] Opened');
+        }
+    };
+
+    /**
+     * Close the sidebar panel and clear content
+     */
+    window.closeSidebar = function() {
+        const sidebar = document.getElementById('work-item-sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+
+        if (sidebar && backdrop) {
+            sidebar.classList.add('translate-x-full');
+            backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+            backdrop.classList.add('opacity-0', 'pointer-events-none');
+            console.log('[Sidebar] Closed');
+        }
+    };
+
+    /**
+     * Listen for HTMX afterSwap to process loaded content in sidebar
+     */
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        if (event.detail.target.id === 'sidebar-content') {
+            console.log('[Sidebar] Content loaded');
+            // Process HTMX attributes in the new content
+            htmx.process(event.detail.target);
+        }
+    });
+
+    /**
+     * Listen for workItemCreated event to close sidebar and refresh tree
+     * Note: workItemSaved no longer used - edit form stays open with instant row update
+     */
+    document.body.addEventListener('workItemCreated', function(event) {
+        console.log('[Sidebar] Work item created, closing sidebar and reloading');
+        closeSidebar();
+        // Reload page to show new item in tree (create needs full refresh for hierarchy)
+        window.location.reload();
+    });
+
+    /**
+     * Listen for custom close event from backend
+     */
+    document.body.addEventListener('closeSidebar', function(event) {
+        console.log('[Sidebar] Close event triggered');
+        closeSidebar();
+    });
+
+    /**
+     * Listen for showToast event from HX-Trigger headers
+     */
+    document.body.addEventListener('showToast', function(event) {
+        console.log('[Toast] Showing notification:', event.detail);
+        if (event.detail && event.detail.message) {
+            showToast(event.detail.message, event.detail.level || 'info');
+        }
+    });
+
+    console.log('✅ Sidebar panel functionality initialized');
 })();
 </script>
 {% endblock %}

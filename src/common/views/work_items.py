@@ -694,9 +694,9 @@ def work_item_calendar_feed(request):
 @login_required
 def work_item_sidebar_detail(request, pk):
     """
-    HTMX endpoint: Return work item detail view for calendar sidebar.
+    HTMX endpoint: Return work item detail view for sidebar (calendar or work items tree).
 
-    Used for displaying work item information in the calendar detail panel.
+    Used for displaying work item information in the sidebar detail panel.
     """
     work_item = get_object_or_404(WorkItem, pk=pk)
 
@@ -709,14 +709,19 @@ def work_item_sidebar_detail(request, pk):
         'can_delete': permissions['can_delete'],
     }
 
-    return render(request, 'common/partials/calendar_event_detail.html', context)
+    # Use different template based on referrer (work items tree vs calendar)
+    referer = request.META.get('HTTP_REFERER', '')
+    if 'work-items' in referer:
+        return render(request, 'work_items/partials/sidebar_detail.html', context)
+    else:
+        return render(request, 'common/partials/calendar_event_detail.html', context)
 
 
 @login_required
 @require_http_methods(["GET", "POST"])
 def work_item_sidebar_edit(request, pk):
     """
-    HTMX endpoint: Handle inline editing in calendar sidebar.
+    HTMX endpoint: Handle inline editing in sidebar (calendar or work items tree).
 
     GET: Return edit form HTML (or detail view if no edit permission)
     POST: Process form submission and return updated detail view
@@ -726,6 +731,12 @@ def work_item_sidebar_edit(request, pk):
     # Check edit permissions
     permissions = get_work_item_permissions(request.user, work_item)
 
+    # Determine which template to use based on referrer
+    referer = request.META.get('HTTP_REFERER', '')
+    is_work_items_tree = 'work-items' in referer
+    detail_template = 'work_items/partials/sidebar_detail.html' if is_work_items_tree else 'common/partials/calendar_event_detail.html'
+    edit_template = 'work_items/partials/sidebar_edit_form.html' if is_work_items_tree else 'common/partials/calendar_event_edit_form.html'
+
     # For GET requests: If user can't edit, gracefully show detail view instead
     if request.method == 'GET' and not permissions['can_edit']:
         # Fallback to read-only detail view
@@ -734,7 +745,7 @@ def work_item_sidebar_edit(request, pk):
             'can_edit': permissions['can_edit'],
             'can_delete': permissions['can_delete'],
         }
-        return render(request, 'common/partials/calendar_event_detail.html', context)
+        return render(request, detail_template, context)
 
     # For POST requests: If user can't edit, return 403 error
     if request.method == 'POST' and not permissions['can_edit']:
@@ -765,35 +776,92 @@ def work_item_sidebar_edit(request, pk):
             # Invalidate calendar cache
             invalidate_calendar_cache(request.user.id)
 
-            # Return updated detail view HTML
-            context = {
-                'work_item': work_item,
-                'can_edit': permissions['can_edit'],
-                'can_delete': permissions['can_delete'],
-            }
-            response = render(request, 'common/partials/calendar_event_detail.html', context)
+            # Refresh work_item from database to get all updated fields
+            work_item.refresh_from_db()
 
-            # Trigger calendar refresh
+            # For work items tree: return detail view + updated row via out-of-band swap
+            # For calendar: return detail view and trigger calendar refresh
             import json
-            response['HX-Trigger'] = json.dumps({
-                'calendarRefresh': {'eventId': str(work_item.pk)},
-                'showToast': {
-                    'message': f'{work_item.get_work_type_display()} updated successfully',
-                    'level': 'success'
+
+            if is_work_items_tree:
+                # Return updated edit form for sidebar + updated tree row for instant update
+                from django.template.loader import render_to_string
+                from common.forms.work_items import WorkItemQuickEditForm
+
+                # Re-render the edit form with updated data (keep sidebar open)
+                form = WorkItemQuickEditForm(instance=work_item, user=request.user)
+                context = {'form': form, 'work_item': work_item}
+                edit_form_html = render_to_string(edit_template, context, request=request)
+
+                # Render the updated tree row for out-of-band swap
+                # Template now has id="work-item-row-{{ work_item.id }}" for HTMX targeting
+                row_html = render_to_string('work_items/_work_item_tree_row.html', {
+                    'work_item': work_item
+                }, request=request)
+
+                # Extract ONLY the main <tr> (exclude placeholder and skeleton rows)
+                import re
+                # Match the main row: from opening <tr id="work-item-row-X"> to its closing </tr>
+                # Use non-greedy match to get just the first <tr>...</tr>
+                pattern = rf'(<tr\s+id="work-item-row-{work_item.id}"[^>]*>.*?</tr>)'
+                match = re.search(pattern, row_html, re.DOTALL)
+
+                if match:
+                    # Successfully extracted just the main row
+                    main_row_only = match.group(1)
+                    row_html_with_oob = main_row_only.replace(
+                        f'id="work-item-row-{work_item.id}"',
+                        f'id="work-item-row-{work_item.id}" hx-swap-oob="true"',
+                        1
+                    )
+                else:
+                    # Fallback: add hx-swap-oob to entire template output
+                    # This includes placeholder/skeleton rows, but HTMX will only swap the matching ID
+                    row_html_with_oob = row_html.replace(
+                        f'id="work-item-row-{work_item.id}"',
+                        f'id="work-item-row-{work_item.id}" hx-swap-oob="true"',
+                        1
+                    )
+
+                # Combine both: edit form stays in sidebar + row updates instantly
+                from django.http import HttpResponse
+                combined_html = edit_form_html + '\n' + row_html_with_oob
+
+                response = HttpResponse(combined_html)
+                response['HX-Trigger'] = json.dumps({
+                    'showToast': {
+                        'message': f'{work_item.get_work_type_display()} updated successfully',
+                        'level': 'success'
+                    }
+                })
+                return response
+            else:
+                # Calendar: Return updated detail view HTML
+                context = {
+                    'work_item': work_item,
+                    'can_edit': permissions['can_edit'],
+                    'can_delete': permissions['can_delete'],
                 }
-            })
-            return response
+                response = render(request, detail_template, context)
+                response['HX-Trigger'] = json.dumps({
+                    'calendarRefresh': {'eventId': str(work_item.pk)},
+                    'showToast': {
+                        'message': f'{work_item.get_work_type_display()} updated successfully',
+                        'level': 'success'
+                    }
+                })
+                return response
         else:
             # Return form with errors
             context = {'form': form, 'work_item': work_item}
-            return render(request, 'common/partials/calendar_event_edit_form.html', context)
+            return render(request, edit_template, context)
 
     else:  # GET
         from common.forms.work_items import WorkItemQuickEditForm
 
         form = WorkItemQuickEditForm(instance=work_item, user=request.user)
         context = {'form': form, 'work_item': work_item}
-        return render(request, 'common/partials/calendar_event_edit_form.html', context)
+        return render(request, edit_template, context)
 
 
 @login_required
@@ -861,13 +929,17 @@ def work_item_duplicate(request, pk):
 @require_http_methods(["GET", "POST"])
 def work_item_sidebar_create(request):
     """
-    HTMX endpoint: Create work item from calendar sidebar (double-click on date).
+    HTMX endpoint: Create work item from sidebar (calendar or work items tree).
 
     GET: Return create form HTML with pre-populated date from query params
-    POST: Process form submission and return success response with calendar refresh
+    POST: Process form submission and return success response with refresh trigger
 
-    This enables Google Calendar-style quick creation: double-click date → create form opens
+    This enables quick creation: double-click date → create form opens
     """
+    # Determine which template to use based on referrer
+    referer = request.META.get('HTTP_REFERER', '')
+    is_work_items_tree = 'work-items' in referer
+    create_template = 'work_items/partials/sidebar_create_form.html' if is_work_items_tree else 'common/partials/calendar_event_create_form.html'
     if request.method == 'POST':
         from common.forms.work_items import WorkItemQuickEditForm
 
@@ -880,22 +952,40 @@ def work_item_sidebar_create(request):
             invalidate_calendar_cache(request.user.id)
             invalidate_work_item_tree_cache(work_item)
 
-            # Return success response with calendar refresh trigger
+            # Return success response with appropriate triggers
             import json
-            response = HttpResponse(status=200)
-            response['HX-Trigger'] = json.dumps({
-                'calendarRefresh': {'eventId': str(work_item.pk)},
-                'showToast': {
-                    'message': f'{work_item.get_work_type_display()} created successfully',
-                    'level': 'success'
-                },
-                'closeDetailPanel': True  # Custom event to close sidebar
-            })
+            response = HttpResponse(status=204)  # No Content
+
+            if is_work_items_tree:
+                # Work items tree: trigger reload and close sidebar
+                response['HX-Trigger'] = json.dumps({
+                    'workItemCreated': {'workItemId': str(work_item.pk)},
+                    'showToast': {
+                        'message': f'{work_item.get_work_type_display()} created successfully',
+                        'level': 'success'
+                    }
+                })
+            else:
+                # Calendar: trigger calendar refresh and close panel
+                response['HX-Trigger'] = json.dumps({
+                    'calendarRefresh': {'eventId': str(work_item.pk)},
+                    'showToast': {
+                        'message': f'{work_item.get_work_type_display()} created successfully',
+                        'level': 'success'
+                    },
+                    'closeDetailPanel': True
+                })
             return response
         else:
+            # Log form errors for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Work item creation failed. Errors: {form.errors.as_json()}")
+            logger.error(f"POST data: {request.POST}")
+
             # Return form with errors
             context = {'form': form, 'is_create': True}
-            return render(request, 'common/partials/calendar_event_create_form.html', context)
+            return render(request, create_template, context)
 
     else:  # GET
         from common.forms.work_items import WorkItemQuickEditForm
@@ -903,19 +993,37 @@ def work_item_sidebar_create(request):
         # Get pre-populated date from query params
         start_date = request.GET.get('start_date')
         due_date = request.GET.get('due_date', start_date)  # Default due_date = start_date
+        parent_id = request.GET.get('parent')  # For "Add Child" action
 
         initial = {}
         if start_date:
             initial['start_date'] = start_date
         if due_date:
             initial['due_date'] = due_date
+        if parent_id:
+            try:
+                parent = WorkItem.objects.get(pk=parent_id)
+                initial['parent'] = parent
+                # Suggest default work_type based on parent
+                if parent.work_type == WorkItem.WORK_TYPE_PROJECT:
+                    initial['work_type'] = WorkItem.WORK_TYPE_ACTIVITY
+                elif parent.work_type == WorkItem.WORK_TYPE_ACTIVITY:
+                    initial['work_type'] = WorkItem.WORK_TYPE_TASK
+                elif parent.work_type == WorkItem.WORK_TYPE_TASK:
+                    initial['work_type'] = WorkItem.WORK_TYPE_SUBTASK
+            except WorkItem.DoesNotExist:
+                pass
 
         # Default values for new work items
-        initial['status'] = 'not_started'
-        initial['priority'] = 'medium'
-        initial['progress'] = 0
-        initial['work_type'] = 'task'  # Default to task
+        if 'status' not in initial:
+            initial['status'] = 'not_started'
+        if 'priority' not in initial:
+            initial['priority'] = 'medium'
+        if 'progress' not in initial:
+            initial['progress'] = 0
+        if 'work_type' not in initial:
+            initial['work_type'] = 'task'  # Default to task
 
-        form = WorkItemQuickEditForm(initial=initial)
+        form = WorkItemQuickEditForm(initial=initial, user=request.user)
         context = {'form': form, 'is_create': True}
-        return render(request, 'common/partials/calendar_event_create_form.html', context)
+        return render(request, create_template, context)

@@ -2,7 +2,7 @@
 
 **Date:** October 6, 2025
 **Status:** ✅ MIGRATION SUCCESSFUL
-**PostgreSQL Versions Installed:** Local (17.6), Docker (15.14)
+**PostgreSQL Versions Installed:** Local (17.6), Docker (17.6)
 **Migration Duration:** ~30 minutes
 
 ---
@@ -13,7 +13,7 @@ OBCMS has been successfully migrated from SQLite to PostgreSQL with **dual datab
 
 1. **SQLite** - Original development database (4.7MB with dev data)
 2. **Local PostgreSQL 17** - Production-ready local instance
-3. **Docker PostgreSQL 15** - Container-based instance for deployment testing
+3. **Docker PostgreSQL 17** - Container-based instance for deployment testing
 
 ---
 
@@ -95,7 +95,7 @@ python manage.py runserver
 
 ---
 
-### Option 3: Docker PostgreSQL 15
+### Option 3: Docker PostgreSQL 17
 
 ```bash
 # Stop local PostgreSQL (avoid port conflict)
@@ -221,7 +221,7 @@ brew services start postgresql@17
 brew services stop postgresql@17
 brew services restart postgresql@17
 
-# Docker PostgreSQL 15
+# Docker PostgreSQL 17
 docker-compose up -d db
 docker-compose stop db
 docker-compose restart db
@@ -323,7 +323,7 @@ python manage.py migrate
 1. **Choose primary database:**
    - [ ] SQLite (rapid development) - Copy `.env.sqlite` to `.env`
    - [ ] Local PostgreSQL 17 (recommended) - Copy `.env.postgres.local` to `.env`
-   - [ ] Docker PostgreSQL 15 (deployment testing) - Copy `.env.postgres.docker` to `.env`
+   - [ ] Docker PostgreSQL 17 (deployment testing) - Copy `.env.postgres.docker` to `.env`
 
 2. **Create initial data:**
    ```bash
@@ -370,7 +370,7 @@ python manage.py migrate
 
 - `.env.sqlite` - SQLite database configuration
 - `.env.postgres.local` - Local PostgreSQL 17 configuration
-- `.env.postgres.docker` - Docker PostgreSQL 15 configuration
+- `.env.postgres.docker` - Docker PostgreSQL 17 configuration
 
 ### Backups
 
@@ -400,14 +400,14 @@ OBCMS now has **flexible database options** for different development and deploy
 
 1. **SQLite** - Fast iteration, offline work
 2. **Local PostgreSQL 17** - Production-ready testing
-3. **Docker PostgreSQL 15** - Deployment simulation
+3. **Docker PostgreSQL 17** - Deployment simulation
 
 You can switch between databases instantly using environment templates. All databases have complete schema and are ready for use.
 
 **Recommended workflow:**
 - Daily development: SQLite (`.env.sqlite`)
 - Pre-deployment testing: Local PostgreSQL 17 (`.env.postgres.local`)
-- Deployment testing: Docker PostgreSQL 15 (`.env.postgres.docker`)
+- Deployment testing: Docker PostgreSQL 17 (`.env.postgres.docker`)
 
 ---
 

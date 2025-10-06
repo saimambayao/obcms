@@ -19,7 +19,14 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 
 ## Documentation Index
 
-> 📌 **Documentation recently reorganized!** See [DOCUMENTATION_ORGANIZATION.md](DOCUMENTATION_ORGANIZATION.md) for details on what moved and where.
+> 📌 **Documentation Recently Reorganized!** (October 2025)
+>
+> **163 markdown files** have been moved from the project root into organized `docs/` subdirectories. See [Documentation Reorganization Summary](DOCUMENTATION_REORGANIZATION_SUMMARY.md) for:
+> - Complete list of moved files by category
+> - New directory structure
+> - File location mappings
+>
+> **Only 4 files remain in root:** README.md, CLAUDE.md, AGENTS.md, GEMINI.md (AI configuration)
 
 ### 📋 Administrator Operations
 - [Installation Guide](admin-guide/installation.md)
@@ -284,6 +291,10 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 - **Deployment & Operations:**
   - [AI Deployment Guide](deployment/AI_DEPLOYMENT_GUIDE.md) 🚀 **Production Deployment Steps**
   - [Communities AI Setup Guide](improvements/COMMUNITIES_AI_SETUP_GUIDE.md) ⚙️ **Communities Module Setup**
+  - **Chat System Troubleshooting:** 🔧 **NEW - Complete Operational Guide**
+    - [Chat System Status](ai/chat/STATUS.md) ⭐ **CHECK HERE FIRST** (✅ UI Working, ✅ CSRF Fixed, ⚠️ API Quota)
+    - [Troubleshooting Guide](ai/chat/TROUBLESHOOTING_GUIDE.md) 📖 **Detailed Solutions & Implementation**
+    - [Chat Documentation](ai/chat/README.md) 📚 **Quick Reference & Testing**
 
 ### 🎨 UI & Experience
 

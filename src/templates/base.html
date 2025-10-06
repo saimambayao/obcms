@@ -669,28 +669,49 @@
     <!-- HTMX CSRF Token Configuration -->
     <script>
     document.body.addEventListener('htmx:configRequest', function(event) {
-        // Get CSRF token from cookie
+        // Get CSRF token from multiple sources (in order of preference)
         function getCsrfToken() {
-            var cookieValue = null;
+            // 1. Try from meta tag
+            var metaTag = document.querySelector('meta[name="csrf-token"]');
+            if (metaTag && metaTag.content) {
+                return metaTag.content;
+            }
+
+            // 2. Try from cookie
             if (document.cookie && document.cookie !== '') {
                 var cookies = document.cookie.split(';');
                 for (var i = 0; i < cookies.length; i++) {
                     var cookie = cookies[i].trim();
                     if (cookie.substring(0, 10) === 'csrftoken=') {
-                        cookieValue = decodeURIComponent(cookie.substring(10));
-                        break;
+                        return decodeURIComponent(cookie.substring(10));
                     }
                 }
             }
-            return cookieValue;
+
+            // 3. Try from form input (for the triggering element)
+            if (event.detail.elt) {
+                var form = event.detail.elt.closest('form');
+                if (form) {
+                    var input = form.querySelector('input[name="csrfmiddlewaretoken"]');
+                    if (input && input.value) {
+                        return input.value;
+                    }
+                }
+            }
+
+            return null;
         }
 
         var csrfToken = getCsrfToken();
 
         // Add CSRF token to all state-changing requests (POST, PUT, PATCH, DELETE)
-        if (csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].indexOf(event.detail.verb.toUpperCase()) !== -1) {
-            event.detail.headers['X-CSRFToken'] = csrfToken;
-            console.log('✅ CSRF token added to', event.detail.verb.toUpperCase(), 'request');
+        if (['POST', 'PUT', 'PATCH', 'DELETE'].indexOf(event.detail.verb.toUpperCase()) !== -1) {
+            if (csrfToken) {
+                event.detail.headers['X-CSRFToken'] = csrfToken;
+                console.log('✅ CSRF token added to', event.detail.verb.toUpperCase(), 'request');
+            } else {
+                console.error('❌ CSRF token not found! Request may fail.');
+            }
         }
     });
     </script>

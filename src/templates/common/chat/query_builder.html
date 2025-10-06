@@ -1,0 +1,216 @@
+{% load static %}
+
+<!-- Query Builder Modal -->
+<div class="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-4"
+     x-data="queryBuilder()"
+     x-show="open"
+     @keydown.escape.window="close()"
+     style="display: none;">
+
+    <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
+         @click.away="close()">
+
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-teal-600 text-white px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-magic text-2xl"></i>
+                    <h2 class="text-xl font-bold">Query Builder</h2>
+                </div>
+                <button @click="close()" class="text-white hover:text-gray-200 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Progress Steps -->
+            <div class="mt-4 flex items-center justify-center space-x-2">
+                <template x-for="i in 4" :key="i">
+                    <div class="flex items-center">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300"
+                             :class="step >= i ? 'bg-white text-blue-600 font-bold' : 'bg-blue-500 bg-opacity-50 text-white'">
+                            <span x-text="i"></span>
+                        </div>
+                        <div x-show="i < 4" class="w-12 h-1 mx-1 transition-all duration-300"
+                             :class="step > i ? 'bg-white' : 'bg-blue-500 bg-opacity-50'"></div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 200px);">
+
+            <!-- Step 1: Query Type -->
+            <div x-show="step === 1" x-transition class="space-y-4">
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">What would you like to know?</h3>
+                <p class="text-gray-600 mb-6">Choose the type of information you need</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button @click="selectQueryType('count')"
+                            class="group p-6 rounded-xl border-2 transition-all duration-200 hover:shadow-lg"
+                            :class="queryType === 'count' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-emerald-300'">
+                        <div class="text-center">
+                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-3 transition-all duration-200"
+                                 :class="queryType === 'count' ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white' : 'bg-gray-100 text-gray-600 group-hover:bg-emerald-100 group-hover:text-emerald-600'">
+                                <i class="fas fa-calculator text-2xl"></i>
+                            </div>
+                            <h4 class="font-bold text-lg mb-2">Count / Total</h4>
+                            <p class="text-sm text-gray-600">Get the number of items</p>
+                        </div>
+                    </button>
+
+                    <button @click="selectQueryType('list')"
+                            class="group p-6 rounded-xl border-2 transition-all duration-200 hover:shadow-lg"
+                            :class="queryType === 'list' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-emerald-300'">
+                        <div class="text-center">
+                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-3 transition-all duration-200"
+                                 :class="queryType === 'list' ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white' : 'bg-gray-100 text-gray-600 group-hover:bg-emerald-100 group-hover:text-emerald-600'">
+                                <i class="fas fa-list text-2xl"></i>
+                            </div>
+                            <h4 class="font-bold text-lg mb-2">List / Show</h4>
+                            <p class="text-sm text-gray-600">View specific items</p>
+                        </div>
+                    </button>
+
+                    <button @click="selectQueryType('aggregate')"
+                            class="group p-6 rounded-xl border-2 transition-all duration-200 hover:shadow-lg"
+                            :class="queryType === 'aggregate' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-emerald-300'">
+                        <div class="text-center">
+                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-3 transition-all duration-200"
+                                 :class="queryType === 'aggregate' ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white' : 'bg-gray-100 text-gray-600 group-hover:bg-emerald-100 group-hover:text-emerald-600'">
+                                <i class="fas fa-chart-bar text-2xl"></i>
+                            </div>
+                            <h4 class="font-bold text-lg mb-2">Statistics / Summary</h4>
+                            <p class="text-sm text-gray-600">Get aggregated data</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Entity Type -->
+            <div x-show="step === 2" x-transition class="space-y-4">
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">About what?</h3>
+                <p class="text-gray-600 mb-6">Select the type of data you want to query</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <template x-for="entity in availableEntities" :key="entity.value">
+                        <button @click="selectEntityType(entity.value)"
+                                class="group p-6 rounded-xl border-2 transition-all duration-200 hover:shadow-lg text-left"
+                                :class="entityType === entity.value ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-emerald-300'">
+                            <div class="flex items-center space-x-4">
+                                <div class="inline-flex items-center justify-center w-14 h-14 rounded-full transition-all duration-200"
+                                     :class="entityType === entity.value ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white' : 'bg-gray-100 text-gray-600 group-hover:bg-emerald-100 group-hover:text-emerald-600'">
+                                    <i :class="'fas ' + entity.icon + ' text-xl'"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-lg" x-text="entity.label"></h4>
+                                </div>
+                            </div>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Step 3: Filters -->
+            <div x-show="step === 3" x-transition class="space-y-4">
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">Filter your results</h3>
+                <p class="text-gray-600 mb-6">Add filters to narrow down the results (optional)</p>
+
+                <div id="filter-container" class="space-y-4">
+                    <!-- Filters will be loaded here via HTMX -->
+                </div>
+
+                <!-- Aggregate selection (if query type is aggregate) -->
+                <div x-show="queryType === 'aggregate' && Object.keys(aggregates).length > 0" class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">What do you want to calculate?</label>
+                    <select x-model="selectedAggregate"
+                            class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none bg-white transition-all duration-200">
+                        <option value="">Select calculation...</option>
+                        <template x-for="(agg, key) in aggregates" :key="key">
+                            <option :value="key" x-text="agg.label"></option>
+                        </template>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Step 4: Preview & Execute -->
+            <div x-show="step === 4" x-transition class="space-y-6">
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">Review your query</h3>
+                <p class="text-gray-600 mb-6">Make sure this is what you want to know</p>
+
+                <!-- Preview Card -->
+                <div class="bg-gradient-to-br from-blue-50 to-teal-50 rounded-xl p-6 border-2 border-blue-200">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-teal-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-question text-white text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-lg text-gray-900 mb-2">Your Query:</h4>
+                            <p class="text-xl text-gray-800 font-medium" x-text="previewText"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Results (loaded via HTMX) -->
+                <div id="preview-results" class="rounded-xl border border-gray-200 p-4 bg-white">
+                    <div class="flex items-center justify-center py-8">
+                        <div class="text-center">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                            <p class="text-gray-600">Loading preview...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Execute Button -->
+                <div class="flex items-center justify-center">
+                    <button @click="executeQuery()"
+                            :disabled="executing"
+                            class="px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span x-show="!executing" class="flex items-center space-x-2">
+                            <i class="fas fa-play-circle"></i>
+                            <span>Get Results</span>
+                        </span>
+                        <span x-show="executing" class="flex items-center space-x-2">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Executing...</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Navigation -->
+        <div class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t">
+            <button @click="prevStep()"
+                    x-show="step > 1"
+                    class="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-100 transition-all duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </button>
+            <div x-show="step === 1"></div>
+
+            <button @click="nextStep()"
+                    x-show="step < 4"
+                    :disabled="!canProceed()"
+                    class="px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                Next<i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Filter templates loaded via HTMX -->
+<template id="filter-dropdown-template">
+    <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700" x-text="filter.label"></label>
+        <div class="relative">
+            <select class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                <option value="">All</option>
+            </select>
+            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+            </span>
+        </div>
+    </div>
+</template>

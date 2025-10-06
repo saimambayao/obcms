@@ -5,6 +5,7 @@ import logging
 from datetime import datetime, time, timedelta
 
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.utils import timezone
@@ -24,6 +25,7 @@ def _strip_known_prefix(raw_id: str) -> str:
         return raw_id
 
     known_prefixes = (
+        "work-item-",  # Unified WorkItem model (projects, activities, tasks)
         "coordination-event-",
         "coordination-activity-",
         "staff-task-",
@@ -88,7 +90,72 @@ def calendar_event_update(request):
         # Update event based on type
         normalized_id = _strip_known_prefix(str(event_id))
 
-        if event_type == "event":
+        # Generic handler for all WorkItem types (projects, activities, tasks)
+        if event_type in {"work_item", "project", "activity", "task"}:
+            try:
+                work_item = WorkItem.objects.get(pk=normalized_id)
+
+                # Check permissions
+                if not (
+                    request.user.is_staff
+                    or request.user.is_superuser
+                    or work_item.created_by == request.user
+                    or request.user.has_perm("common.change_workitem")
+                ):
+                    return JsonResponse(
+                        {"success": False, "error": "Permission denied"}, status=403
+                    )
+
+                # Update dates
+                work_item.start_date = start_dt.date()
+
+                if all_day:
+                    work_item.start_time = None
+                    work_item.end_time = None
+                    if end_dt:
+                        # FullCalendar's end is EXCLUSIVE for all-day events - subtract 1 day
+                        work_item.due_date = (end_dt - timedelta(days=1)).date()
+                    else:
+                        work_item.due_date = start_dt.date()
+                else:
+                    work_item.start_time = start_dt.time()
+                    if end_dt:
+                        work_item.due_date = end_dt.date()
+                        work_item.end_time = end_dt.time()
+
+                work_item.save(
+                    update_fields=[
+                        "start_date",
+                        "start_time",
+                        "due_date",
+                        "end_time",
+                    ]
+                )
+
+                # Invalidate calendar cache for this user
+                user_id = request.user.id
+                current_version = cache.get(f'calendar_version:{user_id}') or 0
+                cache.set(f'calendar_version:{user_id}', current_version + 1, timeout=None)
+                logger.info(f"Cache version incremented to {current_version + 1} for user {user_id}")
+
+                logger.info(
+                    f"WorkItem {event_id} rescheduled by {request.user.username}: "
+                    f"{start_dt} to {end_dt}"
+                )
+
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "message": f"{work_item.get_work_type_display()} '{work_item.title}' rescheduled successfully",
+                    }
+                )
+
+            except WorkItem.DoesNotExist:
+                return JsonResponse(
+                    {"success": False, "error": "Work item not found"}, status=404
+                )
+
+        elif event_type == "event":
             try:
                 # Event is now WorkItem with work_type='activity' or 'sub_activity'
                 activity = WorkItem.objects.get(

@@ -13,6 +13,7 @@ from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
 from common.ai_services.chat import get_conversational_assistant
+from common.ai_services.chat.clarification import get_clarification_handler
 from common.models import ChatMessage
 
 logger = logging.getLogger(__name__)
@@ -44,7 +45,21 @@ def chat_message(request):
             message=message,
         )
 
-        # Render response
+        # Check if clarification needed
+        if result.get('type') == 'clarification':
+            clarification = result.get('clarification', {})
+            context = {
+                'message': clarification.get('message', ''),
+                'options': clarification.get('options', []),
+                'original_query': clarification.get('original_query', message),
+                'session_id': clarification.get('session_id', ''),
+                'clarification_id': clarification.get('clarification_id', ''),
+                'issue_type': clarification.get('issue_type', ''),
+                'priority': clarification.get('priority', 'medium'),
+            }
+            return render(request, 'common/chat/clarification_dialog.html', context)
+
+        # Render normal response
         context = {
             'user_message': message,
             'assistant_response': result.get('response', ''),
@@ -185,3 +200,85 @@ def chat_suggestion(request):
     request.POST['message'] = suggestion
 
     return chat_message(request)
+
+
+@login_required
+@require_http_methods(['POST'])
+def chat_clarification_response(request):
+    """
+    Handle clarification response from user.
+
+    User selected an option from clarification dialog.
+    Refines the query and continues processing.
+    """
+    session_id = request.POST.get('session_id', '').strip()
+    issue_type = request.POST.get('issue_type', '').strip()
+    value = request.POST.get('value', '').strip()
+    original_query = request.POST.get('original_query', '').strip()
+
+    if not all([session_id, issue_type, value, original_query]):
+        return HttpResponse(
+            '<div class="text-red-500 text-sm">Invalid clarification response</div>',
+            status=400,
+        )
+
+    try:
+        # Get clarification handler
+        clarification_handler = get_clarification_handler()
+
+        # Apply clarification
+        result = clarification_handler.apply_clarification(
+            original_query=original_query,
+            user_choice={'value': value, 'issue_type': issue_type},
+            session_id=session_id,
+        )
+
+        refined_query = result['refined_query']
+        entities = result['entities']
+        needs_more = result.get('needs_more_clarification', False)
+
+        # If more clarification needed, show next clarification dialog
+        if needs_more:
+            next_clarification = result.get('next_clarification')
+            if next_clarification:
+                context = {
+                    'message': next_clarification['message'],
+                    'options': next_clarification['options'],
+                    'original_query': refined_query,
+                    'session_id': next_clarification['session_id'],
+                    'clarification_id': next_clarification['clarification_id'],
+                    'issue_type': next_clarification['issue_type'],
+                    'priority': next_clarification.get('priority', 'medium'),
+                }
+                return render(
+                    request, 'common/chat/clarification_dialog.html', context
+                )
+
+        # No more clarification needed - process refined query
+        assistant = get_conversational_assistant()
+
+        # Process refined message with updated entities
+        chat_result = assistant.chat(
+            user_id=request.user.id,
+            message=refined_query,
+        )
+
+        # Render response
+        context = {
+            'user_message': refined_query,
+            'assistant_response': chat_result.get('response', ''),
+            'suggestions': chat_result.get('suggestions', []),
+            'data': chat_result.get('data', {}),
+            'visualization': chat_result.get('visualization'),
+            'intent': chat_result.get('intent'),
+            'confidence': chat_result.get('confidence', 0.0),
+        }
+
+        return render(request, 'common/chat/message_pair.html', context)
+
+    except Exception as e:
+        logger.error(f"Clarification response error: {str(e)}", exc_info=True)
+        return HttpResponse(
+            f'<div class="text-red-500 text-sm">Error: {str(e)}</div>',
+            status=500,
+        )

@@ -730,6 +730,7 @@ from common.views.chat import (
     chat_stats,
     chat_capabilities,
     chat_suggestion,
+    chat_clarification_response,
 )
 
 urlpatterns += [
@@ -739,4 +740,22 @@ urlpatterns += [
     path('chat/stats/', chat_stats, name='chat_stats'),
     path('chat/capabilities/', chat_capabilities, name='chat_capabilities'),
     path('chat/suggestion/', chat_suggestion, name='chat_suggestion'),
+    path('chat/clarification/', chat_clarification_response, name='chat_clarification_response'),
+]
+
+# Query Builder URLs
+from common.views.query_builder import (
+    query_builder_entities,
+    query_builder_config,
+    query_builder_filters,
+    query_builder_preview,
+    query_builder_execute,
+)
+
+urlpatterns += [
+    path('api/query-builder/entities/', query_builder_entities, name='query_builder_entities'),
+    path('api/query-builder/config/<str:entity_type>/', query_builder_config, name='query_builder_config'),
+    path('api/query-builder/filters/', query_builder_filters, name='query_builder_filters'),
+    path('api/query-builder/preview/', query_builder_preview, name='query_builder_preview'),
+    path('api/query-builder/execute/', query_builder_execute, name='query_builder_execute'),
 ]

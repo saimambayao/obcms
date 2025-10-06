@@ -1,0 +1,1792 @@
+# OBCMS AI Chat - Example Queries
+
+**Generated:** 2025-10-06 22:48:18
+
+## ANALYTICS
+
+- Statistical summary
+- Stats analysis
+- Statistical overview
+- Show statistics
+- Distribution analysis
+- Distribution by buckets
+- Show distribution breakdown
+- Bucket analysis
+- Outliers by Z-score
+- Anomaly detection
+- Detect unusual values
+- Find outliers
+- Correlation between metrics
+- Correlation analysis
+- Measure correlation
+- Relationship between fields
+- Variance analysis
+- Variance by group
+- Measure variability
+- Group variance
+- 90th percentile values
+- Percentile ranking
+- Top percentile analysis
+- Show 95th percentile
+- Coefficient of variation
+- Variability measure
+- CV analysis
+- Relative variability
+- Aggregate by multiple dimensions
+- Multi-dimensional analysis
+- Cross-tabulation
+- Pivot analysis
+- Weighted by population
+- Weighted average
+- Weighted by budget
+- Population-weighted average
+- Confidence intervals
+- 95% confidence range
+- Statistical confidence
+- Margin of error
+- Identify clusters
+- Clustering analysis
+- Group similar items
+- Find patterns
+- Group by characteristics
+- Segmentation analysis
+- Segment by attributes
+- Customer segmentation
+- Detect anomalies
+- Unusual patterns
+- Find irregularities
+- Find similar communities
+- Similar projects
+- Similarity analysis
+- Communities like this one
+- Communities with similar profiles
+- Match community characteristics
+- Find similar demographic profiles
+- Pattern matching
+- Group by demographics
+- Cluster by attributes
+- Categorize by features
+- Identify hotspots
+- High-density areas
+- Concentration analysis
+- Where are concentrations?
+- Network analysis
+- Connection patterns
+- Partnership networks
+- Collaboration patterns
+- Hierarchical analysis
+- Parent-child relationships
+- Hierarchy patterns
+- Tree structure analysis
+- Contributing factors
+- Factor analysis
+- What factors contribute?
+- Identify key factors
+- Risk score by project
+- Risk assessment
+- Community risk levels
+- Calculate risk scores
+- Indicators of success
+- Success factors
+- What predicts success?
+- Success rate analysis
+- Predict future gaps
+- Gap prediction
+- Project shortfalls
+- Forecast deficits
+- Capacity vs demand
+- Capacity analysis
+- Utilization rate
+- Capacity shortfall
+- Efficiency indicators
+- Efficiency metrics
+- Cost efficiency
+- Output per input
+- Predicted performance
+- Performance prediction
+- Forecast outcomes
+- Expected performance
+- Project future trends
+- Trend projection
+- Forecast trajectory
+- Extrapolate trends
+- Early warning indicators
+- Warning signs
+- Red flags
+- Risk indicators
+- Predicted impact
+- Impact prediction
+- Expected outcomes
+- Forecast impact
+- Optimal resource allocation
+- Resource optimization
+- Best distribution
+- Optimize allocation
+
+## BUDGET
+
+- Budget ceilings near limit
+- Budget utilization by sector
+- Show ceiling usage
+- Budget allocation rates
+- Which ceilings are near limit?
+- Remaining budget by sector
+- Available budget under ceilings
+- Unused budget by sector
+- How much budget is left?
+- Budget remaining under ceilings
+- Allocations exceeding ceilings
+- Budget violating limits
+- Budgets over ceiling
+- Which allocations exceed limits?
+- Ceiling violations
+- Total budget by sector
+- Sum budget allocated by sector
+- Budget totals per sector
+- Sector budget summary
+- How much budget per sector?
+- Total budget by fiscal year
+- Sum budget for FY 2025
+- Budget totals in 2024
+- How much budget per year?
+- Budget by year
+- Total budget by funding source
+- Sum budget from GAA
+- Budget totals by block grant
+- How much from donor funding?
+- Budget by LGU
+- Budget allocation vs utilization
+- Allocation versus spending
+- Compare budget to utilization
+- Allocation compared to disbursement
+- Budget vs actual spending
+
+## COMMUNITIES
+
+- How many communities are there?
+- Total communities
+- Count all OBC communities
+- Number of communities
+- How many OBC communities?
+- How many communities in Region IX?
+- Count communities in Zamboanga del Sur
+- Total communities in Sultan Kudarat
+- Communities in Cotabato City
+- How many Maranao communities?
+- Count Maguindanaon communities
+- Total Tausug communities
+- Yakan communities count
+- How many communities with fishing livelihood?
+- Count communities having farming
+- Total communities with trading livelihood
+- How many Maranao communities in Region IX?
+- Count Maguindanaon population in Cotabato
+- Total Tausug communities in Zamboanga
+- How many provinces do we have?
+- Total provinces
+- Count provinces
+- Number of provinces
+- How many provinces in OBC Data?
+- How many regions do we have?
+- Total regions
+- Count regions
+- Number of regions
+- How many municipalities do we have?
+- Total municipalities
+- Count municipalities
+- Number of municipalities
+- How many cities?
+- Total cities
+- Count cities
+- Number of cities
+- How many barangays do we have?
+- Total barangays
+- Count barangays
+- Number of barangays
+- Show me communities
+- List all OBC communities
+- Display communities
+- Get all communities
+- Show me communities in Region IX
+- List communities in Zamboanga
+- Display communities in Cotabato
+- Communities in Region XII
+- Show me Maranao communities
+- List Maguindanaon communities
+- Display Tausug communities
+- Show me communities with fishing livelihood
+- List communities with farming
+- Display communities with trading livelihood
+- Recent communities
+- Latest OBC communities
+- Newly added communities
+- Show recent communities
+- Total OBC population
+- Overall population
+- Combined population of all communities
+- What is the total population?
+- Total population in Region IX
+- Overall population in Zamboanga
+- Population in Cotabato
+- Average household size
+- Mean households per community
+- What is the average household size?
+- Top ethnolinguistic groups
+- Main ethnic groups
+- Major ethnic communities
+- Primary ethnolinguistic groups
+- Top livelihoods
+- Main livelihoods
+- Common economic activities
+- Primary livelihoods
+- Largest communities
+- Biggest populations
+- Top 10 largest communities
+- Show largest communities
+- Communities by proximity to BARMM
+- Group communities by BARMM proximity
+- How many adjacent to BARMM?
+- Maranao fishing communities
+- Maguindanaon farming communities
+- Tausug trading communities
+- Fishing communities in Region IX
+- Farming communities in Cotabato
+- Trading communities in Zamboanga
+- Maranao fishing communities in Region IX
+- Maguindanaon farming communities in Cotabato
+- Recent community additions
+- Latest community additions
+- New communities added this month
+- Age distribution
+- Population by age
+- Show age breakdown
+- What is the age distribution?
+- How many children?
+- Total children
+- Count children in communities
+- Number of kids
+- How many youth?
+- Total youth
+- Count youth population
+- Young people count
+- How many seniors?
+- Total elderly
+- Count senior citizens
+- Elderly population
+- How many PWDs?
+- Total persons with disabilities
+- Count disabled population
+- PWD count
+- How many solo parents?
+- Total solo parents
+- Count solo parents
+- Solo parent population
+- How many IDPs?
+- Total internally displaced persons
+- Count IDPs
+- Displaced persons count
+- How many women?
+- Total women
+- Count women population
+- Women count
+- Vulnerable sectors
+- Show vulnerable groups
+- Disadvantaged populations
+- Vulnerable population breakdown
+- Communities with population over 1000
+- Communities with population under 500
+- How many communities with population over 2000?
+- Demographics in Region IX
+- Population breakdown for Zamboanga
+- Demographics of Cotabato
+- Average household size in Region IX
+- Average household for Zamboanga
+- Household size in Cotabato
+- Ethnicity distribution
+- Ethnic breakdown
+- Ethnolinguistic groups
+- Show ethnic distribution
+- Ethnic diversity in Region IX
+- Ethnolinguistic groups in Zamboanga
+- Show ethnic groups in Cotabato
+- Population of Maranao
+- Population by Maguindanaon
+- Tausug population
+- Yakan population total
+- Where are Maranao communities?
+- Where do Tausug live?
+- Maguindanaon locations
+- Where do Yakan reside?
+- Largest ethnic group in Region IX
+- Dominant ethnic group in Zamboanga
+- Main ethnic group in Cotabato
+- Multi-ethnic communities
+- Show diverse communities
+- Mixed ethnic communities
+- Communities with multiple ethnic groups
+- Languages spoken
+- What languages are spoken?
+- Show dialects spoken
+- Language diversity
+- Maranao livelihoods
+- Tausug economic activities
+- What do Maguindanaon do for livelihood?
+- Yakan livelihood patterns
+- Percentage of Maranao
+- What percentage are Tausug?
+- Maguindanaon percentage
+- Share of Yakan communities
+- Rare ethnic groups
+- Small ethnic groups
+- Minority ethnic groups
+- Less common ethnic groups
+- Livelihood distribution
+- Economic breakdown
+- Livelihood patterns
+- Show economic distribution
+- Livelihoods in Region IX
+- Economic activities in Zamboanga
+- Livelihoods at Cotabato
+- How many farmers?
+- Total farmers
+- Count farming population
+- Farmer count
+- How many fisherfolk?
+- Total fishermen
+- Count fishers
+- Fisherfolk count
+- How many unemployed?
+- Total unemployed
+- Count unemployment
+- Unemployed population
+- Livelihood diversity
+- Economic variety
+- How diverse are livelihoods?
+- Show livelihood diversity
+- Primary vs secondary livelihood
+- Primary versus secondary livelihood
+- Compare primary and secondary livelihoods
+- Primary livelihood compared to secondary
+- Income levels
+- Income distribution
+- Earnings range
+- Show income levels
+- Livelihoods by proximity to BARMM
+- Economic activities by BARMM proximity
+- How does proximity affect livelihood?
+- Communities with multiple livelihoods
+- Communities with both livelihoods
+- Dual livelihood communities
+- Show communities with secondary livelihoods
+
+## COMPARISON
+
+- Compare Region IX vs Region X
+- Region IX versus Region XII
+- Region X compared to Region XI
+- Compare Regions IX and X
+- Compare provinces
+- Zamboanga del Sur vs Cotabato
+- Province comparison
+- Compare two provinces
+- Compare municipalities
+- Municipality A vs Municipality B
+- Compare two municipalities
+- Municipality comparison
+- Compare 3+ locations
+- Compare multiple regions
+- Multi-location comparison
+- Compare several provinces
+- Rank regions by metric
+- Ranking provinces by population
+- Rank municipalities by assessments
+- Location ranking
+- Benchmark against average
+- Compare to national average
+- Regional benchmarking
+- Performance vs average
+- Gap between locations
+- Regional gap analysis
+- Location disparity
+- Inequality between regions
+- Performance comparison matrix
+- Multi-metric location comparison
+- Location performance grid
+- Compare locations across metrics
+- Compare ethnic groups demographics
+- Ethnicity demographic comparison
+- Compare Maranao vs Tausug demographics
+- Ethnic group characteristics
+- Needs by ethnic group
+- Compare needs across ethnicities
+- Ethnic group needs analysis
+- Which ethnic groups have most needs?
+- Outcomes by ethnic group
+- Compare ethnic group outcomes
+- Success rates by ethnicity
+- Ethnic group impact
+- Service coverage by ethnic group
+- Coverage by ethnicity
+- Which ethnic groups are underserved?
+- Ethnic group access rates
+- Participation rates by ethnicity
+- Ethnic group engagement
+- Compare participation across ethnicities
+- Engagement by ethnic group
+- Resource allocation by group
+- Budget by ethnicity
+- Funding allocation by ethnic group
+- Ethnic group budget comparison
+- Budget efficiency comparison
+- Compare cost efficiency
+- Budget efficiency by MOA
+- Most efficient spending
+- Success rate by MOA
+- Success rate by sector
+- Compare project success rates
+- Which MOA has best success rate?
+- Completion time by type
+- Compare project durations
+- Average completion time comparison
+- Which projects finish fastest?
+- Cost per beneficiary comparison
+- Cost efficiency by sector
+- Compare cost per beneficiary
+- Most cost-effective projects
+- Coverage rates comparison
+- Compare coverage by region
+- Assessment coverage comparison
+- Service coverage by location
+- Performance vs benchmarks
+- Benchmark comparison
+- Compare to performance standards
+- Performance gap analysis
+
+## COORDINATION
+
+- Partnerships in Region IX
+- How many partnerships in Zamboanga del Sur?
+- Active partnerships
+- Show me ongoing partnerships
+- Partnerships with BARMM
+- How many partnerships with DSWD?
+- How many partnerships?
+- Total partnerships
+- Count partnerships
+- Technical partnerships
+- Funding partnerships
+- Recent partnerships
+- Show me recent partnerships
+- List all partnerships
+- Show partnerships
+- Partnerships in education sector
+- Health sector partnerships
+- Partnership abc-123
+- Show me partnership details
+- Completed partnerships
+- Pending partnerships
+- Organizations in health sector
+- Education sector organizations
+- Active stakeholders
+- Show me active organizations
+- NGOs in Region IX
+- How many NGOs in Zamboanga?
+- How many organizations?
+- Total organizations
+- List all organizations
+- Show organizations
+- NGO organizations
+- Government organizations
+- Government agencies
+- How many government agencies?
+- Organization abc-123
+- Show me organization details
+- Organizations in Region IX
+- Organizations in Zamboanga
+- Find organization DSWD
+- Search organization Red Cross
+- Recent meetings
+- Show me recent meetings
+- Meetings with BARMM
+- How many meetings with DSWD?
+- Meeting schedule
+- Show me meeting schedule
+- Completed meetings
+- How many completed meetings?
+- Meetings in Region IX
+- How many meetings in Zamboanga?
+- How many meetings?
+- Total meetings
+- Planned meetings
+- How many planned meetings?
+- Meeting abc-123
+- Show me meeting details
+- Meetings from 2025-01-01 to 2025-12-31
+- Today's meetings
+- Meetings today
+- Coordination activities
+- Show coordination activities
+- Workshop activities
+- Training activities
+- Consultation activities
+- Activity timeline
+- Show activity timeline
+- Activities with DSWD
+- Activities by BARMM
+- How many activities?
+- Total activities
+- Count activities
+- Shared resources
+- Show shared resources
+- Resources being shared
+- Resources for partnership abc-123
+- Resources in partnership xyz
+- Resource allocation
+- Show resource allocation
+- Partnerships with resources
+- How many partnerships with resource sharing?
+- Types of resources shared
+- Resource types
+- What resources are shared?
+- Active MOAs
+- MOUs
+- Memorandum of agreements
+- MOAs expiring
+- MOUs needing renewal
+- MOA renewal
+- MOAs with DSWD
+- MOUs with BARMM
+- Memorandum with OPAPP
+- MOAs pending renewal
+- List all MOAs
+- Show MOUs
+- All memorandums
+- Partnership effectiveness
+- How effective are partnerships?
+- Engagement metrics
+- Show engagement statistics
+- Organization activity level
+- Agency activity level
+- Most active organizations
+- Partnerships by sector
+- Sector distribution
+- Collaboration trends
+- Partnership trends
+- Show collaboration trends
+- Engagement history for DSWD
+- Engagement history of BARMM
+- Historical partnerships
+- Past partnerships
+- Recent engagements
+- Latest engagements
+- Show recent engagements
+- Engagement outcomes
+- Show engagement outcomes
+- What were the outcomes?
+- Partnership milestones
+- Show milestones
+- Deliverables achieved
+
+## CROSS_DOMAIN
+
+- Communities with active assessments
+- Communities having assessments
+- Show communities with assessments
+- Which communities have assessments?
+- Communities without assessments
+- Communities never assessed
+- No assessment communities
+- Which communities lack assessments?
+- Communities assessed in last 12 months
+- Communities assessed within past year
+- Recent assessments by community
+- Communities assessed last 6 months
+- Assessment coverage by ethnic group
+- Coverage by ethnicity
+- Which ethnic groups are assessed?
+- Assessment penetration by ethnicity
+- Average needs identified per community
+- Mean needs per community
+- Needs per community average
+- How many needs per community?
+- Communities with most identified needs
+- Communities by needs count
+- Top communities by needs
+- Most needs identified
+- Communities with unmet needs
+- Unaddressed needs by community
+- Communities needing support
+- Show communities with open needs
+- Assessment to needs pipeline
+- Assessments to needs identified
+- Assessment needs flow
+- Track assessment to needs conversion
+- Communities with 2+ assessments
+- Communities with multiple assessments
+- Multiple assessments per community
+- Communities assessed more than once
+- Full assessment history by community
+- Assessment history for community
+- Show all assessments for this community
+- Community assessment timeline
+- Communities by assessment status
+- Group communities by assessment phase
+- Assessment status distribution
+- Communities in each assessment stage
+- Assessment coverage by province
+- Geographic coverage by region
+- Assessment penetration by province
+- Coverage map by location
+- Communities with critical needs
+- High priority needs by community
+- Priority needs communities
+- Communities needing urgent support
+- Community participation in assessments
+- Participation rate by assessment
+- Engagement in assessments
+- Community involvement tracking
+- Time since last assessment
+- Assessment gap by community
+- Days since last assessment
+- Communities needing reassessment
+- Partnerships supporting assessments
+- Partnerships linked to assessments
+- Assessment partnerships
+- Which partnerships support assessments?
+- Stakeholders in MANA workshops
+- Stakeholders participating in assessments
+- Workshop participants
+- Who attends MANA workshops?
+- MOAs leading assessments
+- Ministries conducting assessments
+- Agencies leading MANA
+- Government assessment leadership
+- Engagements to assessments
+- Coordination to assessment flow
+- Meetings leading to assessments
+- Engagement assessment linkage
+- Stakeholder participation by assessment
+- Count stakeholders per assessment
+- Assessment participation levels
+- How many stakeholders per assessment?
+- Assessments with 3+ organizations
+- Multi-stakeholder assessments
+- Assessments with multiple partners
+- Collaborative assessments
+- Staff facilitating assessments
+- Assessment facilitators
+- Who leads assessments?
+- Staff assessment workload
+- Engagements linked to assessments
+- Related engagements to assessments
+- Show engagement-assessment links
+- Coordination supporting assessments
+- Partnerships supporting MANA
+- MANA partnerships
+- Partnerships for assessments
+- Collaborative MANA support
+- Stakeholder coverage across assessments
+- Stakeholder assessment participation
+- Which stakeholders are most involved?
+- Assessment engagement by stakeholder
+- Needs to PPAs pipeline
+- Needs to projects addressing them
+- Needs flow to PPAs
+- Track needs to implementation
+- Needs without PPAs
+- Unaddressed needs
+- Needs lacking implementation
+- Which needs have no projects?
+- Needs with budget allocated
+- Funded needs
+- Needs with funding assigned
+- Which needs have budget?
+- Policies addressing needs
+- Recommendations implementing needs
+- Policies for identified needs
+- Policy-needs linkage
+- PPAs addressing needs
+- Projects implementing needs
+- PPAs for identified needs
+- Implementation of needs
+- Complete flow: Needs to Policies to PPAs
+- Full pipeline tracking
+- Needs policy PPA flow
+- Track complete implementation chain
+- High-priority needs without funding
+- Critical needs lacking PPAs
+- Unfunded priority needs
+- High priority gaps
+- Needs addressed vs unmet by sector
+- Needs coverage by sector
+- Sector-wise needs status
+- Implementation rate by sector
+- Needs addressed by multiple PPAs
+- Needs with multiple projects
+- Multi-PPA needs
+- Comprehensive need addressing
+- PPAs ranked by needs addressed count
+- Projects by needs addressed
+- Most impactful PPAs
+- PPAs addressing most needs
+- Budget allocated to needs by sector
+- Funding by sector for needs
+- Sector budget allocation
+- How much budget per sector?
+- Assessment to needs to budget flow
+- Evidence-based budgeting
+- Needs to funding conversion
+- Data-driven budget allocation
+- Time from need identification to PPA start
+- Gap between need and implementation
+- Implementation lag analysis
+- How long from need to action?
+- Needs spanning multiple sectors
+- Cross-sector needs analysis
+- Multi-sector needs
+- Needs requiring coordination
+
+## GENERAL
+
+- Help
+- I need help
+- Assist me
+- How do I use this?
+- User guide
+- How to create assessment
+- How do I add community
+- Help me create project
+- How to add new task
+- How do I make a report?
+- How to edit assessment
+- How do I update community
+- Help me modify project
+- How to change task status
+- How do I update profile?
+- Documentation
+- User manual
+- Guide for communities
+- Tutorial for MANA
+- Show docs
+- FAQ
+- Frequently asked questions
+- Common questions
+- Show FAQ
+- Help FAQ
+- System status
+- Server status
+- Application health
+- Is system running?
+- Check system state
+- Recent updates
+- Latest changes
+- New features
+- Latest releases
+- What changed recently?
+- Announcements
+- System news
+- Notices
+- Show announcements
+- Recent notices
+- Version
+- Build number
+- Release info
+- What version?
+- System version
+- Go to dashboard
+- Open communities
+- Navigate to MANA
+- Take me to projects
+- Go to coordination
+- Home
+- Dashboard
+- Main page
+- Go home
+- Take me to dashboard
+- Find page reports
+- Search section analytics
+- Where is module settings?
+- Find reports page
+- Search for communities section
+- Who created this assessment?
+- Who created community profile?
+- Who created this project?
+- Who created this task?
+- When was this modified?
+- What time was assessment updated?
+- When was community changed?
+- When was project edited?
+- Audit log for assessment
+- History of community
+- Changes for project
+- Log of this task
+- Show history for report
+
+## GEOGRAPHIC
+
+- Show me all regions
+- List regions
+- Display regions
+- What are the regions?
+- Get all regions
+- Show regions list
+- How many regions with OBC?
+- Count regions with communities
+- Regions having OBC presence
+- Show me Region IX
+- Get Region XII details
+- Information about Region X
+- Details of BARMM region
+- Which regions have boundaries?
+- Regions with GeoJSON
+- What regions have geographic data?
+- Show population by region
+- Get OBC population by region
+- Population breakdown by region
+- Show communities per region
+- Get OBC communities by region
+- Count communities in each region
+- Show assessment coverage by region
+- Get MANA coverage per region
+- Assessment distribution by region
+- Show PPAs by region
+- Get projects per region
+- Count programs in each region
+- Show budget allocation by region
+- Get budget by region
+- Budget distribution per region
+- Show identified needs by region
+- Get needs per region
+- Count needs in each region
+- Rank regions by OBC population
+- Sort regions by population
+- Order regions by OBC population
+- Show me all provinces
+- List provinces
+- Display provinces
+- What are the provinces?
+- Get all provinces
+- Show the list of provinces
+- Show me the list of province
+- How many provinces in Region IX?
+- Count provinces in Region XII
+- Provinces within BARMM
+- Show provinces in Region IX
+- List provinces of Region XII
+- Display provinces in BARMM
+- Get provinces within Region X
+- Show me Zamboanga del Sur province
+- Get Cotabato province details
+- Information about Sultan Kudarat province
+- Which provinces have boundaries?
+- Provinces with GeoJSON
+- What provinces have geographic data?
+- Show population by province
+- Get OBC population by province
+- Population breakdown by province
+- Show communities per province
+- Get OBC communities by province
+- Count communities in each province
+- Show assessment coverage by province
+- Get MANA coverage per province
+- Assessment distribution by province
+- Show PPAs by province
+- Get projects per province
+- Count programs in each province
+- Show budget allocation by province
+- Get budget by province
+- Budget distribution per province
+- Rank provinces by OBC population
+- Sort provinces by population
+- Order provinces by OBC population
+- How many municipalities?
+- Count municipalities
+- Number of municipalities
+- How many cities?
+- Count cities
+- Total cities
+- Number of cities
+- Show me all municipalities
+- List municipalities
+- Display cities
+- What are the municipalities?
+- Get all municipalities
+- Show municipalities list
+- How many municipalities in Cotabato?
+- Count cities in Zamboanga del Sur
+- Municipalities within Sultan Kudarat
+- Show municipalities in Cotabato
+- List cities of Sultan Kudarat
+- Display municipalities within Zamboanga del Sur
+- Get municipalities in Cotabato province
+- Show me Pagadian City
+- Get Cotabato City details
+- Information about Tacurong municipality
+- Show urban municipalities
+- List rural cities
+- Display urban areas
+- Show population by municipality
+- Get OBC population by municipality
+- Population breakdown by municipality
+- Show communities per municipality
+- Get OBC communities by municipality
+- Count communities in each municipality
+- Show PPAs by municipality
+- Get projects per municipality
+- Count programs in each municipality
+- Show budget by municipality
+- Get budget per municipality
+- Budget distribution by municipality
+- Show municipalities with high OBC population
+- List municipalities with over 1000 OBC population
+- Municipalities with more than 500 OBC
+- Show administrative data for municipalities
+- Get administrative info for municipalities
+- Municipality administrative information
+- Show me all barangays
+- List barangays
+- Display barangays
+- What are the barangays?
+- Get all barangays
+- How many barangays in Pagadian?
+- Count barangays in Cotabato City
+- Barangays within Tacurong
+- Show barangays in Pagadian
+- List barangays of Cotabato City
+- Display barangays within Tacurong
+- Get barangays in Zamboanga City
+- Show me Barangay Poblacion
+- Get Barangay Matina details
+- Information about Barangay Rosary Heights
+- Which barangays have OBC?
+- Barangays with communities
+- What barangays have OBC presence?
+- Show population by barangay
+- Get OBC population by barangay
+- Population breakdown by barangay
+- Which barangays have coordinates?
+- Barangays with GPS
+- What barangays have location data?
+- Show administrative hierarchy
+- Display hierarchy
+- Get administrative structure
+- Show geographic coverage gaps
+- Find gaps in coverage
+- Identify administrative units without OBC
+- Show coverage gaps
+- Find geographic gaps
+- Display coverage gaps
+- Show geographic summary
+- Get administrative summary
+- Geographic rollup
+- Show adjacent provinces to Cotabato
+- Find neighboring municipalities to Pagadian
+- Get provinces near Sultan Kudarat
+- Compare Region IX vs Region X
+- Contrast Cotabato and Sultan Kudarat
+- Compare Zamboanga del Sur and Zamboanga del Norte
+- Export administrative boundaries
+- Download GeoJSON boundaries
+- Get boundary data
+- Export boundaries
+- Download boundaries
+
+## INFRASTRUCTURE
+
+- How many communities have poor water access?
+- Communities with limited water supply
+- Count communities with no water access
+- Communities having available water
+- Total communities with poor water
+- How many communities without electricity?
+- Communities with no power
+- Count communities lacking electricity
+- Communities need electricity
+- Total communities with poor electricity
+- How many communities with no health facilities?
+- Communities without healthcare
+- Count communities lacking health centers
+- Communities need health facilities
+- Total communities with poor health access
+- How many communities without schools nearby?
+- Communities with no education facilities
+- Count communities lacking schools
+- Communities need schools
+- Total communities with poor education access
+- How many communities have poor sanitation?
+- Communities with limited waste management
+- Count communities by drainage rating
+- Communities with no sanitation
+- Total communities with available drainage
+- Show communities with critical infrastructure needs
+- List communities with urgent infrastructure gaps
+- Find communities with high priority improvements
+- Display communities with critical needs
+- Communities with priority infrastructure gaps
+- Show communities needing water improvements
+- List communities with poor water supply
+- Which communities lack water access?
+- Find communities without water
+- Communities requiring water improvements
+- Show communities needing electricity
+- List communities with poor power access
+- Which communities lack electricity?
+- Find communities without power
+- Communities requiring electricity improvements
+- Show infrastructure availability by province
+- Infrastructure coverage summary by province
+- Display water access by province
+- List electricity availability by province
+- Health facilities breakdown by province
+- Show infrastructure flagged as priority
+- List critical infrastructure improvements
+- What infrastructure projects are urgent?
+- Which improvements are high priority?
+- Infrastructure marked as critical
+
+## LIVELIHOOD
+
+- How many fishing communities?
+- Count agriculture livelihoods
+- Total livestock communities
+- How many trade communities?
+- Handicraft livelihoods count
+- Distribution of primary livelihoods
+- Breakdown of livelihoods
+- Summary of economic activities
+- Primary livelihood distribution
+- Livelihood breakdown
+- How many seasonal livelihoods?
+- Count year-round activities
+- Total seasonal jobs
+- Permanent livelihood count
+- Seasonal vs year-round breakdown
+- Communities by livelihood income level
+- Livelihoods with low income
+- Communities with moderate income
+- High income livelihoods
+- Income level breakdown
+- Participation rate in primary livelihood
+- Percentage involved in livelihoods
+- How many participating in primary livelihood?
+- Average involvement in livelihoods
+- Livelihood participation rate
+- What are livelihood challenges?
+- Show common livelihood problems
+- List livelihood issues
+- Common livelihood difficulties
+- Challenges in livelihoods
+- Show communities with livelihood opportunities
+- List livelihoods with potential
+- Which communities have livelihood prospects?
+- Communities with opportunities
+- Livelihood potential by community
+- Communities with multiple livelihoods
+- Communities having diverse activities
+- Variety of income sources by community
+- Communities with diversified livelihoods
+- Livelihood diversity by community
+- How many cooperatives by location?
+- Count social enterprises in communities
+- Total cooperatives per community
+- Economic organizations count
+- Cooperatives and enterprises total
+- Communities with unbanked population
+- How many unbanked residents?
+- Count communities without banking access
+- Communities having unbanked people
+- Unbanked population by community
+
+## MANA
+
+- Show me workshops
+- List all workshops
+- Display workshops
+- Get workshops
+- Workshops in Region IX
+- Workshops in Zamboanga
+- Show workshops in Cotabato
+- List workshops in Sultan Kudarat
+- Recent workshops
+- Latest workshops
+- Current workshops
+- Show recent workshops
+- Upcoming workshops
+- Future workshops
+- Scheduled workshops
+- Planned workshops
+- Workshops in 2024
+- Workshops from January to March
+- Workshops during last 6 months
+- Workshops this year
+- How many workshops?
+- Total workshops
+- Count workshops
+- Number of workshops
+- How many workshops in Region IX?
+- Count workshops in Zamboanga
+- Workshops in Cotabato count
+- Show me assessments
+- List all assessments
+- Display assessments
+- Get assessments
+- Assessments in Region IX
+- Assessments in Zamboanga
+- Show assessments for Cotabato
+- Completed assessments
+- Ongoing assessments
+- Planning assessments
+- Show completed assessments
+- Recent assessments
+- Latest assessments
+- Show recent assessments
+- How many assessments?
+- Total assessments
+- Count assessments
+- How many completed assessments?
+- Count ongoing assessments
+- Total planning assessments
+- Pending assessments
+- In-progress assessments
+- Show pending assessments
+- Assessment completion rate
+- Assessment success rate
+- What is the assessment completion rate?
+- Show completion rate
+- Assessments by category
+- Assessments by type
+- Show assessment categories
+- Assessment breakdown by category
+- Assessment coverage by region
+- Assessment distribution per region
+- Show assessment coverage
+- Regional assessment coverage
+- Community assessments
+- OBC assessments
+- Show community assessments
+- List OBC community assessments
+- Validated assessments
+- Approved assessments
+- Verified assessments
+- Show validated assessments
+- Pending validation assessments
+- Assessments awaiting validation
+- Assessments under review
+- Show pending validation
+- Unmet needs
+- Unfulfilled needs
+- Outstanding needs
+- Show unmet needs
+- Priority needs
+- High-priority needs
+- Urgent needs
+- Show priority needs
+- Needs by category
+- Needs by type
+- Show needs categories
+- Breakdown of needs by category
+- Needs in Region IX
+- Needs in Zamboanga
+- Show needs for Cotabato
+- Identified needs at Sultan Kudarat
+- Critical needs
+- Emergency needs
+- Show critical needs
+- How many participants?
+- Total workshop participants
+- Count participants
+- Number of participants
+- Show me participants
+- List workshop participants
+- Display participants
+- Participants from Region IX
+- Participants in Zamboanga
+- How many participants from Cotabato?
+- Participant demographics
+- Attendee breakdown
+- Participant stats
+- Show participant demographics
+- Participants by role
+- Participants by type
+- Breakdown by participant type
+- Workshop synthesis
+- Workshop findings
+- Show workshop summaries
+- Workshop reports
+- Show workshop findings
+- Get findings
+- Display workshop findings
+- Workshop findings summary
+- Workshop outputs
+- Workshop results
+- Show workshop deliverables
+- Assessment outputs
+
+## POLICIES
+
+- How many policies are there?
+- Total policies
+- Count all policy recommendations
+- Number of policies
+- How many policy recommendations?
+- How many approved policies?
+- Count draft policies
+- Total implemented policies
+- Policies under review
+- How many policies in education sector?
+- Count policies for health
+- Total policies in infrastructure sector
+- How many high priority policies?
+- Count critical priority policies
+- Total urgent policies
+- How many national level policies?
+- Count regional policies
+- Total provincial policies
+- How many policies with evidence?
+- Count policies with supporting data
+- Total policies with documentation
+- How many policies pending legislation?
+- Count policies awaiting approval
+- Total policies submitted for legislation
+- How many policies with stakeholder engagement?
+- Count policies with consultation
+- Total policies with stakeholders
+- Count program initiatives
+- Total service recommendations
+- How many recent policies?
+- Count new policy recommendations
+- Total latest policies
+- Show me policies
+- List all policy recommendations
+- Display policies
+- Get all policies
+- Show me approved policies
+- List draft policies
+- Display implemented policies
+- Show me policies in education sector
+- List policies for health
+- Display infrastructure policies
+- Show me high priority policies
+- List critical priority policies
+- Display urgent policies
+- Recent policies
+- Latest policy recommendations
+- Newly added policies
+- Show recent policies
+- Show me policies with evidence
+- List policies with supporting data
+- Display policies with documentation
+- Show me national level policies
+- List regional policies
+- Display provincial policies
+- Search for policies about education
+- Find policies on livelihood
+- Search policy recommendations related to health
+- Show me policies pending legislation
+- List policies awaiting approval
+- Display policies submitted for legislation
+- Show me policies with stakeholder engagement
+- List policies with consultation
+- Display policies with stakeholders
+- Show me policies by John Doe
+- List policies created by admin
+- Display policy recommendations from staff
+- Top priority policies
+- Highest priority policy recommendations
+- Show me top priority policies
+- Policies with impact evidence
+- Policy recommendations with outcome data
+- Policies with impact results
+- Evidence-based policies
+- Evidence based policy recommendations
+- Show me evidence-based policies
+- Policies with supporting data
+- Policy recommendations with baseline evidence
+- Policies with research documentation
+- Policies based on assessments
+- Policy recommendations from needs analysis
+- Policies derived from assessments
+- Policies without evidence
+- Policy recommendations lacking supporting data
+- Policies missing documentation
+- Policies by evidence quality
+- Policy recommendations data strength
+- Policies evidence completeness
+- Policies with impact assessment
+- Policy recommendations with outcome evaluation
+- Policies with impact measurement
+- Research-backed policies
+- Research backed policy recommendations
+- Show me research-backed policies
+- Policy implementation status
+- Policies progress tracking
+- Show me policy implementation status
+- Policy implementation rate
+- Policies completion percentage
+- What is the policy implementation rate?
+- Policies in implementation
+- Policy recommendations under progress
+- Show me policies being implemented
+- Fully implemented policies
+- Completed policy recommendations
+- Show me implemented policies
+- Policy implementation gaps
+- Policies implementation challenges
+- Policy execution barriers
+- Policy implementation timeline
+- Policies rollout schedule
+- Policy implementation timeframe
+- Overdue policy implementation
+- Delayed policies
+- Past due policy implementation
+- Successful policy implementation
+- Effective policies
+- High-impact policy implementation
+- Policies involving MOA stakeholder
+- Policy recommendations with OOBC
+- Policies from community stakeholders
+- Policy consultation records
+- Policies engagement history
+- Policy consultation summary
+- Multi-stakeholder policies
+- Collaborative policy recommendations
+- Policies with multiple stakeholders
+- Policy stakeholder feedback
+- Policies with community input
+- Policy stakeholder comments
+- Policies with public consultation
+- Policy recommendations with community participation
+- Policies with public input
+- Policies by stakeholder count
+- Policy recommendations by partner number
+- Policies ranked by stakeholders
+- Policies without stakeholder engagement
+- Policy recommendations lacking consultation
+- Policies missing stakeholders
+
+## PROJECTS
+
+- Show me projects
+- List all PPAs
+- Display programs
+- Get all projects
+- Show me active projects
+- List ongoing PPAs
+- Display active programs
+- Get ongoing projects
+- Show me completed projects
+- List finished PPAs
+- Display done programs
+- Get completed projects
+- Show me projects by MSWDO
+- List PPAs from MILG
+- Display programs of BARMM
+- Projects by Ministry of Health
+- Show me projects in education sector
+- List PPAs in health sector
+- Display programs in infrastructure sector
+- Projects in economic sector
+- Show me projects in Region IX
+- List PPAs in Zamboanga
+- Display programs in Cotabato
+- Projects in Region XII
+- Recent projects
+- Latest PPAs
+- Newly added programs
+- Show recent projects
+- Show me project entries
+- List program PPAs
+- Display activity entries
+- Show programs
+- Show me high budget projects
+- List large budget PPAs
+- Display high budget programs
+- Projects with large budgets
+- Show me overdue projects
+- List delayed PPAs
+- Display late programs
+- Get overdue projects
+- How many projects are there?
+- Total PPAs
+- Count all projects
+- Number of programs
+- How many activities?
+- How many active projects?
+- Count ongoing PPAs
+- Total active programs
+- Number of ongoing projects
+- How many completed projects?
+- Count finished PPAs
+- Total completed programs
+- Number of done projects
+- How many projects by MSWDO?
+- Count PPAs from MILG
+- Total programs of BARMM
+- How many projects in education sector?
+- Count PPAs in health sector
+- Total programs in infrastructure sector
+- How many projects in Region IX?
+- Count PPAs in Zamboanga
+- Total programs in Cotabato
+- How many project entries?
+- Count program PPAs
+- Total activity entries
+- How many overdue projects?
+- Count delayed PPAs
+- Total late programs
+- Number of overdue projects
+- How many projects in 2025?
+- Count PPAs started in 2024
+- Total programs from 2023
+- Projects in 2024
+- How many projects ending soon?
+- Count PPAs ending this month
+- Total programs ending soon
+- Projects ending within 30 days
+- Total budget allocation
+- Overall budget for PPAs
+- Combined project budget
+- What is the total budget?
+- Budget by sector
+- Budget per sector
+- Budget for each sector
+- Sector budget breakdown
+- Budget by ministry
+- Budget per agency
+- Budget for each MOA
+- Ministry budget breakdown
+- Budget utilization rate
+- Budget usage percentage
+- Budget spending rate
+- Show me budget utilization
+- Underutilized budget projects
+- Low utilization PPAs
+- Projects with unused budget
+- Budget underutilization
+- Budget in Region IX
+- Budget for Zamboanga
+- Budget allocated to Cotabato
+- Total budget in Region XII
+- Projects with budget from 1000000 to 5000000
+- PPAs with budget between 500000 and 2000000
+- Programs with budget from 2M to 10M
+- Top budget projects
+- Highest funded PPAs
+- Largest budget programs
+- Show me top funded projects
+- Budget balance
+- Budget remaining
+- How much budget is left?
+- Total budget balance
+- Budget overrun projects
+- Over budget PPAs
+- Projects that exceeded budget
+- Budget overruns
+- Total beneficiaries
+- Overall people served
+- Combined target population
+- How many beneficiaries?
+- Beneficiaries by sector
+- Beneficiaries per sector
+- Beneficiaries in each sector
+- Sector beneficiary breakdown
+- Beneficiaries in Region IX
+- Beneficiaries at Zamboanga
+- Beneficiaries from Cotabato
+- People served in Region XII
+- Project outcomes
+- PPA results
+- Program achievements
+- Project impact
+- Highest impact projects
+- Most impact PPAs
+- Top impact programs
+- Projects with highest impact
+- Beneficiary reach rate
+- Beneficiary achievement percentage
+- Beneficiary attainment rate
+- How many beneficiaries reached?
+- Communities served
+- Barangays reached
+- Communities covered
+- How many communities benefited?
+- Compare impact by sector
+- Comparison of outcomes across sectors
+- Compare results by sector
+- Sector impact comparison
+- Project completion rates
+- PPA completion percentage
+- Program completion status
+- Overall completion rates
+- Projects ending this month
+- PPAs ending soon
+- Programs ending this quarter
+- Projects timeline by 2025
+- PPAs timeline in 2024
+- Programs timeline by 2023
+- Show project timeline in 2025
+- Active projects timeline
+- Ongoing PPAs timeline
+- Active programs timeline
+- Show ongoing project timeline
+- Delayed projects analysis
+- Overdue PPAs report
+- Late programs analysis
+- Projects behind schedule
+- Projects completion by quarter
+- PPAs completion by quarter
+- Program completion by quarter
+- Quarterly completion report
+- Project duration analysis
+- PPA duration average
+- Program duration statistics
+- Average project duration
+
+## STAFF
+
+- Show me all staff
+- List users
+- Display team members
+- Get all staff
+- Staff directory
+- Show me coordinators
+- List admins
+- Display managers
+- Get all coordinators
+- Show staff users
+- How many staff do we have?
+- Count users
+- Total staff
+- Number of team members
+- Staff count
+- How many coordinators?
+- Count admins
+- Total managers
+- Number of coordinators
+- Find John staff
+- Search Maria user
+- Who is Ahmed?
+- Find staff named Sarah
+- My tasks
+- Show my tasks
+- Get my tasks
+- List my tasks
+- What are my tasks?
+- Overdue tasks
+- Late tasks
+- Past due tasks
+- Show overdue tasks
+- My overdue tasks
+- Today tasks
+- Today's tasks
+- Tasks for today
+- What tasks do I have today?
+- Show today tasks
+- Completed tasks
+- Done tasks
+- Finished tasks
+- My completed tasks
+- Show completed tasks
+- High priority tasks
+- Urgent tasks
+- Critical tasks
+- Show high priority tasks
+- My urgent tasks
+- How many my tasks?
+- Count my tasks
+- How many tasks do I have?
+- Number of my tasks
+- Notification settings
+- Alert preferences
+- Email settings
+- My notification settings
+- Show notification preferences
+- Dashboard settings
+- Home preferences
+- Dashboard config
+- Dashboard customization
+- My dashboard settings
+- Recent activity
+- Latest activity
+- My activity
+- My actions
+- Activity history
+- Work log
+- Time log
+- My contributions
+- Show my work
+- Work summary
+
+## STAKEHOLDERS
+
+- How many religious leaders?
+- Count ulama stakeholders
+- Total youth leaders
+- How many imam?
+- Women leaders count
+- How many high influence stakeholders?
+- Count very high influence leaders
+- Total emerging influence stakeholders
+- Medium influence leaders count
+- How many influential stakeholders?
+- How many active stakeholders?
+- Count very active leaders
+- Total inactive stakeholders
+- Limited engagement leaders count
+- Moderate stakeholders count
+- How many ulama?
+- Count imams
+- Total ustadz
+- Religious leaders count
+- How many religious teachers?
+- How many CSOs by community?
+- Count civil society organizations
+- Total associations per community
+- Community organizations count
+- CSO count
+- Show high influence stakeholders
+- List very high influence leaders
+- Who are the influential stakeholders?
+- Find high influence leaders
+- Which leaders have high influence?
+- Show inactive stakeholders
+- List stakeholders with limited engagement
+- Who are the inactive leaders?
+- Find stakeholders needing re-engagement
+- Which leaders are inactive?
+- Engagement history for Ustadz Abdullah
+- Activities record of Imam Hassan
+- Interactions by Datu Miguel
+- Show engagement for Barangay Captain Maria
+- Stakeholder activities for Juan Santos
+- Stakeholders with expertise in education
+- Leaders having health skills
+- Experts by agriculture specialization
+- Stakeholders with livelihood expertise
+- Who has expertise in peace building?
+- Stakeholder connections by community
+- Network analysis
+- Show stakeholder relationships
+- Network connections
+- Stakeholder network analysis
+
+## TEMPORAL
+
+- Assessments last 30 days
+- PPAs this quarter
+- Projects in last 6 months
+- Meetings last week
+- How many assessments in the past 90 days?
+- Projects in FY 2024
+- Assessments for fiscal year 2025
+- PPAs during FY 2023
+- How many projects in fiscal year 2024?
+- Assessments in January
+- PPAs during March 2024
+- Projects for December 2023
+- How many assessments in January 2024?
+- Budget by quarter
+- PPAs per quarter
+- Projects by quarter 2024
+- Show quarterly distribution
+- YTD assessments
+- Year to date PPAs
+- This year projects
+- How many assessments year to date?
+- Last 7 days
+- Past 30 days assessments
+- Previous 90 days PPAs
+- How many in last 14 days?
+- Between January 1 and March 31
+- From 2024-01-01 to 2024-06-30
+- Assessments between Jan 1 and Dec 31 2024
+- Before December 2024
+- Assessments before 2024-06-30
+- PPAs before January 2025
+- After January 2025
+- Assessments after 2024-12-31
+- PPAs after June 1
+- This week assessments
+- Current month PPAs
+- This quarter projects
+- Current year total
+- Assessment trends over time
+- Assessment completion trends
+- Show assessment trends
+- Track assessment completions
+- Project starts by month
+- PPA implementation trends
+- Project trends over time
+- Monthly project launches
+- Budget spend over quarters
+- Budget utilization trends
+- Quarterly budget spending
+- Track budget over time
+- Needs identified per month
+- Needs identification trends
+- Track needs over time
+- Monthly needs discovery
+- Meeting frequency trends
+- Engagement trends over time
+- Stakeholder meeting patterns
+- Track engagement frequency
+- YoY growth in assessments
+- Year over year project growth
+- Growth rate analysis
+- Annual growth trends
+- Seasonal variations
+- Monthly patterns
+- Seasonality analysis
+- Patterns by month
+- Increasing trends
+- Momentum analysis
+- Velocity tracking
+- Show acceleration
+- Projected completions next quarter
+- Forecast upcoming assessments
+- Predict next quarter PPAs
+- Projection analysis
+- Q1 vs Q2 comparison
+- Compare Q3 and Q4
+- Quarter 1 versus quarter 2
+- Q2 2024 vs Q2 2023
+- 2024 vs 2023 comparison
+- Compare 2025 and 2024
+- 2023 versus 2022
+- Year over year 2024 vs 2023
+- Cumulative assessments over time
+- Running total of PPAs
+- Accumulated projects
+- Show cumulative totals
+- Time to complete by project type
+- Average completion time
+- Duration by category
+- Milestone completion tracking
+- Items overdue by days
+- Overdue analysis
+- Past due items
+- Delayed projects
+- Average duration by type
+- Mean completion time by category
+- Duration analysis by project type
+- Average time to complete
+- Items by age (0-30, 30-60, 60+ days)
+- Aging analysis
+- Age distribution
+- How old are items?
+- Average approval time
+- Time to approval
+- How long for approval?
+- Approval duration
+- Recurring events schedule
+- Repeating meetings
+- Regular assessments pattern
+- Scheduled engagement frequency
+- Items from 1 year ago
+- Anniversary tracking
+- From last year
+- One year old items
+- Historical average by month
+- Mean per quarter
+- Average by period
+- Typical monthly count

@@ -7,7 +7,19 @@ This module provides cross-module AI services including:
 - Cross-module result ranking
 - Search analytics and pattern tracking
 - Conversational AI chat assistant
+- Entity extraction for natural language queries
 """
+
+# Entity Extraction (no AI, no external dependencies)
+from .chat.entity_extractor import EntityExtractor
+from .chat.entity_resolvers import (
+    LocationResolver,
+    EthnicGroupResolver,
+    LivelihoodResolver,
+    DateRangeResolver,
+    StatusResolver,
+    NumberResolver,
+)
 
 # Unified Search (requires EmbeddingService - optional)
 try:
@@ -40,11 +52,21 @@ except ImportError:
     HAS_CHAT = False
 
 __all__ = [
+    # Entity Extraction
+    'EntityExtractor',
+    'LocationResolver',
+    'EthnicGroupResolver',
+    'LivelihoodResolver',
+    'DateRangeResolver',
+    'StatusResolver',
+    'NumberResolver',
+    # Unified Search
     'UnifiedSearchEngine',
     'QueryParser',
     'ResultRanker',
     'SearchAnalytics',
     'HAS_UNIFIED_SEARCH',
+    # Conversational AI
     'ConversationalAssistant',
     'ConversationManager',
     'get_conversational_assistant',

@@ -13,6 +13,7 @@ Usage:
     python manage.py shell < ../scripts/test_work_item_tree_performance.py
 """
 
+import os
 import time
 from decimal import Decimal
 from django.test.utils import override_settings
@@ -352,8 +353,5 @@ Next Steps:
 
 
 # Run the test suite
-if __name__ == '__main__':
-    run_all_tests()
-else:
-    # When running via `manage.py shell`
+if __name__ == '__main__' or os.environ.get('RUN_WORK_ITEM_TREE_PERFORMANCE') == '1':
     run_all_tests()

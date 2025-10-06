@@ -19,6 +19,7 @@ from django.views.decorators.http import require_POST
 from common.services.locations import build_location_data, get_object_centroid
 from communities.models import OBCCommunity
 from common.models import Municipality
+from common.work_item_model import WorkItem
 from coordination.models import Organization
 from .forms import (
     MonitoringMOAEntryForm,
@@ -189,7 +190,15 @@ def monitoring_dashboard(request):
 
     linked_counts = {
         "mana_assessments": entries.filter(related_assessment__isnull=False).count(),
-        "coordination_events": entries.filter(related_event__isnull=False).count(),
+        "coordination_events": WorkItem.objects.filter(
+            related_ppa__in=entries,
+            work_type__in=[
+                WorkItem.WORK_TYPE_ACTIVITY,
+                WorkItem.WORK_TYPE_SUB_ACTIVITY,
+            ],
+        )
+        .distinct()
+        .count(),
         "policy_recommendations": entries.filter(related_policy__isnull=False).count(),
     }
 

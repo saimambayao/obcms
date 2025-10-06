@@ -46,17 +46,17 @@
                     </p>
 
                     <div class="flex flex-wrap gap-4">
-                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
-                            <p class="text-sm text-white/70 uppercase tracking-wide">Total Communities</p>
-                            <p class="text-2xl font-bold text-white">{{ stats.communities.total_barangay_obcs_database|add:stats.communities.total_municipal_obcs_database|default:0 }}</p>
+                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-4 border border-white/20 min-w-[220px]">
+                            <p class="text-sm text-white/70 uppercase tracking-wide">Data Coverage</p>
+                            <p class="text-sm text-white/90 leading-relaxed">
+                                Track barangay, municipal, and provincial OBC profiles with verified demographic submissions.
+                            </p>
                         </div>
-                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
-                            <p class="text-sm text-white/70 uppercase tracking-wide">Barangays</p>
-                            <p class="text-2xl font-bold text-white">{{ stats.communities.total_barangay_obcs_database|default:0 }}</p>
-                        </div>
-                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
-                            <p class="text-sm text-white/70 uppercase tracking-wide">Population</p>
-                            <p class="text-2xl font-bold text-white">{{ stats.communities.total_obc_population_database|intcomma }}</p>
+                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-4 border border-white/20 min-w-[220px]">
+                            <p class="text-sm text-white/70 uppercase tracking-wide">Quick Guidance</p>
+                            <p class="text-sm text-white/90 leading-relaxed">
+                                Keep community records current to support outreach, relief coordination, and policy mapping outside BARMM.
+                            </p>
                         </div>
                     </div>
                 </div>

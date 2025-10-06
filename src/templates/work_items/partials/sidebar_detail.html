@@ -1,0 +1,180 @@
+<!-- Work Item Sidebar Detail View -->
+<div class="space-y-4">
+    <!-- Header -->
+    <div class="flex items-center justify-between pb-3 border-b border-gray-200">
+        <div class="flex items-center gap-2">
+            <div class="inline-block px-3 py-1 rounded-full text-xs font-medium
+                {% if work_item.work_type == 'project' or work_item.work_type == 'sub_project' %}bg-blue-100 text-blue-800
+                {% elif work_item.work_type == 'activity' or work_item.work_type == 'sub_activity' %}bg-emerald-100 text-emerald-800
+                {% elif work_item.work_type == 'task' or work_item.work_type == 'subtask' %}bg-purple-100 text-purple-800
+                {% elif work_item.work_type == 'coordination' %}bg-teal-100 text-teal-800
+                {% endif %}">
+                {{ work_item.get_work_type_display }}
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">{{ work_item.title }}</h3>
+        </div>
+    </div>
+
+    <!-- Parent Information -->
+    {% if work_item.parent %}
+    <div class="flex items-start gap-3 bg-blue-50 rounded-lg p-3">
+        <i class="fas fa-sitemap text-blue-600 mt-1"></i>
+        <div>
+            <p class="text-sm text-blue-900 font-medium">Parent Item</p>
+            <p class="text-sm text-blue-700">{{ work_item.parent.title }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Date Range -->
+    <div class="flex items-start gap-3">
+        <i class="fas fa-clock text-gray-400 mt-1"></i>
+        <div>
+            <p class="text-sm font-medium text-gray-700">
+                {% if work_item.start_date %}
+                {{ work_item.start_date|date:"F j, Y" }}
+                {% endif %}
+                {% if work_item.due_date %}
+                 - {{ work_item.due_date|date:"F j, Y" }}
+                {% endif %}
+                {% if not work_item.start_date and not work_item.due_date %}
+                No dates set
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Status -->
+    <div class="flex items-start gap-3">
+        <i class="fas fa-info-circle text-gray-400 mt-1"></i>
+        <div>
+            <p class="text-sm text-gray-600">Status</p>
+            {% if work_item.status == 'not_started' %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                <i class="fas fa-circle mr-1"></i>Not Started
+            </span>
+            {% elif work_item.status == 'in_progress' %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <i class="fas fa-spinner mr-1"></i>In Progress
+            </span>
+            {% elif work_item.status == 'at_risk' %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                <i class="fas fa-exclamation-triangle mr-1"></i>At Risk
+            </span>
+            {% elif work_item.status == 'blocked' %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                <i class="fas fa-ban mr-1"></i>Blocked
+            </span>
+            {% elif work_item.status == 'completed' %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                <i class="fas fa-check-circle mr-1"></i>Completed
+            </span>
+            {% elif work_item.status == 'cancelled' %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                <i class="fas fa-times-circle mr-1"></i>Cancelled
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Priority -->
+    <div class="flex items-start gap-3">
+        <i class="fas fa-flag text-gray-400 mt-1"></i>
+        <div>
+            <p class="text-sm text-gray-600">Priority</p>
+            {% if work_item.priority == 'low' %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">Low</span>
+            {% elif work_item.priority == 'medium' %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Medium</span>
+            {% elif work_item.priority == 'high' %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">High</span>
+            {% elif work_item.priority == 'urgent' %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Urgent</span>
+            {% elif work_item.priority == 'critical' %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-200 text-red-900">Critical</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="flex items-start gap-3">
+        <i class="fas fa-chart-line text-gray-400 mt-1"></i>
+        <div class="flex-1">
+            <p class="text-sm text-gray-600">Progress</p>
+            <div class="flex items-center gap-3 mt-1">
+                <div class="flex-1 bg-gray-200 rounded-full h-2">
+                    <div class="bg-emerald-600 h-2 rounded-full transition-all duration-300"
+                         style="width: {{ work_item.progress }}%"></div>
+                </div>
+                <span class="text-sm font-medium text-gray-700">{{ work_item.progress }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Description -->
+    {% if work_item.description %}
+    <div class="flex items-start gap-3">
+        <i class="fas fa-align-left text-gray-400 mt-1"></i>
+        <div>
+            <p class="text-sm text-gray-600">Description</p>
+            <p class="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{{ work_item.description }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Assignees -->
+    {% if work_item.assignees.exists %}
+    <div class="flex items-start gap-3">
+        <i class="fas fa-users text-gray-400 mt-1"></i>
+        <div>
+            <p class="text-sm text-gray-600">Assigned To</p>
+            <div class="mt-1 flex flex-wrap gap-2">
+                {% for assignee in work_item.assignees.all %}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <i class="fas fa-user mr-1 text-xs"></i>
+                    {{ assignee.get_full_name|default:assignee.username }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Children Count -->
+    {% if work_item.children.count > 0 %}
+    <div class="flex items-start gap-3 bg-purple-50 rounded-lg p-3">
+        <i class="fas fa-sitemap text-purple-600 mt-1"></i>
+        <div>
+            <p class="text-sm text-purple-900 font-medium">Sub-items</p>
+            <p class="text-sm text-purple-700">{{ work_item.children.count }} child item(s)</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="pt-4 border-t border-gray-200 space-y-2">
+        {% if can_edit %}
+        <button hx-get="{% url 'common:work_item_sidebar_edit' pk=work_item.pk %}"
+                hx-target="#sidebar-content"
+                hx-swap="innerHTML"
+                class="w-full inline-flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-emerald-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-emerald-700 transition-all shadow-sm">
+            <i class="fas fa-edit mr-2"></i>
+            Edit
+        </button>
+        {% endif %}
+        <a href="{% url 'common:work_item_detail' pk=work_item.pk %}"
+           class="w-full inline-flex items-center justify-center px-4 py-2.5 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-all shadow-sm">
+            <i class="fas fa-external-link-alt mr-2"></i>
+            Open Full View
+        </a>
+        {% if can_delete %}
+        <button hx-get="{% url 'common:work_item_delete_modal' pk=work_item.pk %}"
+                hx-target="#delete-modal-container"
+                hx-swap="innerHTML"
+                class="w-full inline-flex items-center justify-center px-4 py-2.5 bg-white text-red-600 font-medium rounded-lg border border-red-200 hover:bg-red-50 transition-all shadow-sm">
+            <i class="fas fa-trash-alt mr-2"></i>
+            Delete
+        </button>
+        {% endif %}
+    </div>
+</div>

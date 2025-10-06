@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-10-06T22:47:58.043980",
+  "results": {
+    "template_loading": {
+      "operation": "Template Loading",
+      "iterations": 30,
+      "template_count": 0,
+      "avg_time_ms": 0.0017457995757771034,
+      "min_time_ms": 0.0013749959180131555,
+      "max_time_ms": 0.006542002665810287,
+      "avg_memory_mb": 0.00033111572265625
+    },
+    "pattern_matching": {
+      "operation": "Pattern Matching",
+      "iterations": 30,
+      "queries_tested": 15,
+      "total_matches": 450,
+      "avg_time_ms": 4.545303656616145e-05,
+      "min_time_ms": 0.0,
+      "max_time_ms": 0.000166997779160738,
+      "avg_matches_per_query": 0.0
+    },
+    "registry_operations": {
+      "operation": "Registry Operations",
+      "iterations": 30,
+      "get_all_avg_ms": 0.00011519926677768429,
+      "get_by_category_avg_ms": 0,
+      "search_avg_ms": 0.0001762536218545089
+    },
+    "memory_usage": {
+      "operation": "Memory Usage",
+      "current_mb": 5.340576171875e-05,
+      "peak_mb": 0.00016021728515625,
+      "template_count": 0,
+      "avg_per_template_kb": 0
+    },
+    "category_search": {
+      "operation": "Category Search",
+      "iterations": 30,
+      "categories": {}
+    }
+  }
+}
