@@ -1,0 +1,148 @@
+moa: "Ministry of Science and Technology"
+acronym: "MOST"
+ppas:
+  - title: "Research, Development and Innovation"
+    description: ""
+    outcome_indicators:
+      - indicator: "Bangsamoro Research and Development Program: increased number of recognized researchers, technology developers or inventors in BARMM"
+        target: 30
+      - indicator: "Technology Development and Innovations Program: increased number of technology developers or inventors with improved capacities"
+        target: 5
+    output_indicators:
+      - indicator: "BRACE Project: research proposals funded"
+        target: 8
+      - indicator: "BEEP Project: R&D profiles or reports completed"
+        target: 1
+      - indicator: "RD CoReS Project: S&T policies recommended"
+        target: 2
+      - indicator: "iSTRAND: BARMM R&D consortia proposals crafted"
+        target: 3
+      - indicator: "MOST Tech Innovation Fund: technologies developed"
+        target: 1
+    approved_budget: 25422850.00
+  - title: "Science and Technology Services"
+    description: ""
+    outcome_indicators:
+      - indicator: "Technology Application and Promotion Program: increased number of technology adopters or users"
+        target: 8
+      - indicator: "Technology Transfer and Commercialization Program: increased number of establishments that acquired cGMP, FDA and/or Halal certification"
+        target: 5
+    output_indicators:
+      - indicator: "NETWORKS: trainers with improved capacities in Halal knowledge"
+        target: 25
+      - indicator: "Tech Info & Promo: inventors and/or innovators recognized"
+        target: 3
+      - indicator: "TBI: inventors or innovators accessing IP protection assistance"
+        target: 3
+      - indicator: "TechACS: technologies commercialized"
+        target: 5
+      - indicator: "TechACS: MSMEs or industries upgraded"
+        target: 5
+      - indicator: "BEST Project: technologies adopted"
+        target: 8
+    approved_budget: 20731540.00
+  - title: "Bangsamoro Standards and Testing Laboratories"
+    description: ""
+    outcome_indicators:
+      - indicator: "Testing and Calibration Services: increased number of MSMEs with improved capacities and competencies in compliance"
+        target: 10
+    output_indicators:
+      - indicator: "Operationalization Project: proficiency testing participated"
+        target: 8
+      - indicator: "Operationalization Project: accreditations obtained"
+        target: 7
+      - indicator: "Operationalization Project: customers served"
+        target: 62
+      - indicator: "MEASURES Project: stakeholders capacitated on legal metrology"
+        target: 5
+      - indicator: "Shelf-Life Lab Project: new services offered"
+        target: 1
+      - indicator: "HaVEn Project: research projects completed"
+        target: 1
+      - indicator: "BED Project: new services offered"
+        target: 2
+    approved_budget: 15965170.00
+  - title: "Science Education, Scholarship, and Grants"
+    description: ""
+    outcome_indicators:
+      - indicator: "Bangsamoro S&T Scholarship and Grants: increased number of Bangsamoro students pursuing specialized careers in STEM"
+        target: 12
+      - indicator: "Bangsamoro S&T Education: increased number of STEM schools with improved capacities"
+        target: 10
+    output_indicators:
+      - indicator: "BASE: new grantees"
+        target: 200
+      - indicator: "BASE: continuing grantees"
+        target: 607
+      - indicator: "BASE: graduating grantees"
+        target: 178
+      - indicator: "BASE-Merit: new grantees"
+        target: 200
+      - indicator: "BASE-Merit: continuing grantees"
+        target: 391
+      - indicator: "BSASE: continuing grantees"
+        target: 400
+      - indicator: "PASE: continuing grantees"
+        target: 100
+      - indicator: "BIGAST: continuing grantees"
+        target: 11
+      - indicator: "SMARTS: STEM teachers capacitated"
+        target: 100
+      - indicator: "SMARTS: STARBOOKS sets deployed"
+        target: 50
+      - indicator: "SCIENCE Project: students capacitated on innovation"
+        target: 70
+    approved_budget: 224788200.00
+  - title: "Advance Science and Technology"
+    description: ""
+    outcome_indicators:
+      - indicator: "Bangsamoro DRRM Program: increased number of disaster prevention and mitigation protocols utilized"
+        target: 1
+      - indicator: "BIETDP: increased number of technology developers or inventors with improved capacities on electronic products development"
+        target: 5
+    output_indicators:
+      - indicator: "Innovative Tech Solutions: additional early warning systems installed"
+        target: 20
+      - indicator: "Electronics Development Facility: facilities established"
+        target: 1
+      - indicator: "Capability Building: individuals trained on advanced PCB assembly"
+        target: 3
+      - indicator: "Capability Building: individuals trained on APIs design"
+        target: 3
+      - indicator: "Capability Building: individuals trained on AI/Machine Learning"
+        target: 3
+    approved_budget: 20873258.00
+  - title: "Bangsamoro Science Highschool"
+    description: ""
+    outcome_indicators: []
+    output_indicators: []
+    approved_budget: 11590454.00
+special_provisions:
+  - title: "Research, Development and Innovation"
+    details: |
+      Twenty-Two Million Pesos (P22,000,000.00) shall be used exclusively for research and development, subject to Program Implementation Plan and Guidelines and a list of funded researches submitted to MFBM.
+  - title: "Science and Technology Services"
+    details: |
+      Four Million Five Hundred Thousand Pesos (P4,500,000.00) in capital outlay shall procure processing, packaging, and labeling equipment for TTCP, limited to high-quality equipment, subject to procurement plan and quarterly status report to MFBM.
+  - title: "Bangsamoro Standards and Testing Laboratories"
+    details: |
+      Six Million Three Hundred Fifty Thousand Pesos (P6,350,000.00) for machineries and equipment and Five Million Six Hundred Sixty-Six Thousand Pesos (P5,666,000.00) for supplies and materials shall equip Physico-Chemistry, Microbiology, Metrology, and Halal Verification Laboratories, subject to status reporting to MFBM.
+  - title: "Science Education, Scholarship, and Grants"
+    details: |
+      Two Hundred Twelve Million One Hundred Fifty-Seven Thousand Pesos (P212,157,000.00) shall fund scholarship programs (BASE, BASE-Merit, BSASE, PASE, BIGAST) subject to Program Implementation Plan and Guidelines, qualified scholar list, and quarterly status report to MFBM.
+
+      Three Million Pesos (P3,000,000.00) in capital outlay shall procure STARBOOKS equipment subject to Program Implementation Plan and Guidelines.
+  - title: "Early Warning Stations"
+    details: |
+      Eight Million Eight Hundred Twenty-Five Thousand Pesos (P8,825,000.00) shall procure machineries and equipment for Bangsamoro Disaster Risk Reduction and Management.
+  - title: "Advance Science and Technology"
+    details: |
+      One Million Five Hundred Sixty-Eight Thousand Four Hundred Pesos (P1,568,400.00) and Three Million Two Hundred Thousand Pesos (P3,200,000.00) for subscription expenses shall operationalize early warning stations and the weather monitoring system, respectively.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      Implementing M/O/As shall submit quarterly financial and physical accomplishment reports within thirty (30) days after each quarter through:
+        (a) Submission of hardcopy to the MFBM;
+        (b) Submission of reports through electronic means; and
+        (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the MFBM and other offices where submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

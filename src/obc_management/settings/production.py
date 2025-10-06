@@ -19,7 +19,20 @@ if not ALLOWED_HOSTS:
 # SECURITY: CSRF trusted origins (required for HTTPS behind proxy)
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 if not CSRF_TRUSTED_ORIGINS:
-    raise ValueError("CSRF_TRUSTED_ORIGINS must be set for production HTTPS")
+    raise ValueError(
+        "CSRF_TRUSTED_ORIGINS must be set for production HTTPS\n"
+        "Example: CSRF_TRUSTED_ORIGINS=https://obcms.gov.ph,https://www.obcms.gov.ph\n"
+        "IMPORTANT: Must include https:// scheme, not just domain names"
+    )
+
+# Validate CSRF_TRUSTED_ORIGINS format
+for origin in CSRF_TRUSTED_ORIGINS:
+    if not origin.startswith(("https://", "http://")):
+        raise ValueError(
+            f"Invalid CSRF_TRUSTED_ORIGINS format: {origin}\n"
+            "Each origin must include the scheme (https:// or http://)\n"
+            f"Example: https://{origin} (not just {origin})"
+        )
 
 # SECURITY: Force HTTPS redirects
 SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)

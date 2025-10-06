@@ -1,0 +1,249 @@
+moa: "Ministry of Agriculture, Fisheries and Agrarian Reform"
+acronym: "MAFAR"
+ppas:
+  - title: "Basic Integration for Harmonized Intervention"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage increase in production yield of identified major commodities"
+        target: "5%"
+    output_indicators:
+      - indicator: "Farmers benefited with palay seeds"
+        target: 20196
+      - indicator: "Farmers benefited with corn seeds and fertilizers"
+        target: 5245
+      - indicator: "Farmers benefited with cassava cuttings"
+        target: 1042
+      - indicator: "Farmers benefited with livestock and poultry"
+        target: 1393
+      - indicator: "Farmers trained or capacitated to halal production"
+        target: 1300
+      - indicator: "FCAs provided with machineries for livestock"
+        target: 18
+      - indicator: "FCAs provided with machineries for corn or cassava"
+        target: 22
+      - indicator: "FCAs provided with machineries for rice"
+        target: 18
+    approved_budget: 391750649.00
+  - title: "Food Security and Nutrition Convergence Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Farmer income increased through high value crops and development interventions"
+        target: "15%"
+    output_indicators:
+      - indicator: "Farmers provided with farm inputs"
+        target: 5000
+      - indicator: "FCAs adopting halal production system"
+        target: 16
+      - indicator: "Farmers benefited from organic inputs"
+        target: 7000
+      - indicator: "Machineries distributed to MILF camps"
+        target: 60
+    approved_budget: 93897790.00
+  - title: "Regulatory and Quarantine Services"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of clients rating the service satisfactory or better"
+        target: "80%"
+    output_indicators:
+      - indicator: "Animal disease control: sero-surveillance activities conducted"
+        target: 15
+      - indicator: "Animal disease control: anti-rabies vaccine doses distributed"
+        target: 100000
+      - indicator: "Plant disease control: pest monitoring conducted"
+        target: 19
+      - indicator: "Animal facilities inspected"
+        target: 8
+      - indicator: "Animal handlers registered"
+        target: 33
+    approved_budget: 17526120.00
+  - title: "Integrated and Sustainable Development for Aquaculture/Capture"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of fisheries production improved"
+        target: "6%"
+    output_indicators:
+      - indicator: "Seaweed seedlings provided (kg)"
+        target: 160000
+      - indicator: "Mariculture parks established"
+        target: 2
+      - indicator: "Bantay Dagat/Pawas operations conducted"
+        target: 6
+      - indicator: "Seaborne patrols conducted"
+        target: 10
+      - indicator: "Groups capacitated through post-harvest technology"
+        target: 6
+      - indicator: "Fisheries postharvest equipment distributed"
+        target: 171
+      - indicator: "Coastal conservation and protection interventions deployed"
+        target: 820
+    approved_budget: 141631593.00
+  - title: "Fisheries Adjudication Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of apprehended illegal fishing vessels improved"
+        target: "50%"
+      - indicator: "Percentage of assistance on disposal of fishing vessels, gears, and seized fish catch improved"
+        target: "50%"
+    output_indicators:
+      - indicator: "Resolutions of administrative cases decided"
+        target: 20
+      - indicator: "Resolutions of adjudication cases decided"
+        target: 15
+      - indicator: "Vessels disposed"
+        target: 4
+    approved_budget: 2092600.00
+  - title: "Land Tenure Security Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of distributed EP/CLOA increased"
+        target: "1%"
+      - indicator: "Percentage area of distributed EP/CLOA increased"
+        target: "1%"
+    output_indicators:
+      - indicator: "Hectares with documentation folder"
+        target: 1506
+      - indicator: "EP/CLOAs generated"
+        target: 186
+      - indicator: "Hectares of collective CLOA transmitted to MENRE"
+        target: 3441
+      - indicator: "ARBs profiled"
+        target: 1668
+      - indicator: "Field validations and documentations conducted"
+        target: 2
+    approved_budget: 62919207.00
+  - title: "Sustainable Development for Agrarian Reform Beneficiaries in the Bangsamoro"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of ARB organizations organized, capacitated, and operationalized increased"
+        target: "7%"
+      - indicator: "Percentage of ARBO products developed or enhanced"
+        target: "10%"
+    output_indicators:
+      - indicator: "New ARCs launched"
+        target: 2
+      - indicator: "ARBOs organized"
+        target: 10
+      - indicator: "ARBO products and services developed"
+        target: 10
+      - indicator: "ARBOs served through MAFARDUCERS"
+        target: 5
+      - indicator: "ARBOs trained on climate resiliency"
+        target: 1
+    approved_budget: 30222200.00
+  - title: "Bangsamoro Agri-Fishery Evidence Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage increase of farmers adopting new technologies"
+        target: "60%"
+      - indicator: "Beneficiaries rating the integrated laboratory services satisfactory"
+        target: "100%"
+    output_indicators:
+      - indicator: "Agrifishery production technologies generated"
+        target: 2
+      - indicator: "Farmers or fisherfolk trained or participating"
+        target: 316
+      - indicator: "Agrifishery technologies generated or verified"
+        target: 13
+      - indicator: "Beneficiaries of integrated laboratory services"
+        target: 750
+    approved_budget: 77342632.00
+  - title: "Provision of Legal Support to Farmers and Fisherfolks"
+    description: ""
+    outcome_indicators:
+      - indicator: "Increased resolution rate of ALI and BARAB cases"
+        target: "80%"
+      - indicator: "Percentage increase on legal services extended"
+        target: "11%"
+    output_indicators:
+      - indicator: "ALI cases processed or resolved"
+        target: 10
+      - indicator: "Land transfer cases issued with clearance"
+        target: 2543
+      - indicator: "BARAB case resolution"
+        target: 1
+    approved_budget: 8738373.00
+  - title: "Agribusiness and Marketing Assistance Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of beneficiaries rating AMAD services satisfactory or better"
+        target: "85%"
+    output_indicators:
+      - indicator: "Market linkage or business matching conducted"
+        target: 2
+      - indicator: "MAFARLENGKE-on-wheels conducted"
+        target: 7
+      - indicator: "Price and supply monitoring activities conducted"
+        target: 384
+      - indicator: "Loan assistance to cooperatives and associations provided"
+        target: 100
+      - indicator: "Capacity building training conducted"
+        target: 7
+    approved_budget: 22327610.00
+  - title: "Quick Response Fund"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of support and operation on quick response efficiently extended"
+        target: "80%"
+    output_indicators:
+      - indicator: "Percentage of quick response extended in agriculture, fisheries, and agrarian reform beneficiaries"
+        target: "80%"
+    approved_budget: 250000000.00
+special_provisions:
+  - title: "Quick Response Fund"
+    details: |
+      The amount of Two Hundred Fifty Million Pesos (P250,000,000.00) appropriated for the Quick Response Fund (QRF) shall serve as a stand-by fund to be used for: (i) provision of various production inputs for crops, livestock and poultry, and fisheries; and (ii) provision of other assistance in the form of cash for culled live animals or equipment and supplies directly used to mitigate the effects of a disaster, and necessary tools and supplies to mitigate the effects of an ongoing disaster, in order that the situation and living conditions of people in communities affected by natural or human-induced calamities, epidemics, crises, and catastrophes which occurred in the last quarter of the immediately preceding year and those occurring during the current year may be normalized as quickly as possible.
+
+      Release of funds shall be subject to the following guidelines:
+      (a) The Ministry shall conduct the assessment of the status of the affected communities in the BARMM.
+      (b) The OCM shall authorize and direct MFBM for the release of appropriate funds.
+      (c) In no case shall the QRF be used for pre-disaster activities, such as conduct of training, insurance of assets, and public information and information initiatives, or any other purpose not authorized in this Act.
+  - title: "Basic Integration for Harmonized Intervention (BINHI)"
+    details: |
+      The amount of Three Hundred Seventy-Six Million Seven Hundred Eighty-Eight Thousand Six Hundred Ninety-Nine Pesos (P376,788,699.00) appropriated, subject to the submission of Program Implementation Plan and Guidelines and quarterly status report of implementation to MFBM, shall be used as follows:
+      2.1 Productivity Enhancement Project for Small Landholder Farmers in the Bangsamoro Region. The amount of Three Hundred Twenty-Four Million Nine Hundred Twenty-Four Thousand One Hundred Ninety-Nine Pesos (P324,924,199.00) shall be used exclusively for the distribution of agricultural inputs support to production and community-based rice production, subject further to the submission of list of validated beneficiaries.
+      2.2 Input Provision of Livestock and Poultry. The amount of Twenty Million Six Hundred Fourteen Thousand Five Hundred Pesos (P20,614,500.00) shall be used exclusively for the distribution of livestock and poultry, subject further to the submission of list of validated beneficiaries.
+      2.3 Support to Agricultural Machineries, Equipment, Facilities and Infrastructure. The amount of Thirty-One Million Two Hundred Fifty Thousand Pesos (P31,250,000.00) shall be used exclusively for support to agricultural machineries, equipment, facilities and infrastructure, subject further to the submission of list of validated beneficiaries.
+  - title: "Food Security and Nutrition Convergence Program"
+    details: |
+      The amount of Ninety-Two Million Nine Hundred Fifteen Thousand One Hundred Forty Pesos (P92,915,140.00) appropriated, subject to the submission of Program Implementation Plan and Guidelines and quarterly status report of implementation to MFBM, shall be used as follows:
+      3.1 Food Security and Nutrition Convergence Initiative. The amount of Twenty-Six Million Four Hundred Fifty Thousand Pesos (P26,450,000.00) shall be used exclusively for the implementation of the Food Security and Nutrition Convergence Initiative Project, subject further to the submission of list of validated beneficiaries.
+      3.2 Halal and Organic Production Development Project. The amount of Forty-Two Million Two Hundred Five Thousand One Hundred Forty Pesos (P42,205,140.00) shall be used exclusively for the implementation of the Halal and Organic Production Development Project, subject further to the submission of list of validated beneficiaries.
+      3.3 Livelihood Support to Camps. The amount of Twenty-Four Million Two Hundred Sixty Thousand Pesos (P24,260,000.00) shall be used exclusively for the Livelihood Support to Camps, subject further to the submission of list of validated beneficiaries.
+  - title: "Regulatory and Quarantine Services"
+    details: |
+      The amount of Seventeen Million Five Hundred Twenty-Six Thousand One Hundred Twenty Pesos (P17,526,120.00) appropriated shall be used exclusively for the Regulatory and Quarantine Services Program, subject to the submission of Program Implementation Plan and Guidelines and quarterly status report of implementation to MFBM.
+  - title: "Integrated and Sustainable Development for Aquaculture/Capture (ISDA)"
+    details: |
+      The amount of One Hundred Thirty-Four Million Three Hundred Forty-One Thousand Four Hundred Fifteen Pesos (P134,341,415.00) appropriated, subject to the submission of Program Implementation Plan and Guidelines and quarterly status report of implementation to MFBM, shall be used as follows:
+      5.1 Fisheries Production Support Project. The amount of Sixty-Three Million Nine Hundred Thirty-Five Thousand Nine Hundred Twenty-Four Pesos (P63,935,924.00) shall be used exclusively for the implementation of the Fisheries Production Support Project, subject further to the submission of list of validated beneficiaries.
+      5.2 Fisheries Post-Harvest and Marketing Support Project. The amount of Sixty Million Thirty-Seven Thousand Two Hundred Forty-One Pesos (P60,037,241.00) shall be used exclusively for the implementation of the Fisheries Post-Harvest and Marketing Support Project, subject further to the submission of list of validated beneficiaries.
+      5.3 Fisheries Resource Management Project. The amount of Ten Million Three Hundred Sixty-Eight Thousand Two Hundred Fifty Pesos (P10,368,250.00) shall be used exclusively for the implementation of the Fisheries Resource Management Project, subject further to the submission of list of validated beneficiaries.
+  - title: "Fisheries Adjudication Program"
+    details: |
+      The amount of Two Million Ninety-Two Thousand Six Hundred Pesos (P2,092,600.00) appropriated shall be used exclusively for the implementation of the Fisheries Adjudication Program, subject to the submission of Program Implementation Plan and Guidelines and quarterly status report of implementation to MFBM.
+  - title: "Land Tenure Security Program"
+    details: |
+      The amount of Sixty-Two Million Nine Hundred Nineteen Thousand Two Hundred Seven Pesos (P62,919,207.00) appropriated shall be used exclusively for the implementation of the Land Tenure Security Program, subject to the submission of Program Implementation Plan and Guidelines and quarterly status report of implementation to MFBM.
+  - title: "Sustainable Development for Agrarian Reform Beneficiaries in the Bangsamoro (SDAReBB)"
+    details: |
+      The total amount of Thirty Million Two Hundred Twenty-Two Thousand Two Hundred Pesos (P30,222,200.00) appropriated shall be used exclusively for the implementation of Sustainable Development for Agrarian Reform Beneficiaries in the Bangsamoro (SDAReBB) Program, subject to the submission of Program Implementation Plan and Guidelines and quarterly status report of implementation to MFBM, of which Ten Million Four Hundred Eighty-Two Thousand Two Hundred Fifty Pesos (P10,482,250.00) shall be used for the implementation of the MAFARDUCERS Program, subject further to the submission of list of validated beneficiaries.
+  - title: "Bangsamoro Agri-Fishery Evidence Program"
+    details: |
+      The amount of Seventy-Seven Million Three Hundred Forty-Two Thousand Six Hundred Thirty-Two Pesos (P77,342,632.00) appropriated shall be used exclusively for the Bangsamoro Agri-Fishery Evidence Program, of which Forty-Six Million Six Hundred Forty-Nine Thousand Seven Hundred Twenty Pesos (P46,649,720.00) shall be used for the Integrated Laboratories for Bangsamoro (iLAB) Projects, subject to the submission of Program Implementation Plan and Guidelines and quarterly status report of implementation to MFBM.
+  - title: "Provision of Legal Support to Farmers and Fisherfolk"
+    details: |
+      The amount of Eight Million Seven Hundred Thirty-Eight Thousand Three Hundred Seventy-Three Pesos (P8,738,373.00) appropriated shall be used exclusively for the implementation of the Provision of Legal Support to Farmers and Fisherfolk Program, subject to the submission of Program Implementation Plan and Guidelines and quarterly status report of implementation to MFBM.
+  - title: "Agribusiness and Marketing Assistance Program"
+    details: |
+      The amount of Ten Million Pesos (P10,000,000.00) appropriated shall be used exclusively for the Provision of Loan Assistance to Farmers and Fisherfolk Cooperatives and Associations Program, subject to the submission of Program Implementation Plan and Guidelines, list of CSEA-accredited and validated cooperative-beneficiaries, and quarterly status report of implementation to MFBM.
+  - title: "Machinery, Equipment, and Infrastructure Facilities"
+    details: |
+      Upon completion of the construction of facilities and procurement of machineries and equipment, MAFAR shall turn over the management thereof to the farmers or fisherfolk organizations concerned, which shall commit to shoulder maintenance and repair costs.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on its financial and physical accomplishments within thirty (30) days after the end of every quarter through:
+      (a) Submission of hardcopy to the MFBM;
+      (b) Submission of reports through electronic means; and
+      (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when said reports have been submitted or posted on its website to the MFBM and other offices where the submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

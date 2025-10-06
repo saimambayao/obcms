@@ -1,0 +1,105 @@
+moa: "Ministry of Public Order and Safety"
+acronym: "MPOS"
+ppas:
+  - title: "Safe BARMM"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of community involvement in conflict monitoring and prevention increased"
+        target: ""
+    output_indicators:
+      - indicator: "EWER volunteers capacitated"
+        target: 720
+      - indicator: "Reports on public order and safety submitted"
+        target: 4
+    approved_budget: 8810350.00
+  - title: "Coordination with Law Enforcement Agencies in the Region"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of strengthened law enforcement coordination mechanisms increased"
+        target: ""
+    output_indicators:
+      - indicator: "Provincial stakeholders engaged in identifying public order and safety gaps"
+        target: 7
+      - indicator: "LEA personnel capacitated on CSOP system programming"
+        target: 70
+      - indicator: "Body-worn cameras provided to BARMM PNP"
+        target: 60
+      - indicator: "Communities informed on anti-illegal drugs advocacy"
+        target: 5
+    approved_budget: 7350343.00
+  - title: "Peace Building Initiatives"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of target vulnerable sectors and institutions reintegrated into society"
+        target: "100%"
+    output_indicators:
+      - indicator: "Vulnerable combatants supported"
+        target: 300
+      - indicator: "Widows of violent extremists supported"
+        target: 150
+      - indicator: "Former local insurgents supported"
+        target: 250
+      - indicator: "Orphans of violent extremists supported"
+        target: 150
+      - indicator: "Vulnerable, marginalized, and neglected institutions assisted"
+        target: 150
+    approved_budget: 29780931.00
+  - title: "Sustaining Journey to Peace"
+    description: ""
+    outcome_indicators:
+      - indicator: "Number of individuals engaged in sustaining peace in the BARMM increased"
+        target: "100%"
+    output_indicators:
+      - indicator: "Peacebuilding training modules produced"
+        target: 1
+      - indicator: "Grassroots peacebuilders empowered"
+        target: 5
+      - indicator: "Individuals from conflict-affected communities engaged"
+        target: 30
+      - indicator: "Representatives of the tri-people engaged"
+        target: 40
+      - indicator: "Religious leaders engaged"
+        target: 30
+    approved_budget: 5928368.00
+  - title: "Popularization of Bangsamoro Historical Events"
+    description: ""
+    outcome_indicators:
+      - indicator: "Promotion of transitional justice and reconciliation in the Bangsamoro enhanced"
+        target: "100%"
+    output_indicators:
+      - indicator: "Bangsamoro peace forum conducted"
+        target: 1
+      - indicator: "Bangsamoro historical events mainstreamed"
+        target: 8
+      - indicator: "Advocates on transitional justice and reconciliation engaged"
+        target: 100
+    approved_budget: 9066150.00
+  - title: "Alternative Dispute Resolution Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of rido in BARMM reduced"
+        target: "10% of the digital rido profiled"
+    output_indicators:
+      - indicator: "Digital rido profile enhanced"
+        target: 1
+      - indicator: "Local mediator groups sustained"
+        target: 14
+      - indicator: "Rido cases settled"
+        target: 80
+      - indicator: "Communities partnered in rido prevention"
+        target: 20
+      - indicator: "Returning rido-affected communities assisted"
+        target: 7
+    approved_budget: 17743600.00
+special_provisions:
+  - title: "Rido Knowledge Management"
+    details: |
+      The amount of One Million Eight Hundred Eighty Thousand and Four Hundred Pesos (P1,880,400.00) appropriated under the Alternative Dispute Resolution Program shall be exclusively used for digital profiling to address and gather baseline data on conflicts and rido across the BARMM.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on its financial and physical accomplishments within thirty (30) days after the end of every quarter through:
+      (a) Submission of hardcopy to the MFBM;
+      (b) Submission of reports through electronic means; and
+      (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when said reports have been submitted or posted on its website to the MFBM and other offices where the submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

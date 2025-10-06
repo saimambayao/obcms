@@ -4,10 +4,161 @@ import uuid
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import F, Q, Sum
 
 ZERO_DECIMAL = Decimal("0.00")
+
+
+class MonitoringEntryQuerySet(models.QuerySet):
+    """Custom queryset for MonitoringEntry with common filters and optimizations."""
+
+    def with_related(self):
+        """Prefetch all common relationships for performance."""
+        return self.select_related(
+            "lead_organization",
+            "implementing_moa",
+            "submitted_by_community",
+            "submitted_to_organization",
+            "related_assessment",
+            "related_policy",
+            "coverage_region",
+            "coverage_province",
+            "coverage_municipality",
+            "coverage_barangay",
+            "created_by",
+            "updated_by",
+            "reviewed_by",
+            "budget_approved_by",
+            "executive_approved_by",
+        ).prefetch_related(
+            "communities",
+            "supporting_organizations",
+            "needs_addressed",
+            "implementing_policies",
+            "standard_outcome_indicators",
+            "funding_flows",
+            "workflow_stages",
+            "updates",
+        )
+
+    def with_funding_totals(self):
+        """Annotate with funding total calculations."""
+        return self.annotate(
+            total_allocations_sum=Sum(
+                "funding_flows__amount",
+                filter=Q(funding_flows__tranche_type="allocation"),
+            ),
+            total_obligations_sum=Sum(
+                "funding_flows__amount",
+                filter=Q(funding_flows__tranche_type="obligation"),
+            ),
+            total_disbursements_sum=Sum(
+                "funding_flows__amount",
+                filter=Q(funding_flows__tranche_type="disbursement"),
+            ),
+        )
+
+    def active(self):
+        """Filter to active entries (planning, ongoing)."""
+        return self.filter(status__in=["planning", "ongoing"])
+
+    def completed(self):
+        """Filter to completed entries."""
+        return self.filter(status="completed")
+
+    def by_fiscal_year(self, year):
+        """Filter by fiscal year."""
+        return self.filter(fiscal_year=year)
+
+    def by_plan_year(self, year):
+        """Filter by planning year."""
+        return self.filter(plan_year=year)
+
+    def moa_ppas(self):
+        """Filter to MOA PPAs."""
+        return self.filter(category="moa_ppa")
+
+    def oobc_ppas(self):
+        """Filter to OOBC-led initiatives."""
+        return self.filter(category="oobc_ppa")
+
+    def obc_requests(self):
+        """Filter to OBC community requests."""
+        return self.filter(category="obc_request")
+
+    def by_sector(self, sector):
+        """Filter by sector."""
+        return self.filter(sector=sector)
+
+    def by_organization(self, org):
+        """Filter by lead organization."""
+        return self.filter(lead_organization=org)
+
+    def high_priority(self):
+        """Filter to high and urgent priority."""
+        return self.filter(priority__in=["high", "urgent"])
+
+    def over_budget(self):
+        """Filter to entries with allocation variance."""
+        return self.with_funding_totals().filter(
+            total_allocations_sum__gt=F("budget_allocation")
+        )
+
+    def pending_approval(self):
+        """Filter to entries pending approval."""
+        return self.exclude(approval_status="approved")
+
+
+class MonitoringEntryManager(models.Manager):
+    """Custom manager for MonitoringEntry."""
+
+    def get_queryset(self):
+        return MonitoringEntryQuerySet(self.model, using=self._db)
+
+    def with_related(self):
+        return self.get_queryset().with_related()
+
+    def with_funding_totals(self):
+        return self.get_queryset().with_funding_totals()
+
+    def active(self):
+        return self.get_queryset().active()
+
+    def completed(self):
+        return self.get_queryset().completed()
+
+    def by_fiscal_year(self, year):
+        return self.get_queryset().by_fiscal_year(year)
+
+    def by_plan_year(self, year):
+        return self.get_queryset().by_plan_year(year)
+
+    def moa_ppas(self):
+        return self.get_queryset().moa_ppas()
+
+    def oobc_ppas(self):
+        return self.get_queryset().oobc_ppas()
+
+    def obc_requests(self):
+        return self.get_queryset().obc_requests()
+
+    def by_sector(self, sector):
+        return self.get_queryset().by_sector(sector)
+
+    def by_organization(self, org):
+        return self.get_queryset().by_organization(org)
+
+    def high_priority(self):
+        return self.get_queryset().high_priority()
+
+    def over_budget(self):
+        return self.get_queryset().over_budget()
+
+    def pending_approval(self):
+        return self.get_queryset().pending_approval()
 
 
 class MonitoringEntry(models.Model):
@@ -181,14 +332,9 @@ class MonitoringEntry(models.Model):
         related_name="monitoring_entries",
         help_text="Linked OBC-MANA assessment, if any",
     )
-    related_event = models.ForeignKey(
-        "coordination.Event",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="monitoring_entries",
-        help_text="Related coordination activity or event",
-    )
+    # related_event removed - Event model deleted
+    # Use WorkItem with work_type='activity' for coordination activities
+    # See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
     related_policy = models.ForeignKey(
         "policy_tracking.PolicyRecommendation",
         null=True,
@@ -483,6 +629,7 @@ class MonitoringEntry(models.Model):
 
     approval_history = models.JSONField(
         default=list,
+        blank=True,
         help_text="Complete history of approval stages with timestamps, reviewers, and comments",
     )
 
@@ -523,13 +670,110 @@ class MonitoringEntry(models.Model):
         help_text="Reason for rejection (if approval_status is 'rejected')",
     )
 
+    # ========== WORKITEM INTEGRATION FIELDS ==========
+    execution_project = models.OneToOneField(
+        'common.WorkItem',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='ppa_source',
+        help_text="Root WorkItem project for execution tracking",
+    )
+
+    enable_workitem_tracking = models.BooleanField(
+        default=False,
+        help_text="Enable WorkItem-based execution tracking for this PPA",
+    )
+
+    budget_distribution_policy = models.CharField(
+        max_length=20,
+        choices=[
+            ('equal', 'Equal'),
+            ('weighted', 'Weighted'),
+            ('manual', 'Manual')
+        ],
+        blank=True,
+        help_text="Policy for distributing budget across child work items",
+    )
+
+    auto_sync_progress = models.BooleanField(
+        default=True,
+        help_text="Automatically sync progress from execution project",
+    )
+
+    auto_sync_status = models.BooleanField(
+        default=True,
+        help_text="Automatically sync status from execution project",
+    )
+
+    # Custom manager
+    objects = MonitoringEntryManager()
+
     class Meta:
         ordering = ["-updated_at", "-created_at"]
         verbose_name = "Monitoring Entry"
         verbose_name_plural = "Monitoring Entries"
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(progress__gte=0) & Q(progress__lte=100),
+                name='monitoring_entry_valid_progress'
+            ),
+            models.CheckConstraint(
+                condition=Q(target_end_date__gte=F('start_date')) | Q(start_date__isnull=True) | Q(target_end_date__isnull=True),
+                name='monitoring_entry_valid_date_range'
+            ),
+        ]
 
     def __str__(self):
         return self.title
+
+    def clean(self):
+        """Validate business rules at model level."""
+        super().clean()
+        errors = {}
+
+        # Validate funding_source_other required when funding_source=others
+        if self.funding_source == self.FUNDING_SOURCE_OTHERS and not self.funding_source_other:
+            errors['funding_source_other'] = 'Please specify the funding source when selecting "Others".'
+
+        # Validate date ranges
+        if self.start_date and self.target_end_date:
+            if self.target_end_date < self.start_date:
+                errors['target_end_date'] = 'Target end date must be after start date.'
+
+        if self.start_date and self.actual_end_date:
+            if self.actual_end_date < self.start_date:
+                errors['actual_end_date'] = 'Actual end date cannot be before start date.'
+
+        # Validate budget allocation <= budget ceiling (if ceiling is set)
+        if self.budget_ceiling and self.budget_allocation:
+            if self.budget_allocation > self.budget_ceiling:
+                errors['budget_allocation'] = (
+                    f'Budget allocation (₱{self.budget_allocation:,.2f}) '
+                    f'cannot exceed ceiling (₱{self.budget_ceiling:,.2f}).'
+                )
+
+        # Validate OBC-specific allocations
+        if self.budget_obc_allocation and self.budget_allocation:
+            if self.budget_obc_allocation > self.budget_allocation:
+                errors['budget_obc_allocation'] = 'OBC allocation cannot exceed total budget allocation.'
+
+        if self.obc_slots and self.total_slots:
+            if self.obc_slots > self.total_slots:
+                errors['obc_slots'] = 'OBC slots cannot exceed total slots.'
+
+        # Validate category-specific required fields
+        if self.category == 'moa_ppa' and not self.implementing_moa:
+            errors['implementing_moa'] = 'Implementing MOA is required for MOA PPA entries.'
+
+        if self.category == 'obc_request':
+            if not self.submitted_by_community:
+                errors['submitted_by_community'] = 'Submitting community is required for OBC requests.'
+            if not self.submitted_to_organization:
+                errors['submitted_to_organization'] = 'Recipient organization is required for OBC requests.'
+
+        if errors:
+            raise ValidationError(errors)
 
     def funding_total(self, tranche_type: str) -> float:
         """Return total amount recorded for a funding tranche type."""
@@ -620,6 +864,467 @@ class MonitoringEntry(models.Model):
     def is_under_obligated(self) -> bool:
         """Flag if obligation rate is below 75%."""
         return self.obligation_rate < 75.0
+
+    @property
+    def work_items(self):
+        """
+        QuerySet of all WorkItems in the execution project hierarchy.
+
+        Returns all descendants of the execution_project (including the project itself).
+        Used by BudgetDistributionService to distribute budget across work items.
+
+        Returns:
+            QuerySet: WorkItem queryset containing all items in hierarchy
+
+        Example:
+            >>> ppa.work_items.all()  # All work items
+            >>> ppa.work_items.filter(work_type='task')  # Just tasks
+        """
+        from common.work_item_model import WorkItem
+
+        if not self.execution_project:
+            # Return empty queryset if no execution project exists
+            return WorkItem.objects.none()
+
+        # Return all descendants including the root project
+        return self.execution_project.get_descendants(include_self=True)
+
+    # ========== WORKITEM INTEGRATION METHODS ==========
+
+    def create_execution_project(self, structure_template='activity', created_by=None):
+        """
+        Create root WorkItem project for execution tracking.
+
+        This method creates a hierarchical WorkItem structure for tracking PPA execution.
+        It integrates with the WorkItemGenerationService (to be created in Phase 2) to
+        generate a structured breakdown of activities/tasks.
+
+        Args:
+            structure_template (str): Template structure type. Options:
+                - 'activity': Create activities for each outcome/output
+                - 'milestone': Create tasks for each milestone
+                - 'budget': Create structure based on budget categories
+                Default: 'activity'
+            created_by (User): User creating the execution project. Defaults to system user.
+
+        Returns:
+            WorkItem: The root project WorkItem instance
+
+        Raises:
+            ValidationError: If execution project already exists or PPA lacks required data
+
+        Example:
+            >>> entry = MonitoringEntry.objects.get(id='some-uuid')
+            >>> project = entry.create_execution_project(
+            ...     structure_template='activity',
+            ...     created_by=request.user
+            ... )
+            >>> print(f"Created project: {project.title}")
+            >>> print(f"Child activities: {project.get_children().count()}")
+        """
+        from django.contrib.auth import get_user_model
+        from common.work_item_model import WorkItem
+        from django.contrib.contenttypes.models import ContentType
+
+        # Validation: Check if execution project already exists
+        ct = ContentType.objects.get_for_model(self.__class__)
+        existing_projects = WorkItem.objects.filter(
+            content_type=ct,
+            object_id=self.id,
+            work_type=WorkItem.WORK_TYPE_PROJECT,
+            parent__isnull=True
+        )
+
+        if existing_projects.exists():
+            raise ValidationError(
+                f"Execution project already exists for {self.title}. "
+                "Delete the existing project before creating a new one."
+            )
+
+        # Validation: Ensure PPA has required data
+        if not self.title:
+            raise ValidationError("MonitoringEntry must have a title to create execution project.")
+
+        # Get or create system user
+        if created_by is None:
+            User = get_user_model()
+            system_user, _ = User.objects.get_or_create(
+                username='system',
+                defaults={
+                    'first_name': 'System',
+                    'last_name': 'User',
+                    'is_active': False
+                }
+            )
+            created_by = system_user
+
+        # Create root project WorkItem
+        project = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_PROJECT,
+            title=f"{self.title} - Execution Plan",
+            description=f"Execution tracking for {self.get_category_display()}: {self.title}",
+            status=self._map_monitoring_status_to_workitem(),
+            priority=self._map_monitoring_priority_to_workitem(),
+            start_date=self.start_date,
+            due_date=self.target_end_date,
+            progress=self.progress,
+            created_by=created_by,
+            auto_calculate_progress=True,
+            is_calendar_visible=True,
+            related_ppa=self,
+            allocated_budget=self.budget_allocation,
+            actual_expenditure=Decimal('0.00'),
+            project_data={
+                'monitoring_entry_id': str(self.id),
+                'structure_template': structure_template,
+                'budget_allocation': str(self.budget_allocation) if self.budget_allocation else None,
+                'fiscal_year': self.fiscal_year,
+            }
+        )
+
+        # Link to MonitoringEntry via Generic Foreign Key
+        project.content_type = ct
+        project.object_id = self.id
+        project.save()
+
+        # Phase 2: Call WorkItemGenerationService to generate child structure
+        # This will be implemented in Phase 2
+        # from common.services.workitem_generation import WorkItemGenerationService
+        # service = WorkItemGenerationService(project, self)
+        # service.generate_structure(template=structure_template)
+
+        return project
+
+    def _map_monitoring_status_to_workitem(self):
+        """Map MonitoringEntry status to WorkItem status."""
+        from common.work_item_model import WorkItem
+
+        status_mapping = {
+            'planning': WorkItem.STATUS_NOT_STARTED,
+            'ongoing': WorkItem.STATUS_IN_PROGRESS,
+            'completed': WorkItem.STATUS_COMPLETED,
+            'on_hold': WorkItem.STATUS_BLOCKED,
+            'cancelled': WorkItem.STATUS_CANCELLED,
+        }
+        return status_mapping.get(self.status, WorkItem.STATUS_NOT_STARTED)
+
+    def _map_monitoring_priority_to_workitem(self):
+        """Map MonitoringEntry priority to WorkItem priority."""
+        from common.work_item_model import WorkItem
+
+        priority_mapping = {
+            'low': WorkItem.PRIORITY_LOW,
+            'medium': WorkItem.PRIORITY_MEDIUM,
+            'high': WorkItem.PRIORITY_HIGH,
+            'urgent': WorkItem.PRIORITY_URGENT,
+        }
+        return priority_mapping.get(self.priority, WorkItem.PRIORITY_MEDIUM)
+
+    def sync_progress_from_workitem(self):
+        """
+        Calculate progress from execution_project descendants and update self.progress.
+
+        This method syncs the MonitoringEntry progress with the completion status of
+        its associated WorkItem execution project. Progress is calculated based on
+        completed descendants (activities/tasks).
+
+        Returns:
+            int: Calculated progress percentage (0-100)
+
+        Example:
+            >>> entry = MonitoringEntry.objects.get(id='some-uuid')
+            >>> calculated_progress = entry.sync_progress_from_workitem()
+            >>> print(f"Progress updated: {calculated_progress}%")
+            >>> entry.refresh_from_db()
+            >>> assert entry.progress == calculated_progress
+        """
+        from common.work_item_model import WorkItem
+        from django.contrib.contenttypes.models import ContentType
+
+        # Find execution project
+        try:
+            ct = ContentType.objects.get_for_model(self.__class__)
+            execution_project = WorkItem.objects.get(
+                content_type=ct,
+                object_id=self.id,
+                work_type=WorkItem.WORK_TYPE_PROJECT,
+                parent__isnull=True  # Root project only
+            )
+        except WorkItem.DoesNotExist:
+            # No execution project exists, return current progress
+            return self.progress
+        except WorkItem.MultipleObjectsReturned:
+            # Multiple projects found, use the latest
+            ct = ContentType.objects.get_for_model(self.__class__)
+            execution_project = WorkItem.objects.filter(
+                content_type=ct,
+                object_id=self.id,
+                work_type=WorkItem.WORK_TYPE_PROJECT,
+                parent__isnull=True
+            ).latest('created_at')
+
+        # Calculate progress from descendants
+        descendants = execution_project.get_descendants()
+        if not descendants.exists():
+            # No children, use project's own progress
+            calculated_progress = execution_project.progress
+        else:
+            # Calculate based on completed descendants
+            total_descendants = descendants.count()
+            completed_descendants = descendants.filter(
+                status=WorkItem.STATUS_COMPLETED
+            ).count()
+
+            if total_descendants > 0:
+                calculated_progress = int((completed_descendants / total_descendants) * 100)
+            else:
+                calculated_progress = 0
+
+        # Update MonitoringEntry progress
+        if self.progress != calculated_progress:
+            self.progress = calculated_progress
+            self.save(update_fields=['progress', 'updated_at'])
+
+        return calculated_progress
+
+    def sync_status_from_workitem(self):
+        """
+        Map WorkItem status to MonitoringEntry status and update self.status.
+
+        This method syncs the MonitoringEntry status with the status of its
+        associated WorkItem execution project.
+
+        Returns:
+            str: Updated status value
+
+        Example:
+            >>> entry = MonitoringEntry.objects.get(id='some-uuid')
+            >>> updated_status = entry.sync_status_from_workitem()
+            >>> print(f"Status updated: {updated_status}")
+            >>> entry.refresh_from_db()
+            >>> assert entry.status == updated_status
+        """
+        from common.work_item_model import WorkItem
+        from django.contrib.contenttypes.models import ContentType
+
+        # Find execution project
+        try:
+            ct = ContentType.objects.get_for_model(self.__class__)
+            execution_project = WorkItem.objects.get(
+                content_type=ct,
+                object_id=self.id,
+                work_type=WorkItem.WORK_TYPE_PROJECT,
+                parent__isnull=True
+            )
+        except WorkItem.DoesNotExist:
+            # No execution project exists, return current status
+            return self.status
+        except WorkItem.MultipleObjectsReturned:
+            # Multiple projects found, use the latest
+            ct = ContentType.objects.get_for_model(self.__class__)
+            execution_project = WorkItem.objects.filter(
+                content_type=ct,
+                object_id=self.id,
+                work_type=WorkItem.WORK_TYPE_PROJECT,
+                parent__isnull=True
+            ).latest('created_at')
+
+        # Map WorkItem status to MonitoringEntry status
+        workitem_status = execution_project.status
+        status_mapping = {
+            WorkItem.STATUS_NOT_STARTED: 'planning',
+            WorkItem.STATUS_IN_PROGRESS: 'ongoing',
+            WorkItem.STATUS_AT_RISK: 'ongoing',  # Keep as ongoing but flag risk
+            WorkItem.STATUS_BLOCKED: 'on_hold',
+            WorkItem.STATUS_COMPLETED: 'completed',
+            WorkItem.STATUS_CANCELLED: 'cancelled',
+        }
+
+        mapped_status = status_mapping.get(workitem_status, self.status)
+
+        # Update MonitoringEntry status
+        if self.status != mapped_status:
+            self.status = mapped_status
+            self.save(update_fields=['status', 'updated_at'])
+
+        return mapped_status
+
+    def get_budget_allocation_tree(self):
+        """
+        Return hierarchical budget breakdown as dict.
+
+        This method returns a nested dictionary representing the budget allocation
+        across the WorkItem hierarchy, including allocated budgets and actual
+        expenditures per work item with variance calculations.
+
+        Returns:
+            dict: Hierarchical budget breakdown with structure:
+                {
+                    'work_item_id': str,
+                    'title': str,
+                    'work_type': str,
+                    'allocated_budget': Decimal,
+                    'actual_expenditure': Decimal,
+                    'variance': Decimal,
+                    'variance_pct': float,
+                    'children': [...]  # Recursive children
+                }
+
+        Example:
+            >>> entry = MonitoringEntry.objects.get(id='some-uuid')
+            >>> budget_tree = entry.get_budget_allocation_tree()
+            >>> print(f"Root budget: ₱{budget_tree['allocated_budget']:,.2f}")
+            >>> for child in budget_tree['children']:
+            ...     print(f"  {child['title']}: ₱{child['allocated_budget']:,.2f}")
+        """
+        from common.work_item_model import WorkItem
+        from django.contrib.contenttypes.models import ContentType
+
+        # Find execution project
+        try:
+            ct = ContentType.objects.get_for_model(self.__class__)
+            execution_project = WorkItem.objects.get(
+                content_type=ct,
+                object_id=self.id,
+                work_type=WorkItem.WORK_TYPE_PROJECT,
+                parent__isnull=True
+            )
+        except WorkItem.DoesNotExist:
+            # No execution project exists, return basic structure
+            return {
+                'work_item_id': None,
+                'title': self.title,
+                'work_type': 'monitoring_entry',
+                'allocated_budget': self.budget_allocation or Decimal('0.00'),
+                'actual_expenditure': self.total_disbursements,
+                'variance': (self.total_disbursements - (self.budget_allocation or Decimal('0.00'))),
+                'variance_pct': self._calculate_variance_pct(
+                    self.budget_allocation or Decimal('0.00'),
+                    self.total_disbursements
+                ),
+                'children': []
+            }
+        except WorkItem.MultipleObjectsReturned:
+            ct = ContentType.objects.get_for_model(self.__class__)
+            execution_project = WorkItem.objects.filter(
+                content_type=ct,
+                object_id=self.id,
+                work_type=WorkItem.WORK_TYPE_PROJECT,
+                parent__isnull=True
+            ).latest('created_at')
+
+        # Build hierarchical tree recursively
+        def build_tree(work_item):
+            """Recursively build budget tree for a work item."""
+            allocated = work_item.allocated_budget or Decimal('0.00')
+            actual = work_item.actual_expenditure or Decimal('0.00')
+            variance = actual - allocated
+            variance_pct = self._calculate_variance_pct(allocated, actual)
+
+            node = {
+                'work_item_id': str(work_item.id),
+                'title': work_item.title,
+                'work_type': work_item.work_type,
+                'work_type_display': work_item.get_work_type_display(),
+                'allocated_budget': allocated,
+                'actual_expenditure': actual,
+                'variance': variance,
+                'variance_pct': variance_pct,
+                'status': work_item.status,
+                'progress': work_item.progress,
+                'children': []
+            }
+
+            # Recursively add children
+            children = work_item.get_children()
+            for child in children:
+                node['children'].append(build_tree(child))
+
+            return node
+
+        return build_tree(execution_project)
+
+    def _calculate_variance_pct(self, allocated, actual):
+        """Calculate variance percentage."""
+        if allocated == 0:
+            return 0.0
+        variance = actual - allocated
+        return float((variance / allocated) * 100)
+
+    def validate_budget_distribution(self):
+        """
+        Validate sum of child budgets equals PPA budget.
+
+        This method ensures budget consistency across the WorkItem hierarchy by
+        validating that the sum of allocated budgets in child work items matches
+        the MonitoringEntry's budget_allocation.
+
+        Returns:
+            bool: True if budget distribution is valid
+
+        Raises:
+            ValidationError: If sum of child budgets doesn't match PPA budget
+
+        Example:
+            >>> entry = MonitoringEntry.objects.get(id='some-uuid')
+            >>> try:
+            ...     entry.validate_budget_distribution()
+            ...     print("Budget distribution is valid")
+            ... except ValidationError as e:
+            ...     print(f"Validation failed: {e.message}")
+        """
+        from common.work_item_model import WorkItem
+        from django.contrib.contenttypes.models import ContentType
+
+        # Find execution project
+        try:
+            ct = ContentType.objects.get_for_model(self.__class__)
+            execution_project = WorkItem.objects.get(
+                content_type=ct,
+                object_id=self.id,
+                work_type=WorkItem.WORK_TYPE_PROJECT,
+                parent__isnull=True
+            )
+        except WorkItem.DoesNotExist:
+            # No execution project exists, validation passes
+            return True
+        except WorkItem.MultipleObjectsReturned:
+            ct = ContentType.objects.get_for_model(self.__class__)
+            execution_project = WorkItem.objects.filter(
+                content_type=ct,
+                object_id=self.id,
+                work_type=WorkItem.WORK_TYPE_PROJECT,
+                parent__isnull=True
+            ).latest('created_at')
+
+        # Get PPA budget allocation
+        ppa_budget = self.budget_allocation or Decimal('0.00')
+
+        # Calculate sum of child budgets (immediate children only)
+        children = execution_project.get_children()
+        if not children.exists():
+            # No children, validation passes
+            return True
+
+        # Sum allocated budgets from children
+        child_budget_sum = Decimal('0.00')
+        for child in children:
+            allocated = child.allocated_budget or Decimal('0.00')
+            child_budget_sum += allocated
+
+        # Tolerance for decimal comparison (0.01 = 1 cent)
+        tolerance = Decimal('0.01')
+        difference = abs(ppa_budget - child_budget_sum)
+
+        if difference > tolerance:
+            raise ValidationError(
+                f"Budget distribution mismatch: PPA budget is ₱{ppa_budget:,.2f}, "
+                f"but sum of child budgets is ₱{child_budget_sum:,.2f}. "
+                f"Difference: ₱{difference:,.2f}. "
+                f"Please adjust child budget allocations to match the total PPA budget."
+            )
+
+        return True
 
 
 class OutcomeIndicator(models.Model):
@@ -979,3 +1684,6 @@ from .strategic_models import StrategicGoal, AnnualPlanningCycle
 
 # Import scenario planning models
 from .scenario_models import BudgetScenario, ScenarioAllocation, CeilingManagement
+
+# NOTE: MonitoringEntry is registered with auditlog in common/auditlog_config.py
+# This provides centralized audit trail configuration for compliance tracking

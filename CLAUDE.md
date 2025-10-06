@@ -2,10 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Ultrathink
-
-Always use "Ultrathink" whenever you are responding or coding in Claude Code to show your thinking process. No exception.
-
 ## Time Estimates Policy
 
 **NEVER provide time estimates in hours, days, weeks, or months for implementation tasks.**
@@ -106,7 +102,7 @@ pip install -r requirements/base.txt
 
 ### Django Project Structure
 - **Main Project**: `src/obc_management/` - Django settings and main configuration
-- **Applications**: Each module is a separate Django app with models, views, admin, and migrations
+- **Applications**: Each module is a separate Django app with models, views, admin, and migrations; Modules are Mapping and Needs Assesment (MANA), Coordination, Recommendations, M&E (including the Projects, Programs, and Activities or PPAs of the different Ministries, Offices, and Agencies or MOAs)
 - **Environment**: Uses `django-environ` for environment variable management with `.env` file
 
 ### Core Applications
@@ -129,22 +125,9 @@ pip install -r requirements/base.txt
 This system supports the Office for Other Bangsamoro Communities (OOBC) serving Bangsamoro communities outside BARMM (Bangsamoro Autonomous Region in Muslim Mindanao). 
 
 ### Geographic Scope
-- Primary focus: Regions IX (Zamboanga Peninsula) and XII (SOCCSKSARGEN)
-- Administrative hierarchy: Region > Province > Municipality > Barangay
+- Primary focus: Regions IX (Zamboanga Peninsula), Region X (Northern Mindanao), Region XI (Davao Region), and XII (SOCCSKSARGEN)
+- Administrative hierarchy: Region > Province > Municipality/City > Barangay
 - Timezone: Asia/Manila
-
-### Cultural Considerations
-- Islamic education integration (Madaris, Arabic teachers)
-- Halal industry and traditional crafts
-- Cultural and religious information management
-- Respect for Bangsamoro cultural practices in UI/UX
-
-### Assessment Areas (MANA)
-- Education (scholarships, Islamic education)
-- Economic Development (Halal industry, MSMEs, agriculture/fisheries)
-- Social Development (TABANG, AMBag programs)
-- Cultural Development (heritage preservation, traditional crafts)
-- Infrastructure (healthcare, utilities, roads)
 
 ## Environment Configuration
 

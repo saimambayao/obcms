@@ -16,13 +16,13 @@ from common.constants import CALENDAR_MODULE_ORDER
 from common.models import (
     CalendarResourceBooking,
     StaffLeave,
-    StaffTask,
     TrainingEnrollment,
+    WorkItem,  # Replaced StaffTask
 )
 from communities.models import CommunityEvent, OBCCommunity
 from coordination.models import (
     Communication,
-    Event,
+    # Event removed - migrated to WorkItem
     Partnership,
     PartnershipMilestone,
     StakeholderEngagement,
@@ -194,27 +194,30 @@ def build_calendar_payload(
             follow_up_items.append(action)
         return action
 
-    # Coordination Events ---------------------------------------------------
+    # Coordination Events (migrated to WorkItem) ---------------------------
+    # TODO: Refactor to use WorkItem with work_type='activity'
+    # See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
     if include_module("coordination"):
-        events = Event.objects.select_related("community", "organizer")
+        events = WorkItem.objects.filter(
+            work_type__in=['activity', 'sub_activity']
+        ).select_related("created_by")
 
         for event in events:
             start_dt = _combine(event.start_date, event.start_time)
             all_day = event.start_time is None
 
-            if event.end_date:
+            # WorkItem uses due_date instead of end_date
+            if event.due_date:
                 end_time = (
                     event.end_time
                     if event.end_time
                     else (time.max if not all_day else time.max)
                 )
-                end_dt = _combine(event.end_date, end_time)
+                end_dt = _combine(event.due_date, end_time)
                 if all_day and end_dt:
                     end_dt = end_dt + timedelta(days=1)
             elif event.end_time:
                 end_dt = _combine(event.start_date, event.end_time)
-            elif event.duration_hours and start_dt:
-                end_dt = start_dt + timedelta(hours=float(event.duration_hours))
             elif all_day and start_dt:
                 end_dt = start_dt + timedelta(days=1)
             else:
@@ -224,6 +227,8 @@ def build_calendar_payload(
             upcoming_flag = bool(aware_start and aware_start >= now)
             completed_flag = event.status == "completed"
 
+            # WorkItem doesn't have community, organizer, venue fields
+            # These were part of the old Event model
             payload = {
                 "id": f"coordination-event-{event.pk}",
                 "title": event.title,
@@ -240,14 +245,11 @@ def build_calendar_payload(
                     "objectId": str(event.pk),
                     "supportsEditing": True,
                     "modalUrl": reverse(
-                        "common:coordination_event_modal", args=[event.pk]
+                        "common:work_item_modal", kwargs={"work_item_id": event.pk}
                     ),
                     "status": event.status,
-                    "community": getattr(event.community, "name", ""),
-                    "organizer": getattr(event.organizer, "get_full_name", None)
-                    and event.organizer.get_full_name()
-                    or getattr(event.organizer, "username", ""),
-                    "location": event.venue,
+                    "workType": event.get_work_type_display(),
+                    "description": event.description or "",
                 },
                 "editable": True,
             }
@@ -285,7 +287,7 @@ def build_calendar_payload(
                         "title": event.title,
                         "start": display_start,
                         "end": display_end or display_start,
-                        "location": event.venue,
+                        "location": "",  # WorkItem doesn't have venue field
                     }
                 )
 
@@ -303,16 +305,17 @@ def build_calendar_payload(
                 label = None
                 action_type = None
 
-                if event.status in {"draft", "planned"}:
-                    label = "Event approval"
+                # WorkItem status values: not_started, in_progress, at_risk, blocked, completed, cancelled
+                if event.status == "not_started":
+                    label = "Activity not started"
                     action_type = "approval"
                     if aware_start < now:
                         severity = "critical"
                         action_type = "escalation"
-                elif event.status == "scheduled":
-                    label = "Event readiness"
+                elif event.status == "in_progress":
+                    label = "Activity in progress"
                     action_type = "workflow"
-                    if aware_start < now:
+                    if aware_start < now and event.due_date and event.due_date < now.date():
                         severity = "critical"
                         action_type = "escalation"
 
@@ -325,27 +328,12 @@ def build_calendar_payload(
                         label=label,
                         due=aware_start,
                         status=event.status,
-                        notes=(
-                            event.agenda[:280]
-                            if event.agenda
-                            else event.objectives[:280]
-                        ),
+                        notes=event.description[:280] if event.description else "",
                         severity=severity,
                     )
 
-            if event.follow_up_required and event.follow_up_date:
-                follow_dt = _ensure_aware(_combine(event.follow_up_date))
-                if follow_dt:
-                    append_workflow_action(
-                        workflow_actions_entry,
-                        module_name,
-                        payload["id"],
-                        action_type="follow_up",
-                        label="Event follow-up",
-                        due=follow_dt,
-                        status=event.status,
-                        notes=event.follow_up_notes or "",
-                    )
+            # WorkItem doesn't have follow_up_required, follow_up_date, follow_up_notes
+            # These were part of the old Event model
 
     # Coordination Stakeholder Engagements ---------------------------------
     if include_module("coordination"):
@@ -923,18 +911,17 @@ def build_calendar_payload(
 
             _increment(stats, "mana", upcoming=upcoming_flag, completed=completed_flag)
 
-    # Staff Tasks -----------------------------------------------------------
+    # Staff Tasks (migrated to WorkItem) ---------------------------------------
+    # TODO: Refactor to use WorkItem instead of StaffTask
+    # See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
     if include_module("staff"):
-        tasks = StaffTask.objects.prefetch_related(
-            "teams",
+        tasks = WorkItem.objects.filter(
+            work_type__in=['task', 'subtask']
+        ).prefetch_related(
             "assignees",
-            "linked_workflow__primary_need",
-            "linked_event"
         )
 
         for task in tasks:
-            if task.linked_event_id:
-                continue
             start_dt = _combine(task.start_date) if task.start_date else None
             due_dt = (
                 _combine(task.due_date, default_time=time.max)
@@ -948,25 +935,18 @@ def build_calendar_payload(
 
             aware_due = _ensure_aware(due_dt)
             upcoming_flag = bool(aware_due and aware_due >= now)
-            completed_flag = task.status == StaffTask.STATUS_COMPLETED
+            completed_flag = task.status == 'completed'
 
             assignee_names = [
                 member.get_full_name() or member.username
                 for member in task.assignees.all()
                 if member
             ]
-            task_teams = list(task.teams.all())
-            team_names = [team.name for team in task_teams]
-            team_slugs = [team.slug for team in task_teams]
+            team_names = []
+            team_slugs = []
 
-            # Determine task color based on context
-            task_color = "#7c3aed"  # Default purple
-            if task.task_context == StaffTask.TASK_CONTEXT_PROJECT_ACTIVITY:
-                task_color = "#8b5cf6"  # Purple for project activities
-            elif task.task_context == StaffTask.TASK_CONTEXT_PROJECT:
-                task_color = "#2563eb"  # Dark blue for projects
-            elif task.task_context == StaffTask.TASK_CONTEXT_ACTIVITY:
-                task_color = "#10b981"  # Emerald for activities
+            # Default task color
+            task_color = "#7c3aed"  # Purple
 
             payload = {
                 "id": f"staff-task-{task.pk}",
@@ -985,7 +965,7 @@ def build_calendar_payload(
                     "supportsEditing": True,
                     "hasStartDate": bool(task.start_date),
                     "hasDueDate": bool(task.due_date),
-                    "modalUrl": reverse("common:staff_task_modal", args=[task.pk]),
+                    "modalUrl": reverse("common:work_item_modal", kwargs={"work_item_id": task.pk}),
                     "status": task.status,
                     "team": ", ".join(team_names) if team_names else "Unassigned",
                     "team_slugs": team_slugs,
@@ -993,24 +973,20 @@ def build_calendar_payload(
                         ", ".join(assignee_names) if assignee_names else "Unassigned"
                     ),
                     "location": None,
-                    "task_context": task.task_context,
+                    "description": task.description or "",
+                    "workType": task.get_work_type_display(),
                 },
                 "editable": True,
                 "durationEditable": True,
             }
 
-            # Add project context if exists
-            if task.linked_workflow:
-                payload["extendedProps"]["project"] = {
-                    "id": str(task.linked_workflow.id),
-                    "name": task.linked_workflow.primary_need.title,
-                }
-
-            # Add event context if exists
-            if task.linked_event:
-                payload["extendedProps"]["event"] = {
-                    "id": str(task.linked_event.id),
-                    "name": task.linked_event.title,
+            # WorkItem uses parent/children hierarchy instead of linked_workflow/linked_event
+            # Add parent context if exists
+            if task.parent:
+                payload["extendedProps"]["parent"] = {
+                    "id": str(task.parent.id),
+                    "title": task.parent.title,
+                    "workType": task.parent.get_work_type_display(),
                 }
 
             entries.append(payload)
@@ -1056,7 +1032,7 @@ def build_calendar_payload(
 
             _increment(stats, "staff", upcoming=upcoming_flag, completed=completed_flag)
 
-            if task.status != StaffTask.STATUS_COMPLETED and aware_due:
+            if task.status != 'completed' and aware_due:
                 append_workflow_action(
                     workflow_actions_entry,
                     module_name,

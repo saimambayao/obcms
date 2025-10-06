@@ -4,16 +4,16 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import (
-    ActionItem,
+    # ActionItem,  # DEPRECATED - replaced by WorkItem
     Communication,
     CommunicationSchedule,
     CommunicationTemplate,
     ConsultationFeedback,
     EngagementFacilitator,
     EngagementTracking,
-    Event,
-    EventDocument,
-    EventParticipant,
+    # Event,  # DEPRECATED - replaced by WorkItem
+    # EventDocument,  # DEPRECATED - related to Event
+    # EventParticipant,  # DEPRECATED - related to Event
     Organization,
     OrganizationContact,
     Partnership,
@@ -24,17 +24,17 @@ from .models import (
     StakeholderEngagementType,
 )
 from .serializers import (
-    ActionItemSerializer,
+    # ActionItemSerializer,  # DEPRECATED
     CommunicationScheduleSerializer,
     CommunicationSerializer,
     CommunicationTemplateSerializer,
     ConsultationFeedbackSerializer,
     EngagementFacilitatorSerializer,
     EngagementTrackingSerializer,
-    EventDocumentSerializer,
-    EventListSerializer,
-    EventParticipantSerializer,
-    EventSerializer,
+    # EventDocumentSerializer,  # DEPRECATED
+    # EventListSerializer,  # DEPRECATED
+    # EventParticipantSerializer,  # DEPRECATED
+    # EventSerializer,  # DEPRECATED
     OrganizationContactSerializer,
     OrganizationSerializer,
     PartnershipDocumentSerializer,
@@ -140,79 +140,84 @@ class CommunicationViewSet(viewsets.ModelViewSet):
     ordering = ["-sent_date"]
 
 
-class EventViewSet(viewsets.ModelViewSet):
-    """ViewSet for Event model."""
+# ⚠️ DEPRECATED: Event-related ViewSets disabled - Event model is abstract
+# Event, EventParticipant, and ActionItem models are deprecated and replaced by WorkItem
+# Use: WorkItemViewSet from common.api for unified work item management
+# See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
 
-    queryset = Event.objects.all().select_related("community", "organizer")
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [
-        DjangoFilterBackend,
-        filters.SearchFilter,
-        filters.OrderingFilter,
-    ]
-    filterset_fields = ["event_type", "status", "community", "is_virtual"]
-    search_fields = ["title", "description", "community__name"]
-    ordering_fields = ["title", "planned_date", "created_at"]
-    ordering = ["-planned_date"]
-
-    def get_serializer_class(self):
-        if self.action == "list":
-            return EventListSerializer
-        return EventSerializer
-
-    @action(detail=True, methods=["get"])
-    def participants(self, request, pk=None):
-        """Get participants for this event."""
-        event = self.get_object()
-        participants = event.participants.all()
-        serializer = EventParticipantSerializer(participants, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["get"])
-    def action_items(self, request, pk=None):
-        """Get action items for this event."""
-        event = self.get_object()
-        action_items = event.action_items.all()
-        serializer = ActionItemSerializer(action_items, many=True)
-        return Response(serializer.data)
-
-
-class EventParticipantViewSet(viewsets.ModelViewSet):
-    """ViewSet for EventParticipant model."""
-
-    queryset = EventParticipant.objects.all().select_related("event", "participant")
-    serializer_class = EventParticipantSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [
-        DjangoFilterBackend,
-        filters.SearchFilter,
-        filters.OrderingFilter,
-    ]
-    filterset_fields = [
-        "event",
-        "response_status",
-        "attendance_status",
-        "participant_type",
-    ]
-    search_fields = ["participant__username", "event__title"]
-    ordering = ["event__planned_date", "participant__username"]
+# class EventViewSet(viewsets.ModelViewSet):
+#     """ViewSet for Event model - DEPRECATED."""
+#
+#     queryset = Event.objects.all().select_related("community", "organizer")
+#     permission_classes = [permissions.IsAuthenticated]
+#     filter_backends = [
+#         DjangoFilterBackend,
+#         filters.SearchFilter,
+#         filters.OrderingFilter,
+#     ]
+#     filterset_fields = ["event_type", "status", "community", "is_virtual"]
+#     search_fields = ["title", "description", "community__name"]
+#     ordering_fields = ["title", "planned_date", "created_at"]
+#     ordering = ["-planned_date"]
+#
+#     def get_serializer_class(self):
+#         if self.action == "list":
+#             return EventListSerializer
+#         return EventSerializer
+#
+#     @action(detail=True, methods=["get"])
+#     def participants(self, request, pk=None):
+#         """Get participants for this event."""
+#         event = self.get_object()
+#         participants = event.participants.all()
+#         serializer = EventParticipantSerializer(participants, many=True)
+#         return Response(serializer.data)
+#
+#     @action(detail=True, methods=["get"])
+#     def action_items(self, request, pk=None):
+#         """Get action items for this event."""
+#         event = self.get_object()
+#         action_items = event.action_items.all()
+#         serializer = ActionItemSerializer(action_items, many=True)
+#         return Response(serializer.data)
 
 
-class ActionItemViewSet(viewsets.ModelViewSet):
-    """ViewSet for ActionItem model."""
+# class EventParticipantViewSet(viewsets.ModelViewSet):
+#     """ViewSet for EventParticipant model - DEPRECATED."""
+#
+#     queryset = EventParticipant.objects.all().select_related("event", "participant")
+#     serializer_class = EventParticipantSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+#     filter_backends = [
+#         DjangoFilterBackend,
+#         filters.SearchFilter,
+#         filters.OrderingFilter,
+#     ]
+#     filterset_fields = [
+#         "event",
+#         "response_status",
+#         "attendance_status",
+#         "participant_type",
+#     ]
+#     search_fields = ["participant__username", "event__title"]
+#     ordering = ["event__planned_date", "participant__username"]
 
-    queryset = ActionItem.objects.all().select_related("event", "assigned_to")
-    serializer_class = ActionItemSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [
-        DjangoFilterBackend,
-        filters.SearchFilter,
-        filters.OrderingFilter,
-    ]
-    filterset_fields = ["event", "assigned_to", "status", "priority"]
-    search_fields = ["title", "description", "assigned_to__username"]
-    ordering_fields = ["title", "due_date", "priority", "created_at"]
-    ordering = ["due_date", "-priority"]
+
+# class ActionItemViewSet(viewsets.ModelViewSet):
+#     """ViewSet for ActionItem model - DEPRECATED."""
+#
+#     queryset = ActionItem.objects.all().select_related("event", "assigned_to")
+#     serializer_class = ActionItemSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+#     filter_backends = [
+#         DjangoFilterBackend,
+#         filters.SearchFilter,
+#         filters.OrderingFilter,
+#     ]
+#     filterset_fields = ["event", "assigned_to", "status", "priority"]
+#     search_fields = ["title", "description", "assigned_to__username"]
+#     ordering_fields = ["title", "due_date", "priority", "created_at"]
+#     ordering = ["due_date", "-priority"]
 
 
 class PartnershipViewSet(viewsets.ModelViewSet):
@@ -323,11 +328,12 @@ class CommunicationScheduleViewSet(viewsets.ModelViewSet):
     filterset_fields = ["communication", "status"]
 
 
-class EventDocumentViewSet(viewsets.ModelViewSet):
-    queryset = EventDocument.objects.all().select_related("event")
-    serializer_class = EventDocumentSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    filterset_fields = ["event", "document_type"]
+# class EventDocumentViewSet(viewsets.ModelViewSet):
+#     """DEPRECATED - EventDocument model uses deprecated Event model."""
+#     queryset = EventDocument.objects.all().select_related("event")
+#     serializer_class = EventDocumentSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+#     filterset_fields = ["event", "document_type"]
 
 
 class PartnershipDocumentViewSet(viewsets.ModelViewSet):

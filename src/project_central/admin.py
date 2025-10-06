@@ -5,16 +5,30 @@ Project Central Admin Configuration
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import (
-    ProjectWorkflow,
     BudgetApprovalStage,
     BudgetCeiling,
     BudgetScenario,
     Alert,
 )
 
+# DEPRECATED: ProjectWorkflow import removed
+# ProjectWorkflow has been fully replaced by WorkItem
+# See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
 
-@admin.register(ProjectWorkflow)
+
+# DEPRECATED: ProjectWorkflow admin removed - model is now abstract
+# ProjectWorkflow has been fully replaced by WorkItem
+# See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
+#
+# @admin.register(ProjectWorkflow)
 class ProjectWorkflowAdmin(admin.ModelAdmin):
+    """
+    ⚠️ DEPRECATED - ProjectWorkflow model is abstract and replaced by WorkItem ⚠️
+
+    This admin class is kept for reference but NOT registered.
+    Use: WorkItemAdmin for managing projects.
+    """
+
     list_display = [
         "id",
         "primary_need",
@@ -34,6 +48,32 @@ class ProjectWorkflowAdmin(admin.ModelAdmin):
     ]
     search_fields = ["primary_need__title", "notes", "blocker_description"]
     readonly_fields = ["id", "created_at", "updated_at", "stage_history"]
+
+    def changelist_view(self, request, extra_context=None):
+        """Add deprecation warning banner to admin changelist."""
+        extra_context = extra_context or {}
+        extra_context['deprecation_warning'] = format_html(
+            '<div style="background-color: #fff3cd; border: 1px solid #ffc107; '
+            'padding: 12px; margin-bottom: 20px; border-radius: 4px;">'
+            '<strong style="color: #856404;">⚠️ Deprecation Warning:</strong> '
+            '<span style="color: #856404;">ProjectWorkflow admin is deprecated and will be removed in v2.0. '
+            'Please use <a href="/admin/common/workitem/?work_type=project" '
+            'style="font-weight: bold; text-decoration: underline; color: #004085;">WorkItem admin</a> instead.</span>'
+            '</div>'
+        )
+        return super().changelist_view(request, extra_context)
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        """Add deprecation warning banner to admin change form."""
+        extra_context = extra_context or {}
+        extra_context['deprecation_warning'] = format_html(
+            '<div style="background-color: #fff3cd; border: 1px solid #ffc107; '
+            'padding: 12px; margin-bottom: 20px; border-radius: 4px;">'
+            '<strong style="color: #856404;">⚠️ Deprecation Warning:</strong> '
+            '<span style="color: #856404;">ProjectWorkflow is deprecated. Use WorkItem (type=Project) instead.</span>'
+            '</div>'
+        )
+        return super().change_view(request, object_id, form_url, extra_context)
 
 
 @admin.register(BudgetApprovalStage)

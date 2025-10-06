@@ -7,7 +7,8 @@ class CommonConfig(AppConfig):
 
     def ready(self):
         import common.signals
-        import common.services.task_automation  # Load task automation signal handlers
+        # NOTE: task_automation signals disabled - TaskTemplate model removed
+        # import common.services.task_automation  # Load task automation signal handlers
 
         # Register models with auditlog for security audit trail
         try:

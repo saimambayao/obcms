@@ -1,0 +1,306 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Deprecation Dashboard | Django Admin{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<style>
+    .deprecation-dashboard {
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    .dashboard-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .dashboard-header h1 {
+        margin: 0 0 10px 0;
+        font-size: 2rem;
+    }
+    .dashboard-header p {
+        margin: 0;
+        opacity: 0.9;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 4px solid #667eea;
+    }
+    .stat-card.warning {
+        border-left-color: #f59e0b;
+    }
+    .stat-card.danger {
+        border-left-color: #ef4444;
+    }
+    .stat-card.success {
+        border-left-color: #10b981;
+    }
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #1f2937;
+        margin: 10px 0;
+    }
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .chart-container h2 {
+        margin-top: 0;
+        color: #1f2937;
+        font-size: 1.25rem;
+        margin-bottom: 20px;
+    }
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow-x: auto;
+    }
+    .deprecation-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .deprecation-table th {
+        background: #f3f4f6;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: #374151;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    .deprecation-table td {
+        padding: 12px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .deprecation-table tr:hover {
+        background: #f9fafb;
+    }
+    .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .badge-high {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    .badge-medium {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .badge-low {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    .btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.2s;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    .btn-secondary {
+        background: white;
+        border: 2px solid #e5e7eb;
+        color: #374151;
+    }
+    .btn-secondary:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="deprecation-dashboard">
+    <div class="dashboard-header">
+        <h1>Deprecation Monitoring Dashboard</h1>
+        <p>Track usage of deprecated URLs and plan safe code removal</p>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Deprecated Requests</div>
+            <div class="stat-number">{{ total_requests|default:"0" }}</div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-label">Unique Users Affected</div>
+            <div class="stat-number">{{ unique_users|default:"0" }}</div>
+        </div>
+        <div class="stat-card danger">
+            <div class="stat-label">Top Deprecated URL</div>
+            <div class="stat-number">{{ top_url_count|default:"0" }}</div>
+            <small style="color: #6b7280;">{{ top_url|default:"N/A"|truncatechars:40 }}</small>
+        </div>
+        <div class="stat-card success">
+            <div class="stat-label">Last 24 Hours</div>
+            <div class="stat-number">{{ last_24h_requests|default:"0" }}</div>
+        </div>
+    </div>
+
+    <!-- Request Trend Chart -->
+    <div class="chart-container">
+        <h2>Deprecated URL Requests (Last 30 Days)</h2>
+        <canvas id="trendChart" height="80"></canvas>
+    </div>
+
+    <!-- Top Deprecated URLs Table -->
+    <div class="table-container">
+        <h2>Top Deprecated URLs</h2>
+        <table class="deprecation-table">
+            <thead>
+                <tr>
+                    <th>URL Pattern</th>
+                    <th>Total Requests</th>
+                    <th>Unique Users</th>
+                    <th>Last Accessed</th>
+                    <th>Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in top_urls %}
+                <tr>
+                    <td><code>{{ item.url }}</code></td>
+                    <td>{{ item.count }}</td>
+                    <td>{{ item.unique_users }}</td>
+                    <td>{{ item.last_accessed|timesince }} ago</td>
+                    <td>
+                        {% if item.count > 100 %}
+                            <span class="badge badge-high">High</span>
+                        {% elif item.count > 20 %}
+                            <span class="badge badge-medium">Medium</span>
+                        {% else %}
+                            <span class="badge badge-low">Low</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #6b7280; padding: 40px;">
+                        No deprecated URL requests logged yet. This is good news!
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- User Impact Analysis -->
+    <div class="table-container" style="margin-top: 30px;">
+        <h2>User Impact Analysis</h2>
+        <table class="deprecation-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Total Requests</th>
+                    <th>Different URLs</th>
+                    <th>Most Accessed</th>
+                    <th>Last Activity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in affected_users %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.request_count }}</td>
+                    <td>{{ user.url_count }}</td>
+                    <td><code>{{ user.top_url|truncatechars:50 }}</code></td>
+                    <td>{{ user.last_access|timesince }} ago</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #6b7280; padding: 40px;">
+                        No user activity on deprecated URLs
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <a href="{% url 'admin:index' %}" class="btn btn-secondary">Back to Admin</a>
+        <a href="{% url 'common:work_item_list' %}" class="btn btn-primary">Go to Work Items</a>
+    </div>
+</div>
+
+<script>
+    // Sample data for trend chart (replace with actual data from view)
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    const trendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ trend_labels|safe|default:"[]" }},
+            datasets: [{
+                label: 'Deprecated Requests',
+                data: {{ trend_data|safe|default:"[]" }},
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

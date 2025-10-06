@@ -4,8 +4,6 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from coordination.views import (
-    calendar_overview as _calendar_overview,
-    event_create as _event_create,
     engagement_create as _engagement_create,
     organization_create as _organization_create,
     organization_delete as _organization_delete,
@@ -16,6 +14,9 @@ from coordination.views import (
     partnership_detail as _partnership_detail,
     partnership_update as _partnership_update,
 )
+
+# Note: event_create is defined locally in this file (line 389)
+# It now redirects to WorkItem system since Event model is deprecated
 
 
 @login_required
@@ -389,9 +390,11 @@ def partnership_delete(request, partnership_id):
 
 @login_required
 def event_create(request):
-    """Proxy to coordination event creation view."""
-
-    return _event_create(request)
+    """Create coordination event via WorkItem system."""
+    from django.shortcuts import redirect
+    # Events now use WorkItem with work_type='activity'
+    # See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
+    return redirect('common:work_item_create')
 
 
 @login_required
@@ -489,9 +492,9 @@ def coordination_events(request):
 
 @login_required
 def coordination_calendar(request):
-    """Proxy to coordination calendar view."""
-
-    return _calendar_overview(request)
+    """Coordination calendar view - redirects to main calendar."""
+    from django.shortcuts import redirect
+    return redirect('common:oobc_calendar')
 
 
 @login_required

@@ -1,20 +1,3 @@
-{#
-Reusable data table card component for OBC lists.
-Expected context:
-- title: heading text
-- icon_class: optional icon (FontAwesome)
-- accent_class: Tailwind gradient/colour class for header (default emerald)
-- headers: list of dicts {"label": str, "class": optional Tailwind classes}
-- rows: list of dicts {
-    "cells": [ {"content": HTML/text, "class": optional str} ],
-    "view_url": url,
-    "edit_url": url,
-    "delete_preview_url": url,  # detail page with ?review_delete=1
-    "delete_message": optional str
-  }
-- empty_message: optional fallback text
-- show_actions: optional bool (default True) – hide action column/buttons when False
-#}
 {% load static %}
 <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden" data-table-card>
     <div class="px-6 py-4 flex items-center gap-3 text-white {{ accent_class|default:'bg-gradient-to-r from-emerald-500 to-emerald-600' }}">
@@ -24,7 +7,7 @@ Expected context:
         </div>
     </div>
     <div class="divide-y divide-gray-200">
-        {% with show_actions=show_actions|default:True %}
+        {% with show_actions=show_actions|default_if_none:True %}
         <div class="hidden md:grid gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500" style="grid-template-columns: repeat({{ headers|length|add:show_actions|yesno:'1,0' }}, minmax(0, 1fr));">
             {% for header in headers %}
             <div class="{{ header.class|default:'flex items-center' }}">{{ header.label }}</div>
@@ -48,11 +31,11 @@ Expected context:
                         <span>Edit</span>
                     </a>
                     <button type="button"
-                            class="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-100"
+                            class="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-100"
                             data-delete-preview="{{ row.delete_preview_url }}"
                             data-delete-message="{{ row.delete_message|default:'Are you sure you want to delete this record? You will review details before final confirmation.' }}">
                         <i class="fas fa-trash"></i>
-                        <span>Delete</span>
+                        <span class="sr-only">Delete</span>
                     </button>
                 </div>
                 {% endif %}

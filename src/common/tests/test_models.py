@@ -157,11 +157,16 @@ class CustomLoginFormTest(TestCase):
             user_type="oobc_staff",
             is_approved=True,
         )
+        # Create a proper mock request for django-axes
+        self.mock_request = mock.Mock()
+        self.mock_request.META = {'REMOTE_ADDR': '127.0.0.1', 'HTTP_USER_AGENT': 'test'}
+        self.mock_request.method = 'POST'
+        self.mock_request.path = '/login/'
 
     def test_login_with_username(self):
         """Test login with username."""
         form_data = {"username": "testuser", "password": "TestPassword123!"}
-        form = CustomLoginForm(data=form_data)
+        form = CustomLoginForm(self.mock_request, data=form_data)
         self.assertTrue(form.is_valid())
 
     def test_login_with_email(self):
@@ -170,13 +175,13 @@ class CustomLoginFormTest(TestCase):
             "username": "test@example.com",  # Using email as username
             "password": "TestPassword123!",
         }
-        form = CustomLoginForm(data=form_data)
+        form = CustomLoginForm(self.mock_request, data=form_data)
         self.assertTrue(form.is_valid())
 
     def test_invalid_credentials(self):
         """Test login with invalid credentials."""
         form_data = {"username": "testuser", "password": "WrongPassword"}
-        form = CustomLoginForm(data=form_data)
+        form = CustomLoginForm(self.mock_request, data=form_data)
         self.assertFalse(form.is_valid())
 
 

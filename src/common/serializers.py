@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import Barangay, Municipality, Province, Region, User
+from .work_item_model import WorkItem
 
 
 class BarangaySerializer(serializers.ModelSerializer):
@@ -237,3 +238,102 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+
+class WorkItemSerializer(serializers.ModelSerializer):
+    """Serializer for WorkItem model (unified work hierarchy)."""
+
+    work_type_display = serializers.CharField(
+        source="get_work_type_display", read_only=True
+    )
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    priority_display = serializers.CharField(
+        source="get_priority_display", read_only=True
+    )
+    created_by_name = serializers.CharField(
+        source="created_by.get_full_name", read_only=True
+    )
+    assignees_detail = serializers.SerializerMethodField()
+    teams_detail = serializers.SerializerMethodField()
+    is_overdue = serializers.SerializerMethodField()
+
+    class Meta:
+        model = WorkItem
+        fields = [
+            "id",
+            "work_type",
+            "work_type_display",
+            "title",
+            "description",
+            "status",
+            "status_display",
+            "priority",
+            "priority_display",
+            "progress",
+            "parent",
+            "start_date",
+            "due_date",
+            "start_time",
+            "end_time",
+            "completed_at",
+            "is_calendar_visible",
+            "calendar_color",
+            "auto_calculate_progress",
+            "assignees_detail",
+            "teams_detail",
+            "created_by",
+            "created_by_name",
+            "is_recurring",
+            "project_data",
+            "activity_data",
+            "task_data",
+            "content_type",
+            "object_id",
+            "created_at",
+            "updated_at",
+            "is_overdue",
+        ]
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+            "work_type_display",
+            "status_display",
+            "priority_display",
+            "created_by_name",
+            "assignees_detail",
+            "teams_detail",
+            "is_overdue",
+        ]
+
+    def get_assignees_detail(self, obj):
+        """Return detailed assignee information."""
+        return [
+            {
+                "id": assignee.id,
+                "name": assignee.get_full_name() or assignee.username,
+                "email": assignee.email,
+            }
+            for assignee in obj.assignees.all()
+        ]
+
+    def get_teams_detail(self, obj):
+        """Return detailed team information."""
+        return [
+            {
+                "id": team.id,
+                "name": team.name,
+            }
+            for team in obj.teams.all()
+        ]
+
+    def get_is_overdue(self, obj):
+        """Check if the work item is overdue."""
+        from django.utils import timezone
+
+        if obj.due_date and obj.status not in [
+            WorkItem.STATUS_COMPLETED,
+            WorkItem.STATUS_CANCELLED,
+        ]:
+            return obj.due_date < timezone.now().date()
+        return False

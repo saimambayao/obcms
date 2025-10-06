@@ -59,7 +59,9 @@ class BaseMonitoringEntryForm(forms.ModelForm):
             existing_classes = field.widget.attrs.get("class", "")
             field.widget.attrs["class"] = f"{existing_classes} {tailwind_input}".strip()
             placeholder_source = field.help_text or field.label
-            if placeholder_source:
+            if placeholder_source and not isinstance(
+                field.widget, (forms.Select, forms.SelectMultiple)
+            ):
                 field.widget.attrs.setdefault("placeholder", placeholder_source)
             widget_input_type = getattr(field.widget, "input_type", None)
             if widget_input_type == "select-multiple":
@@ -495,6 +497,7 @@ class MonitoringUpdateForm(forms.ModelForm):
         widgets = {
             "notes": forms.Textarea(attrs={"rows": 3}),
             "next_steps": forms.Textarea(attrs={"rows": 3}),
+            "follow_up_date": forms.DateInput(attrs={"type": "date"}),
         }
 
     def clean(self):
@@ -517,16 +520,33 @@ class MonitoringUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         tailwind_input = (
-            "block w-full px-4 py-3 rounded-xl border border-neutral-200 "
-            "bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 "
-            "text-sm transition"
+            "block w-full px-4 py-3 text-sm rounded-xl border border-gray-200 "
+            "bg-white shadow-sm transition-all duration-200 focus:ring-emerald-500 "
+            "focus:border-emerald-500 min-h-[48px]"
         )
+        def _set_empty_choice_label(django_field: forms.Field, label: str) -> None:
+            if not getattr(django_field, "choices", None):
+                return
+            choices = list(django_field.choices)
+            if choices and choices[0][0] == "":
+                choices[0] = ("", label)
+                django_field.choices = choices
+
         for name, field in self.fields.items():
             existing_classes = field.widget.attrs.get("class", "")
             field.widget.attrs["class"] = f"{existing_classes} {tailwind_input}".strip()
             placeholder_source = field.help_text or field.label
-            if placeholder_source:
+            if placeholder_source and not isinstance(
+                field.widget, (forms.Select, forms.SelectMultiple)
+            ):
                 field.widget.attrs.setdefault("placeholder", placeholder_source)
             widget_input_type = getattr(field.widget, "input_type", None)
             if widget_input_type == "select-multiple":
                 field.widget.attrs.setdefault("size", 4)
+            if name == "progress":
+                field.widget.attrs.setdefault("min", 0)
+                field.widget.attrs.setdefault("max", 100)
+            if name == "status":
+                _set_empty_choice_label(field, "Select status")
+            if name == "request_status":
+                _set_empty_choice_label(field, "Select request status")

@@ -1,0 +1,64 @@
+moa: "Bangsamoro Sports Commission"
+acronym: "BSC"
+ppas:
+  - title: "Bangsamoro Sports Development"
+    description: ""
+    outcome_indicators:
+      - indicator: "Sports Assistance and Policy Services: Percentage of policy and resolution recommendations adopted"
+        target: "50%"
+      - indicator: "Comprehensive Sports Research Program: Percentage of research studies recommended into policies or resolutions"
+        target: "33%"
+      - indicator: "Sports Development and Grassroots Program: Percentage increase in participants with developed skills in sports"
+        target: "66%"
+    output_indicators:
+      - indicator: "Policy Services: Number of policies or resolutions approved"
+        target: 12
+      - indicator: "Research Program: Number of field-based research conducted"
+        target: 2
+      - indicator: "Research Program: Number of field-based research on women in sports conducted"
+        target: 1
+      - indicator: "Grassroots Program: Number of Bangsamoro Sports Commission staff participating in training"
+        target: 30
+      - indicator: "Grassroots Program: Number of participants trained in sports development"
+        target: 180
+    approved_budget: 10724121.00
+  - title: "Bangsamoro Sports Promotion"
+    description: ""
+    outcome_indicators:
+      - indicator: "Sports Promotion: Percentage increase of participants with improved competency, capabilities, and preparedness in sports activities and events"
+        target: "50%"
+      - indicator: "Tournament and Competitions: Percentage increase of athletes and coaches participating in competitions"
+        target: "10%"
+      - indicator: "Linkages and Partnerships: Percentage increase of athletes and coaches supported in major competitions"
+        target: "25%"
+    output_indicators:
+      - indicator: "Sports Promotion: Number of Bangsamoro athletes provided with financial assistance"
+        target: 60
+      - indicator: "Sports Promotion: Number of athletes and coaches rewarded"
+        target: 50
+      - indicator: "Tournament and Competitions: Number of athletes and coaches participating in competitions"
+        target: 270
+      - indicator: "Linkages and Partnerships: Number of athletes and coaches supported in major competitions"
+        target: 150
+    approved_budget: 26785441.00
+  - title: "Bangsamoro Sports Regulation"
+    description: ""
+    outcome_indicators:
+      - indicator: "Mapping and Profiling: Percentage increase of sports clubs and organizations profiled"
+        target: "25%"
+    output_indicators:
+      - indicator: "Mapping and Profiling: Number of sports clubs and organizations profiled"
+        target: 40
+    approved_budget: 279000.00
+special_provisions:
+  - title: "Financial Incentive for Athletes"
+    details: |
+      The amount of Five Million Pesos (P5,000,000.00) appropriated shall be used exclusively for the Financial Incentive for Athletes, subject to the submission of Program Implementation Plan and Guidelines.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on its financial and physical accomplishments within thirty (30) days after the end of every quarter through:
+      (a) Submission of hardcopy to the MFBM;
+      (b) Submission of reports through electronic means; and
+      (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when said reports have been submitted or posted on its website to the MFBM and other offices where the submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

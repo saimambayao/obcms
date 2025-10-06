@@ -66,6 +66,21 @@
         </div>
     </div>
 
+    <!-- Informational Notice -->
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-info-circle text-blue-500 text-lg"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-blue-700">
+                    <strong>Tip:</strong> Events are designed for coordination meetings with participant tracking and detailed management.
+                    For simple project activities, consider using <a href="{% url 'common:work_item_list' %}" class="underline font-semibold hover:text-blue-900">WorkItem Activities</a> instead.
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- Quick Actions -->
     <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
@@ -196,19 +211,10 @@
 
                                 <!-- View Project (if project activity) -->
                                 {% if event.is_project_activity and event.related_project %}
-                                <a href="{% url 'project_central:project_workflow_detail' event.related_project.id %}"
+                                <a href="{% url 'common:work_item_detail' pk=event.related_project.work_item_id %}"
                                    class="text-purple-600 hover:text-purple-900 transition-colors duration-200"
                                    title="View Project">
                                     <i class="fas fa-project-diagram"></i>
-                                </a>
-                                {% endif %}
-
-                                <!-- View Tasks (if tasks exist) -->
-                                {% if event.staff_tasks.exists %}
-                                <a href="{% url 'common:staff_task_board' %}?event_id={{ event.id }}"
-                                   class="text-indigo-600 hover:text-indigo-900 transition-colors duration-200"
-                                   title="View Tasks">
-                                    <i class="fas fa-tasks"></i>
                                 </a>
                                 {% endif %}
 

@@ -1,3 +1,4 @@
+import json
 import re
 import unicodedata
 from pathlib import Path
@@ -17,6 +18,40 @@ POPULATION_DATASETS = {
     "XI": DATASET_DIR / "region_xi_population_raw.txt",
     "XII": DATASET_DIR / "region_xii_population_raw.txt",
 }
+
+
+def _load_province_geodata() -> dict:
+    """Return province geodata payload if the dataset is present."""
+
+    dataset_path = DATASET_DIR / "province_geo.json"
+    if not dataset_path.exists():
+        return {}
+
+    try:
+        with dataset_path.open("r", encoding="utf-8") as handle:
+            return json.load(handle)
+    except json.JSONDecodeError:
+        return {}
+
+
+PROVINCE_GEODATA = _load_province_geodata()
+
+
+def _load_municipality_geodata() -> dict:
+    """Return municipality geodata payload if the dataset is present."""
+
+    dataset_path = DATASET_DIR / "municipality_geo.json"
+    if not dataset_path.exists():
+        return {}
+
+    try:
+        with dataset_path.open("r", encoding="utf-8") as handle:
+            return json.load(handle)
+    except json.JSONDecodeError:
+        return {}
+
+
+MUNICIPALITY_GEODATA = _load_municipality_geodata()
 
 
 REGION_STRUCTURE = {
@@ -582,14 +617,42 @@ class Command(BaseCommand):
                 continue
 
             for province_data in region_data["provinces"]:
+                defaults = {
+                    "region": region,
+                    "name": province_data["name"],
+                    "capital": province_data["capital"],
+                    "is_active": True,
+                }
+
+                geometry = PROVINCE_GEODATA.get(province_data["code"])
+                if not geometry:
+                    # Fall back to a case-insensitive name lookup when no code match exists.
+                    geometry = next(
+                        (
+                            payload
+                            for payload in PROVINCE_GEODATA.values()
+                            if payload.get("name", "").lower()
+                            == province_data["name"].lower()
+                        ),
+                        None,
+                    )
+
+                if geometry:
+                    center = geometry.get("center")
+                    if center:
+                        defaults["center_coordinates"] = center
+
+                    bounding_box = geometry.get("bounding_box")
+                    if bounding_box:
+                        defaults["bounding_box"] = bounding_box
+
+                    boundary_geojson = geometry.get("geojson")
+                    if boundary_geojson:
+                        defaults["boundary_geojson"] = boundary_geojson
+
                 Province.objects.update_or_create(
                     code=province_data["code"],
-                    defaults={
-                        "region": region,
-                        "name": province_data["name"],
-                        "capital": province_data["capital"],
-                        "is_active": True,
-                    },
+                    defaults=defaults,
                 )
                 self.stdout.write(
                     f"Upserted province: {province_data['code']} - {province_data['name']}"
@@ -617,14 +680,43 @@ class Command(BaseCommand):
                         province.code, name
                     )
 
+                    defaults = {
+                        "province": province,
+                        "name": name,
+                        "municipality_type": municipality_type,
+                        "is_active": True,
+                    }
+
+                    geometry = MUNICIPALITY_GEODATA.get(code)
+                    if not geometry:
+                        target_province_name = province_data["name"].lower()
+                        geometry = next(
+                            (
+                                payload
+                                for payload in MUNICIPALITY_GEODATA.values()
+                                if payload.get("name", "").lower() == name.lower()
+                                and payload.get("province", "").lower()
+                                == target_province_name
+                            ),
+                            None,
+                        )
+
+                    if geometry:
+                        center = geometry.get("center")
+                        if center:
+                            defaults["center_coordinates"] = center
+
+                        bounding_box = geometry.get("bounding_box")
+                        if bounding_box:
+                            defaults["bounding_box"] = bounding_box
+
+                        boundary_geojson = geometry.get("geojson")
+                        if boundary_geojson:
+                            defaults["boundary_geojson"] = boundary_geojson
+
                     Municipality.objects.update_or_create(
                         code=code,
-                        defaults={
-                            "province": province,
-                            "name": name,
-                            "municipality_type": municipality_type,
-                            "is_active": True,
-                        },
+                        defaults=defaults,
                     )
 
                     key = (province.code, name.lower())

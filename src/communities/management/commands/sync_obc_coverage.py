@@ -4,6 +4,8 @@ Django management command to sync Municipal and Provincial OBC coverage records.
 This command ensures that all municipalities and provinces with Barangay OBCs
 have corresponding MunicipalityCoverage and ProvinceCoverage records.
 
+Uses optimized bulk sync utilities to minimize database queries.
+
 Usage:
     python manage.py sync_obc_coverage
     python manage.py sync_obc_coverage --dry-run
@@ -12,6 +14,7 @@ Usage:
 from django.core.management.base import BaseCommand
 from django.db.models import Count
 from communities.models import OBCCommunity, MunicipalityCoverage, ProvinceCoverage
+from communities.utils import bulk_refresh_municipalities, bulk_refresh_provinces
 from common.models import Municipality, Province
 
 
@@ -56,7 +59,7 @@ class Command(BaseCommand):
             )
         )
 
-        # Sync Municipal Coverage
+        # Count existing vs new
         municipal_created = 0
         municipal_updated = 0
 
@@ -66,21 +69,27 @@ class Command(BaseCommand):
             ).first()
 
             if existing:
-                if not dry_run:
-                    existing.refresh_from_communities()
                 municipal_updated += 1
                 self.stdout.write(
-                    f"  ✓ Updated: {municipality.name}, {municipality.province.name}"
+                    f"  ✓ Will update: {municipality.name}, {municipality.province.name}"
                 )
             else:
-                if not dry_run:
-                    MunicipalityCoverage.sync_for_municipality(municipality)
                 municipal_created += 1
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f"  + Created: {municipality.name}, {municipality.province.name}"
+                        f"  + Will create: {municipality.name}, {municipality.province.name}"
                     )
                 )
+
+        # Optimized bulk sync (only if not dry-run)
+        if not dry_run:
+            self.stdout.write("\n📊 Executing optimized bulk sync...")
+            stats = bulk_refresh_municipalities(municipalities, sync_provincial=False)
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"✓ Synced {stats['municipalities_synced']} municipalities"
+                )
+            )
 
         # Get all unique provinces with Barangay OBCs
         provinces = (
@@ -97,7 +106,7 @@ class Command(BaseCommand):
             )
         )
 
-        # Sync Provincial Coverage
+        # Count existing vs new
         provincial_created = 0
         provincial_updated = 0
 
@@ -105,19 +114,25 @@ class Command(BaseCommand):
             existing = ProvinceCoverage.objects.filter(province=province).first()
 
             if existing:
-                if not dry_run:
-                    existing.refresh_from_municipalities()
                 provincial_updated += 1
                 self.stdout.write(
-                    f"  ✓ Updated: {province.name}, {province.region.name}"
+                    f"  ✓ Will update: {province.name}, {province.region.name}"
                 )
             else:
-                if not dry_run:
-                    ProvinceCoverage.sync_for_province(province)
                 provincial_created += 1
                 self.stdout.write(
-                    self.style.SUCCESS(f"  + Created: {province.name}, {province.region.name}")
+                    self.style.SUCCESS(f"  + Will create: {province.name}, {province.region.name}")
                 )
+
+        # Optimized bulk sync (only if not dry-run)
+        if not dry_run:
+            self.stdout.write("\n📊 Executing optimized bulk provincial sync...")
+            stats = bulk_refresh_provinces(provinces)
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"✓ Synced {stats['provinces_synced']} provinces"
+                )
+            )
 
         # Summary
         self.stdout.write("\n" + "=" * 60)

@@ -137,6 +137,42 @@ class PolicyRecommendation(models.Model):
         help_text="OBC communities that would be affected by this policy",
     )
 
+    target_region = models.ForeignKey(
+        "common.Region",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="policy_recommendations",
+        help_text="Region directly referenced by this recommendation",
+    )
+
+    target_province = models.ForeignKey(
+        "common.Province",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="policy_recommendations",
+        help_text="Province directly referenced by this recommendation",
+    )
+
+    target_municipality = models.ForeignKey(
+        "common.Municipality",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="policy_recommendations",
+        help_text="Municipality or city directly referenced by this recommendation",
+    )
+
+    target_barangay = models.ForeignKey(
+        "common.Barangay",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="policy_recommendations",
+        help_text="Barangay directly referenced by this recommendation",
+    )
+
     related_assessments = models.ManyToManyField(
         Assessment,
         related_name="policy_recommendations",

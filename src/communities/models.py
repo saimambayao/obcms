@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
+from functools import cached_property
 
 from common.models import Barangay, Municipality, Province, Region
 
@@ -1493,14 +1494,14 @@ class MunicipalityCoverage(CommunityProfileBase):
     def __str__(self):
         return f"{self.municipality.name} Bangsamoro Coverage"
 
-    @property
+    @cached_property
     def region(self):
-        """Shortcut to the parent region."""
+        """Shortcut to the parent region (cached to avoid repeated lookups)."""
         return self.municipality.province.region
 
-    @property
+    @cached_property
     def province(self):
-        """Shortcut to the parent province."""
+        """Shortcut to the parent province (cached to avoid repeated lookups)."""
         return self.municipality.province
 
     @property
@@ -1591,7 +1592,13 @@ class MunicipalityCoverage(CommunityProfileBase):
             }
 
             for field in AGGREGATED_NUMERIC_FIELDS:
+                if field == "estimated_obc_population":
+                    continue
                 update_kwargs[field] = aggregates.get(f"{field}__sum") or 0
+
+            # Municipal estimated OBC population should be manually curated.
+            # Leave blank on auto-sync to avoid inflating totals with unverified data.
+            update_kwargs["estimated_obc_population"] = None
 
             MunicipalityCoverage.objects.filter(pk=self.pk).update(**update_kwargs)
             for field, value in update_kwargs.items():
@@ -1612,6 +1619,24 @@ class MunicipalityCoverage(CommunityProfileBase):
         coverage, _ = cls.objects.get_or_create(municipality=municipality)
         coverage.refresh_from_communities()
         return coverage
+
+    def soft_delete(self, *, user=None):
+        """Mark the record as deleted and trigger provincial sync."""
+        # Call parent soft_delete
+        super().soft_delete(user=user)
+
+        # Trigger provincial coverage sync
+        if self.municipality and self.municipality.province:
+            ProvinceCoverage.sync_for_province(self.municipality.province)
+
+    def restore(self):
+        """Reinstate a soft-deleted record and trigger provincial sync."""
+        # Call parent restore
+        super().restore()
+
+        # Trigger provincial coverage sync
+        if self.municipality and self.municipality.province:
+            ProvinceCoverage.sync_for_province(self.municipality.province)
 
 
 class ProvinceCoverage(CommunityProfileBase):
@@ -1693,9 +1718,9 @@ class ProvinceCoverage(CommunityProfileBase):
     def __str__(self):
         return f"{self.province.name} Bangsamoro Coverage"
 
-    @property
+    @cached_property
     def region(self):
-        """Shortcut to the parent region."""
+        """Shortcut to the parent region (cached to avoid repeated lookups)."""
         return self.province.region
 
     @property
@@ -1804,7 +1829,14 @@ class ProvinceCoverage(CommunityProfileBase):
         }
 
         for field in AGGREGATED_NUMERIC_FIELDS:
+            if field == "estimated_obc_population":
+                continue
             update_kwargs[field] = aggregates.get(f"{field}__sum") or 0
+
+        # Provincial estimated OBC population requires validated inputs.
+        # Leave it empty during auto-sync so coordinators can encode
+        # verified figures manually when available.
+        update_kwargs["estimated_obc_population"] = None
 
         ProvinceCoverage.objects.filter(pk=self.pk).update(**update_kwargs)
         for field, value in update_kwargs.items():
@@ -1823,6 +1855,18 @@ class ProvinceCoverage(CommunityProfileBase):
         coverage, _ = cls.objects.get_or_create(province=province)
         coverage.refresh_from_municipalities()
         return coverage
+
+    def soft_delete(self, *, user=None):
+        """Mark the record as deleted. Provincial coverage has no parent to sync."""
+        # Call parent soft_delete
+        super().soft_delete(user=user)
+        # Note: ProvinceCoverage is the top-level aggregate, no further sync needed
+
+    def restore(self):
+        """Reinstate a soft-deleted record. Provincial coverage has no parent to sync."""
+        # Call parent restore
+        super().restore()
+        # Note: ProvinceCoverage is the top-level aggregate, no further sync needed
 
 
 # ============================================================================

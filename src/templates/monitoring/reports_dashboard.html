@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Compliance Reports{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+    <span class="text-neutral-400 mx-1">/</span>
+</li>
+<li>
+    <a href="{% url 'monitoring:home' %}" class="text-neutral-500 hover:text-neutral-700">M&E</a>
+    <span class="text-neutral-400 mx-1">/</span>
+</li>
+<li class="text-neutral-800 font-semibold">Compliance Reports</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <!-- Hero Section -->
+    <header class="rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white shadow-xl overflow-hidden">
+        <div class="flex flex-col lg:flex-row lg:items-stretch">
+            <div class="flex-1 p-8 space-y-5">
+                <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-3 py-1 rounded-full text-sm font-semibold">
+                    <i class="fas fa-file-contract"></i>
+                    <span>Government Compliance · FY {{ current_year }}</span>
+                </div>
+                <div class="space-y-3">
+                    <h1 class="text-3xl font-semibold leading-tight">Compliance Reports Dashboard</h1>
+                    <p class="text-white/85 text-lg max-w-2xl">
+                        Generate official government compliance reports for MFBM, BPDA, and COA with comprehensive
+                        budget execution analysis, development alignment, and audit trail documentation.
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-3 pt-3 text-sm text-white/90">
+                    <div class="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2">
+                        <i class="fas fa-building-columns"></i>
+                        <span>MFBM Budget Execution</span>
+                    </div>
+                    <div class="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2">
+                        <i class="fas fa-chart-line"></i>
+                        <span>BPDA Development Alignment</span>
+                    </div>
+                    <div class="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2">
+                        <i class="fas fa-balance-scale"></i>
+                        <span>COA Variance & Audit Trail</span>
+                    </div>
+                </div>
+            </div>
+            <div class="w-full lg:w-auto lg:max-w-sm bg-white/12 border-t lg:border-t-0 lg:border-l border-white/20 p-6 flex flex-col gap-4 justify-center">
+                <div class="space-y-2 text-sm text-white/90">
+                    <p class="font-semibold uppercase tracking-wide text-white/75">Report Features</p>
+                    <div class="space-y-2">
+                        <p class="flex items-center gap-2"><i class="fas fa-check-circle"></i><span>Excel format with multiple sheets</span></p>
+                        <p class="flex items-center gap-2"><i class="fas fa-check-circle"></i><span>Activity-level breakdown</span></p>
+                        <p class="flex items-center gap-2"><i class="fas fa-check-circle"></i><span>Comprehensive audit trail</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Report Cards -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- MFBM Budget Execution Report -->
+        <article class="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
+            <div class="bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-6">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-semibold text-white mb-3">
+                            <i class="fas fa-building-columns"></i>
+                            <span>MFBM</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white">Budget Execution Report</h3>
+                        <p class="mt-2 text-sm text-blue-100">Ministry of Finance and Budget Management</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+                        <i class="fas fa-peso-sign text-3xl text-white"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-600">
+                    Comprehensive budget execution analysis with PPA allocation, expenditure tracking, variance analysis,
+                    and WorkItem-based activity expenditure.
+                </p>
+                <div class="space-y-2 text-sm">
+                    <p class="flex items-center gap-2 text-gray-700">
+                        <i class="fas fa-check text-emerald-600"></i>
+                        <span>Budget allocation vs. actual expenditure</span>
+                    </p>
+                    <p class="flex items-center gap-2 text-gray-700">
+                        <i class="fas fa-check text-emerald-600"></i>
+                        <span>Obligation and disbursement rates</span>
+                    </p>
+                    <p class="flex items-center gap-2 text-gray-700">
+                        <i class="fas fa-check text-emerald-600"></i>
+                        <span>WorkItem expenditure tracking</span>
+                    </p>
+                    <p class="flex items-center gap-2 text-gray-700">
+                        <i class="fas fa-check text-emerald-600"></i>
+                        <span>Variance analysis and remarks</span>
+                    </p>
+                </div>
+
+                <!-- Filter Form -->
+                <form method="get" action="{% url 'monitoring:mfbm_budget_report' %}" class="space-y-3 pt-4 border-t border-gray-200">
+                    <div class="space-y-2">
+                        <label for="mfbm_fiscal_year" class="block text-sm font-medium text-gray-700">Fiscal Year <span class="text-red-500">*</span></label>
+                        <select id="mfbm_fiscal_year" name="fiscal_year" required class="block w-full py-2 px-3 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select fiscal year...</option>
+                            {% for year in fiscal_years %}
+                            <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>FY {{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label for="mfbm_moa_filter" class="block text-sm font-medium text-gray-700">Filter by MOA (Optional)</label>
+                        <select id="mfbm_moa_filter" name="moa_filter" class="block w-full py-2 px-3 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">All MOAs</option>
+                            {% for moa in implementing_moas %}
+                            <option value="{{ moa.implementing_moa__id }}">{{ moa.implementing_moa__name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold px-4 py-3 shadow-md hover:from-blue-600 hover:to-blue-700 transition-all duration-200">
+                        <i class="fas fa-download"></i>
+                        Download MFBM Report
+                    </button>
+                </form>
+            </div>
+        </article>
+
+        <!-- BPDA Development Alignment Report -->
+        <article class="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
+            <div class="bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 p-6">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-semibold text-white mb-3">
+                            <i class="fas fa-chart-line"></i>
+                            <span>BPDA</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white">Development Alignment Report</h3>
+                        <p class="mt-2 text-sm text-emerald-100">Bangsamoro Planning and Development Authority</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+                        <i class="fas fa-bullseye text-3xl text-white"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-600">
+                    Development alignment analysis showing PPA alignment with Bangsamoro Development Plan (BDP),
+                    outcome indicators, and beneficiary impact.
+                </p>
+                <div class="space-y-2 text-sm">
+                    <p class="flex items-center gap-2 text-gray-700">
+                        <i class="fas fa-check text-emerald-600"></i>
+                        <span>BDP alignment score calculation</span>
+                    </p>
+                    <p class="flex items-center gap-2 text-gray-700">
+                        <i class="fas fa-check text-emerald-600"></i>
+                        <span>Outcome indicators mapping</span>
+                    </p>
+                    <p class="flex items-center gap-2 text-gray-700">
+                        <i class="fas fa-check text-emerald-600"></i>
+                        <span>OBC beneficiary analysis</span>
+                    </p>
+                    <p class="flex items-center gap-2 text-gray-700">
+                        <i class="fas fa-check text-emerald-600"></i>
+                        <span>SDG contribution tracking</span>
+                    </p>
+                </div>
+
+                <!-- Filter Form -->
+                <form method="get" action="{% url 'monitoring:bpda_development_report' %}" class="space-y-3 pt-4 border-t border-gray-200">
+                    <div class="space-y-2">
+                        <label for="bpda_fiscal_year" class="block text-sm font-medium text-gray-700">Fiscal Year <span class="text-red-500">*</span></label>
+                        <select id="bpda_fiscal_year" name="fiscal_year" required class="block w-full py-2 px-3 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                            <option value="">Select fiscal year...</option>
+                            {% for year in fiscal_years %}
+                            <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>FY {{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label for="bpda_sector" class="block text-sm font-medium text-gray-700">Filter by Sector (Optional)</label>
+                        <select id="bpda_sector" name="sector" class="block w-full py-2 px-3 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                            <option value="">All Sectors</option>
+                            {% for sector_key, sector_label in sectors %}
+                            <option value="{{ sector_key }}">{{ sector_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold px-4 py-3 shadow-md hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200">
+                        <i class="fas fa-download"></i>
+                        Download BPDA Report
+                    </button>
+                </form>
+            </div>
+        </article>
+
+        <!-- COA Budget Variance Report -->
+        <article class="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
+            <div class="bg-gradient-to-br from-red-600 via-red-700 to-red-800 p-6">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-semibold text-white mb-3">
+                            <i class="fas fa-balance-scale"></i>
+                            <span>COA</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white">Budget Variance & Audit Report</h3>
+                        <p class="mt-2 text-sm text-red-100">Commission on Audit</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+                        <i class="fas fa-file-invoice text-3xl text-white"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-600">
+                    Comprehensive budget variance report with activity-level breakdown and complete audit trail export
+                    for COA compliance and forensic analysis.
+                </p>
+                <div class="space-y-2 text-sm">
+                    <p class="flex items-center gap-2 text-gray-700">
+                        <i class="fas fa-check text-emerald-600"></i>
+                        <span>Budget variance summary</span>
+                    </p>
+                    <p class="flex items-center gap-2 text-gray-700">
+                        <i class="fas fa-check text-emerald-600"></i>
+                        <span>Activity-level breakdown</span>
+                    </p>
+                    <p class="flex items-center gap-2 text-gray-700">
+                        <i class="fas fa-check text-emerald-600"></i>
+                        <span>Complete audit trail export</span>
+                    </p>
+                    <p class="flex items-center gap-2 text-gray-700">
+                        <i class="fas fa-check text-emerald-600"></i>
+                        <span>Audit findings and flags</span>
+                    </p>
+                </div>
+
+                <!-- Filter Form -->
+                <form method="get" action="{% url 'monitoring:coa_variance_report' %}" class="space-y-3 pt-4 border-t border-gray-200">
+                    <div class="space-y-2">
+                        <label for="coa_fiscal_year" class="block text-sm font-medium text-gray-700">Fiscal Year <span class="text-red-500">*</span></label>
+                        <select id="coa_fiscal_year" name="fiscal_year" required class="block w-full py-2 px-3 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-red-500 focus:border-red-500">
+                            <option value="">Select fiscal year...</option>
+                            {% for year in fiscal_years %}
+                            <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>FY {{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label for="coa_moa_filter" class="block text-sm font-medium text-gray-700">Filter by MOA (Optional)</label>
+                        <select id="coa_moa_filter" name="moa_filter" class="block w-full py-2 px-3 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-red-500 focus:border-red-500">
+                            <option value="">All MOAs</option>
+                            {% for moa in implementing_moas %}
+                            <option value="{{ moa.implementing_moa__id }}">{{ moa.implementing_moa__name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold px-4 py-3 shadow-md hover:from-red-700 hover:to-red-800 transition-all duration-200">
+                        <i class="fas fa-download"></i>
+                        Download COA Report
+                    </button>
+                </form>
+            </div>
+        </article>
+    </section>
+
+    <!-- Report Information -->
+    <section class="rounded-2xl bg-white border border-gray-200 shadow-sm p-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Report Information</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="space-y-3">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-file-excel text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Excel Format</h3>
+                        <p class="text-sm text-gray-600 mt-1">All reports are generated in Excel (.xlsx) format with multiple sheets for comprehensive analysis.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-shield-halved text-emerald-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Audit Trail</h3>
+                        <p class="text-sm text-gray-600 mt-1">COA reports include complete audit trail with timestamps, user actions, and field-level changes.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-chart-bar text-purple-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Activity Breakdown</h3>
+                        <p class="text-sm text-gray-600 mt-1">Reports include activity-level breakdown when WorkItem tracking is enabled for detailed analysis.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Government Standards -->
+    <section class="rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 shadow-sm p-8">
+        <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-stamp text-2xl text-gray-700"></i>
+            </div>
+            <div class="flex-1">
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Government Compliance Standards</h2>
+                <p class="text-gray-600 mb-4">
+                    All reports follow official government formats and comply with BARMM reporting standards.
+                    Reports include proper headers, official formatting, and comprehensive data for regulatory compliance.
+                </p>
+                <div class="flex flex-wrap gap-3 text-sm">
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-gray-300 text-gray-700">
+                        <i class="fas fa-check-circle text-emerald-600"></i>
+                        <span>MFBM Budget Circular Compliant</span>
+                    </span>
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-gray-300 text-gray-700">
+                        <i class="fas fa-check-circle text-emerald-600"></i>
+                        <span>BPDA BDP Alignment Framework</span>
+                    </span>
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-gray-300 text-gray-700">
+                        <i class="fas fa-check-circle text-emerald-600"></i>
+                        <span>COA Circular Format</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

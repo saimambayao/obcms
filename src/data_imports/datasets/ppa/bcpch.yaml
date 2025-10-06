@@ -1,0 +1,139 @@
+moa: "Bangsamoro Commission for the Preservation of Cultural Heritage"
+acronym: "BCPCH"
+ppas:
+  - title: "Culture-Sensitive Governance"
+    description: ""
+    outcome_indicators:
+      - indicator: "Policy Formulation and Development: Issuances and promulgation of cultural development policies adopted"
+        target: 67
+      - indicator: "Capacity Building and Mainstreaming: Capability-building programs for cultural communities provided"
+        target: "75%"
+    output_indicators:
+      - indicator: "Policy Formulation: Number of technical and cultural experts consulted"
+        target: 40
+      - indicator: "Policy Formulation: Number of policies and resolutions crafted"
+        target: 25
+      - indicator: "Policy Formulation: Number of researches conducted"
+        target: 2
+      - indicator: "Capacity Building: Number of Bangsamoro capacitated on culture and heritage"
+        target: 50
+      - indicator: "Capacity Building: Number of Bangsamoro capacitated on Bangsamoro history"
+        target: 25
+    approved_budget: 4334950.00
+  - title: "Cultural Development and Advocacy"
+    description: ""
+    outcome_indicators:
+      - indicator: "Strengthening Cultural Communities: Capacity and skills of cultural workers enhanced and improved"
+        target: "100%"
+      - indicator: "Empowering Culture Bearers and Workers: Culture bearers and workers empowered"
+        target: 136
+      - indicator: "Support to Cultural Organizations: Percentage of support services provided"
+        target: "10%"
+    output_indicators:
+      - indicator: "Strengthening Cultural Communities: Number of cultural workers capacitated in documentation processes"
+        target: 100
+      - indicator: "Empowering Culture Bearers and Workers: Number of artists and artisans in the database"
+        target: 100
+      - indicator: "Empowering Culture Bearers and Workers: Number of youth cultural advocates registered"
+        target: 30
+      - indicator: "Support to Cultural Organizations: Number of organizations or institutions recognized as partners"
+        target: 10
+    approved_budget: 2912840.00
+  - title: "Cultural Preservation and Conservation"
+    description: ""
+    outcome_indicators:
+      - indicator: "School of Living Traditions: Bangsamoro learners equipped with knowledge of cultural preservation"
+        target: 245
+      - indicator: "Cultural Literacy Program: Knowledge regarding Bangsamoro cultural heritage propagated"
+        target: 60
+      - indicator: "Support to Cultural Practices: Cultural and historical festivities supported"
+        target: 223
+      - indicator: "Documentation on Cultural Heritage: Percentage of tangible documentation mechanisms established"
+        target: "5%"
+      - indicator: "Documentation on Cultural Heritage: Percentage of intangible documentation mechanisms established"
+        target: "50%"
+    output_indicators:
+      - indicator: "School of Living Traditions: Number of learners capacitated in traditional delicacies"
+        target: 100
+      - indicator: "School of Living Traditions: Number of learners capacitated in handicrafts"
+        target: 40
+      - indicator: "School of Living Traditions: Number of learners capacitated in weaving"
+        target: 40
+      - indicator: "School of Living Traditions: Number of learners capacitated in metal works"
+        target: 10
+      - indicator: "Cultural Literacy Program: Number of cultural literacy participants trained"
+        target: 60
+      - indicator: "Support to Cultural Practices: Number of participants in commemorative events supported"
+        target: 220
+      - indicator: "Documentation on Cultural Heritage: Number of LGUs capacitated in cultural mapping"
+        target: 5
+      - indicator: "Documentation on Cultural Heritage: Percentage of Cultural Properties Information System established"
+        target: "50%"
+    approved_budget: 12810190.00
+  - title: "Bangsamoro History and Development"
+    description: ""
+    outcome_indicators:
+      - indicator: "Writing of Bangsamoro History: Accumulated processes on writing Bangsamoro history adopted"
+        target: 24
+      - indicator: "Recognition of Historical Sites: Historical sites, landmarks, and structures documented and recognized"
+        target: 73
+      - indicator: "Recognition of Bangsamoro Personalities: Bangsamoro personalities recognized, documented, and honored"
+        target: 49
+      - indicator: "Archival of Bangsamoro Documents: Archival holdings, processes, and mechanisms established"
+        target: 70
+      - indicator: "Commemoration of the 650th Philippine Muslim History: Philippine Muslim history and heritage mainstreamed and recognized"
+        target: 6
+    output_indicators:
+      - indicator: "History Writing: Number of activities supporting research and writing processes"
+        target: 7
+      - indicator: "Site Recognition: Number of identified and documented sites"
+        target: 15
+      - indicator: "Site Recognition: Number of historical or cultural markers installed"
+        target: 5
+      - indicator: "Personality Recognition: Number of identified and documented notable personalities"
+        target: 18
+      - indicator: "Archival: Number of historical documents archived"
+        target: 20
+      - indicator: "Archival: Number of learners or researchers benefitting from the library"
+        target: 50
+      - indicator: "Commemoration: Number of activities supporting preparation at regional level"
+        target: 1
+      - indicator: "Commemoration: Number of activities supporting preparation at provincial level"
+        target: 5
+    approved_budget: 19821775.00
+  - title: "Museum Management and Development"
+    description: ""
+    outcome_indicators:
+      - indicator: "Maintenance of Museum: Museum facilities and online repositories enhanced"
+        target: 4
+      - indicator: "Knowledge Dissemination: Increased public level of awareness and appreciation of cultural heritage"
+        target: 1002
+      - indicator: "Support to Cultural Institutions: Increased support to LGUs in establishing local cultural resource centers"
+        target: 1
+    output_indicators:
+      - indicator: "Maintenance: Number of maintenance activities conducted"
+        target: 2
+      - indicator: "Maintenance: Number of processes taken in upgrading the website"
+        target: 1
+      - indicator: "Knowledge Dissemination: Number of exhibits conducted"
+        target: 1
+      - indicator: "Knowledge Dissemination: Number of museum visitors"
+        target: 1000
+      - indicator: "Support to Cultural Institutions: Number of processes that strengthen regional museum collaboration"
+        target: 1
+    approved_budget: 2361120.00
+special_provisions:
+  - title: "Research on Bangsamoro History"
+    details: |
+      The amount of Nine Million Pesos (P9,000,000.00) appropriated shall be used for the research and writing of Bangsamoro history.
+  - title: "Recognition of Historical Sites, Landmarks, and Structures"
+    details: |
+      The amount of One Million Pesos (P1,000,000.00) appropriated shall be used exclusively for the installation of markers for validated historical sites, landmarks, and shrines.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on its financial and physical accomplishments within thirty (30) days after the end of every quarter through:
+      (a) Submission of hardcopy to the MFBM;
+      (b) Submission of reports through electronic means; and
+      (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when said reports have been submitted or posted on its website to the MFBM and other offices where the submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

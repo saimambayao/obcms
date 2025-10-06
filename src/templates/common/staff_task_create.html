@@ -20,6 +20,24 @@
 
 {% block content %}
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <!-- Deprecation Notice -->
+    <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-amber-500 text-xl"></i>
+            </div>
+            <div class="ml-4 flex-1">
+                <h3 class="text-sm font-semibold text-amber-800">Deprecation Notice</h3>
+                <div class="mt-1 text-sm text-amber-700">
+                    <p>
+                        This interface is deprecated and will be removed in a future release.
+                        Please use <a href="{% url 'common:work_item_create' %}" class="underline font-semibold text-amber-800 hover:text-amber-900">Work Item creation</a> instead for enhanced features and better performance.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <header class="space-y-3">
         <h1 class="text-3xl font-bold text-gray-900">Create staff task</h1>
         <p class="text-gray-600 max-w-3xl">

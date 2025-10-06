@@ -1,0 +1,133 @@
+moa: "Ministry of the Interior and Local Government"
+acronym: "MILG"
+ppas:
+  - title: "Operation Management Services"
+    description: ""
+    outcome_indicators:
+      - indicator: "Local Government Supervision Program: percentage of LGUs that consistently passed and shown progress in their functionality and performance"
+        target: "50% of 125 P/C/M, 4% (110 B)"
+      - indicator: "Local Government Development Program: percentage of assisted LGUs implementing relevant governance policies, plans, programs, projects, or systems"
+        target: "80%"
+      - indicator: "Local Government Oversight, Incentives, and Awards Program: percentage of LGUs receiving national recognition, awards, or incentives for improved governance performance"
+        target: "32% (40 of 125 P/C/M), 4% (110 of 2,590 B)"
+    output_indicators:
+      - indicator: "LGU Supervision: percentage increase of functional P/C/M/B conferred compared to previous year"
+        target: "3% (70 to 72 P/C/M), 2% (55 to 60 B)"
+      - indicator: "LGU Development: number of LGUs provided with capacity building on various governance areas"
+        target: 133
+      - indicator: "LGU Oversight & Awards: number of local chief executives and community volunteers recognized for leadership"
+        target: 5
+    approved_budget: 537879695.00
+  - title: "Interior Affairs Services"
+    description: ""
+    outcome_indicators:
+      - indicator: "Local Government Peace and Order Capacity Empowerment Program: percentage of LGUs with improved peace and order capacity"
+        target: "30%"
+      - indicator: "Strengthening Local Government Preparedness and Management Capacities Program: percentage of LGUs with improved disaster preparedness capacity"
+        target: "30%"
+    output_indicators:
+      - indicator: "Peace & Order: number of deradicalized, reformed, and reintegrated former combatants"
+        target: 100
+      - indicator: "Peace & Order: number of TuGoN housing units constructed"
+        target: 100
+      - indicator: "Disaster Preparedness: number of LGUs implementing their local DRRM plans"
+        target: 30
+      - indicator: "Disaster Preparedness: number of LGUs with strengthened LDRRM Council"
+        target: 30
+    approved_budget: 194754357.00
+  - title: "Field Operation Services"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of technical assistance provided by the Field Office in addressing LGU gaps based on functionality elements"
+        target: "85%"
+    output_indicators:
+      - indicator: "Percentage of LGUs with government center established through ordinance"
+        target: "70%"
+      - indicator: "Percentage of LGUs with working elected and appointed officials and functionaries"
+        target: "80%"
+      - indicator: "Percentage of LGUs with functional special bodies"
+        target: "80%"
+      - indicator: "Percentage of LGUs with functional local legislative body"
+        target: "80%"
+      - indicator: "Percentage of LGUs with approved mandated plan and budget"
+        target: "80%"
+      - indicator: "Percentage of LGUs with available, visible, and accessible basic services"
+        target: "50%"
+      - indicator: "Percentage of LGUs with sound fiscal management"
+        target: "80%"
+    approved_budget: 291984102.00
+  - title: "Rapid Emergency Action on Disaster Incidence Services"
+    description: ""
+    outcome_indicators:
+      - indicator: "Policy and systems enhancement program: percentage increase in policies and plans formulated and adopted"
+        target: "10%"
+      - indicator: "Preparedness and response capacity development: percentage improvement in preparedness and response activity"
+        target: "10%"
+      - indicator: "Resource augmentation response: percentage of disaster management operations responded to"
+        target: "100%"
+    output_indicators:
+      - indicator: "Policies and systems: number of policies and plans formulated and adopted"
+        target: "1 plan, 45 policies/issuances"
+      - indicator: "Preparedness: percentage increase in timely submission of situation reports"
+        target: "90%"
+      - indicator: "Preparedness: number of individuals capacitated on DRRM"
+        target: 100
+      - indicator: "Response: percentage of emergency response service requests attended"
+        target: "80%"
+      - indicator: "Response: number of relief beneficiaries served"
+        target: 343950
+    approved_budget: 669421582.00
+  - title: "Special Geographic Area Development Authority"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of policies and development interventions implemented for mainstreaming SGA municipalities"
+        target: "50%"
+    output_indicators:
+      - indicator: "Percentage of LGUs in SGA assisted or capacitated to comply with regional policies"
+        target: "60%"
+      - indicator: "Number of governance enhancement and capacity development sessions conducted"
+        target: 5
+      - indicator: "Number of consultations for livelihood beneficiaries including ex-combatants"
+        target: 4
+      - indicator: "Local economic development initiatives established"
+        target: "2 activities, 2 policies"
+      - indicator: "Number of SGADA board meetings conducted"
+        target: 4
+      - indicator: "Number of board policies or resolutions adopted"
+        target: 4
+    approved_budget: 59713461.00
+  - title: "Bangsamoro Local Government Academy"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of policies on academy processes operationalized and institutionalized"
+        target: "70%"
+    output_indicators:
+      - indicator: "Number of policies on academy processes institutionalized"
+        target: 7
+      - indicator: "Number of newly minted officials capacitated on local governance"
+        target: 35
+    approved_budget: 14581026.00
+special_provisions:
+  - title: "Operation Management Services"
+    details: |
+      Fifty Million Seven Hundred Twenty-Eight Thousand Pesos (P50,728,000.00) shall fund awards, rewards, and prizes distributed as follows: P1,500,000.00 for the Seal of Good Local Governance for Barangays (SGLGB); P1,728,000.00 for the Lupon Tagapamayapa Incentive Awards (LTIA); P37,500,000.00 for the LGU Grant Assistance for Innovative Practices (P12,500,000.00) and Salamat Excellency Award on Leadership (P25,000,000.00); and P10,000,000.00 for the Search for Model Barangays (SMB).
+  - title: "Tulong ng Gobyernong Nagmamalasakit (TuGoN)"
+    details: |
+      Funds shall be used for the Local Government Peace and Order Capacity Empowerment Program, including P86,000,000.00 for TuGoN Housing Projects (subject to PIPG and quarterly MFBM reports) and P20,336,000.00 for financial, food relief, reformation, reconciliation, and livelihood assistance, plus P1,500,000.00 for capacity building of 50 beneficiaries, subject to validated beneficiary lists.
+  - title: "Interior Affairs Services"
+    details: |
+      Eighteen Million Pesos (P18,000,000.00) shall be used exclusively for constructing police stations under Interior Affairs Services, subject to PIPG, program of works, common engineering design, and quarterly status reports to MFBM.
+  - title: "Rapid Emergency Action on Disaster Incidence Services"
+    details: |
+      The Bangsamoro RAPID-Response Program shall receive Four Hundred Eighty-One Million Three Hundred Two Thousand Two Hundred Pesos (P481,302,200.00) for welfare goods, while Twenty Million Pesos (P20,000,000.00) shall construct a Provincial Emergency Operation Center, subject to PIPG and quarterly status reporting to MFBM.
+  - title: "Quick Response Fund"
+    details: |
+      One Hundred Million Pesos (P100,000,000.00) appropriated for QRF shall fund immediate response and relief programs following calamities. Fund use requires assessment of affected communities and exclusion of pre-disaster activities.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      Implementing M/O/As shall submit quarterly financial and physical accomplishment reports within thirty (30) days after each quarter through:
+        (a) Submission of hardcopy to the MFBM;
+        (b) Submission of reports through electronic means; and
+        (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the MFBM and other offices where submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

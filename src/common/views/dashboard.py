@@ -96,9 +96,6 @@ def dashboard(request):
             "linked_assessments": MonitoringEntry.objects.filter(
                 related_assessment__isnull=False
             ).count(),
-            "linked_events": MonitoringEntry.objects.filter(
-                related_event__isnull=False
-            ).count(),
             "linked_policies": MonitoringEntry.objects.filter(
                 related_policy__isnull=False
             ).count(),

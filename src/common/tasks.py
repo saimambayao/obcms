@@ -12,7 +12,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 import logging
 
-from coordination.models import Event, EventParticipant
+from common.work_item_model import WorkItem
 from common.models import (
     CalendarResourceBooking,
     StaffLeave,
@@ -27,30 +27,28 @@ User = get_user_model()
 @shared_task
 def send_event_notification(event_id, participant_ids=None):
     """
-    Send event notification emails to participants.
+    Send activity/event notification emails to assigned users.
+
+    DEPRECATED: This function is maintained for backward compatibility.
+    New code should use WorkItem-specific notification handlers.
 
     Args:
-        event_id: UUID of the event
-        participant_ids: List of user IDs (None = all participants)
+        event_id: UUID of the activity (WorkItem)
+        participant_ids: List of user IDs (None = all assigned users)
     """
     try:
-        event = Event.objects.get(pk=event_id)
+        # Get WorkItem (activity/event)
+        activity = WorkItem.objects.get(pk=event_id, work_type='activity')
 
-        # Get participants
+        # Get assigned users (participants)
         if participant_ids:
-            participants = EventParticipant.objects.filter(
-                event=event, participant_id__in=participant_ids
-            ).select_related("participant")
+            assigned_users = activity.assigned_users.filter(id__in=participant_ids)
         else:
-            participants = EventParticipant.objects.filter(event=event).select_related(
-                "participant"
-            )
+            assigned_users = activity.assigned_users.all()
 
-        # Send email to each participant
+        # Send email to each assigned user
         sent_count = 0
-        for participant_obj in participants:
-            user = participant_obj.participant
-
+        for user in assigned_users:
             # Check user preferences
             try:
                 prefs = user.calendar_preferences
@@ -62,7 +60,7 @@ def send_event_notification(event_id, participant_ids=None):
             # Build email context
             context = {
                 "user": user,
-                "event": event,
+                "event": activity,  # Keep 'event' name for template compatibility
                 "event_url": f"{settings.BASE_URL}{reverse('common:coordination_events')}",
                 "current_year": timezone.now().year,
                 "base_url": settings.BASE_URL,
@@ -75,8 +73,8 @@ def send_event_notification(event_id, participant_ids=None):
 
             # Send email
             msg = EmailMultiAlternatives(
-                subject=f"New Event: {event.title}",
-                body=f"You've been invited to: {event.title}",
+                subject=f"New Activity: {activity.title}",
+                body=f"You've been assigned to: {activity.title}",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[user.email],
             )
@@ -87,48 +85,63 @@ def send_event_notification(event_id, participant_ids=None):
             CalendarNotification.objects.create(
                 user=user,
                 notification_type="event_created",
-                title=f"New Event: {event.title}",
-                message=f"You've been invited to {event.title}",
+                title=f"New Activity: {activity.title}",
+                message=f"You've been assigned to {activity.title}",
                 sent_at=timezone.now(),
             )
 
             sent_count += 1
 
-        logger.info(f"Sent {sent_count} event notifications for event: {event.title}")
+        logger.info(f"Sent {sent_count} activity notifications for: {activity.title}")
         return f"Sent {sent_count} notifications"
 
-    except Event.DoesNotExist:
-        logger.error(f"Event {event_id} not found")
-        return "Event not found"
+    except WorkItem.DoesNotExist:
+        logger.error(f"Activity {event_id} not found")
+        return "Activity not found"
     except Exception as e:
-        logger.error(f"Error sending event notifications: {e}")
+        logger.error(f"Error sending activity notifications: {e}")
         raise
 
 
 @shared_task
 def send_event_reminder(event_id, minutes_before=60):
     """
-    Send event reminder emails based on user preferences.
+    Send activity/event reminder emails based on user preferences.
+
+    DEPRECATED: This function is maintained for backward compatibility.
+    New code should use WorkItem-specific reminder handlers.
 
     Args:
-        event_id: UUID of the event
-        minutes_before: Minutes before event (default: 60)
+        event_id: UUID of the activity (WorkItem)
+        minutes_before: Minutes before activity (default: 60)
     """
     try:
-        event = Event.objects.get(pk=event_id)
+        # Get WorkItem (activity/event)
+        activity = WorkItem.objects.get(pk=event_id, work_type='activity')
 
-        # Check if event is in the future
-        if event.start_datetime <= timezone.now():
-            return "Event already started"
+        # Check if activity has start date/time
+        if not activity.start_date:
+            return "Activity has no start date"
 
-        participants = EventParticipant.objects.filter(event=event).select_related(
-            "participant"
-        )
+        # Combine date and time for datetime comparison
+        if activity.start_time:
+            start_datetime = timezone.make_aware(
+                timezone.datetime.combine(activity.start_date, activity.start_time)
+            )
+        else:
+            start_datetime = timezone.make_aware(
+                timezone.datetime.combine(activity.start_date, timezone.datetime.min.time())
+            )
+
+        # Check if activity is in the future
+        if start_datetime <= timezone.now():
+            return "Activity already started"
+
+        # Get assigned users
+        assigned_users = activity.assigned_users.all()
 
         sent_count = 0
-        for participant_obj in participants:
-            user = participant_obj.participant
-
+        for user in assigned_users:
             # Check preferences
             try:
                 prefs = user.calendar_preferences
@@ -149,14 +162,14 @@ def send_event_reminder(event_id, minutes_before=60):
             except UserCalendarPreferences.DoesNotExist:
                 pass
 
-            # Calculate time until event
-            time_until = event.start_datetime - timezone.now()
+            # Calculate time until activity
+            time_until = start_datetime - timezone.now()
             hours_until = int(time_until.total_seconds() // 3600)
             minutes_until = int((time_until.total_seconds() % 3600) // 60)
 
             context = {
                 "user": user,
-                "event": event,
+                "event": activity,  # Keep 'event' name for template compatibility
                 "hours_until": hours_until if hours_until > 0 else None,
                 "minutes_until": minutes_until if hours_until == 0 else None,
                 "event_url": f"{settings.BASE_URL}{reverse('common:coordination_events')}",
@@ -167,8 +180,8 @@ def send_event_reminder(event_id, minutes_before=60):
             html_content = render_to_string("common/email/event_reminder.html", context)
 
             msg = EmailMultiAlternatives(
-                subject=f"Reminder: {event.title}",
-                body=f"Reminder: {event.title} starts soon",
+                subject=f"Reminder: {activity.title}",
+                body=f"Reminder: {activity.title} starts soon",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[user.email],
             )
@@ -177,12 +190,12 @@ def send_event_reminder(event_id, minutes_before=60):
 
             sent_count += 1
 
-        logger.info(f"Sent {sent_count} reminders for event: {event.title}")
+        logger.info(f"Sent {sent_count} reminders for activity: {activity.title}")
         return f"Sent {sent_count} reminders"
 
-    except Event.DoesNotExist:
-        logger.error(f"Event {event_id} not found")
-        return "Event not found"
+    except WorkItem.DoesNotExist:
+        logger.error(f"Activity {event_id} not found")
+        return "Activity not found"
     except Exception as e:
         logger.error(f"Error sending reminders: {e}")
         raise
@@ -192,6 +205,8 @@ def send_event_reminder(event_id, minutes_before=60):
 def send_daily_digest():
     """
     Send daily calendar digest to users who have it enabled.
+
+    Shows user's assigned activities/events for today and upcoming week.
     """
     try:
         # Get users with daily digest enabled
@@ -207,30 +222,29 @@ def send_daily_digest():
         for prefs in users_with_digest:
             user = prefs.user
 
-            # Get today's events for user
-            today_events = EventParticipant.objects.filter(
-                participant=user, event__start_datetime__date=today
-            ).select_related("event")
+            # Get today's activities for user
+            today_activities = WorkItem.objects.filter(
+                work_type='activity',
+                assigned_users=user,
+                start_date=today
+            ).order_by('start_time')
 
-            # Get upcoming events (next 7 days)
-            upcoming_events = (
-                EventParticipant.objects.filter(
-                    participant=user,
-                    event__start_datetime__date__range=[tomorrow, week_from_now],
-                )
-                .select_related("event")
-                .order_by("event__start_datetime")[:10]
-            )
+            # Get upcoming activities (next 7 days)
+            upcoming_activities = WorkItem.objects.filter(
+                work_type='activity',
+                assigned_users=user,
+                start_date__range=[tomorrow, week_from_now]
+            ).order_by('start_date', 'start_time')[:10]
 
-            # Skip if no events
-            if not today_events.exists() and not upcoming_events.exists():
+            # Skip if no activities
+            if not today_activities.exists() and not upcoming_activities.exists():
                 continue
 
             context = {
                 "user": user,
                 "date": today,
-                "today_events": today_events,
-                "upcoming_events": upcoming_events,
+                "today_events": today_activities,  # Keep 'today_events' for template compatibility
+                "upcoming_events": upcoming_activities,  # Keep 'upcoming_events' for template compatibility
                 "calendar_url": f"{settings.BASE_URL}{reverse('common:oobc_calendar')}",
                 "current_year": timezone.now().year,
                 "base_url": settings.BASE_URL,
@@ -322,8 +336,10 @@ def send_booking_notification(booking_id, notification_type="created"):
 @shared_task
 def process_scheduled_reminders():
     """
-    Process all scheduled reminders for upcoming events.
+    Process all scheduled reminders for upcoming activities.
+
     Called by Celery Beat every 15 minutes.
+    Checks for activities starting at specific reminder intervals.
     """
     try:
         now = timezone.now()
@@ -331,19 +347,31 @@ def process_scheduled_reminders():
 
         sent_count = 0
         for minutes in reminder_times:
-            target_time = now + timedelta(minutes=minutes)
+            target_datetime = now + timedelta(minutes=minutes)
+            target_date = target_datetime.date()
 
-            # Find events starting at target time (within 1 minute tolerance)
-            events = Event.objects.filter(
-                start_datetime__gte=target_time - timedelta(minutes=1),
-                start_datetime__lte=target_time + timedelta(minutes=1),
+            # Find activities on target date (activities may not have exact time)
+            activities = WorkItem.objects.filter(
+                work_type='activity',
+                start_date=target_date
             )
 
-            for event in events:
-                send_event_reminder.delay(str(event.id), minutes_before=minutes)
-                sent_count += 1
+            # Filter activities that have start_time matching target time (within tolerance)
+            for activity in activities:
+                if activity.start_time:
+                    activity_datetime = timezone.make_aware(
+                        timezone.datetime.combine(activity.start_date, activity.start_time)
+                    )
+                    # Check if within 1 minute tolerance
+                    time_diff = abs((activity_datetime - target_datetime).total_seconds())
+                    if time_diff <= 60:  # Within 1 minute
+                        send_event_reminder.delay(str(activity.id), minutes_before=minutes)
+                        sent_count += 1
+                elif minutes == 1440:  # For all-day activities, send 1-day reminder
+                    send_event_reminder.delay(str(activity.id), minutes_before=minutes)
+                    sent_count += 1
 
-        logger.info(f"Queued {sent_count} event reminders")
+        logger.info(f"Queued {sent_count} activity reminders")
         return f"Queued {sent_count} reminders"
 
     except Exception as e:

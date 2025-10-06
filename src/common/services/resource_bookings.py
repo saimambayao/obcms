@@ -9,7 +9,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from common.models import CalendarResource, CalendarResourceBooking, StaffTask
+from common.models import CalendarResource, CalendarResourceBooking
+from common.work_item_model import WorkItem
 
 
 class ResourceBookingSpecError(ValueError):
@@ -23,7 +24,7 @@ def _ensure_aware(dt: datetime) -> datetime:
 
 
 def _resolve_datetime(
-    task: StaffTask, spec: Mapping[str, object], attr_prefix: str
+    task: WorkItem, spec: Mapping[str, object], attr_prefix: str
 ) -> datetime | None:
     value = spec.get(attr_prefix)
     if value:
@@ -56,7 +57,7 @@ def _resolve_datetime(
 
 
 def _determine_end_datetime(
-    start_dt: datetime | None, spec: Mapping[str, object], task: StaffTask
+    start_dt: datetime | None, spec: Mapping[str, object], task: WorkItem
 ) -> datetime | None:
     value = spec.get("end")
     if value:
@@ -100,7 +101,7 @@ def _resolve_resource(spec: Mapping[str, object]) -> CalendarResource | None:
 
 
 def create_bookings_for_task(
-    task: StaffTask,
+    task: WorkItem,
     specs: Sequence[Mapping[str, object]] | Mapping[str, object],
     *,
     user=None,
@@ -108,7 +109,7 @@ def create_bookings_for_task(
     """Create resource bookings for a task based on specification objects.
 
     Args:
-        task: The StaffTask instance to associate bookings with.
+        task: The WorkItem instance to associate bookings with.
         specs: Iterable of booking specifications. Each spec supports the
             following keys:
 

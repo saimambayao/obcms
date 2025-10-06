@@ -1,0 +1,33 @@
+moa: "Bangsamoro Darul-Ifta'"
+acronym: "BDI"
+ppas:
+  - title: "Promulgation of Religious Edicts"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of issuances and promulgation of religious edicts implemented"
+        target: "100%"
+    output_indicators:
+      - indicator: "Number of issuances of fatwa or religious guidelines promulgated and issued"
+        target: 22
+      - indicator: "Number of booklets compiling fatawa (religious edicts) and khutba"
+        target: 160
+      - indicator: "Number of propagation of Islamic teachings (khutba) conducted"
+        target: 480
+      - indicator: "Number of interfaith or intrafaith dialogues promoted and conducted"
+        target: 8
+      - indicator: "Number of dual calendars prepared and distributed"
+        target: 15000
+      - indicator: "Number of muhadara supervised and assisted"
+        target: 48
+      - indicator: "Percentage of community peace advocates conducted"
+        target: "100%"
+    approved_budget: 149772172.00
+special_provisions:
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on financial and physical accomplishments within thirty (30) days after each quarter through:
+        (a) Submission of hardcopy to the MFBM;
+        (b) Submission of reports through electronic means; and
+        (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the MFBM and other offices where submission of reports is required by existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

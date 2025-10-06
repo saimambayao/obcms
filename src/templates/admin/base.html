@@ -16,8 +16,8 @@
 {% endif %}
 {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE">{% endblock %}
 
-<!-- Tailwind CSS utilities used for quick layout helpers -->
-<script src="https://cdn.tailwindcss.com"></script>
+<!-- Tailwind CSS utilities (Production Build) -->
+<link rel="stylesheet" href="{% static 'css/output.css' %}">
 
 <!-- Font Awesome Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">

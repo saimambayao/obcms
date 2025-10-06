@@ -2,7 +2,9 @@
 
 import json
 import logging
+import warnings
 from datetime import datetime, time, timedelta
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -15,10 +17,11 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 
 from common.models import RecurringEventPattern
+from common.work_item_model import WorkItem
+from common.forms.work_items import WorkItemForm
+from monitoring.models import MonitoringEntry
 
 from .forms import (
-    EventForm,
-    EventQuickUpdateForm,
     OrganizationContactFormSet,
     OrganizationForm,
     PartnershipDocumentFormSet,
@@ -28,76 +31,14 @@ from .forms import (
     RecurringEventPatternForm,
     StakeholderEngagementForm,
 )
-from .models import Event, Organization, Partnership, StakeholderEngagement
+# Event model removed - use WorkItem with work_type='activity' instead
+from .models import Organization, Partnership, StakeholderEngagement
 
 
 logger = logging.getLogger(__name__)
 
-
-def _calendar_iso(dt_value):
-    if not dt_value:
-        return None
-    if timezone.is_naive(dt_value):
-        dt_value = timezone.make_aware(dt_value, timezone.get_current_timezone())
-    else:
-        dt_value = timezone.localtime(dt_value)
-    return dt_value.isoformat()
-
-
-def _combine_event_datetime(date_part, time_part, default_time=time.min):
-    if not date_part:
-        return None
-    selected_time = time_part if time_part is not None else default_time
-    return datetime.combine(date_part, selected_time)
-
-
-def _serialize_coordination_event(event):
-    start_dt = _combine_event_datetime(event.start_date, event.start_time)
-    all_day = event.start_time is None
-
-    if event.end_date:
-        end_time = (
-            event.end_time
-            if event.end_time
-            else (time.max if not all_day else time.max)
-        )
-        end_dt = _combine_event_datetime(event.end_date, end_time)
-        if all_day and end_dt:
-            end_dt = end_dt + timedelta(days=1)
-    elif event.end_time:
-        end_dt = _combine_event_datetime(event.start_date, event.end_time)
-    elif event.duration_hours and start_dt:
-        end_dt = start_dt + timedelta(hours=float(event.duration_hours))
-    elif all_day and start_dt:
-        end_dt = start_dt + timedelta(days=1)
-    else:
-        end_dt = start_dt
-
-    return {
-        "id": f"coordination-event-{event.pk}",
-        "title": event.title,
-        "start": _calendar_iso(start_dt),
-        "end": _calendar_iso(end_dt),
-        "allDay": all_day,
-        "backgroundColor": "#2563eb",
-        "borderColor": "#1d4ed8",
-        "textColor": "#ffffff" if all_day else None,
-        "editable": True,
-        "extendedProps": {
-            "module": "coordination",
-            "category": "event",
-            "type": "event",
-            "objectId": str(event.pk),
-            "supportsEditing": True,
-            "modalUrl": reverse("common:coordination_event_modal", args=[event.pk]),
-            "status": event.status,
-            "community": getattr(event.community, "name", ""),
-            "organizer": getattr(event.organizer, "get_full_name", None)
-            and event.organizer.get_full_name()
-            or getattr(event.organizer, "username", ""),
-            "location": event.venue,
-        },
-    }
+# Event-related helper functions removed - use WorkItem calendar serialization instead
+# _calendar_iso, _combine_event_datetime, _serialize_coordination_event deleted
 
 
 def _organization_form(request, organization_id=None):
@@ -215,6 +156,37 @@ def organization_detail(request, organization_id):
     contacts = list(organization.contacts.all())
     total_partnerships = len(led_partnerships) + len(member_partnerships)
 
+    moa_ppas_queryset = (
+        MonitoringEntry.objects.filter(
+            category="moa_ppa", implementing_moa=organization
+        )
+        .select_related("implementing_moa")
+        .order_by("-updated_at")
+    )
+    moa_ppas = list(moa_ppas_queryset)
+    moa_ppas_total_budget = sum(
+        (ppa.budget_allocation or Decimal("0")) for ppa in moa_ppas
+    )
+
+    auto_special_text = ""
+    display_notes = organization.notes
+    if organization.notes and organization.notes.startswith("Special Provisions:"):
+        auto_special_text = organization.notes[len("Special Provisions:"):].lstrip()
+        display_notes = ""
+
+    ppa_special_provisions = []
+    for ppa in moa_ppas:
+        support_text = (ppa.support_required or "").strip()
+        if not support_text:
+            continue
+        if support_text.startswith("Special Provision:"):
+            _, _, support_text = support_text.partition(":")
+            support_text = support_text.lstrip()
+        ppa_special_provisions.append({
+            "entry": ppa,
+            "text": support_text,
+        })
+
     context = {
         "organization": organization,
         "contacts": contacts,
@@ -222,6 +194,12 @@ def organization_detail(request, organization_id):
         "member_partnerships": member_partnerships,
         "return_url": reverse("common:coordination_organizations"),
         "total_partnerships": total_partnerships,
+        "moa_ppas_count": len(moa_ppas),
+        "moa_ppas": moa_ppas,
+        "moa_ppas_total_budget": moa_ppas_total_budget,
+        "organization_notes_display": display_notes,
+        "moa_special_provisions_text": auto_special_text,
+        "ppa_special_provisions": ppa_special_provisions,
     }
     return render(request, "coordination/organization_detail.html", context)
 
@@ -472,82 +450,7 @@ def partnership_delete(request, partnership_id):
     return redirect("common:coordination_partnerships")
 
 
-@login_required
-def event_create(request):
-    """Render and process the frontend coordination event creation form."""
-
-    if not request.user.has_perm("coordination.add_event"):
-        raise PermissionDenied
-
-    initial = {
-        "organizer": request.user.pk,
-        "status": "planned",
-        "priority": "medium",
-        "start_date": timezone.now().date(),
-    }
-
-    # Pre-fill project if workflow_id is in GET parameters
-    workflow_id = request.GET.get("workflow_id")
-    if workflow_id:
-        try:
-            from project_central.models import ProjectWorkflow
-            workflow_id_int = int(workflow_id)
-            workflow = ProjectWorkflow.objects.filter(id=workflow_id_int).first()
-            if workflow:
-                initial["related_project"] = workflow.id
-                initial["is_project_activity"] = True
-        except (TypeError, ValueError):
-            pass
-
-    if request.method == "POST":
-        form = EventForm(request.POST)
-        if form.is_valid():
-            event = form.save(commit=False)
-            if not event.organizer_id:
-                event.organizer = request.user
-            event.created_by = request.user
-
-            # Set auto-generate flag before save (for signals to use)
-            auto_generate = form.cleaned_data.get("auto_generate_tasks", False)
-            if auto_generate:
-                event._auto_generate_tasks = True
-
-            event.save()
-            if hasattr(form, "save_m2m"):
-                form.save_m2m()
-
-            messages.success(request, f'Event "{event.title}" successfully scheduled.')
-            if auto_generate and event.is_project_activity and event.related_project:
-                messages.info(
-                    request,
-                    "Preparation and follow-up tasks will be created for this project activity.",
-                )
-
-            # Handle "Save & Add Another" functionality
-            if request.POST.get("save_and_add"):
-                # Redirect back to form with same workflow_id if it was set
-                if workflow_id:
-                    return redirect(f"{reverse('coordination:event_create')}?workflow_id={workflow_id}")
-                return redirect("coordination:event_create")
-
-            return redirect("common:coordination_events")
-        messages.error(
-            request, "Please correct the highlighted errors before submitting."
-        )
-        if form.errors:
-            logger.warning("Event form errors: %s", form.errors)
-    else:
-        form = EventForm(initial=initial)
-
-    context = {
-        "form": form,
-        "return_url": reverse("common:coordination_events"),
-        "page_title": "Schedule Coordination Event",
-        "page_heading": "Schedule New Coordination Event",
-        "submit_label": "Create Event",
-    }
-    return render(request, "coordination/event_form.html", context)
-
+# event_create function removed - use WorkItem create view with work_type='activity' instead
 
 @login_required
 def engagement_create(request):
@@ -592,129 +495,49 @@ def engagement_create(request):
     return render(request, "coordination/activity_form.html", context)
 
 
-@login_required
-def calendar_overview(request):
-    """Visualise coordination events and activities on a shared calendar."""
-
-    events = Event.objects.select_related("community", "organizer")
-    engagements = StakeholderEngagement.objects.select_related(
-        "community",
-        "engagement_type",
-    )
-
-    calendar_entries = []
-
-    for event in events:
-        calendar_entries.append(_serialize_coordination_event(event))
-
-    for engagement in engagements:
-        start_dt = engagement.planned_date
-        end_dt = None
-        if engagement.duration_minutes and start_dt:
-            end_dt = start_dt + timedelta(minutes=engagement.duration_minutes)
-
-        calendar_entries.append(
-            {
-                "id": f"coordination-activity-{engagement.pk}",
-                "title": engagement.title,
-                "start": _calendar_iso(start_dt),
-                "end": _calendar_iso(end_dt),
-                "allDay": False,
-                "backgroundColor": "#059669",
-                "borderColor": "#047857",
-                "extendedProps": {
-                    "module": "coordination",
-                    "type": "activity",
-                    "status": engagement.status,
-                    "objectId": str(engagement.pk),
-                    "supportsEditing": False,
-                    "community": getattr(engagement.community, "name", ""),
-                    "engagementType": getattr(engagement.engagement_type, "name", ""),
-                },
-            }
-        )
-
-    now = timezone.now()
-    upcoming_events = events.filter(start_date__gte=now.date()).count()
-    past_events = events.filter(start_date__lt=now.date()).count()
-    upcoming_engagements = engagements.filter(planned_date__gte=now).count()
-
-    upcoming_event_list = events.filter(start_date__gte=now.date()).order_by(
-        "start_date", "start_time"
-    )[:5]
-    upcoming_engagement_list = engagements.filter(planned_date__gte=now).order_by(
-        "planned_date"
-    )[:5]
-
-    stats = {
-        "events": {
-            "total": events.count(),
-            "upcoming": upcoming_events,
-            "past": past_events,
-            "completed": events.filter(status="completed").count(),
-        },
-        "activities": {
-            "total": engagements.count(),
-            "upcoming": upcoming_engagements,
-            "completed": engagements.filter(status="completed").count(),
-        },
-    }
-
-    context = {
-        "calendar_events": calendar_entries,
-        "calendar_events_json": json.dumps(calendar_entries),
-        "calendar_options_json": json.dumps(
-            {
-                "initialView": "dayGridMonth",
-                "height": "auto",
-            }
-        ),
-        "stats": stats,
-        "upcoming_events": upcoming_event_list,
-        "upcoming_engagements": upcoming_engagement_list,
-    }
-    return render(request, "coordination/calendar.html", context)
-
+# calendar_overview function removed - use unified calendar with WorkItem filtering instead
 
 @login_required
 def event_create_recurring(request):
-    """Create a recurring event with recurrence pattern configuration."""
+    """Create a recurring activity with recurrence pattern configuration."""
 
     if not request.user.has_perm("coordination.add_event"):
         raise PermissionDenied
 
     initial = {
-        "organizer": request.user.pk,
-        "status": "planned",
+        "work_type": "activity",
+        "status": "not_started",
         "priority": "medium",
         "start_date": timezone.now().date(),
-        "is_recurring": True,
+        "is_calendar_visible": True,
     }
 
     if request.method == "POST":
-        event_form = EventForm(request.POST)
+        work_item_form = WorkItemForm(request.POST, initial={"work_type": "activity"})
         pattern_form = RecurringEventPatternForm(request.POST)
 
-        if event_form.is_valid() and pattern_form.is_valid():
+        if work_item_form.is_valid() and pattern_form.is_valid():
             with transaction.atomic():
                 # Save the recurrence pattern first
                 pattern = pattern_form.save()
 
-                # Save the event with the pattern
-                event = event_form.save(commit=False)
-                if not event.organizer_id:
-                    event.organizer = request.user
-                event.created_by = request.user
-                event.is_recurring = True
-                event.recurrence_pattern = pattern
-                event.save()
+                # Save the work item with the pattern
+                work_item = work_item_form.save(commit=False)
+                work_item.work_type = "activity"
+                work_item.created_by = request.user
+                # Store recurrence pattern in type_specific_data
+                if not work_item.type_specific_data:
+                    work_item.type_specific_data = {}
+                work_item.type_specific_data["is_recurring"] = True
+                work_item.type_specific_data["recurrence_pattern_id"] = pattern.id
+                work_item.save()
 
-                if hasattr(event_form, "save_m2m"):
-                    event_form.save_m2m()
+                if hasattr(work_item_form, "save_m2m"):
+                    work_item_form.save_m2m()
 
             messages.success(
                 request,
-                f"Recurring event '{event.title}' successfully created. "
+                f"Recurring activity '{work_item.title}' successfully created. "
                 f"Instances will be generated automatically.",
             )
             return redirect("common:coordination_events")
@@ -722,60 +545,68 @@ def event_create_recurring(request):
         messages.error(
             request, "Please correct the highlighted errors before submitting."
         )
-        if event_form.errors:
-            logger.warning("Event form errors: %s", event_form.errors)
+        if work_item_form.errors:
+            logger.warning("WorkItem form errors: %s", work_item_form.errors)
         if pattern_form.errors:
             logger.warning("Recurrence pattern form errors: %s", pattern_form.errors)
     else:
-        event_form = EventForm(initial=initial)
+        work_item_form = WorkItemForm(initial=initial)
         pattern_form = RecurringEventPatternForm()
 
     context = {
-        "event_form": event_form,
+        "event_form": work_item_form,  # Keep 'event_form' for template compatibility
         "pattern_form": pattern_form,
         "return_url": reverse("common:coordination_events"),
-        "page_title": "Schedule Recurring Event",
-        "page_heading": "Schedule New Recurring Event",
-        "submit_label": "Create Recurring Event",
+        "page_title": "Schedule Recurring Activity",
+        "page_heading": "Schedule New Recurring Activity",
+        "submit_label": "Create Recurring Activity",
     }
     return render(request, "coordination/event_recurring_form.html", context)
 
 
 @login_required
 def event_edit_instance(request, event_id):
-    """Edit a specific instance of a recurring event with 'this' vs 'all future' logic."""
+    """Edit a specific work item (activity) instance with recurring logic."""
 
     if not request.user.has_perm("coordination.change_event"):
         raise PermissionDenied
 
-    event = get_object_or_404(Event, pk=event_id)
-    is_recurring_instance = event.recurrence_parent_id is not None
-    is_recurring_parent = event.is_recurring and not is_recurring_instance
+    work_item = get_object_or_404(WorkItem, pk=event_id, work_type="activity")
+
+    # Check if this is a recurring work item
+    type_data = work_item.type_specific_data or {}
+    is_recurring = type_data.get("is_recurring", False)
+    recurrence_parent_id = type_data.get("recurrence_parent_id")
+    is_recurring_instance = recurrence_parent_id is not None
+    is_recurring_parent = is_recurring and not is_recurring_instance
 
     edit_scope = request.POST.get("edit_scope", "this")  # 'this', 'future', or 'all'
 
     if request.method == "POST" and "confirm_scope" in request.POST:
-        form = EventForm(request.POST, instance=event)
+        form = WorkItemForm(request.POST, instance=work_item)
 
         if form.is_valid():
             with transaction.atomic():
                 if edit_scope == "this":
                     # Edit only this instance - mark as exception
-                    updated_event = form.save(commit=False)
-                    updated_event.is_recurrence_exception = True
-                    updated_event.save()
+                    updated_item = form.save(commit=False)
+                    if not updated_item.type_specific_data:
+                        updated_item.type_specific_data = {}
+                    updated_item.type_specific_data["is_recurrence_exception"] = True
+                    updated_item.save()
                     if hasattr(form, "save_m2m"):
                         form.save_m2m()
                     messages.success(
-                        request, "This event instance has been updated successfully."
+                        request, "This activity instance has been updated successfully."
                     )
 
                 elif edit_scope == "future" and is_recurring_instance:
                     # Edit this and all future instances
-                    parent = event.recurrence_parent
-                    future_instances = Event.objects.filter(
-                        recurrence_parent=parent,
-                        start_date__gte=event.start_date,
+                    parent_id = recurrence_parent_id
+                    future_instances = WorkItem.objects.filter(
+                        work_type="activity",
+                        type_specific_data__recurrence_parent_id=parent_id,
+                        start_date__gte=work_item.start_date,
                     )
 
                     # Update all future instances
@@ -792,8 +623,8 @@ def event_edit_instance(request, event_id):
                 elif edit_scope == "all" or (
                     edit_scope == "future" and is_recurring_parent
                 ):
-                    # Edit parent event and all instances
-                    parent = event if is_recurring_parent else event.recurrence_parent
+                    # Edit parent work item and all instances
+                    parent = work_item if is_recurring_parent else WorkItem.objects.get(pk=recurrence_parent_id)
 
                     # Update parent
                     for field in form.changed_data:
@@ -801,7 +632,10 @@ def event_edit_instance(request, event_id):
                     parent.save()
 
                     # Update all instances
-                    instances = Event.objects.filter(recurrence_parent=parent)
+                    instances = WorkItem.objects.filter(
+                        work_type="activity",
+                        type_specific_data__recurrence_parent_id=parent.pk
+                    )
                     for instance in instances:
                         for field in form.changed_data:
                             setattr(instance, field, form.cleaned_data[field])
@@ -809,7 +643,7 @@ def event_edit_instance(request, event_id):
 
                     messages.success(
                         request,
-                        f"Parent event and all {instances.count()} instances updated.",
+                        f"Parent activity and all {instances.count()} instances updated.",
                     )
 
             return redirect("common:coordination_events")
@@ -818,45 +652,47 @@ def event_edit_instance(request, event_id):
             request, "Please correct the highlighted errors before submitting."
         )
         if form.errors:
-            logger.warning("Event form errors: %s", form.errors)
+            logger.warning("WorkItem form errors: %s", form.errors)
     else:
-        form = EventForm(instance=event)
+        form = WorkItemForm(instance=work_item)
 
     # Provide scope options in context
     scope_options = []
     if is_recurring_instance or is_recurring_parent:
         scope_options.append(
-            {"value": "this", "label": "Only this event", "description": ""}
+            {"value": "this", "label": "Only this activity", "description": ""}
         )
         if is_recurring_instance:
-            parent = event.recurrence_parent
-            future_count = Event.objects.filter(
-                recurrence_parent=parent, start_date__gte=event.start_date
+            parent_id = recurrence_parent_id
+            future_count = WorkItem.objects.filter(
+                work_type="activity",
+                type_specific_data__recurrence_parent_id=parent_id,
+                start_date__gte=work_item.start_date
             ).count()
             scope_options.append(
                 {
                     "value": "future",
-                    "label": "This and future events",
-                    "description": f"Will update {future_count} events",
+                    "label": "This and future activities",
+                    "description": f"Will update {future_count} activities",
                 }
             )
         scope_options.append(
             {
                 "value": "all",
-                "label": "All events in series",
+                "label": "All activities in series",
                 "description": "Will update the entire recurring series",
             }
         )
 
     context = {
         "form": form,
-        "event": event,
+        "event": work_item,  # Keep 'event' for template compatibility
         "is_recurring_instance": is_recurring_instance,
         "is_recurring_parent": is_recurring_parent,
         "scope_options": scope_options,
         "return_url": reverse("common:coordination_events"),
-        "page_title": "Edit Event Instance",
-        "page_heading": f"Edit {event.title}",
+        "page_title": "Edit Activity Instance",
+        "page_heading": f"Edit {work_item.title}",
         "submit_label": "Save Changes",
     }
     return render(request, "coordination/event_edit_instance.html", context)
@@ -864,98 +700,97 @@ def event_edit_instance(request, event_id):
 
 @login_required
 def coordination_event_modal(request, event_id):
-    """Render coordination event quick-update modal."""
+    """Render coordination activity quick-update modal (WorkItem-based)."""
 
-    event = get_object_or_404(
-        Event.objects.select_related("community", "organizer")
-        .prefetch_related("organizations", "co_organizers", "facilitators", "staff_tasks__assignees"),
+    work_item = get_object_or_404(
+        WorkItem.objects.prefetch_related("assignees", "teams", "children"),
         pk=event_id,
+        work_type="activity"
     )
 
     if not (
         request.user.is_staff
         or request.user.is_superuser
-        or event.created_by == request.user
+        or work_item.created_by == request.user
         or request.user.has_perm("coordination.change_event")
     ):
         raise PermissionDenied
 
     if request.method == "POST":
-        form = EventQuickUpdateForm(request.POST, instance=event)
+        form = WorkItemForm(request.POST, instance=work_item)
         if form.is_valid():
             form.save()
-            event.refresh_from_db()
-            payload = _serialize_coordination_event(event)
+            work_item.refresh_from_db()
+
+            # Serialize for calendar update
+            payload = {
+                "id": str(work_item.id),
+                "title": work_item.title,
+                "start": work_item.start_date.isoformat() if work_item.start_date else None,
+                "end": work_item.due_date.isoformat() if work_item.due_date else None,
+                "backgroundColor": work_item.calendar_color or "#3B82F6",
+                "extendedProps": {
+                    "status": work_item.status,
+                    "priority": work_item.priority,
+                }
+            }
+
             context = {
-                "event": event,
-                "form": EventQuickUpdateForm(instance=event),
+                "event": work_item,  # Keep 'event' for template compatibility
+                "form": WorkItemForm(instance=work_item),
                 "save_success": True,
-                "organizations": event.organizations.all(),
-                "co_organizers": event.co_organizers.all(),
-                "facilitators": event.facilitators.all(),
-                "linked_tasks": event.staff_tasks.all(),
+                "assignees": work_item.assignees.all(),
+                "teams": work_item.teams.all(),
+                "linked_tasks": work_item.children.filter(work_type="task"),
             }
             response = render(
                 request, "coordination/partials/event_modal.html", context
             )
             trigger_payload = {
-                "show-toast": "Event updated successfully",
+                "show-toast": "Activity updated successfully",
                 "calendar-close-modal": True,
+                "calendar-event-updated": payload,
             }
-            if payload:
-                trigger_payload["calendar-event-updated"] = payload
             response["HX-Trigger"] = json.dumps(trigger_payload)
             return response
     else:
-        form = EventQuickUpdateForm(instance=event)
+        form = WorkItemForm(instance=work_item)
 
     context = {
-        "event": event,
+        "event": work_item,  # Keep 'event' for template compatibility
         "form": form,
         "save_success": False,
-        "organizations": event.organizations.all(),
-        "co_organizers": event.co_organizers.all(),
-        "facilitators": event.facilitators.all(),
-        "linked_tasks": event.staff_tasks.all(),
+        "assignees": work_item.assignees.all(),
+        "teams": work_item.teams.all(),
+        "linked_tasks": work_item.children.filter(work_type="task"),
     }
     return render(request, "coordination/partials/event_modal.html", context)
 
 
 @login_required
 def coordination_event_delete(request, event_id):
-    """Delete a coordination event."""
-    logger.info(f"Attempting to delete event {event_id}")
-    event = get_object_or_404(Event, pk=event_id)
+    """Delete a coordination activity (WorkItem)."""
+    logger.info(f"Attempting to delete activity {event_id}")
+    work_item = get_object_or_404(WorkItem, pk=event_id, work_type="activity")
 
     # Check permissions
     if not (
         request.user.is_staff
         or request.user.is_superuser
-        or event.created_by == request.user
+        or work_item.created_by == request.user
         or request.user.has_perm("coordination.delete_event")
     ):
         raise PermissionDenied
 
     # Check if this is a confirmation request
     if request.POST.get("confirm") == "yes":
-        event_title = event.title
-        logger.info(f"Deleting event: {event_title}")
-        event.delete()
-        logger.info(f"Event {event_title} deleted successfully")
+        activity_title = work_item.title
+        logger.info(f"Deleting activity: {activity_title}")
+        work_item.delete()
+        logger.info(f"Activity {activity_title} deleted successfully")
 
-        # For HTMX requests, return empty response with triggers
-        if request.headers.get("HX-Request"):
-            response = HttpResponse("")
-            response["HX-Trigger"] = json.dumps(
-                {
-                    "task-board-refresh": True,
-                    "task-modal-close": True,
-                    "show-toast": f'Event "{event_title}" deleted successfully',
-                }
-            )
-            return response
-
-        messages.success(request, f'Event "{event_title}" deleted successfully')
+        # SIMPLE APPROACH: Just add message and redirect
+        messages.success(request, f'Activity "{activity_title}" deleted successfully')
         return redirect("common:oobc_calendar")
 
     # For non-confirmation POST, redirect to calendar
@@ -1178,13 +1013,13 @@ def event_attendance_tracker(request, event_id):
     """
     from .models import EventAttendance, EventParticipant
 
-    event = get_object_or_404(Event, id=event_id)
+    work_item = get_object_or_404(WorkItem, id=event_id, work_type="activity")
 
     context = {
-        "event": event,
+        "event": work_item,  # Keep 'event' for template compatibility
         "return_url": reverse("common:coordination_events"),
-        "page_title": f"Attendance - {event.title}",
-        "page_heading": f"Attendance Tracker: {event.title}",
+        "page_title": f"Attendance - {work_item.title}",
+        "page_heading": f"Attendance Tracker: {work_item.title}",
     }
     return render(request, "coordination/event_attendance_tracker.html", context)
 
@@ -1198,7 +1033,8 @@ def event_attendance_count(request, event_id):
     from .models import EventAttendance
     from django.http import HttpResponse
 
-    event = get_object_or_404(Event, id=event_id)
+    work_item = get_object_or_404(WorkItem, id=event_id, work_type="activity")
+    event = work_item  # For backward compatibility with variable names below
 
     # Count checked-in participants
     checked_in = EventAttendance.objects.filter(
@@ -1257,7 +1093,8 @@ def event_participant_list(request, event_id):
     from .models import EventAttendance
     from django.http import HttpResponse
 
-    event = get_object_or_404(Event, id=event_id)
+    work_item = get_object_or_404(WorkItem, id=event_id, work_type="activity")
+    event = work_item  # For backward compatibility with variable names below
     participants = event.participants.all().select_related("user", "contact")
 
     html = '<div class="space-y-2">'
@@ -1315,7 +1152,8 @@ def event_check_in(request, event_id):
     from .models import EventAttendance, EventParticipant
     from django.http import HttpResponse
 
-    event = get_object_or_404(Event, id=event_id)
+    work_item = get_object_or_404(WorkItem, id=event_id, work_type="activity")
+    event = work_item  # For backward compatibility with variable names below
     participant_id = request.POST.get("participant_id")
     method = request.POST.get("method", "manual")
 

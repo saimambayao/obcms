@@ -1,0 +1,439 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}View Recommendation - {{ recommendation.reference_number }}{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:recommendations_home' %}" class="text-neutral-500 hover:text-neutral-700">Recommendations</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">{{ recommendation.reference_number }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header Card -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <div class="flex items-center space-x-3 mb-2">
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold
+                        {% if recommendation.recommendation_type == 'policy' %}bg-blue-100 text-blue-800
+                        {% elif recommendation.recommendation_type == 'program' %}bg-purple-100 text-purple-800
+                        {% else %}bg-emerald-100 text-emerald-800{% endif %}">
+                        {{ recommendation.get_recommendation_type_display }}
+                    </span>
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                        {{ recommendation.get_status_display }}
+                    </span>
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold
+                        {% if recommendation.priority_category == 'A' %}bg-red-100 text-red-800
+                        {% elif recommendation.priority_category == 'B' %}bg-amber-100 text-amber-800
+                        {% else %}bg-blue-100 text-blue-800{% endif %}">
+                        Priority {{ recommendation.priority_category }}
+                    </span>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ recommendation.title }}</h1>
+                <p class="text-sm text-gray-600">
+                    <strong>Reference:</strong> {{ recommendation.reference_number }} |
+                    <strong>Created:</strong> {{ recommendation.created_at|date:"F d, Y" }}
+                </p>
+            </div>
+            <div class="flex space-x-2">
+                <a href="{% url 'common:recommendations_edit' recommendation.id %}"
+                   class="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all duration-200 flex items-center">
+                    <i class="fas fa-edit mr-2"></i>
+                    Edit
+                </a>
+                <a href="{% url 'common:recommendations_manage' %}"
+                   class="px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column - Main Details -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Basic Information -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center border-b border-gray-200 pb-3">
+                    <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+                    Basic Information
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Policy Category</p>
+                        <p class="text-base text-gray-900 mt-1">{{ recommendation.get_category_display }}</p>
+                    </div>
+                    {% if recommendation.category == 'comprehensive' and recommendation.secondary_categories %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Secondary Categories</p>
+                        <div class="flex flex-wrap gap-2 mt-1">
+                            {% for cat in recommendation.secondary_categories %}
+                            <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium">{{ cat }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if recommendation.core_recommendation_type %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Core Recommendation Type</p>
+                        <p class="text-base text-gray-900 mt-1">{{ recommendation.get_core_recommendation_type_display }}</p>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Scope Level</p>
+                        <p class="text-base text-gray-900 mt-1">{{ recommendation.get_scope_display }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Importance</p>
+                        <p class="text-base text-gray-900 mt-1">{{ recommendation.get_importance_display }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Urgency</p>
+                        <p class="text-base text-gray-900 mt-1">{{ recommendation.get_urgency_display }}</p>
+                    </div>
+                    {% if recommendation.target_region or recommendation.target_province or recommendation.target_municipality or recommendation.target_barangay or recommendation.target_communities.exists %}
+                    <div class="md:col-span-2">
+                        <p class="text-sm font-medium text-gray-600">Tagged Coverage</p>
+                        <div class="flex flex-wrap gap-2 mt-1 text-xs text-gray-700">
+                            {% if recommendation.target_region %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-teal-50 text-teal-700">
+                                <i class="fas fa-globe-asia mr-1"></i>{{ recommendation.target_region.name }}
+                            </span>
+                            {% endif %}
+                            {% if recommendation.target_province %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                                <i class="fas fa-flag mr-1"></i>{{ recommendation.target_province.name }}
+                            </span>
+                            {% endif %}
+                            {% if recommendation.target_municipality %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                                <i class="fas fa-map-marked-alt mr-1"></i>{{ recommendation.target_municipality.name }}
+                            </span>
+                            {% endif %}
+                            {% if recommendation.target_barangay %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
+                                <i class="fas fa-location-arrow mr-1"></i>{{ recommendation.target_barangay.name }}
+                            </span>
+                            {% endif %}
+                            {% if recommendation.target_communities.exists %}
+                                {% with communities=recommendation.target_communities.all %}
+                                    {% for community in communities %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                                        <i class="fas fa-users mr-1"></i>{{ community.name }}
+                                    </span>
+                                    {% endfor %}
+                                {% endwith %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Problem Statement & Objectives -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center border-b border-gray-200 pb-3">
+                    <i class="fas fa-bullseye text-red-600 mr-3"></i>
+                    Problem Statement & Objectives
+                </h3>
+                {% if recommendation.problem_statement %}
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-600">Problem Statement</p>
+                    <p class="text-base text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.problem_statement }}</p>
+                </div>
+                {% endif %}
+                {% if recommendation.policy_objectives %}
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-600">Policy Objectives (SMART)</p>
+                    <p class="text-base text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.policy_objectives }}</p>
+                </div>
+                {% endif %}
+                {% if recommendation.success_metrics %}
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Success Metrics</p>
+                    <p class="text-base text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.success_metrics }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Implementation Details -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center border-b border-gray-200 pb-3">
+                    <i class="fas fa-cogs text-purple-600 mr-3"></i>
+                    Implementation Details
+                </h3>
+                {% if recommendation.description %}
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-600">Description</p>
+                    <p class="text-base text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.description }}</p>
+                </div>
+                {% endif %}
+                {% if recommendation.rationale %}
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-600">Rationale & Justification</p>
+                    <p class="text-base text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.rationale }}</p>
+                </div>
+                {% endif %}
+                {% if recommendation.proposed_solution %}
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-600">Proposed Solution</p>
+                    <p class="text-base text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.proposed_solution }}</p>
+                </div>
+                {% endif %}
+                {% if recommendation.implementation_strategy %}
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Implementation Strategy</p>
+                    <p class="text-base text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.implementation_strategy }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Impact Assessment -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center border-b border-gray-200 pb-3">
+                    <i class="fas fa-rocket text-orange-600 mr-3"></i>
+                    Impact Assessment
+                </h3>
+                {% if recommendation.expected_outcomes %}
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-600">Expected Outcomes</p>
+                    <p class="text-base text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.expected_outcomes }}</p>
+                </div>
+                {% endif %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% if recommendation.short_term_benefits %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Short-term Benefits (1-2 years)</p>
+                        <p class="text-base text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.short_term_benefits }}</p>
+                    </div>
+                    {% endif %}
+                    {% if recommendation.long_term_benefits %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Long-term Benefits (3+ years)</p>
+                        <p class="text-base text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.long_term_benefits }}</p>
+                    </div>
+                    {% endif %}
+                    {% if recommendation.potential_risks %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Potential Risks</p>
+                        <p class="text-base text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.potential_risks }}</p>
+                    </div>
+                    {% endif %}
+                    {% if recommendation.mitigation_strategies %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Mitigation Strategies</p>
+                        <p class="text-base text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.mitigation_strategies }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Sidebar -->
+        <div class="space-y-6">
+            <!-- Evidence Base -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center border-b border-gray-200 pb-3">
+                    <i class="fas fa-chart-bar text-emerald-600 mr-2"></i>
+                    Evidence Base
+                </h3>
+                {% if recommendation.related_assessments.exists %}
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-600 mb-2">Related MANA Assessments</p>
+                    <ul class="space-y-2">
+                        {% for assessment in recommendation.related_assessments.all %}
+                        <li class="text-sm text-blue-600 hover:text-blue-800">
+                            <a href="{% url 'common:mana_assessment_detail' assessment.id %}">
+                                <i class="fas fa-link mr-1"></i>
+                                {{ assessment.title }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                {% if recommendation.consultation_references %}
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-600">Consultation References</p>
+                    <p class="text-sm text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.consultation_references }}</p>
+                </div>
+                {% endif %}
+                {% if recommendation.research_data %}
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Research Data</p>
+                    <p class="text-sm text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.research_data }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Resources & Timeline -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center border-b border-gray-200 pb-3">
+                    <i class="fas fa-coins text-green-600 mr-2"></i>
+                    Resources & Timeline
+                </h3>
+                {% if recommendation.estimated_cost %}
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-600">Estimated Cost</p>
+                    <p class="text-xl font-bold text-green-600 mt-1">₱{{ recommendation.estimated_cost|floatformat:2 }}</p>
+                </div>
+                {% endif %}
+                {% if recommendation.budget_implications %}
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-600">Budget Breakdown</p>
+                    <p class="text-sm text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.budget_implications }}</p>
+                </div>
+                {% endif %}
+                {% if recommendation.implementation_start_date or recommendation.implementation_deadline %}
+                <div class="grid grid-cols-2 gap-4">
+                    {% if recommendation.implementation_start_date %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Start Date</p>
+                        <p class="text-sm text-gray-900 mt-1">{{ recommendation.implementation_start_date|date:"M d, Y" }}</p>
+                    </div>
+                    {% endif %}
+                    {% if recommendation.implementation_deadline %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Deadline</p>
+                        <p class="text-sm text-gray-900 mt-1">{{ recommendation.implementation_deadline|date:"M d, Y" }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Stakeholders -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center border-b border-gray-200 pb-3">
+                    <i class="fas fa-users text-teal-600 mr-2"></i>
+                    Stakeholders
+                </h3>
+                {% if recommendation.responsible_agencies.exists %}
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-600 mb-2">Responsible Agencies</p>
+                    <ul class="space-y-1">
+                        {% for agency in recommendation.responsible_agencies.all %}
+                        <li class="text-sm text-gray-900">
+                            <i class="fas fa-building mr-1 text-gray-500"></i>
+                            {{ agency.name }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                {% if recommendation.lgus_involved.exists or recommendation.ngas_involved.exists or recommendation.cso_partners.exists %}
+                <div class="grid grid-cols-1 gap-3">
+                    {% if recommendation.lgus_involved.exists %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">LGUs</p>
+                        <ul class="space-y-1">
+                            {% for lgu in recommendation.lgus_involved.all %}
+                            <li class="text-xs text-gray-900">{{ lgu.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    {% if recommendation.ngas_involved.exists %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">NGAs</p>
+                        <ul class="space-y-1">
+                            {% for nga in recommendation.ngas_involved.all %}
+                            <li class="text-xs text-gray-900">{{ nga.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    {% if recommendation.cso_partners.exists %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">CSO Partners</p>
+                        <ul class="space-y-1">
+                            {% for cso in recommendation.cso_partners.all %}
+                            <li class="text-xs text-gray-900">{{ cso.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% if recommendation.community_validated %}
+                <div class="mt-3 p-3 bg-emerald-50 rounded-lg border-l-4 border-emerald-500">
+                    <p class="text-xs font-medium text-emerald-800 flex items-center">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Community Validated
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Affected Communities -->
+            {% if recommendation.target_communities.exists %}
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center border-b border-gray-200 pb-3">
+                    <i class="fas fa-map-marked-alt text-indigo-600 mr-2"></i>
+                    Affected Communities
+                </h3>
+                <ul class="space-y-2 max-h-64 overflow-y-auto">
+                    {% for community in recommendation.target_communities.all %}
+                    <li class="text-sm text-gray-900 flex items-start">
+                        <i class="fas fa-map-pin mr-2 text-indigo-500 mt-1"></i>
+                        <span>{{ community.name }}, {{ community.barangay.name }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Additional Sections (Full Width) -->
+    {% if recommendation.monitoring_framework or recommendation.tracking_mechanisms %}
+    <div class="bg-white rounded-xl shadow-lg p-6 mt-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center border-b border-gray-200 pb-3">
+            <i class="fas fa-chart-line text-indigo-600 mr-3"></i>
+            Monitoring & Evaluation
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% if recommendation.monitoring_framework %}
+            <div>
+                <p class="text-sm font-medium text-gray-600">Monitoring Framework</p>
+                <p class="text-base text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.monitoring_framework }}</p>
+            </div>
+            {% endif %}
+            {% if recommendation.tracking_mechanisms %}
+            <div>
+                <p class="text-sm font-medium text-gray-600">Tracking Mechanisms</p>
+                <p class="text-base text-gray-900 mt-2 whitespace-pre-wrap">{{ recommendation.tracking_mechanisms }}</p>
+            </div>
+            {% endif %}
+            {% if recommendation.reporting_schedule %}
+            <div>
+                <p class="text-sm font-medium text-gray-600">Reporting Schedule</p>
+                <p class="text-base text-gray-900 mt-2">{{ recommendation.get_reporting_schedule_display }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if recommendation.notes %}
+    <div class="bg-white rounded-xl shadow-lg p-6 mt-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center border-b border-gray-200 pb-3">
+            <i class="fas fa-sticky-note text-amber-600 mr-3"></i>
+            Additional Notes
+        </h3>
+        <p class="text-base text-gray-900 whitespace-pre-wrap">{{ recommendation.notes }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

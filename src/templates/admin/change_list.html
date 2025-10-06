@@ -21,6 +21,11 @@
 
 {% block content %}
 <div class="change-list-wrapper">
+    <!-- Deprecation Warning (if applicable) -->
+    {% if deprecation_warning %}
+        {{ deprecation_warning|safe }}
+    {% endif %}
+
     <!-- Header Section -->
     <div class="obc-admin-card mb-6">
         <div class="obc-admin-card__header">

@@ -504,6 +504,9 @@ Example:
                                 <i class="fas fa-filter mr-1"></i>
                                 Filter Communities by Location
                             </p>
+                            <p class="text-xs text-blue-700 mb-4">
+                                Selected values will also tag this recommendation so it appears on the matching OBC profiles.
+                            </p>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                                 <!-- Region Filter -->
                                 <div>
@@ -511,7 +514,7 @@ Example:
                                         Region
                                     </label>
                                     <div class="relative">
-                                        <select id="filter_region"
+                                        <select id="filter_region" name="target_region"
                                                 class="block w-full py-2 px-3 text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none pr-10 bg-white">
                                             <option value="">All Regions</option>
                                             {% for region in regions %}
@@ -530,7 +533,7 @@ Example:
                                         Province
                                     </label>
                                     <div class="relative">
-                                        <select id="filter_province" disabled
+                                        <select id="filter_province" name="target_province" disabled
                                                 class="block w-full py-2 px-3 text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none pr-10 bg-white disabled:bg-gray-100">
                                             <option value="">Select Region First</option>
                                         </select>
@@ -546,7 +549,7 @@ Example:
                                         Municipality
                                     </label>
                                     <div class="relative">
-                                        <select id="filter_municipality" disabled
+                                        <select id="filter_municipality" name="target_municipality" disabled
                                                 class="block w-full py-2 px-3 text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none pr-10 bg-white disabled:bg-gray-100">
                                             <option value="">Select Province First</option>
                                         </select>
@@ -562,7 +565,7 @@ Example:
                                         Barangay
                                     </label>
                                     <div class="relative">
-                                        <select id="filter_barangay" disabled
+                                        <select id="filter_barangay" name="target_barangay" disabled
                                                 class="block w-full py-2 px-3 text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none pr-10 bg-white disabled:bg-gray-100">
                                             <option value="">Select Municipality First</option>
                                         </select>

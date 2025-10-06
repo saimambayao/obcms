@@ -232,7 +232,14 @@
                     <li class="relative border-l border-sky-100 pl-6">
                         <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-sky-500 ring-4 ring-sky-100"></span>
                         <p class="text-sm font-semibold text-gray-900 leading-tight">{{ coverage.municipality.name }}, {{ coverage.municipality.province.name }}</p>
-                        <p class="text-xs text-gray-500 mt-1">{{ coverage.total_obc_communities|default:"0" }} communities • {{ coverage.estimated_obc_population|default:0|intcomma }} population</p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            {{ coverage.total_obc_communities|default:"0" }} communities •
+                            {% if coverage.estimated_obc_population is not None %}
+                                {{ coverage.estimated_obc_population|intcomma }} population
+                            {% else %}
+                                No estimate recorded
+                            {% endif %}
+                        </p>
                         <p class="text-xs text-gray-400 mt-1">Updated {{ coverage.updated_at|naturaltime }}</p>
                     </li>
                     {% empty %}
@@ -256,7 +263,14 @@
                     <li class="relative border-l border-purple-100 pl-6">
                         <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-purple-500 ring-4 ring-purple-100"></span>
                         <p class="text-sm font-semibold text-gray-900 leading-tight">{{ province.province.name }} Province</p>
-                        <p class="text-xs text-gray-500 mt-1">{{ province.total_obc_communities|default:"0" }} communities • {{ province.estimated_obc_population|default:0|intcomma }} population</p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            {{ province.total_obc_communities|default:"0" }} communities •
+                            {% if province.estimated_obc_population is not None %}
+                                {{ province.estimated_obc_population|intcomma }} population
+                            {% else %}
+                                No estimate recorded
+                            {% endif %}
+                        </p>
                         <p class="text-xs text-gray-400 mt-1">Updated {{ province.updated_at|naturaltime }}</p>
                     </li>
                     {% empty %}

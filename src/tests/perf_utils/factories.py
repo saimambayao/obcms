@@ -10,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
 from common.models import CalendarResource, CalendarResourceBooking, StaffLeave
-from coordination.models import Event, EventParticipant
+from coordination.models import Event
 
 User = get_user_model()
 
@@ -165,8 +165,13 @@ def create_attendance_event(
     owner: User,
     *,
     participant_count: int = 40,
-) -> tuple[Event, list[EventParticipant]]:
-    """Create an event with internal participants ready for check-in."""
+) -> Event:
+    """Create an event ready for attendance tracking.
+
+    NOTE: EventParticipant model was removed during WorkItem migration.
+    This function now only creates the event without participants.
+    Use WorkItem model for full event functionality.
+    """
 
     now = timezone.now()
     event = create_event(
@@ -178,22 +183,4 @@ def create_attendance_event(
         status="scheduled",
     )
 
-    participants: list[EventParticipant] = []
-    for index in range(participant_count):
-        participant_user = User.objects.create_user(
-            username=f"perf_attendee_{event.id.hex}_{index}",
-            password="testpass123",
-            email=f"perf_attendee_{index}@example.com",
-            is_staff=True,
-            is_superuser=False,
-        )
-        participant = EventParticipant.objects.create(
-            event=event,
-            participant_type="internal",
-            participation_role="participant",
-            user=participant_user,
-            attendance_status="not_checked_in",
-        )
-        participants.append(participant)
-
-    return event, participants
+    return event

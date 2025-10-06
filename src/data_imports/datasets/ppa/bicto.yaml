@@ -1,0 +1,36 @@
+moa: "Bangsamoro Information and Communications Technology Office"
+acronym: "BICTO"
+ppas:
+  - title: "Harmonization of Bangsamoro Agenda on ICT"
+    description: ""
+    outcome_indicators:
+      - indicator: "Enhanced information and communications technology governance and collaboration in the BARMM region"
+        target: "Increasing"
+    output_indicators:
+      - indicator: "Number of ICT policies, standards, guidelines, or procedures developed and Information System Strategic Plan reviewed and endorsed"
+        target: 11
+      - indicator: "Number of information technology professionals and Bangsamoro digital users trained"
+        target: 410
+      - indicator: "Number of government offices and ministries linked to the Bangsamoro intranet"
+        target: 31
+      - indicator: "Number of free public Wi-Fi sites installed or established in public areas"
+        target: 15
+      - indicator: "Number of technical services provided to the ministries and offices"
+        target: 312
+      - indicator: "Number of ICT exhibitors that participated"
+        target: 10
+    approved_budget: 64594584.00
+special_provisions:
+  - title: "ICT Infrastructure and Management Services"
+    details: |
+      The amount of Forty-One Million Nine Hundred Eighty-Eight Thousand Fifty-Five Pesos (P41,988,055.00) appropriated shall be used exclusively for the following purposes:
+        (a) Intranet Phase II for BARMM Ministries and Offices. Twenty-One Million Nine Hundred Ninety-Seven Thousand Pesos (P21,997,000.00) and One Million One Hundred Eighteen Thousand One Hundred Pesos (P1,118,100.00) appropriated under Harmonization of Bangsamoro Agenda on ICT shall be used exclusively for the provision of ICT equipment, and repairs and maintenance and subscription expense, respectively, for the Intranet Phase II of BARMM ministries and offices, subject to the submission of Program Implementation Plan and Guidelines (PIPG);
+        (b) Bangsamoro Network (BangsaNet). Thirteen Million Eight Hundred Thirty-Two Thousand Nine Hundred Fifty-Five Pesos (P13,832,955.00) and Five Million Forty Thousand Pesos (P5,040,000.00) appropriated shall be used exclusively for the procurement of machineries and equipment, and subscription expense, respectively, for the free internet Wi-Fi connectivity in far-flung areas of BARMM and other requesting ministries, offices, and agencies.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on financial and physical accomplishments within thirty (30) days after each quarter through:
+        (a) Submission of hardcopy to the MFBM;
+        (b) Submission of reports through electronic means; and
+        (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the MFBM and other offices where submission of reports is required by existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

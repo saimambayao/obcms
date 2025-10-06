@@ -4,18 +4,13 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from .models import (
-    ActionItem,
     Communication,
     CommunicationSchedule,
     CommunicationTemplate,
     ConsultationFeedback,
     EngagementFacilitator,
     EngagementTracking,
-    Event,
-    EventDocument,
-    EventParticipant,
     MAOFocalPerson,
-    MAOQuarterlyReport,
     Organization,
     OrganizationContact,
     Partnership,
@@ -25,6 +20,10 @@ from .models import (
     StakeholderEngagement,
     StakeholderEngagementType,
 )
+
+# DEPRECATED: ActionItem, Event, EventDocument, EventParticipant, MAOQuarterlyReport
+# These models have been replaced by the WorkItem system or removed
+# See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
 
 
 # Organization Admin
@@ -318,40 +317,54 @@ class MAOFocalPersonAdmin(admin.ModelAdmin):
     is_active_badge.admin_order_field = "is_active"
 
 
-# Event Admin
-class EventParticipantInline(admin.TabularInline):
-    """Inline admin for event participants."""
+# ⚠️ DEPRECATED: Event Admin - All Event-related models are deprecated
+# Event model is abstract and replaced by WorkItem system
+# See: common.work_item_admin.WorkItemAdmin for replacement
 
-    model = EventParticipant
-    extra = 1
-    fields = (
-        "name",
-        "organization",
-        "participation_role",
-        "response_status",
-        "satisfaction_rating",
-    )
+# class EventParticipantInline(admin.TabularInline):
+#     """Inline admin for event participants."""
+#
+#     model = EventParticipant
+#     extra = 1
+#     fields = (
+#         "name",
+#         "organization",
+#         "participation_role",
+#         "response_status",
+#         "satisfaction_rating",
+#     )
+#
+#
+# class ActionItemInline(admin.TabularInline):
+#     """Inline admin for action items."""
+#
+#     model = ActionItem
+#     extra = 1
+#     fields = ("description", "assigned_to", "due_date", "priority", "status")
+#
+#
+# class EventDocumentInline(admin.TabularInline):
+#     """Inline admin for event documents."""
+#
+#     model = EventDocument
+#     extra = 1
+#     fields = ("document_type", "title", "file", "is_public")
 
 
-class ActionItemInline(admin.TabularInline):
-    """Inline admin for action items."""
-
-    model = ActionItem
-    extra = 1
-    fields = ("description", "assigned_to", "due_date", "priority", "status")
-
-
-class EventDocumentInline(admin.TabularInline):
-    """Inline admin for event documents."""
-
-    model = EventDocument
-    extra = 1
-    fields = ("document_type", "title", "file", "is_public")
-
-
-@admin.register(Event)
+# Event model is deprecated and marked as abstract - DO NOT register
+# Use WorkItem instead (see common.work_item_admin.WorkItemAdmin)
+# @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    """Admin interface for Events."""
+    """
+    ⚠️ DEPRECATED - Event model is abstract and replaced by WorkItem ⚠️
+
+    This admin class is kept for reference but NOT registered.
+    Use: WorkItemAdmin for managing activities and events.
+
+    Legacy Note: For simple project activities without participant tracking,
+    consider using WorkItem (type=Activity). Event was for coordination
+    meetings with participant management.
+    """
 
     list_display = (
         "title",
@@ -429,7 +442,7 @@ class EventAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = ("created_at", "updated_at")
-    inlines = [EventParticipantInline, ActionItemInline, EventDocumentInline]
+    # inlines = [EventParticipantInline, ActionItemInline, EventDocumentInline]
 
     def quarterly_coordination_badge(self, obj):
         """Display quarterly coordination status."""
@@ -472,60 +485,64 @@ class EventAdmin(admin.ModelAdmin):
     action_items_count.short_description = "Action Items"
 
 
-@admin.register(EventParticipant)
-class EventParticipantAdmin(admin.ModelAdmin):
-    """Admin interface for Event Participants."""
+# ⚠️ DEPRECATED: EventParticipant model references abstract Event
+# Use WorkItem system instead
+# @admin.register(EventParticipant)
+# class EventParticipantAdmin(admin.ModelAdmin):
+#     """Admin interface for Event Participants."""
+#
+#     list_display = (
+#         "name",
+#         "event",
+#         "organization",
+#         "participation_role",
+#         "response_status",
+#         "satisfaction_rating",
+#     )
+#     list_filter = ("response_status", "participation_role", "event__event_type")
+#     search_fields = ("name", "organization", "event__title")
+#     ordering = ("event__start_date", "name")
 
-    list_display = (
-        "name",
-        "event",
-        "organization",
-        "participation_role",
-        "response_status",
-        "satisfaction_rating",
-    )
-    list_filter = ("response_status", "participation_role", "event__event_type")
-    search_fields = ("name", "organization", "event__title")
-    ordering = ("event__start_date", "name")
 
-
-@admin.register(ActionItem)
-class ActionItemAdmin(admin.ModelAdmin):
-    """Admin interface for Action Items."""
-
-    list_display = (
-        "description_short",
-        "event",
-        "assigned_to",
-        "due_date",
-        "priority",
-        "status",
-        "overdue_indicator",
-    )
-    list_filter = ("status", "priority", "due_date", "event__event_type")
-    search_fields = ("description", "assigned_to", "event__title")
-    ordering = ("due_date", "priority")
-    date_hierarchy = "due_date"
-
-    def description_short(self, obj):
-        """Display shortened description."""
-        return (
-            obj.description[:50] + "..."
-            if len(obj.description) > 50
-            else obj.description
-        )
-
-    description_short.short_description = "Description"
-
-    def overdue_indicator(self, obj):
-        """Display overdue status."""
-        if obj.is_overdue:
-            return format_html(
-                '<span style="color: red; font-weight: bold;">⚠️ OVERDUE</span>'
-            )
-        return "✅"
-
-    overdue_indicator.short_description = "Status"
+# ⚠️ DEPRECATED: ActionItem model references abstract Event
+# Use WorkItem system instead
+# @admin.register(ActionItem)
+# class ActionItemAdmin(admin.ModelAdmin):
+#     """Admin interface for Action Items."""
+#
+#     list_display = (
+#         "description_short",
+#         "event",
+#         "assigned_to",
+#         "due_date",
+#         "priority",
+#         "status",
+#         "overdue_indicator",
+#     )
+#     list_filter = ("status", "priority", "due_date", "event__event_type")
+#     search_fields = ("description", "assigned_to", "event__title")
+#     ordering = ("due_date", "priority")
+#     date_hierarchy = "due_date"
+#
+#     def description_short(self, obj):
+#         """Display shortened description."""
+#         return (
+#             obj.description[:50] + "..."
+#             if len(obj.description) > 50
+#             else obj.description
+#         )
+#
+#     description_short.short_description = "Description"
+#
+#     def overdue_indicator(self, obj):
+#         """Display overdue status."""
+#         if obj.is_overdue:
+#             return format_html(
+#                 '<span style="color: red; font-weight: bold;">⚠️ OVERDUE</span>'
+#             )
+#         return "✅"
+#
+#     overdue_indicator.short_description = "Status"
 
 
 # Partnership Admin
@@ -883,47 +900,52 @@ class EngagementTrackingAdmin(admin.ModelAdmin):
 
 
 # Additional Admin Registrations
-@admin.register(EventDocument)
-class EventDocumentAdmin(admin.ModelAdmin):
-    """Admin interface for Event Documents."""
 
-    list_display = ("title", "event", "document_type", "is_public", "upload_date")
-    list_filter = ("document_type", "is_public", "upload_date")
-    search_fields = ("title", "event__title", "description")
-    ordering = ("-upload_date",)
+# ⚠️ DEPRECATED: EventDocument model references abstract Event
+# Use WorkItem system instead
+# @admin.register(EventDocument)
+# class EventDocumentAdmin(admin.ModelAdmin):
+#     """Admin interface for Event Documents."""
+#
+#     list_display = ("title", "event", "document_type", "is_public", "upload_date")
+#     list_filter = ("document_type", "is_public", "upload_date")
+#     search_fields = ("title", "event__title", "description")
+#     ordering = ("-upload_date",)
 
 
-@admin.register(MAOQuarterlyReport)
-class MAOQuarterlyReportAdmin(admin.ModelAdmin):
-    """Admin for quarterly coordination reports submitted by MAOs."""
-
-    list_display = (
-        "meeting",
-        "mao",
-        "submitted_by",
-        "submitted_at",
-        "total_budget_allocated",
-        "total_obc_beneficiaries",
-    )
-    list_filter = (
-        "meeting__fiscal_year",
-        "meeting__quarter",
-        "mao",
-    )
-    search_fields = (
-        "meeting__title",
-        "mao__name",
-        "accomplishments",
-        "challenges",
-    )
-    autocomplete_fields = (
-        "meeting",
-        "mao",
-        "ppas_implemented",
-        "regions_covered",
-        "submitted_by",
-    )
-    filter_horizontal = ("ppas_implemented", "regions_covered")
+# ⚠️ DEPRECATED: MAOQuarterlyReport model references abstract Event
+# Use WorkItem system instead
+# @admin.register(MAOQuarterlyReport)
+# class MAOQuarterlyReportAdmin(admin.ModelAdmin):
+#     """Admin for quarterly coordination reports submitted by MAOs."""
+#
+#     list_display = (
+#         "meeting",
+#         "mao",
+#         "submitted_by",
+#         "submitted_at",
+#         "total_budget_allocated",
+#         "total_obc_beneficiaries",
+#     )
+#     list_filter = (
+#         "meeting__fiscal_year",
+#         "meeting__quarter",
+#         "mao",
+#     )
+#     search_fields = (
+#         "meeting__title",
+#         "mao__name",
+#         "accomplishments",
+#         "challenges",
+#     )
+#     autocomplete_fields = (
+#         "meeting",
+#         "mao",
+#         "ppas_implemented",
+#         "regions_covered",
+#         "submitted_by",
+#     )
+#     filter_horizontal = ("ppas_implemented", "regions_covered")
 
 
 @admin.register(PartnershipSignatory)

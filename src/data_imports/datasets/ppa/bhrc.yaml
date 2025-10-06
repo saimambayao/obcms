@@ -1,0 +1,74 @@
+moa: "Bangsamoro Human Rights Commission"
+acronym: "BHRC"
+ppas:
+  - title: "Human Rights Protection"
+    description: ""
+    outcome_indicators:
+      - indicator: "Access to justice and protection of human rights strengthened"
+        target: null
+      - indicator: "Percentage of human rights cases resolved"
+        target: null
+    output_indicators:
+      - indicator: "Human Rights Investigation: Number of human rights complaints or motu proprio cases under investigation"
+        target: 150
+      - indicator: "Legal Assistance: Number of individuals provided with legal assistance"
+        target: 2800
+      - indicator: "Jail and Detention Visits: Number of jail, detention, and other facilities visits and monitoring conducted"
+        target: 84
+      - indicator: "Financial Assistance: Number of victims granted with financial assistance"
+        target: 96
+      - indicator: "Research on Social Injustices: Number of cases of past human rights violations documented"
+        target: 8
+    approved_budget: 8783529.00
+  - title: "Human Rights Promotion"
+    description: ""
+    outcome_indicators:
+      - indicator: "Increased number of individuals with knowledge on human rights"
+        target: null
+      - indicator: "Increased number of duty-bearers capacitated on human rights"
+        target: null
+      - indicator: "Increased number of individuals aware of human rights"
+        target: null
+    output_indicators:
+      - indicator: "Human Rights Education: Number of individuals with increased knowledge on human rights"
+        target: 2940
+      - indicator: "Human Rights Education Outside BARMM: Number of individuals residing outside BARMM with increased knowledge"
+        target: 400
+      - indicator: "Strengthening Capacities of Duty-Bearers: Number of individuals from priority sectors oriented"
+        target: 1960
+      - indicator: "Paralegal Capacities: Number of individuals trained as paralegals"
+        target: 50
+      - indicator: "Advocacy and Campaign: Number of participants to human rights celebrations, campaigns, events, and summit"
+        target: 600
+      - indicator: "IEC Development and Dissemination: Number of IEC materials developed"
+        target: 7
+      - indicator: "IEC Development and Dissemination: Number of IEC materials disseminated"
+        target: 3000
+    approved_budget: 11654620.00
+  - title: "Policy Research and Advisory Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Increased number of legislations and policies with human rights lens"
+        target: null
+      - indicator: "Increased number of human rights partners established"
+        target: null
+    output_indicators:
+      - indicator: "Review of Legislation: Number of statements, position papers, and stands on bills prepared"
+        target: 12
+      - indicator: "Coordination Meeting: Number of coordination meetings with civil society organizations or human rights defenders conducted"
+        target: 28
+      - indicator: "Establishment of Partnership: Number of memoranda of agreement, understanding, or collaboration entered into"
+        target: 4
+    approved_budget: 2172021.00
+special_provisions:
+  - title: "Human Rights Protection"
+    details: |
+      The amount of One Million Eight Hundred Forty Thousand Pesos (P1,840,000.00) appropriated for the Financial Assistance to Victims of Human Rights Violations and Witness Protection Program shall be released only upon submission of Program Implementation Plan and Guidelines and quarterly status report of implementation to MFBM.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on its financial and physical accomplishments within thirty (30) days after the end of every quarter through:
+      (a) Submission of hardcopy to the MFBM;
+      (b) Submission of reports through electronic means; and
+      (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when said reports have been submitted or posted on its website to the MFBM and other offices where the submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

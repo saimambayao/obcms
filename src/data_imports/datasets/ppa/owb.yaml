@@ -1,0 +1,50 @@
+moa: "Office of the Wali"
+acronym: "WALI"
+ppas:
+  - title: "Institutional Development"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of public ceremonies attended"
+        target: "100%"
+      - indicator: "Percentage of employees whose oaths were administered and/or attended"
+        target: "100%"
+      - indicator: "Percentage of foreign and local dignitaries welcomed"
+        target: "100%"
+      - indicator: "Percentage of Bangsamoro Parliament session opened"
+        target: "100%"
+    output_indicators:
+      - indicator: "Number of public ceremonies attended"
+        target: 30
+      - indicator: "Number of employees whose oaths were administered and/or attended"
+        target: 80
+      - indicator: "Number of foreign and local dignitaries welcomed"
+        target: 45
+      - indicator: "Number of Bangsamoro Parliament session opened"
+        target: 1
+    approved_budget: 33173851.00
+  - title: "Employees Development and Capacity Building"
+    description: ""
+    outcome_indicators: []
+    output_indicators: []
+    approved_budget: 2528240.00
+  - title: "Support to Bangsamoro Government Initiatives"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of support to Bangsamoro government initiatives activities conducted and participated"
+        target: "100%"
+    output_indicators:
+      - indicator: "Number of support to Bangsamoro government initiatives activities conducted and participated"
+        target: 25
+    approved_budget: 11176460.00
+special_provisions:
+  - title: "Per Diem of the Wali"
+    details: |
+      The amount of Two Hundred Three Thousand Two Hundred Pesos (P203,200.00) per month or an annual amount of Two Million Four Hundred Thirty-Eight Thousand Four Hundred Pesos (P2,438,400.00) appropriated shall be used as the per diem of the Wali pursuant to Section 5 Article VIII of R.A. No. 11054.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on its financial and physical accomplishments within thirty (30) days after the end of every quarter through:
+      (a) Submission of hardcopy to the MFBM;
+      (b) Submission of reports through electronic means; and
+      (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when said reports have been submitted or posted on its website to the MFBM and other offices where the submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

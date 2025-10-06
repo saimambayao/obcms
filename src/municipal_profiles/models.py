@@ -376,8 +376,11 @@ class OBCCommunityHistory(TimeStampedModel):
 
     community = models.ForeignKey(
         "communities.OBCCommunity",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="history_entries",
+        help_text="OBC Community that this history entry references (preserved even if community is deleted).",
     )
     snapshot = models.JSONField(default=dict, blank=True)
     source = models.CharField(max_length=20, choices=SOURCE_CHOICES)
@@ -396,7 +399,8 @@ class OBCCommunityHistory(TimeStampedModel):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:  # pragma: no cover - trivial repr
-        return f"{self.community} snapshot @ {self.created_at:%Y-%m-%d %H:%M}"
+        community_name = self.community if self.community else "[Deleted Community]"
+        return f"{community_name} snapshot @ {self.created_at:%Y-%m-%d %H:%M}"
 
 
 @dataclass

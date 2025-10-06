@@ -1,3 +1,4 @@
+{% load task_tags %}
 <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full">
     <div class="flex items-start justify-between px-6 py-5 border-b border-gray-200">
         <div class="space-y-1">
@@ -127,7 +128,8 @@
                         <p class="font-semibold text-gray-900">{{ task.title }}</p>
                         <p class="text-xs text-gray-500">Status: {{ task.get_status_display }}</p>
                     </div>
-                    <a href="{% url 'common:staff_task_modal' task.id %}" class="inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                    {% task_action_url task 'detail' as event_modal_task_url %}
+                    <a href="{{ event_modal_task_url }}" class="inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700"
                        onclick="event.preventDefault(); if (typeof window.openCalendarModal === 'function') { window.openCalendarModal(this.getAttribute('href')); } else { window.location.href = this.getAttribute('href'); }">
                         <i class="fas fa-pen"></i>Manage task
                     </a>
@@ -236,19 +238,10 @@
                 <div class="flex flex-wrap gap-2">
                     <!-- View Project Button (if project activity) -->
                     {% if event.is_project_activity and event.related_project %}
-                    <a href="{% url 'project_central:project_workflow_detail' event.related_project.id %}"
+                    <a href="{% url 'common:work_item_detail' pk=event.related_project.work_item_id %}"
                        class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-purple-600 hover:text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-50">
                         <i class="fas fa-project-diagram"></i>
                         View Project
-                    </a>
-                    {% endif %}
-
-                    <!-- View Tasks Button (if tasks exist) -->
-                    {% if event.staff_tasks.exists %}
-                    <a href="{% url 'common:staff_task_board' %}?event_id={{ event.id }}"
-                       class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-50">
-                        <i class="fas fa-tasks"></i>
-                        View Tasks ({{ event.staff_tasks.count }})
                     </a>
                     {% endif %}
 
@@ -278,8 +271,7 @@
                       hx-target="#taskModalContent"
                       hx-swap="innerHTML"
                       class="inline-block"
-                      hx-indicator="#delete-loading-{{ event.id }}"
-                      hx-on::after-request="if(event.detail.successful) { document.body.dispatchEvent(new CustomEvent('task-modal-close')); document.body.dispatchEvent(new CustomEvent('task-board-refresh')); }">
+                      hx-indicator="#delete-loading-{{ event.id }}">
                     {% csrf_token %}
                     <input type="hidden" name="confirm" value="yes">
                     <button type="submit" class="px-3 py-1.5 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg">

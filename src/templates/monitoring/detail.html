@@ -1,168 +1,399 @@
 {% extends "base.html" %}
+{% load humanize static %}
 
 {% block title %}M&E · {{ entry.title }}{% endblock %}
 
 {% block breadcrumb %}
 <li>
-    <a href="{% url 'common:dashboard' %}" class="text-white/80 hover:text-white">Dashboard</a>
-    <span class="text-white/60 mx-1">/</span>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+    <span class="text-neutral-400 mx-1">/</span>
 </li>
 <li>
-    <a href="{% url 'monitoring:home' %}" class="text-white/80 hover:text-white">Monitoring &amp; Evaluation</a>
-    <span class="text-white/60 mx-1">/</span>
+    <a href="{% url 'monitoring:home' %}" class="text-neutral-500 hover:text-neutral-700">Monitoring &amp; Evaluation</a>
+    <span class="text-neutral-400 mx-1">/</span>
 </li>
-<li class="text-white font-semibold truncate max-w-xs">{{ entry.title }}</li>
+{% if entry.category == "moa_ppa" %}
+<li>
+    <a href="{% url 'monitoring:moa_ppas' %}" class="text-neutral-500 hover:text-neutral-700">MOA PPAs</a>
+    <span class="text-neutral-400 mx-1">/</span>
+</li>
+{% endif %}
+<li class="text-neutral-800 font-semibold truncate max-w-xs">{{ entry.title }}</li>
 {% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-    <div class="bg-white border border-neutral-200 rounded-xl shadow">
-        <div class="px-6 py-5 border-b border-neutral-200 flex flex-col md:flex-row md:justify-between md:items-center">
-            <div>
-                <h1 class="text-2xl font-semibold text-neutral-900">{{ entry.title }}</h1>
-                <p class="text-sm text-neutral-500">{{ entry.get_category_display }}</p>
-            </div>
-            <div class="mt-4 md:mt-0 flex flex-wrap gap-2">
-                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">{{ entry.get_status_display }}</span>
-                {% if entry.is_request and entry.request_status %}
-                    <span class="px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-700">{{ entry.get_request_status_display }}</span>
+    <!-- Hero -->
+    <header class="rounded-3xl bg-bangsamoro-gradient text-white shadow-xl p-8">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div class="space-y-3 max-w-3xl">
+                <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>{{ entry.get_category_display }}</span>
+                </div>
+                <h1 class="text-3xl font-semibold leading-tight">{{ entry.title }}</h1>
+                {% if entry.implementing_moa %}
+                <h3 class="text-xl font-semibold text-white/90">Implementing MOA: {{ entry.implementing_moa.name }}</h3>
+                {% else %}
+                <h3 class="text-xl font-semibold text-white/70">Implementing MOA: Not specified</h3>
                 {% endif %}
-                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">Priority: {{ entry.get_priority_display }}</span>
-                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700">Progress: {{ entry.progress }}%</span>
-            </div>
-        </div>
-        <div class="px-6 py-6 grid gap-6 md:grid-cols-2">
-            <div class="space-y-4">
                 {% if entry.summary %}
-                    <div>
-                        <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide">Overview</h2>
-                        <p class="mt-2 text-sm text-neutral-700 whitespace-pre-line">{{ entry.summary }}</p>
-                    </div>
+                <p class="text-white/85 text-base">{{ entry.summary }}</p>
                 {% endif %}
-                <div>
-                    <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide">Lead &amp; Coverage</h2>
-                    <ul class="mt-2 space-y-2 text-sm text-neutral-700">
-                        {% if entry.lead_organization %}
-                            <li><span class="font-semibold">Lead Organization:</span> {{ entry.lead_organization.name }}</li>
-                        {% elif entry.oobc_unit %}
-                            <li><span class="font-semibold">OOBC Unit:</span> {{ entry.oobc_unit }}</li>
-                        {% endif %}
-                        {% if entry.submitted_by_community %}
-                            <li><span class="font-semibold">Requesting OBC:</span> {{ entry.submitted_by_community.name }}</li>
-                        {% endif %}
-                        {% if entry.submitted_to_organization %}
-                            <li><span class="font-semibold">Receiving Office:</span> {{ entry.submitted_to_organization.name }}</li>
-                        {% endif %}
-                        {% with entry.supporting_organizations.all as support_orgs %}
-                            {% if support_orgs %}
-                                <li><span class="font-semibold">Supporting Partners:</span>
-                                    {% for org in support_orgs %}
-                                        {{ org.name }}{% if not forloop.last %}, {% endif %}
-                                    {% endfor %}
-                                </li>
-                            {% endif %}
-                        {% endwith %}
-                        {% with entry.communities.all as target_communities %}
-                            {% if target_communities %}
-                                <li><span class="font-semibold">Beneficiary OBCs:</span>
-                                    {% for community in target_communities %}
-                                        {{ community.name }}{% if not forloop.last %}, {% endif %}
-                                    {% endfor %}
-                                </li>
-                            {% endif %}
-                        {% endwith %}
-                    </ul>
-                </div>
-                <div class="grid grid-cols-2 gap-3 text-sm text-neutral-700">
-                    {% if entry.start_date %}
-                        <div class="bg-neutral-50 rounded-lg border border-neutral-200 p-3">
-                            <p class="text-xs text-neutral-500 uppercase">Start</p>
-                            <p class="font-semibold">{{ entry.start_date|date:"M j, Y" }}</p>
-                        </div>
-                    {% endif %}
-                    {% if entry.target_end_date %}
-                        <div class="bg-neutral-50 rounded-lg border border-neutral-200 p-3">
-                            <p class="text-xs text-neutral-500 uppercase">Target End</p>
-                            <p class="font-semibold">{{ entry.target_end_date|date:"M j, Y" }}</p>
-                        </div>
-                    {% endif %}
-                    {% if entry.actual_end_date %}
-                        <div class="bg-neutral-50 rounded-lg border border-neutral-200 p-3">
-                            <p class="text-xs text-neutral-500 uppercase">Actual End</p>
-                            <p class="font-semibold">{{ entry.actual_end_date|date:"M j, Y" }}</p>
-                        </div>
-                    {% endif %}
-                    {% if entry.next_milestone_date %}
-                        <div class="bg-neutral-50 rounded-lg border border-neutral-200 p-3">
-                            <p class="text-xs text-neutral-500 uppercase">Next Milestone</p>
-                            <p class="font-semibold">{{ entry.next_milestone_date|date:"M j, Y" }}</p>
-                        </div>
-                    {% endif %}
-                </div>
             </div>
-            <div class="space-y-4">
-                {% if entry.outcome_indicators %}
-                    <div>
-                        <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide">Outcome Indicators</h2>
-                        <p class="mt-2 text-sm text-neutral-700 whitespace-pre-line">{{ entry.outcome_indicators }}</p>
-                    </div>
-                {% endif %}
-                {% if entry.accomplishments %}
-                    <div>
-                        <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide">Accomplishments</h2>
-                        <p class="mt-2 text-sm text-neutral-700 whitespace-pre-line">{{ entry.accomplishments }}</p>
-                    </div>
-                {% endif %}
-                {% if entry.challenges %}
-                    <div>
-                        <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide">Challenges &amp; Risks</h2>
-                        <p class="mt-2 text-sm text-neutral-700 whitespace-pre-line">{{ entry.challenges }}</p>
-                    </div>
-                {% endif %}
-                {% if entry.support_required %}
-                    <div>
-                        <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide">Support Requested</h2>
-                        <p class="mt-2 text-sm text-neutral-700 whitespace-pre-line">{{ entry.support_required }}</p>
-                    </div>
-                {% endif %}
-                {% if entry.follow_up_actions %}
-                    <div>
-                        <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide">Follow-up Actions</h2>
-                        <p class="mt-2 text-sm text-neutral-700 whitespace-pre-line">{{ entry.follow_up_actions }}</p>
-                    </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="px-3 py-1.5 text-xs font-semibold rounded-full bg-white/15 uppercase tracking-wide">Priority: {{ entry.get_priority_display }}</span>
+                <span class="px-3 py-1.5 text-xs font-semibold rounded-full bg-emerald-200/20 text-white">Progress: {{ entry.progress }}%</span>
+                <span class="px-3 py-1.5 text-xs font-semibold rounded-full bg-white/15">Status: {{ entry.get_status_display }}</span>
+                {% if entry.is_request and entry.request_status %}
+                    <span class="px-3 py-1.5 text-xs font-semibold rounded-full bg-orange-200/20 text-white">Request: {{ entry.get_request_status_display }}</span>
                 {% endif %}
             </div>
         </div>
-        <div class="px-6 py-4 bg-neutral-50 border-t border-neutral-200 grid gap-3 md:grid-cols-3 text-sm">
+        <div class="mt-6 grid gap-4 md:grid-cols-3 text-sm text-white/80">
             <div>
-                <p class="text-xs text-neutral-500 uppercase">Budget Allocation</p>
-                <p class="font-semibold text-neutral-800">{% if entry.budget_allocation %}{{ entry.budget_currency }} {{ entry.budget_allocation|floatformat:2 }}{% else %}—{% endif %}</p>
+                <p class="text-xs uppercase tracking-wide">Record Owners</p>
+                <p class="font-semibold">
+                    {% with creator=entry.created_by %}
+                        {% if creator %}
+                            Created by {{ creator.get_full_name|default:creator.username }}
+                        {% else %}
+                            Created by OBCMS Admin
+                        {% endif %}
+                    {% endwith %}
+                    {% with updater=entry.updated_by %}
+                        {% if updater %}
+                            · Updated by {{ updater.get_full_name|default:updater.username }}
+                        {% endif %}
+                    {% endwith %}
+                </p>
             </div>
             <div>
-                <p class="text-xs text-neutral-500 uppercase">Last Status Update</p>
-                <p class="font-semibold text-neutral-800">{% if entry.last_status_update %}{{ entry.last_status_update|date:"M j, Y" }}{% else %}—{% endif %}</p>
+                <p class="text-xs uppercase tracking-wide">Last Updated</p>
+                <p class="font-semibold">{{ entry.updated_at|date:"M j, Y • h:i A" }}</p>
             </div>
             <div>
-                <p class="text-xs text-neutral-500 uppercase">Record Owners</p>
-                <p class="font-semibold text-neutral-800">Created by {{ entry.created_by|default:"N/A" }}{% if entry.updated_by %}, updated by {{ entry.updated_by }}{% endif %}</p>
+                <p class="text-xs uppercase tracking-wide">Approval Status</p>
+                <p class="font-semibold">{{ entry.get_approval_status_display }}</p>
             </div>
         </div>
-    </div>
+    </header>
 
-    <div class="grid gap-6 lg:grid-cols-3">
-        <div class="lg:col-span-2 bg-white border border-neutral-200 rounded-xl shadow">
-            <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-neutral-800">Timeline &amp; Updates</h2>
-                <span class="text-sm text-neutral-500">{{ updates|length }} records</span>
+    <!-- Tab Navigation (for MOA PPAs only) -->
+    {% if entry.category == "moa_ppa" %}
+    <section class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                <button type="button"
+                        onclick="switchPPATab('details')"
+                        id="tab-details"
+                        class="ppa-tab border-b-2 border-blue-500 text-blue-600 py-4 px-1 text-sm font-medium">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    PPA Details
+                </button>
+                <button type="button"
+                        onclick="switchPPATab('work-items')"
+                        id="tab-work-items"
+                        class="ppa-tab border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 text-sm font-medium">
+                    <i class="fas fa-tasks mr-2"></i>
+                    Work Items
+                    {% if entry.workitem_tracking_enabled %}
+                        <span class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                            Active
+                        </span>
+                    {% endif %}
+                </button>
+                <button type="button"
+                        onclick="switchPPATab('budget')"
+                        id="tab-budget"
+                        class="ppa-tab border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 text-sm font-medium">
+                    <i class="fas fa-chart-pie mr-2"></i>
+                    Budget Tracking
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab Content Container -->
+        <div id="ppa-tab-content" class="p-6">
+            <!-- Details Tab (Default) -->
+            <div id="details-tab-content" class="tab-content-panel">
+                <!-- This will be populated via JS to avoid duplicating HTML -->
             </div>
+
+            <!-- Work Items Tab -->
+            <div id="work-items-tab-content" class="tab-content-panel hidden">
+                {% include "monitoring/partials/work_items_tab.html" %}
+            </div>
+
+            <!-- Budget Tab -->
+            <div id="budget-tab-content" class="tab-content-panel hidden">
+                <div class="text-center py-10 text-gray-500">
+                    <i class="fas fa-chart-line text-4xl mb-3 text-gray-400"></i>
+                    <p>Budget tracking details coming soon...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Overview & Timeline -->
+    <section class="grid gap-6 lg:grid-cols-2" id="ppa-overview-section">
+        <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+            <header class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fas fa-info"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">PPA Overview</h2>
+                    <p class="text-sm text-gray-500">Details taken from the MOA PPA intake form.</p>
+                </div>
+            </header>
+            <div class="grid gap-4 md:grid-cols-2 text-sm text-gray-700">
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Implementing MOA</p>
+                    <p class="font-semibold">{{ entry.implementing_moa.name|default:"Not specified" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Lead Organization / OOBC Unit</p>
+                    {% if entry.lead_organization %}
+                        <p class="font-semibold">{{ entry.lead_organization.name }}</p>
+                    {% elif entry.oobc_unit %}
+                        <p class="font-semibold">{{ entry.oobc_unit }}</p>
+                    {% else %}
+                        <p class="text-gray-500">Not assigned</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Approved Budget</p>
+                    <p class="font-semibold">{% if entry.budget_allocation %}₱{{ entry.budget_allocation|floatformat:2|intcomma }}{% else %}—{% endif %}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Budget Share for OBCs</p>
+                    <p class="font-semibold">{% if entry.budget_obc_allocation %}₱{{ entry.budget_obc_allocation|floatformat:2|intcomma }}{% else %}—{% endif %}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Total Beneficiary Slots</p>
+                    <p class="font-semibold">{{ entry.total_slots|default:"—" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Slots for OBCs</p>
+                    <p class="font-semibold">{{ entry.obc_slots|default:"—" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Fiscal Year</p>
+                    <p class="font-semibold">{{ entry.fiscal_year|default:"—" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Plan Reference</p>
+                    <p class="font-semibold">{{ entry.plan_reference|default:"—" }}</p>
+                </div>
+            </div>
+        </article>
+
+        <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+            <header class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center"><i class="fas fa-calendar"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Timeline &amp; Resources</h2>
+                    <p class="text-sm text-gray-500">Track status, milestones, and workflow approvals.</p>
+                </div>
+            </header>
+            <div class="space-y-3">
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <div class="flex items-center justify-between text-sm text-gray-600">
+                        <span>Progress</span>
+                        <span class="font-semibold text-gray-900">{{ entry.progress }}%</span>
+                    </div>
+                    <div class="mt-2 h-2 rounded-full bg-gray-200 overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-emerald-500 to-emerald-600" style="width: {{ entry.progress }}%"></div>
+                    </div>
+                </div>
+                <div class="grid gap-3 md:grid-cols-2 text-sm text-gray-700">
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-3">
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">Start Date</p>
+                        <p class="font-semibold">{% if entry.start_date %}{{ entry.start_date|date:"M j, Y" }}{% else %}—{% endif %}</p>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-3">
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">Target End Date</p>
+                        <p class="font-semibold">{% if entry.target_end_date %}{{ entry.target_end_date|date:"M j, Y" }}{% else %}—{% endif %}</p>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-3">
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">Actual End Date</p>
+                        <p class="font-semibold">{% if entry.actual_end_date %}{{ entry.actual_end_date|date:"M j, Y" }}{% else %}—{% endif %}</p>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-3">
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">Next Milestone</p>
+                        <p class="font-semibold">{% if entry.next_milestone_date %}{{ entry.next_milestone_date|date:"M j, Y" }}{% else %}—{% endif %}</p>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 md:col-span-2">
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">Approval Notes</p>
+                        <p class="font-semibold text-gray-900">{{ entry.approval_notes|default:"No approval notes yet." }}</p>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Coverage & Beneficiaries -->
+    <section class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-5">
+        <header class="flex items-center gap-3">
+            <span class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fas fa-map-marker-alt"></i></span>
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900">Geographic Coverage &amp; Beneficiaries</h2>
+                <p class="text-sm text-gray-500">Locations and communities served by this MOA PPA.</p>
+            </div>
+        </header>
+        <div class="grid gap-4 md:grid-cols-2 text-sm text-gray-700">
+            <div>
+                <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Region</p>
+                <p class="font-semibold">{{ entry.coverage_region.name|default:"—" }}</p>
+            </div>
+            <div>
+                <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Province</p>
+                <p class="font-semibold">{{ entry.coverage_province.name|default:"—" }}</p>
+            </div>
+            <div>
+                <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Municipality</p>
+                <p class="font-semibold">{{ entry.coverage_municipality.name|default:"—" }}</p>
+            </div>
+            <div>
+                <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Barangay</p>
+                <p class="font-semibold">{{ entry.coverage_barangay.name|default:"—" }}</p>
+            </div>
+        </div>
+        <div class="grid gap-4 md:grid-cols-2">
+            <div>
+                <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Beneficiary OBC Communities</p>
+                {% with entry.communities.all as communities %}
+                    {% if communities %}
+                        <ul class="space-y-1 text-sm text-gray-700">
+                            {% for community in communities %}
+                                <li class="flex items-center gap-2"><span class="inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>{{ community.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-sm text-gray-500">No communities linked yet.</p>
+                    {% endif %}
+                {% endwith %}
+            </div>
+            <div>
+                <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">OBC Impact Narrative</p>
+                <p class="text-sm text-gray-700 whitespace-pre-line">{{ entry.obcs_benefited|default:"Document the expected impact on OBC beneficiaries." }}</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Outcomes & Notes -->
+    <section class="grid gap-6 lg:grid-cols-2">
+        <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+            <header class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fas fa-bullseye"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Outcomes &amp; Indicators</h2>
+                    <p class="text-sm text-gray-500">Targets captured from the MOA PPAs submission.</p>
+                </div>
+            </header>
+            {% with framework=entry.outcome_framework %}
+                {% if framework.outputs or framework.outcomes %}
+                    <div class="space-y-4">
+                        {% if framework.outcomes %}
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Outcome Indicators</p>
+                                <ul class="space-y-2 text-sm text-gray-700">
+                                    {% for item in framework.outcomes %}
+                                        <li class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-2">
+                                            <span class="font-semibold">{{ item.indicator }}</span>
+                                            {% if item.target %}<span class="text-gray-500"> · Target: {{ item.target }}</span>{% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                        {% if framework.outputs %}
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Output Indicators</p>
+                                <ul class="space-y-2 text-sm text-gray-700">
+                                    {% for item in framework.outputs %}
+                                        <li class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-2">
+                                            <span class="font-semibold">{{ item.indicator }}</span>
+                                            {% if item.target %}<span class="text-gray-500"> · Target: {{ item.target }}</span>{% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray-500">Outcome and output indicators have not been recorded yet.</p>
+                {% endif %}
+            {% endwith %}
+            {% with entry.standard_outcome_indicators.all as standard_indicators %}
+                {% if standard_indicators %}
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Standard Indicators Linked</p>
+                        <ul class="space-y-1 text-sm text-gray-700">
+                            {% for indicator in standard_indicators %}
+                                <li class="flex items-center gap-2"><span class="inline-flex h-2 w-2 rounded-full bg-purple-500"></span>{{ indicator.indicator_name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </article>
+
+        <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+            <header class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center"><i class="fas fa-comments"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Implementation Notes</h2>
+                    <p class="text-sm text-gray-500">Operational insights and support requirements.</p>
+                </div>
+            </header>
+            <div class="space-y-4 text-sm text-gray-700">
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Special Provision</p>
+                    <p class="whitespace-pre-line">{{ special_provision_text|default:"No Special Provision under the General Appropriations Act or Other Sources."|linebreaksbr }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Accomplishments</p>
+                    <p class="whitespace-pre-line">{{ entry.accomplishments|default:"No accomplishments recorded yet." }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Challenges &amp; Risks</p>
+                    <p class="whitespace-pre-line">{{ entry.challenges|default:"No challenges logged." }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Support Requested</p>
+                    {% if support_text_clean %}
+                    <p class="whitespace-pre-line">{{ support_text_clean }}</p>
+                    {% else %}
+                    <p>No support requests at this time.</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Follow-up Actions</p>
+                    <p class="whitespace-pre-line">{{ entry.follow_up_actions|default:"No follow-up actions noted." }}</p>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Timeline & Updates -->
+    <section class="grid gap-6 lg:grid-cols-3">
+        <article class="order-1 lg:order-2 lg:col-span-2 bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Timeline &amp; Updates</h2>
+                    <p class="text-sm text-gray-500">Latest coordination notes and status checkpoints.</p>
+                </div>
+                <span class="text-sm text-gray-500">{{ updates|length }} records</span>
+            </header>
             <div class="px-6 py-6 space-y-4">
                 {% for update in updates %}
-                    <div class="border border-neutral-200 rounded-lg p-4 bg-neutral-50">
+                    <div class="border border-gray-200 rounded-xl p-4 bg-gray-50">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 flex-wrap">
                                 <span class="px-2 py-1 text-xs font-semibold rounded bg-blue-200 text-blue-900">{{ update.get_update_type_display }}</span>
                                 {% if update.status %}
-                                    <span class="text-xs font-semibold text-neutral-600">Status: {{ update.get_status_display }}</span>
+                                    <span class="text-xs font-semibold text-gray-700">Status: {{ update.get_status_display }}</span>
                                 {% endif %}
                                 {% if update.request_status %}
                                     <span class="text-xs font-semibold text-orange-600">Request: {{ update.get_request_status_display }}</span>
@@ -171,74 +402,117 @@
                                     <span class="text-xs font-semibold text-emerald-600">Progress: {{ update.progress }}%</span>
                                 {% endif %}
                             </div>
-                            <div class="text-xs text-neutral-500">{{ update.created_at|date:"M j, Y H:i" }} · {{ update.created_by|default:"System" }}</div>
+                            <div class="text-xs text-gray-500">{{ update.created_at|date:"M j, Y h:i A" }} · {{ update.created_by|default:"System" }}</div>
                         </div>
-                        <p class="text-sm text-neutral-700 mt-3 whitespace-pre-line">{{ update.notes }}</p>
+                        {% if update.notes %}
+                        <p class="text-sm text-gray-700 mt-3 whitespace-pre-line">{{ update.notes }}</p>
+                        {% endif %}
                         {% if update.next_steps %}
-                            <p class="mt-2 text-xs text-neutral-600"><span class="font-semibold">Next steps:</span> {{ update.next_steps }}</p>
+                            <p class="mt-2 text-xs text-gray-600"><span class="font-semibold">Next steps:</span> {{ update.next_steps }}</p>
                         {% endif %}
                         {% if update.follow_up_date %}
-                            <p class="mt-2 text-xs text-neutral-600"><span class="font-semibold">Follow-up:</span> {{ update.follow_up_date|date:"M j, Y" }}</p>
+                            <p class="mt-2 text-xs text-gray-600"><span class="font-semibold">Follow-up:</span> {{ update.follow_up_date|date:"M j, Y" }}</p>
                         {% endif %}
                     </div>
                 {% empty %}
-                    <div class="bg-neutral-50 border border-dashed border-neutral-200 rounded-lg px-4 py-8 text-center text-neutral-500">
+                    <div class="bg-gray-50 border border-dashed border-gray-200 rounded-xl px-4 py-10 text-center text-gray-500">
                         No updates logged yet. Add the first status note to kick off tracking.
                     </div>
                 {% endfor %}
             </div>
-        </div>
-        <div class="space-y-6">
-            <div class="bg-white border border-neutral-200 rounded-xl shadow">
-                <div class="px-6 py-4 border-b border-neutral-200">
-                    <h2 class="text-lg font-semibold text-neutral-800">Log an Update</h2>
-                    <p class="text-sm text-neutral-500">Capture coordination notes, milestones, or requests for support.</p>
-                </div>
+        </article>
+        <aside class="order-2 lg:order-1 space-y-6">
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+                <header class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Log an Update</h2>
+                    <p class="text-sm text-gray-500">Capture coordination notes, milestones, or support requests.</p>
+                </header>
                 <div class="px-6 py-6">
-                    <form method="post" class="space-y-4">
+                    <form method="post" class="space-y-5">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="add_update">
-                        {% for field in update_form %}
-                            <div>
-                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-neutral-700 mb-1">{{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}</label>
-                                {{ field }}
-                                {% if field.help_text %}
-                                    <p class="mt-1 text-xs text-neutral-400">{{ field.help_text }}</p>
-                                {% endif %}
-                                {% for error in field.errors %}
-                                    <p class="text-xs text-red-500 mt-1">{{ error }}</p>
-                                {% endfor %}
-                            </div>
-                        {% endfor %}
-                        <button type="submit" class="w-full btn-primary py-2 rounded-lg font-semibold">Record Update</button>
+
+                        {% include "components/form_field.html" with field=update_form.update_type label=update_form.update_type.label %}
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {% include "components/form_field.html" with field=update_form.status label=update_form.status.label %}
+                            {% include "components/form_field.html" with field=update_form.request_status label=update_form.request_status.label %}
+                            {% include "components/form_field.html" with field=update_form.progress label=update_form.progress.label placeholder="New completion percentage" %}
+                            {% include "components/form_field.html" with field=update_form.follow_up_date label=update_form.follow_up_date.label %}
+                        </div>
+
+                        {% include "components/form_field.html" with field=update_form.notes label=update_form.notes.label placeholder="Narrative update or decisions recorded" %}
+
+                        {% include "components/form_field.html" with field=update_form.next_steps label=update_form.next_steps.label placeholder="Follow-up actions to undertake after this update" %}
+
+                        <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all duration-200">
+                            <i class="fas fa-plus"></i>
+                            Save Update
+                        </button>
                     </form>
                 </div>
             </div>
-            <div class="bg-white border border-neutral-200 rounded-xl shadow">
-                <div class="px-6 py-4 border-b border-neutral-200">
-                    <h2 class="text-lg font-semibold text-neutral-800">Linked Activities</h2>
-                    <p class="text-sm text-neutral-500">Cross-reference with MANA, Coordination, and Policy tracking.</p>
-                </div>
-                <div class="px-6 py-4 space-y-3 text-sm text-neutral-700">
-                    <p><span class="font-semibold">MANA Assessment:</span> {% if entry.related_assessment %}<a class="text-blue-600 hover:text-blue-800" href="{% url 'common:mana_manage_assessments' %}?focus={{ entry.related_assessment.pk }}">{{ entry.related_assessment.title|default:entry.related_assessment }}</a>{% else %}—{% endif %}</p>
-                    <p><span class="font-semibold">Coordination Event:</span> {% if entry.related_event %}<a class="text-blue-600 hover:text-blue-800" href="{% url 'common:coordination_events' %}?event={{ entry.related_event.pk }}">{{ entry.related_event.title|default:entry.related_event }}</a>{% else %}—{% endif %}</p>
-                    <p><span class="font-semibold">Policy Recommendation:</span> {% if entry.related_policy %}<a class="text-blue-600 hover:text-blue-800" href="{% url 'common:recommendations_manage' %}?policy={{ entry.related_policy.pk }}">{{ entry.related_policy.title|default:entry.related_policy }}</a>{% else %}—{% endif %}</p>
-                    {% if related_entries %}
-                        <div class="pt-3 border-t border-neutral-200">
-                            <p class="font-semibold text-neutral-700 mb-2">Connected OBC Items</p>
-                            <ul class="space-y-2">
-                                {% for related in related_entries %}
-                                    <li>
-                                        <a href="{% url 'monitoring:detail' related.pk %}" class="text-blue-600 hover:text-blue-800">{{ related.title }}</a>
-                                        <span class="text-xs text-neutral-500">· {{ related.get_category_display }}</span>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    {% endif %}
-                </div>
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 text-sm text-gray-600">
+                <h3 class="text-base font-semibold text-gray-900 mb-2">Linked References</h3>
+                <ul class="space-y-2">
+                    <li><span class="text-gray-500">Related Assessment:</span> {{ entry.related_assessment|default:"—" }}</li>
+                    <li><span class="text-gray-500">Related Event:</span> {{ entry.related_event|default:"—" }}</li>
+                    <li><span class="text-gray-500">Policy Alignment:</span> {{ entry.related_policy|default:"—" }}</li>
+                </ul>
             </div>
-        </div>
-    </div>
+        </aside>
+    </section>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+{% if entry.category == "moa_ppa" %}
+<link rel="stylesheet" href="{% static 'monitoring/css/workitem_integration.css' %}">
+<script src="{% static 'monitoring/js/workitem_integration.js' %}"></script>
+<script>
+// Tab switching for PPA detail page
+function switchPPATab(tabName) {
+    // Hide all tab panels
+    document.querySelectorAll('.tab-content-panel').forEach(panel => {
+        panel.classList.add('hidden');
+    });
+
+    // Remove active state from all tabs
+    document.querySelectorAll('.ppa-tab').forEach(tab => {
+        tab.classList.remove('border-blue-500', 'text-blue-600');
+        tab.classList.add('border-transparent', 'text-gray-500');
+    });
+
+    // Show selected tab panel
+    const selectedPanel = document.getElementById(`${tabName}-tab-content`);
+    if (selectedPanel) {
+        selectedPanel.classList.remove('hidden');
+    }
+
+    // Activate selected tab
+    const selectedTab = document.getElementById(`tab-${tabName}`);
+    if (selectedTab) {
+        selectedTab.classList.remove('border-transparent', 'text-gray-500');
+        selectedTab.classList.add('border-blue-500', 'text-blue-600');
+    }
+
+    // Move overview section based on tab
+    const overviewSection = document.getElementById('ppa-overview-section');
+    if (tabName === 'details' && overviewSection) {
+        // Show overview section for details tab
+        overviewSection.style.display = 'grid';
+    } else if (overviewSection) {
+        // Hide overview section for other tabs
+        overviewSection.style.display = 'none';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default tab
+    switchPPATab('details');
+});
+</script>
+{% endif %}
 {% endblock %}

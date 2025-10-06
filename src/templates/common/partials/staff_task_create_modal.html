@@ -60,7 +60,7 @@
             </div>
         </div>
 
-        <form hx-post="{% url 'common:staff_task_modal_create' %}" hx-target="#taskModalContent" hx-swap="innerHTML" class="space-y-4">
+        <form hx-post="{% url 'common:work_item_create' %}" hx-target="#taskModalContent" hx-swap="innerHTML" class="space-y-4">
             {% csrf_token %}
             {% if form.non_field_errors %}
             <div class="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg px-4 py-2">

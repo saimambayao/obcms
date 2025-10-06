@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete {{ work_item.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Warning Card -->
+    <div class="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+        <!-- Centered Warning Header -->
+        <div class="text-center mb-6">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                Delete Work Item?
+            </h1>
+            <p class="text-sm text-gray-600">
+                This action cannot be undone. Please review the details below carefully.
+            </p>
+        </div>
+
+        <!-- Work Item Details -->
+        <div class="bg-gray-50 rounded-xl p-6 mb-6 border-l-4 border-red-500">
+            <div class="mb-3">
+                <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Title</span>
+                <p class="text-lg font-bold text-gray-900">{{ work_item.title }}</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Type</span>
+                    <p class="text-sm text-gray-900">{{ work_item.get_work_type_display }}</p>
+                </div>
+                {% if work_item.status %}
+                <div>
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</span>
+                    <p class="text-sm text-gray-900">{{ work_item.get_status_display }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Impact Warning (if has descendants) -->
+        {% if descendants_count > 0 %}
+        <div class="bg-amber-50 border-l-4 border-amber-500 rounded-r-lg p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-amber-500 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-amber-800">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Impact Warning
+                    </h3>
+                    <div class="mt-2 text-sm text-amber-700">
+                        <p class="mb-2">This work item has <strong class="font-semibold">{{ descendants_count }} child item{% if descendants_count != 1 %}s{% endif %}</strong>.</p>
+                        <ul class="space-y-1 ml-4">
+                            <li class="flex items-start">
+                                <i class="fas fa-minus-circle mr-2 mt-0.5 text-amber-600"></i>
+                                <span>Deleting this item will <strong>cascade delete all descendants</strong></span>
+                            </li>
+                            {% if can_reparent %}
+                            <li class="flex items-start">
+                                <i class="fas fa-info-circle mr-2 mt-0.5 text-amber-600"></i>
+                                <span>Alternatively, you can re-parent direct children (see option below)</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Delete Form -->
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- Re-parent Option (Radio Card Pattern) -->
+            {% if can_reparent and descendants_count > 0 %}
+            <div class="mb-6">
+                <h3 class="text-sm font-medium text-gray-900 mb-3">
+                    Deletion Options
+                </h3>
+                <div class="space-y-3">
+                    <!-- Cascade Delete (Default) -->
+                    <label class="flex items-start p-4 border-2 border-emerald-500 bg-emerald-50 rounded-xl cursor-pointer transition-all hover:shadow-md">
+                        <input type="radio"
+                               name="delete_mode"
+                               value="cascade"
+                               class="mt-1 mr-3 text-emerald-600 focus:ring-emerald-500"
+                               checked
+                               required>
+                        <div>
+                            <div class="font-semibold text-emerald-900">
+                                <i class="fas fa-trash-alt mr-1"></i>
+                                Cascade Delete (Delete All)
+                            </div>
+                            <div class="text-sm text-emerald-700 mt-1">
+                                Delete this work item and all {{ descendants_count }} descendant{% if descendants_count != 1 %}s{% endif %}
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Re-parent Children -->
+                    <label class="flex items-start p-4 border-2 border-gray-200 bg-white rounded-xl cursor-pointer transition-all hover:border-gray-300 hover:shadow-md">
+                        <input type="radio"
+                               name="delete_mode"
+                               value="reparent"
+                               class="mt-1 mr-3 text-emerald-600 focus:ring-emerald-500"
+                               required>
+                        <div>
+                            <div class="font-semibold text-gray-900">
+                                <i class="fas fa-project-diagram mr-1"></i>
+                                Re-parent Direct Children
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">
+                                Move direct children to this item's parent, then delete this item
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Confirmation Message -->
+            <div class="bg-red-50 border-l-4 border-red-500 rounded-r-lg p-4 mb-6">
+                <h4 class="text-sm font-semibold text-red-900 mb-2">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    What will be deleted:
+                </h4>
+                <ul class="text-sm text-red-800 space-y-1">
+                    <li class="flex items-start">
+                        <i class="fas fa-times-circle mr-2 mt-0.5"></i>
+                        <span>The work item and all its details</span>
+                    </li>
+                    {% if descendants_count > 0 and not can_reparent %}
+                    <li class="flex items-start">
+                        <i class="fas fa-times-circle mr-2 mt-0.5"></i>
+                        <span>All {{ descendants_count }} child item{% if descendants_count != 1 %}s{% endif %} (cascade delete)</span>
+                    </li>
+                    {% endif %}
+                    <li class="flex items-start">
+                        <i class="fas fa-times-circle mr-2 mt-0.5"></i>
+                        <span>All calendar events and scheduling data</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-times-circle mr-2 mt-0.5"></i>
+                        <span>All assigned users and task associations</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                <button type="submit" name="action" value="delete"
+                        class="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                    <i class="fas fa-trash mr-2"></i>
+                    Yes, Delete Permanently
+                </button>
+                <button type="submit" name="action" value="cancel"
+                        class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-200">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancel
+                </button>
+            </div>
+        </form>
+
+        <!-- Alternative Actions -->
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <p class="text-sm text-gray-600 text-center mb-3">
+                Instead of deleting, you can:
+            </p>
+            <div class="flex justify-center space-x-3">
+                <a href="#" onclick="window.history.back(); return false;"
+                   class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                    <i class="fas fa-arrow-left mr-1"></i>
+                    Go back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Radio Button Interactive Selection Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const radioButtons = document.querySelectorAll('input[name="delete_mode"]');
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Update all labels
+            radioButtons.forEach(r => {
+                const label = r.closest('label');
+                if (r.checked) {
+                    // Selected state: emerald border and background
+                    label.classList.remove('border-gray-200', 'bg-white');
+                    label.classList.add('border-emerald-500', 'bg-emerald-50');
+                    const textDiv = label.querySelector('div > div:first-child');
+                    textDiv.classList.remove('text-gray-900');
+                    textDiv.classList.add('text-emerald-900');
+                    const descDiv = label.querySelector('div > div:last-child');
+                    descDiv.classList.remove('text-gray-600');
+                    descDiv.classList.add('text-emerald-700');
+                } else {
+                    // Unselected state: gray border and white background
+                    label.classList.remove('border-emerald-500', 'bg-emerald-50');
+                    label.classList.add('border-gray-200', 'bg-white');
+                    const textDiv = label.querySelector('div > div:first-child');
+                    textDiv.classList.remove('text-emerald-900');
+                    textDiv.classList.add('text-gray-900');
+                    const descDiv = label.querySelector('div > div:last-child');
+                    descDiv.classList.remove('text-emerald-700');
+                    descDiv.classList.add('text-gray-600');
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

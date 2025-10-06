@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Update Project Workflow{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-6">
+    <div class="max-w-4xl mx-auto space-y-6">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <nav aria-label="breadcrumb" class="mb-2 text-sm">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'project_central:project_list' %}">Projects</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'common:work_item_detail' pk=workflow.work_item_id %}">{{ workflow.primary_need.title|truncatechars:40 }}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Edit Workflow</li>
+                    </ol>
+                </nav>
+                <h1 class="text-2xl font-bold text-gray-900">Edit Project Workflow</h1>
+                <p class="text-sm text-gray-600">Adjust priority, focal persons, and timeline while keeping the MOA PPA linkage intact.</p>
+            </div>
+            <a href="{% url 'common:work_item_detail' pk=workflow.work_item_id %}"
+               class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow hover:bg-gray-50 transition">
+                <i class="fas fa-arrow-left"></i>
+                Back to workflow
+            </a>
+        </div>
+
+        <!-- DEPRECATION NOTICE -->
+        <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-r-lg">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-amber-500 text-xl"></i>
+                </div>
+                <div class="ml-4 flex-1">
+                    <h3 class="text-sm font-semibold text-amber-800">
+                        Deprecation Notice
+                    </h3>
+                    <div class="mt-1 text-sm text-amber-700">
+                        <p>
+                            ProjectWorkflow is deprecated and will be removed in OBCMS v2.0.
+                            Please migrate to the unified Work Item system for enhanced features and better performance.
+                        </p>
+                        <a href="{% url 'common:work_item_list' %}"
+                           class="inline-flex items-center mt-2 text-amber-800 hover:text-amber-900 font-semibold">
+                            Switch to Work Items
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-6">
+            {% csrf_token %}
+            {{ form.media }}
+
+            {% if form.non_field_errors %}
+            <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for field in form.visible_fields %}
+                    <div class="col-span-1">
+                        {% include "components/form_field.html" with field=field %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% for hidden in form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
+            <div class="flex items-center justify-end">
+                <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-emerald-600 hover:to-teal-600 transition">
+                    <i class="fas fa-save"></i>
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

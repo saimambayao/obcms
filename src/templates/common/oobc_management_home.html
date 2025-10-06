@@ -67,9 +67,9 @@
                             <i class="fas fa-tachometer-alt"></i>
                             <span>OBCMS Dashboard</span>
                         </a>
-                        <a href="{% url 'common:staff_task_create' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                        <a href="{% url 'common:work_item_create' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-plus-square"></i>
-                            <span>Create Task</span>
+                            <span>Create Work Item</span>
                         </a>
                         <a href="{% url 'common:oobc_calendar' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-calendar-alt"></i>
@@ -95,20 +95,20 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
                 <h2 class="text-2xl font-bold text-gray-900">Recent Updates</h2>
-                <p class="mt-1 text-sm text-gray-600">Latest staff onboarding, pending approvals, and budgeting scenario changes.</p>
+                <p class="mt-1 text-sm text-gray-600">Latest staff tasks, calendar activities, and project PPAs recorded by the OOBC team.</p>
             </div>
             <div class="flex flex-wrap gap-3 text-sm font-medium">
-                <a href="{% url 'common:staff_management' %}" class="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700">
-                    <i class="fas fa-users"></i>
-                    Staff Directory
+                <a href="{% url 'common:work_item_list' %}" class="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700">
+                    <i class="fas fa-tasks"></i>
+                    Manage Work Items
                 </a>
-                <a href="{% url 'common:user_approvals' %}" class="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700">
-                    <i class="fas fa-user-check"></i>
-                    Manage Approvals
+                <a href="{% url 'common:oobc_calendar' %}" class="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700">
+                    <i class="fas fa-calendar-alt"></i>
+                    OOBC Calendar
                 </a>
-                <a href="{% url 'common:planning_budgeting' %}" class="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700">
-                    <i class="fas fa-chart-line"></i>
-                    Budget Scenarios
+                <a href="{% url 'monitoring:moa_ppas' %}" class="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700">
+                    <i class="fas fa-diagram-project"></i>
+                    Project Portfolio
                 </a>
             </div>
         </div>
@@ -117,23 +117,35 @@
             <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
                 <div class="flex items-center gap-3 mb-4">
                     <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg">
-                        <i class="fas fa-user-plus"></i>
+                        <i class="fas fa-tasks"></i>
                     </span>
                     <div>
-                        <h3 class="text-base font-semibold text-gray-900">New Staff Members</h3>
-                        <p class="text-xs text-gray-500">Most recent OOBC staff onboarding</p>
+                        <h3 class="text-base font-semibold text-gray-900">Staff Tasks</h3>
+                        <p class="text-xs text-gray-500">Newest assignments and status changes</p>
                     </div>
                 </div>
                 <ul class="space-y-4">
-                    {% for staff in recent_feeds.staff|slice:":7" %}
+                    {% for task in recent_feeds.tasks|slice:":7" %}
                     <li class="relative border-l border-emerald-100 pl-6">
                         <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></span>
-                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ staff.get_full_name|default:staff.username }}</p>
-                        <p class="text-xs text-gray-500 mt-1">{{ staff.get_user_type_display }}{% if staff.organization %} • {{ staff.organization }}{% endif %}</p>
-                        <p class="text-xs text-gray-400 mt-1">Joined {{ staff.date_joined|naturaltime }}</p>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ task.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                {{ task.get_status_display|default:task.status|capfirst }}
+                            </span>
+                            {% with task.teams.all|first as primary_team %}
+                                {% if primary_team %}
+                                    {{ primary_team.name }}
+                                {% endif %}
+                            {% endwith %}
+                        </p>
+                        {% if task.due_date %}
+                        <p class="text-xs text-gray-500">Due {{ task.due_date|date:"M d" }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ task.updated_at|naturaltime }}</p>
                     </li>
                     {% empty %}
-                    <li class="text-sm text-gray-500">No recent staff onboarding activity.</li>
+                    <li class="text-sm text-gray-500">No staff tasks have been updated recently.</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -141,23 +153,31 @@
             <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
                 <div class="flex items-center gap-3 mb-4">
                     <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg">
-                        <i class="fas fa-user-clock"></i>
+                        <i class="fas fa-calendar-day"></i>
                     </span>
                     <div>
-                        <h3 class="text-base font-semibold text-gray-900">Pending Approvals</h3>
-                        <p class="text-xs text-gray-500">Requests awaiting verification</p>
+                        <h3 class="text-base font-semibold text-gray-900">Calendar Activities</h3>
+                        <p class="text-xs text-gray-500">Coordination events updated most recently</p>
                     </div>
                 </div>
                 <ul class="space-y-4">
-                    {% for pending in recent_feeds.pending|slice:":7" %}
+                    {% for event in recent_feeds.events|slice:":7" %}
                     <li class="relative border-l border-amber-100 pl-6">
                         <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-amber-500 ring-4 ring-amber-100"></span>
-                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ pending.get_full_name|default:pending.username }}</p>
-                        <p class="text-xs text-gray-500 mt-1">{{ pending.get_user_type_display }}{% if pending.organization %} • {{ pending.organization }}{% endif %}</p>
-                        <p class="text-xs text-gray-400 mt-1">Requested {{ pending.date_joined|naturaltime }}</p>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ event.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-600 border border-amber-100">
+                                {{ event.get_status_display|default:event.status|capfirst }}
+                            </span>
+                            {{ event.event_type|title }} • {{ event.start_date|date:"M d" }}
+                        </p>
+                        {% if event.organizer %}
+                        <p class="text-xs text-gray-500">Organizer: {{ event.organizer.get_full_name|default:event.organizer.username }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ event.updated_at|naturaltime }}</p>
                     </li>
                     {% empty %}
-                    <li class="text-sm text-gray-500">No pending approvals at the moment.</li>
+                    <li class="text-sm text-gray-500">No calendar activities have been updated recently.</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -165,28 +185,31 @@
             <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col">
                 <div class="flex items-center gap-3 mb-4">
                     <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-lg">
-                        <i class="fas fa-coins"></i>
+                        <i class="fas fa-diagram-project"></i>
                     </span>
                     <div>
-                        <h3 class="text-base font-semibold text-gray-900">Budget Scenarios</h3>
-                        <p class="text-xs text-gray-500">Latest planning scenario iterations</p>
+                        <h3 class="text-base font-semibold text-gray-900">Project PPAs</h3>
+                        <p class="text-xs text-gray-500">Recently updated MOA & OOBC project entries</p>
                     </div>
                 </div>
                 <ul class="space-y-4">
-                    {% for scenario in recent_feeds.scenarios|slice:":7" %}
+                    {% for entry in recent_feeds.ppas|slice:":7" %}
                     <li class="relative border-l border-blue-100 pl-6">
                         <span class="absolute -left-1 top-2 h-2.5 w-2.5 rounded-full bg-blue-500 ring-4 ring-blue-100"></span>
-                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ scenario.name }}</p>
+                        <p class="text-sm font-semibold text-gray-900 leading-tight">{{ entry.title }}</p>
                         <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">
-                                {{ scenario.get_status_display|default:scenario.status|capfirst }}
+                                {{ entry.get_status_display|default:entry.status|capfirst }}
                             </span>
-                            {{ scenario.get_scenario_type_display|default:scenario.scenario_type|title }}
+                            {{ entry.get_category_display|default:entry.category|title }}
                         </p>
-                        <p class="text-xs text-gray-400 mt-1">Updated {{ scenario.updated_at|naturaltime }}</p>
+                        {% if entry.lead_organization %}
+                        <p class="text-xs text-gray-500">Lead: {{ entry.lead_organization.name }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-400 mt-1">Updated {{ entry.updated_at|naturaltime }}</p>
                     </li>
                     {% empty %}
-                    <li class="text-sm text-gray-500">No budget scenario changes recorded yet.</li>
+                    <li class="text-sm text-gray-500">No project PPAs have been updated recently.</li>
                     {% endfor %}
                 </ul>
             </div>

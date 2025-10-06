@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Staff Profiles - OBC Management System{% endblock %}
 
@@ -61,20 +62,24 @@
 
     <div class="{{ stat_cards_grid_class }}">
         {% for card in stat_cards %}
-        <div class="relative overflow-hidden bg-gradient-to-br {{ card.gradient }} rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
+        <article class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#FEFDFB] to-[#F8F5EE] transition-transform duration-300 hover:-translate-y-1"
+                 style="box-shadow: 0 16px 35px rgba(20,85,80,0.12), 0 6px 12px rgba(20,85,80,0.08), inset 0 1px 0 rgba(255,255,255,0.7);">
+            <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.85),transparent_60%)]"></div>
+            <div class="relative p-6 flex flex-col gap-5 h-full">
+                <div class="flex items-start justify-between gap-4">
                     <div>
-                        <p class="uppercase text-xs font-semibold tracking-wider {{ card.text_color }}">{{ card.title }}</p>
-                        <p class="mt-2 text-3xl font-bold">{{ card.value|default:0 }}</p>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-600">{{ card.title }}</p>
+                        <p class="mt-2 text-3xl font-extrabold text-gray-900">{{ card.value|default:0|intcomma }}</p>
                     </div>
-                    <div class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="{{ card.icon }} text-2xl"></i>
-                    </div>
+                    <span class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-inner">
+                        <i class="{{ card.icon }} text-2xl {{ card.icon_color|default:'text-emerald-600' }}"></i>
+                    </span>
                 </div>
+                {% if card.subtitle or card.description %}
+                <p class="text-sm text-gray-600">{{ card.subtitle|default:card.description }}</p>
+                {% endif %}
             </div>
-        </div>
+        </article>
         {% endfor %}
     </div>
 
@@ -92,31 +97,41 @@
             <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
                 <div class="lg:col-span-3">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Employment status</label>
-                    <select name="status" class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
-                        <option value="">All statuses</option>
-                        {% for value,label in status_choices %}
-                        <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
+                    <div class="relative">
+                        <select name="status"
+                                class="block w-full appearance-none rounded-xl border border-gray-200 bg-white py-3 pl-4 pr-12 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500 transition-all duration-200 min-h-[48px]">
+                            <option value="">All statuses</option>
+                            {% for value,label in status_choices %}
+                            <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
+                            <i class="fas fa-chevron-down text-sm"></i>
+                        </span>
+                    </div>
                 </div>
                 <div class="lg:col-span-3">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Team</label>
-                    <select name="team" class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
-                        <option value="">All teams</option>
-                        {% for team in team_options %}
-                        <option value="{{ team.slug }}" {% if team.slug == team_filter %}selected{% endif %}>{{ team.name }}</option>
-                        {% endfor %}
-                    </select>
+                    <div class="relative">
+                        <select name="team"
+                                class="block w-full appearance-none rounded-xl border border-gray-200 bg-white py-3 pl-4 pr-12 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500 transition-all duration-200 min-h-[48px]">
+                            <option value="">All teams</option>
+                            {% for team in team_options %}
+                            <option value="{{ team.slug }}" {% if team.slug == team_filter %}selected{% endif %}>{{ team.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
+                            <i class="fas fa-chevron-down text-sm"></i>
+                        </span>
+                    </div>
                 </div>
                 <div class="lg:col-span-4">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
-                    <input type="search" name="q" value="{{ search_query }}" placeholder="Search by name, role, username, or location" class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
+                    <input type="search" name="q" value="{{ search_query }}" placeholder="Search by name, role, username, or location"
+                           class="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500 transition-all duration-200 min-h-[48px] placeholder:text-gray-400">
                 </div>
                 <div class="lg:col-span-2 flex items-end">
-                    <button type="submit" class="inline-flex items-center justify-center w-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-200">
-                        <i class="fas fa-search mr-2"></i>
-                        Apply filters
-                    </button>
+                    <button type="submit" class="inline-flex items-center justify-center w-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-200">Apply filters</button>
                 </div>
             </form>
         </div>
@@ -208,11 +223,11 @@
                                     Edit
                                 </a>
                                 <button type="button"
-                                        class="inline-flex items-center px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold transition-colors"
+                                        class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold transition-colors"
                                         data-delete-url="{{ profile.pk }}/delete/"
                                         data-delete-name="{{ profile.directory_display_name }}">
-                                    <i class="fas fa-trash mr-1"></i>
-                                    Delete
+                                    <i class="fas fa-trash"></i>
+                                    <span class="sr-only">Delete</span>
                                 </button>
                             </div>
                         </td>

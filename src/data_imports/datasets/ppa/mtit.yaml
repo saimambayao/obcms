@@ -1,0 +1,169 @@
+moa: "Ministry of Trade, Investments and Tourism"
+acronym: "MTIT"
+ppas:
+  - title: "Promotion and Development of Trade and Industry"
+    description: ""
+    outcome_indicators:
+      - indicator: "Level of consumer awareness increased"
+        target: "20%"
+      - indicator: "Increase in number of MSMEs assisted"
+        target: "20%"
+      - indicator: "Percentage increase in revenue from trade fairs/exhibits"
+        target: "20%"
+    output_indicators:
+      - indicator: "Bangsamoro MSME Development - Number of MSMEs assisted"
+        target: "3,000"
+      - indicator: "Bangsamoro MSME Development - Number of MSMEs capacitated"
+        target: "1,000"
+      - indicator: "Bangsamoro MSME Development - Number of products developed"
+        target: 185
+      - indicator: "Bangsamoro MSME Development - Amount of sales generated thru trade fair/exhibits"
+        target: "22,825,000"
+      - indicator: "Bangsamoro MSME Development - Number of Negosyo Center maintained"
+        target: 4
+      - indicator: "Growth Enhancement Approach Towards Regional Economic Development (GEARED) - Number of enabling policies formulated and implemented"
+        target: 6
+      - indicator: "Growth Enhancement Approach Towards Regional Economic Development (GEARED) - Number of competitive and compliant-standard products with value adding activities on industry increased"
+        target: 18
+      - indicator: "Accelerate Competitiveness by Engaging Private Sector (ACE) - Number of strengthened and functional Chamber of Commerce and Industries (CCIs)"
+        target: 8
+      - indicator: "Bangsamoro Cities and Municipalities Competitiveness (BCMC) - Number of LGUs capacitated on local economic enterprise development"
+        target: 4
+      - indicator: "Bangsamoro Cities and Municipalities Competitiveness (BCMC) - Number of LGUs with improved performance in national competitiveness index"
+        target: 45
+      - indicator: "Consumer Protection and Promotion (CoPP) Program - Percentage of consumer complaint acted upon"
+        target: "100%"
+      - indicator: "Consumer Protection and Promotion (CoPP) Program - Number of Fair Trade Law compliant establishments assessed"
+        target: 60
+      - indicator: "Consumer Protection and Promotion (CoPP) Program - Number of consumer education and advocacy activities initiated"
+        target: 40
+      - indicator: "Regulatory and Accreditation Program (RAP) - Number of business names registered"
+        target: "10,000"
+      - indicator: "Regulatory and Accreditation Program (RAP) - Number of business establishments monitored"
+        target: 350
+      - indicator: "Regulatory and Accreditation Program (RAP) - Number of applications of permits/accreditations issued"
+        target: 60
+      - indicator: "Halal Industry Development Program (HIDeP) - Halal Development Planning and Policies Project - Number of Halal related polices reviewed/modified/formulated/adopted"
+        target: 17
+      - indicator: "Halal Industry Development Program (HIDeP) - Halal Development Planning and Policies Project - Number of MSMEs assisted"
+        target: 7
+      - indicator: "Halal Industry Development Program (HIDeP) - Barter Trading Development - Number of barter trade-related policies formulated"
+        target: 2
+      - indicator: "Halal Industry Development Program (HIDeP) - Barter Trading Development - Number of traders registered/accredited"
+        target: 60
+    approved_budget: 216328111.00
+  - title: "Promotion and Development of Tourism"
+    description: ""
+    outcome_indicators:
+      - indicator: "Increase in tourist arrival"
+        target: "10%"
+    output_indicators:
+      - indicator: "Number of promotional collaterals produced"
+        target: "369"
+      - indicator: "Number of promotion and marketing activities conducted, attended, participated, assisted"
+        target: 16
+      - indicator: "Number of tourism related trainings, orientations and meetings conducted, attended, participated, assisted"
+        target: 650
+      - indicator: "Number of trained participants (tourism stakeholder/LGU/employees)"
+        target: "50,684"
+      - indicator: "Number of extensive information drive towards the accreditation of tourism related enterprises"
+        target: 72
+      - indicator: "Number of technical assistance to stakeholders on tourism circuit development"
+        target: 7
+      - indicator: "Number of tourism product development assisted"
+        target: 8
+      - indicator: "Number of monitoring conducted"
+        target: 9
+      - indicator: "Number of Halal initiative conducted, attended, participated, assisted"
+        target: 3
+      - indicator: "Number of tourism related establishment accredited"
+        target: 30
+    approved_budget: 46704456.00
+  - title: "Investment Promotion and Facilitation"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of investment leads generated increased"
+        target: "10%"
+    output_indicators:
+      - indicator: "Number of investment leads generated"
+        target: 30
+      - indicator: "Number of policy papers prepared and endorsed"
+        target: 1
+      - indicator: "Number of investment promotion activities conducted"
+        target: 10
+      - indicator: "Number of investors assisted"
+        target: 6
+      - indicator: "Number of firms/RBEs monitored/supervised"
+        target: 15
+      - indicator: "Number of investment research conducted"
+        target: 2
+      - indicator: "Number of potential investment areas visited"
+        target: 2
+      - indicator: "Number of promo collaterals produced and printed"
+        target: "2,500"
+      - indicator: "Number of LGUs/LEDIPOs trained on local investment promotion and facilitation"
+        target: 40
+      - indicator: "Number of LGUs provided with technical assistance"
+        target: 45
+    approved_budget: 21602879.00
+  - title: "Ecozone Development"
+    description: ""
+    outcome_indicators:
+      - indicator: "Increased number of intent to apply for ecozone received and assisted"
+        target: 1
+      - indicator: "Increased number of enterprise/locator registered"
+        target: 1
+    output_indicators:
+      - indicator: "Number of Ecozone Development Application granted pre-qualification clearance"
+        target: "163,811"
+      - indicator: "Number of international and/or local ecozone/investment forum/summit participated/conducted"
+        target: 2
+      - indicator: "Number of developers/RBEs/locators oriented"
+        target: 3
+      - indicator: "Number of trainings/seminars/meetings conducted/participated"
+        target: 4
+      - indicator: "Number of enterprises/locators registered/processed"
+        target: 2
+      - indicator: "Number of ecozone policies/studies/manuals/charters formulated"
+        target: 6
+      - indicator: "Number of capacity building/technical assistance related to ecozone conducted or participated"
+        target: 4
+    approved_budget: 43787069.00
+  - title: "Freeport Ecozone Services"
+    description: ""
+    outcome_indicators:
+      - indicator: "Number of port users and locators increase"
+        target: "5%"
+      - indicator: "Percentage Increase client's satisfaction on port operation efficiency"
+        target: "100%"
+      - indicator: "Percentage on freeport and ecozone revenue collection increased"
+        target: "10%"
+    output_indicators:
+      - indicator: "Number of freeport and ecozone improvements implemented"
+        target: 10
+      - indicator: "Number of job generated at freeport and ecozone"
+        target: 80
+      - indicator: "Number of capacity building related to port operation standards conducted or participated"
+        target: 8
+    approved_budget: 34210018.00
+special_provisions:
+  - title: "Propelling Economic and Sustainable Opportunities (PESO) for MSMEs"
+    details: |
+      Fifty Million Pesos (P50,000,000.00) shall be used exclusively to establish halal-compliant micro-financing services for MSMEs, subject to Program Implementation Plan and Guidelines, validated list of MSMEs availing the services, and quarterly status report of implementation to MFBM.
+  - title: "Implementation of Shared Service Facilities"
+    details: |
+      Four Million Eight Hundred Forty-Five Thousand Eight Hundred Twenty-Eight Pesos (P4,845,828.00) shall be used for projects that improve MSME productivity and quality, prioritizing industry clusters identified through stakeholder consultations. Upon procurement of equipment, management shall be turned over to cooperators who will shoulder maintenance and repair costs. After two years, MTIT may transfer ownership, extend usufruct, or reassign management based on performance.
+  - title: "Negosyo Centers"
+    details: |
+      Two Million Five Hundred Seventy-Three Thousand Seven Hundred Fifty Pesos (P2,573,750.00) shall be used exclusively for the management of Negosyo Centers.
+  - title: "Freeport Ecozone Service"
+    details: |
+      One Million Five Hundred Thousand Pesos (P1,500,000.00) shall be used exclusively for the construction of a Material Recovery Facility.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      Implementing M/O/As shall submit quarterly financial and physical accomplishment reports within thirty (30) days after each quarter through:
+        (a) Submission of hardcopy to the MFBM;
+        (b) Submission of reports through electronic means; and
+        (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the MFBM and other offices where submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

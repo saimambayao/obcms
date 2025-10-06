@@ -1,0 +1,81 @@
+moa: "Development Academy of the Bangsamoro"
+acronym: "DAB"
+ppas:
+  - title: "Academy's Operations"
+    description: ""
+    outcome_indicators: []
+    output_indicators: []
+    approved_budget: 16430744.00
+  - title: "Training and Assessment Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of satisfactory rating on the effectiveness of DAB trainings conducted in BARMM ministries, offices, and agencies"
+        target: "95%"
+    output_indicators:
+      - indicator: "Number of technical assistance engagements rendered to BARMM ministries, offices, and agencies"
+        target: 20
+      - indicator: "Number of personnel trained"
+        target: 457
+      - indicator: "Number of mandatory onboarding programs conducted"
+        target: 7
+      - indicator: "Number of training of trainers conducted"
+        target: 3
+    approved_budget: 7322300.00
+  - title: "Research and Policy Development Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Enhanced capacity for research and development measured by number of established research coordination with other institutions"
+        target: "20%"
+      - indicator: "Strengthened governance and institutional capacity measured by number of researches conducted"
+        target: "20%"
+    output_indicators:
+      - indicator: "Number of research-related capacity building activities conducted"
+        target: 3
+      - indicator: "Number of institutions coordinated"
+        target: 20
+      - indicator: "Number of policies drafted and recommended"
+        target: 5
+      - indicator: "Number of researches conducted"
+        target: 1
+    approved_budget: 2470000.00
+  - title: "Education and Extension Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of learning materials for BARMM Leadership short-term course developed"
+        target: "90%"
+    output_indicators:
+      - indicator: "Number of modules enhanced for Moral Governance short-term course"
+        target: 4
+      - indicator: "Number of instructional technologies developed"
+        target: 4
+      - indicator: "Number of review tools developed"
+        target: 2
+      - indicator: "Number of learning needs assessment tools developed"
+        target: 2
+    approved_budget: 2015000.00
+  - title: "Knowledge Management and Exchange Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage increase in the number of documented success strategies"
+        target: "25%"
+      - indicator: "Percentage increase in the number of registered experts over the baseline"
+        target: "25%"
+    output_indicators:
+      - indicator: "Number of documented success strategies"
+        target: 2
+      - indicator: "Number of experts registered in the database"
+        target: 12
+      - indicator: "Number of knowledge exchange forums conducted"
+        target: 2
+      - indicator: "Number of knowledge products recognized"
+        target: 4
+    approved_budget: 2003400.00
+special_provisions:
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on its financial and physical accomplishments within thirty (30) days after the end of every quarter through:
+      (a) Submission of hardcopy to the MFBM;
+      (b) Submission of reports through electronic means; and
+      (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when said reports have been submitted or posted on its website to the MFBM and other offices where the submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

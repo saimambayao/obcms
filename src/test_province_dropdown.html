@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Province Dropdown Test</title>
+</head>
+<body>
+    <select id="region" name="region">
+        <option value="">All Regions</option>
+        <option value="3">Davao Region</option>
+    </select>
+    
+    <select id="province" name="province">
+        <option value="">All Provinces</option>
+    </select>
+
+    <script id="province-data" type="application/json">
+    [{"id": "17", "name": "Davao City (Huc)", "region_id": "3", "region_code": "XI"}, {"id": "18", "name": "Davao Occidental", "region_id": "3", "region_code": "XI"}, {"id": "19", "name": "Davao Oriental", "region_id": "3", "region_code": "XI"}, {"id": "14", "name": "Davao de Oro", "region_id": "3", "region_code": "XI"}, {"id": "15", "name": "Davao del Norte", "region_id": "3", "region_code": "XI"}, {"id": "16", "name": "Davao del Sur", "region_id": "3", "region_code": "XI"}]
+    </script>
+
+    <script>
+        const regionSelect = document.getElementById('region');
+        const provinceSelect = document.getElementById('province');
+        const dataElement = document.getElementById('province-data');
+        
+        let provinceOptions = [];
+        try {
+            provinceOptions = JSON.parse(dataElement.textContent);
+            console.log('Loaded provinces:', provinceOptions);
+        } catch (error) {
+            console.error('Failed to parse:', error);
+        }
+
+        function populateProvinces(regionId) {
+            const normalizedId = regionId ? String(regionId) : '';
+            console.log('Filtering for region:', normalizedId);
+            
+            const filtered = normalizedId
+                ? provinceOptions.filter(opt => opt.region_id === normalizedId)
+                : provinceOptions;
+            
+            console.log('Filtered provinces:', filtered);
+            
+            provinceSelect.innerHTML = '<option value="">All Provinces</option>';
+            filtered.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.id;
+                option.textContent = opt.name;
+                provinceSelect.appendChild(option);
+            });
+        }
+
+        regionSelect.addEventListener('change', () => {
+            console.log('Region changed to:', regionSelect.value);
+            populateProvinces(regionSelect.value);
+        });
+
+        // Initial population
+        populateProvinces(regionSelect.value);
+    </script>
+</body>
+</html>

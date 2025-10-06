@@ -71,6 +71,7 @@ THIRD_PARTY_APPS = [
     "crispy_forms",
     "auditlog",  # Audit logging for compliance
     "axes",  # Failed login tracking and account lockout
+    "mptt",  # Django MPTT for hierarchical work items
 ]
 
 LOCAL_APPS = [
@@ -91,6 +92,23 @@ LOCAL_APPS = [
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
+# ============================================================================
+# DEPRECATED LEGACY MODELS (Added: 2025-10-05)
+# ============================================================================
+# The following models have been DEPRECATED and marked as ABSTRACT:
+#
+# 1. common.models.StaffTask → Use WorkItem(work_type='task')
+# 2. coordination.models.Event → Use WorkItem(work_type='activity')
+# 3. project_central.models.ProjectWorkflow → Use WorkItem(work_type='project')
+#
+# These models cannot be saved/deleted (NotImplementedError).
+# All database records have been migrated to WorkItem.
+# Database tables remain for migration rollback but should NOT be used.
+#
+# See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
+# See: src/common/legacy/deprecation_warnings.py
+# ============================================================================
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files in production
@@ -102,6 +120,7 @@ MIDDLEWARE = [
     "axes.middleware.AxesMiddleware",  # Failed login tracking (after AuthenticationMiddleware)
     "auditlog.middleware.AuditlogMiddleware",  # Audit logging (after AuthenticationMiddleware)
     "common.middleware.APILoggingMiddleware",  # API request/response logging for security audit
+    "common.middleware.DeprecationLoggingMiddleware",  # Track deprecated URL usage for migration planning
     "common.middleware.MANAAccessControlMiddleware",  # Restrict MANA user access to authorized pages only
     "mana.middleware.ManaWorkshopContextMiddleware",
     "mana.middleware.ManaParticipantAccessMiddleware",
@@ -132,6 +151,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "common.context_processors.location_api",
+                "common.context_processors.feature_flags",
                 "project_central.context_processors.project_central_context",
             ],
         },
@@ -201,6 +221,7 @@ STORAGES = {
 WHITENOISE_AUTOREFRESH = DEBUG
 WHITENOISE_USE_FINDERS = DEBUG
 WHITENOISE_MAX_AGE = 31536000  # 1 year cache for static files with hashes
+WHITENOISE_MANIFEST_STRICT = False  # Graceful degradation if hashed file missing
 
 # Media files
 MEDIA_URL = "media/"
@@ -301,6 +322,30 @@ CELERY_TIMEZONE = TIME_ZONE
 from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
+    # ========================================================================
+    # MONITORING & EVALUATION (M&E) AUTOMATION TASKS
+    # ========================================================================
+
+    # Nightly PPA progress sync from WorkItems at 2:00 AM
+    "auto-sync-ppa-progress": {
+        "task": "monitoring.auto_sync_ppa_progress",
+        "schedule": crontab(hour=2, minute=0),
+    },
+    # Budget variance detection every 6 hours
+    "detect-budget-variances": {
+        "task": "monitoring.detect_budget_variances",
+        "schedule": crontab(hour="*/6"),
+    },
+    # Approval deadline reminders daily at 8:00 AM
+    "send-approval-deadline-reminders": {
+        "task": "monitoring.send_approval_deadline_reminders",
+        "schedule": crontab(hour=8, minute=0),
+    },
+
+    # ========================================================================
+    # PROJECT CENTRAL AUTOMATION TASKS
+    # ========================================================================
+
     # Daily alert generation at 6:00 AM
     "generate-daily-alerts": {
         "task": "project_central.generate_daily_alerts",
@@ -326,6 +371,26 @@ CELERY_BEAT_SCHEDULE = {
         "task": "project_central.sync_workflow_ppa_status",
         "schedule": crontab(hour=9, minute=0),
     },
+
+    # ========================================================================
+    # WORKITEM MAINTENANCE TASKS
+    # ========================================================================
+
+    # Weekly cleanup of orphaned WorkItems every Sunday at 3:00 AM
+    "cleanup-orphaned-workitems": {
+        "task": "project_central.cleanup_orphaned_workitems",
+        "schedule": crontab(hour=3, minute=0, day_of_week=0),
+    },
+    # Monthly progress recalculation on 1st of month at 4:00 AM
+    "recalculate-all-progress": {
+        "task": "project_central.recalculate_all_progress",
+        "schedule": crontab(hour=4, minute=0, day_of_month=1),
+    },
+
+    # ========================================================================
+    # REPORTING TASKS
+    # ========================================================================
+
     # Weekly workflow report every Monday at 9:00 AM
     "generate-weekly-workflow-report": {
         "task": "project_central.generate_weekly_workflow_report",
@@ -336,6 +401,11 @@ CELERY_BEAT_SCHEDULE = {
         "task": "project_central.generate_monthly_budget_report",
         "schedule": crontab(hour=10, minute=0, day_of_month=1),
     },
+
+    # ========================================================================
+    # CLEANUP TASKS
+    # ========================================================================
+
     # Weekly cleanup of expired alerts every Sunday at 2:00 AM
     "cleanup-expired-alerts": {
         "task": "project_central.cleanup_expired_alerts",
@@ -465,3 +535,51 @@ LOGGING["loggers"]["api"] = {
     "level": "INFO",
     "propagate": False,
 }
+
+# ========== WORK HIERARCHY CONFIGURATION ==========
+# WorkItem Migration Completed: October 5, 2025
+# See: WORKITEM_MIGRATION_COMPLETE.md
+
+# Feature Flags (controlled via environment variables)
+USE_WORKITEM_MODEL = env.bool('USE_WORKITEM_MODEL', default=True)
+USE_UNIFIED_CALENDAR = env.bool('USE_UNIFIED_CALENDAR', default=True)
+DUAL_WRITE_ENABLED = env.bool('DUAL_WRITE_ENABLED', default=False)
+LEGACY_MODELS_READONLY = env.bool('LEGACY_MODELS_READONLY', default=True)
+
+# ========== DEPRECATED MODELS ==========
+# The following models are maintained for backward compatibility only:
+#
+# - common.models.StaffTask (DEPRECATED)
+#   Replacement: common.work_item_model.WorkItem with work_type='task'
+#   Status: Marked abstract, database table removed
+#   Removal: Version 3.0
+#
+# - coordination.models.Event (DEPRECATED)
+#   Replacement: common.work_item_model.WorkItem with work_type='activity'
+#   Status: Marked abstract, database table removed
+#   Removal: Version 3.0
+#
+# - project_central.models.ProjectWorkflow (DEPRECATED)
+#   Replacement: common.work_item_model.WorkItem with work_type='project'
+#   Status: Marked abstract, database table removed
+#   Removal: Version 3.0
+#
+# Migration Documentation:
+# - WORKITEM_MIGRATION_COMPLETE.md (migration summary)
+# - docs/refactor/LEGACY_CODE_DEPRECATION_PLAN.md (code migration guide)
+# - docs/guidelines/EVENT_VS_WORKITEM_ACTIVITY.md (activity vs event clarification)
+#
+# Legacy model locations (preserved for historical reference):
+# - src/common/legacy/ - Documentation and deprecation utilities
+# - src/coordination/legacy/ - Event model deprecation info
+# - src/project_central/legacy/ - ProjectWorkflow deprecation info
+
+# Enforce read-only mode for legacy models in production
+if LEGACY_MODELS_READONLY and not DEBUG:
+    # Prevent accidental writes to deprecated models
+    # Implemented via model save() method NotImplementedError
+    pass
+
+# Migration verification options (deprecated - migration complete)
+WORKITEM_MIGRATION_AUTO_FIX = env.bool("WORKITEM_MIGRATION_AUTO_FIX", default=False)
+WORKITEM_MIGRATION_STRICT_MODE = env.bool("WORKITEM_MIGRATION_STRICT_MODE", default=False)

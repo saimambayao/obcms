@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static humanize %}
+{% load static humanize task_tags %}
 
 {% block title %}Workflow: {{ workflow.primary_need.title }}{% endblock %}
 
@@ -140,6 +140,31 @@ if (modal) {
 
 {% block content %}
 <div class="container-fluid py-4">
+    <!-- DEPRECATION NOTICE -->
+    <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-r-lg">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-amber-500 text-xl"></i>
+            </div>
+            <div class="ml-4 flex-1">
+                <h3 class="text-sm font-semibold text-amber-800">
+                    Deprecation Notice
+                </h3>
+                <div class="mt-1 text-sm text-amber-700">
+                    <p>
+                        ProjectWorkflow is deprecated and will be removed in OBCMS v2.0.
+                        Please migrate to the unified Work Item system for enhanced features and better performance.
+                    </p>
+                    <a href="{% url 'common:work_item_list' %}"
+                       class="inline-flex items-center mt-2 text-amber-800 hover:text-amber-900 font-semibold">
+                        Switch to Work Items
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
@@ -422,12 +447,12 @@ if (modal) {
                             </button>
                         </div>
 
-                        <!-- Create Project Task Button -->
-                        <a href="{% url 'common:staff_task_modal_create' %}?linked_workflow={{ workflow.id }}"
+                        <!-- Create Project Work Item Button -->
+                        <a href="{% url 'common:work_item_create' %}?linked_workflow={{ workflow.id }}"
                            data-modal-link
                            class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-sm font-medium rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all duration-200 shadow-sm">
                             <i class="fas fa-plus"></i>
-                            Create Task
+                            Create Work Item
                         </a>
                     </div>
                 </div>
@@ -474,7 +499,8 @@ if (modal) {
                                     </div>
                                 </div>
 
-                                <a href="{% url 'common:staff_task_modal' task.id %}"
+                                {% task_action_url task 'detail' as workflow_task_url %}
+                                <a href="{{ workflow_task_url }}"
                                    data-modal-link
                                    class="ml-4 text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg text-sm font-medium">
                                     View

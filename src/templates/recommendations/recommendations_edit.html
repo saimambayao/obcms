@@ -1,0 +1,1647 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Recommendation - Recommendations Tracking{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:recommendations_home' %}" class="text-neutral-500 hover:text-neutral-700">Recommendations</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Edit Recommendation</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Progress Indicator (Sticky) -->
+    <div class="sticky top-0 bg-white border-b border-gray-200 shadow-sm z-10 p-4 mb-6 rounded-xl">
+        <div class="max-w-5xl mx-auto">
+            <!-- Step Indicator -->
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-2 step-indicator" data-step="1">
+                    <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm font-semibold">
+                        1
+                    </div>
+                    <span class="text-sm font-medium text-emerald-600">Type Selection</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-gray-200 mx-2"></div>
+
+                <div class="flex items-center space-x-2 step-indicator opacity-50" data-step="2">
+                    <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-semibold">
+                        2
+                    </div>
+                    <span class="text-sm font-medium text-gray-600 hidden md:inline">Basic Info</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-gray-200 mx-2"></div>
+
+                <div class="flex items-center space-x-2 step-indicator opacity-50" data-step="3">
+                    <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-semibold">
+                        3
+                    </div>
+                    <span class="text-sm font-medium text-gray-600 hidden md:inline">Evidence</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-gray-200 mx-2"></div>
+
+                <div class="flex items-center space-x-2 step-indicator opacity-50" data-step="4">
+                    <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-semibold">
+                        4
+                    </div>
+                    <span class="text-sm font-medium text-gray-600 hidden md:inline">Problem</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-gray-200 mx-2"></div>
+
+                <div class="flex items-center space-x-2 step-indicator opacity-50" data-step="5">
+                    <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-semibold">
+                        5
+                    </div>
+                    <span class="text-sm font-medium text-gray-600 hidden lg:inline">Details</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-gray-200 mx-2"></div>
+
+                <div class="flex items-center space-x-2 step-indicator opacity-50" data-step="6">
+                    <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-semibold">
+                        6
+                    </div>
+                    <span class="text-sm font-medium text-gray-600 hidden lg:inline">Impact</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-gray-200 mx-2"></div>
+
+                <div class="flex items-center space-x-2 step-indicator opacity-50" data-step="7">
+                    <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-semibold">
+                        7
+                    </div>
+                    <span class="text-sm font-medium text-gray-600 hidden lg:inline">Resources</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-gray-200 mx-2"></div>
+
+                <div class="flex items-center space-x-2 step-indicator opacity-50" data-step="8">
+                    <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-semibold">
+                        8
+                    </div>
+                    <span class="text-sm font-medium text-gray-600 hidden lg:inline">M&E</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-gray-200 mx-2"></div>
+
+                <div class="flex items-center space-x-2 step-indicator opacity-50" data-step="9">
+                    <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-semibold">
+                        9
+                    </div>
+                    <span class="text-sm font-medium text-gray-600 hidden lg:inline">Stakeholders</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-gray-200 mx-2"></div>
+
+                <div class="flex items-center space-x-2 step-indicator opacity-50" data-step="10">
+                    <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-semibold">
+                        10
+                    </div>
+                    <span class="text-sm font-medium text-gray-600 hidden lg:inline">Review</span>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="progress-bar" class="bg-gradient-to-r from-blue-600 to-teal-600 h-2 rounded-full transition-all duration-300" style="width: 10%"></div>
+            </div>
+
+            <!-- Auto-save Indicator -->
+            <div class="flex items-center justify-between mt-2">
+                <span id="autosave-status" class="text-xs text-gray-500"></span>
+                <span id="step-title" class="text-xs font-medium text-gray-600">Step 1 of 10</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Form -->
+    <form
+        id="recommendation-form"
+        method="post"
+        action="{% url 'common:recommendations_edit' recommendation.id %}"
+        enctype="multipart/form-data"
+        class="max-w-5xl mx-auto"
+        data-selected-region="{{ recommendation.target_region_id|default_if_none:'' }}"
+        data-selected-province="{{ recommendation.target_province_id|default_if_none:'' }}"
+        data-selected-municipality="{{ recommendation.target_municipality_id|default_if_none:'' }}"
+        data-selected-barangay="{{ recommendation.target_barangay_id|default_if_none:'' }}"
+    >
+        {% csrf_token %}
+
+        <!-- STEP 1: RECOMMENDATION TYPE SELECTION -->
+        <div class="form-step active" data-step="1">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="mb-6 pb-4 border-b border-gray-200">
+                    <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-clipboard-list text-blue-600 mr-3"></i>
+                        Select Recommendation Type
+                    </h3>
+                    <p class="text-sm text-gray-600 mt-2">
+                        Choose the type of recommendation you want to create. This determines which fields will be required.
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Policy Recommendation -->
+                    <label class="flex items-start p-6 border-2 {% if recommendation.recommendation_type == 'policy' %}border-emerald-500 bg-emerald-50{% else %}border-gray-200 bg-white{% endif %} rounded-xl cursor-pointer transition-all hover:shadow-md recommendation-type-option" data-type="policy">
+                        <input type="radio" name="recommendation_type" value="policy" {% if recommendation.recommendation_type == 'policy' %}checked{% endif %}
+                               class="mt-1 h-5 w-5 text-emerald-600 border-gray-300 focus:ring-emerald-500">
+                        <div class="ml-4 flex-1">
+                            <div class="flex items-center">
+                                <i class="fas fa-balance-scale text-blue-600 text-2xl mr-3"></i>
+                                <span class="block text-lg font-bold text-gray-900">Policy Recommendation</span>
+                            </div>
+                            <span class="block text-sm text-gray-600 mt-2">
+                                Strategic measures, legislative proposals, or policy instruments to guide decision-makers in improving conditions for OBCs
+                            </span>
+                            <div class="mt-3 flex items-center text-xs text-gray-500">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                <span>Example: Policy framework for OBC rights protection</span>
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Systematic Program -->
+                    <label class="flex items-start p-6 border-2 {% if recommendation.recommendation_type == 'program' %}border-emerald-500 bg-emerald-50{% else %}border-gray-200 bg-white{% endif %} rounded-xl cursor-pointer transition-all hover:shadow-md recommendation-type-option" data-type="program">
+                        <input type="radio" name="recommendation_type" value="program" {% if recommendation.recommendation_type == 'program' %}checked{% endif %}
+                               class="mt-1 h-5 w-5 text-emerald-600 border-gray-300 focus:ring-emerald-500">
+                        <div class="ml-4 flex-1">
+                            <div class="flex items-center">
+                                <i class="fas fa-layer-group text-purple-600 text-2xl mr-3"></i>
+                                <span class="block text-lg font-bold text-gray-900">Systematic Program</span>
+                            </div>
+                            <span class="block text-sm text-gray-600 mt-2">
+                                Multi-sectoral interventions, ongoing initiatives with structured implementation plans and phased rollouts
+                            </span>
+                            <div class="mt-3 flex items-center text-xs text-gray-500">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                <span>Example: OBC Scholarship Program for Higher Education</span>
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Service Improvement -->
+                    <label class="flex items-start p-6 border-2 {% if recommendation.recommendation_type == 'service' %}border-emerald-500 bg-emerald-50{% else %}border-gray-200 bg-white{% endif %} rounded-xl cursor-pointer transition-all hover:shadow-md recommendation-type-option" data-type="service">
+                        <input type="radio" name="recommendation_type" value="service" {% if recommendation.recommendation_type == 'service' %}checked{% endif %}
+                               class="mt-1 h-5 w-5 text-emerald-600 border-gray-300 focus:ring-emerald-500">
+                        <div class="ml-4 flex-1">
+                            <div class="flex items-center">
+                                <i class="fas fa-hand-holding-heart text-emerald-600 text-2xl mr-3"></i>
+                                <span class="block text-lg font-bold text-gray-900">Service Improvement</span>
+                            </div>
+                            <span class="block text-sm text-gray-600 mt-2">
+                                Specific service delivery enhancements or expansion of existing services to reach OBC communities
+                            </span>
+                            <div class="mt-3 flex items-center text-xs text-gray-500">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                <span>Example: Expansion of TABANG/AMBAG to OBC barangays</span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2: BASIC INFORMATION + TEN CORE TYPES -->
+        <div class="form-step" data-step="2" style="display: none;">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="mb-6 pb-4 border-b border-gray-200">
+                    <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-info-circle text-amber-600 mr-3"></i>
+                        Basic Information
+                    </h3>
+                    <p class="text-sm text-gray-600 mt-2">
+                        Provide essential details about this recommendation
+                    </p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Title -->
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                            Recommendation Title <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="title" name="title" required value="{{ recommendation.title }}"
+                               class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200"
+                               placeholder="Enter a clear, descriptive title...">
+                        <p class="mt-1 text-sm text-gray-500">Make it specific and action-oriented</p>
+                    </div>
+
+                    <!-- Primary Category (MOVED TO FIRST POSITION) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Policy Category <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <select id="category" name="category" required
+                                    class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                <option value="">Select primary category...</option>
+                                <option value="economic_development" {% if recommendation.category == 'economic_development' %}selected{% endif %}>Economic Development</option>
+                                <option value="social_development" {% if recommendation.category == 'social_development' %}selected{% endif %}>Social Development</option>
+                                <option value="cultural_development" {% if recommendation.category == 'cultural_development' %}selected{% endif %}>Cultural Development</option>
+                                <option value="promotion_of_welfare" {% if recommendation.category == 'promotion_of_welfare' %}selected{% endif %}>Promotion of Welfare</option>
+                                <option value="rehabilitation_development" {% if recommendation.category == 'rehabilitation_development' %}selected{% endif %}>Rehabilitation & Development</option>
+                                <option value="protection_of_rights" {% if recommendation.category == 'protection_of_rights' %}selected{% endif %}>Protection of Rights</option>
+                                <option value="comprehensive" {% if recommendation.category == 'comprehensive' %}selected{% endif %}>Comprehensive (Multiple Categories)</option>
+                            </select>
+                            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                            </span>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500">Select the primary policy category for this recommendation</p>
+                    </div>
+
+                    <!-- Secondary Categories (conditional, shown when Comprehensive is selected) -->
+                    <div id="secondary-categories-container" {% if recommendation.category != 'comprehensive' %}style="display: none;"{% endif %}>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Secondary Categories <span class="text-red-500">*</span>
+                        </label>
+                        <div class="space-y-2 border border-gray-200 rounded-xl p-4 bg-gray-50">
+                            <p class="text-xs text-gray-600 mb-3">
+                                <i class="fas fa-info-circle text-blue-500 mr-1"></i>
+                                Select all additional categories that apply to this comprehensive recommendation
+                            </p>
+                            <label class="flex items-center p-3 border-2 border-gray-200 bg-white rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors">
+                                <input type="checkbox" name="secondary_categories" value="economic_development"
+                                       {% if recommendation.secondary_categories and 'economic_development' in recommendation.secondary_categories %}checked{% endif %}
+                                       class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                <span class="ml-3 text-sm font-medium text-gray-900">Economic Development</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 bg-white rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors">
+                                <input type="checkbox" name="secondary_categories" value="social_development"
+                                       {% if recommendation.secondary_categories and 'social_development' in recommendation.secondary_categories %}checked{% endif %}
+                                       class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                <span class="ml-3 text-sm font-medium text-gray-900">Social Development</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 bg-white rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors">
+                                <input type="checkbox" name="secondary_categories" value="cultural_development"
+                                       {% if recommendation.secondary_categories and 'cultural_development' in recommendation.secondary_categories %}checked{% endif %}
+                                       class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                <span class="ml-3 text-sm font-medium text-gray-900">Cultural Development</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 bg-white rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors">
+                                <input type="checkbox" name="secondary_categories" value="promotion_of_welfare"
+                                       {% if recommendation.secondary_categories and 'promotion_of_welfare' in recommendation.secondary_categories %}checked{% endif %}
+                                       class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                <span class="ml-3 text-sm font-medium text-gray-900">Promotion of Welfare</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 bg-white rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors">
+                                <input type="checkbox" name="secondary_categories" value="rehabilitation_development"
+                                       {% if recommendation.secondary_categories and 'rehabilitation_development' in recommendation.secondary_categories %}checked{% endif %}
+                                       class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                <span class="ml-3 text-sm font-medium text-gray-900">Rehabilitation & Development</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 bg-white rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors">
+                                <input type="checkbox" name="secondary_categories" value="protection_of_rights"
+                                       {% if recommendation.secondary_categories and 'protection_of_rights' in recommendation.secondary_categories %}checked{% endif %}
+                                       class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                <span class="ml-3 text-sm font-medium text-gray-900">Protection of Rights</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Ten Core Recommendation Types (NOW SECOND POSITION) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Core Recommendation Type
+                        </label>
+                        <div class="relative">
+                            <select id="core_recommendation_type" name="core_recommendation_type"
+                                    class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                <option value="">Select a core recommendation type (optional)...</option>
+                                <option value="scholarships" {% if recommendation.core_recommendation_type == 'scholarships' %}selected{% endif %}>1. Scholarships & Financial Assistance for Higher Education</option>
+                                <option value="madaris_support" {% if recommendation.core_recommendation_type == 'madaris_support' %}selected{% endif %}>2. Support to OBC Madaris</option>
+                                <option value="halal_enterprise" {% if recommendation.core_recommendation_type == 'halal_enterprise' %}selected{% endif %}>3. Support to OBC Halal Enterprise Development</option>
+                                <option value="social_services" {% if recommendation.core_recommendation_type == 'social_services' %}selected{% endif %}>4. Expansion of Social Services (TABANG, AMBAG, KAPYANAN)</option>
+                                <option value="cultural_development" {% if recommendation.core_recommendation_type == 'cultural_development' %}selected{% endif %}>5. Cultural Development Program</option>
+                                <option value="women_youth" {% if recommendation.core_recommendation_type == 'women_youth' %}selected{% endif %}>6. Women and Youth Development Program</option>
+                                <option value="tourism" {% if recommendation.core_recommendation_type == 'tourism' %}selected{% endif %}>7. Tourism Development Program</option>
+                                <option value="infrastructure" {% if recommendation.core_recommendation_type == 'infrastructure' %}selected{% endif %}>8. Infrastructure Development</option>
+                                <option value="governance_participation" {% if recommendation.core_recommendation_type == 'governance_participation' %}selected{% endif %}>9. Increased Participation in Governance and Planning</option>
+                                <option value="institutional_partnerships" {% if recommendation.core_recommendation_type == 'institutional_partnerships' %}selected{% endif %}>10. Institutional Partnerships and Coordination</option>
+                                <option value="other" {% if recommendation.core_recommendation_type == 'other' %}selected{% endif %}>11. Other (Please specify below)</option>
+                            </select>
+                            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                            </span>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500">
+                            <i class="fas fa-lightbulb text-amber-500 mr-1"></i>
+                            These are the ten core OBC recommendation types from the OOBC Integrative Report
+                        </p>
+                    </div>
+
+                    <!-- Other Type Specification (conditional) -->
+                    <div id="other-type-container" {% if recommendation.core_recommendation_type != 'other' %}style="display: none;"{% endif %}>
+                        <label for="core_recommendation_other" class="block text-sm font-medium text-gray-700 mb-2">
+                            Please Specify Other Type <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="core_recommendation_other" name="core_recommendation_other"
+                               value="{{ recommendation.core_recommendation_other|default:'' }}"
+                               class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200"
+                               placeholder="Describe the type of recommendation...">
+                    </div>
+
+                    <!-- Priority Matrix -->
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                        <h4 class="text-sm font-semibold text-blue-900 mb-3 flex items-center">
+                            <i class="fas fa-layer-group mr-2"></i>
+                            Priority Classification (Importance × Urgency Matrix)
+                        </h4>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Importance -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Importance Level <span class="text-red-500">*</span>
+                                </label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center p-3 border-2 {% if recommendation.importance == 'high' %}border-emerald-500 bg-emerald-50{% else %}border-gray-200 bg-white{% endif %} rounded-lg cursor-pointer">
+                                        <input type="radio" name="importance" value="high" {% if recommendation.importance == 'high' %}checked{% endif %}
+                                               class="h-4 w-4 text-emerald-600 border-gray-300 focus:ring-emerald-500">
+                                        <span class="ml-2 text-sm font-medium text-gray-900">High Importance</span>
+                                    </label>
+                                    <label class="flex items-center p-3 border-2 {% if recommendation.importance == 'low' %}border-emerald-500 bg-emerald-50{% else %}border-gray-200 bg-white{% endif %} rounded-lg cursor-pointer">
+                                        <input type="radio" name="importance" value="low" {% if recommendation.importance == 'low' %}checked{% endif %}
+                                               class="h-4 w-4 text-emerald-600 border-gray-300 focus:ring-emerald-500">
+                                        <span class="ml-2 text-sm font-medium text-gray-900">Low Importance</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Urgency -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Urgency Level <span class="text-red-500">*</span>
+                                </label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center p-3 border-2 {% if recommendation.urgency == 'high' %}border-emerald-500 bg-emerald-50{% else %}border-gray-200 bg-white{% endif %} rounded-lg cursor-pointer">
+                                        <input type="radio" name="urgency" value="high" {% if recommendation.urgency == 'high' %}checked{% endif %}
+                                               class="h-4 w-4 text-emerald-600 border-gray-300 focus:ring-emerald-500">
+                                        <span class="ml-2 text-sm font-medium text-gray-900">High Urgency</span>
+                                    </label>
+                                    <label class="flex items-center p-3 border-2 {% if recommendation.urgency == 'low' %}border-emerald-500 bg-emerald-50{% else %}border-gray-200 bg-white{% endif %} rounded-lg cursor-pointer">
+                                        <input type="radio" name="urgency" value="low" {% if recommendation.urgency == 'low' %}checked{% endif %}
+                                               class="h-4 w-4 text-emerald-600 border-gray-300 focus:ring-emerald-500">
+                                        <span class="ml-2 text-sm font-medium text-gray-900">Low Urgency</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Priority Category Display -->
+                        <div id="priority-category-display" class="mt-4 p-4 bg-white rounded-lg border-2 border-emerald-500">
+                            <p class="text-sm font-semibold text-gray-900">
+                                <i class="fas fa-star text-amber-500 mr-2"></i>
+                                <span>Priority Category: <strong class="text-emerald-600">{{ recommendation.priority_category }} - {% if recommendation.priority_category == 'A' %}High Importance, High Urgency (Critical){% elif recommendation.priority_category == 'B' %}High Importance, Low Urgency (Essential){% else %}Low Importance, Low Urgency (Supportive){% endif %}</strong></span>
+                            </p>
+                            <p class="text-xs text-gray-600 mt-1">{% if recommendation.priority_category == 'A' %}Critical, immediate-impact measures{% elif recommendation.priority_category == 'B' %}Essential, phased interventions{% else %}Supportive, future-oriented proposals{% endif %}</p>
+                        </div>
+                    </div>
+
+                    <!-- Scope Level -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Scope Level <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <select id="scope" name="scope" required
+                                    class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                <option value="">Select scope...</option>
+                                <option value="national" {% if recommendation.scope == 'national' %}selected{% endif %}>National Level</option>
+                                <option value="regional" {% if recommendation.scope == 'regional' %}selected{% endif %}>Regional Level</option>
+                                <option value="provincial" {% if recommendation.scope == 'provincial' %}selected{% endif %}>Provincial Level</option>
+                                <option value="municipal" {% if recommendation.scope == 'municipal' %}selected{% endif %}>Municipal/City Level</option>
+                                <option value="barangay" {% if recommendation.scope == 'barangay' %}selected{% endif %}>Barangay Level</option>
+                                <option value="community" {% if recommendation.scope == 'community' %}selected{% endif %}>Community Level</option>
+                            </select>
+                            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3: EVIDENCE BASE -->
+        <div class="form-step" data-step="3" style="display: none;">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="mb-6 pb-4 border-b border-gray-200">
+                    <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-chart-bar text-emerald-600 mr-3"></i>
+                        Evidence Base
+                    </h3>
+                    <p class="text-sm text-gray-600 mt-2">
+                        Link this recommendation to MANA findings, consultations, and research data
+                    </p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- MANA Findings -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Related MANA Assessments
+                        </label>
+                        <select id="mana_assessments" name="related_assessments" multiple
+                                class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 h-32">
+                            {% for assessment in mana_assessments %}
+                            <option value="{{ assessment.id }}" {% if assessment in recommendation.related_assessments.all %}selected{% endif %}>{{ assessment.title }} - {{ assessment.created_at|date:"M d, Y" }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="mt-1 text-sm text-gray-500">Hold Ctrl/Cmd to select multiple assessments</p>
+                    </div>
+
+                    <!-- Consultation References -->
+                    <div>
+                        <label for="consultation_references" class="block text-sm font-medium text-gray-700 mb-2">
+                            Consultation References
+                        </label>
+                        <textarea id="consultation_references" name="consultation_references" rows="4"
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="List consultations held (dates, locations, participants)...
+
+Example:
+- Pagadian City Consultation (August 22-23, 2022) - 150+ participants
+- Ipil Consultation (June 14-15, 2022) - 100+ participants">{{ recommendation.consultation_references|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Research Data -->
+                    <div>
+                        <label for="research_data" class="block text-sm font-medium text-gray-700 mb-2">
+                            Research Data & Official Statistics
+                        </label>
+                        <textarea id="research_data" name="research_data" rows="4"
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Cite research studies, official statistics, and data sources...
+
+Example:
+- Region IX poverty incidence: 50.80% (Zamboanga del Norte)
+- Muslim population: 703,633 (18.22% of regional population)
+- Source: PSA, MANA 2024">{{ recommendation.research_data|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 4: PROBLEM & OBJECTIVES -->
+        <div class="form-step" data-step="4" style="display: none;">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="mb-6 pb-4 border-b border-gray-200">
+                    <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-bullseye text-red-600 mr-3"></i>
+                        Problem Statement & Objectives
+                    </h3>
+                    <p class="text-sm text-gray-600 mt-2">
+                        Define the problem and set clear, measurable objectives
+                    </p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Problem Statement -->
+                    <div>
+                        <label for="problem_statement" class="block text-sm font-medium text-gray-700 mb-2">
+                            Problem Statement <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="problem_statement" name="problem_statement" rows="5" required
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Clearly state the problem being addressed...">{{ recommendation.problem_statement|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Affected Communities (Optional with Hierarchical Filters) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Affected OBC Communities (Optional)
+                        </label>
+
+                        <!-- Hierarchical Filters -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                            <p class="text-xs font-semibold text-blue-900 mb-3">
+                                <i class="fas fa-filter mr-1"></i>
+                                Filter Communities by Location
+                            </p>
+                            <p class="text-xs text-blue-700 mb-4">
+                                Selected values will tag this recommendation so it appears on the matching OBC profiles.
+                            </p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <!-- Region Filter -->
+                                <div>
+                                    <label for="filter_region" class="block text-xs font-medium text-gray-700 mb-1">
+                                        Region
+                                    </label>
+                                    <div class="relative">
+                                        <select id="filter_region" name="target_region"
+                                                class="block w-full py-2 px-3 text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none pr-10 bg-white">
+                                            <option value="">All Regions</option>
+                                            {% for region in regions %}
+                                            <option value="{{ region.id }}" {% if recommendation.target_region_id == region.id %}selected{% endif %}>{{ region.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                            <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Province Filter -->
+                                <div>
+                                    <label for="filter_province" class="block text-xs font-medium text-gray-700 mb-1">
+                                        Province
+                                    </label>
+                                    <div class="relative">
+                                        <select id="filter_province" name="target_province" disabled
+                                                class="block w-full py-2 px-3 text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none pr-10 bg-white disabled:bg-gray-100">
+                                            <option value="">Select Region First</option>
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                            <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Municipality Filter -->
+                                <div>
+                                    <label for="filter_municipality" class="block text-xs font-medium text-gray-700 mb-1">
+                                        Municipality
+                                    </label>
+                                    <div class="relative">
+                                        <select id="filter_municipality" name="target_municipality" disabled
+                                                class="block w-full py-2 px-3 text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none pr-10 bg-white disabled:bg-gray-100">
+                                            <option value="">Select Province First</option>
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                            <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Barangay Filter -->
+                                <div>
+                                    <label for="filter_barangay" class="block text-xs font-medium text-gray-700 mb-1">
+                                        Barangay
+                                    </label>
+                                    <div class="relative">
+                                        <select id="filter_barangay" name="target_barangay" disabled
+                                                class="block w-full py-2 px-3 text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none pr-10 bg-white disabled:bg-gray-100">
+                                            <option value="">Select Municipality First</option>
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                            <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" id="reset-community-filters" class="mt-3 text-xs text-blue-600 hover:text-blue-800 font-medium">
+                                <i class="fas fa-redo mr-1"></i>
+                                Reset All Filters
+                            </button>
+                        </div>
+
+                        <!-- Communities Multi-Select -->
+                        <select id="target_communities" name="target_communities" multiple
+                                class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 h-40"
+                                data-all-communities='{{ obc_communities|safe }}'>
+                            {% for community in obc_communities %}
+                            <option value="{{ community.id }}"
+                                    {% if community in recommendation.target_communities.all %}selected{% endif %}
+                                    data-region="{{ community.barangay.municipality.province.region.id }}"
+                                    data-province="{{ community.barangay.municipality.province.id }}"
+                                    data-municipality="{{ community.barangay.municipality.id }}"
+                                    data-barangay="{{ community.barangay.id }}">
+                                {{ community.name }} - {{ community.barangay.name }}, {{ community.barangay.municipality.name }}, {{ community.barangay.municipality.province.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <p class="mt-1 text-sm text-gray-500">
+                            <i class="fas fa-info-circle text-blue-500 mr-1"></i>
+                            Select all OBC communities that would benefit (hold Ctrl/Cmd to select multiple). Use filters above to narrow down options.
+                        </p>
+                    </div>
+
+                    <!-- Policy Objectives -->
+                    <div>
+                        <label for="policy_objectives" class="block text-sm font-medium text-gray-700 mb-2">
+                            Policy Objectives (SMART) <span class="text-red-500">*</span>
+                        </label>
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-3 rounded-r-lg">
+                            <p class="text-sm font-semibold text-blue-900 mb-2">SMART Criteria:</p>
+                            <ul class="text-xs text-blue-800 space-y-1">
+                                <li><strong>S</strong>pecific - Clear and well-defined</li>
+                                <li><strong>M</strong>easurable - Quantifiable indicators</li>
+                                <li><strong>A</strong>chievable - Realistic given resources</li>
+                                <li><strong>R</strong>elevant - Aligned with OBC needs</li>
+                                <li><strong>T</strong>ime-bound - Specific timeframe</li>
+                            </ul>
+                        </div>
+                        <textarea id="policy_objectives" name="policy_objectives" rows="5" required
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="List specific, measurable objectives...
+
+Example:
+1. Increase OBC scholarship enrollment by 300% within 2 years
+2. Establish Madaris support in 50 barangays by 2026">{{ recommendation.policy_objectives|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Success Metrics -->
+                    <div>
+                        <label for="success_metrics" class="block text-sm font-medium text-gray-700 mb-2">
+                            Success Metrics
+                        </label>
+                        <textarea id="success_metrics" name="success_metrics" rows="3"
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="How will success be measured?">{{ recommendation.success_metrics|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 5: IMPLEMENTATION DETAILS -->
+        <div class="form-step" data-step="5" style="display: none;">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="mb-6 pb-4 border-b border-gray-200">
+                    <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-cogs text-purple-600 mr-3"></i>
+                        Implementation Details
+                    </h3>
+                    <p class="text-sm text-gray-600 mt-2">
+                        Describe the proposed solution and implementation strategy
+                    </p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Description -->
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                            Detailed Description <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="description" name="description" rows="5" required
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Provide a comprehensive description of this recommendation...">{{ recommendation.description|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Rationale -->
+                    <div>
+                        <label for="rationale" class="block text-sm font-medium text-gray-700 mb-2">
+                            Rationale & Justification <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="rationale" name="rationale" rows="4" required
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Explain the reasoning and evidence supporting this recommendation...">{{ recommendation.rationale|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Proposed Solution -->
+                    <div>
+                        <label for="proposed_solution" class="block text-sm font-medium text-gray-700 mb-2">
+                            Proposed Solution <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="proposed_solution" name="proposed_solution" rows="5" required
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Describe the detailed proposed solution...">{{ recommendation.proposed_solution|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Implementation Strategy -->
+                    <div>
+                        <label for="implementation_strategy" class="block text-sm font-medium text-gray-700 mb-2">
+                            Implementation Strategy
+                        </label>
+                        <textarea id="implementation_strategy" name="implementation_strategy" rows="4"
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Strategy for implementing this recommendation...">{{ recommendation.implementation_strategy|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 6: IMPACT ASSESSMENT -->
+        <div class="form-step" data-step="6" style="display: none;">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="mb-6 pb-4 border-b border-gray-200">
+                    <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-rocket text-orange-600 mr-3"></i>
+                        Impact Assessment
+                    </h3>
+                    <p class="text-sm text-gray-600 mt-2">
+                        Anticipated benefits, risks, and mitigation strategies
+                    </p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Short-term Benefits -->
+                    <div>
+                        <label for="short_term_benefits" class="block text-sm font-medium text-gray-700 mb-2">
+                            Short-term Benefits (1-2 years)
+                        </label>
+                        <textarea id="short_term_benefits" name="short_term_benefits" rows="3"
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Expected benefits within 1-2 years...">{{ recommendation.short_term_benefits|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Long-term Benefits -->
+                    <div>
+                        <label for="long_term_benefits" class="block text-sm font-medium text-gray-700 mb-2">
+                            Long-term Benefits (3+ years)
+                        </label>
+                        <textarea id="long_term_benefits" name="long_term_benefits" rows="3"
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Expected benefits beyond 3 years...">{{ recommendation.long_term_benefits|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Expected Outcomes -->
+                    <div>
+                        <label for="expected_outcomes" class="block text-sm font-medium text-gray-700 mb-2">
+                            Expected Outcomes <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="expected_outcomes" name="expected_outcomes" rows="4" required
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Describe the expected benefits and outcomes...">{{ recommendation.expected_outcomes|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Risks -->
+                    <div>
+                        <label for="potential_risks" class="block text-sm font-medium text-gray-700 mb-2">
+                            Potential Risks & Challenges
+                        </label>
+                        <textarea id="potential_risks" name="potential_risks" rows="3"
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Identify potential risks (funding, logistics, political)...">{{ recommendation.potential_risks|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Mitigation -->
+                    <div>
+                        <label for="mitigation_strategies" class="block text-sm font-medium text-gray-700 mb-2">
+                            Mitigation Strategies
+                        </label>
+                        <textarea id="mitigation_strategies" name="mitigation_strategies" rows="3"
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Strategies to mitigate identified risks...">{{ recommendation.mitigation_strategies|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Equity & Sustainability -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="equity_considerations" class="block text-sm font-medium text-gray-700 mb-2">
+                                Equity Considerations
+                            </label>
+                            <textarea id="equity_considerations" name="equity_considerations" rows="3"
+                                      class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                      placeholder="How does this address inclusion?">{{ recommendation.equity_considerations|default:'' }}</textarea>
+                        </div>
+                        <div>
+                            <label for="sustainability_measures" class="block text-sm font-medium text-gray-700 mb-2">
+                                Sustainability Measures
+                            </label>
+                            <textarea id="sustainability_measures" name="sustainability_measures" rows="3"
+                                      class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                      placeholder="Long-term sustainability...">{{ recommendation.sustainability_measures|default:'' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Cultural Alignment -->
+                    <div>
+                        <label for="cultural_alignment" class="block text-sm font-medium text-gray-700 mb-2">
+                            Cultural Alignment
+                        </label>
+                        <textarea id="cultural_alignment" name="cultural_alignment" rows="2"
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="How does this align with Bangsamoro cultural values?">{{ recommendation.cultural_alignment|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 7: RESOURCES & TIMELINE -->
+        <div class="form-step" data-step="7" style="display: none;">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="mb-6 pb-4 border-b border-gray-200">
+                    <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-coins text-green-600 mr-3"></i>
+                        Resources & Timeline
+                    </h3>
+                    <p class="text-sm text-gray-600 mt-2">
+                        Budget requirements, agencies, and implementation timeline
+                    </p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Budget -->
+                    <div>
+                        <label for="estimated_cost" class="block text-sm font-medium text-gray-700 mb-2">
+                            Estimated Total Cost (PHP)
+                        </label>
+                        <input type="number" id="estimated_cost" name="estimated_cost" min="0" step="0.01"
+                               value="{{ recommendation.estimated_cost|default:'' }}"
+                               class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200"
+                               placeholder="0.00">
+                    </div>
+
+                    <!-- Budget Breakdown -->
+                    <div>
+                        <label for="budget_implications" class="block text-sm font-medium text-gray-700 mb-2">
+                            Budget Breakdown & Implications
+                        </label>
+                        <textarea id="budget_implications" name="budget_implications" rows="4"
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Detailed budget breakdown...">{{ recommendation.budget_implications|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Responsible Agencies -->
+                    <div>
+                        <label for="responsible_agencies" class="block text-sm font-medium text-gray-700 mb-2">
+                            Responsible Agencies/Ministries
+                        </label>
+                        <select id="responsible_agencies" name="responsible_agencies" multiple
+                                class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 h-32">
+                            {% for org in partner_organizations %}
+                            <option value="{{ org.id }}" {% if org in recommendation.responsible_agencies.all %}selected{% endif %}>{{ org.name }} ({{ org.get_organization_type_display }})</option>
+                            {% endfor %}
+                        </select>
+                        <p class="mt-1 text-sm text-gray-500">
+                            <i class="fas fa-info-circle text-blue-500 mr-1"></i>
+                            Select all organizations responsible for implementation (hold Ctrl/Cmd to select multiple)
+                        </p>
+                    </div>
+
+                    <!-- Implementation Timeline -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="implementation_start_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                Target Start Date
+                            </label>
+                            <input type="date" id="implementation_start_date" name="implementation_start_date"
+                                   value="{{ recommendation.implementation_start_date|date:'Y-m-d'|default:'' }}"
+                                   class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200">
+                        </div>
+                        <div>
+                            <label for="implementation_deadline" class="block text-sm font-medium text-gray-700 mb-2">
+                                Target Completion Date
+                            </label>
+                            <input type="date" id="implementation_deadline" name="implementation_deadline"
+                                   value="{{ recommendation.implementation_deadline|date:'Y-m-d'|default:'' }}"
+                                   class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 8: M&E FRAMEWORK -->
+        <div class="form-step" data-step="8" style="display: none;">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="mb-6 pb-4 border-b border-gray-200">
+                    <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-chart-line text-indigo-600 mr-3"></i>
+                        Monitoring & Evaluation Framework
+                    </h3>
+                    <p class="text-sm text-gray-600 mt-2">
+                        Performance indicators, baselines, and tracking mechanisms
+                    </p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Tracking Mechanisms -->
+                    <div>
+                        <label for="tracking_mechanisms" class="block text-sm font-medium text-gray-700 mb-2">
+                            Tracking Mechanisms
+                        </label>
+                        <textarea id="tracking_mechanisms" name="tracking_mechanisms" rows="3"
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="How will progress be monitored and tracked?">{{ recommendation.tracking_mechanisms|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Reporting Schedule -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Reporting Schedule
+                        </label>
+                        <div class="relative">
+                            <select id="reporting_schedule" name="reporting_schedule"
+                                    class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                <option value="">Select reporting frequency...</option>
+                                <option value="monthly" {% if recommendation.reporting_schedule == 'monthly' %}selected{% endif %}>Monthly</option>
+                                <option value="quarterly" {% if recommendation.reporting_schedule == 'quarterly' %}selected{% endif %}>Quarterly</option>
+                                <option value="semi_annual" {% if recommendation.reporting_schedule == 'semi_annual' %}selected{% endif %}>Semi-Annual</option>
+                                <option value="annual" {% if recommendation.reporting_schedule == 'annual' %}selected{% endif %}>Annual</option>
+                            </select>
+                            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Monitoring Framework -->
+                    <div>
+                        <label for="monitoring_framework" class="block text-sm font-medium text-gray-700 mb-2">
+                            Monitoring Framework
+                        </label>
+                        <textarea id="monitoring_framework" name="monitoring_framework" rows="4"
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Framework for monitoring implementation progress...">{{ recommendation.monitoring_framework|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 9: STAKEHOLDER ENGAGEMENT -->
+        <div class="form-step" data-step="9" style="display: none;">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="mb-6 pb-4 border-b border-gray-200">
+                    <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-users text-teal-600 mr-3"></i>
+                        Stakeholder Engagement & Coordination
+                    </h3>
+                    <p class="text-sm text-gray-600 mt-2">
+                        Document consultations and coordination with stakeholders
+                    </p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Stakeholder Feedback -->
+                    <div>
+                        <label for="stakeholder_feedback_detailed" class="block text-sm font-medium text-gray-700 mb-2">
+                            Stakeholder Feedback
+                        </label>
+                        <textarea id="stakeholder_feedback_detailed" name="stakeholder_feedback_detailed" rows="4"
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Summary of stakeholder feedback from consultations...">{{ recommendation.stakeholder_feedback_detailed|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Community Validated -->
+                    <div>
+                        <label class="flex items-center p-4 border-2 border-gray-200 bg-white rounded-xl cursor-pointer hover:bg-gray-50">
+                            <input type="checkbox" id="community_validated" name="community_validated" value="true"
+                                   {% if recommendation.community_validated %}checked{% endif %}
+                                   class="h-5 w-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                            <span class="ml-3 text-sm font-medium text-gray-900">
+                                This recommendation has been validated by the affected communities
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Coordination Partners -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="lgus_involved" class="block text-sm font-medium text-gray-700 mb-2">
+                                LGUs Involved
+                            </label>
+                            <select id="lgus_involved" name="lgus_involved" multiple
+                                    class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 h-32">
+                                {% for org in partner_organizations %}
+                                    {% if org.organization_type == 'lgu' %}
+                                    <option value="{{ org.id }}" {% if org in recommendation.lgus_involved.all %}selected{% endif %}>{{ org.name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            <p class="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple</p>
+                        </div>
+                        <div>
+                            <label for="ngas_involved" class="block text-sm font-medium text-gray-700 mb-2">
+                                NGAs Involved
+                            </label>
+                            <select id="ngas_involved" name="ngas_involved" multiple
+                                    class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 h-32">
+                                {% for org in partner_organizations %}
+                                    {% if org.organization_type == 'nga' %}
+                                    <option value="{{ org.id }}" {% if org in recommendation.ngas_involved.all %}selected{% endif %}>{{ org.name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            <p class="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple</p>
+                        </div>
+                        <div>
+                            <label for="cso_partners" class="block text-sm font-medium text-gray-700 mb-2">
+                                CSO Partners
+                            </label>
+                            <select id="cso_partners" name="cso_partners" multiple
+                                    class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 h-32">
+                                {% for org in partner_organizations %}
+                                    {% if org.organization_type == 'cso' %}
+                                    <option value="{{ org.id }}" {% if org in recommendation.cso_partners.all %}selected{% endif %}>{{ org.name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            <p class="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 10: REVIEW & SUBMIT -->
+        <div class="form-step" data-step="10" style="display: none;">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="mb-6 pb-4 border-b border-gray-200">
+                    <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-check-circle text-green-600 mr-3"></i>
+                        Review & Submit
+                    </h3>
+                    <p class="text-sm text-gray-600 mt-2">
+                        Review your recommendation before submitting
+                    </p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Notes -->
+                    <div>
+                        <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
+                            Additional Notes
+                        </label>
+                        <textarea id="notes" name="notes" rows="4"
+                                  class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                                  placeholder="Any additional notes or observations...">{{ recommendation.notes|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Summary Alert -->
+                    <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded-r-lg">
+                        <div class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 text-2xl mt-1"></i>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-semibold text-green-900 mb-2">
+                                    Ready to Update
+                                </h4>
+                                <p class="text-sm text-green-800">
+                                    Your recommendation is ready for update. Please review all information carefully before submitting.
+                                    Changes will be saved when you click the Update button.
+                                </p>
+                                <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                    <div>
+                                        <p class="text-green-700 font-medium">Status:</p>
+                                        <p class="text-green-900">{{ recommendation.get_status_display }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-green-700 font-medium">Type:</p>
+                                        <p class="text-green-900" id="review-type">{{ recommendation.get_recommendation_type_display }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-green-700 font-medium">Priority:</p>
+                                        <p class="text-green-900" id="review-priority">Category {{ recommendation.priority_category }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-green-700 font-medium">Scope:</p>
+                                        <p class="text-green-900" id="review-scope">{{ recommendation.get_scope_display }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submission Checklist -->
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                        <h4 class="text-sm font-semibold text-blue-900 mb-3">
+                            <i class="fas fa-tasks mr-2"></i>
+                            Pre-Submission Checklist
+                        </h4>
+                        <ul class="text-sm text-blue-800 space-y-2">
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-blue-600 mr-2 mt-0.5"></i>
+                                <span>All required fields are completed</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-blue-600 mr-2 mt-0.5"></i>
+                                <span>Evidence base is properly documented</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-blue-600 mr-2 mt-0.5"></i>
+                                <span>Objectives are SMART (Specific, Measurable, Achievable, Relevant, Time-bound)</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-blue-600 mr-2 mt-0.5"></i>
+                                <span>Budget and timeline are realistic</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-blue-600 mr-2 mt-0.5"></i>
+                                <span>Stakeholders have been consulted</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between mt-6">
+            <button type="button" id="prev-btn" class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-200" style="display: none;">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Previous
+            </button>
+            <div class="flex-1"></div>
+            <button type="button" id="next-btn" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                Next
+                <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+            <button type="submit" id="submit-btn" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl" style="display: none;">
+                <i class="fas fa-save mr-2"></i>
+                Update Recommendation
+            </button>
+        </div>
+
+        <!-- Save Draft Button (Always Visible) -->
+        <div class="mt-4 text-center">
+            <button type="button" id="save-draft-btn" class="px-6 py-3 border-2 border-emerald-500 text-emerald-700 rounded-xl font-medium hover:bg-emerald-50 transition-all duration-200">
+                <i class="fas fa-save mr-2"></i>
+                Save as Draft
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- JavaScript for Multi-Step Edit Form with Free Navigation -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentStep = 1;
+    const totalSteps = 10;
+    const form = document.getElementById('recommendation-form');
+    const progressBar = document.getElementById('progress-bar');
+    const stepTitle = document.getElementById('step-title');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    const autosaveStatus = document.getElementById('autosave-status');
+
+    // Make all step indicators clickable for edit mode
+    function initializeStepNavigation() {
+        document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+            const stepNum = index + 1;
+
+            // Make step indicators clickable
+            indicator.style.cursor = 'pointer';
+            indicator.classList.add('hover:opacity-100');
+
+            indicator.addEventListener('click', function() {
+                showStep(stepNum);
+            });
+        });
+    }
+
+    // Update progress bar and UI
+    function updateProgress() {
+        const percentage = (currentStep / totalSteps) * 100;
+        progressBar.style.width = percentage + '%';
+        stepTitle.textContent = `Step ${currentStep} of ${totalSteps}`;
+
+        // Update step indicators - all are accessible in edit mode
+        document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+            const stepNum = index + 1;
+            const circle = indicator.querySelector('div');
+            const label = indicator.querySelector('span');
+
+            if (stepNum === currentStep) {
+                // Current step - highlighted
+                circle.className = 'w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm font-semibold';
+                label.className = 'text-sm font-medium text-emerald-600';
+                indicator.classList.remove('opacity-50');
+            } else {
+                // Other steps - muted but accessible
+                circle.className = 'w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-semibold hover:bg-gray-400 transition-colors';
+                label.className = 'text-sm font-medium text-gray-600 hidden md:inline';
+                indicator.classList.add('opacity-70', 'hover:opacity-100');
+            }
+        });
+
+        // Show/hide navigation buttons
+        prevBtn.style.display = currentStep === 1 ? 'none' : 'block';
+        nextBtn.style.display = currentStep === totalSteps ? 'none' : 'block';
+        submitBtn.style.display = currentStep === totalSteps ? 'block' : 'none';
+    }
+
+    // Show specific step
+    function showStep(stepNumber) {
+        // Validate step number
+        if (stepNumber < 1 || stepNumber > totalSteps) return;
+
+        document.querySelectorAll('.form-step').forEach(step => {
+            step.style.display = 'none';
+            step.classList.remove('active');
+        });
+
+        const targetStep = document.querySelector(`.form-step[data-step="${stepNumber}"]`);
+        if (targetStep) {
+            targetStep.style.display = 'block';
+            targetStep.classList.add('active');
+        }
+
+        currentStep = stepNumber;
+        updateProgress();
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Next button
+    nextBtn.addEventListener('click', function() {
+        if (currentStep < totalSteps) {
+            showStep(currentStep + 1);
+        }
+    });
+
+    // Previous button
+    prevBtn.addEventListener('click', function() {
+        if (currentStep > 1) {
+            showStep(currentStep - 1);
+        }
+    });
+
+    // Recommendation type selection highlighting
+    document.querySelectorAll('.recommendation-type-option').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.recommendation-type-option').forEach(opt => {
+                opt.classList.remove('border-emerald-500', 'bg-emerald-50');
+                opt.classList.add('border-gray-200', 'bg-white');
+            });
+            this.classList.remove('border-gray-200', 'bg-white');
+            this.classList.add('border-emerald-500', 'bg-emerald-50');
+        });
+    });
+
+    // Category dropdown - show/hide secondary categories
+    const categorySelect = document.getElementById('category');
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            const secondaryContainer = document.getElementById('secondary-categories-container');
+            const secondaryCheckboxes = document.querySelectorAll('input[name="secondary_categories"]');
+
+            if (this.value === 'comprehensive') {
+                secondaryContainer.style.display = 'block';
+            } else {
+                secondaryContainer.style.display = 'none';
+                secondaryCheckboxes.forEach(cb => {
+                    cb.checked = false;
+                });
+            }
+        });
+    }
+
+    // Core recommendation type - show/hide "other" field
+    const coreTypeSelect = document.getElementById('core_recommendation_type');
+    if (coreTypeSelect) {
+        coreTypeSelect.addEventListener('change', function() {
+            const otherContainer = document.getElementById('other-type-container');
+            const otherInput = document.getElementById('core_recommendation_other');
+
+            if (this.value === 'other') {
+                otherContainer.style.display = 'block';
+            } else {
+                otherContainer.style.display = 'none';
+            }
+        });
+    }
+
+    // Priority matrix calculator
+    function updatePriorityCategory() {
+        const importance = document.querySelector('input[name="importance"]:checked')?.value;
+        const urgency = document.querySelector('input[name="urgency"]:checked')?.value;
+        const display = document.getElementById('priority-category-display');
+
+        if (!display) return;
+
+        let category, description, categoryClass;
+
+        if (importance === 'high' && urgency === 'high') {
+            category = 'A';
+            description = 'High Importance, High Urgency (Critical)';
+            categoryClass = 'text-red-600';
+        } else if (importance === 'high' && urgency === 'low') {
+            category = 'B';
+            description = 'High Importance, Low Urgency (Essential)';
+            categoryClass = 'text-amber-600';
+        } else {
+            category = 'C';
+            description = 'Low Importance, Low Urgency (Supportive)';
+            categoryClass = 'text-blue-600';
+        }
+
+        display.innerHTML = `
+            <p class="text-sm font-semibold text-gray-900">
+                <i class="fas fa-star text-amber-500 mr-2"></i>
+                <span>Priority Category: <strong class="${categoryClass}">Category ${category} - ${description}</strong></span>
+            </p>
+            <p class="text-xs text-gray-600 mt-1">
+                ${category === 'A' ? 'Critical, immediate-impact measures' :
+                  category === 'B' ? 'Essential, phased interventions' :
+                  'Supportive, future-oriented proposals'}
+            </p>
+        `;
+    }
+
+    document.querySelectorAll('input[name="importance"], input[name="urgency"]').forEach(radio => {
+        radio.addEventListener('change', updatePriorityCategory);
+    });
+
+    // Hierarchical Community Filters
+    const filterRegion = document.getElementById('filter_region');
+    const filterProvince = document.getElementById('filter_province');
+    const filterMunicipality = document.getElementById('filter_municipality');
+    const filterBarangay = document.getElementById('filter_barangay');
+    const targetCommunities = document.getElementById('target_communities');
+    const resetFiltersBtn = document.getElementById('reset-community-filters');
+
+    if (filterRegion && filterProvince && filterMunicipality && filterBarangay && targetCommunities) {
+        // Store all options for filtering
+        const allCommunityOptions = Array.from(targetCommunities.options);
+
+        // Helper to get unique values from community options
+        function getUniqueValues(dataAttr, parentFilter = null, parentValue = null) {
+            let options = allCommunityOptions;
+
+            // Filter based on parent selection
+            if (parentFilter && parentValue) {
+                options = options.filter(opt => opt.dataset[parentFilter] === parentValue);
+            }
+
+            const values = options.map(opt => ({
+                id: opt.dataset[dataAttr],
+                text: opt.textContent.split(' - ')[1]?.split(', ').find((_, i) => {
+                    if (dataAttr === 'region') return i === 3;
+                    if (dataAttr === 'province') return i === 2;
+                    if (dataAttr === 'municipality') return i === 1;
+                    if (dataAttr === 'barangay') return i === 0;
+                }) || opt.dataset[dataAttr]
+            }));
+
+            return [...new Map(values.map(v => [v.id, v])).values()];
+        }
+
+        // Region change
+        filterRegion.addEventListener('change', function() {
+            const regionId = this.value;
+
+            // Reset dependent filters
+            filterProvince.innerHTML = '<option value="">Select Province...</option>';
+            filterMunicipality.innerHTML = '<option value="">Select Municipality...</option>';
+            filterBarangay.innerHTML = '<option value="">Select Barangay...</option>';
+            filterMunicipality.disabled = true;
+            filterBarangay.disabled = true;
+
+            if (regionId) {
+                // Populate provinces
+                const provinces = getUniqueValues('province', 'region', regionId);
+                provinces.forEach(prov => {
+                    const opt = document.createElement('option');
+                    opt.value = prov.id;
+                    opt.textContent = prov.text;
+                    filterProvince.appendChild(opt);
+                });
+                filterProvince.disabled = false;
+            } else {
+                filterProvince.disabled = true;
+            }
+
+            filterCommunities();
+        });
+
+        // Province change
+        filterProvince.addEventListener('change', function() {
+            const provinceId = this.value;
+
+            // Reset dependent filters
+            filterMunicipality.innerHTML = '<option value="">Select Municipality...</option>';
+            filterBarangay.innerHTML = '<option value="">Select Barangay...</option>';
+            filterBarangay.disabled = true;
+
+            if (provinceId) {
+                // Populate municipalities
+                const municipalities = getUniqueValues('municipality', 'province', provinceId);
+                municipalities.forEach(mun => {
+                    const opt = document.createElement('option');
+                    opt.value = mun.id;
+                    opt.textContent = mun.text;
+                    filterMunicipality.appendChild(opt);
+                });
+                filterMunicipality.disabled = false;
+            } else {
+                filterMunicipality.disabled = true;
+            }
+
+            filterCommunities();
+        });
+
+        // Municipality change
+        filterMunicipality.addEventListener('change', function() {
+            const municipalityId = this.value;
+
+            // Reset barangay filter
+            filterBarangay.innerHTML = '<option value="">Select Barangay...</option>';
+
+            if (municipalityId) {
+                // Populate barangays
+                const barangays = getUniqueValues('barangay', 'municipality', municipalityId);
+                barangays.forEach(brgy => {
+                    const opt = document.createElement('option');
+                    opt.value = brgy.id;
+                    opt.textContent = brgy.text;
+                    filterBarangay.appendChild(opt);
+                });
+                filterBarangay.disabled = false;
+            } else {
+                filterBarangay.disabled = true;
+            }
+
+            filterCommunities();
+        });
+
+        // Barangay change
+        filterBarangay.addEventListener('change', function() {
+            filterCommunities();
+        });
+
+        // Filter communities based on selections
+        function filterCommunities() {
+            const regionId = filterRegion.value;
+            const provinceId = filterProvince.value;
+            const municipalityId = filterMunicipality.value;
+            const barangayId = filterBarangay.value;
+
+            // Store currently selected options
+            const selectedValues = Array.from(targetCommunities.selectedOptions).map(opt => opt.value);
+
+            // Clear current options
+            targetCommunities.innerHTML = '';
+
+            // Filter and add matching communities
+            allCommunityOptions.forEach(opt => {
+                let matches = true;
+
+                if (regionId && opt.dataset.region !== regionId) matches = false;
+                if (provinceId && opt.dataset.province !== provinceId) matches = false;
+                if (municipalityId && opt.dataset.municipality !== municipalityId) matches = false;
+                if (barangayId && opt.dataset.barangay !== barangayId) matches = false;
+
+                if (matches) {
+                    const newOpt = opt.cloneNode(true);
+                    // Restore selection state
+                    if (selectedValues.includes(newOpt.value)) {
+                        newOpt.selected = true;
+                    }
+                    targetCommunities.appendChild(newOpt);
+                }
+            });
+        }
+
+        // Reset filters
+        if (resetFiltersBtn) {
+            resetFiltersBtn.addEventListener('click', function() {
+                filterRegion.value = '';
+                filterProvince.innerHTML = '<option value="">Select Region First</option>';
+                filterMunicipality.innerHTML = '<option value="">Select Province First</option>';
+                filterBarangay.innerHTML = '<option value="">Select Municipality First</option>';
+                filterProvince.disabled = true;
+                filterMunicipality.disabled = true;
+                filterBarangay.disabled = true;
+
+                // Store currently selected options
+                const selectedValues = Array.from(targetCommunities.selectedOptions).map(opt => opt.value);
+
+                // Restore all communities
+                targetCommunities.innerHTML = '';
+                allCommunityOptions.forEach(opt => {
+                    const newOpt = opt.cloneNode(true);
+                    // Restore selection state
+                    if (selectedValues.includes(newOpt.value)) {
+                        newOpt.selected = true;
+                    }
+                    targetCommunities.appendChild(newOpt);
+                });
+            });
+        }
+
+        // Restore saved geographic selections when editing
+        const selectedRegion = form?.dataset.selectedRegion || '';
+        const selectedProvince = form?.dataset.selectedProvince || '';
+        const selectedMunicipality = form?.dataset.selectedMunicipality || '';
+        const selectedBarangay = form?.dataset.selectedBarangay || '';
+
+        if (selectedRegion) {
+            filterRegion.value = selectedRegion;
+            filterRegion.dispatchEvent(new Event('change'));
+
+            if (selectedProvince) {
+                filterProvince.value = selectedProvince;
+                filterProvince.dispatchEvent(new Event('change'));
+
+                if (selectedMunicipality) {
+                    filterMunicipality.value = selectedMunicipality;
+                    filterMunicipality.dispatchEvent(new Event('change'));
+
+                    if (selectedBarangay) {
+                        filterBarangay.value = selectedBarangay;
+                        filterBarangay.dispatchEvent(new Event('change'));
+                    }
+                } else if (selectedBarangay) {
+                    // Handle barangay tagged without explicit municipality (fallback)
+                    filterMunicipality.disabled = false;
+                    const municipalities = getUniqueValues('municipality', 'province', selectedProvince);
+                    filterMunicipality.innerHTML = '<option value="">Select Municipality...</option>';
+                    municipalities.forEach(mun => {
+                        const opt = document.createElement('option');
+                        opt.value = mun.id;
+                        opt.textContent = mun.text;
+                        filterMunicipality.appendChild(opt);
+                    });
+
+                    const barangays = getUniqueValues('barangay', 'province', selectedProvince);
+                    filterBarangay.innerHTML = '<option value="">Select Barangay...</option>';
+                    barangays.forEach(brgy => {
+                        const opt = document.createElement('option');
+                        opt.value = brgy.id;
+                        opt.textContent = brgy.text;
+                        filterBarangay.appendChild(opt);
+                    });
+                    filterBarangay.disabled = false;
+                    filterBarangay.value = selectedBarangay;
+                }
+            } else if (selectedMunicipality || selectedBarangay) {
+                // Populate provinces that contain tagged communities when province was not stored
+                filterProvince.disabled = false;
+                const provinces = getUniqueValues('province', 'region', selectedRegion);
+                filterProvince.innerHTML = '<option value="">Select Province...</option>';
+                provinces.forEach(prov => {
+                    const opt = document.createElement('option');
+                    opt.value = prov.id;
+                    opt.textContent = prov.text;
+                    filterProvince.appendChild(opt);
+                });
+
+                if (selectedProvince) {
+                    filterProvince.value = selectedProvince;
+                }
+            }
+        } else if (selectedProvince) {
+            // Province is set but region missing (fallback for legacy data)
+            const provinces = getUniqueValues('province');
+            filterProvince.innerHTML = '<option value="">Select Province...</option>';
+            provinces.forEach(prov => {
+                const opt = document.createElement('option');
+                opt.value = prov.id;
+                opt.textContent = prov.text;
+                filterProvince.appendChild(opt);
+            });
+            filterProvince.disabled = false;
+            filterProvince.value = selectedProvince;
+            filterProvince.dispatchEvent(new Event('change'));
+        }
+    }
+
+    // Auto-save functionality (every 30 seconds)
+    let autoSaveInterval = setInterval(function() {
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const now = new Date();
+                autosaveStatus.textContent = `Auto-saved at ${now.toLocaleTimeString()}`;
+                autosaveStatus.className = 'text-xs text-emerald-600';
+            }
+        })
+        .catch(error => {
+            console.error('Autosave failed:', error);
+            autosaveStatus.textContent = 'Auto-save failed - changes saved manually only';
+            autosaveStatus.className = 'text-xs text-amber-600';
+        });
+    }, 30000); // Every 30 seconds
+
+    // Manual save draft
+    const saveDraftBtn = document.getElementById('save-draft-btn');
+    if (saveDraftBtn) {
+        saveDraftBtn.addEventListener('click', function() {
+            const formData = new FormData(form);
+            formData.append('save_as_draft', 'true');
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    autosaveStatus.textContent = 'Draft saved successfully!';
+                    autosaveStatus.className = 'text-xs text-emerald-600';
+                    setTimeout(() => {
+                        window.location.href = '{% url "common:recommendations_manage" %}';
+                    }, 1000);
+                }
+            })
+            .catch(error => {
+                console.error('Save draft failed:', error);
+                alert('Failed to save draft. Please try again.');
+            });
+        });
+    }
+
+    // Initialize
+    initializeStepNavigation();
+    showStep(1);
+    updatePriorityCategory();
+
+    // Show initial auto-save status
+    autosaveStatus.textContent = 'Auto-save enabled (every 30 seconds)';
+    autosaveStatus.className = 'text-xs text-blue-600';
+});
+</script>
+{% endblock %}

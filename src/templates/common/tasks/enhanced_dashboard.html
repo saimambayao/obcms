@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static task_tags %}
 
 {% block title %}My Tasks Dashboard - OBC Management System{% endblock %}
 
@@ -33,10 +33,10 @@
                 <i class="fas fa-chart-bar mr-2"></i>
                 Analytics
             </a>
-            <a href="{% url 'common:staff_task_board' %}"
+            <a href="{% url 'common:work_item_list' %}"
                class="inline-flex items-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
                 <i class="fas fa-th mr-2"></i>
-                Kanban Board
+                Work Items
             </a>
         </div>
     </div>
@@ -180,7 +180,8 @@
                                     {% elif task.status == 'at_risk' %}bg-rose-500
                                     {% else %}bg-gray-300{% endif %}"></span>
                                 <div>
-                                    <a href="{% url 'common:staff_task_modal' task.id %}" data-modal-link class="text-sm font-medium text-gray-900 hover:text-emerald-600">
+                                    {% task_action_url task 'detail' as dashboard_task_url %}
+                                    <a href="{{ dashboard_task_url }}" data-modal-link class="text-sm font-medium text-gray-900 hover:text-emerald-600">
                                         {{ task.title }}
                                     </a>
                                     {% if task.primary_domain_object %}

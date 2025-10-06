@@ -355,7 +355,8 @@ class BudgetApprovalService:
     @classmethod
     def _generate_approval_tasks(cls, ppa, new_status, user):
         """Generate tasks for approval stage."""
-        from common.models import StaffTask
+        from common.models import WorkItem
+        from django.contrib.contenttypes.models import ContentType
 
         task_templates = {
             MonitoringEntry.APPROVAL_STATUS_TECHNICAL_REVIEW: {
@@ -390,17 +391,25 @@ class BudgetApprovalService:
 
         due_date = timezone.now().date() + timezone.timedelta(days=template["days"])
 
-        task = StaffTask.objects.create(
+        # Get ContentType for MonitoringEntry (PPA)
+        ppa_ct = ContentType.objects.get_for_model(ppa)
+
+        # Create WorkItem task with domain in task_data
+        task = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
             title=template["title"],
             description=template["description"],
             priority=template["priority"],
             status="not_started",
             due_date=due_date,
             created_by=user,
-            linked_ppa=ppa,
-            workflow_stage="approval",
-            auto_generated=True,
-            domain="project_central",
+            content_type=ppa_ct,
+            object_id=ppa.id,
+            task_data={
+                "domain": "project_central",
+                "workflow_stage": "approval",
+                "auto_generated": True,
+            },
         )
 
         logger.info(f"Generated approval task '{task.title}' for PPA {ppa.id}")

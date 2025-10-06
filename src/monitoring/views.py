@@ -19,6 +19,7 @@ from django.views.decorators.http import require_POST
 from common.services.locations import build_location_data, get_object_centroid
 from communities.models import OBCCommunity
 from common.models import Municipality
+from coordination.models import Organization
 from .forms import (
     MonitoringMOAEntryForm,
     MonitoringOOBCEntryForm,
@@ -40,21 +41,8 @@ def _normalise_float(value):
 
 def _prefetch_entries():
     """Return a queryset with the relations needed across views."""
-
-    return (
-        MonitoringEntry.objects.all()
-        .select_related(
-            "lead_organization",
-            "submitted_by_community",
-            "submitted_to_organization",
-            "related_assessment",
-            "related_event",
-            "related_policy",
-            "created_by",
-            "updated_by",
-        )
-        .prefetch_related("communities", "supporting_organizations", "updates")
-    )
+    # Use custom manager's with_related() for optimal performance
+    return MonitoringEntry.objects.with_related()
 
 
 @login_required
@@ -356,11 +344,65 @@ def monitoring_entry_detail(request, pk):
         .select_related("lead_organization")
     )
 
+    support_raw = (entry.support_required or "").strip()
+    special_provision_text = ""
+    support_text_clean = support_raw
+
+    if support_text_clean.lower().startswith("special provision"):
+        _, _, after_label = support_text_clean.partition(":")
+        provision_block = after_label.lstrip()
+        additional_support = ""
+        if "\n\n" in provision_block:
+            provision_block, additional_support = provision_block.split("\n\n", 1)
+        special_provision_text = provision_block.strip()
+        support_text_clean = additional_support.strip()
+
+    # WorkItem Integration Context (for MOA PPAs)
+    work_items = None
+    budget_summary = None
+    progress_by_type = {}
+
+    if entry.category == "moa_ppa" and entry.execution_project:
+        from common.work_item_model import WorkItem
+        from decimal import Decimal
+
+        # Get root-level work items (children of execution_project)
+        work_items = entry.execution_project.get_children().select_related('created_by')
+
+        # Calculate budget summary
+        total_budget = entry.budget_allocation or Decimal('0.00')
+        allocated_sum = entry.work_items.aggregate(
+            total=Sum('allocated_budget')
+        )['total'] or Decimal('0.00')
+
+        budget_summary = {
+            'total': total_budget,
+            'allocated': allocated_sum,
+            'remaining': total_budget - allocated_sum,
+        }
+
+        # Calculate progress by work type
+        all_work_items = entry.work_items.all()
+        for work_type_key, work_type_label in WorkItem.WORK_TYPE_CHOICES:
+            items_of_type = all_work_items.filter(work_type=work_type_key)
+            if items_of_type.exists():
+                avg_progress = items_of_type.aggregate(avg=Avg('progress'))['avg'] or 0
+                progress_by_type[work_type_label] = {
+                    'count': items_of_type.count(),
+                    'avg_progress': round(avg_progress, 1),
+                }
+
     context = {
         "entry": entry,
         "updates": entry.updates.select_related("created_by"),
         "update_form": update_form,
         "related_entries": related_entries,
+        "special_provision_text": special_provision_text,
+        "support_text_clean": support_text_clean,
+        # WorkItem Integration
+        "work_items": work_items,
+        "budget_summary": budget_summary,
+        "progress_by_type": progress_by_type,
     }
     return render(request, "monitoring/detail.html", context)
 
@@ -569,44 +611,93 @@ def create_request_entry(request):
 def moa_ppas_dashboard(request):
     """Dedicated dashboard for MOA PPAs (Ministries, Offices, and Agencies Programs, Projects, and Activities)."""
 
-    moa_entries = _prefetch_entries().filter(category="moa_ppa")
+    all_moa_entries = _prefetch_entries().filter(category="moa_ppa")
     current_year = timezone.now().year
 
-    # Filter for current year entries
-    moa_year_qs = moa_entries.filter(
+    status_filter = request.GET.get("status", "").strip()
+    moa_filter = request.GET.get("implementing_moa", "").strip()
+    fiscal_year_filter = request.GET.get("fiscal_year", "").strip()
+    search_query = request.GET.get("q", "").strip()
+
+    filtered_entries = all_moa_entries
+
+    if status_filter:
+        filtered_entries = filtered_entries.filter(status=status_filter)
+
+    if moa_filter:
+        try:
+            filtered_entries = filtered_entries.filter(implementing_moa__id=moa_filter)
+        except (TypeError, ValueError):
+            filtered_entries = filtered_entries.none()
+
+    if fiscal_year_filter:
+        filtered_entries = filtered_entries.filter(fiscal_year=fiscal_year_filter)
+
+    if search_query:
+        filtered_entries = filtered_entries.filter(
+            Q(title__icontains=search_query)
+            | Q(summary__icontains=search_query)
+            | Q(implementing_moa__name__icontains=search_query)
+        )
+
+    # Filter for current year entries (based on filtered queryset)
+    moa_year_qs = filtered_entries.filter(
         Q(start_date__year=current_year)
         | Q(start_date__isnull=True, created_at__year=current_year)
     )
 
     # Statistics cards
-    total_moa_ppas = moa_entries.count()
-    total_budget = moa_entries.aggregate(
+    total_moa_ppas = filtered_entries.count()
+    total_budget = filtered_entries.aggregate(
         total=Sum("budget_allocation"), obc_total=Sum("budget_obc_allocation")
     )
 
     # Geographic coverage
     geographic_coverage = {
-        "regions": moa_entries.exclude(coverage_region__isnull=True)
+        "regions": filtered_entries.exclude(coverage_region__isnull=True)
         .values("coverage_region__name")
         .distinct()
         .count(),
-        "provinces": moa_entries.exclude(coverage_province__isnull=True)
+        "provinces": filtered_entries.exclude(coverage_province__isnull=True)
         .values("coverage_province__name")
         .distinct()
         .count(),
-        "municipalities": moa_entries.exclude(coverage_municipality__isnull=True)
+        "municipalities": filtered_entries.exclude(coverage_municipality__isnull=True)
         .values("coverage_municipality__name")
         .distinct()
         .count(),
     }
 
-    # Timeline analysis
-    upcoming_deadlines = moa_entries.filter(
-        target_end_date__gte=timezone.now().date(),
-        target_end_date__lte=timezone.now().date() + timezone.timedelta(days=30),
-    ).count()
+    implementing_moa_qs = filtered_entries.exclude(implementing_moa__isnull=True)
+    total_moa_orgs = implementing_moa_qs.values("implementing_moa").distinct().count()
+    ministry_moa_count = (
+        implementing_moa_qs.filter(
+            Q(implementing_moa__name__istartswith="Ministry")
+            | Q(implementing_moa__name__iexact="Office of the Chief Minister")
+        )
+        .values("implementing_moa")
+        .distinct()
+        .count()
+    )
+    other_exec_moa_count = max(total_moa_orgs - ministry_moa_count, 0)
 
     stats_cards = [
+        {
+            "title": "Total MOAs",
+            "subtitle": f"Implementing Partners",
+            "icon": "fas fa-sitemap",
+            "icon_color": "text-sky-600",
+            "gradient": "from-sky-500 via-sky-600 to-sky-700",
+            "total": total_moa_orgs,
+            "metric_columns": "grid-cols-2",
+            "metrics": [
+                {"label": "Ministries", "value": ministry_moa_count},
+                {
+                    "label": "Other Exec Offices",
+                    "value": other_exec_moa_count,
+                },
+            ],
+        },
         {
             "title": "Total MOA PPAs",
             "subtitle": f"Active Programs & Projects",
@@ -618,15 +709,15 @@ def moa_ppas_dashboard(request):
             "metrics": [
                 {
                     "label": "Completed",
-                    "value": moa_entries.filter(status="completed").count(),
+                    "value": filtered_entries.filter(status="completed").count(),
                 },
                 {
                     "label": "Ongoing",
-                    "value": moa_entries.filter(status="ongoing").count(),
+                    "value": filtered_entries.filter(status="ongoing").count(),
                 },
                 {
                     "label": "Planning",
-                    "value": moa_entries.filter(status="planning").count(),
+                    "value": filtered_entries.filter(status="planning").count(),
                 },
             ],
         },
@@ -644,13 +735,13 @@ def moa_ppas_dashboard(request):
                 },
                 {
                     "label": "With Budget",
-                    "value": moa_entries.exclude(
+                    "value": filtered_entries.exclude(
                         budget_allocation__isnull=True
                     ).count(),
                 },
                 {
                     "label": "Pending",
-                    "value": moa_entries.filter(budget_allocation__isnull=True).count(),
+                    "value": filtered_entries.filter(budget_allocation__isnull=True).count(),
                 },
             ],
         },
@@ -666,32 +757,7 @@ def moa_ppas_dashboard(request):
                 {"label": "Provinces", "value": geographic_coverage["provinces"]},
                 {
                     "label": "Municipalities",
-                    "value": geographic_coverage["municipalities"],
-                },
-            ],
-        },
-        {
-            "title": "Timeline Status",
-            "subtitle": f"Implementation Schedule",
-            "icon": "fas fa-calendar-check",
-            "icon_color": "text-blue-600",  # Info/Schedule
-            "gradient": "from-orange-500 via-orange-600 to-orange-700",
-            "total": upcoming_deadlines,
-            "metrics": [
-                {"label": "Due Soon", "value": upcoming_deadlines},
-                {
-                    "label": "On Time",
-                    "value": moa_entries.filter(
-                        status="ongoing", progress__gte=50
-                    ).count(),
-                },
-                {
-                    "label": "Delayed",
-                    "value": moa_entries.filter(
-                        target_end_date__lt=timezone.now().date(),
-                        status__in=["ongoing", "planning"],
-                    ).count(),
-                },
+                    "value": geographic_coverage["municipalities"]},
             ],
         },
     ]
@@ -752,43 +818,221 @@ def moa_ppas_dashboard(request):
             "total": item["total"],
         }
         for item in (
-            moa_entries.order_by()
+            filtered_entries.order_by()
             .values("status")
             .annotate(total=Count("id"))
             .order_by("status")
         )
     ]
 
-    # Recent updates
-    recent_updates = (
-        MonitoringUpdate.objects.filter(entry__category="moa_ppa")
-        .select_related("entry", "created_by")
-        .order_by("-created_at")[:10]
-    )
-
     # Progress snapshot
-    progress_snapshot = moa_entries.aggregate(
+    progress_snapshot = filtered_entries.aggregate(
         avg_progress=Avg("progress"),
         latest_update=Max("updated_at"),
     )
 
+    hero_config = {
+        "badge_icon": "fas fa-building-columns",
+        "badge_text": f"MOA Programs · {current_year}",
+        "title": "MOA PPAs Management",
+        "title_suffix": "",
+        "subtitle": (
+            "Monitor BARMM ministries, offices, and agencies initiatives that benefit "
+            "Bangsamoro communities outside the region."
+        ),
+        "extra_chips": [],
+        "contacts": [],
+        "overview": {
+            "entries_label": "MOA PPAs tracked",
+            "budget_label": "Total budget",
+        },
+    }
+
+    selected_moa_details = None
+    if moa_filter:
+        selected_moa_details = Organization.objects.filter(pk=moa_filter).first()
+
+        if selected_moa_details:
+            subtitle_source = next(
+                (
+                    value.strip()
+                    for value in [
+                        selected_moa_details.description or "",
+                        selected_moa_details.mandate or "",
+                        selected_moa_details.target_beneficiaries or "",
+                        selected_moa_details.geographic_coverage or "",
+                    ]
+                    if value and value.strip()
+                ),
+                hero_config["subtitle"],
+            )
+
+            acronym = (selected_moa_details.acronym or "").strip()
+            name_normalised = (selected_moa_details.name or "").strip()
+            hero_config["title"] = selected_moa_details.name
+            hero_config["title_suffix"] = (
+                acronym
+                if acronym
+                and name_normalised
+                and acronym.lower() != name_normalised.lower()
+                else ""
+            )
+
+            type_label = selected_moa_details.get_organization_type_display()
+            badge_text = f"{type_label or 'Implementing MOA'} · {current_year}"
+
+            hero_config["badge_icon"] = "fas fa-briefcase"
+            hero_config["badge_text"] = badge_text
+            hero_config["subtitle"] = subtitle_source
+            hero_config["overview"]["entries_label"] = "PPAs under this MOA"
+            hero_config["overview"]["budget_label"] = "Total budget (PHP)"
+
+            extra_chips = []
+            if type_label:
+                extra_chips.append({"icon": "fas fa-sitemap", "text": type_label})
+            if selected_moa_details.geographic_coverage:
+                extra_chips.append(
+                    {
+                        "icon": "fas fa-map-location-dot",
+                        "text": selected_moa_details.geographic_coverage,
+                    }
+                )
+            hero_config["extra_chips"] = extra_chips
+
+            contacts = []
+            if selected_moa_details.focal_person:
+                contacts.append(
+                    {
+                        "icon": "fas fa-user-tie",
+                        "label": "Focal person",
+                        "value": selected_moa_details.focal_person,
+                        "meta": selected_moa_details.focal_person_position,
+                    }
+                )
+            elif selected_moa_details.head_of_organization:
+                contacts.append(
+                    {
+                        "icon": "fas fa-user-shield",
+                        "label": selected_moa_details.head_position or "Head of agency",
+                        "value": selected_moa_details.head_of_organization,
+                        "meta": None,
+                    }
+                )
+
+            primary_contact = next(
+                (
+                    value.strip()
+                    for value in [
+                        selected_moa_details.focal_person_contact or "",
+                        selected_moa_details.mobile or "",
+                        selected_moa_details.phone or "",
+                    ]
+                    if value and value.strip()
+                ),
+                "",
+            )
+            if primary_contact:
+                contacts.append(
+                    {
+                        "icon": "fas fa-phone",
+                        "label": "Primary contact",
+                        "value": primary_contact,
+                        "meta": None,
+                    }
+                )
+
+            contact_email = next(
+                (
+                    value.strip()
+                    for value in [
+                        selected_moa_details.focal_person_email or "",
+                        selected_moa_details.email or "",
+                    ]
+                    if value and value.strip()
+                ),
+                "",
+            )
+            if contact_email:
+                contacts.append(
+                    {
+                        "icon": "fas fa-envelope",
+                        "label": "Email",
+                        "value": contact_email,
+                        "meta": None,
+                    }
+                )
+
+            hero_config["contacts"] = contacts
+
+    hero_budget_total_display = "₱0"
+    if len(stats_cards) > 2:
+        hero_budget_total_display = stats_cards[2].get("total") or "₱0"
+
     # Implementing organizations
     implementing_orgs = (
-        moa_entries.exclude(implementing_moa__isnull=True)
+        filtered_entries.exclude(implementing_moa__isnull=True)
         .values("implementing_moa__name")
         .annotate(total=Count("id"))
         .order_by("-total")[:10]
     )
 
+    page_size_param = request.GET.get("page_size", "10")
+    try:
+        page_size = int(page_size_param)
+    except (TypeError, ValueError):
+        page_size = 10
+
+    if page_size not in {10, 25, 50}:
+        page_size = 10
+
+    paginated_entries = filtered_entries.order_by("created_at", "id")
+    paginator = Paginator(paginated_entries, page_size)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    implementing_moa_options = (
+        all_moa_entries.exclude(implementing_moa__isnull=True)
+        .values("implementing_moa__id", "implementing_moa__name")
+        .distinct()
+        .order_by("implementing_moa__name")
+    )
+
+    fiscal_year_options = sorted(
+        {
+            year
+            for year in all_moa_entries.values_list("fiscal_year", flat=True)
+            if year
+        },
+        reverse=True,
+    )
+
+    preserved_query = request.GET.copy()
+    if "page" in preserved_query:
+        preserved_query.pop("page")
+    base_querystring = preserved_query.urlencode()
+
     context = {
         "stats_cards": stats_cards,
         "quick_actions": quick_actions,
-        "moa_entries": moa_entries.order_by("-updated_at"),
+        "page_obj": page_obj,
+        "page_size": page_size,
+        "page_size_options": [10, 25, 50],
         "status_breakdown": status_breakdown,
-        "recent_updates": recent_updates,
         "progress_snapshot": progress_snapshot,
+        "hero_config": hero_config,
+        "selected_moa_details": selected_moa_details,
+        "hero_budget_total_display": hero_budget_total_display,
         "implementing_orgs": implementing_orgs,
         "current_year": current_year,
+        "status_choices": MonitoringEntry.STATUS_CHOICES,
+        "selected_status": status_filter,
+        "selected_moa": moa_filter,
+        "selected_year": fiscal_year_filter,
+        "search_query": search_query,
+        "implementing_moa_options": implementing_moa_options,
+        "fiscal_year_options": fiscal_year_options,
+        "result_count": paginator.count,
+        "base_querystring": base_querystring,
     }
 
     return render(request, "monitoring/moa_ppas_dashboard.html", context)
@@ -1607,3 +1851,212 @@ def export_obc_data(request):
     """Placeholder for OBC data export."""
     messages.info(request, "OBC Data Export feature coming soon!")
     return redirect("monitoring:obc_requests")
+
+
+# ==================== WORKITEM INTEGRATION VIEWS ====================
+
+@login_required
+def work_item_children(request, work_item_id):
+    """
+    HTMX endpoint: Return children of a WorkItem for lazy loading.
+
+    Used by work_item_tree.html to load child items when user expands a node.
+    """
+    from common.work_item_model import WorkItem
+
+    work_item = get_object_or_404(WorkItem, pk=work_item_id)
+    children = work_item.get_children().select_related('created_by')
+    depth = int(request.GET.get('depth', 1))
+
+    context = {
+        'children': children,
+        'depth': depth
+    }
+
+    return render(request, 'monitoring/partials/work_item_children.html', context)
+
+
+# ==================== COMPLIANCE REPORTS (Phase 5) ====================
+
+@login_required
+def reports_dashboard(request):
+    """
+    Compliance Reports Dashboard.
+
+    Provides access to government compliance reports:
+    - MFBM Budget Execution Report
+    - BPDA Development Alignment Report
+    - COA Budget Variance Report
+    """
+    current_year = timezone.now().year
+
+    # Get fiscal years for filter
+    fiscal_years = sorted(
+        set(
+            MonitoringEntry.objects.exclude(fiscal_year__isnull=True)
+            .values_list('fiscal_year', flat=True)
+            .distinct()
+        ),
+        reverse=True
+    )
+
+    # Get implementing MOAs for filter
+    implementing_moas = (
+        MonitoringEntry.objects.exclude(implementing_moa__isnull=True)
+        .values('implementing_moa__id', 'implementing_moa__name')
+        .distinct()
+        .order_by('implementing_moa__name')
+    )
+
+    # Get sectors for filter
+    sectors = MonitoringEntry.SECTOR_CHOICES
+
+    context = {
+        'current_year': current_year,
+        'fiscal_years': fiscal_years,
+        'implementing_moas': implementing_moas,
+        'sectors': sectors,
+    }
+
+    return render(request, 'monitoring/reports_dashboard.html', context)
+
+
+@login_required
+def mfbm_budget_report_download(request):
+    """
+    Download MFBM Budget Execution Report.
+
+    Query Parameters:
+        - fiscal_year: Required fiscal year
+        - moa_filter: Optional MOA organization ID filter
+    """
+    from .services.reports import generate_mfbm_budget_execution_report
+
+    fiscal_year = request.GET.get('fiscal_year')
+    moa_filter = request.GET.get('moa_filter', None)
+
+    if not fiscal_year:
+        messages.error(request, "Fiscal year is required for MFBM report.")
+        return redirect('monitoring:reports_dashboard')
+
+    try:
+        fiscal_year = int(fiscal_year)
+    except (TypeError, ValueError):
+        messages.error(request, "Invalid fiscal year provided.")
+        return redirect('monitoring:reports_dashboard')
+
+    # Generate report
+    try:
+        report_buffer = generate_mfbm_budget_execution_report(
+            fiscal_year=fiscal_year,
+            moa_filter=moa_filter
+        )
+
+        # Prepare response
+        response = HttpResponse(
+            report_buffer.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+
+        filename = f"MFBM_Budget_Execution_FY{fiscal_year}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        return response
+
+    except Exception as e:
+        messages.error(request, f"Error generating MFBM report: {str(e)}")
+        return redirect('monitoring:reports_dashboard')
+
+
+@login_required
+def bpda_development_report_download(request):
+    """
+    Download BPDA Development Alignment Report.
+
+    Query Parameters:
+        - fiscal_year: Required fiscal year
+        - sector: Optional sector filter
+    """
+    from .services.reports import generate_bpda_development_report
+
+    fiscal_year = request.GET.get('fiscal_year')
+    sector = request.GET.get('sector', None)
+
+    if not fiscal_year:
+        messages.error(request, "Fiscal year is required for BPDA report.")
+        return redirect('monitoring:reports_dashboard')
+
+    try:
+        fiscal_year = int(fiscal_year)
+    except (TypeError, ValueError):
+        messages.error(request, "Invalid fiscal year provided.")
+        return redirect('monitoring:reports_dashboard')
+
+    # Generate report
+    try:
+        report_buffer = generate_bpda_development_report(
+            fiscal_year=fiscal_year,
+            sector=sector
+        )
+
+        # Prepare response
+        response = HttpResponse(
+            report_buffer.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+
+        filename = f"BPDA_Development_Alignment_FY{fiscal_year}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        return response
+
+    except Exception as e:
+        messages.error(request, f"Error generating BPDA report: {str(e)}")
+        return redirect('monitoring:reports_dashboard')
+
+
+@login_required
+def coa_variance_report_download(request):
+    """
+    Download COA Budget Variance Report.
+
+    Query Parameters:
+        - fiscal_year: Required fiscal year
+        - moa_filter: Optional MOA organization ID filter
+    """
+    from .services.reports import generate_coa_variance_report
+
+    fiscal_year = request.GET.get('fiscal_year')
+    moa_filter = request.GET.get('moa_filter', None)
+
+    if not fiscal_year:
+        messages.error(request, "Fiscal year is required for COA report.")
+        return redirect('monitoring:reports_dashboard')
+
+    try:
+        fiscal_year = int(fiscal_year)
+    except (TypeError, ValueError):
+        messages.error(request, "Invalid fiscal year provided.")
+        return redirect('monitoring:reports_dashboard')
+
+    # Generate report
+    try:
+        report_buffer = generate_coa_variance_report(
+            fiscal_year=fiscal_year,
+            moa_filter=moa_filter
+        )
+
+        # Prepare response
+        response = HttpResponse(
+            report_buffer.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+
+        filename = f"COA_Budget_Variance_FY{fiscal_year}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        return response
+
+    except Exception as e:
+        messages.error(request, f"Error generating COA report: {str(e)}")
+        return redirect('monitoring:reports_dashboard')

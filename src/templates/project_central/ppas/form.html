@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ form_title }} - MOA PPAs{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-6">
+    <div class="max-w-5xl mx-auto space-y-6">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <nav aria-label="breadcrumb" class="mb-2 text-sm">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'project_central:moa_ppa_list' %}">MOA PPAs</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ form_title }}</li>
+                    </ol>
+                </nav>
+                <h1 class="text-2xl font-bold text-gray-900">{{ form_title }}</h1>
+                <p class="text-sm text-gray-600">Provide the official MOA program, project, or activity details. These records power Project Central workflows and monitoring analytics.</p>
+            </div>
+            <a href="{% url 'project_central:moa_ppa_list' %}"
+               class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow hover:bg-gray-50 transition">
+                <i class="fas fa-arrow-left"></i>
+                Back to list
+            </a>
+        </div>
+
+        <form method="post" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-6">
+            {% csrf_token %}
+            {{ form.media }}
+
+            {% if form.non_field_errors %}
+            <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for field in form.visible_fields %}
+                    <div class="col-span-1">
+                        {% include "components/form_field.html" with field=field %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% for hidden in form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
+            <div class="flex items-center justify-between">
+                {% if ppa %}
+                    <span class="text-xs text-gray-500">Last updated: {{ ppa.updated_at|date:"M d, Y" }}</span>
+                {% else %}
+                    <span></span>
+                {% endif %}
+                <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-emerald-600 hover:to-teal-600 transition">
+                    <i class="fas fa-save"></i>
+                    {{ submit_label }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

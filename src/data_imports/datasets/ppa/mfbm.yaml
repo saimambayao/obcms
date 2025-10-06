@@ -1,0 +1,118 @@
+moa: "Ministry of Finance, and Budget and Management"
+acronym: "MFBM"
+ppas:
+  - title: "Expenditure Management Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Fund management procedure efficiency"
+        target: "2% average increase in overall efficiency"
+      - indicator: "Utilization of annual budget"
+        target: "6% increase in overall utilization"
+    output_indicators:
+      - indicator: "Percentage of expenditure management policies adopted or issued on target date"
+        target: "90%"
+      - indicator: "Percentage of requests for budget authorization and variation acted upon within the prescribed period"
+        target: "95%"
+      - indicator: "Percentage of mandatory budget documents under the responsibility of MFBM submitted on time"
+        target: "100%"
+      - indicator: "Number of collaborative initiatives for enhancement of expenditure management conducted"
+        target: 12
+      - indicator: "Percentage of requested technical assistance during budget legislation acted upon"
+        target: "100%"
+      - indicator: "Number of e-NGAS packages deployed to BARMM LGUs or ministries"
+        target: 19
+      - indicator: "Percentage of scheduled preparatory activities for the crafting of the Budget Operations Manual conducted on time"
+        target: "90%"
+      - indicator: "Percentage of proposed policies on organization, staffing, position classification, and compensation issued or adopted within the target date"
+        target: "90%"
+      - indicator: "Percentage of approved actions on organization, staffing, position classification, and compensation released by MFBM within the target date"
+        target: "85%"
+      - indicator: "Number of assessments, consultations, studies, or recommendations on bureaucracy size and efficiency conducted"
+        target: 15
+      - indicator: "Percentage of target financial practitioners capacitated with public financial management and other expenditure management expertise conducted on schedule and rated as very satisfactory"
+        target: "90%"
+      - indicator: "Number of financial practitioners capacitated on various public financial management expertise"
+        target: 400
+      - indicator: "Number of Public Financial Management Course trainings conducted"
+        target: 2
+      - indicator: "Percentage of accountability policies or directives adopted or issued on the target date"
+        target: "90%"
+      - indicator: "Percentage of periodical budget utilization reports published or submitted to authorized bodies within the prescribed period"
+        target: "100%"
+      - indicator: "Percentage of targeted periodical performance reviews conducted on time"
+        target: "100%"
+      - indicator: "Number of Bangsamoro Unified Accounts Code Structure crafted"
+        target: 1
+    approved_budget: 111648503.00
+  - title: "Asset Management Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Asset management efficiency"
+        target: "2% average increase in overall efficiency"
+    output_indicators:
+      - indicator: "Number of periodical reconciliation of remittances conducted"
+        target: 4
+      - indicator: "Number of asset registry data collection, updating, or reporting activities conducted"
+        target: 4
+      - indicator: "Percentage of certifications issued to requesting parties within the prescribed period"
+        target: "80%"
+      - indicator: "Number of investment strategies developed"
+        target: 1
+      - indicator: "Number of periodical cash flow analyses conducted"
+        target: 4
+      - indicator: "Percentage of NTAs released to requesting parties within the prescribed period"
+        target: "95%"
+      - indicator: "Percentage of bank reconciliation statements and other documents submitted to authorized bodies within the required period"
+        target: "95%"
+      - indicator: "Number of coordination activities with LGUs within BARMM on treasury guidelines or policies"
+        target: 4
+      - indicator: "Percentage of processed and released shares to LGUs upon completion of all requirements within the prescribed period"
+        target: "90%"
+      - indicator: "Percentage of requests for accountable forms acted upon within the day"
+        target: "100%"
+    approved_budget: 44562884.00
+  - title: "Financial Sustainability and Revenue Strengthening Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of revenue sources other than the block grant"
+        target: "Increasing"
+      - indicator: "Fiscal policies in BARMM established"
+        target: 2
+    output_indicators:
+      - indicator: "Number of fiscal policy advisories drafted"
+        target: 3
+      - indicator: "Number of information, education, and communication activities on fiscal policy conducted"
+        target: 2
+      - indicator: "Number of training activities for development of fiscal policy conducted"
+        target: 4
+      - indicator: "Number of economic briefers published"
+        target: 4
+      - indicator: "Percentage of requested support services for fiscal boards provided"
+        target: "100%"
+      - indicator: "Number of trainings on Islamic finance for BARMM stakeholders conducted"
+        target: 2
+      - indicator: "Number of information, education, communication, and other promotional activities on Islamic finance conducted"
+        target: 2
+      - indicator: "Number of activities of Islamic finance collegial bodies, boards, councils, and other institutions supported"
+        target: 5
+    approved_budget: 82208730.00
+special_provisions:
+  - title: "Financial Sustainability and Revenue Strengthening Program"
+    details: |
+      The amount of Eighty-Two Million Two Hundred Eight Thousand Seven Hundred Thirty Pesos (P82,208,730.00) appropriated shall be used for the Financial Sustainability and Revenue Strengthening Program, of which Twenty-Six Million Nine Hundred Twenty-Two Thousand Three Hundred Thirteen Pesos (P26,922,313.00) shall be used exclusively for the Revenue Administration Program.
+  - title: "Support to Shari'ah Supervisory Board"
+    details: |
+      The amount of Six Million Three Hundred Ninety Thousand One Hundred Sixteen Pesos (P6,390,116.00) appropriated for Support to Islamic Finance Bodies and Institutions shall allocate Three Million Five Hundred Seventy-One Thousand Seven Hundred Four Pesos (P3,571,704.00) exclusively for professional services of the Shari'ah Supervisory Board.
+  - title: "Digitalization of Financial Management Systems"
+    details: |
+      The Ministry shall endeavor to digitalize manual systems of financial management. For this purpose, Nine Million Six Hundred Fifty-Three Thousand Pesos (P9,653,000.00) under the Regional and Local Expenditure Management Strengthening Program shall be used exclusively for the deployment of the electronic National Government Accounting System (e-NGAS) to local government units and other offices in BARMM, of which Eight Million Six Hundred Forty-Five Thousand Pesos (P8,645,000.00) shall be used to procure IT equipment for the said purpose.
+  - title: "Improvement of Physical Plant"
+    details: |
+      The Ministry shall initiate activities for the planning and forecasting of the architectural and engineering requirements for the establishment of the Ministry's Operational Center, charged to the available Contingent Fund and subject to the submission of a Detailed Work and Financial Plan.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      Implementing M/O/As shall submit quarterly reports on financial and physical accomplishments within thirty (30) days after each quarter, or earlier as may be required, through:
+        a. Submission of reports through electronic means; and
+        b. Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the offices where submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

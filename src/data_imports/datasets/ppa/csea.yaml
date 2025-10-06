@@ -1,0 +1,54 @@
+moa: "Cooperatives and Social Enterprise Authority"
+acronym: "CSEA"
+ppas:
+  - title: "Cooperative Development Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of increased profitability of Bangsamoro cooperatives"
+        target: "10%"
+    output_indicators:
+      - indicator: "Number of prospective cooperative members oriented and validated"
+        target: 4500
+      - indicator: "Number of cooperatives registered"
+        target: 300
+      - indicator: "Number of certificates of compliance issued"
+        target: 500
+      - indicator: "Number of cooperatives monitored and supervised"
+        target: 500
+      - indicator: "Number of technical assistance engagements extended to cooperatives"
+        target: 800
+      - indicator: "Number of trainings conducted"
+        target: 20
+    approved_budget: 17143504.00
+  - title: "Social Enterprise Development Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of social enterprises accredited"
+        target: "10%"
+    output_indicators:
+      - indicator: "Number of business enterprises qualified into social enterprise"
+        target: 150
+      - indicator: "Number of regional trade fairs organized and conducted"
+        target: 1
+      - indicator: "Number of financial assistance packages extended to business enterprises"
+        target: 150
+      - indicator: "Number of financial assistance packages extended to social enterprises"
+        target: 70
+      - indicator: "Number of trainings conducted"
+        target: 2
+    approved_budget: 26595639.00
+special_provisions:
+  - title: "Social Enterprises Development (SET-UP)"
+    details: |
+      The amount of Seven Million Eight Hundred Seventy-Five Thousand Pesos (P7,875,000.00) appropriated as financial assistance or subsidy shall be used exclusively for the SE Tabang sa Usbong Pagbangon (SET-UP), subject to the submission of Program Implementation Plan and Guidelines and list of validated beneficiaries to MFBM.
+  - title: "Social Enterprises Development (Income Generating Activity)"
+    details: |
+      The amount of Ten Million Five Hundred Thousand Pesos (P10,500,000.00) appropriated as financial assistance or subsidy shall be used exclusively for the Financial Assistance for Income Generating Activity, subject to the submission of Program Implementation Plan and Guidelines and list of validated beneficiaries to MFBM.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on its financial and physical accomplishments within thirty (30) days after the end of every quarter through:
+      (a) Submission of hardcopy to the MFBM;
+      (b) Submission of reports through electronic means; and
+      (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when said reports have been submitted or posted on its website to the MFBM and other offices where the submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

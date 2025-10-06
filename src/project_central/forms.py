@@ -4,10 +4,12 @@ Project Central Forms
 Forms for workflow management, budget approval, and alert handling.
 """
 
+import warnings
 from django import forms
 from django.contrib.auth import get_user_model
 
-from .models import ProjectWorkflow, Alert, BudgetCeiling, BudgetScenario
+from .models import Alert, BudgetCeiling, BudgetScenario
+# ProjectWorkflow import removed - model is now abstract (see WORKITEM_MIGRATION_COMPLETE.md)
 from mana.models import Need
 from monitoring.models import MonitoringEntry
 from coordination.models import MAOFocalPerson
@@ -24,104 +26,61 @@ def _tailwind_select_attrs():
 User = get_user_model()
 
 
-class ProjectWorkflowForm(forms.ModelForm):
-    """Form for creating and editing project workflows."""
+class ProjectWorkflowForm(forms.Form):
+    """
+    DEPRECATED: ProjectWorkflow model is now abstract. Use WorkItemForm instead.
 
-    class Meta:
-        model = ProjectWorkflow
-        fields = [
-            "primary_need",
-            "ppa",
-            "project_lead",
-            "mao_focal_person",
-            "priority_level",
-            "estimated_budget",
-            "target_completion_date",
-            "notes",
-        ]
-        widgets = {
-            "primary_need": forms.Select(
-                attrs={
-                    "class": "form-select",
-                    "required": True,
-                }
-            ),
-            "ppa": forms.Select(
-                attrs={
-                    "class": "form-select",
-                }
-            ),
-            "project_lead": forms.Select(
-                attrs={
-                    "class": "form-select",
-                }
-            ),
-            "mao_focal_person": forms.Select(
-                attrs={
-                    "class": "form-select",
-                }
-            ),
-            "priority_level": forms.Select(
-                attrs={
-                    "class": "form-select",
-                }
-            ),
-            "estimated_budget": forms.NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "0.00",
-                    "step": "0.01",
-                }
-            ),
-            "target_completion_date": forms.DateInput(
-                attrs={
-                    "class": "form-control",
-                    "type": "date",
-                }
-            ),
-            "notes": forms.Textarea(
-                attrs={
-                    "class": "form-control",
-                    "rows": 4,
-                    "placeholder": "Additional notes about this workflow...",
-                }
-            ),
-        }
+    This form is kept ONLY to prevent import errors but CANNOT be used.
+    All new code should use WorkItemForm from common.forms.work_items.
+
+    See: WORKITEM_MIGRATION_COMPLETE.md
+    """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # Filter needs to show only unfunded high-priority needs
-        self.fields["primary_need"].queryset = Need.objects.filter(
-            priority_score__gte=4.0
-        ).order_by("-priority_score", "-created_at")
-
-        # Filter PPAs
-        self.fields["ppa"].queryset = MonitoringEntry.objects.filter(
-            status__in=["planning", "ongoing"]
-        ).order_by("-created_at")
-        self.fields["ppa"].required = False
-
-        # Filter users for project lead
-        self.fields["project_lead"].queryset = User.objects.filter(
-            is_staff=True, is_active=True
-        ).order_by("first_name", "last_name")
-        self.fields["project_lead"].required = False
-
-        # Filter MAOs
-        self.fields["mao_focal_person"].queryset = (
-            MAOFocalPerson.objects.select_related("mao", "user")
-            .filter(is_active=True)
-            .order_by("mao__name", "user__first_name", "user__last_name")
+        raise NotImplementedError(
+            "ProjectWorkflowForm is deprecated because ProjectWorkflow model is abstract. "
+            "Use WorkItemForm with work_type='project' instead. "
+            "See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md"
         )
-        self.fields["mao_focal_person"].required = False
+
+
+class ProjectWorkflowFromPPAForm(forms.Form):
+    """
+    DEPRECATED: Specialized form ensuring workflows originate from a specific MOA PPA.
+
+    This form is deprecated and will be removed in OBCMS v2.0.
+    Use WorkItemForm(work_type='project') instead for the unified Work Item system.
+
+    See: WORKITEM_MIGRATION_COMPLETE.md
+    """
+
+    def __init__(self, ppa=None, *args, **kwargs):
+        raise NotImplementedError(
+            "ProjectWorkflowFromPPAForm is deprecated because ProjectWorkflow model is abstract. "
+            "Use WorkItemForm with work_type='project' instead. "
+            "See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md"
+        )
 
 
 class AdvanceWorkflowStageForm(forms.Form):
     """Form for advancing workflow to next stage."""
 
+    # Define WORKFLOW_STAGES inline to avoid circular import issues
+    # This matches the definition in common.proxies.ProjectWorkflowProxy
+    WORKFLOW_STAGES = [
+        ('need_identification', 'Need Identification'),
+        ('need_validation', 'Need Validation'),
+        ('policy_linkage', 'Policy Linkage'),
+        ('mao_coordination', 'MAO Coordination'),
+        ('budget_planning', 'Budget Planning'),
+        ('approval', 'Approval Process'),
+        ('implementation', 'Implementation'),
+        ('monitoring', 'Monitoring & Evaluation'),
+        ('completion', 'Completion'),
+    ]
+
     new_stage = forms.ChoiceField(
-        choices=ProjectWorkflow.WORKFLOW_STAGES,
+        choices=WORKFLOW_STAGES,
         widget=forms.Select(attrs={"class": "form-select"}),
     )
     notes = forms.CharField(
@@ -141,14 +100,14 @@ class AdvanceWorkflowStageForm(forms.Form):
 
         # Filter choices to show only valid next stages
         current_stage_index = None
-        for i, (code, label) in enumerate(ProjectWorkflow.WORKFLOW_STAGES):
+        for i, (code, label) in enumerate(self.WORKFLOW_STAGES):
             if code == workflow.current_stage:
                 current_stage_index = i
                 break
 
         if current_stage_index is not None:
             # Can only advance to next stages
-            self.fields["new_stage"].choices = ProjectWorkflow.WORKFLOW_STAGES[
+            self.fields["new_stage"].choices = self.WORKFLOW_STAGES[
                 current_stage_index + 1 :
             ]
 

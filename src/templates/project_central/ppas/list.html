@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}MOA PPAs - Project Central{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-6 space-y-8">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <nav aria-label="breadcrumb" class="mb-2">
+                <ol class="breadcrumb text-sm">
+                    <li class="breadcrumb-item"><a href="{% url 'project_central:portfolio_dashboard' %}">Portfolio</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">MOA PPAs</li>
+                </ol>
+            </nav>
+            <h1 class="text-3xl font-bold text-gray-900">MOA PPAs</h1>
+            <p class="text-sm text-gray-600 max-w-2xl">Track Ministry-led programs and seamlessly launch Project Central workflows. Start by registering the MOA PPA, then convert it into a project to manage budgets, activities, and tasks.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <a href="{% url 'project_central:moa_ppa_create' %}"
+               class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-lg hover:from-emerald-600 hover:to-teal-600 transition">
+                <i class="fas fa-plus-circle"></i>
+                Add MOA PPA
+            </a>
+            <a href="{% url 'monitoring:moa_ppas' %}"
+               class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow hover:bg-gray-50 transition">
+                <i class="fas fa-chart-line"></i>
+                Open MOA Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="rounded-2xl bg-white border border-gray-200 shadow-sm p-5">
+            <div class="text-xs font-semibold uppercase tracking-wide text-emerald-600 mb-1">Total Budget</div>
+            <div class="text-2xl font-bold text-gray-900">{{ totals.total_allocation|default:0|floatformat:2|intcomma }}</div>
+            <p class="text-xs text-gray-500 mt-1">Aggregate allocation across filtered PPAs</p>
+        </div>
+        <div class="rounded-2xl bg-white border border-gray-200 shadow-sm p-5">
+            <div class="text-xs font-semibold uppercase tracking-wide text-blue-600 mb-1">OBC Allocation</div>
+            <div class="text-2xl font-bold text-gray-900">{{ totals.total_obc_allocation|default:0|floatformat:2|intcomma }}</div>
+            <p class="text-xs text-gray-500 mt-1">Portion tagged for OBC beneficiaries</p>
+        </div>
+        <div class="rounded-2xl bg-white border border-gray-200 shadow-sm p-5">
+            <div class="text-xs font-semibold uppercase tracking-wide text-purple-600 mb-1">Average Progress</div>
+            <div class="text-2xl font-bold text-gray-900">{{ totals.average_progress|default:0|floatformat:0 }}%</div>
+            <p class="text-xs text-gray-500 mt-1">Implementation progress across filtered PPAs</p>
+        </div>
+    </div>
+
+    <form method="get" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col lg:flex-row gap-4 lg:items-end">
+        <div class="flex-1">
+            <label for="search" class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Search</label>
+            <input id="search" type="search" name="q" value="{{ search_query }}"
+                   class="mt-1 block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:border-emerald-500 focus:ring-emerald-500 transition"
+                   placeholder="Search by title, program code, or implementing MOA" />
+        </div>
+        <div class="w-full lg:w-64">
+            <label for="status" class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Status</label>
+            <select id="status" name="status"
+                    class="mt-1 block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:border-emerald-500 focus:ring-emerald-500 transition">
+                <option value="">All statuses</option>
+                {% for value,label in status_choices %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow hover:from-blue-600 hover:to-indigo-600 transition">
+                <i class="fas fa-search"></i>
+                Apply Filters
+            </button>
+        </div>
+    </form>
+
+    {% if status_breakdown %}
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-600 mb-4">Status Breakdown</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            {% for item in status_breakdown %}
+            <div class="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                <div class="text-xs text-gray-500 uppercase tracking-wide">{{ item.label }}</div>
+                <div class="text-xl font-bold text-gray-900">{{ item.total }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% include "components/data_table_card.html" with title="MOA PPA Registry" icon_class="fas fa-building-columns" accent_class="bg-gradient-to-r from-blue-600 via-indigo-500 to-sky-500" headers=headers rows=rows empty_message="No MOA PPAs match the current filters." %}
+</div>
+{% endblock %}

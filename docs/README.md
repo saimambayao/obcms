@@ -20,6 +20,7 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 - **Production Deployment:**
   - [Deployment Readiness Verification](deployment/DEPLOYMENT_READINESS_VERIFICATION.md) ⭐ **FINAL VERIFICATION - 100% Ready**
   - [Production Deployment Issues & Resolution](deployment/production-deployment-issues-resolution.md) ⭐ **Primary Reference**
+  - [Production Deployment Troubleshooting](deployment/PRODUCTION_DEPLOYMENT_TROUBLESHOOTING.md) 🆕 **Critical Fixes - CSRF, CSS, Cache**
   - [Deployment Implementation Status](deployment/DEPLOYMENT_IMPLEMENTATION_STATUS.md)
   - [Critical Blockers Fixed](deployment/CRITICAL_BLOCKERS_FIXED.md) ✅
   - [Pre-Deployment Implementation Summary](deployment/pre-deployment-implementation-summary.md)
@@ -138,6 +139,7 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 - [Policy Coordination Guidelines](guidelines/OBC_guidelines_policy.md)
 - [Facilitator Training Guide](guidelines/facilitator_training_guide.md)
 - [Participant User Guide](guidelines/participant_user_guide.md)
+- [Event vs WorkItem Activity Decision Guide](guidelines/EVENT_VS_WORKITEM_ACTIVITY.md) ⭐ **NEW - Choose the Right Tool**
 
 ### 🗺️ Reference Documentation
 - [Coordinate System Guide](reference/COORDINATE_SYSTEM.md)
@@ -219,6 +221,13 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [Stat Card Auto-Refresh Guide](improvements/ui/STATCARD_AUTO_REFRESH_GUIDE.md) ⚡ **NEW - Live Updates with HTMX**
   - [Stat Card Implementation Tracker](improvements/ui/STATCARD_IMPLEMENTATION_TRACKER.md) 🚧 **In Progress (3/15 Complete)**
   - [Stat Card Implementation Progress](improvements/ui/STATCARD_IMPLEMENTATION_PROGRESS.md) 📊 **20% Complete**
+
+- **Calendar Event Overflow:** 🆕 **NEW - Google Calendar Pattern**
+  - [Calendar Overflow Strategy](improvements/UI/CALENDAR_EVENT_OVERFLOW_STRATEGY.md) ⭐ **Complete Implementation Guide**
+  - [Implementation Code](improvements/UI/CALENDAR_OVERFLOW_IMPLEMENTATION_CODE.md) ✅ **Ready-to-Use Code Snippets**
+  - [UX Flow Diagram](improvements/UI/CALENDAR_OVERFLOW_UX_FLOW.md) 📊 **Visual UX Guide**
+  - [Visual Comparison](improvements/UI/CALENDAR_OVERFLOW_VISUAL_COMPARISON.md) 📸 **Before/After Analysis**
+  - [Quick Reference](improvements/UI/CALENDAR_OVERFLOW_QUICK_REFERENCE.md) 🚀 **One-Page Setup Guide**
 
 - **Admin Panel:**
   - [Admin Panel UI Evaluation](ui/admin_panel_ui_evaluation.md) ⭐ **NEW - Comprehensive Analysis**

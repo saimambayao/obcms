@@ -102,37 +102,43 @@
             <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-                    <select name="status" class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
-                        <option value="">All Status</option>
-                        {% for value, label in status_choices %}
-                        <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <div class="relative">
+                        <select name="status"
+                                class="block w-full appearance-none rounded-xl border border-gray-200 bg-white py-3 pl-4 pr-12 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500 min-h-[48px] transition-all duration-200">
+                            <option value="">All Status</option>
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
+                            <i class="fas fa-chevron-down text-sm"></i>
+                        </span>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Community</label>
-                    <select name="community" class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
-                        <option value="">All Communities</option>
-                        {% for community in communities %}
-                        <option value="{{ community.id }}" {% if current_community == community.id|stringformat:"s" %}selected{% endif %}>
-                            {{ community.barangay.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <div class="relative">
+                        <select name="community"
+                                class="block w-full appearance-none rounded-xl border border-gray-200 bg-white py-3 pl-4 pr-12 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500 min-h-[48px] transition-all duration-200">
+                            <option value="">All Communities</option>
+                            {% for community in communities %}
+                            <option value="{{ community.id }}" {% if current_community == community.id|stringformat:"s" %}selected{% endif %}>
+                                {{ community.barangay.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
+                            <i class="fas fa-chevron-down text-sm"></i>
+                        </span>
+                    </div>
                 </div>
                 <div class="flex items-end">
-                    <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200">
-                        <i class="fas fa-search mr-2"></i>
-                        Apply Filters
-                    </button>
+                    <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200">Apply Filters</button>
                 </div>
                 <div class="flex items-end">
-                    <a href="{% url 'common:mana_manage_assessments' %}" class="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">
-                        <i class="fas fa-undo mr-2"></i>
-                        Clear Filters
-                    </a>
+                    <a href="{% url 'common:mana_manage_assessments' %}" class="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">Clear Filters</a>
                 </div>
             </form>
         </div>

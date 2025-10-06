@@ -255,7 +255,8 @@ class WorkflowService:
             stage: Workflow stage to generate tasks for
             user: User who triggered stage advancement
         """
-        from common.models import StaffTask
+        from common.models import WorkItem
+        from django.contrib.contenttypes.models import ContentType
 
         templates = cls.STAGE_TASK_TEMPLATES.get(stage, [])
 
@@ -264,18 +265,26 @@ class WorkflowService:
                 days=template["days_to_complete"]
             )
 
-            task = StaffTask.objects.create(
+            # Get ContentType for workflow
+            workflow_ct = ContentType.objects.get_for_model(workflow)
+
+            # Create WorkItem task with domain in task_data
+            task = WorkItem.objects.create(
+                work_type=WorkItem.WORK_TYPE_TASK,
                 title=template["title"],
                 description=template["description"],
                 priority=template["priority"],
                 status="not_started",
                 due_date=due_date,
                 created_by=user,
-                linked_workflow=workflow,
-                linked_ppa=workflow.ppa if workflow.ppa else None,
-                workflow_stage=stage,
-                auto_generated=True,
-                domain="project_central",
+                content_type=workflow_ct,
+                object_id=workflow.id,
+                task_data={
+                    "domain": "project_central",
+                    "workflow_stage": stage,
+                    "auto_generated": True,
+                    "linked_ppa_id": str(workflow.ppa.id) if workflow.ppa else None,
+                },
             )
 
             # Assign to project lead if available

@@ -1,0 +1,173 @@
+moa: "Ministry of Social Services and Development"
+acronym: "MSSD"
+ppas:
+  - title: "Family and Community Welfare Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of total poor Bangsamoro families with improved access to poverty-alleviation assistance, social protection and empowerment interventions"
+        target: "64,913 (22% of the poor Bangsamoro families)"
+    output_indicators:
+      - indicator: "No. of families provided with poverty alleviating assistance, including financial subsidy, training and educational support, and seed capital"
+        target: "25,000"
+      - indicator: "No. of member of families supported through various social protection programs such as educational grants, recovery assistance, and advocacy efforts"
+        target: "36,075"
+      - indicator: "No. of families reached and engaged through advocacy and awareness campaigns on social issues"
+        target: "3,838"
+    approved_budget: 1031852929.00
+  - title: "Child and Youth Welfare Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "No. of assisted poor and vulnerable children and youth (0-24 years old) with improved access to social protection services, awareness campaigns on child protection and youth development support programs that address their vulnerabilities"
+        target: "56,223"
+    output_indicators:
+      - indicator: "No. of children and youth reached through awareness campaigns on child protection and youth development support programs"
+        target: "1,700"
+      - indicator: "No. of volunteers and service providers mobilized and trained to respond to various child protection and welfare issues"
+        target: "3,063"
+      - indicator: "No. of vulnerable children and youth provided with assistance to alleviate their immediate needs"
+        target: "54,523"
+      - indicator: "No. of children and youth development structures or mechanisms established or strengthened"
+        target: 4
+      - indicator: "No. of community-based infrastructures and facilities assisted or subsidized to support early childhood care and development and child protection strengthening initiatives"
+        target: "627"
+    approved_budget: 435904366.00
+  - title: "Women's Welfare Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "No. of vulnerable women, including victim-survivors of gender-based violence with increased access to social protection services, and with meaningful participation in the community development initiatives that address gender-related issues"
+        target: "10,278"
+    output_indicators:
+      - indicator: "No. of individuals participated in awareness programs on gender-based violence and other gender-related issues"
+        target: "3,878"
+      - indicator: "No. of social service mechanisms or structures established or strengthened to address gender related issues in the community"
+        target: "105"
+      - indicator: "No. of vulnerable individuals provided with assistance to alleviate their immediate needs"
+        target: "6,400"
+      - indicator: "No. of volunteers trained, mobilized and actively involved in the delivery of social welfare services and social protection"
+        target: "150"
+      - indicator: "No. of centers operated and supported by MSSD which dispense services for the improved welfare of individuals facing crises, the promotion of their rights and welfare, and the empowerment of community-based self-help organizations and structures"
+        target: 1
+    approved_budget: 59301236.00
+  - title: "Older Persons and Persons with Disabilities Welfare Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "No. of vulnerable and disadvantaged older persons and persons with disabilities with improved access to social protection services that help alleviate their immediate needs to help them meet their full potential"
+        target: "52,402 (OP and PWDs total number catered)"
+    output_indicators:
+      - indicator: "No. of vulnerable individuals provided with assistance to alleviate their immediate needs"
+        target: "52,402"
+      - indicator: "No. of centers operated and supported by MSSD which dispense services for the improved welfare of individuals facing crises, the promotion of their rights and welfare, and the empowerment of community-based self-help organizations and structures"
+        target: 2
+      - indicator: "No. of individuals reached and capacitated through awareness campaigns and capacity development initiatives in support to the promotion of Senior Citizens and Persons with Disabilities agenda and interventions"
+        target: "2,000"
+    approved_budget: 340209420.00
+  - title: "Disaster Risk Reduction and Emergency Assistance Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "No. of individuals and families affected by conflict, disaster caused by natural hazards, or other crises provided with appropriate life-saving assistance to reduce their vulnerabilities"
+        target: "130,208"
+      - indicator: "No. of community mechanisms strengthened and established to address disaster-related situations that reduce their vulnerabilities"
+        target: "100% (Target: 4)"
+    output_indicators:
+      - indicator: "No. of families affected by conflict and disaster caused by natural hazards provided with life-saving assistance"
+        target: "88,208"
+      - indicator: "No. of community-based volunteers augmented and rendered community service to mitigate the impact of disasters caused by natural or human-induced hazards"
+        target: "13,592"
+      - indicator: "No. of vulnerable individuals in crises situation provided with assistance to alleviate their immediate needs"
+        target: "42,000"
+      - indicator: "No. of centers operated and supported by MSSD which dispense services for the improved welfare of individuals facing crises, the promotion of their rights and welfare, and the empowerment of community-based self-help organizations and structures"
+        target: 4
+    approved_budget: 1257366889.00
+  - title: "Quick Response Fund"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of support and operation on quick response efficiently extended"
+        target: "80%"
+    output_indicators:
+      - indicator: "Percentage of quick response extended in social services"
+        target: "80%"
+    approved_budget: 200000000.00
+special_provisions:
+  - title: "Unlad Pamilyang Bangsamoro"
+    details: |
+      Four Hundred Fifty-Two Million Two Hundred Seventy-One Thousand Five Hundred Fifty-Six Pesos (P452,271,556.00) under the Family and Community Welfare Program shall be used exclusively for assistance to poor households, subject to the submission to MFBM of the Program Implementation Plan and Guidelines, validated list of beneficiaries, and quarterly status report of implementation.
+  - title: "Layag Bajau"
+    details: |
+      Eighty-Three Million Two Hundred Thousand Pesos (P83,200,000.00) under the Family and Community Welfare Program shall be used exclusively for assistance to qualified Badjau households, subject to Program Implementation Plan and Guidelines, validated beneficiary list, and quarterly status report to MFBM.
+  - title: "Angat Bangsamoro Kabataan Tungo sa Karunungan"
+    details: |
+      One Hundred Ten Million Pesos (P110,000,000.00) shall be used exclusively for educational assistance to children of disadvantaged families and other needy adults, subject to Program Implementation Plan and Guidelines, validated beneficiary list, and quarterly status report to MFBM.
+  - title: "Dakila Bangsamoro"
+    details: |
+      Eighty-Four Million Seven Hundred Thousand Pesos (P84,700,000.00) shall be used exclusively for assistance to indigent solo parents, subject to Program Implementation Plan and Guidelines, validated beneficiary list, and quarterly status report to MFBM.
+  - title: "Welfare Goods for Social Protection"
+    details: |
+      Twenty-Five Million Pesos (P25,000,000.00) under the Family and Community Welfare Program shall be used exclusively for procurement of welfare goods for social protection interventions, subject to quarterly status reporting to MFBM.
+  - title: "Bangsamoro Sagip Kabuhayan"
+    details: |
+      Fifteen Million Pesos (P15,000,000.00) shall be used exclusively to provide seed capital assistance to households, subject to Program Implementation Plan and Guidelines, validated beneficiary list, and quarterly status report to MFBM.
+  - title: "Child Development Workers and SNP Workers Honorarium"
+    details: |
+      One Hundred Twenty-Four Million Three Hundred Twenty Thousand Pesos (P124,320,000.00) under the Child and Youth Welfare Program shall be used exclusively to augment honoraria for Child Development Workers and Supervised Neighborhood Play Workers, subject to Program Implementation Plan and Guidelines.
+  - title: "Augmentation of Supplementary Feeding Program"
+    details: |
+      One Hundred Four Million Six Hundred Sixty-One Thousand Pesos (P104,661,000.00) under the Child and Youth Welfare Program shall exclusively augment the Supplementary Feeding Program for children in Child Development Centers and Supervised Neighborhood Plays, subject to Program Implementation Plan and Guidelines, validated beneficiary list, and quarterly status report to MFBM.
+  - title: "Kupkop Program"
+    details: |
+      One Hundred Seven Million Four Hundred Thousand Pesos (P107,400,000.00) under the Child and Youth Welfare Program shall provide financial assistance for case-managed orphans, trafficked, disengaged children, and youth, subject to Program Implementation Plan and Guidelines, validated beneficiary list, and quarterly status report to MFBM.
+  - title: "Operationalization of Bahay Pag-asa"
+    details: |
+      Twenty-Seven Million Five Hundred Forty-Eight Thousand Six Hundred Ten Pesos (P27,548,610.00) under the Child and Youth Welfare Program shall be used exclusively for the operation of Bahay Pag-asa facilities.
+  - title: "Livelihood Package to BABAE Association"
+    details: |
+      Eight Million Pesos (P8,000,000.00) under the Women's Welfare Program shall be used exclusively to provide livelihood packages for organized women's organizations, subject to Program Implementation Plan and Guidelines, validated beneficiary list, and quarterly status report to MFBM.
+  - title: "Women's Opportunities to Maternal Benefits (WOMB)"
+    details: |
+      Ten Million Pesos (P10,000,000.00) under the Women's Welfare Program shall be used exclusively to provide maternity kits supporting indigent pregnant women, subject to Program Implementation Plan and Guidelines, validated beneficiary list, and quarterly status report to MFBM.
+  - title: "Bangsamoro Women's Studies for Institutional and Legislative Reforms and Advocacies (BASIRA)"
+    details: |
+      Four Million Seven Hundred Ten Thousand Pesos (P4,710,000.00) under the Women's Welfare Program shall be used exclusively for Bangsamoro Women's Studies focusing on the lived experiences of Manobo women, subject to Program Implementation Plan and Guidelines and quarterly status report to MFBM.
+  - title: "Hadiya Package"
+    details: |
+      Twenty-Two Million One Hundred Twenty-Five Thousand Pesos (P22,125,000.00) under the Older Persons and Persons with Disability Program shall provide care packages for senior citizens, including Sagip Paningin Para kay Lolo at Lola, subject to Program Implementation Plan and Guidelines, validated beneficiary list, and quarterly status report to MFBM.
+  - title: "Assistive Devices"
+    details: |
+      Fifteen Million Two Hundred Sixty-Four Thousand Pesos (P15,264,000.00) of supplies and materials shall be used exclusively for assistive devices, equally split between older persons and persons with disabilities, subject to Program Implementation Plan and Guidelines, validated beneficiary list, and quarterly status report to MFBM.
+  - title: "Kalinga Para sa may Kapansanan"
+    details: |
+      Two Hundred Seventy Million Pesos (P270,000,000.00) under the Older Persons and Persons with Disability Program shall be used exclusively for assistance to persons with disabilities, subject to Program Implementation Plan and Guidelines, validated beneficiary list, and quarterly status report to MFBM.
+  - title: "Emergency Relief Assistance"
+    details: |
+      Three Hundred Thirty-Six Million Five Hundred Thousand Pesos (P336,500,000.00) under the Disaster Risk Reduction and Emergency Assistance Program shall be used exclusively for procurement of welfare goods for emergency relief assistance to needy individuals and families, including IDPs, subject to quarterly status report to MFBM.
+  - title: "Emergency Shelter Assistance"
+    details: |
+      Sixty Million Pesos (P60,000,000.00) under the Disaster Risk Reduction and Emergency Assistance Program shall be used exclusively for emergency shelter assistance, subject to Program Implementation Plan and Guidelines.
+  - title: "Ligtas Pamilya Program"
+    details: |
+      Sixteen Million Five Hundred Fifty Thousand Pesos (P16,550,000.00) of supplies and materials under the Disaster Risk Reduction and Emergency Assistance Program shall provide emergency go bags to highly vulnerable families, subject to Program Implementation Plan and Guidelines.
+  - title: "Multi-Purpose Cash Assistance Program"
+    details: |
+      Twenty-Nine Million Pesos (P29,000,000.00) of financial assistance/subsidy under the Disaster Risk Reduction and Emergency Assistance Program shall provide assistance for anticipatory action, response, and recovery to vulnerable families, subject to Program Implementation Plan and Guidelines.
+  - title: "Lingkod Pamayanan Para sa Kapayapaan Program"
+    details: |
+      One Hundred Twenty-Five Million Nine Hundred Seventy-One Thousand Two Hundred Pesos (P125,971,200.00) of financial assistance/subsidy under the Disaster Risk Reduction and Emergency Assistance Program shall provide financial subsidy to volunteers of community services programs for disaster risk reduction and protective services, subject to Program Implementation Plan and Guidelines.
+  - title: "Water Sanitation and Hygiene Intervention"
+    details: |
+      Thirty Million Pesos (P30,000,000.00) of supplies and materials under the Disaster Risk Reduction and Emergency Assistance Program shall be used exclusively to provide hygiene kits to vulnerable families, subject to Program Implementation Plan and Guidelines.
+  - title: "Bangsamoro CARES"
+    details: |
+      Four Hundred Fifty Million Pesos (P450,000,000.00) under the Disaster Risk Reduction and Emergency Assistance Program shall be used exclusively for Critical Assistance in Response to Emergency Situation.
+  - title: "Quick Response Fund"
+    details: |
+      Two Hundred Million Pesos (P200,000,000.00) appropriated for the Quick Response Fund shall serve as a stand-by fund for immediate response and relief programs, ensuring the situation and living conditions of affected communities are normalized as quickly as possible. Release of funds requires:
+        (a) Assessment of the status of affected communities in BARMM by the Ministry;
+        (b) Authorization and direction from the OCM to MFBM for fund release; and
+        (c) Exclusion of pre-disaster activities such as training, asset insurance, and public information initiatives from QRF usage.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      Implementing M/O/As shall submit quarterly reports on financial and physical accomplishments within thirty (30) days after the end of every quarter through:
+        (a) Submission of hardcopy to the MFBM;
+        (b) Submission of reports through electronic means; and
+        (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the MFBM and other offices where submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static task_tags %}
 
 {% block title %}{{ assessment.title }} · Task Board{% endblock %}
 
@@ -45,11 +45,11 @@
             </div>
         </div>
         <div class="flex flex-col sm:flex-row gap-3">
-            <button hx-get="{% url 'common:staff_task_modal_create' %}?assessment={{ assessment.id }}"
+            <button hx-get="{% url 'common:work_item_create' %}?assessment={{ assessment.id }}"
                     hx-target="#task-modal-container"
                     class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-purple-600 text-white text-sm font-semibold shadow hover:bg-purple-700 transition-all duration-200">
                 <i class="fas fa-plus"></i>
-                <span>Add Task</span>
+                <span>Add Work Item</span>
             </button>
             <a href="{% url 'common:mana_assessment_detail' assessment.id %}"
                class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all duration-200">
@@ -76,7 +76,7 @@
     </nav>
 
     <!-- Kanban Board -->
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6" id="assessment-kanban-board" data-board data-board-type="assessment" data-group-by="phase" data-assessment-id="{{ assessment.id }}" data-update-url="{% url 'common:staff_task_update_board' %}">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6" id="assessment-kanban-board" data-board data-board-type="assessment" data-group-by="phase" data-assessment-id="{{ assessment.id }}" data-update-url="{% url 'common:work_item_update_progress' pk='PLACEHOLDER' %}">
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {% for phase_key, phase_data in phases.items %}
             <div class="kanban-column bg-gray-50 rounded-xl p-4 min-h-[400px]" data-board-column data-column-value="{{ phase_key }}">
@@ -94,11 +94,12 @@
                 <!-- Drop Zone -->
                 <div class="space-y-3 min-h-[320px]" data-drop-zone data-task-list ondrop="return false;" ondragover="return false;">
                     {% for task in phase_data.tasks %}
+                    {% task_action_url task 'detail' as task_modal_url %}
                     <div class="task-card bg-white rounded-lg border border-gray-200 p-4 cursor-move hover:shadow-md transition-shadow duration-200"
                          draggable="true"
                          data-task-id="{{ task.id }}"
                          data-phase="{{ task.assessment_phase }}"
-                         data-modal-url="{% url 'common:staff_task_modal_detail' task.id %}">
+                         data-modal-url="{{ task_modal_url }}">
 
                         <!-- Task Title -->
                         <h4 class="text-sm font-semibold text-gray-900 mb-2 line-clamp-2">{{ task.title }}</h4>
@@ -157,12 +158,12 @@
                     {% endfor %}
                 </div>
 
-                <!-- Add Task Button -->
-                <button hx-get="{% url 'common:staff_task_modal_create' %}?assessment={{ assessment.id }}&assessment_phase={{ phase_key }}"
+                <!-- Add Work Item Button -->
+                <button hx-get="{% url 'common:work_item_create' %}?assessment={{ assessment.id }}&assessment_phase={{ phase_key }}"
                         hx-target="#task-modal-container"
                         class="w-full mt-4 py-2 px-4 border-2 border-dashed border-gray-300 rounded-lg text-sm font-medium text-gray-600 hover:border-{{ phase_data.color }}-400 hover:text-{{ phase_data.color }}-600 hover:bg-{{ phase_data.color }}-50 transition-all duration-200">
                     <i class="fas fa-plus mr-2"></i>
-                    Add Task
+                    Add Work Item
                 </button>
             </div>
             {% endfor %}

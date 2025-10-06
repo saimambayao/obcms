@@ -2,7 +2,8 @@
 
 from rest_framework import serializers
 
-from common.models import StaffTask
+from common.models import WorkItem
+from common.serializers import WorkItemSerializer
 
 from .models import (
     MonitoringEntry,
@@ -132,62 +133,45 @@ class MonitoringEntryWorkflowStageSerializer(serializers.ModelSerializer):
         ]
 
 
-class MonitoringEntryStaffTaskSerializer(serializers.ModelSerializer):
-    """Serialize StaffTask records linked to monitoring entries."""
+class MonitoringEntryWorkItemSerializer(WorkItemSerializer):
+    """Serialize WorkItem records linked to monitoring entries.
 
-    status_display = serializers.CharField(source="get_status_display", read_only=True)
-    priority_display = serializers.CharField(
-        source="get_priority_display", read_only=True
-    )
-    created_by_name = serializers.CharField(
-        source="created_by.get_full_name", read_only=True
-    )
-    assignees_detail = serializers.SerializerMethodField()
-    is_overdue = serializers.BooleanField(read_only=True)
+    This serializer extends WorkItemSerializer with monitoring-specific fields.
+    It replaces the legacy MonitoringEntryStaffTaskSerializer.
+    """
 
-    class Meta:
-        model = StaffTask
-        fields = [
-            "id",
-            "title",
-            "description",
-            "status",
-            "status_display",
-            "priority",
-            "priority_display",
-            "task_role",
-            "due_date",
-            "completed_at",
+    # Add monitoring-specific fields from task_data JSON
+    domain = serializers.SerializerMethodField()
+    estimated_hours = serializers.SerializerMethodField()
+    actual_hours = serializers.SerializerMethodField()
+
+    class Meta(WorkItemSerializer.Meta):
+        fields = WorkItemSerializer.Meta.fields + [
+            "domain",
             "estimated_hours",
             "actual_hours",
-            "notes",
-            "assignees_detail",
-            "created_by",
-            "created_by_name",
-            "is_overdue",
-            "auto_generated",
-            "created_at",
-            "updated_at",
         ]
-        read_only_fields = [
-            "status_display",
-            "priority_display",
-            "assignees_detail",
-            "created_by_name",
-            "is_overdue",
-            "created_at",
-            "updated_at",
+        read_only_fields = WorkItemSerializer.Meta.read_only_fields + [
+            "domain",
+            "estimated_hours",
+            "actual_hours",
         ]
 
-    def get_assignees_detail(self, obj):
-        return [
-            {
-                "id": assignee.id,
-                "name": assignee.get_full_name() or assignee.username,
-                "email": assignee.email,
-            }
-            for assignee in obj.assignees.all()
-        ]
+    def get_domain(self, obj):
+        """Extract domain from task_data JSON field."""
+        return obj.task_data.get("domain", "general") if obj.task_data else "general"
+
+    def get_estimated_hours(self, obj):
+        """Extract estimated_hours from task_data JSON field."""
+        return obj.task_data.get("estimated_hours") if obj.task_data else None
+
+    def get_actual_hours(self, obj):
+        """Extract actual_hours from task_data JSON field."""
+        return obj.task_data.get("actual_hours") if obj.task_data else None
+
+
+# Backward compatibility alias
+MonitoringEntryStaffTaskSerializer = MonitoringEntryWorkItemSerializer
 
 
 class MonitoringUpdateSerializer(serializers.ModelSerializer):
@@ -322,7 +306,6 @@ class MonitoringEntrySerializer(serializers.ModelSerializer):
             "submitted_to_organization",
             "submitted_to_organization_name",
             "related_assessment",
-            "related_event",
             "related_policy",
             "start_date",
             "target_end_date",
@@ -369,10 +352,241 @@ class MonitoringEntrySerializer(serializers.ModelSerializer):
         ]
 
     def get_task_assignments(self, obj):
-        tasks = obj.tasks.filter(domain=StaffTask.DOMAIN_MONITORING).order_by(
-            "due_date", "title"
-        )
-        serializer = MonitoringEntryStaffTaskSerializer(
-            tasks, many=True, context=self.context
+        """Get WorkItem tasks linked to this monitoring entry.
+
+        Links WorkItems to MonitoringEntry via GenericForeignKey (content_type + object_id).
+        Filters to tasks with work_type='task' and domain='monitoring' in task_data.
+        """
+        from django.contrib.contenttypes.models import ContentType
+
+        # Get ContentType for MonitoringEntry
+        ct = ContentType.objects.get_for_model(MonitoringEntry)
+
+        # Find WorkItems linked via GenericForeignKey
+        tasks = WorkItem.objects.filter(
+            content_type=ct,
+            object_id=obj.id,
+            work_type__in=[WorkItem.WORK_TYPE_TASK, WorkItem.WORK_TYPE_SUBTASK],
+        ).order_by("due_date", "title")
+
+        # Further filter to monitoring domain tasks
+        # (domain is stored in task_data JSON field)
+        monitoring_tasks = [
+            task
+            for task in tasks
+            if task.task_data and task.task_data.get("domain") == "monitoring"
+        ]
+
+        serializer = MonitoringEntryWorkItemSerializer(
+            monitoring_tasks, many=True, context=self.context
         )
         return serializer.data
+
+
+# ==============================================================================
+# Phase 3: PPA WorkItem Integration Serializers
+# ==============================================================================
+
+
+class WorkItemIntegrationSerializer(serializers.Serializer):
+    """
+    Serializer for WorkItem execution project creation and management.
+
+    This serializer handles the creation of WorkItem hierarchies from PPA templates
+    and provides data for tracking PPA execution progress.
+
+    Used by: enable_workitem_tracking API endpoint
+    """
+
+    structure_template = serializers.ChoiceField(
+        choices=["program", "activity", "milestone", "minimal"],
+        default="activity",
+        help_text="Template for WorkItem hierarchy structure",
+    )
+
+    # Read-only fields returned after creation
+    execution_project_id = serializers.UUIDField(read_only=True)
+    execution_project_title = serializers.CharField(read_only=True)
+    work_items_created = serializers.IntegerField(read_only=True)
+    structure_summary = serializers.DictField(read_only=True)
+
+
+class BudgetAllocationNodeSerializer(serializers.Serializer):
+    """
+    Serializer for a single node in the budget allocation tree.
+
+    Represents a WorkItem with its budget allocation and children nodes.
+    Used recursively to build a nested tree structure.
+    """
+
+    id = serializers.UUIDField(help_text="WorkItem UUID")
+    title = serializers.CharField(help_text="WorkItem title")
+    work_type = serializers.CharField(help_text="WorkItem type (project/task/subtask)")
+    allocated_budget = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        allow_null=True,
+        help_text="Budget allocated to this WorkItem",
+    )
+    budget_currency = serializers.CharField(
+        max_length=3, default="PHP", help_text="Currency code"
+    )
+    parent_id = serializers.UUIDField(
+        allow_null=True, help_text="Parent WorkItem UUID (null for root)"
+    )
+    children = serializers.SerializerMethodField(
+        help_text="Nested child WorkItems (recursive)"
+    )
+
+    def get_children(self, obj):
+        """Recursively serialize child nodes."""
+        children = obj.get("children", [])
+        return BudgetAllocationNodeSerializer(children, many=True).data
+
+
+class BudgetAllocationTreeSerializer(serializers.Serializer):
+    """
+    Serializer for the complete budget allocation tree.
+
+    Returns a hierarchical structure showing how budget flows from PPA
+    through the WorkItem hierarchy (Program → Activities → Tasks).
+
+    Used by: budget_allocation_tree API endpoint
+    """
+
+    ppa_id = serializers.UUIDField(help_text="MonitoringEntry UUID")
+    ppa_title = serializers.CharField(help_text="PPA title")
+    total_budget = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        help_text="Total PPA budget allocation",
+    )
+    allocated_budget = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        help_text="Sum of allocated budget across all WorkItems",
+    )
+    unallocated_budget = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        help_text="Remaining unallocated budget",
+    )
+    budget_currency = serializers.CharField(
+        max_length=3, default="PHP", help_text="Currency code"
+    )
+    tree = BudgetAllocationNodeSerializer(
+        many=True, help_text="Root-level WorkItems with nested children"
+    )
+
+
+class BudgetDistributionRequestSerializer(serializers.Serializer):
+    """
+    Serializer for budget distribution requests.
+
+    Validates and processes budget distribution across WorkItems using
+    equal, weighted, or manual allocation methods.
+
+    Used by: distribute_budget API endpoint
+    """
+
+    method = serializers.ChoiceField(
+        choices=["equal", "weighted", "manual"],
+        required=True,
+        help_text="Distribution method: equal, weighted, or manual",
+    )
+
+    # For weighted distribution
+    weights = serializers.DictField(
+        child=serializers.FloatField(min_value=0.0, max_value=1.0),
+        required=False,
+        allow_null=True,
+        help_text="Mapping of work_item_id (UUID) to weight (0.0-1.0). "
+        "Required for 'weighted' method. Must sum to 1.0.",
+    )
+
+    # For manual distribution
+    allocations = serializers.DictField(
+        child=serializers.DecimalField(max_digits=15, decimal_places=2, min_value=0),
+        required=False,
+        allow_null=True,
+        help_text="Mapping of work_item_id (UUID) to specific amount. "
+        "Required for 'manual' method. Must sum to PPA budget.",
+    )
+
+    def validate(self, data):
+        """Cross-field validation for distribution method and data."""
+        method = data.get("method")
+
+        if method == "weighted":
+            if not data.get("weights"):
+                raise serializers.ValidationError(
+                    {"weights": "Weights are required for 'weighted' distribution method"}
+                )
+
+            # Validate weights sum to 1.0 (with tolerance)
+            weight_sum = sum(data["weights"].values())
+            if abs(weight_sum - 1.0) > 0.0001:
+                raise serializers.ValidationError(
+                    {"weights": f"Weights must sum to 1.0 (current sum: {weight_sum})"}
+                )
+
+        elif method == "manual":
+            if not data.get("allocations"):
+                raise serializers.ValidationError(
+                    {
+                        "allocations": "Allocations are required for 'manual' distribution method"
+                    }
+                )
+
+        elif method == "equal":
+            # No additional data required for equal distribution
+            pass
+
+        return data
+
+
+class BudgetDistributionResponseSerializer(serializers.Serializer):
+    """
+    Serializer for budget distribution results.
+
+    Returns summary of budget distribution operation including
+    number of work items updated and distribution details.
+    """
+
+    success = serializers.BooleanField(default=True)
+    message = serializers.CharField()
+    work_items_updated = serializers.IntegerField(help_text="Number of WorkItems updated")
+    distribution = serializers.DictField(
+        child=serializers.DecimalField(max_digits=15, decimal_places=2),
+        help_text="Mapping of work_item_id to allocated amount",
+    )
+    total_allocated = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        help_text="Total budget allocated across all WorkItems",
+    )
+
+
+class WorkItemSyncStatusSerializer(serializers.Serializer):
+    """
+    Serializer for WorkItem synchronization status.
+
+    Returns status of progress and status sync between WorkItems and PPA.
+
+    Used by: sync_from_workitem API endpoint
+    """
+
+    success = serializers.BooleanField(default=True)
+    message = serializers.CharField()
+    previous_progress = serializers.IntegerField(
+        help_text="PPA progress before sync (0-100)"
+    )
+    updated_progress = serializers.IntegerField(
+        help_text="PPA progress after sync (0-100)"
+    )
+    previous_status = serializers.CharField(help_text="PPA status before sync")
+    updated_status = serializers.CharField(help_text="PPA status after sync")
+    work_items_analyzed = serializers.IntegerField(
+        help_text="Number of WorkItems analyzed for sync"
+    )
+    sync_timestamp = serializers.DateTimeField(help_text="Time of synchronization")

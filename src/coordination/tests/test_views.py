@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from common.models import Barangay, Municipality, Province, Region, User
 from communities.models import OBCCommunity
+from monitoring.models import MonitoringEntry
 
 from ..models import (
     Event,
@@ -153,6 +154,23 @@ class OrganizationDetailUpdateDeleteTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.organization.name)
         self.assertContains(response, self.contact.display_name)
+
+    def test_detail_lists_moa_ppas(self):
+        MonitoringEntry.objects.create(
+            title="Scholarship Grants",
+            category="moa_ppa",
+            implementing_moa=self.organization,
+            summary="Supports OBC scholars in partner provinces.",
+            status="ongoing",
+            progress=45,
+        )
+
+        self.client.force_login(self.user)
+        response = self.client.get(self.detail_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Scholarship Grants")
+        self.assertEqual(response.context["moa_ppas_count"], 1)
 
     def test_edit_requires_change_permission(self):
         self.client.force_login(self.user)

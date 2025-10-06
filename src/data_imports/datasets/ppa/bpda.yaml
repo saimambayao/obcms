@@ -1,0 +1,68 @@
+moa: "Bangsamoro Planning and Development Authority"
+acronym: "BPDA"
+ppas:
+  - title: "Socio-Economic Development Planning Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Socio-Economic Planning and Policies Development: Percentage of average client satisfaction rating on technical services provided"
+        target: "80%"
+      - indicator: "Socio-Economic Planning and Policies Development: Percentage of recommended policies adopted"
+        target: "90%"
+      - indicator: "Investment Programming: Average client satisfaction rating on secretariat services provided"
+        target: ">75%"
+      - indicator: "Research Development and Knowledge Management: Percentage of policy research-based recommendations endorsed"
+        target: "80%"
+      - indicator: "Monitoring and Evaluation: Percentage of programs and projects validated, monitored, and geo-tagged"
+        target: "100%"
+    output_indicators:
+      - indicator: "Planning and Policies: Number of technical secretariat services provided to BEDC"
+        target: 138
+      - indicator: "Planning and Policies: Number of socio-economic and physical plans formulated or updated"
+        target: 1
+      - indicator: "Investment Programming: Number of annual or medium-term public investment program documents prepared or updated"
+        target: 1
+      - indicator: "Research and Knowledge Management: Number of policy research agenda or studies conducted"
+        target: 1
+      - indicator: "Research and Knowledge Management: Number of pre-feasibility, feasibility, or technical studies developed"
+        target: 2
+      - indicator: "Monitoring and Evaluation: Number of programs or projects validated, monitored, evaluated, and geo-tagged"
+        target: 380
+    approved_budget: 47018675.00
+  - title: "Socio-Economic Planning and Policies Development Program"
+    description: "Sub-program under the Socio-Economic Development Planning Program that shares the parent indicators."
+    outcome_indicators: []
+    output_indicators: []
+    approved_budget: 15982833.00
+  - title: "Investment Programming"
+    description: "Sub-program under the Socio-Economic Development Planning Program that shares the parent indicators."
+    outcome_indicators: []
+    output_indicators: []
+    approved_budget: 1055000.00
+  - title: "Research Development and Knowledge Management Program"
+    description: "Sub-program under the Socio-Economic Development Planning Program that shares the parent indicators."
+    outcome_indicators: []
+    output_indicators: []
+    approved_budget: 44452738.00
+  - title: "Monitoring and Evaluation"
+    description: "Sub-program under the Socio-Economic Development Planning Program that shares the parent indicators."
+    outcome_indicators: []
+    output_indicators: []
+    approved_budget: 6581750.00
+special_provisions:
+  - title: "Bangsamoro Economic Development Council (BEDC)"
+    details: |
+      The BEDC allocations authorized under this Act shall be used exclusively for Personnel Services – Honoraria P2,300,000.00 and Maintenance and Other Operating Expenses P5,817,400.00. The amount appropriated as honoraria of the BEDC is subject to existing rules and regulations on the payment of honoraria.
+  - title: "Policy Research Study"
+    details: |
+      The amount of Two Million Eight Hundred Twenty-Five Thousand Five Hundred Pesos (P2,825,500.00) appropriated shall be used exclusively for the procurement of consulting services for the conduct of a comprehensive review on official development assistance (ODA) and non-ODA support in BARMM.
+  - title: "Bangsamoro High Impact Projects"
+    details: |
+      The amount of Thirty-Nine Million Two Hundred Fifty-Four Thousand Seven Hundred Thirty-Eight Pesos (P39,254,738.00) appropriated shall be used exclusively for the procurement of consulting services for the conduct of feasibility studies for identified projects for the master plan, technical feasibility studies with geotechnical survey, and environmental impact assessment, subject to the submission of Program Implementation Plan and Guidelines, details of the proposal, and quarterly status report of implementation to MFBM.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on its financial and physical accomplishments within thirty (30) days after the end of every quarter through:
+      (a) Submission of hardcopy to the MFBM;
+      (b) Submission of reports through electronic means; and
+      (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when said reports have been submitted or posted on its website to the MFBM and other offices where the submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

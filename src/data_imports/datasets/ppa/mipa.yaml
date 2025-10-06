@@ -1,0 +1,271 @@
+moa: "Ministry of Indigenous Peoples' Affairs"
+acronym: "MIPA"
+ppas:
+  - title: "Land Tenure Security and Ancestral Domain"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of development that IPs/ICCs have made in their ancestral domain (ADSDPPF)"
+        target: "80%"
+      - indicator: "Increased involvement of stakeholders in ancestral domain development (Fëfëgëtuwan)"
+        target: "80%"
+      - indicator: "Sustainability of cooperatives within ancestral domains increased"
+        target: "80%"
+      - indicator: "Product centers established to showcase cultures, beliefs, and traditions"
+        target: "80%"
+      - indicator: "Emerging leaders' capability to promote peace and development enhanced"
+        target: "80%"
+    output_indicators:
+      - indicator: "ADSDPPF - No. of social preparation activities"
+        target: 3
+      - indicator: "ADSDPPF - No. of ADSDPPF formulated"
+        target: 3
+      - indicator: "ADSDPPF - No. of ADSDPPF copies printed"
+        target: 3
+      - indicator: "Fëfëgëtuwan - No. of IEC sessions on delineation process"
+        target: 5
+      - indicator: "Fëfëgëtuwan - No. of IEC materials distributed"
+        target: 250
+      - indicator: "Ancestral Domain Cooperative Development - No. of IP cooperatives in skills training"
+        target: 10
+      - indicator: "Ancestral Domain Cooperative Development - No. of pre-registration seminars"
+        target: 5
+      - indicator: "Ancestral Domain Cooperative Development - No. of IP cooperatives in livelihood programs"
+        target: 5
+      - indicator: "IPC - No. of trainings"
+        target: 2
+      - indicator: "IPC - No. of organized cooperatives trained in sutra making"
+        target: 1
+      - indicator: "IPC - No. of functional Schools of Living Traditions"
+        target: null
+      - indicator: "Monom Ketanek-Kefaginseg - No. of leadership trainings"
+        target: 2
+      - indicator: "Monom Ketanek-Kefaginseg - No. of young leaders in benchmarking"
+        target: 50
+    approved_budget: 6398060.00
+  - title: "Conflict Management and Legal Mechanism Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Capacity and skills of IP leaders enhanced in conflict management"
+        target: "80%"
+    output_indicators:
+      - indicator: "No. of conflict management training modules completed"
+        target: 4
+      - indicator: "No. of conflict dialogues completed"
+        target: 30
+      - indicator: "No. of conflicts resolved"
+        target: 20
+    approved_budget: 2655000.00
+  - title: "IP-Governance and Leadership Support Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Engagement of IPs/ICCs in self-governance and decision-making increased"
+        target: "80%"
+      - indicator: "Knowledge and leadership skills of IP women and youth improved"
+        target: "80%"
+    output_indicators:
+      - indicator: "Indigenous community engagement - No. of IP leaders equipped"
+        target: 60
+      - indicator: "Indigenous community engagement - No. of indigenous political structures or IPOs supported"
+        target: 8
+      - indicator: "Revitalizing indigenous governance - No. of training modules completed"
+        target: 1
+      - indicator: "Revitalizing indigenous governance - No. of youth and women equipped"
+        target: 30
+    approved_budget: 3799280.00
+  - title: "Promotion of Indigenous Peoples' Rights and Legal Aid"
+    description: ""
+    outcome_indicators:
+      - indicator: "Access of indigenous communities to legal remedies increased"
+        target: "80%"
+      - indicator: "Knowledge and skills of tribal leaders as mediators improved"
+        target: "80%"
+      - indicator: "Awareness and enjoyment of IP rights increased"
+        target: "80%"
+      - indicator: "Functional IP youths serving as legal advocates"
+        target: "80%"
+      - indicator: "Functional IP peacekeepers and responders within ancestral domains"
+        target: "80%"
+      - indicator: "IP victims of violent crimes supported with financial assistance"
+        target: "80%"
+      - indicator: "Recognition and protection of IP rights by law enforcers strengthened"
+        target: "80%"
+    output_indicators:
+      - indicator: "Legal assistance - No. of IPs provided with legal services"
+        target: 40
+      - indicator: "Legal assistance - No. of activities attended"
+        target: 10
+      - indicator: "Legal assistance - No. of case build-ups conducted"
+        target: 30
+      - indicator: "Paralegal training - No. of trainings conducted"
+        target: 2
+      - indicator: "Paralegal training - No. of modules completed"
+        target: 2
+      - indicator: "Paralegal training - No. of tribal leaders capacitated"
+        target: 100
+      - indicator: "Information drive - No. of information drives completed"
+        target: 7
+      - indicator: "Information drive - No. of IEC materials distributed"
+        target: 1050
+      - indicator: "Information drive - No. of IP legal issues addressed"
+        target: 10
+      - indicator: "IPYAD - No. of trainings conducted"
+        target: 2
+      - indicator: "IPYAD - No. of modules completed"
+        target: 3
+      - indicator: "IPYAD - No. of IP youth trained"
+        target: 100
+      - indicator: "IPPFR - No. of trainings conducted"
+        target: 2
+      - indicator: "IPPFR - No. of modules completed"
+        target: 3
+      - indicator: "IPPFR - No. of IP peacekeepers trained"
+        target: 100
+      - indicator: "IPVAP - No. of IP victims provided financial assistance"
+        target: 30
+      - indicator: "IPVAP - No. of IP victims assisted in filing criminal actions"
+        target: 15
+      - indicator: "IPVAP - No. of IP victims encouraged to attend trial"
+        target: 15
+      - indicator: "Advancing IP rights - No. of modules completed"
+        target: 3
+      - indicator: "Advancing IP rights - No. of law enforcers trained"
+        target: 50
+      - indicator: "Advancing IP rights - No. of law enforcers engaged"
+        target: 50
+    approved_budget: 6886307.00
+  - title: "Promotion of Indigenous Peoples' Customs and Affairs"
+    description: ""
+    outcome_indicators:
+      - indicator: "Certification processes completed"
+        target: "80%"
+      - indicator: "Database on indigenous population established"
+        target: "80%"
+      - indicator: "Knowledge and skills of IP students improved; culture preserved"
+        target: "80%"
+      - indicator: "Customary law documentation workshops completed"
+        target: "80%"
+      - indicator: "Culture preserved and IPS oriented with guidelines"
+        target: "80%"
+    output_indicators:
+      - indicator: "Issuances of certificates - No. of Certificate of Confirmation of Tribal Membership released"
+        target: 2000
+      - indicator: "Issuances of certificates - No. of Certificate of Accreditation of Tribal Marriage released"
+        target: 500
+      - indicator: "IP household survey - No. of provinces surveyed"
+        target: 2
+      - indicator: "IP household survey - No. of provinces that underwent data validation"
+        target: 3
+      - indicator: "Revitalization of IP culture - No. of IP students trained"
+        target: 90
+      - indicator: "Revitalization of IP culture - No. of IP cultures showcased"
+        target: 3
+      - indicator: "Documentation of customary laws - No. of workshops completed"
+        target: 2
+      - indicator: "Documentation of customary laws - No. of tribal leaders participating"
+        target: 30
+      - indicator: "Documentation of customary laws - No. of documents completed"
+        target: 2
+      - indicator: "Advocacy and coordination - No. of cultural festivals supported"
+        target: 5
+      - indicator: "Advocacy and coordination - No. of IP representatives involved"
+        target: 50
+      - indicator: "Advocacy and coordination - No. of IP leaders oriented"
+        target: 60
+      - indicator: "Advocacy and coordination - No. of functional IP mandatory representatives"
+        target: 60
+      - indicator: "Advocacy and coordination - No. of orientations conducted"
+        target: 2
+    approved_budget: 5132500.00
+  - title: "Crafting of Indigenous Political Structure of IPs/ICCs in BARMM"
+    description: ""
+    outcome_indicators:
+      - indicator: "Indigenous leadership systems and institutions strengthened"
+        target: "80%"
+      - indicator: "Lakbay Kultura - Cross-cultural understanding and experiences enhanced"
+        target: "80%"
+      - indicator: "Comprehensive writeshops for IKSP documented and preserved"
+        target: "80%"
+    output_indicators:
+      - indicator: "Documentation - No. of stages of documentation process completed"
+        target: 1
+      - indicator: "Documentation - No. of tribal leaders involved"
+        target: 30
+      - indicator: "Lakbay Kultura - No. of IPs participating in cultural tours"
+        target: 30
+      - indicator: "Lakbay Kultura - No. of cultural tour activities undertaken"
+        target: 1
+      - indicator: "IKSP writeshops - No. of focus group discussions and workshops conducted"
+        target: 2
+      - indicator: "IKSP writeshops - No. of key IP informants"
+        target: 25
+    approved_budget: 2541786.00
+  - title: "Conduct of IEC on Disaster and Relief Assistance"
+    description: ""
+    outcome_indicators:
+      - indicator: "Increased understanding of disaster risk reduction and prevention"
+        target: "80%"
+    output_indicators:
+      - indicator: "No. of disaster training sessions conducted"
+        target: 10
+      - indicator: "No. of IEC materials distributed"
+        target: 500
+    approved_budget: 4907960.00
+  - title: "\"Project Fëdëyugën Fë'lindagan\" (Fedeyugen means Love and Protection to Nature-Fe'lindagan)"
+    description: ""
+    outcome_indicators:
+      - indicator: "IP farmers provided with climate change adaptation trainings"
+        target: "80%"
+    output_indicators:
+      - indicator: "No. of farmers' trainings conducted"
+        target: 1
+      - indicator: "No. of IP farmer beneficiaries"
+        target: 90
+    approved_budget: 2131380.00
+  - title: "Conduct of Medical Outreach Programs"
+    description: ""
+    outcome_indicators:
+      - indicator: "IPs and ICCs with improved health and well-being"
+        target: "80%"
+    output_indicators:
+      - indicator: "No. of medical outreach activities conducted"
+        target: 8
+      - indicator: "No. of IP beneficiaries"
+        target: 150
+    approved_budget: 980000.00
+  - title: "Socio-Economic Assistance"
+    description: ""
+    outcome_indicators:
+      - indicator: "IPs with financial needs assisted"
+        target: "80%"
+      - indicator: "IP students availed educational assistance"
+        target: "80%"
+      - indicator: "IP students taking up Law and Medicine provided with assistance"
+        target: "80%"
+      - indicator: "IP adults gaining knowledge on basic education"
+        target: "80%"
+      - indicator: "IPs and ICCs with improved health and well-being"
+        target: "80%"
+    output_indicators:
+      - indicator: "No. of IP beneficiaries"
+        target: 550
+      - indicator: "No. of IP students provided with assistance"
+        target: 200
+      - indicator: "No. of IP students in law or medicine assisted"
+        target: 20
+      - indicator: "No. of IP adults in literacy programs"
+        target: 30
+      - indicator: "No. of IP women in health campaigns"
+        target: 50
+    approved_budget: 7581725.00
+special_provisions:
+  - title: "Comprehensive Survey on IP Household"
+    details: |
+      Two Million Seven Hundred Thousand Pesos (P2,700,000.00) appropriated for Survey, Research, Exploration and Development Expenses shall be used exclusively for the survey on IP households, subject to Program Implementation Plan and Guidelines and quarterly status report of implementation to MFBM.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      Implementing M/O/As shall submit quarterly reports on financial and physical accomplishments within thirty (30) days after each quarter through:
+        a. Submission of hardcopy to MFBM;
+        b. Submission of reports through electronic means; and
+        c. Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the MFBM and other offices where submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

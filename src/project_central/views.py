@@ -3,6 +3,10 @@
 from datetime import date
 
 import json
+import logging
+import warnings
+
+from django import forms
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -13,15 +17,72 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from common.models import StaffTask
+# Logger for deprecation warnings
+logger = logging.getLogger(__name__)
+
+from common.models import WorkItem
+from common.proxies import ProjectWorkflowProxy as ProjectWorkflow
 from common.services.task_automation import create_tasks_from_template
 from coordination.models import Organization
 from mana.models import Need
+from monitoring.forms import MonitoringMOAEntryForm
 from monitoring.models import MonitoringEntry
 from recommendations.policy_tracking.models import PolicyRecommendation
 
-from .forms import AlertFilterForm
-from .models import Alert, BudgetCeiling, BudgetScenario, ProjectWorkflow
+from common.forms.work_items import WorkItemForm
+from .forms import AlertFilterForm, ProjectWorkflowFromPPAForm
+from .models import Alert, BudgetCeiling, BudgetScenario
+
+
+# ========== Constants (replacing legacy model constants) ==========
+
+WORKFLOW_STAGES = [
+    ('need_identification', 'Need Identification'),
+    ('need_validation', 'Need Validation'),
+    ('policy_linkage', 'Policy Linkage'),
+    ('mao_coordination', 'MAO Coordination'),
+    ('budget_planning', 'Budget Planning'),
+    ('approval', 'Approval Process'),
+    ('implementation', 'Implementation'),
+    ('monitoring', 'Monitoring & Evaluation'),
+    ('completion', 'Completion'),
+]
+
+PRIORITY_LEVELS = [
+    ("low", "Low"),
+    ("medium", "Medium"),
+    ("high", "High"),
+    ("urgent", "Urgent"),
+    ("critical", "Critical"),
+]
+
+
+# ========== Deprecation Decorator ==========
+
+def deprecated_workflow_view(replacement_info=None):
+    """
+    Decorator to mark ProjectWorkflow views as deprecated.
+
+    Args:
+        replacement_info: Optional info about replacement (e.g., "Use WorkItem(work_type='project') instead")
+    """
+    def decorator(view_func):
+        def wrapper(request, *args, **kwargs):
+            # Log deprecation warning
+            warning_msg = (
+                f"{view_func.__name__} is deprecated and will be removed in OBCMS v2.0. "
+                f"{replacement_info or 'Use WorkItem system instead.'}"
+            )
+            warnings.warn(warning_msg, PendingDeprecationWarning, stacklevel=2)
+            logger.warning(f"DEPRECATION: {warning_msg} - Called by user {request.user}")
+
+            # Execute the original view
+            return view_func(request, *args, **kwargs)
+
+        wrapper.__name__ = view_func.__name__
+        wrapper.__doc__ = f"DEPRECATED: {view_func.__doc__ or ''}"
+        return wrapper
+    return decorator
 
 
 # ========== TASK 8: Portfolio Dashboard View ==========
@@ -116,6 +177,7 @@ def portfolio_dashboard_view(request):
             "icon": "fa-money-bill-wave",
             "gradient": "from-emerald-600 via-teal-500 to-sky-500",
             "pill": f"FY {current_year}",
+            "icon_color": "text-emerald-600",
         },
         {
             "title": "Active Projects",
@@ -123,6 +185,7 @@ def portfolio_dashboard_view(request):
             "icon": "fa-diagram-project",
             "gradient": "from-blue-600 via-sky-500 to-cyan-500",
             "subtitle": "Currently being implemented",
+            "icon_color": "text-blue-600",
         },
         {
             "title": "Unfunded Needs",
@@ -130,6 +193,7 @@ def portfolio_dashboard_view(request):
             "icon": "fa-triangle-exclamation",
             "gradient": "from-rose-600 via-orange-500 to-amber-500",
             "subtitle": "High priority, awaiting budget",
+            "icon_color": "text-amber-600",
         },
         {
             "title": "OBC Beneficiaries",
@@ -137,6 +201,7 @@ def portfolio_dashboard_view(request):
             "icon": "fa-people-group",
             "gradient": "from-violet-600 via-purple-500 to-fuchsia-500",
             "subtitle": "Slots allocated across PPAs",
+            "icon_color": "text-purple-600",
         },
         {
             "title": "MAOs Engaged",
@@ -144,6 +209,7 @@ def portfolio_dashboard_view(request):
             "icon": "fa-handshake-angle",
             "gradient": "from-indigo-600 via-blue-500 to-slate-500",
             "subtitle": "LGU partners with active coordination",
+            "icon_color": "text-indigo-600",
         },
         {
             "title": "Policies Implemented",
@@ -151,6 +217,7 @@ def portfolio_dashboard_view(request):
             "icon": "fa-gavel",
             "gradient": "from-emerald-700 via-lime-500 to-teal-500",
             "subtitle": "Policy recommendations in execution",
+            "icon_color": "text-teal-600",
         },
     ]
 
@@ -238,10 +305,348 @@ def portfolio_dashboard_view(request):
     return render(request, "project_central/portfolio_dashboard.html", context)
 
 
+# ========== MOA PPA Management ==========
+
+
+def _format_currency(value):
+    if value is None:
+        return "—"
+    try:
+        return f"₱{value:,.2f}"
+    except (TypeError, ValueError):
+        return str(value)
+
+
+@login_required
+def moa_ppa_list_view(request):
+    """List MOA PPAs so users can transition them into Project Central workflows."""
+
+    search_query = request.GET.get("q", "").strip()
+    status_filter = request.GET.get("status", "").strip()
+
+    base_queryset = (
+        MonitoringEntry.objects.filter(category="moa_ppa")
+        .select_related("implementing_moa")
+        .prefetch_related("communities")
+    )
+
+    ppa_queryset = base_queryset
+    if search_query:
+        ppa_queryset = ppa_queryset.filter(
+            Q(title__icontains=search_query)
+            | Q(program_code__icontains=search_query)
+            | Q(plan_reference__icontains=search_query)
+            | Q(implementing_moa__name__icontains=search_query)
+        )
+
+    if status_filter:
+        ppa_queryset = ppa_queryset.filter(status=status_filter)
+
+    ppa_queryset = ppa_queryset.order_by("-updated_at", "-created_at")
+
+    totals = ppa_queryset.aggregate(
+        total_allocation=Sum("budget_allocation"),
+        total_obc_allocation=Sum("budget_obc_allocation"),
+        average_progress=Avg("progress"),
+    )
+
+    status_map = dict(MonitoringEntry.STATUS_CHOICES)
+    status_breakdown = [
+        {
+            "status": row["status"],
+            "total": row["total"],
+            "label": status_map.get(row["status"], row["status"].title()),
+        }
+        for row in (
+            ppa_queryset.order_by()
+            .values("status")
+            .annotate(total=Count("id"))
+            .order_by("status")
+        )
+    ]
+
+    rows = []
+    for entry in ppa_queryset:
+        implementing_moa = entry.implementing_moa.name if entry.implementing_moa else "—"
+        communities = list(entry.communities.values_list("name", flat=True))
+        if len(communities) > 2:
+            communities_display = ", ".join(communities[:2]) + f" +{len(communities) - 2}"
+        else:
+            communities_display = ", ".join(communities) if communities else "—"
+
+        if hasattr(entry, "project_workflow") and entry.project_workflow:
+            workflow_url = reverse(
+                "project_central:project_workflow_detail",
+                kwargs={"workflow_id": entry.project_workflow.id},
+            )
+            workflow_badge = (
+                f"<a href='{workflow_url}' "
+                "class='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-200 transition'>"
+                "<i class='fas fa-diagram-project'></i> Workflow Linked"
+                "</a>"
+            )
+        else:
+            create_url = reverse(
+                "project_central:create_workflow_from_ppa",
+                kwargs={"ppa_id": entry.id},
+            )
+            workflow_badge = (
+                f"<a href='{create_url}' "
+                "class='inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-200 transition'>"
+                "<i class='fas fa-plus-circle'></i> Create Workflow"
+                "</a>"
+            )
+
+        rows.append(
+            {
+                "cells": [
+                    {
+                        "content": (
+                            "<div class='space-y-1'>"
+                            f"<p class='font-semibold text-gray-900'>{entry.title}</p>"
+                            f"<p class='text-xs text-gray-500'>Program Code: {entry.program_code or '—'}</p>"
+                            f"{workflow_badge}"
+                            "</div>"
+                        ),
+                    },
+                    {
+                        "content": (
+                            "<div class='space-y-1'>"
+                            f"<p class='text-sm text-gray-800'>{implementing_moa}</p>"
+                            f"<p class='text-xs text-gray-500'>Status: {entry.get_status_display()}</p>"
+                            "</div>"
+                        ),
+                    },
+                    {
+                        "content": (
+                            "<div class='space-y-1'>"
+                            f"<p class='text-sm text-gray-800'>{_format_currency(entry.budget_allocation)}</p>"
+                            f"<p class='text-xs text-gray-500'>OBC: {_format_currency(entry.budget_obc_allocation)}</p>"
+                            "</div>"
+                        ),
+                        "class": "text-sm font-medium text-gray-900",
+                    },
+                    {
+                        "content": (
+                            "<div class='space-y-1'>"
+                            f"<p class='text-sm text-gray-800'>{entry.progress or 0}%</p>"
+                            f"<p class='text-xs text-gray-500'>Target end: {entry.target_end_date.strftime('%b %d, %Y') if entry.target_end_date else '—'}</p>"
+                            "</div>"
+                        ),
+                    },
+                    {
+                        "content": (
+                            "<div class='space-y-1'>"
+                            f"<p class='text-sm text-gray-800'>{communities_display}</p>"
+                            "</div>"
+                        ),
+                    },
+                ],
+                "view_url": reverse(
+                    "project_central:moa_ppa_detail", kwargs={"ppa_id": entry.id}
+                ),
+                "edit_url": reverse(
+                    "project_central:moa_ppa_edit", kwargs={"ppa_id": entry.id}
+                ),
+                "delete_preview_url": (
+                    reverse("project_central:moa_ppa_detail", kwargs={"ppa_id": entry.id})
+                    + "?review_delete=1"
+                ),
+                "delete_message": "This will remove the PPA record from monitoring and project central views.",
+            }
+        )
+
+    context = {
+        "rows": rows,
+        "headers": [
+            {"label": "Program / Project"},
+            {"label": "Implementing MOA"},
+            {"label": "Budget"},
+            {"label": "Progress"},
+            {"label": "Communities"},
+        ],
+        "search_query": search_query,
+        "status_filter": status_filter,
+        "status_choices": MonitoringEntry.STATUS_CHOICES,
+        "totals": totals,
+        "status_breakdown": status_breakdown,
+    }
+
+    return render(request, "project_central/ppas/list.html", context)
+
+
+@login_required
+def create_moa_ppa_view(request):
+    """Create a new MOA PPA entry from Project Central."""
+
+    if request.method == "POST":
+        form = MonitoringMOAEntryForm(request.POST)
+        if form.is_valid():
+            ppa = form.save(commit=False)
+            if not ppa.created_by:
+                ppa.created_by = request.user
+            ppa.updated_by = request.user
+            ppa.save()
+            form.save_m2m()
+            messages.success(
+                request, "MOA PPA created and ready for workflow linkage."
+            )
+            return redirect("project_central:moa_ppa_detail", ppa_id=ppa.id)
+    else:
+        form = MonitoringMOAEntryForm()
+
+    context = {
+        "form": form,
+        "form_title": "Add MOA PPA",
+        "submit_label": "Save PPA",
+        "ppa": None,
+    }
+    return render(request, "project_central/ppas/form.html", context)
+
+
+@login_required
+def edit_moa_ppa_view(request, ppa_id):
+    """Edit an existing MOA PPA."""
+
+    ppa = get_object_or_404(MonitoringEntry, id=ppa_id, category="moa_ppa")
+
+    if request.method == "POST":
+        form = MonitoringMOAEntryForm(request.POST, instance=ppa)
+        if form.is_valid():
+            updated_ppa = form.save(commit=False)
+            updated_ppa.updated_by = request.user
+            updated_ppa.save()
+            form.save_m2m()
+            messages.success(request, "MOA PPA updated.")
+            return redirect("project_central:moa_ppa_detail", ppa_id=ppa.id)
+    else:
+        form = MonitoringMOAEntryForm(instance=ppa)
+
+    context = {
+        "form": form,
+        "form_title": "Edit MOA PPA",
+        "submit_label": "Update PPA",
+        "ppa": ppa,
+    }
+    return render(request, "project_central/ppas/form.html", context)
+
+
+@login_required
+def delete_moa_ppa_view(request, ppa_id):
+    """Confirm and delete a MOA PPA."""
+
+    ppa = get_object_or_404(MonitoringEntry, id=ppa_id, category="moa_ppa")
+
+    if request.method == "POST":
+        ppa.delete()
+        messages.success(request, "MOA PPA deleted.")
+        return redirect("project_central:moa_ppa_list")
+
+    context = {
+        "ppa": ppa,
+    }
+    return render(request, "project_central/ppas/delete_confirm.html", context)
+
+
+@login_required
+def moa_ppa_detail_view(request, ppa_id):
+    """Show details for a MOA PPA including linked workflow and activities."""
+
+    ppa = get_object_or_404(MonitoringEntry, id=ppa_id, category="moa_ppa")
+    workflow = getattr(ppa, "project_workflow", None)
+
+    # Use WorkItem with work_type='activity' instead of deprecated Event model
+    activity_queryset = (
+        WorkItem.objects.filter(related_project=workflow, work_type='activity')
+        .select_related("related_project")
+        .order_by("start_date", "start_time")
+        if workflow
+        else WorkItem.objects.none()
+    )
+
+    today = timezone.now().date()
+    upcoming_activities = activity_queryset.filter(start_date__gte=today)
+
+    review_delete = request.GET.get("review_delete") == "1"
+
+    supports_sdg = ppa.supports_sdg
+    if isinstance(supports_sdg, (list, tuple)):
+        sdg_display = ", ".join(supports_sdg) if supports_sdg else "—"
+    else:
+        sdg_display = supports_sdg or "—"
+
+    community_names = list(ppa.communities.values_list("name", flat=True))
+
+    context = {
+        "ppa": ppa,
+        "workflow": workflow,
+        "activities": activity_queryset,
+        "upcoming_activities": upcoming_activities,
+        "review_delete": review_delete,
+        "status_options": MonitoringEntry.STATUS_CHOICES,
+        "sdg_display": sdg_display,
+        "community_names": community_names,
+    }
+
+    return render(request, "project_central/ppas/detail.html", context)
+
+
+@login_required
+@deprecated_workflow_view("Use WorkItem(work_type='project') instead")
+def create_workflow_from_ppa(request, ppa_id):
+    """Bind a MOA PPA to a new Project Central workflow."""
+
+    ppa = get_object_or_404(MonitoringEntry, id=ppa_id, category="moa_ppa")
+
+    existing_workflow = getattr(ppa, "project_workflow", None)
+    if existing_workflow:
+        messages.info(
+            request,
+            "This PPA already has a linked workflow. You can update it from the workflow detail page.",
+        )
+        return redirect(
+            "project_central:project_workflow_detail",
+            workflow_id=existing_workflow.id,
+        )
+
+    if request.method == "POST":
+        form = ProjectWorkflowFromPPAForm(ppa, request.POST)
+        if form.is_valid():
+            workflow = form.save(commit=False)
+            workflow.ppa = ppa
+            workflow.created_by = request.user
+            if not workflow.current_stage:
+                workflow.current_stage = "budget_planning"
+            if not workflow.estimated_budget and ppa.budget_allocation:
+                workflow.estimated_budget = ppa.budget_allocation
+            workflow.save()
+            form.save_m2m()
+            messages.success(
+                request,
+                "Workflow created from MOA PPA. You can now schedule activities and assign tasks.",
+            )
+            return redirect(
+                "project_central:project_workflow_detail", workflow_id=workflow.id
+            )
+    else:
+        initial = {
+            "priority_level": ppa.priority or PRIORITY_LEVELS[1][0],
+            "estimated_budget": ppa.budget_allocation,
+        }
+        form = ProjectWorkflowFromPPAForm(ppa, initial=initial)
+
+    context = {
+        "ppa": ppa,
+        "form": form,
+    }
+    return render(request, "project_central/ppas/workflow_form.html", context)
+
+
 # ========== TASK 9: Project Workflow Detail View ==========
 
 
 @login_required
+@deprecated_workflow_view("Use WorkItem detail view instead")
 def project_workflow_detail(request, workflow_id):
     """
     Display detailed project workflow with stage progression.
@@ -262,7 +667,7 @@ def project_workflow_detail(request, workflow_id):
 
     # Get all stages with completion status
     stages = []
-    stage_choices = ProjectWorkflow.WORKFLOW_STAGES
+    stage_choices = WORKFLOW_STAGES
     current_index = [s[0] for s in stage_choices].index(workflow.current_stage)
 
     for idx, (stage_key, stage_label) in enumerate(stage_choices):
@@ -284,7 +689,7 @@ def project_workflow_detail(request, workflow_id):
     history = workflow.stage_history if workflow.stage_history else []
 
     # Get related tasks and alerts
-    tasks = StaffTask.objects.filter(linked_workflow=workflow).order_by("-created_at")
+    tasks = WorkItem.objects.filter(linked_workflow=workflow).order_by("-created_at")
     alerts = Alert.objects.filter(related_workflow=workflow, is_active=True).order_by(
         "-severity", "-created_at"
     )
@@ -334,6 +739,7 @@ def _get_stage_icon(stage_key):
 
 
 @login_required
+@deprecated_workflow_view("Use WorkItem list view with work_type filter instead")
 def project_list_view(request):
     """List all project workflows."""
     workflows = ProjectWorkflow.objects.all().order_by("-initiated_date")
@@ -345,24 +751,56 @@ def project_list_view(request):
     context = {
         "workflows": workflows,
         "stage_filter": stage_filter,
-        "stage_choices": ProjectWorkflow.WORKFLOW_STAGES,
+        "stage_choices": WORKFLOW_STAGES,
     }
     return render(request, "project_central/project_list.html", context)
 
 
 @login_required
+@deprecated_workflow_view("Use WorkItem create view instead")
 def create_project_workflow(request):
-    messages.info(request, "Create project workflow functionality coming soon.")
-    return redirect("project_central:project_list")
+    messages.info(
+        request,
+        "Select an MOA PPA to start a new project workflow.",
+    )
+    return redirect("project_central:moa_ppa_list")
 
 
 @login_required
+@deprecated_workflow_view("Use WorkItem edit view instead")
 def edit_project_workflow(request, workflow_id):
-    messages.info(request, "Edit project workflow functionality coming soon.")
-    return redirect("project_central:project_workflow_detail", workflow_id=workflow_id)
+    # Get the underlying WorkItem instance (ProjectWorkflow is a proxy)
+    workflow = get_object_or_404(ProjectWorkflow, id=workflow_id)
+    work_item = get_object_or_404(WorkItem, id=workflow_id)
+
+    if request.method == "POST":
+        form = WorkItemForm(request.POST, instance=work_item)
+        if form.is_valid():
+            updated_workflow = form.save(commit=False)
+            # Ensure work_type stays as 'project'
+            updated_workflow.work_type = WorkItem.WORK_TYPE_PROJECT
+            updated_workflow.save()
+            form.save_m2m()
+            messages.success(request, "Project workflow updated.")
+            return redirect(
+                "project_central:project_workflow_detail", workflow_id=workflow.id
+            )
+    else:
+        form = WorkItemForm(instance=work_item)
+        # Lock the work_type field to prevent changes
+        form.fields['work_type'].widget = forms.HiddenInput()
+        form.fields['work_type'].initial = WorkItem.WORK_TYPE_PROJECT
+
+    context = {
+        "form": form,
+        "workflow": workflow,
+    }
+
+    return render(request, "project_central/workflow_form.html", context)
 
 
 @login_required
+@deprecated_workflow_view("Use WorkItem status updates instead")
 def advance_project_stage(request, workflow_id):
     """Advance workflow to next stage with validation."""
     workflow = get_object_or_404(ProjectWorkflow, id=workflow_id)
@@ -371,7 +809,7 @@ def advance_project_stage(request, workflow_id):
         notes = request.POST.get("notes", "")
 
         # Get current and next stage
-        stage_choices = ProjectWorkflow.WORKFLOW_STAGES
+        stage_choices = WORKFLOW_STAGES
         current_index = [s[0] for s in stage_choices].index(workflow.current_stage)
 
         # Check if already at final stage
@@ -1049,7 +1487,7 @@ def my_tasks_with_projects(request):
     )
 
     tasks_qs = (
-        StaffTask.objects.filter(base_filter)
+        WorkItem.objects.filter(base_filter)
         .filter(Q(linked_workflow__isnull=False) | Q(related_ppa__isnull=False))
         .select_related(
             "linked_workflow",
@@ -1067,21 +1505,21 @@ def my_tasks_with_projects(request):
     search_query = (request.GET.get("q") or "").strip()
     show_overdue = request.GET.get("overdue") == "1"
 
-    valid_statuses = {value for value, _ in StaffTask.STATUS_CHOICES}
+    valid_statuses = {value for value, _ in WorkItem.STATUS_CHOICES}
     if status_filter in valid_statuses:
         tasks_qs = tasks_qs.filter(status=status_filter)
     if stage_filter:
         tasks_qs = tasks_qs.filter(linked_workflow__current_stage=stage_filter)
-    valid_domains = {value for value, _ in StaffTask.DOMAIN_CHOICES}
+    valid_domains = {value for value, _ in WorkItem.DOMAIN_CHOICES}
     if domain_filter in valid_domains:
         tasks_qs = tasks_qs.filter(domain=domain_filter)
     if show_overdue:
         tasks_qs = tasks_qs.filter(
             due_date__lt=today,
             status__in=[
-                StaffTask.STATUS_NOT_STARTED,
-                StaffTask.STATUS_IN_PROGRESS,
-                StaffTask.STATUS_AT_RISK,
+                WorkItem.STATUS_NOT_STARTED,
+                WorkItem.STATUS_IN_PROGRESS,
+                "at_risk",  # WorkItem may not have STATUS_AT_RISK constant
             ],
         )
     if search_query:
@@ -1092,7 +1530,7 @@ def my_tasks_with_projects(request):
             | Q(related_ppa__title__icontains=search_query)
         )
 
-    def sort_key(task: StaffTask):
+    def sort_key(task: WorkItem):
         due = task.due_date or date.max
         return (due, task.priority, task.title.lower())
 
@@ -1102,19 +1540,19 @@ def my_tasks_with_projects(request):
         "total": len(task_list),
         "overdue": sum(1 for task in task_list if task.is_overdue),
         "in_progress": sum(
-            1 for task in task_list if task.status == StaffTask.STATUS_IN_PROGRESS
+            1 for task in task_list if task.status == WorkItem.STATUS_IN_PROGRESS
         ),
         "completed": sum(
-            1 for task in task_list if task.status == StaffTask.STATUS_COMPLETED
+            1 for task in task_list if task.status == WorkItem.STATUS_COMPLETED
         ),
     }
 
     context = {
         "tasks": task_list,
         "summary": summary,
-        "status_choices": StaffTask.STATUS_CHOICES,
-        "stage_choices": ProjectWorkflow.WORKFLOW_STAGES,
-        "domain_choices": StaffTask.DOMAIN_CHOICES,
+        "status_choices": WorkItem.STATUS_CHOICES,
+        "stage_choices": WORKFLOW_STAGES,
+        "domain_choices": WorkItem.DOMAIN_CHOICES,
         "current_filters": {
             "status": status_filter,
             "stage": stage_filter,
@@ -1135,6 +1573,7 @@ def my_tasks_with_projects(request):
 
 
 @login_required
+@deprecated_workflow_view("Use WorkItem task generation instead")
 def generate_workflow_tasks(request, workflow_id):
     workflow = get_object_or_404(ProjectWorkflow, id=workflow_id)
     ppa = workflow.ppa
@@ -1160,7 +1599,7 @@ def generate_workflow_tasks(request, workflow_id):
         "linked_workflow": workflow,
     }
 
-    if StaffTask.objects.filter(**base_filters).exists():
+    if WorkItem.objects.filter(**base_filters).exists():
         messages.info(request, "Workflow tasks for this stage already exist.")
         return redirect(
             "project_central:project_workflow_detail", workflow_id=workflow_id
@@ -1416,6 +1855,7 @@ def reject_budget(request, ppa_id):
 
 
 @login_required
+@deprecated_workflow_view("Use unified calendar with WorkItem filtering instead")
 def project_calendar_view(request, workflow_id):
     """Display project-specific calendar view."""
     workflow = get_object_or_404(
@@ -1431,6 +1871,7 @@ def project_calendar_view(request, workflow_id):
 
 
 @login_required
+@deprecated_workflow_view("Use unified calendar API with WorkItem filtering instead")
 def project_calendar_events(request, workflow_id):
     """Return calendar events for a specific project."""
     workflow = get_object_or_404(ProjectWorkflow, pk=workflow_id)

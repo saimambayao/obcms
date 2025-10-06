@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block extra_css %}
 {{ block.super }}
@@ -144,24 +145,30 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
             <p class="text-sm font-semibold text-gray-500">Total Municipalities</p>
-            <p class="mt-2 text-2xl font-bold text-gray-900">{{ coverage.total_municipalities|default:0 }}</p>
+            <p class="mt-2 text-2xl font-bold text-gray-900">{{ coverage.total_municipalities|intcomma|default:0 }}</p>
         </div>
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
             <p class="text-sm font-semibold text-gray-500">Barangay OBCs (aggregated)</p>
-            <p class="mt-2 text-2xl font-bold text-gray-900">{{ coverage.total_obc_communities|default:0 }}</p>
+            <p class="mt-2 text-2xl font-bold text-gray-900">{{ coverage.total_obc_communities|intcomma|default:0 }}</p>
         </div>
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
             <p class="text-sm font-semibold text-gray-500">Estimated OBC Population</p>
-            <p class="mt-2 text-2xl font-bold text-gray-900">{{ coverage.estimated_obc_population|default:0 }}</p>
+            <p class="mt-2 text-2xl font-bold text-gray-900">
+                {% if coverage.estimated_obc_population is not None %}
+                    {{ coverage.estimated_obc_population|intcomma }}
+                {% else %}
+                    &mdash;
+                {% endif %}
+            </p>
         </div>
         <div class="bg-white border border-purple-100 rounded-xl shadow-sm p-5">
             <p class="text-sm text-purple-500 font-medium uppercase">Total Population</p>
-            <p class="mt-2 text-2xl font-bold text-gray-900">{{ coverage.province.population_total|default:0 }}</p>
+            <p class="mt-2 text-2xl font-bold text-gray-900">{{ coverage.province.population_total|intcomma|default:0 }}</p>
             <p class="text-xs text-gray-500 mt-1">Province total</p>
         </div>
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
             <p class="text-sm font-semibold text-gray-500">Households (aggregated)</p>
-            <p class="mt-2 text-2xl font-bold text-gray-900">{{ coverage.households|default:0 }}</p>
+            <p class="mt-2 text-2xl font-bold text-gray-900">{{ coverage.households|intcomma|default:0 }}</p>
         </div>
     </div>
 
@@ -197,12 +204,18 @@
                     </dd>
                 </div>
             </dl>
-            {% if coverage.key_municipalities %}
             <div class="mt-6">
                 <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Key Municipalities</h3>
-                <p class="mt-2 text-sm text-gray-600 leading-relaxed">{{ coverage.key_municipalities }}</p>
+                <p class="mt-2 text-sm text-gray-600 leading-relaxed">
+                    {% if coverage.key_municipalities %}
+                        {{ coverage.key_municipalities }}
+                    {% else %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full border border-gray-200 bg-gray-100 text-gray-500">
+                            <i class="fas fa-city mr-1"></i>No key municipalities recorded
+                        </span>
+                    {% endif %}
+                </p>
             </div>
-            {% endif %}
         </section>
 
         <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-0 lg:col-span-2">
@@ -260,7 +273,13 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ municipal.municipality.name }}</td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ municipal.total_obc_communities|default:0 }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">{{ municipal.estimated_obc_population|default:0 }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {% if municipal.estimated_obc_population is not None %}
+                                {{ municipal.estimated_obc_population|intcomma }}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ municipal.municipality.population_total|default:"N/A" }}</td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ municipal.households|default:0 }}</td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ municipal.updated_at|date:"M d, Y" }}</td>
@@ -271,7 +290,11 @@
                                 <a href="{% url 'common:communities_edit_municipal' municipal.id %}"
                                    class="text-emerald-600 hover:text-emerald-900">Edit</a>
                                 <a href="{% url 'common:communities_delete_municipal' municipal.id %}?review_delete=1"
-                                   class="text-red-600 hover:text-red-900">Delete</a>
+                                   class="inline-flex items-center justify-center text-red-600 hover:text-red-900"
+                                   aria-label="Delete municipal coverage">
+                                    <i class="fas fa-trash"></i>
+                                    <span class="sr-only">Delete</span>
+                                </a>
                             </div>
                         </td>
                     </tr>
@@ -331,7 +354,11 @@
                                 <a href="{% url 'common:communities_edit' community.id %}"
                                    class="text-emerald-600 hover:text-emerald-900">Edit</a>
                                 <a href="{% url 'common:communities_delete' community.id %}?review_delete=1"
-                                   class="text-red-600 hover:text-red-900">Delete</a>
+                                   class="inline-flex items-center justify-center text-red-600 hover:text-red-900"
+                                   aria-label="Delete community">
+                                    <i class="fas fa-trash"></i>
+                                    <span class="sr-only">Delete</span>
+                                </a>
                             </div>
                         </td>
                     </tr>
@@ -398,7 +425,125 @@
             </table>
         </div>
         {% else %}
-        <p class="text-sm text-gray-400 italic">No PPA for this OBC.</p>
+        <p class="text-sm">
+            <span class="inline-flex items-center px-3 py-1 rounded-full border border-gray-200 bg-gray-100 text-gray-500">
+                <i class="fas fa-file-contract mr-1"></i>No PPA for this OBC.
+            </span>
+        </p>
+        {% endif %}
+    </section>
+
+    <!-- Recommendations Section -->
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mt-8">
+        <div class="flex items-center mb-4">
+            <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mr-3">
+                <i class="fas fa-lightbulb"></i>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-900">Policy Recommendations for {{ coverage.province.name }} OBC</h2>
+        </div>
+        {% if recommendations %}
+        <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p class="text-sm text-blue-700">
+                <i class="fas fa-info-circle mr-1"></i>
+                Showing recommendations tagged for {{ coverage.province.name }} OBC via the Recommendations module.
+            </p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Locations</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                    {% for rec in recommendations %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2 font-medium text-gray-900">{{ rec.title }}</td>
+                        <td class="px-4 py-2 text-gray-700">
+                            {% with communities=rec.target_communities.all %}
+                            <div class="space-y-2">
+                                {% if communities %}
+                                <div class="flex flex-wrap gap-1">
+                                    {% for comm in communities %}
+                                        {% if comm.barangay.municipality.province.id == coverage.province.id %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-50 text-green-700">
+                                            <i class="fas fa-map-marker-alt mr-1"></i>{{ comm.barangay.name }}, {{ comm.barangay.municipality.name }}
+                                        </span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="flex flex-wrap gap-1 text-xs text-gray-600">
+                                    {% if rec.target_barangay and rec.target_barangay.municipality.province_id == coverage.province.id %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
+                                        <i class="fas fa-location-arrow mr-1"></i>{{ rec.target_barangay.name }}
+                                    </span>
+                                    {% endif %}
+                                    {% if rec.target_municipality and rec.target_municipality.province_id == coverage.province.id %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                                        <i class="fas fa-map-marked-alt mr-1"></i>{{ rec.target_municipality.name }}
+                                    </span>
+                                    {% endif %}
+                                    {% if rec.target_province %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                                        <i class="fas fa-flag mr-1"></i>{{ rec.target_province.name }}
+                                    </span>
+                                    {% endif %}
+                                    {% if rec.target_region %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-teal-50 text-teal-700">
+                                        <i class="fas fa-globe-asia mr-1"></i>{{ rec.target_region.name }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endwith %}
+                        </td>
+                        <td class="px-4 py-2 text-gray-700">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                                {{ rec.get_recommendation_type_display }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-2 text-gray-700">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold
+                                {% if rec.status == 'implemented' %}bg-green-100 text-green-800
+                                {% elif rec.status == 'in_implementation' %}bg-blue-100 text-blue-800
+                                {% elif rec.status == 'approved' %}bg-emerald-100 text-emerald-800
+                                {% elif rec.status == 'submitted' %}bg-indigo-100 text-indigo-800
+                                {% elif rec.status == 'under_review' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ rec.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-2 text-gray-700">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold
+                                {% if rec.priority == 'critical' %}bg-red-100 text-red-800
+                                {% elif rec.priority == 'urgent' %}bg-orange-100 text-orange-800
+                                {% elif rec.priority == 'high' %}bg-amber-100 text-amber-800
+                                {% elif rec.priority == 'medium' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ rec.get_priority_display }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-2 text-gray-700">
+                            <a href="{% url 'common:recommendations_view' rec.id %}"
+                               class="text-indigo-600 hover:text-indigo-800 font-semibold text-xs">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-sm">
+            <span class="inline-flex items-center px-3 py-1 rounded-full border border-gray-200 bg-gray-100 text-gray-500">
+                <i class="fas fa-lightbulb mr-1"></i>No recommendations tagged for this province yet in the Recommendations module.
+            </span>
+        </p>
         {% endif %}
     </section>
 </div>

@@ -12,7 +12,7 @@ from django.utils import timezone
 from common.constants import STAFF_TEAM_DEFINITIONS
 from common.models import (
     StaffProfile,
-    StaffTask,
+    WorkItem,
     StaffTeam,
     StaffTeamMembership,
     User,
@@ -53,14 +53,14 @@ def ensure_default_staff_teams() -> Sequence[StaffTeam]:
     return updated_teams
 
 
-def assign_board_position(task: StaffTask) -> StaffTask:
+def assign_board_position(task: WorkItem) -> WorkItem:
     """Ensure the task has a trailing board position within its status column."""
 
     if task.board_position:
         return task
     try:
         max_position = (
-            StaffTask.objects.filter(status=task.status)
+            WorkItem.objects.filter(status=task.status)
             .exclude(pk=task.pk)
             .aggregate(Max("board_position"))
             .get("board_position__max")
@@ -109,12 +109,12 @@ def seed_tasks(
     staff_users: Sequence[User],
     blueprints: Iterable[dict],
     today: timezone.datetime | None = None,
-) -> list[StaffTask]:
+) -> list[WorkItem]:
     """Create staff tasks based on blueprints and distribute to staff."""
 
     if today is None:
         today = timezone.now().date()
-    tasks: list[StaffTask] = []
+    tasks: list[WorkItem] = []
     staff_cycle = list(staff_users)
     if not staff_cycle and created_by:
         staff_cycle = [created_by]
@@ -126,8 +126,8 @@ def seed_tasks(
         team, _ = StaffTeam.objects.get_or_create(name=blueprint["team"])
         assignee = staff_cycle[index % staff_count]
         defaults = {
-            "priority": blueprint.get("priority", StaffTask.PRIORITY_MEDIUM),
-            "status": blueprint.get("status", StaffTask.STATUS_NOT_STARTED),
+            "priority": blueprint.get("priority", WorkItem.PRIORITY_MEDIUM),
+            "status": blueprint.get("status", WorkItem.STATUS_NOT_STARTED),
             "impact": blueprint.get("impact", ""),
             "description": blueprint.get("description", ""),
             "progress": blueprint.get("progress", 0),
@@ -140,14 +140,14 @@ def seed_tasks(
         if start_date < today:
             start_date = today
         defaults.update({"start_date": start_date, "due_date": due_date})
-        task, _ = StaffTask.objects.get_or_create(
+        task, _ = WorkItem.objects.get_or_create(
             title=blueprint["title"],
             defaults=defaults,
         )
         task.teams.add(team)
         task.assignees.set([assignee])
         if (
-            blueprint.get("status") == StaffTask.STATUS_COMPLETED
+            blueprint.get("status") == WorkItem.STATUS_COMPLETED
             and task.completed_at is None
         ):
             task.completed_at = timezone.now()
@@ -160,7 +160,7 @@ def seed_tasks(
 
 
 @transaction.atomic
-def seed_staff_demo_data(created_by: User | None = None) -> list[StaffTask]:
+def seed_staff_demo_data(created_by: User | None = None) -> list[WorkItem]:
     """Seed staff teams and demo tasks useful for staging environments."""
 
     ensure_default_staff_teams()
@@ -187,48 +187,48 @@ def seed_staff_demo_data(created_by: User | None = None) -> list[StaffTask]:
         {
             "title": "Refresh barangay mapping layers",
             "team": "MANA Team",
-            "priority": StaffTask.PRIORITY_HIGH,
-            "status": StaffTask.STATUS_IN_PROGRESS,
+            "priority": WorkItem.PRIORITY_HIGH,
+            "status": WorkItem.STATUS_IN_PROGRESS,
             "impact": "Update field datasets ahead of deployment windows.",
             "due_in_days": 5,
         },
         {
             "title": "Compile monthly monitoring brief",
             "team": "M&E Unit",
-            "priority": StaffTask.PRIORITY_MEDIUM,
-            "status": StaffTask.STATUS_NOT_STARTED,
+            "priority": WorkItem.PRIORITY_MEDIUM,
+            "status": WorkItem.STATUS_NOT_STARTED,
             "impact": "Surface programme progress indicators for leadership.",
             "due_in_days": 7,
         },
         {
             "title": "Finalize Q3 resource alignment",
             "team": "Planning and Budgeting Unit",
-            "priority": StaffTask.PRIORITY_HIGH,
-            "status": StaffTask.STATUS_AT_RISK,
+            "priority": WorkItem.PRIORITY_HIGH,
+            "status": "at_risk",  # WorkItem may not have STATUS_AT_RISK constant
             "impact": "Close gaps in funding envelopes with finance leads.",
             "due_in_days": 3,
         },
         {
             "title": "Inter-agency coordination briefing",
             "team": "Coordination Unit",
-            "priority": StaffTask.PRIORITY_MEDIUM,
-            "status": StaffTask.STATUS_IN_PROGRESS,
+            "priority": WorkItem.PRIORITY_MEDIUM,
+            "status": WorkItem.STATUS_IN_PROGRESS,
             "impact": "Align commitments for upcoming community engagement.",
             "due_in_days": 6,
         },
         {
             "title": "Design livelihood support package",
             "team": "Community Development Unit",
-            "priority": StaffTask.PRIORITY_MEDIUM,
-            "status": StaffTask.STATUS_NOT_STARTED,
+            "priority": WorkItem.PRIORITY_MEDIUM,
+            "status": WorkItem.STATUS_NOT_STARTED,
             "impact": "Bundle social protection and livelihood components.",
             "due_in_days": 9,
         },
         {
             "title": "Synthesize field interviews",
             "team": "Research Unit",
-            "priority": StaffTask.PRIORITY_LOW,
-            "status": StaffTask.STATUS_COMPLETED,
+            "priority": WorkItem.PRIORITY_LOW,
+            "status": WorkItem.STATUS_COMPLETED,
             "impact": "Feed insights into policy evidence dashboards.",
             "due_in_days": 2,
         },

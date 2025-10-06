@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils import timezone
+from django.utils.html import format_html
 
 from .models import (
     Barangay,
@@ -14,13 +15,11 @@ from .models import (
     Region,
     SharedCalendarLink,
     StaffLeave,
-    StaffTask,
     StaffTeam,
     StaffTeamMembership,
-    TaskTemplate,
-    TaskTemplateItem,
     User,
     UserCalendarPreferences,
+    WorkItem,
 )
 
 
@@ -252,270 +251,17 @@ class StaffTeamMembershipAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
 
 
-@admin.register(StaffTask)
-class StaffTaskAdmin(admin.ModelAdmin):
-    """Admin configuration for staff tasks."""
-
-    list_display = (
-        "title",
-        "domain_display_col",
-        "teams_list",
-        "assignee_list",
-        "status",
-        "priority",
-        "due_date",
-        "progress",
-    )
-    list_filter = (
-        "status",
-        "priority",
-        "domain",
-        "assessment_phase",
-        "policy_phase",
-        "service_phase",
-        "task_role",
-        "teams",
-        "assignees",
-    )
-    search_fields = ("title", "description", "impact", "task_category")
-    autocomplete_fields = (
-        "teams",
-        "assignees",
-        "created_by",
-        "linked_event",
-        "created_from_template",
-        "related_assessment",
-        "related_policy",
-        "related_ppa",
-        "related_service",
-        "related_community",
-    )
-    readonly_fields = (
-        "created_at",
-        "updated_at",
-        "completed_at",
-        "primary_domain_object",
-        "domain_display",
-    )
-    fieldsets = (
-        (
-            "Basic Information",
-            {
-                "fields": (
-                    "title",
-                    "description",
-                    "domain",
-                    "task_category",
-                    "impact",
-                    "created_from_template",
-                )
-            },
-        ),
-        (
-            "Assignment",
-            {
-                "fields": (
-                    "teams",
-                    "assignees",
-                    "created_by",
-                    "task_role",
-                )
-            },
-        ),
-        (
-            "Schedule & Status",
-            {
-                "fields": (
-                    "start_date",
-                    "due_date",
-                    "status",
-                    "priority",
-                    "progress",
-                    "estimated_hours",
-                    "actual_hours",
-                )
-            },
-        ),
-        (
-            "Domain Relationships",
-            {
-                "fields": (
-                    "linked_event",
-                    "related_assessment",
-                    "related_survey",
-                    "related_workshop",
-                    "related_baseline",
-                    "related_need",
-                    "related_mapping",
-                    "related_policy",
-                    "related_policy_milestone",
-                    "related_policy_evidence",
-                    "related_ppa",
-                    "related_funding_flow",
-                    "related_workflow_stage",
-                    "related_outcome_indicator",
-                    "related_strategic_goal",
-                    "related_service",
-                    "related_application",
-                    "related_community",
-                    "related_stakeholder",
-                    "related_engagement",
-                    "related_municipality_coverage",
-                    "related_organization",
-                    "related_partnership",
-                    "related_partnership_milestone",
-                    "related_communication",
-                    "related_mao_focal_person",
-                    "related_training",
-                    "related_dev_plan",
-                    "related_performance_target",
-                    "related_municipal_profile",
-                    "related_import",
-                ),
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "Workflow-Specific",
-            {
-                "fields": (
-                    "assessment_phase",
-                    "policy_phase",
-                    "service_phase",
-                    "deliverable_type",
-                    "geographic_scope",
-                ),
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "Dependencies",
-            {
-                "fields": ("depends_on",),
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "Timestamps",
-            {
-                "fields": ("created_at", "updated_at", "completed_at"),
-                "classes": ("collapse",),
-            },
-        ),
-    )
-
-    @admin.display(description="Domain")
-    def domain_display_col(self, obj):
-        return obj.domain_display
-
-    @admin.display(description="Assignees")
-    def assignee_list(self, obj):
-        return obj.assignee_display_name
-
-    def teams_list(self, obj):
-        """Display teams for the task."""
-        teams = list(obj.teams.all())
-        if not teams:
-            return "No teams"
-        return ", ".join(team.name for team in teams)
-
-    teams_list.short_description = "Teams"
-
-
-@admin.register(TaskTemplate)
-class TaskTemplateAdmin(admin.ModelAdmin):
-    """Admin configuration for task templates."""
-
-    list_display = ("name", "domain", "is_active", "item_count", "created_at")
-    list_filter = ("domain", "is_active", "created_at")
-    search_fields = ("name", "description")
-    readonly_fields = ("created_at", "updated_at")
-    fieldsets = (
-        (
-            None,
-            {"fields": ("name", "domain", "description", "is_active")},
-        ),
-        (
-            "Timestamps",
-            {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},
-        ),
-    )
-
-    @admin.display(description="Items")
-    def item_count(self, obj):
-        return obj.items.count()
-
-
-class TaskTemplateItemInline(admin.TabularInline):
-    """Inline for task template items."""
-
-    model = TaskTemplateItem
-    extra = 1
-    fields = (
-        "sequence",
-        "title",
-        "priority",
-        "estimated_hours",
-        "days_from_start",
-        "assessment_phase",
-        "policy_phase",
-        "service_phase",
-        "task_role",
-    )
-
-
-@admin.register(TaskTemplateItem)
-class TaskTemplateItemAdmin(admin.ModelAdmin):
-    """Admin configuration for task template items."""
-
-    list_display = (
-        "template",
-        "sequence",
-        "title",
-        "priority",
-        "estimated_hours",
-        "days_from_start",
-    )
-    list_filter = (
-        "template",
-        "priority",
-        "assessment_phase",
-        "policy_phase",
-        "service_phase",
-        "task_role",
-    )
-    search_fields = ("title", "description")
-    autocomplete_fields = ("template",)
-    fieldsets = (
-        (
-            "Basic Information",
-            {
-                "fields": (
-                    "template",
-                    "sequence",
-                    "title",
-                    "description",
-                    "task_category",
-                )
-            },
-        ),
-        (
-            "Effort & Timing",
-            {"fields": ("priority", "estimated_hours", "days_from_start")},
-        ),
-        (
-            "Workflow Phases",
-            {
-                "fields": (
-                    "assessment_phase",
-                    "policy_phase",
-                    "service_phase",
-                    "task_role",
-                ),
-                "classes": ("collapse",),
-            },
-        ),
-    )
+# ============================================================================
+# DEPRECATED MODELS - Admin Removed
+# ============================================================================
+# The following models have been fully replaced by the WorkItem system:
+#
+# - StaffTask → WorkItem (work_type='task')
+# - TaskTemplate → WorkItem templates (TBD)
+# - TaskTemplateItem → WorkItem template items (TBD)
+#
+# See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
+# ============================================================================
 
 
 # =============================================================================
@@ -777,3 +523,7 @@ class StaffLeaveAdmin(admin.ModelAdmin):
         self.message_user(request, f"{updated} leave requests were rejected.")
 
     reject_leave.short_description = "Reject selected leave requests"
+
+# ========== UNIFIED WORK HIERARCHY ADMIN ==========
+# Import WorkItem admin (Phase 1)
+from .work_item_admin import WorkItemAdmin

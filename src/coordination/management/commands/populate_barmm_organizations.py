@@ -51,15 +51,27 @@ class Command(BaseCommand):
 
         self.stdout.write("Populating BARMM Ministries, Offices, and Agencies...")
 
-        system_user, _ = User.objects.get_or_create(
+        system_user, created = User.objects.get_or_create(
             username="system",
             defaults={
                 "email": "system@bangsamoro.gov.ph",
-                "first_name": "System",
-                "last_name": "User",
+                "first_name": "OBCMS",
+                "last_name": "Admin",
                 "is_active": True,
             },
         )
+
+        if not created:
+            desired_fields = {"first_name": "OBCMS", "last_name": "Admin"}
+            updates = {
+                field: value
+                for field, value in desired_fields.items()
+                if getattr(system_user, field) != value
+            }
+            if updates:
+                for field, value in updates.items():
+                    setattr(system_user, field, value)
+                system_user.save(update_fields=list(updates.keys()))
 
         created_count = 0
         updated_count = 0

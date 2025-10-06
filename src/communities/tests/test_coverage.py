@@ -154,7 +154,7 @@ class MunicipalityCoverageSyncTest(TestCase):
         coverage = MunicipalityCoverage.objects.get(municipality=self.municipality)
         self.assertTrue(coverage.auto_sync)
         self.assertEqual(coverage.total_obc_communities, 1)
-        self.assertEqual(coverage.estimated_obc_population, 150)
+        self.assertIsNone(coverage.estimated_obc_population)
         self.assertEqual(coverage.households, 30)
         self.assertEqual(coverage.women_count, 60)
         self.assertIn("Barangay Uno", coverage.key_barangays)
@@ -169,7 +169,7 @@ class MunicipalityCoverageSyncTest(TestCase):
 
         coverage.refresh_from_db()
         self.assertEqual(coverage.total_obc_communities, 2)
-        self.assertEqual(coverage.estimated_obc_population, 350)
+        self.assertIsNone(coverage.estimated_obc_population)
         self.assertEqual(coverage.households, 70)
         self.assertEqual(coverage.women_count, 140)
         self.assertIn("Barangay Dos", coverage.key_barangays)
@@ -180,7 +180,7 @@ class MunicipalityCoverageSyncTest(TestCase):
         OBCCommunity.objects.filter(barangay=self.barangay_a).delete()
         coverage.refresh_from_db()
         self.assertEqual(coverage.total_obc_communities, 1)
-        self.assertEqual(coverage.estimated_obc_population, 200)
+        self.assertIsNone(coverage.estimated_obc_population)
         self.assertEqual(coverage.households, 40)
         self.assertEqual(coverage.women_count, 80)
 
@@ -254,7 +254,7 @@ class ProvinceCoverageAggregationTest(TestCase):
 
         self.assertEqual(coverage.total_municipalities, 2)
         self.assertEqual(coverage.total_obc_communities, 5)
-        self.assertEqual(coverage.estimated_obc_population, 700)
+        self.assertIsNone(coverage.estimated_obc_population)
         self.assertEqual(coverage.households, 140)
         self.assertIn(self.municipality_a.name, coverage.key_municipalities)
         self.assertIn(self.municipality_b.name, coverage.key_municipalities)
@@ -272,13 +272,14 @@ class ProvinceCoverageAggregationTest(TestCase):
         coverage.refresh_from_db()
 
         self.assertEqual(coverage.total_obc_communities, 6)
-        self.assertEqual(coverage.estimated_obc_population, 900)
+        self.assertIsNone(coverage.estimated_obc_population)
         self.assertEqual(coverage.households, 145)
 
     def test_auto_sync_respected(self):
         coverage = ProvinceCoverage.sync_for_province(self.province)
         coverage.auto_sync = False
-        coverage.save(update_fields=["auto_sync"])
+        coverage.estimated_obc_population = 700
+        coverage.save(update_fields=["auto_sync", "estimated_obc_population"])
 
         MunicipalityCoverage.objects.filter(pk=self.coverage_a.pk).update(
             total_obc_communities=10,
@@ -295,4 +296,4 @@ class ProvinceCoverageAggregationTest(TestCase):
         ProvinceCoverage.sync_for_province(self.province)
         coverage.refresh_from_db()
         self.assertEqual(coverage.total_obc_communities, 12)
-        self.assertEqual(coverage.estimated_obc_population, 1250)
+        self.assertIsNone(coverage.estimated_obc_population)

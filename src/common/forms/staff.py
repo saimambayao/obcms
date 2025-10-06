@@ -8,7 +8,7 @@ from common.models import (
     PerformanceTarget,
     StaffDevelopmentPlan,
     StaffProfile,
-    StaffTask,
+    # StaffTask,  # DEPRECATED: Model is now abstract
     StaffTeam,
     StaffTeamMembership,
     TrainingEnrollment,
@@ -306,6 +306,7 @@ class StaffProfileForm(forms.ModelForm):
     )
     job_documents_url = forms.URLField(
         required=False,
+        assume_scheme="https",  # Django 6.0 compatibility
         label="Reference documents URL",
         help_text="Link to job description, competency rubric, or supporting files.",
     )
@@ -489,182 +490,20 @@ class StaffProfileForm(forms.ModelForm):
         return _newline_to_list(self.cleaned_data.get("cross_functional_partners", ""))
 
 
-class StaffTaskForm(forms.ModelForm):
-    """Create or update staff tasks."""
+class StaffTaskForm(forms.Form):
+    """
+    ⚠️ DEPRECATED: StaffTask model is now abstract. Use WorkItemForm instead. ⚠️
 
-    start_date = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={"type": "date"}),
-    )
-    due_date = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={"type": "date"}),
-    )
+    This form stub is kept ONLY to prevent import errors but CANNOT be instantiated.
+    All new code MUST use WorkItemForm from common.forms.work_items.
 
-    class Meta:
-        model = StaffTask
-        fields = [
-            "title",
-            "teams",
-            "assignees",
-            "priority",
-            "status",
-            "impact",
-            "description",
-            "start_date",
-            "due_date",
-            "progress",
-            "linked_event",
-        ]
-        widgets = {
-            "description": forms.Textarea(attrs={"rows": 3}),
-            "impact": forms.Textarea(attrs={"rows": 2}),
-        }
+    See: WORKITEM_MIGRATION_COMPLETE.md
+    """
 
     def __init__(self, *args, **kwargs):
-        request = kwargs.pop("request", None)
-        table_mode = kwargs.pop("table_mode", False)
-        super().__init__(*args, **kwargs)
-        self.table_mode = table_mode
-        self.fields["teams"].queryset = StaffTeam.objects.filter(
-            is_active=True
-        ).order_by("name")
-        staff_qs = User.objects.filter(user_type__in=STAFF_USER_TYPES, is_active=True)
-        self.fields["assignees"].queryset = staff_qs.order_by("last_name", "first_name")
-        self.fields["assignees"].required = False
-        if request:
-            self.fields["teams"].help_text = "Select one or more teams."
-            self.fields["assignees"].help_text = "Select one or more staff members."
-        if not self.initial.get("start_date"):
-            self.initial.setdefault("start_date", timezone.now().date())
-        _apply_form_field_styles(self, mode="table" if table_mode else "default")
-
-        def _append_classes(widget: forms.Widget, class_names: str) -> None:
-            existing_classes = widget.attrs.get("class", "").split()
-            for class_name in class_names.split():
-                if class_name and class_name not in existing_classes:
-                    existing_classes.append(class_name)
-            widget.attrs["class"] = " ".join(existing_classes)
-
-        title_widget = self.fields["title"].widget
-        title_class = title_widget.attrs.get("class", "")
-        if table_mode:
-            emphasis_classes = (
-                " font-semibold text-slate-900 tracking-tight border border-slate-200/60 "
-                "shadow-sm bg-white focus:border-emerald-400 focus:ring-emerald-400 "
-                "focus:outline-none"
-            )
-        else:
-            emphasis_classes = (
-                " font-semibold text-blue-700 border-blue-200 focus:border-blue-400 "
-                "focus:ring-blue-400"
-            )
-        title_widget.attrs["class"] = (title_class + emphasis_classes).strip()
-
-        status_widget = self.fields["status"].widget
-        priority_widget = self.fields["priority"].widget
-        status_widget.attrs.setdefault("data-color-select", "status")
-        priority_widget.attrs.setdefault("data-color-select", "priority")
-        _append_classes(status_widget, "task-status-select")
-        _append_classes(priority_widget, "task-priority-select")
-
-        team_widget = self.fields["teams"].widget
-        assignee_widget = self.fields["assignees"].widget
-        for widget, key, placeholder, singular, empty in (
-            (
-                team_widget,
-                "teams",
-                "Select one or more teams",
-                "team",
-                "No team selected",
-            ),
-            (
-                assignee_widget,
-                "assignees",
-                "Select one or more assignees",
-                "assignee",
-                "No assignee selected",
-            ),
-        ):
-            widget.attrs.setdefault("data-enhanced-multiselect", key)
-            widget.attrs.setdefault("data-placeholder", placeholder)
-            widget.attrs.setdefault(
-                "data-search-placeholder", "Search " + key.replace("_", " ") + "..."
-            )
-            widget.attrs.setdefault("data-singular-label", singular)
-            widget.attrs.setdefault("data-empty-label", empty)
-            _append_classes(widget, "task-enhanced-multiselect")
-
-        if table_mode:
-            title_widget.attrs.setdefault("placeholder", "Task name")
-            title_widget.attrs.setdefault("data-notion-control", "title")
-            title_widget.attrs["data-base-class"] = title_widget.attrs.get("class", "")
-
-            def _configure_select(field_name: str, control_name: str):
-                widget = self.fields[field_name].widget
-                widget.attrs.setdefault("data-notion-control", control_name)
-                base_class = widget.attrs.get("class", "")
-                widget.attrs["class"] = (
-                    base_class
-                    + " font-sans text-sm font-medium bg-white/80 hover:bg-white border "
-                    "border-slate-200/70 cursor-pointer"
-                ).strip()
-                if getattr(widget, "allow_multiple_selected", False):
-                    widget.attrs["class"] += " min-h-[2.75rem]"
-                    widget.attrs.setdefault("size", 3)
-                    widget.attrs.setdefault("data-multiple", "true")
-                existing_style = widget.attrs.get("style", "").strip()
-                style_parts = [
-                    fragment
-                    for fragment in existing_style.rstrip(";").split(";")
-                    if fragment
-                ]
-                style_parts.append("font-family:inherit")
-                widget.attrs["style"] = ";".join(style_parts)
-                widget.attrs["data-base-class"] = widget.attrs.get("class", "")
-
-            _configure_select("assignees", "assignees")
-            _configure_select("teams", "teams")
-            _configure_select("status", "status")
-            _configure_select("priority", "priority")
-
-            progress_widget = self.fields["progress"].widget
-            progress_widget.attrs.setdefault("min", 0)
-            progress_widget.attrs.setdefault("max", 100)
-            progress_widget.attrs.setdefault("step", 10)
-            progress_widget.attrs.setdefault("data-notion-control", "progress")
-            progress_widget.attrs["class"] = (
-                progress_widget.attrs.get("class", "")
-                + " text-sm font-semibold text-slate-700 font-sans"
-            ).strip()
-            progress_widget.attrs["data-base-class"] = progress_widget.attrs.get(
-                "class", ""
-            )
-
-            start_widget = self.fields["start_date"].widget
-            start_widget.attrs.setdefault("data-notion-control", "start-date")
-            start_widget.attrs["class"] = (
-                start_widget.attrs.get("class", "") + " text-sm font-sans"
-            ).strip()
-            start_widget.attrs["data-base-class"] = start_widget.attrs.get("class", "")
-
-            due_widget = self.fields["due_date"].widget
-            due_widget.attrs.setdefault("placeholder", "No due date")
-            due_widget.attrs.setdefault("data-notion-control", "due-date")
-            due_widget.attrs["class"] = (
-                due_widget.attrs.get("class", "") + " text-sm font-sans"
-            ).strip()
-            due_widget.attrs["data-base-class"] = due_widget.attrs.get("class", "")
-
-    def clean(self):
-        cleaned_data = super().clean()
-        start = cleaned_data.get("start_date")
-        due = cleaned_data.get("due_date")
-        if start and due and due < start:
-            self.add_error(
-                "due_date", "Due date cannot be earlier than the start date."
-            )
-        return cleaned_data
+        raise NotImplementedError(
+            "StaffTaskForm is deprecated. Use WorkItemForm from common.forms.work_items instead."
+        )
 
 
 class PerformanceTargetForm(forms.ModelForm):

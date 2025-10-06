@@ -1,3 +1,5 @@
+const colors = require('tailwindcss/colors');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -8,6 +10,11 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Import standard Tailwind colors
+        emerald: colors.emerald,
+        amber: colors.amber,
+        slate: colors.slate,
+        teal: colors.teal,
         // OBCMS Ocean Blue - Primary brand color
         ocean: {
           50: '#e0f2fe',
@@ -22,75 +29,8 @@ module.exports = {
           900: '#082f49',  // Safe for headers (14.3:1)
         },
 
-        // OBCMS Emerald Green - Success & primary actions
-        emerald: {
-          50: '#ecfdf5',
-          100: '#d1fae5',
-          200: '#a7f3d0',
-          300: '#6ee7b7',
-          400: '#34d399',
-          500: '#10b981',
-          600: '#059669',  // WCAG AA compliant (4.5:1)
-          700: '#047857',  // WCAG AA compliant (5.7:1)
-          800: '#065f46',  // Safe for body text (7.2:1)
-          900: '#064e3b',  // Safe for headers (8.9:1)
-        },
-
-        // OBCMS Teal - Secondary actions & coordination
-        teal: {
-          50: '#f0fdfa',
-          100: '#ccfbf1',
-          200: '#99f6e4',
-          300: '#5eead4',
-          400: '#2dd4bf',
-          500: '#14b8a6',
-          600: '#0d9488',  // WCAG AA compliant (4.6:1)
-          700: '#0f766e',  // WCAG AA compliant (6.0:1)
-          800: '#115e59',  // Safe for body text (7.8:1)
-          900: '#134e4a',  // Safe for headers (9.6:1)
-        },
-
-        // OBCMS Gold - Warnings, highlights & prosperity
-        gold: {
-          50: '#fffbeb',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#f59e0b',
-          600: '#d97706',  // WCAG AA compliant (4.6:1)
-          700: '#b45309',  // WCAG AA compliant (5.8:1)
-          800: '#92400e',  // Safe for body text (7.2:1)
-          900: '#78350f',  // Safe for headers (9.5:1)
-        },
-
-        // Amber - Alternative warning color
-        amber: {
-          50: '#fffbeb',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#f59e0b',
-          600: '#d97706',
-          700: '#b45309',
-          800: '#92400e',
-          900: '#78350f',
-        },
-
-        // Slate - Alternative neutral palette
-        slate: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',  // WCAG AA compliant (4.9:1)
-          600: '#475569',  // WCAG AA compliant (7.4:1)
-          700: '#334155',  // Safe for body text (10.7:1)
-          800: '#1e293b',  // Safe for headers (14.9:1)
-          900: '#0f172a',  // Darkest (16.8:1)
-        },
+        // OBCMS Gold - Warnings, highlights & prosperity (alias for amber)
+        gold: colors.amber,
       },
 
       backgroundImage: {

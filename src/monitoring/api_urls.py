@@ -14,6 +14,13 @@ from .api import (
 app_name = "monitoring_api"
 
 router = DefaultRouter()
+
+# Phase 3: PPA WorkItem Integration APIs
+# The following custom actions are registered on MonitoringEntryViewSet:
+#   - POST /entries/{id}/enable-workitem-tracking/
+#   - GET  /entries/{id}/budget-allocation-tree/
+#   - POST /entries/{id}/distribute-budget/
+#   - POST /entries/{id}/sync-from-workitem/
 router.register(r"entries", MonitoringEntryViewSet)
 router.register(r"updates", MonitoringUpdateViewSet)
 

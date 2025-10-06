@@ -57,6 +57,12 @@ urlpatterns = [
     ),
     path("obc-requests/export/", views.export_obc_data, name="export_obc_data"),
     path("entry/<uuid:pk>/", views.monitoring_entry_detail, name="detail"),
+    # WorkItem Integration (HTMX endpoints)
+    path(
+        "work-items/<uuid:work_item_id>/children/",
+        views.work_item_children,
+        name="work_item_children",
+    ),
     path("create/moa/", views.create_moa_entry, name="create_moa"),
     path("create/moa/obc/", views.ajax_create_obc, name="ajax_create_obc"),
     path("create/oobc/", views.create_oobc_entry, name="create_oobc"),
@@ -98,5 +104,22 @@ urlpatterns = [
         "api/scenario/obligation-forecast/",
         scenario_api.scenario_obligation_forecast,
         name="scenario_obligation_forecast",
+    ),
+    # Compliance Reports (Phase 5)
+    path("reports/", views.reports_dashboard, name="reports_dashboard"),
+    path(
+        "reports/mfbm-budget/",
+        views.mfbm_budget_report_download,
+        name="mfbm_budget_report",
+    ),
+    path(
+        "reports/bpda-development/",
+        views.bpda_development_report_download,
+        name="bpda_development_report",
+    ),
+    path(
+        "reports/coa-variance/",
+        views.coa_variance_report_download,
+        name="coa_variance_report",
     ),
 ]

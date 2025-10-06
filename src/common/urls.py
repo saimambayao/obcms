@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 from . import views
 from communities import data_utils
 from coordination import views as coordination_views
@@ -234,47 +235,7 @@ urlpatterns = [
         views.partnership_delete,
         name="coordination_partnership_delete",
     ),
-    path("coordination/events/add/", views.event_create, name="coordination_event_add"),
-    path(
-        "coordination/events/recurring/add/",
-        coordination_views.event_create_recurring,
-        name="coordination_event_recurring_add",
-    ),
-    path(
-        "coordination/events/<uuid:event_id>/edit-instance/",
-        coordination_views.event_edit_instance,
-        name="coordination_event_edit_instance",
-    ),
-    path(
-        "coordination/events/<uuid:event_id>/modal/",
-        coordination_views.coordination_event_modal,
-        name="coordination_event_modal",
-    ),
-    path(
-        "coordination/events/<uuid:event_id>/delete/",
-        coordination_views.coordination_event_delete,
-        name="coordination_event_delete",
-    ),
-    path(
-        "coordination/events/<uuid:event_id>/attendance/",
-        coordination_views.event_attendance_tracker,
-        name="coordination_event_attendance",
-    ),
-    path(
-        "coordination/events/<uuid:event_id>/attendance/count/",
-        coordination_views.event_attendance_count,
-        name="coordination_event_attendance_count",
-    ),
-    path(
-        "coordination/events/<uuid:event_id>/attendance/participants/",
-        coordination_views.event_participant_list,
-        name="coordination_event_participant_list",
-    ),
-    path(
-        "coordination/events/<uuid:event_id>/check-in/",
-        views.event_check_in,
-        name="coordination_event_check_in",
-    ),
+    # Legacy Event URLs removed - replaced by WorkItem system (activities)
     path("coordination/events/", views.coordination_events, name="coordination_events"),
     path(
         "coordination/calendar/",
@@ -302,6 +263,19 @@ urlpatterns = [
         name="recommendations_manage",
     ),
     path(
+        "recommendations/programs/",
+        views.recommendations_programs,
+        name="recommendations_programs",
+    ),
+    path(
+        "recommendations/services/",
+        views.recommendations_services,
+        name="recommendations_services",
+    ),
+    path("recommendations/<uuid:pk>/view/", views.recommendations_view, name="recommendations_view"),
+    path("recommendations/<uuid:pk>/edit/", views.recommendations_edit, name="recommendations_edit"),
+    path("recommendations/<uuid:pk>/delete/", views.recommendations_delete, name="recommendations_delete"),
+    path(
         "recommendations/area/<str:area_slug>/",
         views.recommendations_by_area,
         name="recommendations_by_area",
@@ -312,6 +286,17 @@ urlpatterns = [
         "oobc-management/calendar/feed/json/",
         views.oobc_calendar_feed_json,
         name="oobc_calendar_feed_json",
+    ),
+    # Unified Calendar Feed (WorkItem Hierarchy)
+    path(
+        "oobc-management/calendar/work-items/feed/",
+        views.work_items_calendar_feed,
+        name="work_items_calendar_feed",
+    ),
+    path(
+        "oobc-management/work-items/<uuid:work_item_id>/modal/",
+        views.work_item_modal,
+        name="work_item_modal",
     ),
     path(
         "oobc-management/calendar/feed/ics/",
@@ -435,27 +420,7 @@ urlpatterns = [
         views.calendar_share_delete,
         name="calendar_share_delete",
     ),
-    # Event Attendance
-    path(
-        "coordination/events/<uuid:event_id>/check-in/",
-        views.event_check_in,
-        name="event_check_in",
-    ),
-    path(
-        "coordination/events/<uuid:event_id>/qr-code/",
-        views.event_generate_qr,
-        name="event_generate_qr",
-    ),
-    path(
-        "coordination/events/<uuid:event_id>/qr-scan/",
-        views.event_scan_qr,
-        name="event_scan_qr",
-    ),
-    path(
-        "coordination/events/<uuid:event_id>/attendance-report/",
-        views.event_attendance_report,
-        name="event_attendance_report",
-    ),
+    # Legacy Event Attendance URLs removed - WorkItem attendance system TBD
     # Calendar API (drag-and-drop, interactive features)
     path(
         "api/calendar/event/update/",
@@ -463,132 +428,7 @@ urlpatterns = [
         name="calendar_event_update",
     ),
     path("oobc-management/staff/", views.staff_management, name="staff_management"),
-    path(
-        "oobc-management/staff/tasks/", views.staff_task_board, name="staff_task_board"
-    ),
-    path(
-        "oobc-management/staff/tasks/modal/new/",
-        views.staff_task_modal_create,
-        name="staff_task_modal_create",
-    ),
-    path(
-        "oobc-management/staff/tasks/<int:task_id>/modal/",
-        views.staff_task_modal,
-        name="staff_task_modal",
-    ),
-    path(
-        "oobc-management/staff/tasks/<int:task_id>/delete/",
-        views.staff_task_delete,
-        name="staff_task_delete",
-    ),
-    path(
-        "oobc-management/staff/tasks/<int:task_id>/inline/",
-        views.staff_task_inline_update,
-        name="staff_task_inline_update",
-    ),
-    path(
-        "oobc-management/staff/tasks/<int:task_id>/update-field/",
-        views.staff_task_update_field,
-        name="staff_task_update_field",
-    ),
-    path(
-        "oobc-management/staff/tasks/update/",
-        views.staff_task_update,
-        name="staff_task_update",
-    ),
-    path(
-        "oobc-management/staff/api/assignees/",
-        views.staff_api_assignees,
-        name="staff_api_assignees",
-    ),
-    path(
-        "oobc-management/staff/api/teams/",
-        views.staff_api_teams,
-        name="staff_api_teams",
-    ),
-    path(
-        "oobc-management/staff/tasks/new/",
-        views.staff_task_create,
-        name="staff_task_create",
-    ),
-    # Enhanced Task Management URLs
-    path(
-        "oobc-management/staff/tasks/dashboard/",
-        views.enhanced_task_dashboard,
-        name="enhanced_task_dashboard",
-    ),
-    path(
-        "oobc-management/staff/tasks/domain/<str:domain>/",
-        views.tasks_by_domain,
-        name="tasks_by_domain",
-    ),
-    path(
-        "oobc-management/staff/tasks/assessment/<uuid:assessment_id>/",
-        views.assessment_tasks,
-        name="assessment_tasks",
-    ),
-    path(
-        "oobc-management/staff/tasks/event/<uuid:event_id>/",
-        views.event_tasks,
-        name="event_tasks",
-    ),
-    path(
-        "oobc-management/staff/tasks/policy/<uuid:policy_id>/",
-        views.policy_tasks,
-        name="policy_tasks",
-    ),
-    path(
-        "oobc-management/staff/tasks/ppa/<uuid:ppa_id>/",
-        views.ppa_tasks,
-        name="ppa_tasks",
-    ),
-    path(
-        "oobc-management/staff/tasks/service/<uuid:service_id>/",
-        views.service_tasks,
-        name="service_tasks",
-    ),
-    path(
-        "oobc-management/staff/tasks/<int:task_id>/complete/",
-        views.task_complete,
-        name="task_complete",
-    ),
-    path(
-        "oobc-management/staff/tasks/<int:task_id>/start/",
-        views.task_start,
-        name="task_start",
-    ),
-    path(
-        "oobc-management/staff/tasks/<int:task_id>/assign/",
-        views.task_assign,
-        name="task_assign",
-    ),
-    # Task Analytics URLs
-    path(
-        "oobc-management/staff/tasks/analytics/",
-        views.task_analytics,
-        name="task_analytics",
-    ),
-    path(
-        "oobc-management/staff/tasks/analytics/<str:domain>/",
-        views.domain_task_analytics,
-        name="domain_task_analytics",
-    ),
-    # Task Template URLs
-    path(
-        "oobc-management/staff/task-templates/",
-        views.task_template_list,
-        name="task_template_list",
-    ),
-    path(
-        "oobc-management/staff/task-templates/<int:template_id>/",
-        views.task_template_detail,
-        name="task_template_detail",
-    ),
-    path(
-        "oobc-management/staff/task-templates/<int:template_id>/instantiate/",
-        views.instantiate_template,
-        name="instantiate_template",
-    ),
+    # Legacy StaffTask URLs removed - replaced by WorkItem system (see lines 807-846)
     path(
         "oobc-management/staff/teams/assign/",
         views.staff_team_assign,
@@ -772,5 +612,67 @@ urlpatterns = [
         name="generate_obc_report",
     ),
     path("data-guidelines/", data_utils.data_guidelines, name="data_guidelines"),
+    # Deprecation Dashboard
+    path(
+        "admin/deprecation/",
+        views.deprecation_dashboard,
+        name="deprecation_dashboard",
+    ),
+    # WorkItem CRUD URLs (Phase 3: Unified Work Hierarchy)
+    path(
+        "oobc-management/work-items/",
+        views.work_item_list,
+        name="work_item_list",
+    ),
+    path(
+        "oobc-management/work-items/create/",
+        views.work_item_create,
+        name="work_item_create",
+    ),
+    path(
+        "oobc-management/work-items/<uuid:pk>/",
+        views.work_item_detail,
+        name="work_item_detail",
+    ),
+    path(
+        "oobc-management/work-items/<uuid:pk>/edit/",
+        views.work_item_edit,
+        name="work_item_edit",
+    ),
+    path(
+        "oobc-management/work-items/<uuid:pk>/delete/",
+        views.work_item_delete,
+        name="work_item_delete",
+    ),
+    path(
+        "oobc-management/work-items/<uuid:pk>/tree/",
+        views.work_item_tree_partial,
+        name="work_item_tree_partial",
+    ),
+    path(
+        "oobc-management/work-items/<uuid:pk>/update-progress/",
+        views.work_item_update_progress,
+        name="work_item_update_progress",
+    ),
+    path(
+        "oobc-management/work-items/calendar/feed/",
+        views.work_item_calendar_feed,
+        name="work_item_calendar_feed",
+    ),
+    # ============================================================================
+    # LEGACY URL REDIRECTS REMOVED
+    # ============================================================================
+    # All legacy URL redirects for StaffTask, Event, and ProjectWorkflow have
+    # been removed. The system now exclusively uses the WorkItem hierarchy.
+    #
+    # Migration complete: 2025-10-05
+    # - StaffTask URLs → WorkItem URLs
+    # - Event URLs → WorkItem (activity) URLs
+    # - ProjectWorkflow URLs → WorkItem (project) URLs
+    #
+    # If you encounter broken links, please update them to use:
+    # - work_item_list, work_item_detail, work_item_create, etc.
+    # ============================================================================
+
     path("", views.dashboard, name="home"),  # Default to dashboard
 ]

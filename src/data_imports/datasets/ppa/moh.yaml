@@ -1,0 +1,877 @@
+moa: "Ministry of Health"
+acronym: "MOH"
+ppas:
+  - title: "Tiyakap Bangsamoro Kalusugan Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of Barangay Health Stations fully functional"
+        target: "100%"
+      - indicator: "Percentage of Rural Health Units fully functional"
+        target: "100%"
+      - indicator: "Percentage of hospitals fully functional"
+        target: "100%"
+    output_indicators:
+      - indicator: "Number of Rural Health Units that received MOOE"
+        target: 131
+      - indicator: "Number of Barangay Health Stations that received MOOE"
+        target: 1052
+      - indicator: "Number of Barangay Health Stations that received medical equipment"
+        target: 295
+      - indicator: "Number of Rural Health Units that received medical equipment"
+        target: 5
+      - indicator: "Construction of Operation Center"
+        target: 4
+      - indicator: "Number of commodes procured"
+        target: 330
+    approved_budget: 259680000.00
+  - title: "Health Human Resources Development Bureau"
+    description: ""
+    outcome_indicators:
+      - indicator: "Number of RHUs with GIDA barangays augmented with BARMM HRH"
+        target: 127
+      - indicator: "Number of BARMM hospitals augmented with BARMM HRH"
+        target: 27
+      - indicator: "Number of PHOs, CHOs, FHO, and Regional Office augmented with BARMM HRH"
+        target: 9
+    output_indicators:
+      - indicator: "Number of hired BARMM HRH"
+        target: "810 (Physicians: 10, Dentists: 11, Nurses: 550, Midwives: 114, MedTechs: 17, Pharmacists: 7, Psychometricians: 9, Nutritionist-Dietitians: 10, Senior Health Associates: 30, Public Health Associates: 25)"
+      - indicator: "Number of hired Administrative Assistants"
+        target: 7
+      - indicator: "Number of hired Administrative Aide IV"
+        target: 9
+      - indicator: "Number of provinces, cities, and field health offices with pre-deployment orientation"
+        target: 1
+      - indicator: "Number of Program Implementation Review sessions conducted"
+        target: 2
+      - indicator: "Number of consultative meetings conducted"
+        target: 2
+      - indicator: "Number of monitoring visits conducted"
+        target: 9
+      - indicator: "Number of provinces, cities, and field health offices with post-deployment evaluation"
+        target: 1
+    approved_budget: 459870758.00
+  - title: "Bangsamoro Medical Scholarship Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Total number of scholars for return service"
+        target: 83
+      - indicator: "Number of physicians for return service"
+        target: 8
+      - indicator: "Number of midwives for return service"
+        target: 75
+    output_indicators:
+      - indicator: "Total number of enrolled scholars (2025-2026)"
+        target: 319
+      - indicator: "Number of enrolled Medicine scholars"
+        target: 125
+      - indicator: "Number of post-graduate interns"
+        target: 32
+      - indicator: "Number of physician licensure examinees"
+        target: 11
+      - indicator: "Number of enrolled BS Midwifery scholars"
+        target: 71
+      - indicator: "Number of enrolled Dentistry scholars"
+        target: 15
+      - indicator: "Number of enrolled BS Medical Technology scholars"
+        target: 28
+      - indicator: "Number of Medical Technology licensure examinees"
+        target: 1
+      - indicator: "Number of enrolled BS Pharmacy scholars"
+        target: 25
+      - indicator: "Number of enrolled BS Radiologic Technology scholars"
+        target: 25
+      - indicator: "Number of enrolled BS Nutrition and Dietetics scholars"
+        target: 15
+      - indicator: "Number of screening activities conducted"
+        target: 2
+      - indicator: "Number of newly accepted BS Nursing scholars"
+        target: 15
+      - indicator: "Total number of partner schools"
+        target: 16
+      - indicator: "Total number of MOA signings with new partner schools"
+        target: 2
+      - indicator: "Number of orientation and contract signing activities conducted"
+        target: 6
+      - indicator: "Number of monitoring visits for scholars (per school)"
+        target: 16
+    approved_budget: 84491250.00
+  - title: "Health Emergency Management Staff"
+    description: ""
+    outcome_indicators:
+      - indicator: "Number of provinces or cities with institutionalized DRRM-H system"
+        target: 9
+      - indicator: "Number of RHUs with institutionalized DRRM-H system"
+        target: 33
+    output_indicators:
+      - indicator: "Number of Health Emergency Response Teams organized and trained on minimum training for P/CWHS"
+        target: 47
+      - indicator: "Number of provinces, municipalities, and cities with available Essential Health Emergency Commodities"
+        target: 47
+      - indicator: "Number of functional Operation Centers"
+        target: 4
+      - indicator: "Number of earthquake drill simulations conducted"
+        target: 8
+      - indicator: "Number of health care workers trained on Incident Command System (ICS 1)"
+        target: 45
+      - indicator: "Number of health care workers trained on Risk Communication"
+        target: 40
+      - indicator: "Number of health care workers trained on EMT-B"
+        target: 54
+      - indicator: "Number of health care workers trained on SPEED"
+        target: 54
+      - indicator: "Number of personnel trained on ambulance operation and management"
+        target: 54
+    approved_budget: 31288200.00
+  - title: "Nutrition Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Micronutrient Supplementation: proportion of infants 6-11 months given Vitamin A"
+        target: "50%"
+      - indicator: "Micronutrient Supplementation: proportion of children 12-59 months given Vitamin A"
+        target: "50%"
+      - indicator: "Micronutrient Supplementation: proportion of pregnant women given MMS/FFA"
+        target: "25%"
+      - indicator: "PIMAM: proportion of SAM children cured"
+        target: "50%"
+      - indicator: "PIMAM: proportion of MAM children cured"
+        target: "20%"
+      - indicator: "Maternal and Infant Young Child Health and Nutrition: proportion of newborns initiated on breastfeeding"
+        target: "80%"
+      - indicator: "Maternal and Infant Young Child Health and Nutrition: proportion exclusively breastfed until 6 months"
+        target: "50%"
+      - indicator: "Operation Timbang Plus: coverage of 0-59 months old children"
+        target: "80%"
+      - indicator: "Operation Timbang Plus: proportion of wasted children"
+        target: "<5%"
+    output_indicators:
+      - indicator: "Micronutrient Supplementation: number of infants 6-11 months given Vitamin A"
+        target: 28915
+      - indicator: "Micronutrient Supplementation: number of children 12-59 months given Vitamin A"
+        target: 301215
+      - indicator: "PIMAM: number of SAM children given RUTF"
+        target: 945
+      - indicator: "PIMAM: number of MAM children given RUSF"
+        target: 512
+      - indicator: "Operation Timbang Plus: number of weighing scales procured"
+        target: 131
+      - indicator: "Operation Timbang Plus: number of length or height boards procured"
+        target: 131
+    approved_budget: 47371568.00
+  - title: "Population Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Population Development / Special Population: number of Indigenous People given health packages"
+        target: 200
+      - indicator: "Population Development / Special Population: number of orphans given yateem health kits"
+        target: 100
+      - indicator: "Women and Child Protection Program: number of level 1 Women and Children Protection Units in public hospitals"
+        target: 10
+      - indicator: "Women and Child Protection Program: number of trained WCPU personnel"
+        target: 60
+      - indicator: "Senior Citizens Program: number of assistive devices allotted"
+        target: 670
+      - indicator: "Senior Citizens Program: number of Elderly Filipino Week celebrations"
+        target: 2
+      - indicator: "Adolescent Health Development: number of certified adolescent-friendly health facilities in RHUs"
+        target: 131
+      - indicator: "Adolescent Health Development: number of certified adolescent-friendly health facilities in hospitals"
+        target: 27
+      - indicator: "Gender and Development Program: number of women given dignity kits"
+        target: 100
+      - indicator: "Gender and Development Program: GAD Plan and Budget consolidated"
+        target: 15
+      - indicator: "Health and Wellness Program for Persons with Disabilities: number of disability-inclusive health care facilities assessed"
+        target: 20
+      - indicator: "Health and Wellness Program for Persons with Disabilities: number of PWDs given health packages"
+        target: 300
+      - indicator: "Migrants Health Program: number of returnees from Sabah given health services"
+        target: 1333
+      - indicator: "Migrants Health Program: number of Hajj pilgrims receiving pre-Hajj consultations"
+        target: 2500
+    output_indicators: []
+    approved_budget: 28712900.00
+  - title: "Infectious Disease Cluster"
+    description: ""
+    outcome_indicators:
+      - indicator: "NTP: treatment coverage rate"
+        target: "90%"
+      - indicator: "NTP: treatment success rate (DSTB)"
+        target: "95%"
+      - indicator: "NTP: treatment success rate (DRTB)"
+        target: "80%"
+      - indicator: "Dengue: morbidity reduction"
+        target: "25%"
+      - indicator: "Dengue: case fatality rate"
+        target: "<1%"
+      - indicator: "Leprosy: prevalence rate"
+        target: "<1%"
+      - indicator: "Rabies: number of human rabies cases"
+        target: 0
+      - indicator: "Malaria: number of malaria-free provinces"
+        target: 2
+      - indicator: "Malaria: malaria morbidity"
+        target: 0
+    output_indicators:
+      - indicator: "NTP: TB cases, all forms"
+        target: "28203 (90%)"
+      - indicator: "AIDS/STI: percentage of pregnant women screened for syphilis"
+        target: "5%"
+      - indicator: "AIDS/STI: percentage of pregnant women tested for HIV"
+        target: "10%"
+      - indicator: "Dengue: number of NS1 kits distributed"
+        target: 4000
+    approved_budget: 64088594.00
+  - title: "Family Health Cluster"
+    description: ""
+    outcome_indicators:
+      - indicator: "Family Planning: number of new acceptors"
+        target: 39999
+      - indicator: "Family Planning: number of current users"
+        target: 230759
+      - indicator: "Maternal and Child Care: maternal mortality ratio per 100,000 live births"
+        target: 48
+      - indicator: "Maternal and Child Care: percentage of facility-based delivery"
+        target: "85%"
+      - indicator: "Newborn Screening: expanded coverage BARMM-wide"
+        target: "50%"
+    output_indicators:
+      - indicator: "Family Planning: number of FP commodities procured"
+        target: 21905
+      - indicator: "Maternal and Child Care: number of BEmONC trainings conducted"
+        target: 2
+      - indicator: "Newborn Screening: number of newborns who underwent expanded screening"
+        target: 15000
+    approved_budget: 61835429.00
+  - title: "Bangsamoro Immunization Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Infants and children: proportion of fully immunized children"
+        target: "10%"
+      - indicator: "School-aged children: proportion of Grade 1 learners given Td vaccines"
+        target: "10%"
+      - indicator: "School-aged children: proportion of Grade 7 learners given Td vaccines"
+        target: "10%"
+      - indicator: "Senior citizens: number vaccinated with influenza vaccine"
+        target: 50000
+    output_indicators: []
+    approved_budget: 98458062.00
+  - title: "Non-Communicable Disease Cluster"
+    description: ""
+    outcome_indicators:
+      - indicator: "Lifestyle: increased awareness of school-aged children on NCD risk factors"
+        target: ">70%"
+      - indicator: "Cardiovascular: decreased number of hypertensive-related emergencies"
+        target: "<50%"
+      - indicator: "Cancer: number of health care professionals trained on cervical cancer screening"
+        target: 30
+      - indicator: "Chronic respiratory: percentage of smokers who quit after brief tobacco intervention"
+        target: "20%"
+      - indicator: "Prevention of blindness: number of senior citizens screened for visual acuity"
+        target: 3000
+    output_indicators:
+      - indicator: "Cardiovascular: number of adults risk-assessed using PhilPEN protocol"
+        target: 720000
+      - indicator: "Cancer: number of clinical breast examinations conducted per province"
+        target: 1250
+    approved_budget: 83244766.00
+  - title: "Regional Voluntary Blood Service Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of blood unit collection over total BARMM population"
+        target: "0.32%"
+      - indicator: "Percentage of RHUs Donor Recruitment Officers trained"
+        target: "60%"
+    output_indicators:
+      - indicator: "Number of blood units collected across BARMM"
+        target: 16180
+      - indicator: "Number of voluntary non-remunerated donors"
+        target: 12000
+      - indicator: "Number of Blood Services Facilities monitored"
+        target: 24
+    approved_budget: 21744383.00
+  - title: "Mental Health Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "MHPSS: number of health care workers trained on psychological first aid"
+        target: 35
+      - indicator: "MHGAP: number of municipal health physicians and nurses trained on MHGAP Level 2"
+        target: 40
+      - indicator: "Telepsychiatry: number of health care providers trained in ASIST"
+        target: 60
+    output_indicators:
+      - indicator: "MHPSS: number of provinces and cities trained on PFA"
+        target: 4
+      - indicator: "MHGAP: number of access sites provided with mental health drugs"
+        target: 9
+      - indicator: "Telepsychiatry: number of Applied Suicide Intervention Skills trainings conducted"
+        target: 2
+    approved_budget: 28922078.00
+  - title: "Health Promotion and Public Information Office"
+    description: ""
+    outcome_indicators: []
+    output_indicators:
+      - indicator: "Number of radio broadcasts aired"
+        target: 288
+      - indicator: "Number of Facebook page boosts"
+        target: 100
+      - indicator: "Number of printed tarpaulins for health events"
+        target: 960
+      - indicator: "Number of health promotion campaigns or activities"
+        target: 21
+      - indicator: "Number of press conferences"
+        target: 4
+      - indicator: "Number of trainings facilitated and conducted"
+        target: 3
+    approved_budget: 7316700.00
+  - title: "Field Health Service Information System"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of provinces or cities submitting monthly FHSIS reports on time"
+        target: "100%"
+      - indicator: "Percentage of health personnel oriented on FHSIS MOP version 2018"
+        target: "100%"
+    output_indicators:
+      - indicator: "Number of orientations conducted on the revised FHSIS MOP Version 2018"
+        target: 2
+      - indicator: "Number of health personnel oriented"
+        target: 100
+      - indicator: "Number of Target Client Lists reproduced"
+        target: 5000
+      - indicator: "Number of data validation and reconciliation activities"
+        target: 2
+    approved_budget: 7428250.00
+  - title: "Regional Epidemiology Surveillance Unit"
+    description: ""
+    outcome_indicators:
+      - indicator: "Number of functional Provincial Epidemiology Surveillance Units"
+        target: 7
+      - indicator: "Number of functional City Epidemiology Surveillance Units"
+        target: 3
+    output_indicators:
+      - indicator: "Percentage of PESU/CESU submitting evidence-based surveillance reports on time"
+        target: "100%"
+      - indicator: "Number of staff trained on outbreak investigation"
+        target: 40
+      - indicator: "Percentage of acute flaccid paralysis cases with adequate stool specimen"
+        target: "70%"
+    approved_budget: 19016376.00
+  - title: "Knowledge Management and Information Technology Service"
+    description: ""
+    outcome_indicators: []
+    output_indicators:
+      - indicator: "Number of iClinicSys roll-out trainings conducted"
+        target: 1
+      - indicator: "Number of iHOMIS+ and UHC referral system roll-out trainings conducted"
+        target: 7
+      - indicator: "Number of workshops on National Health Facility Registry conducted"
+        target: 1
+      - indicator: "Number of ICT equipment procured"
+        target: 80
+      - indicator: "Number of ICT intangible assets procured"
+        target: 9
+    approved_budget: 20462050.00
+  - title: "Barangay Health Workers Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Proportion of clients provided with basic health services by trained BHWs"
+        target: "100%"
+      - indicator: "Number of clients reached and masterlisted"
+        target: 1023000
+    output_indicators:
+      - indicator: "Number of basic health program trainings for BHWs"
+        target: 3240
+      - indicator: "Number of BHW kits requisitioned, procured, and provided"
+        target: 8600
+      - indicator: "Number of BHW incentives distributed"
+        target: 8600
+    approved_budget: 442458700.00
+  - title: "Water and Sanitation Hygiene Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of households with access to basic safe water supply"
+        target: "65%"
+      - indicator: "Percentage of households with basic sanitation facility"
+        target: "55%"
+      - indicator: "Percentage of municipalities or cities certified as ZOD area"
+        target: "19%"
+    output_indicators:
+      - indicator: "Number of Rural Sanitary Inspectors or WASH personnel trained"
+        target: 75
+      - indicator: "Number of water testing kits procured"
+        target: 6
+      - indicator: "Number of Sanitank septic tanks procured"
+        target: 30
+    approved_budget: 7899400.00
+  - title: "Regulation, Licensing and Enforcement Division"
+    description: ""
+    outcome_indicators:
+      - indicator: "Number of health facilities compliant with regulatory standards"
+        target: 200
+    output_indicators:
+      - indicator: "Number of health facilities issued Permit to Construct"
+        target: 35
+      - indicator: "Number of health facilities issued License to Operate"
+        target: 220
+      - indicator: "Number of licensed health facilities monitored"
+        target: 200
+    approved_budget: 10627461.00
+  - title: "Quick Response Fund"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of support and operation on quick response efficiently extended"
+        target: "80%"
+    output_indicators:
+      - indicator: "Percentage of quick response extended in health"
+        target: "80%"
+    approved_budget: 250000000.00
+  - title: "Bangsamoro Surgical Outreach Program / Kasama MOH sa Kalusugan"
+    description: ""
+    outcome_indicators:
+      - indicator: "Number of Bangsamoro medical missions conducted"
+        target: 20
+    output_indicators:
+      - indicator: "Number of surgical outreach programs conducted"
+        target: 5
+      - indicator: "Number of patients who underwent circumcision"
+        target: 5000
+      - indicator: "Number of patients who underwent minor surgery"
+        target: 375
+      - indicator: "Number of patients who underwent major surgery"
+        target: 250
+    approved_budget: 28272500.00
+  - title: "Pharmaceutical Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of medicine utilization reports submitted through PMIS"
+        target: "80%"
+      - indicator: "Percentage of drug establishments compliant to EDPMS reporting"
+        target: "70%"
+    output_indicators:
+      - indicator: "Number of public health facilities monitored monthly on medicine availability"
+        target: 100
+      - indicator: "Number of trainings on Electronic Drug Price Monitoring System conducted"
+        target: 3
+    approved_budget: 3619772.00
+  - title: "Ibadah Friendly Hospital"
+    description: ""
+    outcome_indicators: []
+    output_indicators:
+      - indicator: "Number of hospitals participating in post-implementation assessment"
+        target: 31
+      - indicator: "Number of certified Ibadah-friendly hospitals awarded"
+        target: 10
+      - indicator: "Number of hospitals oriented and assessed"
+        target: 31
+      - indicator: "Number of trainings on Janazah, Taharah, and Salah"
+        target: 15
+    approved_budget: 5065000.00
+  - title: "Health Facility Development Program"
+    description: ""
+    outcome_indicators: []
+    output_indicators:
+      - indicator: "Number of ongoing constructions monitored (hospitals, RHUs, BHS)"
+        target: 114
+      - indicator: "Number of trainings conducted and attended"
+        target: 3
+      - indicator: "Number of desktop computers procured"
+        target: 5
+    approved_budget: 4947000.00
+  - title: "Universal Health Care Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Functional Regional Technical Assistance Team"
+        target: "100%"
+      - indicator: "Integration of local health systems into P/CWHS on identified UHC integration sites"
+        target: "50%"
+    output_indicators:
+      - indicator: "Number of rapid appraisals conducted"
+        target: 8
+      - indicator: "Number of regular, consultative, and special meetings conducted"
+        target: 6
+    approved_budget: 5306000.00
+  - title: "Entomology Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Number of vector mapping activities conducted"
+        target: 4
+      - indicator: "Number of larval surveillance activities conducted"
+        target: 10
+      - indicator: "Number of assessments on mosquito larvae prevalence and intervention impact"
+        target: 10
+      - indicator: "Number of laboratory capacity monitoring activities for mosquito-borne diseases"
+        target: 50
+    output_indicators: []
+    approved_budget: 1882500.00
+  - title: "Development Partners Coordinating Unit Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Number of meetings with stakeholders attended"
+        target: 4
+      - indicator: "Number of foreign-assisted projects facilitated and assisted for approval"
+        target: 4
+      - indicator: "Number of proposed foreign-assisted projects approved by SDCom and BEDC"
+        target: 4
+    output_indicators: []
+    approved_budget: 946900.00
+  - title: "Medical Outreach Program / Bangsamoro Health Outreach Program for Everyone"
+    description: ""
+    outcome_indicators:
+      - indicator: "Number of medical outreach or tulong medikal activities conducted"
+        target: 80
+    output_indicators: []
+    approved_budget: 220000000.00
+  - title: "Health Facilities Operation - IPHO Maguindanao"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 478693113.00
+  - title: "Health Facilities Operation - IPHO Sulu"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 593938046.00
+  - title: "Health Facilities Operation - IPHO Tawi-Tawi"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 169835771.00
+  - title: "Health Facilities Operation - IPHO Lanao del Sur"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 171030257.00
+  - title: "Health Facilities Operation - Buluan District Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 399907080.00
+  - title: "Health Facilities Operation - Datu Blah T. Sinsuat District Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 302428901.00
+  - title: "Health Facilities Operation - Datu Odin Sinsuat District Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 83479496.00
+  - title: "Health Facilities Operation - Iranon District Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 101854480.00
+  - title: "Health Facilities Operation - South Upi Municipal Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 39791482.00
+  - title: "Health Facilities Operation - Luuk District Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 112064783.00
+  - title: "Health Facilities Operation - Maimbung District Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 300963510.00
+  - title: "Health Facilities Operation - Panamao District Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 58476432.00
+  - title: "Health Facilities Operation - Pangutaran District Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 64766030.00
+  - title: "Health Facilities Operation - Parang District Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 75225509.00
+  - title: "Health Facilities Operation - Siasi District Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 62855267.00
+  - title: "Health Facilities Operation - Tapul Municipal Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 32060166.00
+  - title: "Health Facilities Operation - Tongkil Municipal Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 33335230.00
+  - title: "Health Facilities Operation - Cagayan de Tawi-Tawi District Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 131508552.00
+  - title: "Health Facilities Operation - Datu Alawadin T. Bandon Sr. Municipal Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 30230536.00
+  - title: "Health Facilities Operation - Languyan Municipal Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 30105645.00
+  - title: "Health Facilities Operation - Tuan Ligaddung Lipae Memorial Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 104540933.00
+  - title: "Health Facilities Operation - Balindong Municipal Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 83450959.00
+  - title: "Health Facilities Operation - Dr. Serapio B. Montañer, Al Haj Memorial Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 187097973.00
+  - title: "Health Facilities Operation - Tamparan Provincial Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 351888892.00
+  - title: "Health Facilities Operation - Unayan District Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 143529065.00
+  - title: "Health Facilities Operation - Wao District Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 173279847.00
+  - title: "Health Facilities Operation - Sumisip Municipal Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 17138601.00
+  - title: "Health Facilities Operation - Special Geographic Area Field Office"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 101987864.00
+  - title: "Health Facilities Operation - City Health Office of Marawi"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 7135213.00
+  - title: "Health Facilities Operation - Basilan Provincial Health Office"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 6040000.00
+  - title: "Health Facilities Operation - Lamitan District Hospital"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 5268000.00
+  - title: "Health Facilities Operation - City Health Office of Lamitan"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 3257000.00
+  - title: "Health Facilities Operation - City Health Office of Cotabato"
+    description: "As per Health Facilities Operation Program"
+    outcome_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    output_indicators:
+      - indicator: "As per Health Facilities Operation Program"
+        target: ""
+    approved_budget: 10468000.00
+special_provisions:
+  - title: "Tiyakap Bangsamoro Kalusugan Program"
+    details: |
+      Two Hundred Thirty-Six Million Eight Hundred Forty Thousand Pesos (P236,840,000.00) shall be utilized to support barangay health stations, rural health units, and procurement of medical equipment, subject to Program Implementation Plan and Guidelines and quarterly status report to MFBM.
+  - title: "Purchase and Allocation of Drugs, Medicines and Vaccines"
+    details: |
+      Ninety-One Million Four Hundred One Thousand Five Hundred Sixty-Two Pesos (P91,401,562.00) shall procure drugs and medicines for the Immunization Program, subject to Program Implementation Plan and Guidelines, detailed procurement plan, allocation per area, and quarterly distribution reports to MFBM.
+  - title: "Advance Payment for Drugs and Vaccines Not Locally Available"
+    details: |
+      MOH is authorized to deposit or pay in advance for the procurement of drugs and vaccines not locally available from WHO, UNICEF, and other specialized agencies or financing institutions when local suppliers cannot meet quantity requirements.
+  - title: "Procurement of Capital Outlays, and Supplies and Medicines"
+    details: |
+      Funds appropriated for capital outlays and supplies and medicines intended for Integrated Provincial Health Offices (IPHOs) and Rural Health Units shall be downloaded directly to the IPHOs, procured in accordance with existing laws, and distributed to RHUs.
+  - title: "Newborn Care Program"
+    details: |
+      Twenty-Four Million Seven Hundred Thirty-Nine Thousand Two Hundred Fifty Pesos (P24,739,250.00) shall support newborn screening equipment, routine care kits, congenital anomaly medicines, and expanded screening kits, subject to Program Implementation Plan and Guidelines, distribution list, and quarterly status report to MFBM.
+  - title: "MOH Medical Scholarship Program"
+    details: |
+      Eighty-Three Million Four Hundred Ninety-Nine Thousand Pesos (P83,499,000.00) shall fund medical scholarships, subject to submission of scholar lists, Program Implementation Plan and Guidelines, and quarterly status report to MFBM. MOH shall maintain a scholars monitoring database.
+  - title: "Complementary Feeding Program"
+    details: |
+      Six Million Pesos (P6,000,000.00) shall fund dietary supplementation for pregnant women and children aged 0-24 months, with administrative and monitoring expenses capped at 1.5%. MOH shall coordinate with relevant ministries to incorporate fresh milk and enriched foods.
+  - title: "Barangay Health Workers"
+    details: |
+      Four Hundred Twelve Million Eight Hundred Thousand Pesos (P412,800,000.00) shall provide financial assistance to 8,600 Barangay Health Workers, subject to Program Implementation Plan and Guidelines, beneficiary list, quarterly status report to MFBM, and timely distribution.
+  - title: "BHW Kits"
+    details: |
+      Twenty-One Million Five Hundred Thousand Pesos (P21,500,000.00) shall procure 8,600 kits for Barangay Health Workers.
+  - title: "Consultancy Services for Mental Health Program"
+    details: |
+      Three Million Pesos (P3,000,000.00) shall fund consulting services for the mental health program.
+  - title: "Medical Equipment"
+    details: |
+      Ninety Million Nine Hundred Sixty-Nine Thousand Three Hundred Thirty-Four Pesos (P90,969,334.00) shall be used exclusively to purchase medical equipment for MOH-supervised hospitals.
+  - title: "Hospital and Other Health Care Facilities Income"
+    details: |
+      Income generated by provincial, district, and municipal hospitals and other facilities shall be deposited in authorized government banks, with 20% remitted to the Bangsamoro Treasury Office and 80% retained to augment MOOE and capital outlays, subject to specified utilization conditions and reporting requirements.
+  - title: "Other Health Services"
+    details: |
+      Six Hundred One Million Eight Hundred Forty-Nine Thousand One Hundred Eighty-Six Pesos (P601,849,186.00) shall augment the Bangsamoro HRH Program and support designated offices and facilities, with priority for geographically isolated and disadvantaged areas and submission of deployment reports to MFBM.
+  - title: "Quick Response Fund"
+    details: |
+      Two Hundred Fifty Million Pesos (P250,000,000.00) appropriated for the QRF shall serve as a stand-by fund for facility rehabilitation, equipment replacement, and emergency medical assistance following calamities. Fund release requires assessment by the Ministry, authorization from OCM to MFBM, and exclusion of pre-disaster activities.
+  - title: "Access to Promotive Health Care Service"
+    details: |
+      MOH shall submit quarterly status reports to MFBM covering all programs under Access to Promotive Health Care Service.
+  - title: "Medical Outreach Program"
+    details: |
+      Two Hundred Twenty Million Pesos (P220,000,000.00) shall fund medical outreach through the regular budget, covering drugs, medicines, goods, and related services after PhilHealth and other assistance deductions. Professional fees shall not exceed 50% of the approved assistance amount.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      Implementing M/O/As shall submit quarterly financial and physical accomplishment reports within thirty (30) days after each quarter through:
+        (a) Submission of hardcopy to the MFBM;
+        (b) Submission of reports through electronic means; and
+        (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the MFBM and other offices where submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

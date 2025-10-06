@@ -3,11 +3,27 @@
 from django.db import migrations
 
 
+def _safe_get_model(apps, app_label, model_name):
+    """Return historical model if available, else None."""
+
+    try:
+        return apps.get_model(app_label, model_name)
+    except LookupError:
+        return None
+
+
 def migrate_monitoring_tasks(apps, schema_editor):
     """Migrate existing MonitoringEntryTaskAssignment records to StaffTask."""
-    MonitoringEntryTaskAssignment = apps.get_model('monitoring', 'MonitoringEntryTaskAssignment')
-    StaffTask = apps.get_model('common', 'StaffTask')
-    
+    MonitoringEntryTaskAssignment = _safe_get_model(
+        apps, 'monitoring', 'MonitoringEntryTaskAssignment'
+    )
+    StaffTask = _safe_get_model(apps, 'common', 'StaffTask')
+
+    if not MonitoringEntryTaskAssignment or not StaffTask:
+        # Historical model removed in new deployments; nothing to migrate.
+        print("MonitoringEntryTaskAssignment model unavailable; skipping migration.")
+        return
+
     migrated_count = 0
     
     for mta in MonitoringEntryTaskAssignment.objects.all():
@@ -39,7 +55,9 @@ def migrate_monitoring_tasks(apps, schema_editor):
 
 def reverse_migration(apps, schema_editor):
     """Reverse migration - delete migrated StaffTasks."""
-    StaffTask = apps.get_model('common', 'StaffTask')
+    StaffTask = _safe_get_model(apps, 'common', 'StaffTask')
+    if not StaffTask:
+        return
     
     # Delete all monitoring domain tasks (those migrated from MonitoringEntryTaskAssignment)
     deleted_count = StaffTask.objects.filter(domain='monitoring').delete()[0]

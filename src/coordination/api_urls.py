@@ -2,16 +2,16 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .api_views import (
-    ActionItemViewSet,
+    # ActionItemViewSet,  # DEPRECATED: Event model is abstract
     CommunicationScheduleViewSet,
     CommunicationTemplateViewSet,
     CommunicationViewSet,
     ConsultationFeedbackViewSet,
     EngagementFacilitatorViewSet,
     EngagementTrackingViewSet,
-    EventDocumentViewSet,
-    EventParticipantViewSet,
-    EventViewSet,
+    # EventDocumentViewSet,  # DEPRECATED: Event model is abstract
+    # EventParticipantViewSet,  # DEPRECATED: Event model is abstract
+    # EventViewSet,  # DEPRECATED: Event model is abstract
     OrganizationContactViewSet,
     OrganizationViewSet,
     PartnershipDocumentViewSet,
@@ -35,10 +35,10 @@ router.register(r"organization-contacts", OrganizationContactViewSet)
 router.register(r"communications", CommunicationViewSet)
 router.register(r"communication-templates", CommunicationTemplateViewSet)
 router.register(r"communication-schedules", CommunicationScheduleViewSet)
-router.register(r"events", EventViewSet)
-router.register(r"event-participants", EventParticipantViewSet)
-router.register(r"action-items", ActionItemViewSet)
-router.register(r"event-documents", EventDocumentViewSet)
+# router.register(r"events", EventViewSet)  # DEPRECATED: Event model is abstract
+# router.register(r"event-participants", EventParticipantViewSet)  # DEPRECATED
+# router.register(r"action-items", ActionItemViewSet)  # DEPRECATED
+# router.register(r"event-documents", EventDocumentViewSet)  # DEPRECATED: Event model is abstract
 router.register(r"partnerships", PartnershipViewSet)
 router.register(r"partnership-signatories", PartnershipSignatoryViewSet)
 router.register(r"partnership-milestones", PartnershipMilestoneViewSet)

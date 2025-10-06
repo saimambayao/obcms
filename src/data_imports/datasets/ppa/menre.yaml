@@ -1,0 +1,201 @@
+moa: "Ministry of Environment, Natural Resources and Energy"
+acronym: "MENRE"
+ppas:
+  - title: "Land Survey, Disposition and Knowledge Management Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Land Administration and Management System: percentage of land related data captured, stored, analyzed, and information generated"
+        target: "16.66%"
+      - indicator: "Inspection, Verification and Approval of Surveys: percentage increase of land areas inspected, verified and approved"
+        target: "8.09%"
+      - indicator: "Land Records Management for BARMM: percentage of land records managed and digitized"
+        target: "7.14%"
+    output_indicators:
+      - indicator: "LAMS: number of land related data inventoried"
+        target: 11574
+      - indicator: "LAMS: number of land related data scanned"
+        target: 118523
+      - indicator: "LAMS: number of land related data encoded"
+        target: 50494
+      - indicator: "IVAS: hectares inspected, verified and/or approved"
+        target: 1531
+      - indicator: "Land records: number of land-related records received or issued"
+        target: 739
+      - indicator: "Land records: number of sheets reproduced"
+        target: 18627
+    approved_budget: 10582318.00
+  - title: "Environmental Regulation Compliance, Ambient Monitoring and Pollution Control Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Environmental regulation compliance monitored"
+        target: "5% increase"
+      - indicator: "Ambient air and water quality improved or maintained"
+        target: "2 waterbodies, 1 air quality station"
+      - indicator: "Pollution control compliance of firms or establishments"
+        target: "100%"
+      - indicator: "LGUs provided with solid waste management technical assistance"
+        target: "20%"
+      - indicator: "Climate change baseline on greenhouse gas emission established"
+        target: 1
+      - indicator: "Annual brown environment report released"
+        target: 1
+    output_indicators:
+      - indicator: "Number of environmental clearances issued"
+        target: 134
+      - indicator: "Number of permits to operate issued"
+        target: 65
+      - indicator: "Number of wastewater discharge permits issued"
+        target: 32
+      - indicator: "Number of waterbodies classified"
+        target: 2
+      - indicator: "Air quality monitoring stations maintained"
+        target: 1
+      - indicator: "Firms monitored for ECC/CNC compliance"
+        target: 41
+      - indicator: "Firms monitored for Clean Air Act compliance"
+        target: 80
+      - indicator: "Firms monitored for Clean Water Act compliance"
+        target: 80
+      - indicator: "LGUs provided with solid waste technical assistance"
+        target: 4
+      - indicator: "Approved SWM plans monitored"
+        target: 48
+      - indicator: "Capacity building on local GHG inventory"
+        target: 1
+      - indicator: "Environment reports produced or distributed"
+        target: 688
+    approved_budget: 42262588.00
+  - title: "Natural Resources Policy Enforcement, Conservation and Development Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Forestry policies localized and enforced"
+        target: "14%"
+      - indicator: "Municipalities illegal logging hotspot neutralized"
+        target: "6%"
+      - indicator: "Forestland protected"
+        target: "669,066.89 hectares"
+      - indicator: "Hectares reforested and rehabilitated"
+        target: "1.66% of baseline"
+    output_indicators:
+      - indicator: "Policies formulated"
+        target: 1
+      - indicator: "Forestry guidelines formulated"
+        target: 3
+      - indicator: "Municipalities illegal logging hotspot neutralized"
+        target: 7
+      - indicator: "Hectares foot patrolled"
+        target: 669066.89
+      - indicator: "Hectares reforested"
+        target: 2642
+      - indicator: "Seedlings produced or procured"
+        target: 1000000
+    approved_budget: 171398112.00
+  - title: "Mineral Resources and Geosciences Development Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of BARMM revenues from mineral resources development"
+        target: "50%"
+      - indicator: "Percentage of LGUs assisted in identifying geology and mineral potential"
+        target: "4.17%"
+      - indicator: "Percentage of LGUs provided with geohazard data"
+        target: "3.33%"
+    output_indicators:
+      - indicator: "Monitoring or audit of mining permits or contracts conducted"
+        target: 40
+      - indicator: "Areas surveyed for geology and mineral potential"
+        target: 5
+      - indicator: "LGUs where geohazard assessment and mapping conducted"
+        target: 4
+      - indicator: "New mineral reservation area assessed or endorsed"
+        target: 1
+    approved_budget: 23404379.00
+  - title: "Biodiversity Management, Research and Protected Area Development Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of critical habitat established"
+        target: "100%"
+      - indicator: "Percentage of potential eco-tourism sites assessed"
+        target: "100%"
+      - indicator: "Protected areas managed"
+        target: "82%"
+      - indicator: "Inland wetlands conserved"
+        target: "100%"
+      - indicator: "Environmental research studies conducted for policy purposes"
+        target: "100%"
+    output_indicators:
+      - indicator: "Wildlife permits issued"
+        target: 50
+      - indicator: "Wildlife rescue conducted"
+        target: 50
+      - indicator: "Potential eco-tourism sites assessed"
+        target: 5
+      - indicator: "Protected areas managed"
+        target: 7
+      - indicator: "Environmental research studies conducted"
+        target: 4
+    approved_budget: 33076032.00
+  - title: "Energy Management and Development Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Institutional development: percentage of policies formulated, adopted, implemented, and monitored"
+        target: "55%"
+      - indicator: "Regulatory and enforcement: percentage increase of services rendered"
+        target: "50% (12)"
+      - indicator: "Upstream conventional energy: revenue collected"
+        target: 9500000
+      - indicator: "Renewable energy: percentage of revenue collected"
+        target: "100%"
+      - indicator: "Downstream oil and gas: percentage of revenue collected"
+        target: "45% of 2023 baseline"
+      - indicator: "Energy efficiency: number of policies formulated, adopted, and implemented"
+        target: 1
+    output_indicators:
+      - indicator: "Institutional development: joint policies formulated"
+        target: 17
+      - indicator: "Regulatory: certifications or permits issued"
+        target: 10
+      - indicator: "Upstream: joint investment promotion activities"
+        target: 3
+      - indicator: "Power industry: electric cooperatives equipped"
+        target: 7
+      - indicator: "Renewable: RE resource applications processed"
+        target: 2
+      - indicator: "Downstream: certificates or permits issued"
+        target: 25
+      - indicator: "Energy efficiency: government offices supported"
+        target: 1
+    approved_budget: 24690981.00
+special_provisions:
+  - title: "Renovation of Kalikasan Building"
+    details: |
+      Four Million Three Hundred Thirty-Four Thousand Nine Hundred Seventy-Nine Pesos (P4,334,979.00) shall fund the construction of a two-storey supply and property office and storage room, subject to submission of common engineering documents.
+  - title: "Bangsamoro Sustainable and Development Board"
+    details: |
+      One Million Five Hundred Thousand Pesos (P1,500,000.00) shall support activities of the Bangsamoro Sustainable and Development Board.
+  - title: "Land Survey, Disposition and Knowledge Management Program"
+    details: |
+      Three Million Eight Hundred Ninety-Four Thousand Pesos (P3,894,000.00) shall procure Real-Time Kinematic (RTK) surveying equipment and related IT equipment.
+  - title: "Environmental Regulation Compliance, Ambient Monitoring and Pollution Control Program"
+    details: |
+      Two Million Pesos (P2,000,000.00) shall fund professional services for ISO certification and systems innovation monitoring.
+
+      One Million Pesos (P1,000,000.00) shall maintain databases and servers for e-permitting.
+
+      Seventeen Million Seven Hundred Ninety-Six Thousand Nine Hundred Seventy-Four Pesos (P17,796,974.00) shall be used for ambient air and water baseline and monitoring activities.
+  - title: "Natural Resources Policy Enforcement, Conservation and Development Program"
+    details: |
+      One Hundred Forty-Five Million Five Hundred Fifty-Two Thousand Nine Hundred Eighty-Six Pesos (P145,552,986.00) shall fund conservation and management programs, allocating P88,176,000.00 for professional services, P12,682,536.00 for general services, and P44,694,450.00 for repairs and maintenance of reforestation projects, subject to Program Implementation Plan and Guidelines and quarterly status report to MFBM.
+  - title: "Biodiversity Management, Research and Protected Area Development Program"
+    details: |
+      Four Million Six Hundred Sixty-Eight Thousand Three Hundred Nineteen Pesos (P4,668,319.00) shall support protection and maintenance of the Turtle Island Wildlife Sanctuary, subject to Program Implementation Plan and Guidelines and quarterly reporting to MFBM.
+  - title: "Energy Management and Regulation"
+    details: |
+      One Million One Hundred Sixty-Eight Thousand Pesos (P1,168,000.00) shall be used exclusively for drafting the Bangsamoro Energy Code.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      Implementing M/O/As shall submit quarterly financial and physical accomplishment reports within thirty (30) days after each quarter through:
+        (a) Submission of hardcopy to the MFBM;
+        (b) Submission of reports through electronic means; and
+        (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the MFBM and other offices where submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

@@ -290,3 +290,98 @@ class APILoggingMiddleware(MiddlewareMixin):
             f"Status: {response.status_code} | "
             f"Duration: {duration:.3f}s"
         )
+
+
+class DeprecationLoggingMiddleware(MiddlewareMixin):
+    """
+    Middleware to log requests to deprecated URLs.
+
+    Logs deprecation events to help monitor usage of legacy endpoints
+    and plan safe removal of deprecated code.
+
+    Logged Information:
+    - URL path accessed
+    - User (authenticated or anonymous)
+    - Timestamp
+    - Referer (where the request came from)
+    - User agent
+    - IP address
+
+    Logs are written to: logs/deprecation.log
+    """
+
+    # Deprecated URL patterns to monitor
+    DEPRECATED_PATTERNS = [
+        '/oobc-management/staff/tasks/',
+        '/oobc-management/staff/task-templates/',
+        '/project-central/workflows/',
+        '/coordination/events/legacy/',
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set up dedicated deprecation logger
+        self.logger = logging.getLogger('deprecation')
+
+        # Ensure handler exists (create if not configured)
+        if not self.logger.handlers:
+            handler = logging.FileHandler('logs/deprecation.log')
+            handler.setFormatter(logging.Formatter(
+                '%(asctime)s | %(levelname)s | %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S'
+            ))
+            self.logger.addHandler(handler)
+            self.logger.setLevel(logging.WARNING)
+
+    def process_request(self, request):
+        """Check if request is to a deprecated URL and log it."""
+        path = request.path
+
+        # Check if path matches any deprecated pattern
+        is_deprecated = any(
+            path.startswith(pattern) for pattern in self.DEPRECATED_PATTERNS
+        )
+
+        if is_deprecated:
+            # Get user information
+            if request.user.is_authenticated:
+                user_info = f"{request.user.username} (ID: {request.user.id})"
+            else:
+                user_info = "Anonymous"
+
+            # Get request metadata
+            referer = request.META.get('HTTP_REFERER', 'Direct access')
+            user_agent = request.META.get('HTTP_USER_AGENT', 'Unknown')[:100]
+            ip_address = self._get_client_ip(request)
+
+            # Log deprecation event
+            self.logger.warning(
+                f"Deprecated URL accessed | "
+                f"Path: {path} | "
+                f"User: {user_info} | "
+                f"IP: {ip_address} | "
+                f"Referer: {referer} | "
+                f"User-Agent: {user_agent}"
+            )
+
+            # Store in request for view layer access
+            request.deprecated_url_accessed = True
+
+        return None
+
+    def _get_client_ip(self, request):
+        """Get client IP address (proxy-aware)."""
+        # Check for Cloudflare real IP
+        cf_connecting_ip = request.META.get('HTTP_CF_CONNECTING_IP')
+        if cf_connecting_ip:
+            return cf_connecting_ip
+
+        # Check for X-Forwarded-For
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            # Take the first IP (client IP)
+            ip = x_forwarded_for.split(',')[0].strip()
+            return ip
+
+        # Fall back to REMOTE_ADDR
+        return request.META.get('REMOTE_ADDR', 'Unknown')

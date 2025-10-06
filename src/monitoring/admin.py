@@ -3,7 +3,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from common.models import StaffTask
+from common.models import WorkItem
 
 from .models import (
     MonitoringEntry,
@@ -89,33 +89,18 @@ class MonitoringEntryWorkflowDocumentInline(admin.TabularInline):
         super().save_model(request, obj, form, change)
 
 
-class MonitoringEntryStaffTaskInline(admin.TabularInline):
-    """Inline view of monitoring staff tasks."""
+# ============================================================================
+# DEPRECATED: MonitoringEntryStaffTaskInline
+# ============================================================================
+# This inline has been removed as StaffTask has been replaced by WorkItem.
+# Monitoring tasks are now managed through the WorkItem system.
+# See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
+# ============================================================================
 
-    model = StaffTask
-    fk_name = "related_ppa"
-    extra = 0
-    fields = (
-        "title",
-        "assignee_list",
-        "task_role",
-        "status",
-        "priority",
-        "due_date",
-        "completed_at",
-    )
-    readonly_fields = ("assignee_list", "completed_at")
-    autocomplete_fields = ("assignees",)
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.filter(domain=StaffTask.DOMAIN_MONITORING)
-
-    def assignee_list(self, obj):
-        names = [user.get_full_name() or user.username for user in obj.assignees.all()]
-        return ", ".join(filter(None, names)) or "—"
-
-    assignee_list.short_description = "Assignees"
+# class MonitoringEntryStaffTaskInline(admin.TabularInline):
+#     """Inline view of monitoring staff tasks - DEPRECATED."""
+#     model = WorkItem
+#     # ... (removed for now, will be reimplemented for WorkItem)
 
 
 @admin.register(MonitoringEntry)
@@ -170,7 +155,7 @@ class MonitoringEntryAdmin(admin.ModelAdmin):
         "communities",
         "submitted_to_organization",
         "related_assessment",
-        "related_event",
+        # "related_event",  # REMOVED - use WorkItem instead
         "related_policy",
         "needs_addressed",
         "implementing_policies",
@@ -186,7 +171,7 @@ class MonitoringEntryAdmin(admin.ModelAdmin):
     inlines = [
         MonitoringEntryFundingInline,
         MonitoringEntryWorkflowStageInline,
-        MonitoringEntryStaffTaskInline,
+        # MonitoringEntryStaffTaskInline,  # DEPRECATED: Replaced by WorkItem
         MonitoringUpdateInline,
     ]
     date_hierarchy = "created_at"

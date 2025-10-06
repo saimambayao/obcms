@@ -1,0 +1,121 @@
+moa: "Ministry of Public Works"
+acronym: "MPW"
+ppas:
+  - title: "Road and Bridge Development Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Road and bridge network connectivity improved"
+        target: ""
+    output_indicators:
+      - indicator: "Length of road constructed (km)"
+        target: 244.259
+      - indicator: "Length of road rehabilitated and reconstructed (km)"
+        target: 6.85
+      - indicator: "Length of road newly opened (km)"
+        target: 7.02
+      - indicator: "Number of roads repaired and maintained"
+        target: 95
+      - indicator: "Number of bridges constructed"
+        target: 12
+      - indicator: "Number of bridges repaired and maintained"
+        target: 8
+    approved_budget: 6028570000.00
+  - title: "Natural Disaster Management Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Vulnerability and exposure to hazard decreased"
+        target: ""
+    output_indicators:
+      - indicator: "Number of flood control structures constructed and rehabilitated"
+        target: 97
+      - indicator: "Number of slope or shore protection structures constructed and rehabilitated"
+        target: 22
+      - indicator: "Number of flood control structures repaired and maintained"
+        target: 43
+      - indicator: "Number of slope or shore protection structures repaired and maintained"
+        target: 11
+    approved_budget: 1841280000.00
+  - title: "Water System Development Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Improved access to safe water supply"
+        target: ""
+    output_indicators:
+      - indicator: "Number of water systems constructed"
+        target: 85
+      - indicator: "Number of water systems repaired and maintained"
+        target: 92
+    approved_budget: 419620000.00
+  - title: "Port Development Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Improved inter and intra-island connectivity"
+        target: ""
+    output_indicators:
+      - indicator: "Number of ports constructed"
+        target: 3
+      - indicator: "Number of ports expanded"
+        target: 3
+      - indicator: "Number of ports repaired and maintained"
+        target: 6
+    approved_budget: 125500000.00
+  - title: "Other Programs"
+    description: ""
+    outcome_indicators:
+      - indicator: "Access to affordable and quality health, education, and other government facilities increased"
+        target: ""
+      - indicator: "Number of farmers and fisherfolks' associations provided with infrastructure support increased"
+        target: ""
+      - indicator: "Energy security improved"
+        target: ""
+    output_indicators:
+      - indicator: "Number of other facilities constructed"
+        target: 92
+      - indicator: "Number of other facilities repaired and maintained"
+        target: 49
+      - indicator: "Number of agri-fishery related infrastructure constructed"
+        target: 4
+      - indicator: "Number of solar lights installed"
+        target: 13596
+      - indicator: "Number of solar lights repaired and maintained"
+        target: 5461
+    approved_budget: 1781730000.00
+  - title: "Quick Response Fund"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of support and operation on quick response efficiently extended"
+        target: "80%"
+    output_indicators:
+      - indicator: "Percentage of quick response extended in infrastructure and equipment"
+        target: "80%"
+    approved_budget: 200000000.00
+special_provisions:
+  - title: "Quick Response Fund"
+    details: |
+      Two Hundred Million Pesos (P200,000,000.00) appropriated for the QRF shall serve as a stand-by fund for reconstruction and rehabilitation programs to normalize living conditions after disasters. The MPW shall consider infrastructure and equipment requirements of affected M/O/As. Fund release requires community assessments, OCM authorization directing MFBM, and exclusion of pre-disaster activities.
+  - title: "Engineering and Administrative Overhead (EAO) Expenses"
+    details: |
+      For infrastructure projects costing more than One Million Pesos (P1,000,000.00), MPW may deduct up to 3% (not exceeding 2% for releases to District Engineering Offices) to cover EAO expenses limited to administrative overhead, pre-construction activities, construction project management, testing and quality control, acquisition and repair of related equipment, and contingencies. EAO shall be capitalized as part of project cost; vehicle acquisition must be justified as more economical than rental.
+  - title: "Project Development and Engineering Services"
+    details: |
+      One Hundred Seventy Million Seven Hundred Eighty-Nine Thousand Three Hundred Thirteen Pesos (P170,789,313.00) appropriated for pre-engineering activities shall be supported by reports on completed works.
+  - title: "Road Network and Other Public Infrastructure Facilities Program"
+    details: |
+      In implementing infrastructure projects, MPW may cluster procurements, adopt hazard-resilient standards, provide bike lanes, ensure potable water facilities, and apply cost-effective bio-engineering solutions. Funding release requires submission of common engineering documents.
+  - title: "Geo-Tagging of Infrastructure Projects"
+    details: |
+      MPW shall publish geo-tagged photos with status updates for all projects on the E-BARMM portal and MPW website, and regularly submit status reports to MFBM, BPDA, and OCM.
+  - title: "Restriction on Delegation of Project Implementation"
+    details: |
+      MPW may delegate project implementation to AFP Corps of Engineers or equivalent agencies in high-risk areas, inter-agency projects, or capable LGUs, subject to MPW’s overall technical supervision.
+  - title: "Ensuring Accessibility for Senior Citizens and Persons with Disabilities"
+    details: |
+      All public building projects shall incorporate accessibility features consistent with Batas Pambansa Blg. 344, R.A. Nos. 7277 and 9994, their IRRs, and universal design principles.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      Implementing M/O/As shall submit quarterly financial and physical accomplishment reports within thirty (30) days after each quarter through:
+        (a) Submission of hardcopy to the MFBM;
+        (b) Submission of reports through electronic means; and
+        (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the MFBM and other offices where submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

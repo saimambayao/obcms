@@ -1,0 +1,542 @@
+{% load humanize %}
+
+{# ========================================== #}
+{# WORK ITEMS INTEGRATION TAB                #}
+{# Conditional UI based on tracking status   #}
+{# ========================================== #}
+
+<div id="work-items-tab-container" class="space-y-6">
+    {% if not entry.enable_workitem_tracking %}
+        {# ========================================== #}
+        {# STATE 1: WorkItem Tracking NOT Enabled    #}
+        {# Call-to-action to enable tracking         #}
+        {# ========================================== #}
+
+        <div class="bg-gradient-to-br from-blue-50 via-white to-purple-50 border border-blue-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="p-8 text-center space-y-6">
+                {# Header Icon #}
+                <div class="flex justify-center">
+                    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-teal-600 flex items-center justify-center shadow-lg">
+                        <i class="fas fa-tasks text-white text-3xl"></i>
+                    </div>
+                </div>
+
+                {# Title & Description #}
+                <div class="max-w-2xl mx-auto space-y-3">
+                    <h3 class="text-2xl font-bold text-gray-900">Enable Work Item Tracking</h3>
+                    <p class="text-base text-gray-600 leading-relaxed">
+                        Transform this PPA into a structured execution project with trackable work items,
+                        automated budget distribution, and real-time progress synchronization.
+                    </p>
+                </div>
+
+                {# Benefits Grid #}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto mt-6">
+                    <div class="bg-white border border-gray-200 rounded-xl p-4 space-y-2">
+                        <div class="w-12 h-12 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                            <i class="fas fa-sitemap text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Hierarchical Execution</h4>
+                        <p class="text-sm text-gray-600">Organize work into projects, activities, tasks, and subtasks</p>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-xl p-4 space-y-2">
+                        <div class="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mx-auto">
+                            <i class="fas fa-coins text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Budget Distribution</h4>
+                        <p class="text-sm text-gray-600">Automatically allocate budget across work items</p>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-xl p-4 space-y-2">
+                        <div class="w-12 h-12 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center mx-auto">
+                            <i class="fas fa-sync text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Progress Sync</h4>
+                        <p class="text-sm text-gray-600">PPA progress updates automatically from work items</p>
+                    </div>
+                </div>
+
+                {# Template Selection Form #}
+                <div class="max-w-3xl mx-auto mt-8">
+                    <div class="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
+                        <div class="text-left">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-2">Choose Your Execution Template</h4>
+                            <p class="text-sm text-gray-600">Select a pre-configured structure that best fits your PPA type</p>
+                        </div>
+
+                        <form id="enable-tracking-form"
+                              hx-post="{% url 'monitoring:enable_workitem_tracking' entry.id %}"
+                              hx-target="#work-items-tab-container"
+                              hx-swap="outerHTML swap:300ms"
+                              hx-indicator="#enable-tracking-spinner"
+                              class="space-y-4">
+                            {% csrf_token %}
+
+                            {# Template Radio Cards #}
+                            <div class="space-y-3">
+                                {# Program Template #}
+                                <label class="flex items-start gap-4 p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-emerald-300 transition-all duration-200 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                                    <input type="radio"
+                                           name="template_type"
+                                           value="program"
+                                           class="mt-1 w-5 h-5 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0"
+                                           checked>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <i class="fas fa-layer-group text-emerald-600"></i>
+                                            <span class="font-semibold text-gray-900">Program Template</span>
+                                            <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">Recommended</span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mb-2">Multi-phase program with planning, implementation, and monitoring</p>
+                                        <div class="flex flex-wrap gap-2 text-xs text-gray-500">
+                                            <span class="px-2 py-1 bg-gray-100 rounded">Planning (20%)</span>
+                                            <span class="px-2 py-1 bg-gray-100 rounded">Implementation (60%)</span>
+                                            <span class="px-2 py-1 bg-gray-100 rounded">M&E (20%)</span>
+                                        </div>
+                                    </div>
+                                </label>
+
+                                {# Activity Template #}
+                                <label class="flex items-start gap-4 p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-emerald-300 transition-all duration-200 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                                    <input type="radio"
+                                           name="template_type"
+                                           value="activity"
+                                           class="mt-1 w-5 h-5 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <i class="fas fa-calendar-check text-blue-600"></i>
+                                            <span class="font-semibold text-gray-900">Activity Template</span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mb-2">Event-based or single activity with preparation, execution, completion</p>
+                                        <div class="flex flex-wrap gap-2 text-xs text-gray-500">
+                                            <span class="px-2 py-1 bg-gray-100 rounded">Preparation (15%)</span>
+                                            <span class="px-2 py-1 bg-gray-100 rounded">Execution (75%)</span>
+                                            <span class="px-2 py-1 bg-gray-100 rounded">Completion (10%)</span>
+                                        </div>
+                                    </div>
+                                </label>
+
+                                {# Milestone Template #}
+                                <label class="flex items-start gap-4 p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-emerald-300 transition-all duration-200 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                                    <input type="radio"
+                                           name="template_type"
+                                           value="milestone"
+                                           class="mt-1 w-5 h-5 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <i class="fas fa-flag-checkered text-purple-600"></i>
+                                            <span class="font-semibold text-gray-900">Milestone Template</span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mb-2">Generate work items from PPA milestone dates (if available)</p>
+                                        <div class="flex flex-wrap gap-2 text-xs text-gray-500">
+                                            {% if entry.milestone_dates %}
+                                                <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded">{{ entry.milestone_dates|length }} milestones found</span>
+                                            {% else %}
+                                                <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded">No milestones yet</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </label>
+
+                                {# Minimal Template #}
+                                <label class="flex items-start gap-4 p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-emerald-300 transition-all duration-200 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                                    <input type="radio"
+                                           name="template_type"
+                                           value="minimal"
+                                           class="mt-1 w-5 h-5 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <i class="fas fa-check-circle text-gray-600"></i>
+                                            <span class="font-semibold text-gray-900">Minimal Template</span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mb-2">Single top-level task only (you can add subtasks later)</p>
+                                        <div class="flex flex-wrap gap-2 text-xs text-gray-500">
+                                            <span class="px-2 py-1 bg-gray-100 rounded">Simplest option</span>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            {# Budget Distribution Policy #}
+                            <div class="space-y-2 relative">
+                                <label class="block text-sm font-semibold text-gray-700">Budget Distribution Method</label>
+                                <div class="relative">
+                                    <select name="budget_distribution_policy"
+                                            class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                        <option value="equal">Equal Distribution (divide evenly across work items)</option>
+                                        <option value="weighted">Weighted Distribution (based on complexity/duration)</option>
+                                        <option value="manual">Manual Allocation (set budget per work item manually)</option>
+                                    </select>
+                                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                        <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                    </span>
+                                </div>
+                            </div>
+
+                            {# Submit Button #}
+                            <button type="submit"
+                                    class="w-full inline-flex items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 to-teal-600 px-6 py-4 text-base font-semibold text-white shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-teal-700 transition-all duration-200 min-h-[48px] focus:outline-none focus:ring-4 focus:ring-blue-300"
+                                    aria-label="Enable work item tracking for this PPA">
+                                <i class="fas fa-rocket text-lg"></i>
+                                <span>Enable Work Item Tracking</span>
+                                <span id="enable-tracking-spinner" class="htmx-indicator">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                {# Help Text #}
+                <p class="text-xs text-gray-500 mt-6 max-w-2xl mx-auto">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    After enabling tracking, you can add, edit, and remove work items as your execution plan evolves.
+                </p>
+            </div>
+        </div>
+
+    {% else %}
+        {# ========================================== #}
+        {# STATE 2: WorkItem Tracking IS Enabled     #}
+        {# Show stats, tree, and budget summary      #}
+        {# ========================================== #}
+
+        {# Top Stats Section - 3D Milk White Cards #}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {# Total Budget Allocated #}
+            <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-xl transform hover:-translate-y-1 transition-all duration-300"
+                 style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+                <div class="relative p-6">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
+                             style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                            <i class="fas fa-coins text-xl text-blue-600"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Total Budget</p>
+                            <p class="text-2xl font-bold text-gray-900 truncate">
+                                {% if workitem_stats.total_budget_allocated %}
+                                    ₱{{ workitem_stats.total_budget_allocated|floatformat:2|intcomma }}
+                                {% else %}
+                                    ₱0.00
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Total Work Items #}
+            <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-xl transform hover:-translate-y-1 transition-all duration-300"
+                 style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+                <div class="relative p-6">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
+                             style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                            <i class="fas fa-tasks text-xl text-emerald-600"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Work Items</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ workitem_stats.total_work_items|default:0 }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Completion Progress #}
+            <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-xl transform hover:-translate-y-1 transition-all duration-300"
+                 style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+                <div class="relative p-6">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
+                             style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                            <i class="fas fa-chart-line text-xl text-purple-600"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Completion</p>
+                            <div class="flex items-center gap-2">
+                                <p class="text-2xl font-bold text-gray-900">{{ workitem_stats.avg_progress|default:0 }}%</p>
+                            </div>
+                            <div class="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all duration-300"
+                                     style="width: {{ workitem_stats.avg_progress|default:0 }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Budget Variance #}
+            <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-xl transform hover:-translate-y-1 transition-all duration-300"
+                 style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+                <div class="relative p-6">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
+                             style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                            <i class="fas fa-balance-scale text-xl
+                                      {% if workitem_stats.budget_variance_pct > 10 %}text-red-600
+                                      {% elif workitem_stats.budget_variance_pct > 0 %}text-amber-600
+                                      {% else %}text-emerald-600{% endif %}"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Variance</p>
+                            <p class="text-2xl font-bold
+                                      {% if workitem_stats.budget_variance_pct > 10 %}text-red-600
+                                      {% elif workitem_stats.budget_variance_pct > 0 %}text-amber-600
+                                      {% else %}text-emerald-600{% endif %}">
+                                {% if workitem_stats.budget_variance_pct %}
+                                    {{ workitem_stats.budget_variance_pct|floatformat:1 }}%
+                                {% else %}
+                                    0.0%
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Execution Project Overview Card #}
+        {% if entry.execution_project %}
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-teal-600 text-white flex items-center justify-center">
+                        <i class="fas fa-project-diagram"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Execution Project</h3>
+                        <p class="text-sm text-gray-500">{{ entry.execution_project.title }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1.5 text-xs font-semibold rounded-full
+                                {% if entry.execution_project.status == 'completed' %}bg-emerald-100 text-emerald-700
+                                {% elif entry.execution_project.status == 'in_progress' %}bg-blue-100 text-blue-700
+                                {% elif entry.execution_project.status == 'at_risk' %}bg-rose-100 text-rose-700
+                                {% else %}bg-gray-100 text-gray-600{% endif %}">
+                        {{ entry.execution_project.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                {# Metadata Grid #}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div class="space-y-1">
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">Created</p>
+                        <p class="font-semibold text-gray-900">{{ entry.execution_project.created_at|date:"M j, Y" }}</p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">Last Synced</p>
+                        <p class="font-semibold text-gray-900">
+                            {% if entry.updated_at %}
+                                {{ entry.updated_at|date:"M j, Y • h:i A" }}
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">Distribution Method</p>
+                        <p class="font-semibold text-gray-900">{{ entry.get_budget_distribution_policy_display }}</p>
+                    </div>
+                </div>
+
+                {# Quick Actions #}
+                <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                    <button type="button"
+                            hx-post="{% url 'monitoring:distribute_budget' entry.id %}"
+                            hx-target="#work-items-tab-container"
+                            hx-swap="outerHTML swap:300ms"
+                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all duration-200 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            aria-label="Distribute PPA budget across work items">
+                        <i class="fas fa-calculator"></i>
+                        <span>Distribute Budget</span>
+                    </button>
+                    <button type="button"
+                            hx-post="{% url 'monitoring:sync_progress' entry.id %}"
+                            hx-target="#work-items-tab-container"
+                            hx-swap="outerHTML swap:300ms"
+                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition-all duration-200 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                            aria-label="Synchronize PPA progress from work items">
+                        <i class="fas fa-sync"></i>
+                        <span>Sync Progress</span>
+                    </button>
+                    <a href="{% url 'common:work_item_detail' entry.execution_project.id %}"
+                       class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all duration-200 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                       aria-label="View full execution project hierarchy">
+                        <i class="fas fa-external-link-alt"></i>
+                        <span>View Full Hierarchy</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Work Items Hierarchy Tree #}
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                        <i class="fas fa-sitemap"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Work Items Hierarchy</h3>
+                        <p class="text-sm text-gray-500">Expandable tree view of execution structure</p>
+                    </div>
+                </div>
+                <button type="button"
+                        hx-get="{% url 'common:work_item_create' %}?ppa_id={{ entry.id }}"
+                        hx-target="#workItemModal"
+                        hx-swap="innerHTML"
+                        onclick="document.getElementById('workItemModal').classList.remove('hidden')"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-blue-600 to-teal-600 text-white hover:shadow-lg transition-all duration-200 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        aria-label="Add new work item">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Work Item</span>
+                </button>
+            </div>
+            <div class="p-6" id="work-items-tree">
+                {% if work_items %}
+                    {% for item in work_items %}
+                        {% include "monitoring/partials/work_item_tree.html" with work_item=item depth=0 %}
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-10 text-gray-500">
+                        <i class="fas fa-inbox text-4xl mb-3 text-gray-400"></i>
+                        <p>No work items found. Click "Distribute Budget" to generate initial structure.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Budget Distribution Summary #}
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center gap-3">
+                <span class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+                    <i class="fas fa-chart-pie"></i>
+                </span>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Budget Distribution Summary</h3>
+                    <p class="text-sm text-gray-500">Allocation breakdown and variance analysis</p>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {# Total Allocated vs. Unallocated #}
+                    <div class="space-y-3">
+                        <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Budget Allocation</h4>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">PPA Budget:</span>
+                                <span class="font-bold text-gray-900">
+                                    {% if entry.budget_allocation %}
+                                        ₱{{ entry.budget_allocation|floatformat:2|intcomma }}
+                                    {% else %}
+                                        ₱0.00
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Allocated to Work Items:</span>
+                                <span class="font-bold text-emerald-600">
+                                    {% if workitem_stats.total_budget_allocated %}
+                                        ₱{{ workitem_stats.total_budget_allocated|floatformat:2|intcomma }}
+                                    {% else %}
+                                        ₱0.00
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm pt-2 border-t border-gray-200">
+                                <span class="text-gray-600">Unallocated:</span>
+                                <span class="font-bold
+                                            {% if workitem_stats.unallocated_budget > 0 %}text-amber-600
+                                            {% elif workitem_stats.unallocated_budget < 0 %}text-red-600
+                                            {% else %}text-emerald-600{% endif %}">
+                                    {% if workitem_stats.unallocated_budget %}
+                                        ₱{{ workitem_stats.unallocated_budget|floatformat:2|intcomma }}
+                                    {% else %}
+                                        ₱0.00
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Distribution Method & Variance #}
+                    <div class="space-y-3">
+                        <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Distribution Details</h4>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Method:</span>
+                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                                    {{ entry.get_budget_distribution_policy_display }}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Variance:</span>
+                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full
+                                            {% if workitem_stats.budget_variance_pct > 10 %}bg-red-100 text-red-700
+                                            {% elif workitem_stats.budget_variance_pct > 5 %}bg-amber-100 text-amber-700
+                                            {% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                                    {% if workitem_stats.budget_variance_pct %}
+                                        {{ workitem_stats.budget_variance_pct|floatformat:1 }}%
+                                        {% if workitem_stats.budget_variance_pct > 10 %}
+                                            <i class="fas fa-exclamation-triangle ml-1"></i>
+                                        {% elif workitem_stats.budget_variance_pct > 5 %}
+                                            <i class="fas fa-exclamation-circle ml-1"></i>
+                                        {% else %}
+                                            <i class="fas fa-check-circle ml-1"></i>
+                                        {% endif %}
+                                    {% else %}
+                                        0.0% <i class="fas fa-check-circle ml-1"></i>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            {% if workitem_stats.budget_variance_pct > 5 %}
+                            <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                <p class="text-xs text-amber-800">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Budget variance exceeds 5%. Consider redistributing or adjusting work item allocations.
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% endif %}
+</div>
+
+{# Work Item Modal Container #}
+<div id="workItemModal"
+     class="fixed inset-0 hidden z-50 flex items-center justify-center px-4 sm:px-6"
+     role="dialog"
+     aria-modal="true">
+    <div class="absolute inset-0 bg-gray-900 bg-opacity-50" onclick="document.getElementById('workItemModal').classList.add('hidden')"></div>
+    <div class="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto" id="workItemModalContent"></div>
+</div>
+
+<!-- Budget Distribution Modal Container -->
+<div id="budgetDistributionModal"
+     class="fixed inset-0 hidden z-50 flex items-center justify-center px-4 sm:px-6"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="budget-modal-title">
+    <div class="absolute inset-0 bg-gray-900 bg-opacity-50" onclick="closeBudgetDistributionModal()"></div>
+    <div class="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto" id="budgetDistributionModalContent"></div>
+</div>
+
+<!-- Work Item Modal Container -->
+<div id="workItemModal"
+     class="fixed inset-0 hidden z-50 flex items-center justify-center px-4 sm:px-6"
+     role="dialog"
+     aria-modal="true">
+    <div class="absolute inset-0 bg-gray-900 bg-opacity-50" onclick="document.getElementById('workItemModal').classList.add('hidden')"></div>
+    <div class="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto" id="workItemModalContent"></div>
+</div>

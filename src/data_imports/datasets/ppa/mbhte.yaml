@@ -1,0 +1,370 @@
+moa: "Ministry of Basic, Higher and Technical Education"
+acronym: "MBHTE"
+ppas:
+  - title: "Management Support to Education Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Operational efficiency of TESD Quality Management System"
+        target: "100%"
+      - indicator: "Private schools in BARMM complying with regulation standards"
+        target: "80%"
+      - indicator: "Knowledge in journalism, skills, and talents demonstrated through competitions"
+        target: "100%"
+      - indicator: "Basic education research initiatives funded"
+        target: "100%"
+      - indicator: "Target schools attending training on school-based child protection policy"
+        target: "100%"
+      - indicator: "Guidance counselors and teachers trained on Grade 10 Career Guidance Module"
+        target: "100%"
+      - indicator: "Teacher-advisers, student leaders, and YFD coordinators participating in federated elections and leadership training"
+        target: "100%"
+      - indicator: "Teachers attending Digital Literacy training"
+        target: "100%"
+      - indicator: "Non-SUC HEIs monitored or validated by RQAT"
+        target: "68%"
+    output_indicators:
+      - indicator: "Percentage of TVET operating units audited"
+        target: "100%"
+      - indicator: "No. of private schools that applied for renewal of Permit to Operate"
+        target: 80
+      - indicator: "No. of workshops conducted to validate status of private schools"
+        target: 1
+      - indicator: "No. of summits conducted for private schools"
+        target: 1
+      - indicator: "No. of national trainings or conferences on regulation of private schools"
+        target: 1
+      - indicator: "Regional Schools Press Conference and Regional Festival of Talents conducted"
+        target: 2
+      - indicator: "Participation and competition in the National Schools Press Conference and National Festival of Talents"
+        target: 2
+      - indicator: "No. of school paper advisers attending training on campus journalism"
+        target: 30
+      - indicator: "No. of action research approved"
+        target: 17
+      - indicator: "Bangsamoro Research Caravan and orientation conducted"
+        target: 1
+      - indicator: "Refresher course on basic and action research conducted"
+        target: 1
+      - indicator: "No. of school child protection focal persons attending continuous training"
+        target: 125
+      - indicator: "No. of guidance counselors and teachers trained on Grade 10 Career Guidance Module"
+        target: 72
+      - indicator: "No. of teacher-advisers, student leaders, and YFD coordinators attending federated elections and leadership training"
+        target: 112
+      - indicator: "No. of teachers trained on Digital Literacy"
+        target: 50
+      - indicator: "No. of HEIs monitored or validated by RQAT"
+        target: 69
+      - indicator: "No. of disciplinal cluster RQATs organized"
+        target: 5
+      - indicator: "No. of higher education curricular programs monitored or validated"
+        target: 866
+      - indicator: "No. of HEI Learning Continuity Plans undergoing MEAL (non-SUCs)"
+        target: 69
+    approved_budget: 1606003064.00
+  - title: "Bangsamoro Education Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Learners benefiting from school-based feeding and dental programs showing improved health and nutrition"
+        target: "70%"
+      - indicator: "Implementation of Oplan Kalusugan para sa Bangsamoro programs"
+        target: "100%"
+    output_indicators:
+      - indicator: "No. of learners benefiting from the School-Based Feeding Program with milk feeding component"
+        target: "110,000"
+      - indicator: "No. of learners benefiting from the School Dental Health Program"
+        target: "110,000"
+      - indicator: "No. of learners benefiting from home-grown school feeding"
+        target: "10,000"
+      - indicator: "No. of Oplan Kalusugan programs implemented"
+        target: 6
+    approved_budget: 792897739.00
+  - title: "School-Based Management and Operation"
+    description: ""
+    outcome_indicators:
+      - indicator: "Schools with improved administration and supervision"
+        target: "100%"
+      - indicator: "Improved learning conditions of learners and teachers"
+        target: "95%"
+    output_indicators:
+      - indicator: "No. of Schools Division Offices provided with MOOE"
+        target: 11
+      - indicator: "No. of public schools provided with MOOE"
+        target: "2,607"
+      - indicator: "No. of classrooms constructed"
+        target: 54
+    approved_budget: 24904909955.00
+  - title: "Bangsamoro School Sports Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "School sports competitions strengthened"
+        target: "100%"
+      - indicator: "Physical education and school sports programs improved"
+        target: "100%"
+      - indicator: "Teacher-coaches trained and attending sports clinics"
+        target: "90%"
+    output_indicators:
+      - indicator: "BARMMAA Meet conducted"
+        target: 1
+      - indicator: "Participation and competition in Palarong Pambansa"
+        target: 500
+      - indicator: "No. of technical officials attending refresher courses for school sports"
+        target: 759
+      - indicator: "No. of coaches attending training courses for school sports"
+        target: 11
+      - indicator: "Monitoring and assessment of sports activities conducted in all SDOs"
+        target: 11
+    approved_budget: 56038450.00
+  - title: "Inclusive Education Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Learners' access to inclusive basic education services improved"
+        target: "100%"
+      - indicator: "Learners in SpED implementing schools in difficult circumstances provided with learning resources"
+        target: "100%"
+      - indicator: "Improved literacy and educational attainment among targeted IP communities"
+        target: "100%"
+      - indicator: "Enhanced understanding and application of learning materials by ALS educators"
+        target: "100%"
+    output_indicators:
+      - indicator: "No. of K-12 SPED learners provided with medical assessment (SPEDAMA)"
+        target: 50
+      - indicator: "No. of assistive devices provided to SPED implementing schools"
+        target: 150
+      - indicator: "No. of teachers attending training on bridging gaps in SPED content and pedagogy"
+        target: 57
+      - indicator: "No. of Alternative Delivery Modality learners assisted in 150 barangays"
+        target: "8,000"
+      - indicator: "No. of learning facilitators provided with professional development on GAD and pedagogy"
+        target: 101
+      - indicator: "No. of ALS teachers provided with transportation allowance"
+        target: 392
+      - indicator: "No. of teachers trained on specialized ALS courses"
+        target: 50
+      - indicator: "No. of ALS learners enrolled"
+        target: "28,938"
+      - indicator: "No. of ALS program completers assessed"
+        target: "14,469"
+      - indicator: "No. of ALS passers tracked"
+        target: "18,837"
+      - indicator: "No. of GIDCA areas provided with School-in-a-Bag and learning materials"
+        target: 5
+      - indicator: "No. of educators trained in contextualization of learning materials"
+        target: 5
+      - indicator: "Percentage of IPED program implementation participated and monitored"
+        target: "1"
+    approved_budget: 69204160.00
+  - title: "Curriculum, Learning Delivery and Assessment"
+    description: ""
+    outcome_indicators:
+      - indicator: "Capacity of teachers and students to improve quality of education through research strengthened"
+        target: "100%"
+      - indicator: "Schools demonstrating literacy and numeracy improvements recognized and awarded"
+        target: "100%"
+      - indicator: "Proficiency level of Grade 4 and Grade 8 learners identified via BRAMES"
+        target: "100%"
+      - indicator: "Trainers trained on classroom-based assessment"
+        target: "100%"
+      - indicator: "National standardized assessments administered"
+        target: "100%"
+      - indicator: "Grade-level competencies mapped to the Matatag Curriculum"
+        target: "100%"
+    output_indicators:
+      - indicator: "No. of senior high schools participating in Bangsamoro Junior Scientist Research Congress"
+        target: 35
+      - indicator: "No. of teachers enabled to deliver reading remediation activities"
+        target: 35
+      - indicator: "No. of grade levels with Matatag Curriculum competencies mapped"
+        target: 3
+      - indicator: "Bangsamoro Regional Assessment for Mathematics, English, and Science (BRAMES) results produced"
+        target: 1
+      - indicator: "Pool of trainers trained on classroom-based assessment"
+        target: 66
+      - indicator: "No. of national standardized assessments administered"
+        target: 6
+    approved_budget: 9748200.00
+  - title: "Access to Higher and Modern Education (AHME) Scholarship Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Student beneficiaries enrolled in STEM programs"
+        target: "50%"
+    output_indicators:
+      - indicator: "No. of scholarship slots maintained"
+        target: "2,805"
+      - indicator: "No. of new scholarship slots awarded"
+        target: "1,600"
+    approved_budget: 267572050.00
+  - title: "Higher Education Services"
+    description: ""
+    outcome_indicators:
+      - indicator: "Average annual increase in freshmen enrollment in MSHEIs"
+        target: "3%"
+      - indicator: "HEIs compliant with agricultural education integration initiatives"
+        target: "100%"
+      - indicator: "Average annual increase in completion rate in MSHEIs"
+        target: "2.73%"
+    output_indicators:
+      - indicator: "No. of MEPA activities on institutional strategic plans"
+        target: 7
+      - indicator: "No. of beneficiaries of faculty development program"
+        target: 99
+      - indicator: "No. of students provided with modules"
+        target: "10,494"
+      - indicator: "No. of students participating in MSHEI capability-building activities"
+        target: "1,465"
+      - indicator: "No. of research-related capability-building activities conducted"
+        target: 13
+      - indicator: "No. of activities supporting board program performance"
+        target: 6
+    approved_budget: 334034078.00
+  - title: "TVET Provisions"
+    description: ""
+    outcome_indicators:
+      - indicator: "Graduates from Bangsamoro Scholarship Program for TVET employed"
+        target: "40%"
+      - indicator: "TVET operating units compliant with statutory and regulatory requirements"
+        target: "100%"
+      - indicator: "Increase of young people participating in TVET"
+        target: "5%"
+    output_indicators:
+      - indicator: "No. of beneficiaries from the Bangsamoro Scholarship Program for TVET"
+        target: "19,304"
+      - indicator: "Percentage of operating units with MOOE"
+        target: "100%"
+      - indicator: "No. of beneficiaries from CAC4TVL program"
+        target: "2,500"
+      - indicator: "No. of TVET operating units upgraded"
+        target: 2
+      - indicator: "No. of provincial offices constructed"
+        target: 1
+    approved_budget: 574137673.00
+  - title: "TVET Policy and Standards"
+    description: ""
+    outcome_indicators:
+      - indicator: "TVET registered programs compliant with TESDA and industry requirements"
+        target: "95%"
+      - indicator: "Increase in qualifications aligned with WorldSkills Occupational Standards"
+        target: "5%"
+    output_indicators:
+      - indicator: "No. of TESD Technology Institutions compliant with TVET policies"
+        target: 6
+      - indicator: "No. of TTI-accredited assessment centers compliant with regulations"
+        target: 6
+      - indicator: "Percentage of BSPTVET graduates undergoing national competency assessment"
+        target: "82%"
+      - indicator: "Percentage of registered TVET programs audited"
+        target: "100%"
+      - indicator: "Percentage of accredited assessment centers audited"
+        target: "100%"
+      - indicator: "No. of skills competitions conducted"
+        target: 2
+    approved_budget: 23155001.00
+  - title: "Madaris Education Services"
+    description: ""
+    outcome_indicators:
+      - indicator: "Madaris standards and provision - Access to Madrasah education improved"
+        target: "90%"
+      - indicator: "Madaris standards and provision - Administrative and operational mechanisms established"
+        target: "90%"
+      - indicator: "Madaris Asatidz Program - Delivery of Madaris education in public schools improved"
+        target: "90%"
+      - indicator: "Madaris Asatidz Program - Mudarris capacitated"
+        target: "90%"
+    output_indicators:
+      - indicator: "Madaris Standards and Provision - No. of learners granted financial assistance"
+        target: "38,238"
+      - indicator: "Madaris Standards and Provision - No. of Madrasah inspected and monitored"
+        target: 499
+      - indicator: "Madaris Standards and Provision - No. of Madrasah heads and administrators trained"
+        target: 253
+      - indicator: "Madaris Standards and Provision - No. of Madaris Division Heads provided with MODE"
+        target: 11
+      - indicator: "Madaris Standards and Provision - No. of classrooms constructed"
+        target: 110
+      - indicator: "Madaris Asatidz Program - No. of Asatidz hired and deployed"
+        target: "5,959"
+      - indicator: "Madaris Asatidz Program - No. of Asatidz trained"
+        target: "5,959"
+      - indicator: "Madaris Asatidz Program - No. of Mudarris lesson guides developed"
+        target: 36
+      - indicator: "Madaris Asatidz Program - No. of Asatidz monitored and supervised"
+        target: 550
+    approved_budget: 1845513695.00
+special_provisions:
+  - title: "Quick Response Fund"
+    details: |
+      Two Hundred Million Pesos (P200,000,000.00) appropriated for the Quick Response Fund shall serve as a stand-by fund for replacement, reconstruction, rehabilitation, or repair of school buildings and facilities to normalize learning conditions after disasters. Fund release requires assessment reports, rehabilitation designs, and supporting documents. QRF shall not be used for pre-disaster activities such as training, insurance, or public information initiatives.
+  - title: "Provision of Learning Resources"
+    details: |
+      One Billion Five Hundred Sixty Million Nine Hundred Sixty-Three Thousand Three Hundred Pesos (P1,560,963,300.00) shall be released only upon submission of the list of learning resources procured using prior years' appropriations and the list of school beneficiaries. Purchases shall comply with applicable laws including R.A. Nos. 8047 and 9184.
+  - title: "Procurement of BARMM Signature Armchair"
+    details: |
+      Three Hundred Eighty-Four Million Seven Hundred Twenty Thousand Pesos (P384,720,000.00) under Support to Operations shall be used exclusively to procure BARMM Signature Armchairs with wide, laminated writing surfaces, subject to reporting on previous armchair procurements and learner beneficiaries.
+  - title: "Bangsamoro RESPECT Program"
+    details: |
+      One Hundred Thirty-One Million Five Hundred Thirty-Five Thousand Pesos (P131,535,000.00) shall be released only upon submission of the list of assigned personnel and the Program Implementation Plan and Guidelines.
+  - title: "Systems Development"
+    details: |
+      Two Million Pesos (P2,000,000.00) shall be used exclusively to develop the Annual School-Based Assessment Report System.
+  - title: "School-Based Feeding Program"
+    details: |
+      Seven Hundred Fifty-Six Million Two Hundred Fifty Thousand Pesos (P756,250,000.00) shall feed 110,000 learners within 220 days, subject to Program Implementation Plan and Guidelines, SBFP reports, and an administrative cost cap of 3.5%.
+  - title: "Home Grown School Feeding"
+    details: |
+      Twenty-Two Million Pesos (P22,000,000.00) shall feed 10,000 learners within 100 days, subject to Program Implementation Plan and Guidelines and Home Grown School Feeding reports.
+  - title: "Inclusive Education"
+    details: |
+      Sixty-Nine Million Two Hundred Four Thousand One Hundred Sixty Pesos (P69,204,160.00) shall support Alternative Learning System, Abot Kaalaman sa Pamilyang Bangsamoro, Indigenous Peoples Education, and Special Education, subject to quarterly implementation reports to MFBM.
+  - title: "School Sports Program"
+    details: |
+      Fifty-Six Million Thirty-Eight Thousand Four Hundred Fifty Pesos (P56,038,450.00) shall fund the School Sports Program, with Ten Million Pesos (P10,000,000.00) earmarked for athlete training.
+  - title: "School-Building Program"
+    details: |
+      One Hundred Sixty-Two Million Twenty-Six Thousand Pesos (P162,026,000.00) shall be used for school construction, subject to submission of identified school beneficiaries and common engineering documents.
+  - title: "Infrastructure Integrity of School Buildings"
+    details: |
+      One Hundred Fifty-Eight Million Four Hundred Thousand Pesos (P158,400,000.00) shall rehabilitate, renovate, repair, and improve school buildings, subject to identified beneficiaries and engineering documents.
+  - title: "Teachers' Furniture and Fixtures"
+    details: |
+      Thirty-Nine Million Three Hundred Seventy-Five Thousand Pesos (P39,375,000.00) shall procure school desks, furniture, and fixtures for teachers, subject to Program Implementation Plan and Guidelines.
+  - title: "Cash Allowance to Teachers"
+    details: |
+      Cash allowance funds shall provide Ten Thousand Pesos (P10,000.00) per classroom teacher annually for teaching supplies, connectivity expenses, and medical examination, subject to Program Implementation Plan and Guidelines.
+  - title: "World Teachers' Day Incentive Benefit"
+    details: |
+      One Thousand Pesos (P1,000.00) per teacher shall be granted during the World Teachers' Day celebration, subject to MBHTE-issued guidelines.
+  - title: "Appropriations for In-Service Training"
+    details: |
+      Three Hundred Sixty-Two Million Seventy Thousand Pesos (P362,070,000.00) shall fund in-service training and learning interventions for teachers and education personnel, integrating Values Transformation Training.
+  - title: "Access to Higher and Modern Education Scholarship Program"
+    details: |
+      Two Hundred Sixty-Four Million Three Hundred Thousand Pesos (P264,300,000.00) shall be released only upon submission of Program Implementation Plan and Guidelines and quarterly implementation reports. MBHTE shall develop a scholar monitoring database.
+  - title: "Bangsamoro Kulliyyah for Islamic Studies"
+    details: |
+      Forty-Four Million Six Hundred Fifty-Eight Thousand Seven Hundred Pesos (P44,658,700.00) shall be used exclusively for land acquisition and construction of an administrative building.
+  - title: "TVET Scholarship"
+    details: |
+      Four Hundred Thirty-One Million Five Hundred Forty-Nine Thousand Six Hundred Ninety-Two Pesos (P431,549,692.00) shall be subject to Program Implementation Plan and Guidelines and quarterly status reports to MFBM.
+  - title: "Employability of BSPTVET Graduates"
+    details: |
+      One Million Eight Hundred Thousand Pesos (P1,800,000.00) shall fund a study on the employability of BSPTVET graduates.
+  - title: "Madaris Education Services"
+    details: |
+      One Billion Four Hundred Twenty-Four Million Six Hundred Thirty-Eight Thousand Eight Hundred Ninety-Eight Pesos (P1,424,638,898.00) shall assist learners in accredited private madaris and support hiring and training of Asatidz, subject to Program Implementation Plan and Guidelines and quarterly reports to MFBM.
+  - title: "Construction of Public Madrasah"
+    details: |
+      Four Hundred Eighteen Million Five Hundred Seventy Thousand Pesos (P418,570,000.00) shall fund land acquisition and construction of public madrasah, subject to identified beneficiaries and engineering documents.
+  - title: "Maintenance and Other Operating Expenses Allocation for Schools"
+    details: |
+      The MBHTE shall allocate school MOOE in accordance with ministry-issued guidelines and submit quarterly status reports to the MFBM.
+  - title: "Personnel Services Release Condition"
+    details: |
+      Personnel Services amounting to Five Billion Two Hundred Ninety-Six Million Five Hundred Eight Thousand Four Hundred Twenty-Six Pesos (P5,296,508,426.00) shall be released only when positions are filled and upon submission of appointment and deployment orders.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      Implementing M/O/As shall submit quarterly reports on financial and physical accomplishments within thirty (30) days after each quarter through:
+        (a) Submission of hardcopy to the MFBM;
+        (b) Submission of reports through electronic means; and
+        (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the MFBM and other offices where submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

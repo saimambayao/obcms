@@ -408,10 +408,18 @@ def assessment_tasks_board(request, assessment_id):
     assessment = get_object_or_404(Assessment, id=assessment_id)
 
     # Get tasks related to this assessment
-    from common.models import StaffTask
+    from common.work_item_model import WorkItem
+    from django.contrib.contenttypes.models import ContentType
+
+    # Get ContentType for Assessment model
+    assessment_ct = ContentType.objects.get_for_model(Assessment)
 
     all_tasks = (
-        StaffTask.objects.filter(related_assessment=assessment)
+        WorkItem.objects.filter(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            content_type=assessment_ct,
+            object_id=assessment.id
+        )
         .select_related("created_by")
         .prefetch_related("assignees", "teams")
     )
@@ -422,38 +430,38 @@ def assessment_tasks_board(request, assessment_id):
             "label": "Planning",
             "icon": "fa-clipboard-list",
             "color": "blue",
-            "tasks": all_tasks.filter(assessment_phase="planning"),
+            "tasks": all_tasks.filter(task_data__assessment_phase="planning"),
         },
         "data_collection": {
             "label": "Data Collection",
             "icon": "fa-database",
             "color": "indigo",
-            "tasks": all_tasks.filter(assessment_phase="data_collection"),
+            "tasks": all_tasks.filter(task_data__assessment_phase="data_collection"),
         },
         "analysis": {
             "label": "Analysis",
             "icon": "fa-chart-line",
             "color": "purple",
-            "tasks": all_tasks.filter(assessment_phase="analysis"),
+            "tasks": all_tasks.filter(task_data__assessment_phase="analysis"),
         },
         "report_writing": {
             "label": "Report Writing",
             "icon": "fa-file-alt",
             "color": "pink",
-            "tasks": all_tasks.filter(assessment_phase="report_writing"),
+            "tasks": all_tasks.filter(task_data__assessment_phase="report_writing"),
         },
         "review": {
             "label": "Review",
             "icon": "fa-check-circle",
             "color": "emerald",
-            "tasks": all_tasks.filter(assessment_phase="review"),
+            "tasks": all_tasks.filter(task_data__assessment_phase="review"),
         },
     }
 
     # Calculate totals
     tasks_by_phase = {
         "total": all_tasks.count(),
-        "completed": all_tasks.filter(status="completed").count(),
+        "completed": all_tasks.filter(status=WorkItem.STATUS_COMPLETED).count(),
     }
 
     context = {
@@ -546,10 +554,17 @@ def assessment_calendar_feed(request, assessment_id):
         )
 
     # Tasks (with due dates)
-    from common.models import StaffTask
+    from common.work_item_model import WorkItem
+    from django.contrib.contenttypes.models import ContentType
 
-    tasks = StaffTask.objects.filter(
-        related_assessment=assessment, due_date__isnull=False
+    # Get ContentType for Assessment model
+    assessment_ct = ContentType.objects.get_for_model(Assessment)
+
+    tasks = WorkItem.objects.filter(
+        work_type=WorkItem.WORK_TYPE_TASK,
+        content_type=assessment_ct,
+        object_id=assessment.id,
+        due_date__isnull=False
     ).select_related("created_by")
 
     for task in tasks:

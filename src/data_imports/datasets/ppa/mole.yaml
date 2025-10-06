@@ -1,0 +1,243 @@
+moa: "Ministry of Labor and Employment"
+acronym: "MOLE"
+ppas:
+  - title: "Employment Facilitation and Promotion Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Job Fair and Special Recruitment Activities (JFSRA)"
+        target: "Access on employment opportunities increased; additional employment generated for BARMM."
+      - indicator: "MOLE-BARMM Job Portal Project (MB.JPP)"
+        target: "Avenue for employment matching enhanced; cost-effective support for job seekers; expanded job opportunity and network generation between job seekers and employers."
+      - indicator: "Special Program for the Employment of Students (SPES) and Bangsamoro Internship Development Program (BIDP)"
+        target: "Increased temporary employment and available allowance for enrolment, decreasing drop-out rate among youth sectors."
+      - indicator: "Technical Support to Public Employment Service Offices (PESOS)"
+        target: "LGUs established PESO through technical assistance from MOLE."
+      - indicator: "Career Guidance and Employment Coaching for Graduating Students (CGECGS)"
+        target: "Graduating students guided on suitable courses based on projected labor market job opportunities and demands."
+      - indicator: "Workers Emergency Assistance Program"
+        target: "Immediate economic relief for workers and their families."
+      - indicator: "Bangsamoro Integrated Livelihood Program (BILP)"
+        target: "Increased profit for individual entrepreneurs; more organized and sanitized food service; improved living conditions; sustained economic activity for workers associations; established new business enterprises."
+      - indicator: "Special Employment and Entrepreneurial Assistance Program"
+        target: "Alleviated economic living conditions of beneficiaries and communities."
+      - indicator: "Skills and Entrepreneurial Development for Overseas Bangsamoro Workers"
+        target: "Increased labor productivity of returning OBWs; generated new jobs."
+      - indicator: "Bangsamoro Tulong Panghanapbuhay sa Ating Disadvantaged Informal Sector Workers (Bangsamoro TUPAD Program)"
+        target: "Provided temporary employment and generated jobs for informal sector workers."
+    output_indicators:
+      - indicator: "JFSRA - No. of job fairs facilitated"
+        target: 10
+      - indicator: "JFSRA - No. of job seekers hired"
+        target: "Increasing"
+      - indicator: "JFSRA - No. of private establishments, recruiters, and LGUs participating"
+        target: "Increasing"
+      - indicator: "MB.JPP - No. of job seekers and employers accessing the one job portal system"
+        target: "Increasing"
+      - indicator: "SPES and BIDP - No. of in-school and out-of-school youth provided with financial allowance"
+        target: "3,000"
+      - indicator: "SPES and BIDP - No. of unemployed graduates hired under BIDP"
+        target: "2,500"
+      - indicator: "PESOS - No. of LGUs provided with technical assistance"
+        target: 10
+      - indicator: "PESOS - Percentage of LGUs provided with technical assistance upon request"
+        target: "100%"
+      - indicator: "CGECGS - No. of tertiary schools' graduating students provided with employment coaching"
+        target: 300
+      - indicator: "CGECGS - No. of secondary schools' graduating students provided with career guidance"
+        target: 300
+      - indicator: "Workers Emergency Assistance Program - No. of displaced or severely affected workers provided with direct assistance"
+        target: 500
+      - indicator: "Workers Emergency Assistance Program - Percentage of scheduled orientations conducted on time"
+        target: "100%"
+      - indicator: "BILP - No. of individual workers served and provided with Set-A-Kart livelihood assistance"
+        target: 400
+      - indicator: "BILP - No. of workers associations provided with livelihood assistance"
+        target: 100
+      - indicator: "Special Employment and Entrepreneurial Assistance Program - No. of MNLF/MILF combatants provided with livelihood assistance"
+        target: 350
+      - indicator: "Skills and Entrepreneurial Development for OBWs - No. of OBWs capacitated through skills training"
+        target: 100
+      - indicator: "Bangsamoro TUPAD Program - No. of workers provided temporary employment"
+        target: "2,000"
+    approved_budget: 144511696.00
+  - title: "Employment Preservation and Regulation Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Labor Enforcement and Advisory Program (LEAP)"
+        target: "Ensured protection of rights and general welfare of workers."
+      - indicator: "Permit, Registration, and Organization Development Program"
+        target: "Ensured equal protection of labor laws for employers and workers."
+      - indicator: "Labor Case Management Program"
+        target: "Prevented labor cases and disputes from ripening into full-blown cases; improved workplace relations."
+      - indicator: "Tripartism and Social Dialogue Program"
+        target: "Strengthened cooperation among government, management, and labor groups; adopted appropriate labor employment policies."
+      - indicator: "Labor Relations, Human Relations and Productivity (LHP) Program"
+        target: "Increased awareness on labor standards; improved labor relations and productivity."
+      - indicator: "MOLE Emergency and Disaster Control Program (MEDCP)"
+        target: "Increased preparedness on emergency response in workplaces."
+      - indicator: "Bangsamoro Labor Summit"
+        target: "Supported formulation of relevant labor and management policies; enhanced BARMM attractiveness to investors."
+      - indicator: "Bangsamoro Labor Day"
+        target: "Boosted morale, improved productivity, and promoted belongingness of Bangsamoro workers."
+      - indicator: "Bangsamoro Recruitment Agency Development Program"
+        target: "Ensured legitimate, accredited recruitment agencies and safeguarded OBWs."
+      - indicator: "OBWs Balik Manggagawa Online Assistance and Processing"
+        target: "Enabled speedy issuance of OECs and curtailed fixers victimizing OBWs."
+    output_indicators:
+      - indicator: "LEAP - No. of establishments inspected"
+        target: "GLS: 120; OSHS: 120"
+      - indicator: "LEAP - No. of mechanical equipment inspected"
+        target: 24
+      - indicator: "LEAP - No. of establishments with technical assistance visits (TAVs)"
+        target: 35
+      - indicator: "Permit, Registration, and Organization Development Program - No. of private establishments registered"
+        target: 100
+      - indicator: "Permit, Registration, and Organization Development Program - Percentage of permit applications processed"
+        target: "100%"
+      - indicator: "Labor Case Management Program - Percentage of complaints acted upon and resolved"
+        target: "100%"
+      - indicator: "Tripartism and Social Dialogue Program - No. of conventions or meetings conducted"
+        target: "Regional: 9; Provincial: 9; LMC: 4; OSH-Net: 8"
+      - indicator: "Tripartism and Social Dialogue Program - Percentage of policy resolutions adopted"
+        target: "100%"
+      - indicator: "LHP Program - No. of sessions"
+        target: 15
+      - indicator: "LHP Program - No. of labor management members benefitted"
+        target: 450
+      - indicator: "LHP Program - No. of private establishments updated"
+        target: 225
+      - indicator: "MEDCP - No. of sessions"
+        target: 7
+      - indicator: "MEDCP - No. of employees trained"
+        target: 210
+      - indicator: "MEDCP - No. of workplaces improved"
+        target: 105
+      - indicator: "Bangsamoro Labor Summit - No. of summits conducted"
+        target: 1
+      - indicator: "Bangsamoro Labor Summit - No. of attendees"
+        target: 200
+      - indicator: "Bangsamoro Labor Summit - Percentage of policies enacted"
+        target: "100%"
+      - indicator: "Bangsamoro Labor Day - No. of celebrations"
+        target: 1
+      - indicator: "Bangsamoro Labor Day - No. of participants"
+        target: "5,000"
+      - indicator: "Recruitment Agency Development Program - No. of international cooperation missions"
+        target: "Increasing"
+      - indicator: "Recruitment Agency Development Program - No. of monitoring activities"
+        target: 2
+      - indicator: "Recruitment Agency Development Program - Percentage of applications processed"
+        target: "100%"
+      - indicator: "Recruitment Agency Development Program - No. of orientations"
+        target: "Provincial: 5; Regional Summit: 1"
+      - indicator: "OBWs Balik Manggagawa Online Assistance and Processing - Percentage of applications assisted"
+        target: "100%"
+    approved_budget: 10467659.00
+  - title: "Workers' Social Protection and Welfare Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Pre-Employment and Pre-Departure Orientation Seminar (PEOS/PDOS)"
+        target: "Increased preparedness and readiness of would-be and outgoing OBWs."
+      - indicator: "Overseas Bangsamoro Workers Convention"
+        target: "Revised or improved training modules and policies related to overseas workers."
+      - indicator: "Assistance Program for Repatriated OBWs"
+        target: "Provided immediate economic relief assistance to repatriated workers and demonstrated government care."
+      - indicator: "Overseas Bangsamoro Workers Social Benefits Program"
+        target: "Improved psycho-social condition of OBWs and their families."
+      - indicator: "Social Protection Program for Workers in the Informal Sector"
+        target: "Ensured insurance protection for informal workers facing high-risk and hazardous work."
+      - indicator: "Campaign Against Illegal Recruitment, Trafficking in Persons and Irregular Migration (CAIRTIM)"
+        target: "Increased awareness on illegal recruitment, human trafficking, and irregular migration; reduced victims."
+      - indicator: "Bangsamoro Child Labor Sagip Program"
+        target: "Strengthened efforts to eliminate child labor; rescued and mainstreamed child laborers."
+      - indicator: "Bangsamoro Workers Family Welfare Program"
+        target: "Improved productive relationships between management and workers; promoted industrial peace."
+      - indicator: "Bangsamoro Women Workers Empowerment Program"
+        target: "Enhanced capacities of Bangsamoro women workers for fuller participation in society."
+    output_indicators:
+      - indicator: "PEOS/PDOS - No. of PEOS conducted"
+        target: "10 sessions for 300 individuals"
+      - indicator: "PEOS/PDOS - No. of PDOS conducted"
+        target: "10 sessions for 300 individuals"
+      - indicator: "Overseas Bangsamoro Workers Convention - No. of conventions"
+        target: 2
+      - indicator: "Overseas Bangsamoro Workers Convention - No. of participants"
+        target: 100
+      - indicator: "Overseas Bangsamoro Workers Convention - Percentage of modules improved"
+        target: "100%"
+      - indicator: "Assistance for Repatriated OBWs - No. of OBWs provided with financial assistance"
+        target: 350
+      - indicator: "Overseas Bangsamoro Workers Social Benefits Program - No. of OBWs provided with benefits"
+        target: 25
+      - indicator: "Social Protection Program for Workers in the Informal Sector - No. of informal sector workers enrolled in GSIS social insurance"
+        target: "4,000"
+      - indicator: "CAIRTIM - No. of seminars conducted"
+        target: "8 sessions for 400 individuals"
+      - indicator: "CAIRTIM - No. of IEC materials produced"
+        target: "1,200"
+      - indicator: "CAIRTIM - No. of tri-media contracts"
+        target: 1
+      - indicator: "CAIRTIM - No. of airport or seaport LED ads"
+        target: 2
+      - indicator: "Bangsamoro Child Labor Sagip Program - No. of child laborers rescued"
+        target: 335
+      - indicator: "Bangsamoro Child Labor Sagip Program - No. of child labor desks established"
+        target: 7
+      - indicator: "Bangsamoro Child Labor Sagip Program - No. of advocacy sessions"
+        target: 5
+      - indicator: "Bangsamoro Child Labor Sagip Program - No. of IEC materials produced"
+        target: "1,000"
+      - indicator: "Bangsamoro Workers Family Welfare Program - No. of establishments oriented"
+        target: 3
+      - indicator: "Bangsamoro Workers Family Welfare Program - No. of participants"
+        target: 300
+      - indicator: "Bangsamoro Women Workers Empowerment Program - No. of training sessions"
+        target: 5
+      - indicator: "Bangsamoro Women Workers Empowerment Program - No. of women workers trained"
+        target: 200
+    approved_budget: 19765555.00
+  - title: "Wages and Productivity Development Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Determining and Fixing of New Minimum Wage in BARMM"
+        target: "Improved and fixed minimum wage for formal sector workers and kasambahay; enhanced investor confidence."
+      - indicator: "Productivity Enhancement Program (PEP)"
+        target: "Enhanced productivity and competitiveness of formal workers and kasambahay."
+      - indicator: "Bangsamoro Productivity Olympics (BPO)"
+        target: "Recognized best productivity practices and increased productivity awareness among workers and management."
+    output_indicators:
+      - indicator: "Minimum Wage Fixing - No. of public consultations conducted"
+        target: "Minimum wage: 3; Kasambahay: 3"
+      - indicator: "Minimum Wage Fixing - No. of tripartite or board meetings"
+        target: 3
+      - indicator: "Minimum Wage Fixing - No. of annual conferences attended"
+        target: 1
+      - indicator: "Productivity Enhancement Program - No. of MSMEs with productivity and T3K seminar"
+        target: 20
+      - indicator: "Productivity Enhancement Program - No. of formal sector workers trained"
+        target: 600
+      - indicator: "Productivity Enhancement Program - No. of kasambahay trained"
+        target: 500
+      - indicator: "Bangsamoro Productivity Olympics - No. of awarding ceremonies"
+        target: 1
+      - indicator: "Bangsamoro Productivity Olympics - No. of attendees"
+        target: 200
+    approved_budget: 6615444.00
+special_provisions:
+  - title: "Wages and Productivity"
+    details: |
+      The amount of Four Hundred Twenty Thousand Pesos (P420,000.00) herein appropriated shall be used exclusively for payment of Honoraria for the Members of Bangsamoro Tripartite Wages and Productivity Board (BTWPB), subject to existing rules and regulations on the payment of Honoraria.
+  - title: "Employment Facilitation and Promotion Program"
+    details: |
+      The amount of One Hundred Thirty-Five Million Two Hundred Ninety-Six Thousand Four Hundred Pesos (P135,296,400.00) herein appropriated shall be used exclusively for the implementation of Special Program for Employment of Students (SPES), Bangsamoro Internship Development Program (BIDP), Workers Emergency Assistance Program, Bangsamoro Integrated Livelihood Program (BILP), Special Employment & Entrepreneurial Assistance Program for Differently-abled Persons, Elderly, and Former MILF/MNLF Combatants and Others Disadvantaged Bangsamoro, and Bangsamoro Tulong Panghanapbuhay para sa ating Disadvantaged Informal Sector Workers (Bangsamoro TUPAD Program) subject to the submission of Program Implementation Plan and Guidelines, validated list of beneficiaries, and quarterly status report of implementation to MFBM.
+  - title: "Workers' Social Protection and Welfare Program"
+    details: |
+      The amount of Thirteen Million Seven Hundred Twenty-Four Thousand Pesos (P13,724,000.00) herein appropriated shall be used exclusively for the implementation of the Assistance Program for Repatriated Abused Overseas Bangsamoro Workers (OBWs), Social Protection Program for Informal Workers, Overseas Bangsamoro Worker Social Benefits Program, and Bangsamoro Child Labor Sagip Program subject to the submission of the respective Program Implementation Plan and Guidelines, validated list of beneficiaries, and quarterly status report of implementation to MFBM.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/D/As shall submit quarterly reports on its financial and physical accomplishments, within thirty (30) days after the end of every quarter, through the following:
+        a. Submission of hardcopy to the MFBM;
+        b. Submission of reports through electronic means; and
+        c. Publication to M/D/A's website.
+
+      The implementing M/D/As shall send written notice when said reports have been submitted or posted on its website to the MFBM and other offices where the submission of reports is required under existing laws, rules and regulations. The date of notice to said M/O/As shall be considered the date of compliance with this requirement.

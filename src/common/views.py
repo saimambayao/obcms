@@ -112,8 +112,9 @@ def dashboard(request):
 
     from communities.models import OBCCommunity, Stakeholder
     from mana.models import Assessment, Need
-    from coordination.models import Event, Partnership
+    from coordination.models import Partnership
     from policy_tracking.models import PolicyRecommendation
+    from common.work_item_model import WorkItem
     from django.db.models import Count
 
     # Get dashboard statistics
@@ -135,10 +136,12 @@ def dashboard(request):
             "high_priority": Need.objects.filter(impact_severity=5).count(),
         },
         "coordination": {
-            "total_events": Event.objects.count(),
+            "total_events": WorkItem.objects.filter(work_type='activity').count(),
             "active_partnerships": Partnership.objects.filter(status="active").count(),
-            "upcoming_events": Event.objects.filter(
-                start_date__gte=timezone.now().date(), status="planned"
+            "upcoming_events": WorkItem.objects.filter(
+                work_type='activity',
+                start_date__gte=timezone.now().date(),
+                status="planned"
             ).count(),
             "pending_actions": 0,  # Will be calculated if ActionItem model exists
             # Partnership breakdown by organization type
@@ -493,13 +496,12 @@ def mana_home(request):
 def coordination_home(request):
     """Coordination module home page - Coordination with BMOAs, NGAs, and LGUs."""
     from coordination.models import (
-        Event,
         Partnership,
         Organization,
         StakeholderEngagement,
         PartnershipSignatory,
-        EventParticipant,
     )
+    from common.work_item_model import WorkItem
     from django.db.models import Count, Q
     from django.utils import timezone
     from datetime import timedelta
@@ -547,84 +549,62 @@ def coordination_home(request):
         "lgu": lgu_partnerships,
     }
 
-    # 3. Coordination Activities Done (Completed events and engagements)
-    completed_events = Event.objects.filter(status="completed")
+    # 3. Coordination Activities Done (Completed activities and engagements)
+    completed_activities = WorkItem.objects.filter(
+        work_type='activity',
+        status="completed"
+    )
     completed_engagements = StakeholderEngagement.objects.filter(status="completed")
 
     total_completed_activities = (
-        completed_events.count() + completed_engagements.count()
+        completed_activities.count() + completed_engagements.count()
     )
 
-    # Count by organization type for events through participants
-    bmoa_events = (
-        completed_events.filter(participants__organization__organization_type="bmoa")
-        .distinct()
-        .count()
-    )
-    nga_events = (
-        completed_events.filter(participants__organization__organization_type="nga")
-        .distinct()
-        .count()
-    )
-    lgu_events = (
-        completed_events.filter(participants__organization__organization_type="lgu")
-        .distinct()
-        .count()
-    )
-
+    # Note: Organization type filtering for activities requires participant tracking
+    # which may be stored in activity_data JSON field or related EventParticipant model
+    # For now, using total counts without organization breakdown
     coordination_activities_done_stats = {
         "total": total_completed_activities,
-        "bmoa": bmoa_events,
-        "nga": nga_events,
-        "lgu": lgu_events,
+        "bmoa": 0,  # TODO: Implement participant tracking in WorkItem
+        "nga": 0,   # TODO: Implement participant tracking in WorkItem
+        "lgu": 0,   # TODO: Implement participant tracking in WorkItem
     }
 
-    # 4. Planned Coordination Activities (Upcoming events and planned engagements)
-    planned_events = Event.objects.filter(
-        status__in=["planned", "scheduled"], start_date__gte=now.date()
+    # 4. Planned Coordination Activities (Upcoming activities and planned engagements)
+    planned_activities = WorkItem.objects.filter(
+        work_type='activity',
+        status__in=["not_started", "in_progress"],
+        start_date__gte=now.date()
     )
 
     planned_engagements = StakeholderEngagement.objects.filter(
         status__in=["planned", "scheduled"], planned_date__gte=now
     )
 
-    total_planned_activities = planned_events.count() + planned_engagements.count()
+    total_planned_activities = planned_activities.count() + planned_engagements.count()
 
-    # Count by organization type for planned events through participants
-    bmoa_planned = (
-        planned_events.filter(participants__organization__organization_type="bmoa")
-        .distinct()
-        .count()
-    )
-    nga_planned = (
-        planned_events.filter(participants__organization__organization_type="nga")
-        .distinct()
-        .count()
-    )
-    lgu_planned = (
-        planned_events.filter(participants__organization__organization_type="lgu")
-        .distinct()
-        .count()
-    )
-
+    # Note: Organization type filtering requires participant tracking
     planned_coordination_activities_stats = {
         "total": total_planned_activities,
-        "bmoa": bmoa_planned,
-        "nga": nga_planned,
-        "lgu": lgu_planned,
+        "bmoa": 0,  # TODO: Implement participant tracking in WorkItem
+        "nga": 0,   # TODO: Implement participant tracking in WorkItem
+        "lgu": 0,   # TODO: Implement participant tracking in WorkItem
     }
 
     # Recent activities for display
-    recent_events = Event.objects.filter(
+    recent_activities = WorkItem.objects.filter(
+        work_type='activity',
         start_date__gte=now.date() - timedelta(days=30)
     ).order_by("-start_date")[:5]
 
-    # Event categories breakdown (for Event Categories section)
+    # Activity categories breakdown (by event_type in activity_data)
+    # Note: event_type is stored in activity_data JSON field
+    all_activities = WorkItem.objects.filter(work_type='activity')
     event_by_type = {
-        "meeting": Event.objects.filter(event_type="meeting").count(),
-        "workshop": Event.objects.filter(event_type="workshop").count(),
-        "conference": Event.objects.filter(event_type="conference").count(),
-        "consultation": Event.objects.filter(event_type="consultation").count(),
+        "meeting": sum(1 for a in all_activities if a.activity_data.get("event_type") == "meeting"),
+        "workshop": sum(1 for a in all_activities if a.activity_data.get("event_type") == "workshop"),
+        "conference": sum(1 for a in all_activities if a.activity_data.get("event_type") == "conference"),
+        "consultation": sum(1 for a in all_activities if a.activity_data.get("event_type") == "consultation"),
     }
 
     # Active partnerships list for display
@@ -637,7 +617,7 @@ def coordination_home(request):
         "active_partnerships": active_partnerships_stats,
         "coordination_activities_done": coordination_activities_done_stats,
         "planned_coordination_activities": planned_coordination_activities_stats,
-        "recent_events": recent_events,
+        "recent_events": recent_activities,  # Using WorkItem activities
         "coordination": {
             "active_partnerships": active_partnerships_list,
             "by_type": event_by_type,
@@ -1308,13 +1288,14 @@ def coordination_events(request):
 @login_required
 def coordination_view_all(request):
     """Coordination overview and reports page."""
-    from coordination.models import Event, Partnership, Organization
+    from coordination.models import Partnership, Organization
+    from common.work_item_model import WorkItem
     from django.db.models import Count
     from django.utils import timezone
     from datetime import timedelta
 
     # Get comprehensive coordination data
-    events = Event.objects.select_related("community", "organizer")
+    activities = WorkItem.objects.filter(work_type='activity')
     partnerships = Partnership.objects.select_related("lead_organization")
     organizations = Organization.objects.filter(is_active=True)
 
@@ -1337,15 +1318,16 @@ def coordination_view_all(request):
             "by_status": partnerships.values("status").annotate(count=Count("id")),
         },
         "events": {
-            "total": events.count(),
-            "upcoming": events.filter(start_date__gte=now.date()).count(),
-            "recent": events.filter(start_date__gte=last_30_days).count(),
-            "by_type": events.values("event_type").annotate(count=Count("id"))[:5],
+            "total": activities.count(),
+            "upcoming": activities.filter(start_date__gte=now.date()).count(),
+            "recent": activities.filter(start_date__gte=last_30_days).count(),
+            # Note: event_type is in activity_data JSON field, cannot use values/annotate
+            "by_type": [],  # TODO: Implement JSON field aggregation
         },
     }
 
     # Recent activity
-    recent_events = events.order_by("-created_at")[:5]
+    recent_events = activities.order_by("-created_at")[:5]
     recent_partnerships = partnerships.order_by("-created_at")[:5]
 
     context = {
@@ -1948,8 +1930,7 @@ from django.db.models import Sum
         # Import models safely
         from monitoring.models import MonitoringEntry
         from mana.models import Need
-        from coordination.models import Event
-        from common.models.staff import StaffTask
+        from common.work_item_model import WorkItem
 
         # Aggregate from all modules
         total_budget = (
@@ -1967,14 +1948,19 @@ from django.db.models import Sum
             MonitoringEntry.objects.aggregate(total=Sum("obc_slots"))["total"] or 0
         )
 
-        upcoming_events = Event.objects.filter(
+        # Get upcoming activities from WorkItem
+        upcoming_events = WorkItem.objects.filter(
+            work_type='activity',
             start_date__gte=timezone.now().date(),
             start_date__lte=timezone.now().date() + timedelta(days=7),
         ).count()
 
         current_week = timezone.now().isocalendar()[1]
-        tasks_due = StaffTask.objects.filter(
-            due_date__week=current_week, status__in=["not_started", "in_progress"]
+        # Get tasks due this week from WorkItem
+        tasks_due = WorkItem.objects.filter(
+            work_type='task',
+            due_date__week=current_week,
+            status__in=["not_started", "in_progress"]
         ).count()
 
     except Exception as e:
@@ -2083,8 +2069,7 @@ def dashboard_activity(request):
     try:
         from mana.models import Need
         from monitoring.models import MonitoringEntry
-        from common.models.staff import StaffTask
-        from coordination.models import Event
+        from common.work_item_model import WorkItem
 
         # Recent needs
         for need in Need.objects.filter(
@@ -2117,32 +2102,35 @@ def dashboard_activity(request):
                 }
             )
 
-        # Recent tasks completed
-        for task in StaffTask.objects.filter(
-            status="completed", updated_at__gte=timezone.now() - timedelta(days=30)
+        # Recent tasks completed (from WorkItem)
+        for work_item in WorkItem.objects.filter(
+            work_type='task',
+            status="completed",
+            updated_at__gte=timezone.now() - timedelta(days=30)
         ).select_related("assigned_to")[:10]:
             activities.append(
                 {
                     "icon": "fa-check-circle",
                     "color": "green",
-                    "title": f"Task completed: {task.title}",
-                    "subtitle": f'by {task.assigned_to.get_full_name() if task.assigned_to else "Unassigned"}',
-                    "timestamp": task.updated_at,
+                    "title": f"Task completed: {work_item.title}",
+                    "subtitle": f'by {work_item.assigned_to.get_full_name() if work_item.assigned_to else "Unassigned"}',
+                    "timestamp": work_item.updated_at,
                     "url": "#",
                 }
             )
 
-        # Recent events
-        for event in Event.objects.filter(
+        # Recent activities (from WorkItem)
+        for activity in WorkItem.objects.filter(
+            work_type='activity',
             created_at__gte=timezone.now() - timedelta(days=30)
         )[:10]:
             activities.append(
                 {
                     "icon": "fa-calendar",
                     "color": "purple",
-                    "title": f"Event scheduled: {event.title}",
-                    "subtitle": f'{event.start_date.strftime("%b %d, %Y")}',
-                    "timestamp": event.created_at,
+                    "title": f"Activity scheduled: {activity.title}",
+                    "subtitle": f'{activity.start_date.strftime("%b %d, %Y") if activity.start_date else "Date TBD"}',
+                    "timestamp": activity.created_at,
                     "url": "#",
                 }
             )
@@ -2207,7 +2195,7 @@ def dashboard_alerts(request):
 
     try:
         from mana.models import Need
-        from common.models.staff import StaffTask
+        from common.work_item_model import WorkItem
 
         # Unfunded needs
         unfunded = Need.objects.filter(
@@ -2225,8 +2213,9 @@ def dashboard_alerts(request):
                 }
             )
 
-        # Overdue tasks
-        overdue = StaffTask.objects.filter(
+        # Overdue tasks (from WorkItem)
+        overdue = WorkItem.objects.filter(
+            work_type='task',
             due_date__lt=timezone.now().date(),
             status__in=["not_started", "in_progress"],
         ).count()

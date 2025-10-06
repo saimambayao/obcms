@@ -1,16 +1,12 @@
 from rest_framework import serializers
 
 from .models import (
-    ActionItem,
     Communication,
     CommunicationSchedule,
     CommunicationTemplate,
     ConsultationFeedback,
     EngagementFacilitator,
     EngagementTracking,
-    Event,
-    EventDocument,
-    EventParticipant,
     Organization,
     OrganizationContact,
     Partnership,
@@ -20,6 +16,12 @@ from .models import (
     StakeholderEngagement,
     StakeholderEngagementType,
 )
+
+# Note: The following models have been removed/migrated:
+# - ActionItem: Use WorkItem with work_type='task' instead
+# - Event, EventDocument, EventParticipant: These coordination.Event models were removed
+#   Events now use WorkItem with work_type='activity'
+# See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
 
 
 class StakeholderEngagementTypeSerializer(serializers.ModelSerializer):
@@ -126,96 +128,92 @@ class CommunicationScheduleSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class EventDocumentSerializer(serializers.ModelSerializer):
-    """Serializer for EventDocument model."""
+# =============================================================================
+# DEPRECATED SERIALIZERS - Models removed and replaced by WorkItem system
+# These are commented out because the underlying models no longer exist
+# See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
+# =============================================================================
 
-    class Meta:
-        model = EventDocument
-        fields = "__all__"
-
-
-class ActionItemSerializer(serializers.ModelSerializer):
-    """Serializer for ActionItem model."""
-
-    event_title = serializers.CharField(source="event.title", read_only=True)
-    assigned_to_name = serializers.CharField(
-        source="assigned_to.get_full_name", read_only=True
-    )
-    dependency_titles = serializers.SerializerMethodField()
-
-    class Meta:
-        model = ActionItem
-        fields = "__all__"
-
-    def get_dependency_titles(self, obj):
-        return [dep.title for dep in obj.dependencies.all()]
+# class EventDocumentSerializer(serializers.ModelSerializer):
+#     """DEPRECATED: Serializer for EventDocument model."""
+#     class Meta:
+#         model = EventDocument
+#         fields = "__all__"
 
 
-class EventParticipantSerializer(serializers.ModelSerializer):
-    """Serializer for EventParticipant model."""
-
-    event_title = serializers.CharField(source="event.title", read_only=True)
-    participant_name = serializers.CharField(
-        source="participant.get_full_name", read_only=True
-    )
-
-    class Meta:
-        model = EventParticipant
-        fields = "__all__"
-
-
-class EventSerializer(serializers.ModelSerializer):
-    """Serializer for Event model."""
-
-    community_name = serializers.CharField(source="community.name", read_only=True)
-    organizer_name = serializers.CharField(
-        source="organizer.get_full_name", read_only=True
-    )
-    participants = EventParticipantSerializer(many=True, read_only=True)
-    action_items = ActionItemSerializer(many=True, read_only=True)
-    documents = EventDocumentSerializer(many=True, read_only=True)
-    participant_count = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Event
-        fields = "__all__"
-
-    def get_participant_count(self, obj):
-        return obj.participants.count()
+# class ActionItemSerializer(serializers.ModelSerializer):
+#     """DEPRECATED: Serializer for ActionItem model."""
+#     event_title = serializers.CharField(source="event.title", read_only=True)
+#     assigned_to_name = serializers.CharField(
+#         source="assigned_to.get_full_name", read_only=True
+#     )
+#     dependency_titles = serializers.SerializerMethodField()
+#     class Meta:
+#         model = ActionItem
+#         fields = "__all__"
+#     def get_dependency_titles(self, obj):
+#         return [dep.title for dep in obj.dependencies.all()]
 
 
-class EventListSerializer(serializers.ModelSerializer):
-    """Simplified serializer for Event list view."""
+# class EventParticipantSerializer(serializers.ModelSerializer):
+#     """DEPRECATED: Serializer for EventParticipant model."""
+#     event_title = serializers.CharField(source="event.title", read_only=True)
+#     participant_name = serializers.CharField(
+#         source="participant.get_full_name", read_only=True
+#     )
+#     class Meta:
+#         model = EventParticipant
+#         fields = "__all__"
 
-    community_name = serializers.CharField(source="community.name", read_only=True)
-    organizer_name = serializers.CharField(
-        source="organizer.get_full_name", read_only=True
-    )
-    participant_count = serializers.SerializerMethodField()
-    action_item_count = serializers.SerializerMethodField()
 
-    class Meta:
-        model = Event
-        fields = [
-            "id",
-            "title",
-            "event_type",
-            "community_name",
-            "organizer_name",
-            "planned_date",
-            "actual_date",
-            "status",
-            "participant_count",
-            "action_item_count",
-            "is_virtual",
-            "virtual_platform",
-        ]
+# class EventSerializer(serializers.ModelSerializer):
+#     """DEPRECATED: Serializer for Event model."""
+#     community_name = serializers.CharField(source="community.name", read_only=True)
+#     organizer_name = serializers.CharField(
+#         source="organizer.get_full_name", read_only=True
+#     )
+#     participants = EventParticipantSerializer(many=True, read_only=True)
+#     action_items = ActionItemSerializer(many=True, read_only=True)
+#     documents = EventDocumentSerializer(many=True, read_only=True)
+#     participant_count = serializers.SerializerMethodField()
+#     class Meta:
+#         model = Event
+#         fields = "__all__"
+#     def get_participant_count(self, obj):
+#         return obj.participants.count()
 
-    def get_participant_count(self, obj):
-        return obj.participants.count()
 
-    def get_action_item_count(self, obj):
-        return obj.action_items.count()
+# class EventListSerializer(serializers.ModelSerializer):
+#     """DEPRECATED: Simplified serializer for Event list view."""
+#     community_name = serializers.CharField(source="community.name", read_only=True)
+#     organizer_name = serializers.CharField(
+#         source="organizer.get_full_name", read_only=True
+#     )
+#     participant_count = serializers.SerializerMethodField()
+#     action_item_count = serializers.SerializerMethodField()
+#     class Meta:
+#         model = Event
+#         fields = [
+#             "id",
+#             "title",
+#             "event_type",
+#             "community_name",
+#             "organizer_name",
+#             "planned_date",
+#             "actual_date",
+#             "status",
+#             "participant_count",
+#             "action_item_count",
+#             "is_virtual",
+#             "virtual_platform",
+#         ]
+#     def get_participant_count(self, obj):
+#         return obj.participants.count()
+#     def get_action_item_count(self, obj):
+#         return obj.action_items.count()
+
+# End of deprecated Event serializers
+# =============================================================================
 
 
 class PartnershipDocumentSerializer(serializers.ModelSerializer):

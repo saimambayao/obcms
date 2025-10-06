@@ -1,0 +1,76 @@
+moa: "Bangsamoro Pilgrimage Authority"
+acronym: "BPA"
+ppas:
+  - title: "Capacity Building and Linkage Building Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "BPA personnel fully capacitated on Hajj management processes"
+        target: null
+    output_indicators:
+      - indicator: "Number of personnel acquiring skills on Hajj registration processes"
+        target: 10
+      - indicator: "Number of personnel with enhanced knowledge on Hajj electronic data processing"
+        target: 6
+      - indicator: "Number of personnel gaining operational knowledge on Hajj activities"
+        target: 22
+      - indicator: "Number of memoranda of agreement for Hajj partnerships forged"
+        target: 4
+    approved_budget: 12833550.00
+  - title: "Information, Education and Communication Services"
+    description: ""
+    outcome_indicators:
+      - indicator: "Bangsamoro awareness on Hajj and Umrah improved"
+        target: null
+    output_indicators:
+      - indicator: "Number of BPA officials acquiring adequate knowledge or exposure on KSA Hajj policies"
+        target: 3
+      - indicator: "Number of modules on Hajj course developed"
+        target: 1
+      - indicator: "Number of users reached and informed on Hajj and Umrah requirements"
+        target: 3000
+    approved_budget: 2913683.00
+  - title: "Hajj and Umrah Administration and Supervision Services"
+    description: ""
+    outcome_indicators:
+      - indicator: "Hajj and Umrah experience of Bangsamoro pilgrims improved"
+        target: null
+    output_indicators:
+      - indicator: "Number of clients successfully assisted in complying with passporting requirements"
+        target: 300
+      - indicator: "Number of pilgrims provided with facilitation services during departure"
+        target: 1000
+      - indicator: "Number of pilgrims provided with facilitation services during arrival"
+        target: 1000
+      - indicator: "Number of post-Hajj assessment reports prepared"
+        target: 1
+    approved_budget: 1902350.00
+  - title: "Hajj Financing and Support Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Hajj and Umrah financing support system established"
+        target: null
+    output_indicators:
+      - indicator: "Number of former combatants oriented on the Hajj process"
+        target: 150
+      - indicator: "Number of former combatants extended with financial assistance"
+        target: 150
+      - indicator: "Number of coordination activities conducted"
+        target: 5
+      - indicator: "Number of memoranda of agreement forged"
+        target: 1
+    approved_budget: 60212000.00
+special_provisions:
+  - title: "Hajj Financing and Support Program"
+    details: |
+      The amount of Sixty Million Pesos (P60,000,000.00) shall be used for the Hajj Assistance to the marginalized sectors subject to the submission of Program Implementation Plan and Guidelines, validated list of beneficiaries as approved by the Office of the Chief Minister, and quarterly status report of implementation to MFBM.
+  - title: "Hajj Technical Working Group"
+    details: |
+      The Office of the Chief Minister shall create a Hajj Technical Working Group which shall assist the Bangsamoro Pilgrimage Authority in formulating the Hajj Plan and carrying out preparations for the actual Hajj operations.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on its financial and physical accomplishments within thirty (30) days after the end of every quarter through:
+      (a) Submission of hardcopy to the MFBM;
+      (b) Submission of reports through electronic means; and
+      (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when said reports have been submitted or posted on its website to the MFBM and other offices where the submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

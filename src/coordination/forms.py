@@ -10,7 +10,6 @@ from mana.models import Assessment
 from common.models import RecurringEventPattern
 
 from .models import (
-    Event,
     Organization,
     OrganizationContact,
     Partnership,
@@ -19,6 +18,9 @@ from .models import (
     PartnershipSignatory,
     StakeholderEngagement,
 )
+
+# DEPRECATED: Event model removed - replaced by WorkItem
+# See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
 
 INPUT_CLASS = (
     "block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm "
@@ -249,18 +251,26 @@ PartnershipDocumentFormSet = inlineformset_factory(
 )
 
 
-class EventForm(forms.ModelForm):
-    """Frontend form for scheduling coordination events."""
+class EventForm(forms.Form):
+    """
+    DEPRECATED: Event model is now abstract. Use WorkItemForm instead.
 
-    auto_generate_tasks = forms.BooleanField(
-        required=False,
-        initial=False,
-        label="Auto-create preparation and follow-up tasks",
-        help_text="Automatically generate tasks for event preparation and follow-up",
-    )
+    This form is kept ONLY to prevent import errors but CANNOT be used.
+    All new code should use WorkItemForm from common.forms.work_items.
 
-    class Meta:
-        model = Event
+    See: WORKITEM_MIGRATION_COMPLETE.md
+    """
+
+    def __init__(self, *args, **kwargs):
+        raise NotImplementedError(
+            "EventForm is deprecated because Event model is abstract. "
+            "Use WorkItemForm with work_type='activity' instead. "
+            "See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md"
+        )
+
+    # Legacy Meta class preserved for reference only
+    # class Meta:
+    #     model = Event
         fields = [
             "title",
             "event_type",
@@ -334,117 +344,29 @@ class EventForm(forms.ModelForm):
             "end_time": TIME_WIDGET,
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        _apply_field_styles(self.fields)
-        self.fields["community"].queryset = OBCCommunity.objects.order_by("name")
-        self.fields["organizations"].queryset = Organization.objects.order_by("name")
-        self.fields["co_organizers"].queryset = User.objects.order_by(
-            "first_name",
-            "last_name",
-        )
-        self.fields["facilitators"].queryset = User.objects.order_by(
-            "first_name",
-            "last_name",
-        )
-        self.fields["organizer"].queryset = User.objects.order_by(
-            "first_name",
-            "last_name",
-        )
-        self.fields["related_engagement"].queryset = (
-            StakeholderEngagement.objects.order_by("-planned_date")
-        )
-        self.fields["related_assessment"].queryset = Assessment.objects.order_by(
-            "-created_at"
-        )
-        self.fields["parent_event"].queryset = Event.objects.order_by(
-            "-start_date",
-            "-start_time",
-        )
 
-        # Filter related_project to only active projects
-        try:
-            from project_central.models import ProjectWorkflow
+class EventQuickUpdateForm(forms.Form):
+    """
+    DEPRECATED: Event model is now abstract. Use WorkItemForm instead.
 
-            self.fields["related_project"].queryset = ProjectWorkflow.objects.filter(
-                current_stage__in=[
-                    "need_identification",
-                    "need_validation",
-                    "policy_linkage",
-                    "mao_coordination",
-                    "budget_planning",
-                    "approval",
-                    "implementation",
-                    "monitoring",
-                ]
-            ).select_related("primary_need").order_by("-initiated_date")
-        except Exception:
-            # Handle case where project_central is not available
-            pass
+    This form is kept ONLY to prevent import errors but CANNOT be used.
+    All new code should use WorkItemForm from common.forms.work_items.
 
-        # Make project fields conditional
-        self.fields["related_project"].required = False
-        self.fields["project_activity_type"].required = False
-
-        numeric_fields = [
-            "duration_hours",
-            "expected_participants",
-            "actual_participants",
-            "budget_allocated",
-            "actual_cost",
-        ]
-        for field_name in numeric_fields:
-            field = self.fields.get(field_name)
-            if field and isinstance(field.widget, forms.NumberInput):
-                field.widget.attrs.setdefault("min", "0")
-                if field_name == "duration_hours":
-                    field.widget.attrs.setdefault("step", "0.25")
-
-
-class EventQuickUpdateForm(forms.ModelForm):
-    """Streamlined update form rendered inside calendar modal."""
-
-    class Meta:
-        model = Event
-        fields = [
-            "title",
-            "status",
-            "priority",
-            "start_date",
-            "start_time",
-            "end_date",
-            "end_time",
-            "duration_hours",
-            "venue",
-            "address",
-            "is_virtual",
-            "virtual_platform",
-            "virtual_link",
-            "follow_up_required",
-            "follow_up_date",
-            "follow_up_notes",
-            "description",
-        ]
-        widgets = {
-            "description": forms.Textarea(attrs={"rows": 3}),
-            "address": forms.Textarea(attrs={"rows": 3}),
-            "follow_up_notes": forms.Textarea(attrs={"rows": 3}),
-            "start_date": DATE_WIDGET,
-            "end_date": DATE_WIDGET,
-            "follow_up_date": DATE_WIDGET,
-            "start_time": TIME_WIDGET,
-            "end_time": TIME_WIDGET,
-        }
+    See: WORKITEM_MIGRATION_COMPLETE.md
+    """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        _apply_field_styles(self.fields)
-        numeric_fields = ["duration_hours"]
-        for field_name in numeric_fields:
-            field = self.fields.get(field_name)
-            if field and isinstance(field.widget, forms.NumberInput):
-                field.widget.attrs.setdefault("min", "0")
-                field.widget.attrs.setdefault("step", "0.25")
+        raise NotImplementedError(
+            "EventQuickUpdateForm is deprecated because Event model is abstract. "
+            "Use WorkItemForm with work_type='activity' instead. "
+            "See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md"
+        )
+
+    # Legacy Meta preserved for reference only
+    # class Meta:
+    #     model = Event
+    #     fields = ["title", "status", "priority", ...]
+    #     widgets = {...}
 
 
 class StakeholderEngagementForm(forms.ModelForm):

@@ -69,7 +69,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
             <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Total Contacts</p>
             <p class="mt-2 text-3xl font-bold text-gray-900">{{ contacts|length }}</p>
@@ -79,6 +79,11 @@
             <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Related Partnerships</p>
             <p class="mt-2 text-3xl font-bold text-gray-900">{{ total_partnerships }}</p>
             <p class="mt-3 text-sm text-gray-500">{{ led_partnerships|length }} led • {{ member_partnerships|length }} participating</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+            <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">MOA PPAs Recorded</p>
+            <p class="mt-2 text-3xl font-bold text-gray-900">{{ moa_ppas_count }}</p>
+            <p class="mt-3 text-sm text-gray-500">Projects and activities tagged under this MOA.</p>
         </div>
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
             <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Partnership Level</p>
@@ -240,10 +245,10 @@
             </div>
             {% endif %}
 
-            {% if organization.notes %}
+            {% if organization_notes_display %}
             <div>
                 <dt class="text-sm font-semibold text-gray-600">Notes</dt>
-                <dd class="mt-2 text-sm text-gray-700 whitespace-pre-line">{{ organization.notes }}</dd>
+                <dd class="mt-2 text-sm text-gray-700 whitespace-pre-line">{{ organization_notes_display }}</dd>
             </div>
             {% endif %}
         </div>
@@ -380,5 +385,8 @@
             </div>
         </div>
     </section>
+</div>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+    {% include "coordination/partials/moa_ppas_table.html" with moa_ppas=moa_ppas moa_ppas_count=moa_ppas_count organization=organization moa_ppas_total_budget=moa_ppas_total_budget moa_special_text=moa_special_provisions_text ppa_special_items=ppa_special_provisions %}
 </div>
 {% endblock %}

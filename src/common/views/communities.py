@@ -8,7 +8,16 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Sum
+from django.db.models import (
+    Case,
+    F,
+    IntegerField,
+    OuterRef,
+    Subquery,
+    Sum,
+    When,
+)
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -28,13 +37,26 @@ DEFAULT_MAP_CENTER = (7.1907, 125.4553, 6)
 PAGE_SIZE_OPTIONS = (10, 25, 50)
 
 
+def _sanitize_filter_value(value: Optional[str]) -> Optional[str]:
+    """Normalize GET parameters coming from selects that emit the string "None"."""
+
+    if value is None:
+        return None
+
+    normalized = str(value).strip()
+    if normalized.lower() in {"", "none", "null", "undefined"}:
+        return None
+
+    return normalized
+
+
 def _sync_hierarchical_coverages(municipality):
     """Ensure municipality and province coverage records reflect barangay changes."""
 
     if municipality is None:
         return
 
-    from communities.models import MunicipalityCoverage, ProvinceCoverage
+    from communities.models import MunicipalityCoverage, OBCCommunity, ProvinceCoverage
 
     coverage = MunicipalityCoverage.sync_for_municipality(municipality)
     province = municipality.province
@@ -379,7 +401,7 @@ def communities_add(request):
 @login_required
 def communities_add_municipality(request):
     """Record a municipality or city with Bangsamoro communities."""
-    from communities.models import MunicipalityCoverage, ProvinceCoverage
+    from communities.models import MunicipalityCoverage, OBCCommunity, ProvinceCoverage
 
     if request.method == "POST":
         form = MunicipalityCoverageForm(request.POST)
@@ -479,9 +501,10 @@ def communities_manage(request):
         "municipality__name",
     )
 
-    region_filter = request.GET.get("region")
-    province_filter = request.GET.get("province")
-    search_query = request.GET.get("search")
+    region_filter = _sanitize_filter_value(request.GET.get("region"))
+    province_filter = _sanitize_filter_value(request.GET.get("province"))
+    municipality_filter = _sanitize_filter_value(request.GET.get("municipality"))
+    search_query = _sanitize_filter_value(request.GET.get("search"))
 
     if region_filter:
         communities = communities.filter(
@@ -499,6 +522,12 @@ def communities_manage(request):
             municipality__province__id=province_filter
         )
 
+    if municipality_filter:
+        communities = communities.filter(barangay__municipality__id=municipality_filter)
+        municipality_coverages = municipality_coverages.filter(
+            municipality__id=municipality_filter
+        )
+
     if search_query:
         communities = communities.filter(
             Q(barangay__name__icontains=search_query)
@@ -513,13 +542,15 @@ def communities_manage(request):
             | Q(key_barangays__icontains=search_query)
         )
 
-    regions = Region.objects.all().order_by("name")
+    regions = Region.objects.filter(is_active=True).order_by("name")
 
     # Get provinces and prepare client-side filtering metadata
     from ..models import Province
 
-    base_provinces_qs = Province.objects.select_related("region").order_by(
-        "region__name", "name"
+    base_provinces_qs = (
+        Province.objects.select_related("region")
+        .filter(is_active=True, region__is_active=True)
+        .order_by("region__name", "name")
     )
     provinces = base_provinces_qs
     if region_filter:
@@ -536,6 +567,37 @@ def communities_manage(request):
     ]
 
     province_options_json = json.dumps(province_options, cls=DjangoJSONEncoder)
+
+    base_municipalities_qs = (
+        Municipality.objects.select_related("province__region")
+        .filter(
+            is_active=True,
+            province__is_active=True,
+            province__region__is_active=True,
+        )
+        .order_by("province__name", "name")
+    )
+
+    municipalities = base_municipalities_qs
+    if region_filter:
+        municipalities = municipalities.filter(province__region__id=region_filter)
+    if province_filter:
+        municipalities = municipalities.filter(province__id=province_filter)
+
+    municipality_options = [
+        {
+            "id": str(municipality.id),
+            "name": municipality.name,
+            "province_id": str(municipality.province_id),
+            "province_name": municipality.province.name,
+            "region_id": str(municipality.province.region_id),
+        }
+        for municipality in base_municipalities_qs
+    ]
+
+    municipality_options_json = json.dumps(
+        municipality_options, cls=DjangoJSONEncoder
+    )
 
     total_barangay_obcs = communities.count()
     total_barangay_population = (
@@ -580,6 +642,7 @@ def communities_manage(request):
             "icon": "fas fa-users",
             "gradient": "from-blue-500 via-blue-600 to-blue-700",
             "text_color": "text-blue-100",
+            "icon_color": "text-blue-600",
         },
         {
             "title": "Total OBC Population from Barangays",
@@ -587,6 +650,7 @@ def communities_manage(request):
             "icon": "fas fa-user-friends",
             "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
             "text_color": "text-emerald-100",
+            "icon_color": "text-emerald-600",
         },
         {
             "title": "Total Municipalities OBCs in the Database",
@@ -594,6 +658,7 @@ def communities_manage(request):
             "icon": "fas fa-city",
             "gradient": "from-purple-500 via-purple-600 to-purple-700",
             "text_color": "text-purple-100",
+            "icon_color": "text-purple-600",
         },
     ]
 
@@ -601,6 +666,39 @@ def communities_manage(request):
     stat_cards_grid_class = (
         f"mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-{lg_columns} gap-6"
     )
+
+    page_title = "Manage Barangay OBC"
+    page_description = (
+        "View, edit, and manage barangay-level Bangsamoro coverage data"
+    )
+
+    hero_config = {
+        "badge_icon": "fas fa-database",
+        "badge_text": "OBC Data - Barangay",
+        "icon": "fas fa-map",
+        "title": page_title,
+        "subtitle": page_description,
+        "level_summary": (
+            "Barangay-level coverage consolidates community rosters, local leadership,"
+            " and frontline service readiness for every OBC community in BARMM."
+        ),
+        "meta_cards": [],
+        "metrics": [],
+        "actions": [
+            {
+                "href": reverse("common:communities_add"),
+                "label": "Add barangay OBC",
+                "icon": "fas fa-plus",
+                "variant": "primary",
+            },
+            {
+                "href": reverse("common:communities_manage_municipal"),
+                "label": "Go to municipal view",
+                "icon": "fas fa-landmark",
+                "variant": "ghost",
+            },
+        ],
+    }
 
     context = {
         "communities": communities_page,
@@ -626,8 +724,17 @@ def communities_manage(request):
         "municipality_total_pages": max(municipality_page.paginator.num_pages, 1),
         "barangay_base_querystring": barangay_base_querystring,
         "municipality_base_querystring": municipality_base_querystring,
+        "page_title": page_title,
+        "page_description": page_description,
+        "hero_config": hero_config,
+        "municipalities": municipalities,
+        "current_municipality": municipality_filter,
+        "municipality_options_json": municipality_options_json,
     }
-    return render(request, "communities/communities_manage.html", context)
+    template_name = "communities/communities_manage.html"
+    if request.headers.get("HX-Request"):
+        template_name = "communities/partials/barangay_manage_results.html"
+    return render(request, template_name, context)
 
 
 @login_required
@@ -635,7 +742,7 @@ def communities_manage_municipal(request):
     """Manage municipality-level OBC coverage."""
     from django.db.models import Count, Q
 
-    from communities.models import MunicipalityCoverage, ProvinceCoverage
+    from communities.models import MunicipalityCoverage, OBCCommunity, ProvinceCoverage
 
     show_archived = request.GET.get("archived") == "1"
 
@@ -655,12 +762,18 @@ def communities_manage_municipal(request):
         "municipality__name",
     )
 
+    coverages = coverages.filter(
+        municipality__is_active=True,
+        municipality__province__is_active=True,
+        municipality__province__region__is_active=True,
+    )
+
     if show_archived:
         coverages = coverages.filter(is_deleted=True)
 
-    region_filter = request.GET.get("region")
-    province_filter = request.GET.get("province")
-    search_query = request.GET.get("search")
+    region_filter = _sanitize_filter_value(request.GET.get("region"))
+    province_filter = _sanitize_filter_value(request.GET.get("province"))
+    search_query = _sanitize_filter_value(request.GET.get("search"))
 
     if region_filter:
         coverages = coverages.filter(municipality__province__region__id=region_filter)
@@ -676,13 +789,15 @@ def communities_manage_municipal(request):
             | Q(key_barangays__icontains=search_query)
         )
 
-    regions = Region.objects.all().order_by("name")
+    regions = Region.objects.filter(is_active=True).order_by("name")
 
     # Get provinces and prepare client-side filtering metadata
     from ..models import Province
 
-    base_provinces_qs = Province.objects.select_related("region").order_by(
-        "region__name", "name"
+    base_provinces_qs = (
+        Province.objects.select_related("region")
+        .filter(is_active=True, region__is_active=True)
+        .order_by("region__name", "name")
     )
     provinces = base_provinces_qs
     if region_filter:
@@ -701,8 +816,35 @@ def communities_manage_municipal(request):
     province_options_json = json.dumps(province_options, cls=DjangoJSONEncoder)
 
     total_coverages = coverages.count()
+    barangay_population_subquery = (
+        OBCCommunity.objects.filter(
+            barangay__municipality=OuterRef("municipality")
+        )
+        .values("barangay__municipality")
+        .annotate(total=Sum("estimated_obc_population"))
+        .values("total")
+    )
+
+    coverages_with_population = coverages.annotate(
+        barangay_population=Coalesce(
+            Subquery(barangay_population_subquery, output_field=IntegerField()), 0
+        )
+    )
+
     total_population = (
-        coverages.aggregate(total=Sum("estimated_obc_population"))["total"] or 0
+        coverages_with_population.aggregate(
+            total=Sum(
+                Case(
+                    When(
+                        estimated_obc_population__isnull=False,
+                        then="estimated_obc_population",
+                    ),
+                    default=F("barangay_population"),
+                    output_field=IntegerField(),
+                )
+            )
+        )["total"]
+        or 0
     )
     total_communities = (
         coverages.aggregate(total=Sum("total_obc_communities"))["total"] or 0
@@ -729,6 +871,7 @@ def communities_manage_municipal(request):
             "icon": "fas fa-city",
             "gradient": "from-blue-500 via-blue-600 to-blue-700",
             "text_color": "text-blue-100",
+            "icon_color": "text-blue-600",
         },
         {
             "title": (
@@ -740,6 +883,7 @@ def communities_manage_municipal(request):
             "icon": "fas fa-users",
             "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
             "text_color": "text-emerald-100",
+            "icon_color": "text-emerald-600",
         },
         {
             "title": "Auto-Synced Municipalities",
@@ -747,6 +891,7 @@ def communities_manage_municipal(request):
             "icon": "fas fa-sync-alt",
             "gradient": "from-purple-500 via-purple-600 to-purple-700",
             "text_color": "text-purple-100",
+            "icon_color": "text-purple-600",
         },
         {
             "title": "Manually Updated Municipalities",
@@ -754,6 +899,7 @@ def communities_manage_municipal(request):
             "icon": "fas fa-edit",
             "gradient": "from-orange-500 via-orange-600 to-orange-700",
             "text_color": "text-orange-100",
+            "icon_color": "text-orange-500",
         },
     ]
 
@@ -765,6 +911,54 @@ def communities_manage_municipal(request):
         if show_archived
         else "View, edit, and manage municipality-level Bangsamoro coverage data"
     )
+
+    badge_text = (
+        "OBC Data - Municipal (Archived)"
+        if show_archived
+        else "OBC Data - Municipal"
+    )
+
+    hero_config = {
+        "badge_icon": "fas fa-landmark",
+        "badge_text": badge_text,
+        "icon": "fas fa-city",
+        "title": page_title,
+        "subtitle": page_description,
+        "level_summary": (
+            "Municipal-level coverage aggregates barangay submissions to map OBC"
+            " presence, staffing, and active programs across each LGU."
+        ),
+        "meta_cards": [],
+        "metrics": [],
+        "actions": [
+            {
+                "href": (
+                    reverse("common:communities_manage_municipal")
+                    if show_archived
+                    else f"{reverse('common:communities_manage_municipal')}?archived=1"
+                ),
+                "label": (
+                    "Back to active records"
+                    if show_archived
+                    else "View archived records"
+                ),
+                "icon": "fas fa-archive" if not show_archived else "fas fa-list",
+                "variant": "secondary",
+            },
+            {
+                "href": reverse("common:communities_add_municipality"),
+                "label": "Add municipal OBC",
+                "icon": "fas fa-plus",
+                "variant": "primary",
+            },
+            {
+                "href": reverse("common:communities_manage_provincial"),
+                "label": "Go to provincial view",
+                "icon": "fas fa-flag",
+                "variant": "ghost",
+            },
+        ],
+    }
 
     page_size = _resolve_page_size(request, "municipality_page_size")
     page_number = request.GET.get("municipality_page") or 1
@@ -792,12 +986,16 @@ def communities_manage_municipal(request):
         "show_archived": show_archived,
         "page_title": page_title,
         "page_description": page_description,
+        "hero_config": hero_config,
         "municipality_page_size": page_size,
         "municipality_page_size_options": PAGE_SIZE_OPTIONS,
         "municipality_base_querystring": coverage_base_querystring,
         "municipality_total_pages": max(coverages_page.paginator.num_pages, 1),
     }
-    return render(request, "communities/municipal_manage.html", context)
+    template_name = "communities/municipal_manage.html"
+    if request.headers.get("HX-Request"):
+        template_name = "communities/partials/municipal_manage_results.html"
+    return render(request, template_name, context)
 
 
 @login_required
@@ -820,6 +1018,11 @@ def communities_manage_provincial(request):
     ).order_by(
         "province__region__name",
         "province__name",
+    )
+
+    coverages = coverages.filter(
+        province__is_active=True,
+        province__region__is_active=True,
     )
 
     if show_archived:
@@ -852,9 +1055,9 @@ def communities_manage_provincial(request):
             # If no participant account, show nothing
             coverages = coverages.none()
 
-    region_filter = request.GET.get("region")
-    province_filter = request.GET.get("province")
-    search_query = request.GET.get("search")
+    region_filter = _sanitize_filter_value(request.GET.get("region"))
+    province_filter = _sanitize_filter_value(request.GET.get("province"))
+    search_query = _sanitize_filter_value(request.GET.get("search"))
 
     if region_filter:
         coverages = coverages.filter(province__region__id=region_filter)
@@ -870,14 +1073,16 @@ def communities_manage_provincial(request):
             | Q(key_municipalities__icontains=search_query)
         )
 
-    regions = Region.objects.all().order_by("name")
+    regions = Region.objects.filter(is_active=True).order_by("name")
 
     # For MANA participants, only show their region
     if is_mana_participant and participant_region:
         regions = regions.filter(id=participant_region.id)
 
-    base_provinces_qs = Province.objects.select_related("region").order_by(
-        "region__name", "name"
+    base_provinces_qs = (
+        Province.objects.select_related("region")
+        .filter(is_active=True, region__is_active=True)
+        .order_by("region__name", "name")
     )
 
     # For MANA participants, only show provinces in their region
@@ -933,6 +1138,7 @@ def communities_manage_provincial(request):
             "icon": "fas fa-flag",
             "gradient": "from-blue-500 via-blue-600 to-blue-700",
             "text_color": "text-blue-100",
+            "icon_color": "text-blue-600",
         },
         {
             "title": (
@@ -944,6 +1150,7 @@ def communities_manage_provincial(request):
             "icon": "fas fa-users",
             "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
             "text_color": "text-emerald-100",
+            "icon_color": "text-emerald-600",
         },
         {
             "title": "Auto-Synced Provinces",
@@ -951,6 +1158,7 @@ def communities_manage_provincial(request):
             "icon": "fas fa-sync-alt",
             "gradient": "from-purple-500 via-purple-600 to-purple-700",
             "text_color": "text-purple-100",
+            "icon_color": "text-purple-600",
         },
         {
             "title": "Manually Updated Provinces",
@@ -958,6 +1166,7 @@ def communities_manage_provincial(request):
             "icon": "fas fa-edit",
             "gradient": "from-orange-500 via-orange-600 to-orange-700",
             "text_color": "text-orange-100",
+            "icon_color": "text-orange-500",
         },
     ]
 
@@ -971,6 +1180,54 @@ def communities_manage_provincial(request):
         if show_archived
         else "View, edit, and manage province-level Bangsamoro coverage data"
     )
+
+    badge_text = (
+        "OBC Data - Provincial (Archived)"
+        if show_archived
+        else "OBC Data - Provincial"
+    )
+
+    hero_config = {
+        "badge_icon": "fas fa-flag",
+        "badge_text": badge_text,
+        "icon": "fas fa-map",
+        "title": page_title,
+        "subtitle": page_description,
+        "level_summary": (
+            "Provincial-level coverage delivers a strategic view of OBC reach,"
+            " resource deployments, and coordination rhythms across BARMM."
+        ),
+        "meta_cards": [],
+        "metrics": [],
+        "actions": [
+            {
+                "href": (
+                    reverse("common:communities_manage_provincial")
+                    if show_archived
+                    else f"{reverse('common:communities_manage_provincial')}?archived=1"
+                ),
+                "label": (
+                    "Back to active records"
+                    if show_archived
+                    else "View archived records"
+                ),
+                "icon": "fas fa-list" if show_archived else "fas fa-archive",
+                "variant": "secondary",
+            },
+            {
+                "href": reverse("common:communities_add_province"),
+                "label": "Add provincial OBC",
+                "icon": "fas fa-plus",
+                "variant": "primary",
+            },
+            {
+                "href": reverse("common:communities_manage_municipal"),
+                "label": "Go to municipal view",
+                "icon": "fas fa-city",
+                "variant": "ghost",
+            },
+        ],
+    }
 
     page_size = _resolve_page_size(request, "province_page_size")
     page_number = request.GET.get("province_page") or 1
@@ -998,19 +1255,26 @@ def communities_manage_provincial(request):
         "show_archived": show_archived,
         "page_title": page_title,
         "page_description": page_description,
+        "hero_config": hero_config,
         "province_page_size": page_size,
         "province_page_size_options": PAGE_SIZE_OPTIONS,
         "province_base_querystring": coverage_base_querystring,
         "province_total_pages": max(coverages_page.paginator.num_pages, 1),
     }
-    return render(request, "communities/provincial_manage.html", context)
+    template_name = "communities/provincial_manage.html"
+    if request.headers.get("HX-Request"):
+        template_name = "communities/partials/provincial_manage_results.html"
+    return render(request, template_name, context)
 
 
 @login_required
 def communities_view(request, community_id):
     """Display a read-only view of a barangay-level OBC community."""
+    from django.db.models import Q
+
     from communities.models import MunicipalityCoverage, OBCCommunity
     from monitoring.models import MonitoringEntry
+    from recommendations.policy_tracking.models import PolicyRecommendation
 
     community = get_object_or_404(
         OBCCommunity.all_objects.select_related(
@@ -1046,10 +1310,50 @@ def communities_view(request, community_id):
         .order_by("-created_at")[:10]
     )
 
+    # Query recommendations tagged to this barangay OBC or its administrative parents
+    location_filters = Q(target_communities=community)
+
+    if getattr(community, "barangay", None):
+        barangay = community.barangay
+        municipality = getattr(barangay, "municipality", None)
+        province = getattr(municipality, "province", None) if municipality else None
+        region = getattr(province, "region", None) if province else None
+
+        location_filters |= Q(target_barangay=barangay)
+
+        if municipality:
+            location_filters |= Q(target_municipality=municipality)
+            location_filters |= Q(target_barangay__municipality=municipality)
+            location_filters |= Q(target_communities__barangay__municipality=municipality)
+
+        if province:
+            location_filters |= Q(target_province=province)
+            location_filters |= Q(target_municipality__province=province)
+            location_filters |= Q(target_barangay__municipality__province=province)
+            location_filters |= Q(target_communities__barangay__municipality__province=province)
+
+        if region:
+            location_filters |= Q(target_region=region)
+
+    recommendations = (
+        PolicyRecommendation.objects.filter(location_filters)
+        .select_related(
+            "proposed_by",
+            "target_region",
+            "target_province",
+            "target_municipality",
+            "target_barangay",
+        )
+        .prefetch_related("target_communities__barangay__municipality")
+        .order_by("-created_at")
+        .distinct()[:10]
+    )
+
     context = {
         "community": community,
         "municipality_coverage": municipality_coverage,
         "moa_ppas": moa_ppas,
+        "recommendations": recommendations,
         "delete_review_mode": delete_review_mode,
         "is_archived": community.is_deleted,
         "redirect_after_action": redirect_after_action,
@@ -1066,8 +1370,11 @@ def communities_view(request, community_id):
 @login_required
 def communities_view_municipal(request, coverage_id):
     """Display a read-only view of a municipal-level OBC coverage."""
+    from django.db.models import Q
+
     from communities.models import MunicipalityCoverage, OBCCommunity
     from monitoring.models import MonitoringEntry
+    from recommendations.policy_tracking.models import PolicyRecommendation
 
     coverage = get_object_or_404(
         MunicipalityCoverage.all_objects.select_related(
@@ -1103,10 +1410,43 @@ def communities_view_municipal(request, coverage_id):
         .order_by("-created_at")[:10]
     )
 
+    # Query recommendations tagged to this municipality or its administrative parents/children
+    municipality = coverage.municipality
+    province = municipality.province
+    region = province.region if province else None
+
+    location_filters = Q(target_municipality=municipality)
+    location_filters |= Q(target_barangay__municipality=municipality)
+    location_filters |= Q(target_communities__barangay__municipality=municipality)
+
+    if province:
+        location_filters |= Q(target_province=province)
+        location_filters |= Q(target_municipality__province=province)
+        location_filters |= Q(target_barangay__municipality__province=province)
+        location_filters |= Q(target_communities__barangay__municipality__province=province)
+
+    if region:
+        location_filters |= Q(target_region=region)
+
+    recommendations = (
+        PolicyRecommendation.objects.filter(location_filters)
+        .select_related(
+            "proposed_by",
+            "target_region",
+            "target_province",
+            "target_municipality",
+            "target_barangay",
+        )
+        .prefetch_related("target_communities__barangay")
+        .order_by("-created_at")
+        .distinct()[:10]
+    )
+
     context = {
         "coverage": coverage,
         "related_communities": related_communities,
         "moa_ppas": moa_ppas,
+        "recommendations": recommendations,
         "delete_review_mode": delete_review_mode,
         "is_archived": coverage.is_deleted,
         "redirect_after_action": redirect_after_action,
@@ -1123,6 +1463,8 @@ def communities_view_municipal(request, coverage_id):
 @login_required
 def communities_view_provincial(request, coverage_id):
     """Display a read-only view of a province-level OBC coverage."""
+    from django.db.models import Q
+
     from communities.models import MunicipalityCoverage, OBCCommunity, ProvinceCoverage
     from django.core.exceptions import PermissionDenied
 
@@ -1181,6 +1523,7 @@ def communities_view_provincial(request, coverage_id):
 
     # Query MOA/PPAs attributed to this province
     from monitoring.models import MonitoringEntry
+    from recommendations.policy_tracking.models import PolicyRecommendation
 
     moa_ppas = (
         MonitoringEntry.objects.filter(
@@ -1191,11 +1534,41 @@ def communities_view_provincial(request, coverage_id):
         .order_by("-created_at")[:10]
     )
 
+    # Query recommendations tagged to this province or its administrative ancestors/descendants
+    province = coverage.province
+    region = province.region if province else None
+
+    location_filters = Q(target_province=province)
+    location_filters |= Q(target_municipality__province=province)
+    location_filters |= Q(target_barangay__municipality__province=province)
+    location_filters |= Q(target_communities__barangay__municipality__province=province)
+
+    if region:
+        location_filters |= Q(target_region=region)
+
+    recommendations = (
+        PolicyRecommendation.objects.filter(location_filters)
+        .select_related(
+            "proposed_by",
+            "target_region",
+            "target_province",
+            "target_municipality",
+            "target_barangay",
+        )
+        .prefetch_related(
+            "target_communities__barangay__municipality",
+            "target_communities__barangay__municipality__province",
+        )
+        .order_by("-created_at")
+        .distinct()[:10]
+    )
+
     context = {
         "coverage": coverage,
         "related_municipal_coverages": related_municipal_coverages,
         "related_communities": related_communities,
         "moa_ppas": moa_ppas,
+        "recommendations": recommendations,
         "delete_review_mode": delete_review_mode,
         "is_archived": coverage.is_deleted,
         "redirect_after_action": redirect_after_action,

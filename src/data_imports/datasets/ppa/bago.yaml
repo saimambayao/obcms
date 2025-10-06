@@ -1,0 +1,53 @@
+moa: "Bangsamoro Attorney-General's Office"
+acronym: "BAGO"
+ppas:
+  - title: "BAGO Legal Services"
+    description: "Consolidated legal services program encompassing litigation, advisory, community legal aid, Shari'ah strengthening, and intergovernmental coordination mandates of the Bangsamoro Attorney-General's Office."
+    outcome_indicators:
+      - indicator: "Case Litigation: Percentage of awards or recommendations in support to quasi-judicial services provided and adopted by the implementing agency"
+        target: "95%"
+      - indicator: "Legal Opinions and Advice: Percentage of legal opinions issued rated as responsive by the clients"
+        target: "95%"
+      - indicator: "Legal Opinions and Advice: Percentage of legal advice provided and accepted by the clients"
+        target: "95%"
+      - indicator: "Other Legal Services: Percentage of Legal Liaison Network members actively participating"
+        target: "95%"
+      - indicator: "Other Legal Services: Percentage of clients who rated the BAGO Community Legal Services as satisfactory or higher"
+        target: "95%"
+      - indicator: "Shari'ah Strengthening Program: Percentage of policy recommendations considered by policymakers"
+        target: "95%"
+      - indicator: "Intergovernmental Relations Services: Percentage of participants to meetings or coordinations who rated the IGR secretariat support as satisfactory or higher"
+        target: "95%"
+    output_indicators:
+      - indicator: "Case Litigation: Percentage of legal documents filed within the reglementary period"
+        target: "95%"
+      - indicator: "Case Litigation: Percentage of court appearances made as scheduled"
+        target: "95%"
+      - indicator: "Case Litigation: Percentage of preliminary investigation reports submitted within the period allowed by law"
+        target: "95%"
+      - indicator: "Legal Opinions and Advice: Percentage of requests for legal opinion acted upon"
+        target: "95%"
+      - indicator: "Legal Opinions and Advice: Percentage of client conferences conducted as scheduled"
+        target: "95%"
+      - indicator: "Other Legal Services: Number of Legal Liaison Network assemblies conducted"
+        target: 2
+      - indicator: "Other Legal Services: Number of clients served during the community legal service"
+        target: 200
+      - indicator: "Shari'ah Strengthening Program: Number of policy recommendations put forward"
+        target: 3
+      - indicator: "Shari'ah Strengthening Program: Number of stakeholders consulted"
+        target: 30
+      - indicator: "Intergovernmental Relations Services: Number of Intergovernmental Relations Body meetings provided with technical secretariat services"
+        target: 6
+      - indicator: "Intergovernmental Relations Services: Number of briefers and other technical documents prepared"
+        target: 24
+    approved_budget: 34001249.00
+special_provisions:
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on its financial and physical accomplishments within thirty (30) days after the end of every quarter through:
+      (a) Submission of hardcopy to the MFBM;
+      (b) Submission of reports through electronic means; and
+      (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when said reports have been submitted or posted on its website to the MFBM and other offices where the submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

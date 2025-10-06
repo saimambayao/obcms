@@ -17,7 +17,7 @@ class LocationCentroidViewTests(TestCase):
             email="tester@example.com",
             password="password123",
         )
-        self.client.login(username="centroid-tester", password="password123")
+        self.client.force_login(self.user)
 
     def test_returns_existing_coordinates(self):
         region = Region.objects.create(

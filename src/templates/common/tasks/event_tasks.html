@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static task_tags %}
 
 {% block title %}Tasks for {{ event.title }} - OBC Management System{% endblock %}
 
@@ -44,11 +44,11 @@
                 <i class="fas fa-arrow-left mr-2"></i>
                 Back to Events
             </a>
-            <a href="{% url 'common:staff_task_modal_create' %}"
+            <a href="{% url 'common:work_item_create' %}"
                data-modal-link
                class="inline-flex items-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
                 <i class="fas fa-plus mr-2"></i>
-                New Task
+                New Work Item
             </a>
         </div>
     </div>
@@ -176,7 +176,8 @@
                                     {% if task.status == 'completed' %}disabled{% endif %}>
                                     <i class="fas fa-check"></i>
                                 </button>
-                                <a href="{% url 'common:staff_task_modal' task.id %}"
+                                {% task_action_url task 'detail' as event_task_url %}
+                                <a href="{{ event_task_url }}"
                                    data-modal-link
                                    class="text-gray-600 hover:text-gray-800 text-sm font-medium">
                                     <i class="fas fa-eye"></i>
@@ -193,7 +194,7 @@
     <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-12 text-center">
         <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
         <p class="text-gray-500 text-lg mb-4">No tasks found for this event.</p>
-        <a href="{% url 'common:staff_task_modal_create' %}" data-modal-link class="inline-flex items-center text-emerald-600 hover:text-emerald-700 font-medium">
+        <a href="{% url 'common:work_item_create' %}" data-modal-link class="inline-flex items-center text-emerald-600 hover:text-emerald-700 font-medium">
             <i class="fas fa-plus mr-2"></i>
             Create event task
         </a>

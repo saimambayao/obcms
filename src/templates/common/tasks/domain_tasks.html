@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static task_tags %}
 
 {% block title %}{{ domain_display }} Tasks - OBC Management System{% endblock %}
 
@@ -32,11 +32,11 @@
             </p>
         </div>
         <div class="flex items-center gap-3">
-            <a href="{% url 'common:staff_task_modal_create' %}"
+            <a href="{% url 'common:work_item_create' %}"
                data-modal-link
                class="inline-flex items-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
                 <i class="fas fa-plus mr-2"></i>
-                New Task
+                New Work Item
             </a>
         </div>
     </div>
@@ -141,7 +141,8 @@
                                     {% elif task.status == 'at_risk' %}bg-rose-500 animate-pulse
                                     {% else %}bg-gray-300{% endif %}"></span>
                                 <div>
-                                    <a href="{% url 'common:staff_task_modal' task.id %}" data-modal-link class="text-sm font-medium text-gray-900 hover:text-emerald-600">
+                                    {% task_action_url task 'detail' as domain_task_url %}
+                                    <a href="{{ domain_task_url }}" data-modal-link class="text-sm font-medium text-gray-900 hover:text-emerald-600">
                                         {{ task.title }}
                                     </a>
                                     {% if task.description %}
@@ -204,9 +205,9 @@
         <div class="px-6 py-12 text-center">
             <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
             <p class="text-gray-500 text-lg">No tasks found for this domain.</p>
-            <a href="{% url 'common:staff_task_modal_create' %}" data-modal-link class="inline-flex items-center mt-4 text-emerald-600 hover:text-emerald-700 font-medium">
+            <a href="{% url 'common:work_item_create' %}" data-modal-link class="inline-flex items-center mt-4 text-emerald-600 hover:text-emerald-700 font-medium">
                 <i class="fas fa-plus mr-2"></i>
-                Create your first task
+                Create your first work item
             </a>
         </div>
         {% endif %}

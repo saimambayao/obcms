@@ -1,0 +1,99 @@
+moa: "Ministry of Human Settlements and Development"
+acronym: "MHSD"
+ppas:
+  - title: "Housing and Human Settlement Development Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Housing resettlement production: percentage decrease of households with no access to decent housing"
+        target: "0.13%"
+      - indicator: "Community support service: percentage of beneficiaries awarded with housing units"
+        target: "100%"
+      - indicator: "Estate management: percentage of hectares of land acquired with permits for resettlement housing projects"
+        target: "100%"
+      - indicator: "Housing loan management: percentage of hectares of land acquired with permits for housing loan projects"
+        target: "100%"
+    output_indicators:
+      - indicator: "Housing production: number of housing units constructed"
+        target: 400
+      - indicator: "Community support: beneficiaries profiled"
+        target: 400
+      - indicator: "Community support: beneficiaries validated"
+        target: 400
+      - indicator: "Community support: beneficiaries awarded"
+        target: 200
+      - indicator: "Estate management: number of land surveyed"
+        target: 8
+      - indicator: "Estate management: hectares acquired"
+        target: 8
+      - indicator: "Loan management: number of housing loan units at Phase II turnovered"
+        target: 193
+    approved_budget: 457083512.00
+  - title: "Housing Regulation and Land Use Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Technical assistance: percentage of technical assistance provided to increase LGU capacity on CLUP/ZO"
+        target: "16.90%"
+      - indicator: "LUUDeP: percentage of assistance to SUC on LUDIP preparation"
+        target: "100%"
+      - indicator: "HRED: percentage of certificate of registration or license to sell applications acted upon"
+        target: "100%"
+      - indicator: "HOACD: percentage of approved HOA registration"
+        target: "100%"
+    output_indicators:
+      - indicator: "Technical assistance to LGUs on CLUP/ZO"
+        target: 12
+      - indicator: "LUUDeP: assistance to SUC on LUDIP"
+        target: 1
+      - indicator: "LUUDeP: training on GIS mapping to LGUs"
+        target: 3
+      - indicator: "HRED: certificates of registration and/or license to sell issued"
+        target: 8
+      - indicator: "HOACD: approved HOA certificates of registration"
+        target: 5
+    approved_budget: 10869315.00
+  - title: "Policy Development and Coordination Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Policy research and formulation: percentage of policy research agenda presented to the Parliament"
+        target: "100%"
+      - indicator: "Policy development and coordination: percentage of LGUs with increased awareness on devolved functions related to CLUP/ZO"
+        target: "26%"
+    output_indicators:
+      - indicator: "Policy research and events conducted"
+        target: 4
+      - indicator: "LGUs capacitated on devolved functions"
+        target: 10
+      - indicator: "Policy coordination engagements with stakeholders"
+        target: 2
+    approved_budget: 4276999.00
+  - title: "Monitoring and Evaluation Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of monitoring and evaluation system institutionalized"
+        target: "100%"
+      - indicator: "Percentage of real estate, land use, and human settlement initiatives, policies and laws reinforced"
+        target: "55%"
+    output_indicators:
+      - indicator: "Monitoring and evaluation on housing and human settlements projects conducted"
+        target: 30
+      - indicator: "Collaboration drives on enforcement of policies conducted"
+        target: 6
+      - indicator: "Evaluation activities on collected shelter information"
+        target: 5
+      - indicator: "Monitoring on outcome of response and recovery efforts"
+        target: 3
+    approved_budget: 4326250.00
+special_provisions:
+  - title: "Housing and Human Settlement Development Program"
+    details: |
+      Four Hundred Twenty-Two Million Eleven Thousand Four Hundred Pesos (P422,011,400.00) shall be utilized subject to Program Implementation Plan and Guidelines and submission of common engineering documents to MFBM, covering:
+        (a) Development Assistance on Resettlement towards Unity, Support, Sustainability, Accessibility, Livelihood, Accountability and Moral Governance (DARUSSALAM) at P419,637,500.00 distributed among infrastructure assets (P333,750,000.00), land survey (P5,600,000.00), land acquisition (P80,000,000.00), permits and clearances (P160,000.00), and real property taxes (P127,500.00);
+        (b) Housing and Loan Management Program at P2,373,900.00 for tax payments, released only upon actual sale and turnover of units.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      Implementing M/O/As shall submit quarterly financial and physical accomplishment reports within thirty (30) days after each quarter through:
+        (a) Submission of hardcopy to the MFBM;
+        (b) Submission of reports through electronic means; and
+        (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the MFBM and other offices where submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

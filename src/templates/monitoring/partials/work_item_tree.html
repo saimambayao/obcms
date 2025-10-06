@@ -1,0 +1,365 @@
+{% load humanize %}
+
+<!--
+    Recursive Work Item Tree Component
+
+    Features:
+    - HTMX lazy loading for children
+    - localStorage state persistence
+    - Visual tree connectors
+    - Full ARIA support for accessibility
+    - Keyboard navigation
+    - Budget tracking with variance indicators
+    - Smooth animations
+
+    Usage:
+        {% include "monitoring/partials/work_item_tree.html" with work_item=root_item depth=0 %}
+-->
+
+<!-- Tree Node Container -->
+<div class="tree-node relative"
+     id="node-{{ work_item.id }}"
+     data-node-id="{{ work_item.id }}"
+     data-work-type="{{ work_item.work_type }}"
+     data-depth="{{ depth }}"
+     role="treeitem"
+     aria-level="{{ depth|add:1 }}"
+     {% if work_item.get_children %}aria-expanded="false"{% endif %}
+     tabindex="{% if depth == 0 %}0{% else %}-1{% endif %}">
+
+    <!-- Tree Connector Lines -->
+    {% if depth > 0 %}
+    <div class="tree-connectors absolute left-0 top-0 bottom-0"
+         style="width: {{ depth|mul:24 }}px;">
+        {% for i in "x"|rjust:depth %}
+            <div class="tree-line absolute top-0 bottom-0"
+                 style="left: {{ forloop.counter0|mul:24|add:11 }}px; width: 1px;"></div>
+        {% endfor %}
+        <div class="tree-branch absolute top-6"
+             style="left: {{ depth|mul:24|sub:13 }}px; width: 12px; height: 1px;"></div>
+    </div>
+    {% endif %}
+
+    <!-- Node Content Card -->
+    <div class="node-card relative ml-{{ depth|mul:24 }} mb-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group"
+         data-card-id="{{ work_item.id }}">
+
+        <!-- Top Border Accent (Work Type Indicator) -->
+        <div class="absolute top-0 left-0 right-0 h-1 rounded-t-xl
+                    {% if work_item.work_type == 'project' %}bg-gradient-to-r from-blue-500 to-blue-600
+                    {% elif work_item.work_type == 'sub_project' %}bg-gradient-to-r from-blue-400 to-blue-500
+                    {% elif work_item.work_type == 'activity' %}bg-gradient-to-r from-emerald-500 to-emerald-600
+                    {% elif work_item.work_type == 'sub_activity' %}bg-gradient-to-r from-emerald-400 to-emerald-500
+                    {% elif work_item.work_type == 'task' %}bg-gradient-to-r from-purple-500 to-purple-600
+                    {% else %}bg-gradient-to-r from-amber-500 to-amber-600{% endif %}">
+        </div>
+
+        <div class="p-4 pt-5">
+            <!-- Header Row -->
+            <div class="flex items-start gap-3">
+
+                <!-- Expand/Collapse Icon -->
+                <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                    {% if work_item.get_children %}
+                        <button type="button"
+                                class="expand-toggle w-8 h-8 rounded-lg bg-gray-100 hover:bg-emerald-100 flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                                data-work-item-id="{{ work_item.id }}"
+                                hx-get="{% url 'monitoring:work_item_children' work_item.id %}"
+                                hx-target="#children-{{ work_item.id }}"
+                                hx-swap="innerHTML"
+                                hx-trigger="click once"
+                                hx-indicator="#loading-{{ work_item.id }}"
+                                onclick="toggleWorkItemNode(this, '{{ work_item.id }}')"
+                                aria-label="{% if work_item.get_children.count %}Expand to show {{ work_item.get_children.count }} sub-items{% else %}Expand sub-items{% endif %}"
+                                aria-controls="children-{{ work_item.id }}">
+                            <i class="fas fa-chevron-right transition-transform duration-200 text-gray-600 text-sm"
+                               id="toggle-icon-{{ work_item.id }}"></i>
+                        </button>
+                        <div id="loading-{{ work_item.id }}" class="htmx-indicator absolute">
+                            <div class="animate-spin rounded-full h-5 w-5 border-2 border-emerald-500 border-t-transparent"></div>
+                        </div>
+                    {% else %}
+                        <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+                    {% endif %}
+                </div>
+
+                <!-- Work Type Icon Badge -->
+                <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
+                            {% if work_item.work_type == 'project' %}bg-blue-100 text-blue-600
+                            {% elif work_item.work_type == 'sub_project' %}bg-blue-50 text-blue-500
+                            {% elif work_item.work_type == 'activity' %}bg-emerald-100 text-emerald-600
+                            {% elif work_item.work_type == 'sub_activity' %}bg-emerald-50 text-emerald-500
+                            {% elif work_item.work_type == 'task' %}bg-purple-100 text-purple-600
+                            {% else %}bg-amber-100 text-amber-600{% endif %}">
+                    <i class="fas {% if work_item.work_type == 'project' or work_item.work_type == 'sub_project' %}fa-project-diagram
+                              {% elif work_item.work_type == 'activity' or work_item.work_type == 'sub_activity' %}fa-tasks
+                              {% else %}fa-check-square{% endif %} text-lg"></i>
+                </div>
+
+                <!-- Title and Metadata -->
+                <div class="flex-1 min-w-0">
+
+                    <!-- Title Row -->
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-base font-semibold text-gray-900 mb-1 line-clamp-2">
+                                {{ work_item.title }}
+                            </h4>
+
+                            <!-- Badges Row -->
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <!-- Work Type Badge -->
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                            {% if work_item.work_type == 'project' %}bg-blue-100 text-blue-800
+                                            {% elif work_item.work_type == 'sub_project' %}bg-blue-50 text-blue-700
+                                            {% elif work_item.work_type == 'activity' %}bg-emerald-100 text-emerald-800
+                                            {% elif work_item.work_type == 'sub_activity' %}bg-emerald-50 text-emerald-700
+                                            {% elif work_item.work_type == 'task' %}bg-purple-100 text-purple-800
+                                            {% else %}bg-amber-100 text-amber-800{% endif %}">
+                                    {{ work_item.get_work_type_display }}
+                                </span>
+
+                                <!-- Status Badge -->
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                            {% if work_item.status == 'completed' %}bg-emerald-100 text-emerald-800
+                                            {% elif work_item.status == 'in_progress' %}bg-blue-100 text-blue-800
+                                            {% elif work_item.status == 'at_risk' %}bg-orange-100 text-orange-800
+                                            {% elif work_item.status == 'blocked' %}bg-red-100 text-red-800
+                                            {% elif work_item.status == 'cancelled' %}bg-gray-100 text-gray-800
+                                            {% else %}bg-gray-50 text-gray-600{% endif %}">
+                                    <i class="fas {% if work_item.status == 'completed' %}fa-check-circle
+                                              {% elif work_item.status == 'in_progress' %}fa-spinner
+                                              {% elif work_item.status == 'at_risk' %}fa-exclamation-triangle
+                                              {% elif work_item.status == 'blocked' %}fa-ban
+                                              {% else %}fa-circle{% endif %} mr-1"></i>
+                                    {{ work_item.get_status_display }}
+                                </span>
+
+                                <!-- Priority Badge (High/Urgent/Critical only) -->
+                                {% if work_item.priority == 'urgent' or work_item.priority == 'critical' or work_item.priority == 'high' %}
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                            {% if work_item.priority == 'critical' %}bg-red-100 text-red-800
+                                            {% elif work_item.priority == 'urgent' %}bg-orange-100 text-orange-800
+                                            {% else %}bg-amber-100 text-amber-800{% endif %}">
+                                    <i class="fas fa-exclamation-circle mr-1"></i>{{ work_item.get_priority_display }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons (Hidden, show on hover) -->
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0">
+                            <button type="button"
+                                    hx-get="{% url 'common:work_item_detail' work_item.id %}"
+                                    hx-target="#workItemModal"
+                                    hx-swap="innerHTML"
+                                    onclick="document.getElementById('workItemModal').classList.remove('hidden')"
+                                    class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    aria-label="View details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button type="button"
+                                    hx-get="{% url 'common:work_item_edit' work_item.id %}"
+                                    hx-target="#workItemModal"
+                                    hx-swap="innerHTML"
+                                    onclick="document.getElementById('workItemModal').classList.remove('hidden')"
+                                    class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                    aria-label="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button"
+                                    hx-delete="{% url 'common:work_item_delete' work_item.id %}"
+                                    hx-confirm="Are you sure you want to delete this work item?"
+                                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                    aria-label="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Description (if present) -->
+                    {% if work_item.description %}
+                    <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ work_item.description }}</p>
+                    {% endif %}
+
+                    <!-- Budget Information Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+
+                        <!-- Allocated Budget -->
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200 rounded-lg p-3">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <p class="text-xs text-blue-600 font-medium uppercase tracking-wide mb-1">
+                                        <i class="fas fa-wallet mr-1"></i>Allocated Budget
+                                    </p>
+                                    <p class="text-lg font-bold text-blue-900">
+                                        {% if work_item.allocated_budget %}
+                                            ₱{{ work_item.allocated_budget|floatformat:2|intcomma }}
+                                        {% else %}
+                                            <span class="text-blue-400">Not set</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actual Expenditure -->
+                        <div class="bg-gradient-to-br from-gray-50 to-gray-100/50 border border-gray-200 rounded-lg p-3">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <p class="text-xs text-gray-600 font-medium uppercase tracking-wide mb-1">
+                                        <i class="fas fa-receipt mr-1"></i>Actual Expenditure
+                                    </p>
+                                    <p class="text-lg font-bold text-gray-900">
+                                        {% if work_item.actual_expenditure %}
+                                            ₱{{ work_item.actual_expenditure|floatformat:2|intcomma }}
+                                        {% else %}
+                                            ₱0.00
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Budget Variance with Indicator -->
+                        <div class="bg-gradient-to-br from-gray-50 to-gray-100/50 border border-gray-200 rounded-lg p-3">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <p class="text-xs text-gray-600 font-medium uppercase tracking-wide mb-1">
+                                        <i class="fas fa-chart-line mr-1"></i>Variance
+                                    </p>
+                                    {% if work_item.allocated_budget and work_item.actual_expenditure %}
+                                        {% widthratio work_item.actual_expenditure 1 100 as actual_cents %}
+                                        {% widthratio work_item.allocated_budget 1 100 as allocated_cents %}
+                                        {% widthratio actual_cents allocated_cents 100 as variance_pct %}
+
+                                        {% if actual_cents > allocated_cents %}
+                                            <!-- Over Budget -->
+                                            <div class="flex items-center gap-2">
+                                                <p class="text-lg font-bold text-red-600">
+                                                    +₱{{ work_item.actual_expenditure|floatformat:2|intcomma|cut:work_item.allocated_budget|floatformat:2|intcomma }}
+                                                </p>
+                                                <span class="flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
+                                                    <i class="fas fa-arrow-up"></i>
+                                                    {% widthratio variance_pct 100 1 as var_abs %}
+                                                    {{ var_abs|add:"-100" }}%
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-red-600 mt-1">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i>Over budget
+                                            </p>
+                                        {% elif variance_pct >= 95 %}
+                                            <!-- Near Budget (95-100%) -->
+                                            <div class="flex items-center gap-2">
+                                                <p class="text-lg font-bold text-amber-600">
+                                                    {% widthratio work_item.allocated_budget|floatformat:2 1 1 as alloc %}
+                                                    {% widthratio work_item.actual_expenditure|floatformat:2 1 1 as actual %}
+                                                    ₱{{ alloc|add:"-"|add:actual|floatformat:2|intcomma }}
+                                                </p>
+                                                <span class="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
+                                                    <i class="fas fa-exclamation"></i>
+                                                    {{ variance_pct }}%
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-amber-600 mt-1">
+                                                <i class="fas fa-exclamation-circle mr-1"></i>Near limit
+                                            </p>
+                                        {% else %}
+                                            <!-- Under Budget -->
+                                            <div class="flex items-center gap-2">
+                                                <p class="text-lg font-bold text-emerald-600">
+                                                    {% widthratio work_item.allocated_budget|floatformat:2 1 1 as alloc %}
+                                                    {% widthratio work_item.actual_expenditure|floatformat:2 1 1 as actual %}
+                                                    ₱{{ alloc|add:"-"|add:actual|floatformat:2|intcomma }}
+                                                </p>
+                                                <span class="flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-full">
+                                                    <i class="fas fa-check"></i>
+                                                    {{ variance_pct }}%
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-emerald-600 mt-1">
+                                                <i class="fas fa-check-circle mr-1"></i>Within budget
+                                            </p>
+                                        {% endif %}
+                                    {% else %}
+                                        <p class="text-lg font-bold text-gray-400">—</p>
+                                        <p class="text-xs text-gray-400 mt-1">No data</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="mt-4">
+                        <div class="flex items-center justify-between text-sm mb-2">
+                            <span class="font-medium text-gray-700">
+                                <i class="fas fa-tasks mr-1 text-gray-400"></i>Progress
+                            </span>
+                            <span class="font-bold
+                                        {% if work_item.progress >= 100 %}text-emerald-600
+                                        {% elif work_item.progress >= 75 %}text-blue-600
+                                        {% elif work_item.progress >= 50 %}text-amber-600
+                                        {% else %}text-gray-600{% endif %}">
+                                {{ work_item.progress|default:0 }}%
+                            </span>
+                        </div>
+                        <div class="h-3 rounded-full bg-gray-200 overflow-hidden shadow-inner">
+                            <div class="h-full transition-all duration-500 ease-out
+                                        {% if work_item.status == 'completed' %}bg-gradient-to-r from-emerald-500 to-emerald-600
+                                        {% elif work_item.status == 'at_risk' %}bg-gradient-to-r from-orange-500 to-orange-600
+                                        {% elif work_item.status == 'blocked' %}bg-gradient-to-r from-red-500 to-red-600
+                                        {% else %}bg-gradient-to-r from-blue-500 to-emerald-500{% endif %}"
+                                 style="width: {{ work_item.progress|default:0 }}%"
+                                 role="progressbar"
+                                 aria-valuenow="{{ work_item.progress|default:0 }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100"
+                                 aria-label="Progress: {{ work_item.progress|default:0 }} percent">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline (Dates) -->
+                    {% if work_item.start_date or work_item.due_date %}
+                    <div class="flex items-center gap-4 mt-3 text-sm text-gray-600">
+                        {% if work_item.start_date %}
+                        <div class="flex items-center gap-1.5">
+                            <i class="fas fa-calendar-alt text-gray-400"></i>
+                            <span class="font-medium">Start:</span>
+                            <span>{{ work_item.start_date|date:"M j, Y" }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if work_item.due_date %}
+                        <div class="flex items-center gap-1.5">
+                            <i class="fas fa-flag-checkered text-gray-400"></i>
+                            <span class="font-medium">Due:</span>
+                            <span class="{% if work_item.is_overdue %}text-red-600 font-semibold{% endif %}">
+                                {{ work_item.due_date|date:"M j, Y" }}
+                                {% if work_item.is_overdue %}
+                                    <i class="fas fa-exclamation-triangle ml-1 text-red-600"></i>
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Children Container (Lazy Loaded) -->
+    {% if work_item.get_children %}
+    <div class="children-container hidden"
+         id="children-{{ work_item.id }}"
+         role="group"
+         aria-label="Sub-items of {{ work_item.title }}">
+        <!-- Children will be loaded via HTMX when expanded -->
+    </div>
+    {% endif %}
+
+</div>

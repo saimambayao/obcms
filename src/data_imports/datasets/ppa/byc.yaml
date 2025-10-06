@@ -1,0 +1,83 @@
+moa: "Bangsamoro Youth Commission"
+acronym: "BYC"
+ppas:
+  - title: "Stakeholders and Partnership Building"
+    description: ""
+    outcome_indicators:
+      - indicator: "Enabling Youth Participation: Increased meaningful engagement of accredited youth organizations and youth in socio-political processes and local community building efforts"
+        target: "15%"
+      - indicator: "Coordination: Partner institutions and organizations adopting youth-centered resolutions, policies, and development agenda of the council and the Commission"
+        target: "50%"
+    output_indicators:
+      - indicator: "Youth Participation: Number of youth organizations accredited"
+        target: 300
+      - indicator: "Youth Participation: Number of youth leaders trained"
+        target: 250
+      - indicator: "Youth Participation: Number of local youth networks established"
+        target: 10
+      - indicator: "Coordination: Number of joint memorandum circulars on youth planning issued"
+        target: 1
+      - indicator: "Coordination: Number of resolutions adopted by the Commission Proper"
+        target: 25
+    approved_budget: 4249700.00
+  - title: "Youth Responsive Policy and Program Development"
+    description: ""
+    outcome_indicators:
+      - indicator: "Baseline Research: Evidence-based and data-driven youth-related agenda and policies adopted by the Bangsamoro Government"
+        target: 1
+      - indicator: "Youth Policy Development Agenda: Enhanced opportunities of participation for vulnerable youth sectors in policy-making"
+        target: "10%"
+    output_indicators:
+      - indicator: "Baseline Research: Number of ministries, offices, agencies, LGUs, and civil societies lobbied and informed about the Comprehensive Bangsamoro Youth Development Plan"
+        target: 10
+      - indicator: "Policy Agenda: Number of resolutions and policies passed and lobbied"
+        target: 10
+      - indicator: "Policy Agenda: Number of youth-led initiatives supported"
+        target: 4
+    approved_budget: 10166380.00
+  - title: "Public Engagement Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Increased number of young people who have access to youth-related projects, programs, or activities of the Bangsamoro government"
+        target: 10000
+    output_indicators:
+      - indicator: "Number of youth in radio programs engaged"
+        target: 200
+      - indicator: "Number of public relations materials published and released"
+        target: 200
+      - indicator: "Number of information, education, and communication materials produced"
+        target: 1000
+    approved_budget: 3759050.00
+  - title: "Monitoring and Evaluation"
+    description: ""
+    outcome_indicators:
+      - indicator: "Increased number of enhanced youth development programs through policy recommendations aligned with Bangsamoro development plans"
+        target: 10
+    output_indicators:
+      - indicator: "Number of Local Youth Development Plans aligned with Bangsamoro development plans reviewed"
+        target: 5
+      - indicator: "Number of youth organizations' operations reviewed"
+        target: 15
+    approved_budget: 1013880.00
+  - title: "Bangsamoro Youth, Peace and Security Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Increased number of youth and youth organizations with access to peacebuilding, peace, and security initiatives of the Bangsamoro government"
+        target: 200
+    output_indicators:
+      - indicator: "Number of policies, memoranda, and resolutions relevant to the Bangsamoro Action Plan on Youth Peace and Security"
+        target: 3
+      - indicator: "Number of ministries, offices, agencies, or LGUs assisted on YPS mainstreaming"
+        target: 5
+      - indicator: "Number of ministries, offices, agencies, or LGUs implementation of BAP-YPS reviewed"
+        target: 5
+    approved_budget: 2265000.00
+special_provisions:
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on its financial and physical accomplishments within thirty (30) days after the end of every quarter through:
+      (a) Submission of hardcopy to the MFBM;
+      (b) Submission of reports through electronic means; and
+      (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when said reports have been submitted or posted on its website to the MFBM and other offices where the submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

@@ -1,0 +1,11 @@
+{% load humanize %}
+
+<!-- WorkItem Children Container (HTMX Response) -->
+{% for child in children %}
+    {% include "monitoring/partials/work_item_tree.html" with work_item=child depth=depth %}
+{% empty %}
+    <div class="text-center py-4 text-gray-500 text-sm">
+        <i class="fas fa-info-circle mr-2"></i>
+        No sub-items found
+    </div>
+{% endfor %}

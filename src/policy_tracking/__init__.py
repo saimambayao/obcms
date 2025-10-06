@@ -60,6 +60,10 @@ for _name in [
 def __getattr__(name: str):
     """Lazily proxy remaining attributes/submodules on demand."""
 
+    # Django test discovery looks for load_tests - don't try to proxy it
+    if name == "load_tests":
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
     warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
 
     try:

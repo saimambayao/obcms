@@ -40,7 +40,7 @@ def register_auditlog_models():
         MAOFocalPerson,
     )
     from project_central.models import (
-        ProjectWorkflow,
+        # ProjectWorkflow,  # DEPRECATED: Replaced by WorkItem system
         BudgetCeiling,
         BudgetScenario,
         Alert,
@@ -117,9 +117,50 @@ def register_auditlog_models():
     auditlog.register(MAOFocalPerson, serialize_data=True)
 
     # Project Management
-    auditlog.register(ProjectWorkflow, serialize_data=True)
+    # auditlog.register(ProjectWorkflow, serialize_data=True)  # DEPRECATED: Replaced by WorkItem
     auditlog.register(BudgetCeiling, serialize_data=True)
     auditlog.register(BudgetScenario, serialize_data=True)
     auditlog.register(Alert, serialize_data=True)
+
+    # Register WorkItem instead of deprecated ProjectWorkflow (with specific fields for compliance)
+    from common.models import WorkItem
+    auditlog.register(
+        WorkItem,
+        include_fields=[
+            'title',
+            'work_type',
+            'status',
+            'priority',
+            'progress',
+            'related_ppa',
+            'allocated_budget',
+            'actual_expenditure',
+            'parent',
+            'start_date',
+            'due_date',
+        ],
+        serialize_data=True,
+    )
+
+    # Register MonitoringEntry for PPA compliance tracking
+    from monitoring.models import MonitoringEntry
+    auditlog.register(
+        MonitoringEntry,
+        include_fields=[
+            'title',
+            'category',
+            'status',
+            'approval_status',
+            'budget_allocation',
+            'budget_obc_allocation',
+            'implementing_moa',
+            'lead_organization',
+            'fiscal_year',
+            'plan_year',
+            'funding_source',
+            'appropriation_class',
+        ],
+        serialize_data=True,
+    )
 
     print("✅ Auditlog registered for all security-sensitive models")

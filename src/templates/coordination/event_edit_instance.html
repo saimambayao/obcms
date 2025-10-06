@@ -50,30 +50,16 @@
                     Project Activity
                 </span>
                 {% endif %}
-                {% if object.staff_tasks.exists %}
-                <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-700">
-                    <i class="fas fa-tasks"></i>
-                    {{ object.staff_tasks.count }} Task{{ object.staff_tasks.count|pluralize }}
-                </span>
-                {% endif %}
             </div>
         </div>
 
         <!-- Action Buttons Group -->
         <div class="flex flex-wrap gap-2">
             {% if object.is_project_activity and object.related_project %}
-            <a href="{% url 'project_central:project_workflow_detail' object.related_project.id %}"
+            <a href="{% url 'common:work_item_detail' pk=object.related_project.work_item_id %}"
                class="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg shadow-sm hover:bg-purple-100">
                 <i class="fas fa-project-diagram mr-2"></i>
                 View Project
-            </a>
-            {% endif %}
-
-            {% if object.staff_tasks.exists %}
-            <a href="{% url 'common:staff_task_board' %}?event_id={{ object.id }}"
-               class="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg shadow-sm hover:bg-indigo-100">
-                <i class="fas fa-tasks mr-2"></i>
-                View Tasks ({{ object.staff_tasks.count }})
             </a>
             {% endif %}
 

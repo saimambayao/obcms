@@ -21,7 +21,7 @@ from .staff import (
     PerformanceTargetForm,
     StaffDevelopmentPlanForm,
     StaffProfileForm,
-    StaffTaskForm,
+    StaffTaskForm,  # DEPRECATED: Stub only - raises error on instantiation
     StaffTeamForm,
     StaffTeamMembershipForm,
     TrainingEnrollmentForm,
@@ -47,7 +47,7 @@ __all__ = [
     "StaffProfileForm",
     "StaffTeamForm",
     "StaffTeamMembershipForm",
-    "StaffTaskForm",
+    "StaffTaskForm",  # DEPRECATED: Stub only - raises error on instantiation
     "PerformanceTargetForm",
     "TrainingProgramForm",
     "TrainingEnrollmentForm",

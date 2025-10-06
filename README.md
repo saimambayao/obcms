@@ -4,6 +4,17 @@
 
 A comprehensive web-based application designed to support the Office for Other Bangsamoro Communities (OOBC) in serving Other Bangsamoro Communities (OBCs) residing outside the Bangsamoro Autonomous Region in Muslim Mindanao (BARMM).
 
+## Recent Updates
+
+**WorkItem Unified Model (October 2025):**
+The OBCMS now uses a unified WorkItem model for all work management (projects, activities, tasks). Legacy models (StaffTask, Event, ProjectWorkflow) have been deprecated and removed.
+
+- **Migration Guide:** [WORKITEM_MIGRATION_COMPLETE.md](WORKITEM_MIGRATION_COMPLETE.md)
+- **Documentation:** [docs/refactor/](docs/refactor/)
+- **Feature Flags:** See `.env.example` for configuration
+
+All new development should use WorkItem. See [Work Item Examples](docs/refactor/WORK_ITEM_IMPLEMENTATION_EXAMPLES.md) if available.
+
 ## Project Overview
 
 This system digitalizes the OOBC's core functions including:

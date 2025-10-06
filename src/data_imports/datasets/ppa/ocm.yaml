@@ -1,0 +1,245 @@
+moa: "Office of the Chief Minister"
+acronym: "OCM"
+ppas:
+  - title: "Provision of Conflict Resolution and Reconciliation Mechanisms in promoting Peace and Security"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage ceasefire of local disputes facilitated in promoting peace and stability in the region"
+        target: "100%"
+    output_indicators:
+      - indicator: "Number of PNP-AFP-MILF Joint Operation monitored"
+        target: 80
+      - indicator: "Percentage of local disputes monitored"
+        target: "90%"
+      - indicator: "Percentage of mediation or conciliation provided with technical assistance"
+        target: "90%"
+      - indicator: "Number of peace dialogue and consultations to transitioning combatants, peace partners, and CSOs"
+        target: 6
+      - indicator: "Number of guidelines, policy paper, or rules and regulations formulated"
+        target: 2
+      - indicator: "Percentage of security assessment report submitted to the Chief Minister"
+        target: "100%"
+      - indicator: "Number coordination meetings with other ministries, offices, or agencies conducted"
+        target: 3
+      - indicator: "Number of IEC materials developed and distributed"
+        target: 4
+      - indicator: "Number of talk show episodes aired"
+        target: 1
+      - indicator: "Number of legal assistance provided in relation to the GPH-MILF Amnesty Program"
+        target: 2
+    approved_budget: 59239904.00
+  - title: "Promotion of the Welfare of Bangsamoro Communities Outside the Region"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of recommended policies, programs, and services submitted"
+        target: "100%"
+      - indicator: "Effectiveness of coordination with NGAs, LGUs, and other stakeholders on promoting the welfare of Bangsamoro communities outside the region"
+        target: "80%"
+    output_indicators:
+      - indicator: "Number of provinces mapped through socio-economic profiling and key information assessment review"
+        target: 10
+      - indicator: "Number of LGUs, NGAs, line agencies, and stakeholders outside BARMM profiled under program of mapping and needs assessment"
+        target: 20
+      - indicator: "Percentage of OBC MANA compilation and digitalization"
+        target: "100%"
+      - indicator: "Number of stakeholders forum conducted"
+        target: 1
+      - indicator: "Number of ministries, offices, agencies, and development partners coordinated for the protection of OBCs rights, enhance socio-economic and cultural development"
+        target: 55
+      - indicator: "Number of NGAs and LGUs outside BARMM coordinated for the protection of OBCs rights, enhance socio-economic and cultural development"
+        target: 10
+      - indicator: "Percentage of request letters from different organizations, stakeholders, and communities outside the BARMM region endorsed to the Chief Minister"
+        target: "100%"
+      - indicator: "Percentage of policy, program, and services recommendation to the Chief Minister submitted"
+        target: "100%"
+    approved_budget: 19889224.00
+  - title: "Provision of Legal Assistance to Bangsamoro Indigent Litigants before the Shari'ah Courts"
+    description: ""
+    outcome_indicators:
+      - indicator: "Increased accessibility to quality legal services of Bangsamoro communities"
+        target: "20%"
+    output_indicators:
+      - indicator: "Number of legal advice and representation provided"
+        target: 20
+      - indicator: "Number of awareness campaigns conducted"
+        target: 4
+      - indicator: "Number of legal aid materials produced"
+        target: 1000
+      - indicator: "Number of cases facilitated"
+        target: 8
+      - indicator: "Number of MOA signed with Legal Aid Organizations"
+        target: 4
+    approved_budget: 7140454.00
+  - title: "Management of Library and Archives Services and Programs for Bangsamoro People"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage increase in community engagement program, access to educational resources, and preservation and accessibility of regional documents"
+        target: "25%"
+      - indicator: "Percentage of satisfactory rating in the promotion and provision of library services in BARMM"
+        target: "80%"
+    output_indicators:
+      - indicator: "Number of library patrons served"
+        target: 5000
+      - indicator: "Number of library programs conducted"
+        target: 10
+      - indicator: "Number of library extension services provided"
+        target: 8
+      - indicator: "Number of library programs and services for children conducted"
+        target: 4
+      - indicator: "Number of coordination meetings with LGUs for the establishment of public libraries"
+        target: 20
+      - indicator: "Number of new library materials acquired"
+        target: 250
+      - indicator: "Percentage of library collections catalogued and classified"
+        target: "90%"
+      - indicator: "Percentage of annual accomplishment reports collected"
+        target: "70%"
+      - indicator: "Percentage of National Library of the Philippines directives complied"
+        target: "70%"
+    approved_budget: 6733821.00
+  - title: "Ayudang Medikal mula sa Bangsamoro Government (AMBAG)"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of health services assistance efficiently extended"
+        target: "95%"
+    output_indicators:
+      - indicator: "Percentage of assistance efficiently extended"
+        target: "98%"
+      - indicator: "Number of beneficiaries served"
+        target: 31500
+    approved_budget: 343600150.00
+  - title: "Tulong Alay sa Bangsamorong Nangangailangan (TABANG)"
+    description: ""
+    outcome_indicators:
+      - indicator: "Improved direct response initiatives to the basic needs of Bangsamoro communities"
+        target: "90%"
+    output_indicators:
+      - indicator: "Number of cooperatives assisted by livelihood intervention"
+        target: 110
+      - indicator: "Number of individuals assisted by livelihood intervention"
+        target: 3850
+      - indicator: "Number of individuals received food assistance"
+        target: 247972
+      - indicator: "Number of institutions received food assistance"
+        target: 180
+      - indicator: "Number of beneficiaries received hygiene kits"
+        target: 2200
+      - indicator: "Number of beneficiaries received kitchenwares"
+        target: 1760
+      - indicator: "Number of beneficiaries received school kits"
+        target: 880
+      - indicator: "Number of beneficiaries received PWDs kit"
+        target: 1350
+      - indicator: "Number of beneficiaries received elderly kits"
+        target: 900
+      - indicator: "Number of beneficiaries received medicines and medical supplies assistance"
+        target: 50000
+      - indicator: "Number of convergence initiatives conducted with implementing agencies and offices of BARMM"
+        target: 4
+    approved_budget: 1043877433.00
+  - title: "Kapayapaan sa Pamayanan (KAPYANAN)"
+    description: ""
+    outcome_indicators:
+      - indicator: "Improved the living conditions of the Bangsamoro beneficiaries in housing, livelihood assistance, and community development intervention adopted by the BEDC"
+        target: "100%"
+    output_indicators:
+      - indicator: "Percentage of construction of core shelter monitored"
+        target: "100%"
+      - indicator: "Percentage of completed core shelter with solar powered light and water component awarded"
+        target: "50%"
+      - indicator: "Percentage of beneficiaries capacitated on leadership and operation and maintenance of KAPYANAN project"
+        target: "100%"
+    approved_budget: 36056714.00
+  - title: "Quick Response Fund"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of support and operation on quick response efficiently extended"
+        target: "80%"
+    output_indicators:
+      - indicator: "Percentage of quick response extended in social services"
+        target: "80%"
+      - indicator: "Percentage of quick response extended in infrastructure and equipment"
+        target: "80%"
+    approved_budget: 201000000.00
+  - title: "Support to Local Moral Governance"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of satisfactory rating in the implementation of utilities and infrastructure facilities of SLMG in the Bangsamoro communities"
+        target: "80%"
+    output_indicators:
+      - indicator: "Percentage of SLMG infrastructure facilities implementation for the Bangsamoro people monitored"
+        target: "80%"
+    approved_budget: 10162259.00
+  - title: "Marawi Rehabilitation Program"
+    description: ""
+    outcome_indicators:
+      - indicator: "Enhanced the living conditions of Marawi IDPs by providing educational, livelihood, infrastructure, health, and well-being support"
+        target: "35%"
+    output_indicators:
+      - indicator: "Number of IDPs who benefited from MRP projects and services"
+        target: 3206
+      - indicator: "Number of communities benefited from the MRP projects and services"
+        target: 20
+      - indicator: "Percentage of implementation of all MRP projects"
+        target: "50%"
+      - indicator: "Percentage of total Marawi Rehabilitation Fund allocated through project approvals"
+        target: "100%"
+      - indicator: "Percentage of MRP project implementation for the Marawi IDPs monitored"
+        target: "80%"
+      - indicator: "Number of Marawi IDPs provided with legal services assistance and legal rights education in relation to Transitional Justice"
+        target: 200
+    approved_budget: 212000258.00
+  - title: "Strengthening Access to Living Assistance to Marginalized Bangsamoro (SALAM)"
+    description: ""
+    outcome_indicators:
+      - indicator: "Improved the efficiency of providing immediate assistance to Bangsamoro communities living in extreme poverty conditions"
+        target: "90%"
+    output_indicators:
+      - indicator: "Number of beneficiaries granted with financial assistance"
+        target: 13000
+      - indicator: "Percentage of monitoring and evaluation in SALAM project areas conducted"
+        target: "100%"
+    approved_budget: 985695980.00
+special_provisions:
+  - title: "Provision of Legal Assistance to Bangsamoro Indigent Litigants before the Shari'ah Courts"
+    details: |
+      The amount of Seven Million One Hundred Forty Thousand Four Hundred Fifty-Four Pesos (P7,140,454.00) herein appropriated for the Maintenance and Other Operating Expenses of the Shari'ah Public Assistance Office (SPAO) and shall be made available only upon hiring of the head of SPAO.
+  - title: "Quick Response Fund"
+    details: |
+      The amount of Two Hundred Fifty-One Million Pesos (P251,000,000.00) herein appropriated for the Quick Response Fund (QRF) shall serve as a stand-by fund to be exclusively used for:
+        (a) Social Services P201,000,000.00
+        (b) Infrastructure P50,000,000.00
+
+      Social Services. The amount of Two Hundred One Million Pesos (P201,000,000.00) herein appropriated shall serve as a stand-by fund to be used for immediate response and relief programs of the Office.
+
+      Infrastructure. The amount of Fifty Million Pesos (P50,000,000.00) herein appropriated shall serve as the stand-by fund to be used for reconstruction and rehabilitation programs, activities or projects.
+
+      These appropriations are made in order that the situation and living conditions of people in the Bangsamoro communities or areas affected by natural or human-induced calamities, epidemics, crises and catastrophes, which occurred in the last quarter of the immediately preceding year and those occurring during the current year may be normalized as quickly as possible.
+
+      Release of funds shall be subject to the following guidelines:
+        (a) The Office shall conduct the assessment of the status of the affected communities in the BARMM;
+        (b) The OCM shall authorize and direct MFBM for the release of appropriate funds; and
+        (c) In no case shall the QRF be used for pre-disaster activities, such as conduct of training, insurance of assets, and public information and information initiatives, or any other purpose not authorized in this Act.
+  - title: "Program Implementation Plans and Guidelines"
+    details: |
+      The Office of the Chief Minister shall issue Program Implementation Plan and Guidelines and submit to MFBM quarterly status report of implementation of the following programs:
+        (a) Ayudang Medikal mula sa Bangsamoro Government (AMBAG);
+        (b) Tulong Alay sa Bangsamorong Nangangailangan (TABANG);
+        (c) Kapayapaan sa Pamayanan (KAPYANAN);
+        (d) Support to Local Moral Governance;
+        (e) Marawi Rehabilitation Program; and
+        (f) Strengthening Access to Living Assistance to Marginalized Bangsamoro (SALAM).
+  - title: "Administrative Costs of Special Programs"
+    details: |
+      The amount herein appropriated to cover the administrative costs incurred in the implementation of Special Programs (AMBaG, TABANG, KAPYANAN, SLMG, MRP, and SALAM) shall be excluded from their respective appropriations that are classified as For Later Release.
+  - title: "Ayudang Medikal mula sa Bangsamoro Government (AMBaG)"
+    details: |
+      The health services assistance provided under the AMBaG program shall cover purchase of drugs and medicines, goods or all other medical, health, documentary and related services billed by the partner hospital, after deducting the Phil Health and other applicable medical assistance for in-and-out patients. Provided further, that coverage of professional fees shall not exceed 50% of the approved amount of health service assistance.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on its financial and physical accomplishments within thirty (30) days after the end of every quarter, through the following:
+        (a) Submission of hardcopy to the MFBM;
+        (b) Submission of reports through electronic means; and
+        (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when said reports have been submitted or posted on its website to the MFBM and other offices where the submission of reports is required under existing laws, rules and regulations. The date of notice to said M/O/As shall be considered the date of compliance with this requirement.

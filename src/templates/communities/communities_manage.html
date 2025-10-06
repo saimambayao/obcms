@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Manage Barangay OBC - OBC Management System{% endblock %}
 
@@ -14,64 +15,97 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <!-- Header -->
-    <div class="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <i class="fas fa-edit text-green-600"></i>
-                <span>{{ page_title|default:'Manage Barangay OBC' }}</span>
-                {% if show_archived %}
-                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold uppercase tracking-wide rounded-full bg-amber-100 text-amber-800">
-                    Archived view
-                </span>
-                {% endif %}
-            </h1>
-            <p class="mt-2 text-lg text-gray-600">
-                {{ page_description|default:'View, edit, and manage barangay-level OBC communities' }}
-            </p>
-        </div>
-        <div class="flex flex-wrap items-center gap-3">
-            {% if show_archived %}
-            <a href="{% url 'common:communities_manage' %}"
-               class="inline-flex items-center bg-white border border-emerald-200 text-emerald-600 hover:bg-emerald-50 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
-                <i class="fas fa-list mr-2"></i>
-                Back to active records
-            </a>
-            {% else %}
-            <a href="{% url 'common:communities_manage' %}?archived=1"
-               class="inline-flex items-center bg-white border border-amber-200 text-amber-600 hover:bg-amber-50 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
-                <i class="fas fa-archive mr-2"></i>
-                View archived records
-            </a>
-            {% endif %}
-            <a href="{% url 'common:communities_add' %}"
-               class="inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
-                <i class="fas fa-plus mr-2"></i>
-                Add barangay OBC
-            </a>
-        </div>
-    </div>
-
-    <!-- Statistics Cards -->
-    <div class="{{ stat_cards_grid_class|default:'mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' }}">
-        {% for card in stat_cards %}
-        <div class="relative overflow-hidden bg-gradient-to-br {{ card.gradient }} rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="{{ card.text_color }} text-sm font-medium">{{ card.title }}</p>
-                        <p class="text-3xl font-bold">{{ card.value|default:0 }}</p>
-                    </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="{{ card.icon|default:'fas fa-users' }} text-2xl"></i>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-10">
+    {% if hero_config %}
+    <header class="relative overflow-hidden rounded-3xl bg-bangsamoro-gradient text-white shadow-2xl">
+        <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.35), transparent 55%), radial-gradient(circle at 80% 0%, rgba(255,255,255,0.25), transparent 60%);"></div>
+        <div class="relative flex flex-col lg:flex-row">
+            <div class="flex-1 p-8 space-y-6">
+                <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-3 py-1 rounded-full text-sm font-semibold uppercase tracking-wide">
+                    <i class="{{ hero_config.badge_icon }}"></i>
+                    <span>{{ hero_config.badge_text }}</span>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
+                    <div class="flex items-start gap-4">
+                        <span class="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-3xl">
+                            <i class="{{ hero_config.icon }}"></i>
+                        </span>
+                        <div>
+                            <h1 class="text-3xl font-bold leading-tight">{{ hero_config.title }}</h1>
+                            {% if show_archived %}
+                            <span class="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-100/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">Archived view</span>
+                            {% endif %}
+                            <p class="mt-3 text-white/80 text-lg max-w-2xl">{{ hero_config.subtitle }}</p>
+                        </div>
                     </div>
                 </div>
+                {% if hero_config.level_summary %}
+                <p class="text-white/80 text-base max-w-3xl">{{ hero_config.level_summary }}</p>
+                {% endif %}
+                {% if hero_config.meta_cards %}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {% for card in hero_config.meta_cards %}
+                    <div class="flex items-start gap-3 rounded-2xl bg-white/12 px-5 py-4 backdrop-blur-sm border border-white/10">
+                        {% if card.icon %}
+                        <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-xl">
+                            <i class="{{ card.icon }}"></i>
+                        </span>
+                        {% endif %}
+                        <div>
+                            <p class="text-white/70 text-xs font-semibold uppercase tracking-wide">{{ card.label }}</p>
+                            <p class="text-white font-semibold text-sm sm:text-base">{{ card.value }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
+            {% if hero_config.actions %}
+            <div class="lg:w-80 xl:w-96 bg-white/10 border-t border-white/15 lg:border-t-0 lg:border-l rounded-b-3xl lg:rounded-b-none lg:rounded-r-3xl p-6 flex flex-col gap-5 justify-center backdrop-blur">
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold uppercase tracking-wide text-white/70">Quick actions</p>
+                    <p class="text-white/80 text-sm">Jump to the workflows you need most.</p>
+                </div>
+                <div class="flex flex-col gap-3">
+                    {% for action in hero_config.actions %}
+                    <a href="{{ action.href }}"
+                       class="inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-semibold transition-all duration-200 {% if action.variant == 'primary' %}bg-white text-emerald-600 hover:bg-emerald-50 shadow-lg shadow-emerald-900/25{% elif action.variant == 'secondary' %}bg-white/10 border border-white/30 hover:bg-white/20{% else %}bg-transparent border border-white/20 hover:bg-white/10{% endif %}">
+                        {% if action.icon %}<i class="{{ action.icon }}"></i>{% endif %}
+                        <span>{{ action.label }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
+    </header>
+    {% endif %}
+
+    {% if stat_cards %}
+    <section class="{{ stat_cards_grid_class|default:'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' }}">
+        {% for card in stat_cards %}
+        <article class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#FEFDFB] to-[#F8F5EE] transition-transform duration-300 hover:-translate-y-1"
+                 style="box-shadow: 0 16px 35px rgba(20,85,80,0.12), 0 6px 12px rgba(20,85,80,0.08), inset 0 1px 0 rgba(255,255,255,0.7);">
+            <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.85),transparent_60%)]"></div>
+            <div class="relative p-6 flex flex-col h-full gap-5">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-600">{{ card.title }}</p>
+                        <p class="mt-3 text-3xl font-extrabold text-gray-900">{{ card.value|default:0|intcomma }}</p>
+                    </div>
+                    <span class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-inner">
+                        <i class="{{ card.icon|default:'fas fa-chart-bar' }} text-2xl {{ card.icon_color|default:'text-emerald-600' }}"></i>
+                    </span>
+                </div>
+                {% if card.subtitle or card.description %}
+                <p class="text-sm text-gray-600">{{ card.subtitle|default:card.description }}</p>
+                {% endif %}
+                <div class="flex-grow"></div>
+            </div>
+        </article>
         {% endfor %}
-    </div>
+    </section>
+    {% endif %}
 
     <!-- Filters and Search -->
     <div class="bg-white rounded-xl shadow-xl border border-gray-200 mb-8 overflow-hidden">
@@ -82,41 +116,84 @@
             </h2>
         </div>
         <div class="p-6">
-            <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
+            <form id="barangay-filter-form"
+                  method="get"
+                  hx-get="{% url 'common:communities_manage' %}"
+                  hx-target="#barangay-results-container"
+                  hx-swap="innerHTML transition:true"
+                  hx-trigger="change from:select, submit"
+                  hx-indicator="#barangay-filter-loading"
+                  class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
+                {% if show_archived %}
+                <input type="hidden" name="archived" value="1">
+                {% endif %}
                 <div class="lg:col-span-3">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Region</label>
-                    <select name="region" data-initial="{{ current_region|default:'' }}" class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
-                        <option value="">All Regions</option>
-                        {% for region in regions %}
-                        <option value="{{ region.id }}" {% if current_region == region.id|stringformat:"s" %}selected{% endif %}>
-                            {{ region.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <div class="relative">
+                        <select name="region" data-initial="{{ current_region|default:'' }}"
+                                class="block w-full appearance-none rounded-xl border border-gray-200 bg-white py-3 pl-4 pr-12 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500 min-h-[48px] transition-all duration-200">
+                            <option value="">All Regions</option>
+                            {% for region in regions %}
+                            <option value="{{ region.id }}" {% if current_region == region.id|stringformat:"s" %}selected{% endif %}>
+                                {{ region.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
+                            <i class="fas fa-chevron-down text-sm"></i>
+                        </span>
+                    </div>
                 </div>
                 <div class="lg:col-span-3">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Province</label>
-                    <select name="province" data-initial="{{ current_province|default:'' }}" class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
-                        <option value="">All Provinces</option>
-                        {% for province in provinces %}
-                        <option value="{{ province.id }}" {% if current_province == province.id|stringformat:"s" %}selected{% endif %}>
-                            {{ province.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <div class="relative">
+                        <select name="province" data-initial="{{ current_province|default:'' }}"
+                                class="block w-full appearance-none rounded-xl border border-gray-200 bg-white py-3 pl-4 pr-12 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500 min-h-[48px] transition-all duration-200">
+                            <option value="">All Provinces</option>
+                            {% for province in provinces %}
+                            <option value="{{ province.id }}" {% if current_province == province.id|stringformat:"s" %}selected{% endif %}>
+                                {{ province.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
+                            <i class="fas fa-chevron-down text-sm"></i>
+                        </span>
+                    </div>
                 </div>
-                <div class="lg:col-span-4">
+                <div class="lg:col-span-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Municipality</label>
+                    <div class="relative">
+                        <select name="municipality" data-initial="{{ current_municipality|default:'' }}"
+                                class="block w-full appearance-none rounded-xl border border-gray-200 bg-white py-3 pl-4 pr-12 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500 min-h-[48px] transition-all duration-200">
+                            <option value="">All Municipalities</option>
+                            {% for municipality in municipalities %}
+                            <option value="{{ municipality.id }}" {% if current_municipality == municipality.id|stringformat:"s" %}selected{% endif %}>
+                                {{ municipality.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
+                            <i class="fas fa-chevron-down text-sm"></i>
+                        </span>
+                    </div>
+                </div>
+                <div class="lg:col-span-3">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
                     <input type="text" name="search" value="{{ search_query }}"
                            placeholder="Search by barangay, municipality, or province..."
-                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                           class="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500 min-h-[48px] transition-all duration-200 placeholder:text-gray-400">
                 </div>
-                <div class="lg:col-span-2 flex flex-col sm:flex-row gap-3 lg:items-end">
-                    <button type="submit" class="w-full sm:flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200">
-                        Apply
+                <div class="lg:col-span-3 flex flex-col sm:flex-row gap-3 lg:items-end">
+                    <button type="submit" class="w-full sm:flex-1 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm transition-all duration-200 hover:bg-emerald-700">
+                        <span class="htmx-indicator hidden" id="barangay-filter-loading">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>
+                            Updating...
+                        </span>
+                        <span class="htmx-indicator-shown">Apply</span>
                     </button>
                     <a href="{% url 'common:communities_manage' %}"
-                       class="w-full sm:flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">
+                       class="w-full sm:flex-1 inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-white px-6 py-3 font-semibold text-emerald-600 transition-all duration-200 hover:bg-emerald-50">
                         Clear
                     </a>
                 </div>
@@ -124,247 +201,62 @@
         </div>
     </div>
 
-    <!-- Communities List -->
-    <div class="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
-        <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
-            <h2 class="text-xl font-bold text-white flex items-center">
-                <i class="fas fa-list mr-3 text-2xl"></i>
-                Barangay OBC List
-            </h2>
-        </div>
-        <div class="px-6 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-gray-200">
-            <form method="get" class="flex items-center gap-2 text-sm text-gray-600">
-                {% for key, value in request.GET.items %}
-                    {% if key != 'barangay_page_size' and key != 'barangay_page' %}
-                        <input type="hidden" name="{{ key }}" value="{{ value }}">
-                    {% endif %}
-                {% endfor %}
-                <label for="barangay-page-size" class="font-medium">Show</label>
-                <select id="barangay-page-size" name="barangay_page_size"
-                        class="border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500"
-                        onchange="this.form.submit()">
-                    {% for option in barangay_page_size_options %}
-                        <option value="{{ option }}" {% if barangay_page_size == option %}selected{% endif %}>{{ option }}</option>
-                    {% endfor %}
-                </select>
-                <span>entries</span>
-            </form>
-            <div class="text-sm text-gray-600">
-                {% if communities.paginator.count %}
-                    Showing {{ communities.start_index }} – {{ communities.end_index }} of {{ communities.paginator.count }} entries
-                {% else %}
-                    Showing 0 entries
-                {% endif %}
-            </div>
-        </div>
-        <div class="overflow-x-auto">
-            {% if communities %}
-            <table class="w-full">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Community</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coverage Snapshot</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ethnolinguistic Groups</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for community in communities %}
-                    <tr class="hover:bg-gray-50 transition-colors duration-200">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3">
-                                    <i class="fas fa-map-marker-alt text-white"></i>
-                                </div>
-                                <div>
-                                    <div class="text-sm font-semibold text-gray-900">{{ community.barangay.name }}</div>
-                                    {% if community.obc_id %}
-                                    <div class="text-xs text-gray-500">ID: {{ community.obc_id }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ community.barangay.municipality.name }}</div>
-                            <div class="text-xs text-gray-500">{{ community.barangay.municipality.province.name }}</div>
-                            <div class="text-xs text-gray-400">Region {{ community.barangay.municipality.province.region.code }} · {{ community.barangay.municipality.province.region.name }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-semibold text-gray-900">Est. OBC Population: {{ community.estimated_obc_population|default:"N/A" }}</div>
-                            <div class="text-xs text-gray-500">Total Population: {{ community.total_barangay_population|default:"N/A" }}</div>
-                            <div class="text-xs text-gray-500">Households: {{ community.households|default:"0" }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {% if community.primary_ethnolinguistic_group %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                    {{ community.get_primary_ethnolinguistic_group_display }}
-                                </span>
-                                {% if community.other_ethnolinguistic_groups %}
-                                    <p class="text-xs text-gray-500 mt-2">Other groups: {{ community.other_ethnolinguistic_groups }}</p>
-                                {% endif %}
-                            {% else %}
-                                <span class="text-xs text-gray-400">Not specified</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex flex-wrap gap-2">
-                                <a href="{% url 'common:communities_view' community.id %}{% if show_archived %}?archived=1{% endif %}"
-                                   class="bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 px-3 py-1 rounded text-xs font-medium transition-colors duration-200">
-                                    <i class="fas fa-eye mr-1"></i>
-                                    View
-                                </a>
-                                {% if show_archived %}
-                                <form method="post" action="{% url 'common:communities_restore' community.id %}" class="inline">
-                                    {% csrf_token %}
-                                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200">
-                                        <i class="fas fa-undo mr-1"></i>
-                                        Restore
-                                    </button>
-                                </form>
-                                {% else %}
-                                <a href="{% url 'common:communities_edit' community.id %}"
-                                   class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200">
-                                    <i class="fas fa-edit mr-1"></i>
-                                    Edit
-                                </a>
-                                <button type="button"
-                                        class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
-                                        data-delete-view="{% url 'common:communities_view' community.id %}"
-                                        data-confirm="Are you sure you want to delete this barangay OBC? You will review the details before final confirmation.">
-                                    <i class="fas fa-trash-alt mr-1"></i>
-                                    Delete
-                                </button>
-                                {% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <div class="px-6 py-4 border-t border-gray-200 flex flex-col gap-3 md:flex-row md:items-center md:justify-between bg-gray-50">
-                <div class="text-sm text-gray-600">
-                    {% if communities.paginator.count %}
-                        Page {{ communities.number }} of {{ barangay_total_pages }}
-                    {% else %}
-                        Page 0 of 0
-                    {% endif %}
-                </div>
-                <div class="flex items-center gap-2">
-                    {% if communities.has_previous %}
-                        {% if barangay_base_querystring %}
-                            {% with query=barangay_base_querystring|add:'&barangay_page='|add:communities.previous_page_number %}
-                                <a href="?{{ query }}"
-                                   class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
-                                    <i class="fas fa-chevron-left mr-1"></i>
-                                    Previous
-                                </a>
-                            {% endwith %}
-                        {% else %}
-                            <a href="?barangay_page={{ communities.previous_page_number }}"
-                               class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
-                                <i class="fas fa-chevron-left mr-1"></i>
-                                Previous
-                            </a>
-                        {% endif %}
-                    {% else %}
-                        <span class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-200 text-sm text-gray-300 bg-white cursor-not-allowed">
-                            <i class="fas fa-chevron-left mr-1"></i>
-                            Previous
-                        </span>
-                    {% endif %}
-
-                    {% if communities.has_next %}
-                        {% if barangay_base_querystring %}
-                            {% with query=barangay_base_querystring|add:'&barangay_page='|add:communities.next_page_number %}
-                                <a href="?{{ query }}"
-                                   class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
-                                    Next
-                                    <i class="fas fa-chevron-right ml-1"></i>
-                                </a>
-                            {% endwith %}
-                        {% else %}
-                            <a href="?barangay_page={{ communities.next_page_number }}"
-                               class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
-                                Next
-                                <i class="fas fa-chevron-right ml-1"></i>
-                            </a>
-                        {% endif %}
-                    {% else %}
-                        <span class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-200 text-sm text-gray-300 bg-white cursor-not-allowed">
-                            Next
-                            <i class="fas fa-chevron-right ml-1"></i>
-                        </span>
-                    {% endif %}
-                </div>
-            </div>
-            {% else %}
-            <div class="text-center py-12 text-gray-500">
-                <i class="fas fa-search text-4xl mb-4"></i>
-                <p class="text-lg font-medium">No communities found</p>
-                <p class="text-sm">Try adjusting your filters or add a new community.</p>
-                <a href="{% url 'common:communities_add' %}" 
-                   class="mt-4 inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
-                    <i class="fas fa-plus mr-2"></i>
-                    Add Barangay OBC
-                </a>
-            </div>
-            {% endif %}
-        </div>
+    <div id="barangay-results-container">
+        {% include "communities/partials/barangay_manage_results.html" %}
     </div>
 
     <!-- Quick Actions -->
     <div class="mt-8">
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <a href="{% url 'common:communities_add' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:communities_add' %}" class="group bg-white rounded-xl shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-plus text-white text-xl"></i>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
                         Add Barangay OBC
                     </h3>
                     <p class="mt-2 text-sm text-gray-600">
                         Register a new barangay-level OBC community.
                     </p>
-                    <div class="mt-4 flex items-center text-blue-600 text-sm font-medium">
+                    <div class="mt-4 flex items-center text-emerald-600 text-sm font-medium">
                         <span>Add Barangay</span>
                         <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>
             </a>
 
-            <a href="{% url 'common:communities_stakeholders' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:communities_stakeholders' %}" class="group bg-white rounded-xl shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
-                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-users text-white text-xl"></i>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
                         Manage Stakeholders
                     </h3>
                     <p class="mt-2 text-sm text-gray-600">
                         View and manage stakeholders.
                     </p>
-                    <div class="mt-4 flex items-center text-purple-600 text-sm font-medium">
+                    <div class="mt-4 flex items-center text-emerald-600 text-sm font-medium">
                         <span>Manage Stakeholders</span>
                         <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>
             </a>
 
-            <a href="{% url 'common:communities_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:communities_home' %}" class="group bg-white rounded-xl shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
-                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-chart-bar text-white text-xl"></i>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
                         View Dashboard
                     </h3>
                     <p class="mt-2 text-sm text-gray-600">
                         Return to communities overview.
                     </p>
-                    <div class="mt-4 flex items-center text-green-600 text-sm font-medium">
+                    <div class="mt-4 flex items-center text-emerald-600 text-sm font-medium">
                         <span>View Dashboard</span>
                         <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                     </div>
@@ -377,81 +269,209 @@
 
 {% block extra_js %}
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            document.querySelectorAll("[data-delete-view]").forEach((button) => {
-                button.addEventListener("click", (event) => {
+        const initializeBarangayDeleteButtons = () => {
+            document.querySelectorAll('[data-delete-view]:not([data-delete-bound])').forEach((button) => {
+                button.dataset.deleteBound = '1';
+                button.addEventListener('click', (event) => {
                     event.preventDefault();
-                    const viewUrl = button.getAttribute("data-delete-view");
+                    const viewUrl = button.getAttribute('data-delete-view');
                     if (!viewUrl) {
                         return;
                     }
                     const confirmationMessage =
-                        button.getAttribute("data-confirm") ||
-                        "Are you sure you want to delete this record?";
+                        button.getAttribute('data-confirm') ||
+                        'Are you sure you want to delete this record?';
                     if (window.confirm(confirmationMessage)) {
-                        const separator = viewUrl.includes("?") ? "&" : "?";
+                        const separator = viewUrl.includes('?') ? '&' : '?';
                         window.location.href = `${viewUrl}${separator}review_delete=1`;
                     }
                 });
             });
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeBarangayDeleteButtons();
+        });
+
+        document.body.addEventListener('htmx:afterSwap', (event) => {
+            if (!(event.target instanceof Element)) {
+                return;
+            }
+            if (event.target.closest('#barangay-results-container')) {
+                initializeBarangayDeleteButtons();
+            }
         });
     </script>
-    {% if province_options_json %}
-        {{ province_options_json|json_script:"barangay-province-options" }}
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                const dataElement = document.getElementById("barangay-province-options");
-                if (!dataElement) {
+    <script id="barangay-province-options" type="application/json">{{ province_options_json|default:"[]"|safe }}</script>
+    <script id="barangay-municipality-options" type="application/json">{{ municipality_options_json|default:"[]"|safe }}</script>
+    <script>
+        (function() {
+            console.log('[Barangay OBC] Script loaded');
+
+            function initializeFilters() {
+                console.log('[Barangay OBC] Initializing filters...');
+
+                const provinceDataElement = document.getElementById('barangay-province-options');
+                const municipalityDataElement = document.getElementById('barangay-municipality-options');
+
+                let provinceOptions = [];
+                if (provinceDataElement) {
+                    try {
+                        provinceOptions = JSON.parse(provinceDataElement.textContent);
+                        console.log('[Barangay OBC] ✅ Loaded province options:', provinceOptions.length);
+                        console.log('[Barangay OBC] First province:', provinceOptions[0]);
+                    } catch (error) {
+                        console.error('[Barangay OBC] ❌ Failed to parse province options:', error);
+                    }
+                } else {
+                    console.warn('[Barangay OBC] ⚠️ Province data element not found');
+                }
+
+                let municipalityOptions = [];
+                if (municipalityDataElement) {
+                    try {
+                        municipalityOptions = JSON.parse(municipalityDataElement.textContent);
+                        console.log('[Barangay OBC] ✅ Loaded municipality options:', municipalityOptions.length);
+                    } catch (error) {
+                        console.error('[Barangay OBC] ❌ Failed to parse municipality options:', error);
+                    }
+                } else {
+                    console.warn('[Barangay OBC] ⚠️ Municipality data element not found');
+                }
+
+                const filterForm = document.getElementById('barangay-filter-form');
+                if (!filterForm) {
+                    console.warn('[Barangay OBC] ⚠️ Filter form not found');
                     return;
                 }
 
-                let provinceOptions;
-                try {
-                    provinceOptions = JSON.parse(dataElement.textContent);
-                } catch (error) {
-                    console.error("Failed to parse province options", error);
-                    provinceOptions = [];
-                }
+                const regionSelect = filterForm.querySelector('select[name="region"]');
+                const provinceSelect = filterForm.querySelector('select[name="province"]');
+                const municipalitySelect = filterForm.querySelector('select[name="municipality"]');
 
-                const regionSelect = document.querySelector('form select[name="region"]');
-                const provinceSelect = document.querySelector('form select[name="province"]');
-                if (!regionSelect || !provinceSelect) {
+                if (!regionSelect || !provinceSelect || !municipalitySelect) {
+                    console.warn('[Barangay OBC] ⚠️ One or more select elements not found');
+                    console.log('Region:', regionSelect, 'Province:', provinceSelect, 'Municipality:', municipalitySelect);
                     return;
                 }
 
                 const populateProvinces = (regionId, preserveValue) => {
-                    const normalizedId = regionId ? String(regionId) : "";
-                    const previousValue = preserveValue || "";
+                    console.log('[Barangay OBC] 🔧 populateProvinces called:', { regionId, type: typeof regionId, preserveValue });
+
+                    const normalizedId = regionId ? String(regionId) : '';
+                    const previousValue = preserveValue ? String(preserveValue) : '';
+
+                    console.log('[Barangay OBC] 🔧 Normalized:', { normalizedId, willFilter: !!normalizedId, totalOptions: provinceOptions.length });
+
+                    // Debug filter logic
+                    if (normalizedId && provinceOptions.length > 0) {
+                        console.log('[Barangay OBC] 🔍 Sample filter test:');
+                        provinceOptions.slice(0, 3).forEach(opt => {
+                            const match = String(opt.region_id) === normalizedId;
+                            console.log(`  ${opt.name}: region_id="${opt.region_id}" ${match ? '✅ MATCH' : '❌ no match'}`);
+                        });
+                    }
+
                     const filtered = normalizedId
-                        ? provinceOptions.filter((option) => option.region_id === normalizedId)
+                        ? provinceOptions.filter((option) => String(option.region_id) === normalizedId)
                         : provinceOptions;
 
-                    provinceSelect.innerHTML = "";
-                    const defaultOption = document.createElement("option");
-                    defaultOption.value = "";
-                    defaultOption.textContent = "All Provinces";
+                    console.log(`[Barangay OBC] 🔄 Filter result: ${filtered.length}/${provinceOptions.length} provinces`);
+                    if (filtered.length > 0 && filtered.length <= 10) {
+                        console.log('[Barangay OBC] ✅ ALL filtered provinces:', filtered.map(p => `${p.name} (${p.region_id})`));
+                    }
+
+                    provinceSelect.innerHTML = '';
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'All Provinces';
                     provinceSelect.appendChild(defaultOption);
 
                     filtered.forEach((option) => {
-                        const opt = document.createElement("option");
+                        const opt = document.createElement('option');
                         opt.value = option.id;
                         opt.textContent = option.name;
                         provinceSelect.appendChild(opt);
                     });
 
-                    if (previousValue && filtered.some((option) => option.id === previousValue)) {
+                    if (previousValue && filtered.some((option) => String(option.id) === previousValue)) {
                         provinceSelect.value = previousValue;
+                        console.log('[Barangay OBC] ✅ Restored selection:', previousValue);
+                    }
+
+                    console.log('[Barangay OBC] ✅ Dropdown updated:', provinceSelect.options.length, 'total options');
+                };
+
+                const populateMunicipalities = (regionId, provinceId, preserveValue) => {
+                    const normalizedRegion = regionId ? String(regionId) : '';
+                    const normalizedProvince = provinceId ? String(provinceId) : '';
+                    const previousValue = preserveValue ? String(preserveValue) : '';
+
+                    const filtered = municipalityOptions.filter((option) => {
+                        if (normalizedRegion && String(option.region_id) !== normalizedRegion) {
+                            return false;
+                        }
+                        if (normalizedProvince && String(option.province_id) !== normalizedProvince) {
+                            return false;
+                        }
+                        return true;
+                    });
+
+                    console.log(`[Barangay OBC] 🔄 Populating municipalities for region "${normalizedRegion}", province "${normalizedProvince}":`, filtered.length, 'municipalities found');
+
+                    municipalitySelect.innerHTML = '';
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'All Municipalities';
+                    municipalitySelect.appendChild(defaultOption);
+
+                    filtered.forEach((option) => {
+                        const opt = document.createElement('option');
+                        opt.value = option.id;
+                        opt.textContent = option.name;
+                        municipalitySelect.appendChild(opt);
+                    });
+
+                    if (previousValue && filtered.some((option) => String(option.id) === previousValue)) {
+                        municipalitySelect.value = previousValue;
+                        console.log('[Barangay OBC] ✅ Restored municipality selection:', previousValue);
                     }
                 };
 
-                const initialRegion = regionSelect.dataset.initial || regionSelect.value || "";
-                const initialProvince = provinceSelect.dataset.initial || provinceSelect.value || "";
-                populateProvinces(initialRegion, initialProvince);
+                // Get initial values
+                const initialRegion = regionSelect.dataset.initial || regionSelect.value || '';
+                const initialProvince = provinceSelect.dataset.initial || provinceSelect.value || '';
+                const initialMunicipality = municipalitySelect.dataset.initial || municipalitySelect.value || '';
 
-                regionSelect.addEventListener("change", () => {
-                    populateProvinces(regionSelect.value, "");
+                console.log('[Barangay OBC] 📊 Initial state:');
+                console.log('  Region:', initialRegion, '(from', regionSelect.dataset.initial ? 'data-initial' : 'value', ')');
+                console.log('  Province:', initialProvince, '(from', provinceSelect.dataset.initial ? 'data-initial' : 'value', ')');
+                console.log('  Municipality:', initialMunicipality, '(from', municipalitySelect.dataset.initial ? 'data-initial' : 'value', ')');
+
+                // Initial population
+                populateProvinces(initialRegion, initialProvince);
+                populateMunicipalities(initialRegion, initialProvince, initialMunicipality);
+
+                // Event listeners
+                regionSelect.addEventListener('change', () => {
+                    console.log('[Barangay OBC] 👉 Region changed to:', regionSelect.value);
+                    populateProvinces(regionSelect.value, '');
+                    populateMunicipalities(regionSelect.value, '', '');
                 });
-            });
-        </script>
-    {% endif %}
+
+                provinceSelect.addEventListener('change', () => {
+                    console.log('[Barangay OBC] 👉 Province changed to:', provinceSelect.value);
+                    populateMunicipalities(regionSelect.value, provinceSelect.value, '');
+                });
+
+                console.log('[Barangay OBC] ✅ Initialization complete');
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeFilters);
+            } else {
+                initializeFilters();
+            }
+        })();
+    </script>
 {% endblock %}

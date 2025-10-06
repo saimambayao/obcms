@@ -350,6 +350,18 @@ class MunicipalityCoverageForm(LocationSelectionMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # Mark optional fields as not required (they have defaults at model level)
+        optional_fields = [
+            'settlement_type',
+            'mosques_count',
+            'madrasah_count',
+            'asatidz_count',
+            'religious_leaders_count',
+        ]
+        for field_name in optional_fields:
+            if field_name in self.fields:
+                self.fields[field_name].required = False
+
         # Additional logic specific to municipality coverage
         municipality_field = self.fields.get("municipality")
         if municipality_field:
@@ -435,6 +447,18 @@ class ProvinceCoverageForm(LocationSelectionMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # Mark optional fields as not required (they have defaults at model level)
+        optional_fields = [
+            'settlement_type',
+            'mosques_count',
+            'madrasah_count',
+            'asatidz_count',
+            'religious_leaders_count',
+        ]
+        for field_name in optional_fields:
+            if field_name in self.fields:
+                self.fields[field_name].required = False
+
         province_field = self.fields.get("province")
         if province_field:
             province_choices = Province.objects.select_related("region").order_by(
@@ -499,13 +523,46 @@ class OBCCommunityForm(LocationSelectionMixin, forms.ModelForm):
             **COMMUNITY_PROFILE_LABELS,
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Mark optional fields as not required (they have defaults at model level)
+        optional_fields = [
+            'settlement_type',
+            'mosques_count',
+            'madrasah_count',
+            'asatidz_count',
+            'religious_leaders_count',
+        ]
+        for field_name in optional_fields:
+            if field_name in self.fields:
+                self.fields[field_name].required = False
+
     def clean(self):
         """Validate that OBC population does not exceed total barangay population."""
         cleaned_data = super().clean()
         estimated_obc_population = cleaned_data.get("estimated_obc_population")
         total_barangay_population = cleaned_data.get("total_barangay_population")
+        barangay = cleaned_data.get("barangay")
 
-        # Only validate if both values are provided
+        # Check against the barangay's population_total (from the Barangay model)
+        if (
+            estimated_obc_population is not None
+            and barangay is not None
+            and barangay.population_total is not None
+            and estimated_obc_population > 0
+            and barangay.population_total > 0
+        ):
+            if estimated_obc_population > barangay.population_total:
+                raise forms.ValidationError(
+                    {
+                        "estimated_obc_population": "Estimated OBC Population cannot exceed Total Barangay Population. "
+                        f"The total population of {barangay.name} is {barangay.population_total:,}, "
+                        f"but you entered an OBC population of {estimated_obc_population:,}."
+                    }
+                )
+
+        # Also check against the total_barangay_population field if provided
         if (
             estimated_obc_population is not None
             and total_barangay_population is not None

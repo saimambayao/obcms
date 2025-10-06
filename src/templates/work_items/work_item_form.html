@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ action }} Work Item{% endblock %}
+
+{% block breadcrumb %}
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:work_item_list' %}" class="text-gray-600 hover:text-gray-900">Work Items</a>
+</li>
+{% for ancestor in breadcrumb %}
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:work_item_detail' pk=ancestor.pk %}" class="text-gray-600 hover:text-gray-900">{{ ancestor.title }}</a>
+</li>
+{% endfor %}
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <span class="text-gray-500 font-medium">{{ action }}</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-5xl">
+
+    <!-- Page Header -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">{{ action }} Work Item</h1>
+        {% if parent %}
+            <p class="mt-2 text-gray-600">
+                <i class="fas fa-sitemap mr-1 text-gray-400"></i>
+                Parent: <span class="font-medium">{{ parent.title }}</span>
+            </p>
+        {% endif %}
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="bg-red-50 border-l-4 border-red-500 rounded-r-lg p-4">
+                <div class="flex">
+                    <i class="fas fa-exclamation-circle text-red-500 text-xl mt-0.5 mr-3"></i>
+                    <div class="text-red-700">
+                        {{ form.non_field_errors }}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Basic Information Section -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                Basic Information
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Work Type -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Work Type<span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        {{ form.work_type }}
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                        </span>
+                    </div>
+                    {% if form.work_type.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.work_type.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Parent -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Parent Work Item
+                    </label>
+                    <div class="relative">
+                        {{ form.parent }}
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                        </span>
+                    </div>
+                    {% if form.parent.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.parent.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">Select a parent to create a hierarchical structure</p>
+                </div>
+
+                <!-- Title -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Title<span class="text-red-500">*</span>
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Description -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Description
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Status & Priority Section -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-tasks text-emerald-500 mr-2"></i>
+                Status & Priority
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Status -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Status
+                    </label>
+                    <div class="relative">
+                        {{ form.status }}
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                        </span>
+                    </div>
+                    {% if form.status.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Priority -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Priority
+                    </label>
+                    <div class="relative">
+                        {{ form.priority }}
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                        </span>
+                    </div>
+                    {% if form.priority.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.priority.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Progress -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Progress (%)
+                    </label>
+                    {{ form.progress }}
+                    {% if form.progress.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.progress.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Auto Calculate Progress -->
+                <div class="flex items-end pb-3">
+                    <label class="flex items-center space-x-2">
+                        {{ form.auto_calculate_progress }}
+                        <span class="text-sm text-gray-700">Auto-calculate from children</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Section -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-calendar-alt text-purple-500 mr-2"></i>
+                Schedule & Timeline
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Start Date -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Start Date
+                    </label>
+                    {{ form.start_date }}
+                    {% if form.start_date.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.start_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Start Time -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Start Time
+                    </label>
+                    {{ form.start_time }}
+                    {% if form.start_time.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.start_time.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Due Date -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Due Date
+                    </label>
+                    {{ form.due_date }}
+                    {% if form.due_date.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.due_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- End Time -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        End Time
+                    </label>
+                    {{ form.end_time }}
+                    {% if form.end_time.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.end_time.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignment Section -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-users text-amber-500 mr-2"></i>
+                Assignment
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Assignees -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Assigned Users
+                    </label>
+                    {{ form.assignees }}
+                    {% if form.assignees.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.assignees.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">Hold Ctrl/Cmd to select multiple</p>
+                </div>
+
+                <!-- Teams -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Assigned Teams
+                    </label>
+                    {{ form.teams }}
+                    {% if form.teams.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.teams.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">Hold Ctrl/Cmd to select multiple</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar Settings Section -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-cog text-gray-500 mr-2"></i>
+                Calendar Settings
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Calendar Visibility -->
+                <div>
+                    <label class="flex items-center space-x-2">
+                        {{ form.is_calendar_visible }}
+                        <span class="text-sm text-gray-700">Show in calendar</span>
+                    </label>
+                    <p class="mt-1 text-sm text-gray-500 ml-7">Display this work item on the OOBC calendar</p>
+                </div>
+
+                <!-- Calendar Color -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Calendar Color
+                    </label>
+                    {{ form.calendar_color }}
+                    {% if form.calendar_color.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.calendar_color.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-200">
+            <a href="{% if work_item %}{% url 'common:work_item_detail' pk=work_item.pk %}{% else %}{% url 'common:work_item_list' %}{% endif %}"
+               class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200 text-center">
+                <i class="fas fa-times mr-2"></i>
+                Cancel
+            </a>
+            <button type="submit" class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <i class="fas fa-save mr-2"></i>
+                {{ action }} Work Item
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

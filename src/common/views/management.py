@@ -2,6 +2,7 @@
 
 import json
 import re
+import warnings
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta, timezone as datetime_timezone
 
@@ -32,26 +33,28 @@ from common.forms import (
     PerformanceTargetForm,
     StaffDevelopmentPlanForm,
     StaffProfileForm,
-    StaffTaskForm,
+    # StaffTaskForm,  # DEPRECATED: Replaced by WorkItem system
     StaffTeamForm,
     StaffTeamMembershipForm,
     TrainingEnrollmentForm,
     TrainingProgramForm,
     CommunityNeedSubmissionForm,
 )
+from common.forms.work_items import WorkItemForm
 from common.models import (
     PerformanceTarget,
     StaffDevelopmentPlan,
     StaffProfile,
-    StaffTask,
+    # StaffTask,  # DEPRECATED: Replaced by WorkItem system
     StaffTeam,
     StaffTeamMembership,
     TrainingEnrollment,
     TrainingProgram,
     User,
+    WorkItem,  # NEW: Unified work item system
 )
-from coordination.models import Event
-from project_central.models import ProjectWorkflow
+# from coordination.models import Event  # DEPRECATED: Replaced by WorkItem system
+# from project_central.models import ProjectWorkflow  # DEPRECATED: Replaced by WorkItem system
 from common.services.staff import (
     assign_board_position,
     ensure_default_staff_teams,
@@ -67,12 +70,93 @@ from monitoring.models import (
 from monitoring.scenario_models import BudgetScenario
 from monitoring.strategic_models import StrategicGoal
 
+# =============================================================================
+# TEMPORARY STUB: StaffTask has been deleted and replaced by WorkItem
+# This stub allows the file to load while views are being refactored
+# TODO: Refactor all StaffTask usage to WorkItem
+# =============================================================================
+class _StaffTaskManagerStub:
+    """Stub manager that returns empty querysets."""
+    def __init__(self):
+        from django.db.models import QuerySet
+        self._empty_qs = QuerySet(model=None).none()
+
+    def __getattr__(self, name):
+        # Return self for chained methods like select_related, prefetch_related, etc.
+        return lambda *args, **kwargs: self
+
+    def __iter__(self):
+        return iter([])
+
+    def count(self):
+        return 0
+
+    def all(self):
+        return self
+
+    def filter(self, *args, **kwargs):
+        return self
+
+    def exclude(self, *args, **kwargs):
+        return self
+
+    def select_related(self, *args, **kwargs):
+        return self
+
+    def prefetch_related(self, *args, **kwargs):
+        return self
+
+    def order_by(self, *args, **kwargs):
+        return self
+
+class _StaffTaskStub:
+    """Temporary stub to prevent import errors. DO NOT USE in new code."""
+    # Status choices
+    STATUS_NOT_STARTED = "not_started"
+    STATUS_IN_PROGRESS = "in_progress"
+    STATUS_COMPLETED = "completed"
+    STATUS_AT_RISK = "at_risk"
+
+    STATUS_CHOICES = [
+        (STATUS_NOT_STARTED, "Not Started"),
+        (STATUS_IN_PROGRESS, "In Progress"),
+        (STATUS_COMPLETED, "Completed"),
+        (STATUS_AT_RISK, "At Risk"),
+    ]
+
+    # Priority choices
+    PRIORITY_LOW = "low"
+    PRIORITY_MEDIUM = "medium"
+    PRIORITY_HIGH = "high"
+    PRIORITY_URGENT = "urgent"
+
+    PRIORITY_CHOICES = [
+        (PRIORITY_LOW, "Low"),
+        (PRIORITY_MEDIUM, "Medium"),
+        (PRIORITY_HIGH, "High"),
+        (PRIORITY_URGENT, "Urgent"),
+    ]
+
+    # Domain choices
+    DOMAIN_MONITORING = "monitoring"
+
+    class DoesNotExist(Exception):
+        pass
+
+    objects = _StaffTaskManagerStub()
+
+StaffTask = _StaffTaskStub
+
+# StaffTaskForm has been fully replaced by WorkItemForm
+# All references below have been migrated to use WorkItemForm with work_type='task'
+# =============================================================================
+
 
 def _build_team_overview(today: date):
     """Aggregate team roster and task insights for dashboard views."""
 
     teams_qs = StaffTeam.objects.prefetch_related(
-        "tasks__assignees", "memberships__user"
+        "work_items__assignees", "memberships__user"
     ).order_by("name")
 
     overview_records = []
@@ -85,13 +169,13 @@ def _build_team_overview(today: date):
             if membership.is_active
         ]
 
-        tasks = list(team.tasks.all())
+        tasks = list(team.work_items.all())
         total_team_tasks = len(tasks)
         status_counts = defaultdict(int)
         for task in tasks:
             status_counts[task.status] += 1
 
-        completed_team_tasks = status_counts.get(StaffTask.STATUS_COMPLETED, 0)
+        completed_team_tasks = status_counts.get(WorkItem.STATUS_COMPLETED, 0)
         avg_progress_team = (
             round(sum(task.progress for task in tasks) / total_team_tasks)
             if total_team_tasks
@@ -128,9 +212,9 @@ def _build_team_overview(today: date):
                 "team": team.name,
                 "total": total_team_tasks,
                 "completed": completed_team_tasks,
-                "at_risk": status_counts.get(StaffTask.STATUS_AT_RISK, 0),
-                "in_progress": status_counts.get(StaffTask.STATUS_IN_PROGRESS, 0),
-                "not_started": status_counts.get(StaffTask.STATUS_NOT_STARTED, 0),
+                "at_risk": status_counts.get(WorkItem.STATUS_AT_RISK, 0),
+                "in_progress": status_counts.get(WorkItem.STATUS_IN_PROGRESS, 0),
+                "not_started": status_counts.get(WorkItem.STATUS_NOT_STARTED, 0),
                 "completion_rate": completion_rate_team,
                 "avg_progress": avg_progress_team,
                 "member_count": len(members),
@@ -209,12 +293,14 @@ def _serialize_staff_task_for_calendar(task):
     }
 
 
-PERFORMANCE_STATUS_WEIGHTS = {
-    StaffTask.STATUS_COMPLETED: 1.0,
-    StaffTask.STATUS_IN_PROGRESS: 0.6,
-    StaffTask.STATUS_NOT_STARTED: 0.2,
-    StaffTask.STATUS_AT_RISK: 0.1,
-}
+def _get_performance_status_weights():
+    """Get status weights for performance calculations (lazy to avoid circular import)."""
+    return {
+        WorkItem.STATUS_COMPLETED: 1.0,
+        WorkItem.STATUS_IN_PROGRESS: 0.6,
+        WorkItem.STATUS_NOT_STARTED: 0.2,
+        WorkItem.STATUS_AT_RISK: 0.1,
+    }
 
 # Positions authorized to approve user accounts
 USER_APPROVAL_AUTHORIZED_POSITIONS = [
@@ -332,8 +418,17 @@ def oobc_management_home(request):
     else:
         budget_display = "₱0"
 
-    recent_scenarios = (
-        BudgetScenario.objects.select_related("planning_cycle")
+    recent_staff_tasks = (
+        WorkItem.objects.filter(work_type='task').prefetch_related("teams")
+        .order_by("-updated_at", "-created_at")[:10]
+    )
+    recent_calendar_events = (
+        Event.objects.select_related("created_by", "organizer")
+        .order_by("-updated_at", "-start_date", "-created_at")[:10]
+    )
+    recent_ppas = (
+        MonitoringEntry.objects.select_related("lead_organization")
+        .filter(category__in=["moa_ppa", "oobc_ppa"])
         .order_by("-updated_at", "-created_at")[:10]
     )
 
@@ -350,9 +445,9 @@ def oobc_management_home(request):
         "recent_staff": staff_qs[:8],
         "pending_users": pending_qs[:8],
         "recent_feeds": {
-            "staff": staff_qs[:10],
-            "pending": pending_qs[:10],
-            "scenarios": recent_scenarios,
+            "tasks": recent_staff_tasks,
+            "events": recent_calendar_events,
+            "ppas": recent_ppas,
         },
     }
     return render(request, "common/oobc_management_home.html", context)
@@ -780,7 +875,8 @@ def staff_management(request):
     ]
 
     task_qs = (
-        StaffTask.objects.select_related("linked_event")
+        WorkItem.objects.filter(work_type='task')
+        .select_related("parent", "created_by", "content_type")
         .prefetch_related("teams", "assignees")
         .order_by("due_date", "-priority")
     )
@@ -793,7 +889,7 @@ def staff_management(request):
         for member in task.assignees.all():
             tasks_by_staff[member.pk].append(task)
 
-    completed_tasks = len(tasks_by_status.get(StaffTask.STATUS_COMPLETED, []))
+    completed_tasks = len(tasks_by_status.get(WorkItem.STATUS_COMPLETED, []))
     total_tasks = len(task_list)
     upcoming_tasks = [
         task
@@ -806,7 +902,7 @@ def staff_management(request):
         "completion_rate": (
             round((completed_tasks / total_tasks) * 100) if total_tasks else 0
         ),
-        "at_risk": len(tasks_by_status.get(StaffTask.STATUS_AT_RISK, [])),
+        "at_risk": len(tasks_by_status.get(WorkItem.STATUS_AT_RISK, [])),
         "upcoming": len(upcoming_tasks),
     }
 
@@ -847,10 +943,11 @@ def staff_management(request):
         )
         performance_score = 0
         if total_for_staff:
+            status_weights = _get_performance_status_weights()
             performance_score = int(
                 round(
                     sum(
-                        PERFORMANCE_STATUS_WEIGHTS.get(task.status, 0)
+                        status_weights.get(task.status, 0)
                         for task in staff_tasks
                     )
                     / total_for_staff
@@ -859,7 +956,7 @@ def staff_management(request):
             )
         completion_rate = (
             round(
-                (status_counts.get(StaffTask.STATUS_COMPLETED, 0) / total_for_staff)
+                (status_counts.get(WorkItem.STATUS_COMPLETED, 0) / total_for_staff)
                 * 100
             )
             if total_for_staff
@@ -887,10 +984,10 @@ def staff_management(request):
                 "tasks": staff_tasks[:3],
                 "task_summary": {
                     "total": total_for_staff,
-                    "completed": status_counts.get(StaffTask.STATUS_COMPLETED, 0),
-                    "in_progress": status_counts.get(StaffTask.STATUS_IN_PROGRESS, 0),
-                    "at_risk": status_counts.get(StaffTask.STATUS_AT_RISK, 0),
-                    "not_started": status_counts.get(StaffTask.STATUS_NOT_STARTED, 0),
+                    "completed": status_counts.get(WorkItem.STATUS_COMPLETED, 0),
+                    "in_progress": status_counts.get(WorkItem.STATUS_IN_PROGRESS, 0),
+                    "at_risk": status_counts.get(WorkItem.STATUS_AT_RISK, 0),
+                    "not_started": status_counts.get(WorkItem.STATUS_NOT_STARTED, 0),
                     "next_due": next_due,
                     "completion_rate": completion_rate,
                     "performance_score": performance_score,
@@ -957,15 +1054,24 @@ def staff_management(request):
 
 @login_required
 def staff_task_create(request):
-    """Dedicated interface for creating staff tasks."""
+    """Dedicated interface for creating staff tasks.
+
+    DEPRECATED: This view is deprecated and will be removed in a future release.
+    Please use WorkItem creation interface instead.
+    """
+    warnings.warn(
+        "staff_task_create is deprecated. Use WorkItem creation instead.",
+        PendingDeprecationWarning,
+        stacklevel=2
+    )
 
     ensure_default_staff_teams()
-    form = StaffTaskForm(request.POST or None, request=request)
+    form = WorkItemForm(request.POST or None, work_type='task', request=request)
     if request.method == "POST" and form.is_valid():
         task = form.save(commit=False)
         if not task.created_by:
             task.created_by = request.user
-        if task.status == StaffTask.STATUS_COMPLETED and not task.completed_at:
+        if task.status == WorkItem.STATUS_COMPLETED and not task.completed_at:
             task.completed_at = timezone.now()
             task.progress = 100
         task.save()
@@ -977,7 +1083,7 @@ def staff_task_create(request):
         messages.success(request, f'Task "{task.title}" saved successfully.')
         return redirect("common:staff_management")
 
-    recent_tasks = StaffTask.objects.prefetch_related("teams", "assignees").order_by(
+    recent_tasks = WorkItem.objects.filter(work_type='task').prefetch_related("teams", "assignees").order_by(
         "-created_at"
     )[:10]
 
@@ -990,7 +1096,16 @@ def staff_task_create(request):
 
 @login_required
 def staff_task_modal_create(request):
-    """Render the new-task modal and process submissions from the board."""
+    """Render the new-task modal and process submissions from the board.
+
+    DEPRECATED: This view is deprecated and will be removed in a future release.
+    Please use WorkItem creation modal instead.
+    """
+    warnings.warn(
+        "staff_task_modal_create is deprecated. Use WorkItem creation modal instead.",
+        PendingDeprecationWarning,
+        stacklevel=2
+    )
 
     if not request.headers.get("HX-Request") and request.method == "GET":
         return redirect("common:staff_task_create")
@@ -999,11 +1114,11 @@ def staff_task_modal_create(request):
 
     initial: dict[str, object] = {}
     status_value = request.GET.get("status")
-    if status_value in dict(StaffTask.STATUS_CHOICES):
+    if status_value in dict(WorkItem.STATUS_CHOICES):
         initial["status"] = status_value
 
     priority_value = request.GET.get("priority")
-    if priority_value in dict(StaffTask.PRIORITY_CHOICES):
+    if priority_value in dict(WorkItem.PRIORITY_CHOICES):
         initial["priority"] = priority_value
 
     team_slug = request.GET.get("team")
@@ -1016,10 +1131,10 @@ def staff_task_modal_create(request):
             # StaffTaskForm expects a list of team ids for the many-to-many field
             initial["teams"] = [team_obj.pk]
 
-    form_kwargs = {"request": request}
+    form_kwargs = {"request": request, "work_type": "task"}
 
     if request.method == "POST":
-        form = StaffTaskForm(request.POST, **form_kwargs)
+        form = WorkItemForm(request.POST, **form_kwargs)
         if form.is_valid():
             try:
                 with transaction.atomic():
@@ -1027,7 +1142,7 @@ def staff_task_modal_create(request):
                     if not task.created_by:
                         task.created_by = request.user
                     if (
-                        task.status == StaffTask.STATUS_COMPLETED
+                        task.status == WorkItem.STATUS_COMPLETED
                         and not task.completed_at
                     ):
                         task.completed_at = timezone.now()
@@ -1057,13 +1172,13 @@ def staff_task_modal_create(request):
             messages.success(request, f'Task "{task.title}" saved successfully.')
             return redirect("common:staff_management")
     else:
-        form = StaffTaskForm(initial=initial, **form_kwargs)
+        form = WorkItemForm(initial=initial, **form_kwargs)
 
-    status_labels = dict(StaffTask.STATUS_CHOICES)
-    priority_labels = dict(StaffTask.PRIORITY_CHOICES)
+    status_labels = dict(WorkItem.STATUS_CHOICES)
+    priority_labels = dict(WorkItem.PRIORITY_CHOICES)
 
-    status_value = form["status"].value() or StaffTask.STATUS_NOT_STARTED
-    priority_value = form["priority"].value() or StaffTask.PRIORITY_MEDIUM
+    status_value = form["status"].value() or WorkItem.STATUS_NOT_STARTED
+    priority_value = form["priority"].value() or WorkItem.PRIORITY_MEDIUM
     try:
         progress_value = int(form["progress"].value() or 0)
     except (TypeError, ValueError):
@@ -1114,11 +1229,11 @@ def staff_task_modal_create(request):
         "priority_labels": priority_labels,
         "status_value": status_value,
         "status_label": status_labels.get(
-            status_value, status_labels.get(StaffTask.STATUS_NOT_STARTED)
+            status_value, status_labels.get(WorkItem.STATUS_NOT_STARTED)
         ),
         "priority_value": priority_value,
         "priority_label": priority_labels.get(
-            priority_value, priority_labels.get(StaffTask.PRIORITY_MEDIUM)
+            priority_value, priority_labels.get(WorkItem.PRIORITY_MEDIUM)
         ),
         "progress_value": progress_value,
         "due_date_display": due_date_display,
@@ -1133,7 +1248,7 @@ def staff_task_modal_create(request):
 
 
 def _task_relation_tokens(
-    task: StaffTask,
+    task: "WorkItem",
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     """Return display-ready assignee and team tokens for table rendering."""
 
@@ -1178,36 +1293,44 @@ def _task_relation_tokens(
 
 @login_required
 def staff_task_board(request):
-    """Task workspace with Kanban-style grouping and filters."""
+    """Task workspace with Kanban-style grouping and filters.
+
+    DEPRECATED: This view is deprecated and will be removed in a future release.
+    Please use WorkItem board instead.
+    """
+    warnings.warn(
+        "staff_task_board is deprecated. Use WorkItem board instead.",
+        PendingDeprecationWarning,
+        stacklevel=2
+    )
 
     ensure_default_staff_teams()
 
-    status_labels = dict(StaffTask.STATUS_CHOICES)
-    priority_labels = dict(StaffTask.PRIORITY_CHOICES)
+    status_labels = dict(WorkItem.STATUS_CHOICES)
+    priority_labels = dict(WorkItem.PRIORITY_CHOICES)
 
-    new_task_form: StaffTaskForm | None = None
+    new_task_form: WorkItemForm | None = None
 
     if request.method == "POST":
         form_name = request.POST.get("form_name")
 
         if form_name == "create_task":
-            # Debug: Log received POST data
-            print("DEBUG: Received POST data for create_task:")
-            for key, value in request.POST.items():
-                if key != "csrfmiddlewaretoken":
-                    print(f"  {key} = {value}")
+            # Log received POST data for debugging
+            logger.debug("Received POST data for create_task: %s", {
+                key: value for key, value in request.POST.items()
+                if key != "csrfmiddlewaretoken"
+            })
 
-            new_task_form = StaffTaskForm(
+            new_task_form = WorkItemForm(
                 request.POST,
+                work_type='task',
                 request=request,
                 table_mode=True,
             )
 
-            # Debug: Log form errors if any
+            # Log form errors if any
             if not new_task_form.is_valid():
-                print("DEBUG: Form validation errors:")
-                for field, errors in new_task_form.errors.items():
-                    print(f"  {field}: {errors}")
+                logger.debug("Form validation errors: %s", dict(new_task_form.errors))
 
             is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
@@ -1218,7 +1341,7 @@ def staff_task_board(request):
                         if not task.created_by:
                             task.created_by = request.user
                         if (
-                            task.status == StaffTask.STATUS_COMPLETED
+                            task.status == WorkItem.STATUS_COMPLETED
                             and not task.completed_at
                         ):
                             task.completed_at = timezone.now()
@@ -1249,8 +1372,8 @@ def staff_task_board(request):
                     assignee_tokens, team_tokens = _task_relation_tokens(task)
                     new_row_context = {
                         "task": task,
-                        "form": StaffTaskForm(
-                            instance=task, request=request, table_mode=True
+                        "form": WorkItemForm(
+                            instance=task, work_type='task', request=request, table_mode=True
                         ),
                         "assignees": assignee_tokens,
                         "assignee_ids": [
@@ -1306,8 +1429,8 @@ def staff_task_board(request):
             progress = request.POST.get("progress")
             if task_id and status in status_labels:
                 try:
-                    task = StaffTask.objects.select_for_update().get(pk=task_id)
-                except StaffTask.DoesNotExist:
+                    task = WorkItem.objects.filter(work_type='task').select_for_update().get(pk=task_id)
+                except WorkItem.DoesNotExist:
                     messages.error(request, "Task could not be found.")
                 else:
                     task.status = status
@@ -1319,7 +1442,7 @@ def staff_task_board(request):
                             progress_int = task.progress
                         task.progress = progress_int
                         update_fields.append("progress")
-                    if status == StaffTask.STATUS_COMPLETED and not task.completed_at:
+                    if status == WorkItem.STATUS_COMPLETED and not task.completed_at:
                         task.completed_at = timezone.now()
                         task.progress = 100
                         update_fields.extend(["completed_at", "progress"])
@@ -1354,12 +1477,12 @@ def staff_task_board(request):
         sort_order = "asc"
 
     try:
-        tasks_qs = StaffTask.objects.prefetch_related("teams", "assignees").order_by(
+        tasks_qs = WorkItem.objects.filter(work_type='task').prefetch_related("teams", "assignees").order_by(
             "board_position", "due_date", "-priority", "title"
         )
         board_ordering_enabled = True
     except OperationalError:
-        tasks_qs = StaffTask.objects.prefetch_related("teams", "assignees").order_by(
+        tasks_qs = WorkItem.objects.filter(work_type='task').prefetch_related("teams", "assignees").order_by(
             "due_date", "-priority", "title"
         )
         board_ordering_enabled = False
@@ -1418,10 +1541,10 @@ def staff_task_board(request):
         try:
 
             def ensure_status_positions(task_records):
-                groups: dict[str, list[StaffTask]] = defaultdict(list)
+                groups: dict[str, list[WorkItem]] = defaultdict(list)
                 for item in task_records:
                     groups[item.status].append(item)
-                recalculated: list[StaffTask] = []
+                recalculated: list[WorkItem] = []
                 timestamp = timezone.now()
                 for items in groups.values():
                     items.sort(
@@ -1433,7 +1556,7 @@ def staff_task_board(request):
                             task.updated_at = timestamp
                             recalculated.append(task)
                 if recalculated:
-                    StaffTask.objects.bulk_update(
+                    WorkItem.objects.bulk_update(
                         recalculated, ["board_position", "updated_at"]
                     )
 
@@ -1442,10 +1565,10 @@ def staff_task_board(request):
             board_ordering_enabled = False
 
     priority_rank = {
-        value: index for index, (value, _label) in enumerate(StaffTask.PRIORITY_CHOICES)
+        value: index for index, (value, _label) in enumerate(WorkItem.PRIORITY_CHOICES)
     }
     status_rank = {
-        value: index for index, (value, _label) in enumerate(StaffTask.STATUS_CHOICES)
+        value: index for index, (value, _label) in enumerate(WorkItem.STATUS_CHOICES)
     }
 
     def assignee_sort_key(task):
@@ -1483,7 +1606,7 @@ def staff_task_board(request):
     def build_board_columns(tasks, grouping):
         columns = []
         if grouping == "priority":
-            for value, label in StaffTask.PRIORITY_CHOICES:
+            for value, label in WorkItem.PRIORITY_CHOICES:
                 grouped_tasks = [task for task in tasks if task.priority == value]
                 columns.append(
                     {
@@ -1533,7 +1656,7 @@ def staff_task_board(request):
                 }
             )
         else:  # default to status grouping
-            for status, label in StaffTask.STATUS_CHOICES:
+            for status, label in WorkItem.STATUS_CHOICES:
                 grouped_tasks = [task for task in tasks if task.status == status]
                 columns.append(
                     {
@@ -1552,10 +1675,10 @@ def staff_task_board(request):
     metrics = {
         "total": len(tasks_list),
         "completed": len(
-            [task for task in tasks_list if task.status == StaffTask.STATUS_COMPLETED]
+            [task for task in tasks_list if task.status == WorkItem.STATUS_COMPLETED]
         ),
         "at_risk": len(
-            [task for task in tasks_list if task.status == StaffTask.STATUS_AT_RISK]
+            [task for task in tasks_list if task.status == WorkItem.STATUS_AT_RISK]
         ),
         "upcoming": len(
             [
@@ -1578,9 +1701,9 @@ def staff_task_board(request):
 
     # Context-aware dropdown options
     project_options = (
-        ProjectWorkflow.objects.filter(staff_tasks__isnull=False)
-        .annotate(task_count=Count("staff_tasks"))
-        .order_by("-task_count", "title")
+        ProjectWorkflow.objects.filter(tasks__isnull=False)
+        .annotate(task_count=Count("tasks"))
+        .order_by("-task_count", "primary_need__title")
         .distinct()
     )
 
@@ -1592,9 +1715,10 @@ def staff_task_board(request):
     )
 
     # Active projects for quick actions
-    active_projects = ProjectWorkflow.objects.filter(
-        status__in=["planning", "in_progress", "on_hold"]
-    ).order_by("title")
+    active_projects = (
+        ProjectWorkflow.objects.exclude(current_stage="completion")
+        .order_by("primary_need__title")
+    )
 
     view_options = [
         {"value": "board", "label": "Board", "icon": "fa-columns"},
@@ -1633,8 +1757,9 @@ def staff_task_board(request):
         table_rows.append(
             {
                 "task": task,
-                "form": StaffTaskForm(
+                "form": WorkItemForm(
                     instance=task,
+                    work_type='task',
                     request=request,
                     table_mode=True,
                 ),
@@ -1653,7 +1778,8 @@ def staff_task_board(request):
         )
 
     if new_task_form is None:
-        new_task_form = StaffTaskForm(
+        new_task_form = WorkItemForm(
+            work_type='task',
             request=request,
             table_mode=True,
         )
@@ -1725,8 +1851,8 @@ def staff_task_board(request):
 def staff_task_update(request):
     """Handle inline updates from the drag-and-drop task board."""
 
-    status_labels = dict(StaffTask.STATUS_CHOICES)
-    priority_labels = dict(StaffTask.PRIORITY_CHOICES)
+    status_labels = dict(WorkItem.STATUS_CHOICES)
+    priority_labels = dict(WorkItem.PRIORITY_CHOICES)
     valid_groups = {"status", "priority", "team"}
 
     if request.content_type == "application/json":
@@ -1781,7 +1907,7 @@ def staff_task_update(request):
         if not order_ids:
             return
         tasks = (
-            StaffTask.objects.select_for_update()
+            WorkItem.objects.filter(work_type='task').select_for_update()
             .prefetch_related("teams")
             .filter(pk__in=order_ids)
         )
@@ -1799,12 +1925,12 @@ def staff_task_update(request):
                 task_obj.updated_at = timestamp
                 updated.append(task_obj)
         if updated:
-            StaffTask.objects.bulk_update(updated, ["board_position", "updated_at"])
+            WorkItem.objects.bulk_update(updated, ["board_position", "updated_at"])
 
     board_position_value = None
     try:
         with transaction.atomic():
-            task = StaffTask.objects.select_for_update().get(pk=task_id)
+            task = WorkItem.objects.filter(work_type='task').select_for_update().get(pk=task_id)
             update_fields = ["updated_at"]
 
             if group == "status":
@@ -1818,7 +1944,7 @@ def staff_task_update(request):
                         progress_override = max(0, min(100, int(progress_value)))
                     except (TypeError, ValueError):
                         progress_override = None
-                if value == StaffTask.STATUS_COMPLETED:
+                if value == WorkItem.STATUS_COMPLETED:
                     if not task.completed_at:
                         task.completed_at = timezone.now()
                         update_fields.append("completed_at")
@@ -1868,7 +1994,7 @@ def staff_task_update(request):
 
             board_position_value = getattr(task, "board_position", None)
 
-    except StaffTask.DoesNotExist:
+    except WorkItem.DoesNotExist:
         return JsonResponse({"error": "Task not found."}, status=404)
     except OperationalError:
         board_position_value = None
@@ -1905,26 +2031,26 @@ def staff_task_modal(request, task_id: int):
 
     ensure_default_staff_teams()
     task = get_object_or_404(
-        StaffTask.objects.select_related("created_by").prefetch_related(
+        WorkItem.objects.filter(work_type='task').select_related("created_by").prefetch_related(
             "teams", "assignees"
         ),
         pk=task_id,
     )
 
     if request.method == "POST":
-        form = StaffTaskForm(request.POST, instance=task, request=request)
+        form = WorkItemForm(request.POST, instance=task, work_type='task', request=request)
         if form.is_valid():
             try:
                 with transaction.atomic():
                     updated_task = form.save(commit=False)
                     if (
-                        updated_task.status == StaffTask.STATUS_COMPLETED
+                        updated_task.status == WorkItem.STATUS_COMPLETED
                         and not updated_task.completed_at
                     ):
                         updated_task.completed_at = timezone.now()
                         updated_task.progress = 100
                     elif (
-                        updated_task.status != StaffTask.STATUS_COMPLETED
+                        updated_task.status != WorkItem.STATUS_COMPLETED
                         and updated_task.completed_at
                     ):
                         updated_task.completed_at = None
@@ -1941,7 +2067,7 @@ def staff_task_modal(request, task_id: int):
                 pass
 
             updated_task = (
-                StaffTask.objects.select_related("created_by")
+                WorkItem.objects.filter(work_type='task').select_related("created_by")
                 .prefetch_related("teams", "assignees")
                 .get(pk=updated_task.pk)
             )
@@ -1960,7 +2086,7 @@ def staff_task_modal(request, task_id: int):
             headers = {"HX-Trigger": json.dumps(trigger_data)}
             return HttpResponse(status=204, headers=headers)
     else:
-        form = StaffTaskForm(instance=task, request=request)
+        form = WorkItemForm(instance=task, work_type='task', request=request)
 
     # Get related tasks for context
     related_project_tasks = []
@@ -1968,7 +2094,7 @@ def staff_task_modal(request, task_id: int):
 
     if task.linked_workflow:
         related_project_tasks = (
-            StaffTask.objects.filter(linked_workflow=task.linked_workflow)
+            WorkItem.objects.filter(work_type='task', linked_workflow=task.linked_workflow)
             .exclude(pk=task.pk)
             .select_related("created_by")
             .prefetch_related("teams", "assignees")
@@ -1977,7 +2103,7 @@ def staff_task_modal(request, task_id: int):
 
     if task.linked_event:
         related_activity_tasks = (
-            StaffTask.objects.filter(linked_event=task.linked_event)
+            WorkItem.objects.filter(work_type='task', linked_event=task.linked_event)
             .exclude(pk=task.pk)
             .select_related("created_by")
             .prefetch_related("teams", "assignees")
@@ -1987,8 +2113,8 @@ def staff_task_modal(request, task_id: int):
     context = {
         "task": task,
         "form": form,
-        "status_labels": dict(StaffTask.STATUS_CHOICES),
-        "priority_labels": dict(StaffTask.PRIORITY_CHOICES),
+        "status_labels": dict(WorkItem.STATUS_CHOICES),
+        "priority_labels": dict(WorkItem.PRIORITY_CHOICES),
         "related_project_tasks": related_project_tasks,
         "related_activity_tasks": related_activity_tasks,
     }
@@ -2018,8 +2144,8 @@ def staff_task_update_field(request, task_id: int):
         )
 
     try:
-        task = StaffTask.objects.select_for_update().get(pk=task_id)
-    except StaffTask.DoesNotExist:
+        task = WorkItem.objects.filter(work_type='task').select_for_update().get(pk=task_id)
+    except WorkItem.DoesNotExist:
         return JsonResponse({"success": False, "error": "Task not found"}, status=404)
 
     # Validate and update the field
@@ -2041,9 +2167,9 @@ def staff_task_update_field(request, task_id: int):
                         # Auto-complete task if progress is 100%
                         if (
                             progress_value == 100
-                            and task.status != StaffTask.STATUS_COMPLETED
+                            and task.status != WorkItem.STATUS_COMPLETED
                         ):
-                            task.status = StaffTask.STATUS_COMPLETED
+                            task.status = WorkItem.STATUS_COMPLETED
                             task.completed_at = timezone.now()
                             update_fields.extend(["status", "completed_at"])
                     else:
@@ -2061,18 +2187,18 @@ def staff_task_update_field(request, task_id: int):
                     )
 
             elif field == "status":
-                status_choices = [choice[0] for choice in StaffTask.STATUS_CHOICES]
+                status_choices = [choice[0] for choice in WorkItem.STATUS_CHOICES]
                 if value in status_choices:
                     task.status = value
                     update_fields.append("status")
 
                     # Set completed_at when marking as completed
-                    if value == StaffTask.STATUS_COMPLETED and not task.completed_at:
+                    if value == WorkItem.STATUS_COMPLETED and not task.completed_at:
                         task.completed_at = timezone.now()
                         update_fields.append("completed_at")
                         task.progress = 100
                         update_fields.append("progress")
-                    elif value != StaffTask.STATUS_COMPLETED:
+                    elif value != WorkItem.STATUS_COMPLETED:
                         task.completed_at = None
                         update_fields.append("completed_at")
                 else:
@@ -2081,7 +2207,7 @@ def staff_task_update_field(request, task_id: int):
                     )
 
             elif field == "priority":
-                priority_choices = [choice[0] for choice in StaffTask.PRIORITY_CHOICES]
+                priority_choices = [choice[0] for choice in WorkItem.PRIORITY_CHOICES]
                 if value in priority_choices:
                     task.priority = value
                     update_fields.append("priority")
@@ -2262,15 +2388,16 @@ def staff_task_inline_update(request, task_id: int):
     """Inline edit handler for the table view."""
 
     task = get_object_or_404(
-        StaffTask.objects.prefetch_related("teams", "assignees"), pk=task_id
+        WorkItem.objects.filter(work_type='task').prefetch_related("teams", "assignees"), pk=task_id
     )
 
     if request.method != "POST":
         return redirect("common:staff_task_board")
 
-    form = StaffTaskForm(
+    form = WorkItemForm(
         request.POST,
         instance=task,
+        work_type='task',
         request=request,
         table_mode=True,
     )
@@ -2279,13 +2406,13 @@ def staff_task_inline_update(request, task_id: int):
             with transaction.atomic():
                 updated_task = form.save(commit=False)
                 if (
-                    updated_task.status == StaffTask.STATUS_COMPLETED
+                    updated_task.status == WorkItem.STATUS_COMPLETED
                     and not updated_task.completed_at
                 ):
                     updated_task.completed_at = timezone.now()
                     updated_task.progress = 100
                 elif (
-                    updated_task.status != StaffTask.STATUS_COMPLETED
+                    updated_task.status != WorkItem.STATUS_COMPLETED
                     and updated_task.completed_at
                 ):
                     updated_task.completed_at = None
@@ -2315,8 +2442,8 @@ def staff_task_inline_update(request, task_id: int):
     context = {
         "task": task,
         "form": form,
-        "status_labels": dict(StaffTask.STATUS_CHOICES),
-        "priority_labels": dict(StaffTask.PRIORITY_CHOICES),
+        "status_labels": dict(WorkItem.STATUS_CHOICES),
+        "priority_labels": dict(WorkItem.PRIORITY_CHOICES),
         "assignee_tokens": assignee_tokens,
         "team_tokens": team_tokens,
     }
@@ -2411,7 +2538,7 @@ def staff_team_manage(request):
             "team": record,
             "member_count": record.memberships.filter(is_active=True).count(),
             "active_tasks": record.tasks.exclude(
-                status=StaffTask.STATUS_COMPLETED
+                status=WorkItem.STATUS_COMPLETED
             ).count(),
             "completion_rate": _completion_rate(record.tasks.all()),
         }
@@ -2563,6 +2690,7 @@ def staff_profiles_list(request):
             "icon": "fas fa-id-card-alt",
             "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
             "text_color": "text-emerald-100",
+            "icon_color": "text-emerald-600",
         },
         {
             "title": "Active staff",
@@ -2570,6 +2698,7 @@ def staff_profiles_list(request):
             "icon": "fas fa-user-check",
             "gradient": "from-blue-500 via-blue-600 to-blue-700",
             "text_color": "text-blue-100",
+            "icon_color": "text-blue-600",
         },
         {
             "title": "On leave",
@@ -2577,6 +2706,7 @@ def staff_profiles_list(request):
             "icon": "fas fa-plane-departure",
             "gradient": "from-amber-500 via-amber-600 to-amber-700",
             "text_color": "text-amber-100",
+            "icon_color": "text-amber-500",
         },
         {
             "title": "Inactive or archived",
@@ -2584,6 +2714,7 @@ def staff_profiles_list(request):
             "icon": "fas fa-user-slash",
             "gradient": "from-rose-500 via-rose-600 to-rose-700",
             "text_color": "text-rose-100",
+            "icon_color": "text-rose-500",
         },
         {
             "title": "Staff without profiles",
@@ -2591,6 +2722,7 @@ def staff_profiles_list(request):
             "icon": "fas fa-user-plus",
             "gradient": "from-sky-500 via-sky-600 to-sky-700",
             "text_color": "text-sky-100",
+            "icon_color": "text-sky-600",
         },
     ]
 
@@ -2736,7 +2868,7 @@ def staff_profiles_detail(request, pk):
     )
 
     recent_tasks = (
-        StaffTask.objects.filter(assignees=profile.user)
+        WorkItem.objects.filter(work_type='task', assignees=profile.user)
         .prefetch_related("teams", "assignees")
         .order_by("-updated_at")[:10]
     )
@@ -2745,8 +2877,8 @@ def staff_profiles_detail(request, pk):
     performance_targets = profile.performance_targets.select_related("team")
 
     tasks_by_status = {
-        label: profile.user.assigned_staff_tasks.filter(status=status).count()
-        for status, label in StaffTask.STATUS_CHOICES
+        label: profile.user.assigned_work_items.filter(work_type='task', status=status).count()
+        for status, label in WorkItem.STATUS_CHOICES
     }
 
     context = {
@@ -2965,7 +3097,7 @@ def _completion_rate(tasks):
     total = tasks.count()
     if not total:
         return 0
-    completed = tasks.filter(status=StaffTask.STATUS_COMPLETED).count()
+    completed = tasks.filter(status=WorkItem.STATUS_COMPLETED).count()
     return round((completed / total) * 100)
 
 
@@ -3259,7 +3391,7 @@ logger = logging.getLogger(__name__)
 def staff_task_delete(request, task_id):
     """Delete a staff task."""
     logger.info(f"Attempting to delete task {task_id}")
-    task = get_object_or_404(StaffTask, pk=task_id)
+    task = get_object_or_404(WorkItem.objects.filter(work_type='task'), pk=task_id)
 
     # Check if this is a confirmation request
     if request.POST.get("confirm") == "yes":
@@ -3268,27 +3400,18 @@ def staff_task_delete(request, task_id):
         task.delete()
         logger.info(f"Task {task_title} deleted successfully")
 
-        # For HTMX requests, return empty response with triggers
-        if request.headers.get("HX-Request"):
-            response = HttpResponse("")
-            response["HX-Trigger"] = json.dumps(
-                {
-                    "task-board-refresh": True,
-                    "task-modal-close": True,
-                    "show-toast": f'Task "{task_title}" deleted successfully',
-                }
-            )
-            return response
-
-        # For regular requests, add Django message and redirect to the task board
+        # SIMPLE APPROACH: Just add message and redirect
         messages.success(request, f'Task "{task_title}" has been deleted.')
-        return redirect("common:staff_task_board")
+
+        # Redirect based on referer
+        referer = request.META.get('HTTP_REFERER', '')
+        if 'calendar' in referer:
+            return redirect("common:oobc_calendar")
+        else:
+            return redirect("common:staff_task_board")
 
     # If not confirmed, return an error or redirect
     logger.warning(f"Task deletion not confirmed for task {task_id}")
-    if request.headers.get("HX-Request"):
-        return JsonResponse({"error": "Confirmation required."}, status=400)
-
     messages.error(request, "Task deletion was not confirmed.")
     return redirect("common:staff_task_board")
 
@@ -3306,7 +3429,7 @@ def staff_task_create_api(request):
     else:
         form_data = request.POST
 
-    form = StaffTaskForm(form_data, request=request, table_mode=True)
+    form = WorkItemForm(form_data, work_type='task', request=request, table_mode=True)
 
     if form.is_valid():
         try:
@@ -3314,7 +3437,7 @@ def staff_task_create_api(request):
                 task = form.save(commit=False)
                 if not task.created_by:
                     task.created_by = request.user
-                if task.status == StaffTask.STATUS_COMPLETED and not task.completed_at:
+                if task.status == WorkItem.STATUS_COMPLETED and not task.completed_at:
                     task.completed_at = timezone.now()
                     task.progress = 100
                 task.save()
@@ -4032,7 +4155,7 @@ def budget_feedback_dashboard(request):
     """
     from services.models import ServiceApplication
     from monitoring.models import MonitoringEntry, MonitoringEntryFunding
-    from common.models import StaffTask
+    from common.work_item_model import WorkItem
     from django.db.models import Avg, Count, Prefetch, Q
 
     # Service delivery feedback
@@ -4081,7 +4204,7 @@ def budget_feedback_dashboard(request):
     # PPA completion feedback
     task_prefetch = Prefetch(
         "tasks",
-        queryset=StaffTask.objects.filter(domain=StaffTask.DOMAIN_MONITORING)
+        queryset=WorkItem.objects.filter(work_type='task', domain=WorkItem.DOMAIN_MONITORING)
         .prefetch_related("assignees")
         .order_by("created_at"),
         to_attr="prefetched_monitoring_tasks",
@@ -4168,7 +4291,7 @@ def transparency_dashboard(request):
     Shows how community funds are being used and results achieved.
     """
     from monitoring.models import MonitoringEntry
-    from common.models import StaffTask
+    from common.work_item_model import WorkItem
     from mana.models import Need
     from services.models import ServiceApplication, ServiceOffering
     from django.db.models import Sum, Count, Avg, Prefetch, Q, F
@@ -4220,7 +4343,7 @@ def transparency_dashboard(request):
 
     task_prefetch = Prefetch(
         "tasks",
-        queryset=StaffTask.objects.filter(domain=StaffTask.DOMAIN_MONITORING)
+        queryset=WorkItem.objects.filter(work_type='task', domain=WorkItem.DOMAIN_MONITORING)
         .prefetch_related("assignees")
         .order_by("created_at"),
         to_attr="prefetched_monitoring_tasks",

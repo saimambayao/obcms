@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete {{ ppa.title }} - MOA PPA{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-6">
+    <div class="max-w-3xl mx-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-6">
+        <div class="flex items-start gap-3">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-600"><i class="fas fa-triangle-exclamation"></i></span>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Delete MOA PPA</h1>
+                <p class="text-sm text-gray-600">This action removes the PPA from monitoring and Project Central. Linked workflows and activities will lose their source reference.</p>
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+            <p class="font-semibold">{{ ppa.title }}</p>
+            <p>Program code {{ ppa.program_code|default:"N/A" }} • Implementing MOA {{ ppa.implementing_moa.name|default:"Unassigned" }}</p>
+        </div>
+
+        <form method="post" class="flex items-center justify-end gap-3">
+            {% csrf_token %}
+            <a href="{% url 'project_central:moa_ppa_detail' ppa.id %}"
+               class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition">
+                <i class="fas fa-arrow-left"></i>
+                Cancel
+            </a>
+            <button type="submit"
+                    class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-red-500 px-5 py-3 text-sm font-semibold text-white shadow-lg hover:from-rose-600 hover:to-red-600 transition">
+                <i class="fas fa-trash"></i>
+                Permanently Delete
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

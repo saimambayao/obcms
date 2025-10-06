@@ -7,6 +7,15 @@ from .auth import (
     page_restricted,
     profile,
 )
+from .redirects import (
+    DeprecatedRedirectView,
+    StaffTaskRedirectView,
+    ProjectWorkflowRedirectView,
+    EventRedirectView,
+)
+from .deprecation import (
+    deprecation_dashboard,
+)
 from .calendar_resources import (
     resource_list,
     resource_create,
@@ -37,6 +46,20 @@ from .attendance import (
 )
 from .calendar_api import (
     calendar_event_update,
+)
+from .calendar import (
+    work_items_calendar_feed,
+    work_item_modal,
+)
+from .work_items import (
+    work_item_list,
+    work_item_detail,
+    work_item_create,
+    work_item_edit,
+    work_item_delete,
+    work_item_tree_partial,
+    work_item_update_progress,
+    work_item_calendar_feed,
 )
 
 # Import task_detail for calendar integration
@@ -72,7 +95,7 @@ from .coordination import (
     coordination_organizations,
     coordination_partnerships,
     coordination_view_all,
-    event_create,
+    event_create,  # Defined in coordination.py, redirects to WorkItem
     coordination_activity_create,
     organization_create,
     organization_delete,
@@ -144,23 +167,24 @@ from .management import (
     user_approvals,
     user_approval_action,
 )
-from .tasks import (
-    tasks_by_domain,
-    assessment_tasks,
-    event_tasks,
-    policy_tasks,
-    ppa_tasks,
-    service_tasks,
-    enhanced_task_dashboard,
-    task_analytics,
-    domain_task_analytics,
-    task_template_list,
-    task_template_detail,
-    instantiate_template,
-    task_complete,
-    task_start,
-    task_assign,
-)
+# Legacy tasks.py imports removed - use WorkItem views instead
+# from .tasks import (
+#     tasks_by_domain,
+#     assessment_tasks,
+#     event_tasks,
+#     policy_tasks,
+#     ppa_tasks,
+#     service_tasks,
+#     enhanced_task_dashboard,
+#     task_analytics,
+#     domain_task_analytics,
+#     task_template_list,
+#     task_template_detail,
+#     instantiate_template,
+#     task_complete,
+#     task_start,
+#     task_assign,
+# )
 from .mana import (
     mana_assessment_delete,
     mana_assessment_detail,
@@ -190,6 +214,11 @@ from .recommendations import (
     recommendations_new,
     recommendations_create,
     recommendations_autosave,
+    recommendations_programs,
+    recommendations_services,
+    recommendations_view,
+    recommendations_edit,
+    recommendations_delete,
     recommendations_stats_cards,
 )
 
@@ -332,6 +361,20 @@ __all__ = [
     "recommendations_create",
     "recommendations_autosave",
     "recommendations_manage",
+    "recommendations_programs",
+    "recommendations_services",
+    "recommendations_view",
+    "recommendations_edit",
+    "recommendations_delete",
     "recommendations_by_area",
     "calendar_event_update",
+    # WorkItem views (Phase 3)
+    "work_item_list",
+    "work_item_detail",
+    "work_item_create",
+    "work_item_edit",
+    "work_item_delete",
+    "work_item_tree_partial",
+    "work_item_update_progress",
+    "work_item_calendar_feed",
 ]

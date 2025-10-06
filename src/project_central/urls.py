@@ -15,6 +15,17 @@ urlpatterns = [
     path("dashboard/", views.portfolio_dashboard_view, name="dashboard"),
     # Budget Planning Dashboard
     path("budget/", views.budget_planning_dashboard, name="budget_planning_dashboard"),
+    # MOA PPA Management
+    path("ppas/", views.moa_ppa_list_view, name="moa_ppa_list"),
+    path("ppas/create/", views.create_moa_ppa_view, name="moa_ppa_create"),
+    path("ppas/<uuid:ppa_id>/", views.moa_ppa_detail_view, name="moa_ppa_detail"),
+    path("ppas/<uuid:ppa_id>/edit/", views.edit_moa_ppa_view, name="moa_ppa_edit"),
+    path("ppas/<uuid:ppa_id>/delete/", views.delete_moa_ppa_view, name="moa_ppa_delete"),
+    path(
+        "ppas/<uuid:ppa_id>/workflow/create/",
+        views.create_workflow_from_ppa,
+        name="create_workflow_from_ppa",
+    ),
     # Project Workflows
     path("projects/", views.project_list_view, name="project_list"),
     path(

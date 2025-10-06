@@ -27,6 +27,31 @@
         </div>
     </div>
 
+    <!-- DEPRECATION NOTICE -->
+    <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-r-lg">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-amber-500 text-xl"></i>
+            </div>
+            <div class="ml-4 flex-1">
+                <h3 class="text-sm font-semibold text-amber-800">
+                    Deprecation Notice
+                </h3>
+                <div class="mt-1 text-sm text-amber-700">
+                    <p>
+                        ProjectWorkflow is deprecated and will be removed in OBCMS v2.0.
+                        Please migrate to the unified Work Item system for enhanced features and better performance.
+                    </p>
+                    <a href="{% url 'common:work_item_list' %}"
+                       class="inline-flex items-center mt-2 text-amber-800 hover:text-amber-900 font-semibold">
+                        Switch to Work Items
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Stage Filter Pills -->
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-6">
         <div class="flex items-center gap-2 flex-wrap">
@@ -136,7 +161,7 @@
                     <!-- Card Footer -->
                     <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl">
                         <div class="flex items-center justify-between gap-3">
-                            <a href="{% url 'project_central:project_workflow_detail' workflow.id %}"
+                            <a href="{% url 'common:work_item_detail' pk=workflow.work_item_id %}"
                                class="flex-1 text-center px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all">
                                 <i class="fas fa-eye mr-1"></i>
                                 View Details

@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>{% block title %}OBC Management System{% endblock %}</title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
+    <!-- Tailwind CSS (Production Build) -->
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -659,6 +660,35 @@
     </script>
     <script src="{% static 'common/js/location_data_loader.js' %}"></script>
     <script src="{% static 'common/js/htmx-focus-management.js' %}"></script>
+
+    <!-- HTMX CSRF Token Configuration -->
+    <script>
+    document.body.addEventListener('htmx:configRequest', function(event) {
+        // Get CSRF token from cookie
+        function getCsrfToken() {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    if (cookie.substring(0, 10) === 'csrftoken=') {
+                        cookieValue = decodeURIComponent(cookie.substring(10));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        var csrfToken = getCsrfToken();
+
+        // Add CSRF token to all state-changing requests (POST, PUT, PATCH, DELETE)
+        if (csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].indexOf(event.detail.verb.toUpperCase()) !== -1) {
+            event.detail.headers['X-CSRFToken'] = csrfToken;
+            console.log('✅ CSRF token added to', event.detail.verb.toUpperCase(), 'request');
+        }
+    });
+    </script>
 
     <div id="toast-root" class="fixed top-6 right-6 z-50 space-y-2 pointer-events-none"></div>
     <script>

@@ -1,0 +1,27 @@
+moa: "Bangsamoro Information Office"
+acronym: "BIO"
+ppas:
+  - title: "Strengthening of BARMM Linkages and Networks through Information Services"
+    description: ""
+    outcome_indicators:
+      - indicator: "Percentage of increased visibility and engagement in the promotion of programs and thrusts of the BARMM Government through multifaceted information dissemination"
+        target: "20%"
+    output_indicators:
+      - indicator: "Number of media and information programs and initiatives implemented to promote BARMM government thrusts"
+        target: 650
+      - indicator: "Number of digital information of BARMM government developed and promoted on social media"
+        target: 269
+      - indicator: "Number of partners and key stakeholders engaged"
+        target: 8
+      - indicator: "Number of copies of BARMM laws and issuances published in print and digital platform"
+        target: 1200
+    approved_budget: 35818179.00
+special_provisions:
+  - title: "Reporting and Posting Requirements"
+    details: |
+      The implementing M/O/As shall submit quarterly reports on financial and physical accomplishments within thirty (30) days after each quarter through:
+        (a) Submission of hardcopy to the MFBM;
+        (b) Submission of reports through electronic means; and
+        (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the MFBM and other offices where submission of reports is required by existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

@@ -1,0 +1,261 @@
+moa: "Ministry of Transportation and Communications"
+acronym: "MOTC"
+ppas:
+  - title: "Bangsamoro Airport Authority"
+    description: ""
+    outcome_indicators:
+      - indicator: "Airport Landside Management, Supervision, and Control"
+        target: "Provided better airport services and facilities to air passengers and airport users; complied with ICAO security and safety standards."
+      - indicator: "BARMM Air Transportation Policy and Development Program - Plans and policies formulated in compliance with security and safety standards"
+        target: "75%"
+      - indicator: "Revenue Strengthening and Regulation of Fees and Charges"
+        target: "Increased fees and charges collected; strengthened partnerships with airport concessionaires and stakeholders."
+      - indicator: "Airport Development and Maintenance - Facilities improved or rehabilitated in compliance with ICAO infrastructure standards"
+        target: "80%"
+      - indicator: "Airport Development and Maintenance - Security systems improved or installed in compliance with ICAO safety standards"
+        target: "90%"
+    output_indicators:
+      - indicator: "Landside Management - No. of airport services and facilities inspected and assessed"
+        target: 10
+      - indicator: "Landside Management - No. of airport safety, security, and maintenance activities performed"
+        target: 74
+      - indicator: "Policy and Development - No. of plans and policies reviewed and updated"
+        target: 3
+      - indicator: "Revenue Strengthening - No. of travel tax tickets issued"
+        target: "183,855"
+      - indicator: "Revenue Strengthening - No. of domestic passenger service charges issued"
+        target: "183,855"
+      - indicator: "Revenue Strengthening - No. of concession contracts issued"
+        target: 55
+      - indicator: "Revenue Strengthening - No. of vehicle parking tickets issued"
+        target: "39,140"
+      - indicator: "Revenue Strengthening - No. of policies formulated, updated, issued, and implemented"
+        target: 3
+      - indicator: "Development and Maintenance - No. of concession buildings constructed at Cotabato (Awang) Airport"
+        target: 1
+      - indicator: "Development and Maintenance - Length of perimeter fence constructed at Cotabato (Awang) Airport"
+        target: "2.2 km"
+      - indicator: "Development and Maintenance - Length of perimeter fence constructed at Sanga-Sanga Airport"
+        target: "2.2 km"
+    approved_budget: 109564711.00
+  - title: "Civil Aeronautics Board of the Bangsamoro"
+    description: ""
+    outcome_indicators:
+      - indicator: "Air Transport Regulatory and Enforcement Program - Compliance of registered operators with CABB rules and regulations"
+        target: "100%"
+      - indicator: "Air Passenger Bill of Rights Program - Passenger satisfaction with CABB services"
+        target: "90%"
+    output_indicators:
+      - indicator: "Regulatory and Enforcement - No. of permits issued"
+        target: 60
+      - indicator: "Regulatory and Enforcement - No. of issues addressed"
+        target: 10
+      - indicator: "Regulatory and Enforcement - No. of facilities inspected"
+        target: 30
+      - indicator: "Regulatory and Enforcement - No. of focused-group discussions conducted"
+        target: 12
+      - indicator: "Passenger Rights - No. of matters attended by passenger rights action officer"
+        target: 500
+      - indicator: "Passenger Rights - No. of complaints acted upon"
+        target: 30
+    approved_budget: 19132602.00
+  - title: "Bangsamoro Land Transportation Office"
+    description: ""
+    outcome_indicators:
+      - indicator: "Law Enforcement and Adjudication System"
+        target: "Enhanced road safety, strengthened public engagement with law enforcement, robust inter-agency partnerships, and reliable data management system."
+      - indicator: "Registration and Licensing Program - Increase in licenses or permits issued"
+        target: "17%"
+      - indicator: "Registration and Licensing Program - Road worthiness of registered motor vehicles ensured"
+        target: null
+      - indicator: "Accreditation Program"
+        target: "Systematized BLTO auxiliary services."
+    output_indicators:
+      - indicator: "Law Enforcement - Seasonal road safety campaigns conducted"
+        target: 4
+      - indicator: "Law Enforcement - No. of law enforcement operations"
+        target: 1472
+      - indicator: "Law Enforcement - No. of coordination activities with other agencies"
+        target: 10
+      - indicator: "Law Enforcement - No. of trainings on data management system"
+        target: 9
+      - indicator: "Registration and Licensing - No. of driver's or conductor's licenses issued"
+        target: "30,000"
+      - indicator: "Registration and Licensing - No. of motor vehicles registered"
+        target: "9,833"
+      - indicator: "Registration and Licensing - No. of BLTO District Offices with LTMS module"
+        target: 10
+      - indicator: "Accreditation - No. of medical clinics accredited"
+        target: 19
+      - indicator: "Accreditation - No. of PETCs accredited"
+        target: 7
+      - indicator: "Accreditation - No. of driving schools accredited"
+        target: 10
+      - indicator: "Accreditation - No. of dealers accredited"
+        target: 8
+    approved_budget: 186621019.00
+  - title: "Bangsamoro Land Transportation Franchising and Regulatory Board"
+    description: ""
+    outcome_indicators:
+      - indicator: "Public Land Transportation Franchising, Enforcement, and Regulatory Program"
+        target: "Increased number of compliant PUVs and operators."
+      - indicator: "Public Land Transportation Management Information Program"
+        target: "Increased number of established and rationalized land routes supporting economic activity."
+      - indicator: "Pantawid Pasada Program"
+        target: "Ensured stable and uninterrupted land transport services across BARMM."
+    output_indicators:
+      - indicator: "Franchising and Enforcement - No. of CPC or franchise applications resolved"
+        target: 250
+      - indicator: "Franchising and Enforcement - No. of vehicles monitored, inspected, or apprehended"
+        target: "3,800"
+      - indicator: "Franchising and Enforcement - No. of terminals or garages inspected"
+        target: 95
+      - indicator: "Franchising and Enforcement - No. of Driver's Academy sessions conducted"
+        target: 10
+      - indicator: "Franchising and Enforcement - No. of BLTFRB District Desk Offices constructed"
+        target: 3
+      - indicator: "Management Information - No. of land routes opened"
+        target: 15
+      - indicator: "Management Information - No. of route capacity studies conducted"
+        target: 40
+      - indicator: "Management Information - No. of stakeholder consultations"
+        target: 36
+      - indicator: "Pantawid Pasada - No. of beneficiaries of fuel card subsidy"
+        target: "2,500"
+    approved_budget: 76015692.00
+  - title: "Bangsamoro Maritime Industry Authority"
+    description: ""
+    outcome_indicators:
+      - indicator: "Maritime Industry Promotion and Policy Development Program"
+        target: "Ensured awareness of integrated maritime governance initiatives and updated policies among stakeholders."
+      - indicator: "Maritime Industry Regulatory and Supervision Program"
+        target: "Ensured safety of stakeholders in compliance with SOLAS and other maritime regulations."
+    output_indicators:
+      - indicator: "Promotion and Policy - No. of policies formulated, updated, issued, and disseminated"
+        target: 16
+      - indicator: "Regulatory and Supervision - No. of stakeholders determined compliant with SOLAS"
+        target: "3,995"
+      - indicator: "Regulatory and Supervision - No. of vessels determined or registered"
+        target: "6,240"
+    approved_budget: 39977411.00
+  - title: "Bangsamoro Ports Management Authority"
+    description: ""
+    outcome_indicators:
+      - indicator: "Port Management and Development Program"
+        target: "Ports compliant to BPMA port rules and regulations"
+      - indicator: "Regulation and Enforcement Program"
+        target: "Increased port statistics and client satisfaction with port services."
+      - indicator: "Port Expansion and Modernization Program"
+        target: "Constructed port facilities completed in line with standard designs."
+    output_indicators:
+      - indicator: "Management and Development - No. of port inspections and monitoring activities"
+        target: 10
+      - indicator: "Management and Development - No. of conferences conducted"
+        target: 2
+      - indicator: "Management and Development - No. of port assessments and validations"
+        target: 10
+      - indicator: "Regulation and Enforcement - No. of board sessions"
+        target: 3
+      - indicator: "Regulation and Enforcement - No. of policies formulated"
+        target: 3
+      - indicator: "Regulation and Enforcement - No. of Port Stakeholders Forums"
+        target: 8
+      - indicator: "Regulation and Enforcement - No. of issues identified and acted upon"
+        target: 8
+      - indicator: "Regulation and Enforcement - No. of official receipts issued"
+        target: "25,000"
+      - indicator: "Regulation and Enforcement - No. of ship calls"
+        target: "3,188"
+      - indicator: "Regulation and Enforcement - No. of passenger traffic"
+        target: "817,593"
+      - indicator: "Regulation and Enforcement - Volume of cargo throughput"
+        target: "162,664.345 mt"
+      - indicator: "Regulation and Enforcement - No. of coordination meetings"
+        target: 2
+      - indicator: "Regulation and Enforcement - No. of engagements in BBTC/BIMP-EAGA"
+        target: 2
+      - indicator: "Expansion and Modernization - No. of Lake Port at Bairan, Bayang constructed"
+        target: 1
+      - indicator: "Expansion and Modernization - No. of Lake Port at Brgy. Abdullah Buisan, Masiu constructed"
+        target: 1
+    approved_budget: 83782012.00
+  - title: "Bangsamoro Telecommunications Commission"
+    description: ""
+    outcome_indicators:
+      - indicator: "Validation and Data Analytics and Resources Program"
+        target: "Determined annual changes in served, unserved, and underserved areas; measured percentage increase in broadband speed."
+      - indicator: "Inspection and Monitoring Program"
+        target: "100% of registered stations inspected and compliance status determined."
+      - indicator: "Law Enforcement Program"
+        target: "Increased number of regulated radio operators."
+      - indicator: "Issuance of Licenses, Permits and Certificates"
+        target: "Increased issuances and collections or remittances."
+      - indicator: "Radio Operators Examination Program"
+        target: "Determined percentage of passers (18%); increased number of professional radio operators (130)."
+      - indicator: "Spectrum Planning and Management Program"
+        target: "Established data on used and vacant frequencies; determined percentage of clients granted frequency use."
+      - indicator: "Adjudicatory Program"
+        target: "Ensured efficient decisions, orders, and issuances served (100%)."
+    output_indicators:
+      - indicator: "Validation and Data Analytics - No. of BARMM barangays validated"
+        target: 900
+      - indicator: "Validation and Data Analytics - No. of cellular towers and radio equipment validated"
+        target: 40
+      - indicator: "Inspection and Monitoring - No. of stations inspected"
+        target: "AM: 6; FM: 38; CATV: 3; TV: 3; Land-based: 15; Coast/Ship: 38; Dealers: 14; VAS: 7"
+      - indicator: "Law Enforcement - No. of orientations conducted"
+        target: "Civic: 21; Amateur: 4"
+      - indicator: "Law Enforcement - No. of trainings for deputized enforcers"
+        target: 5
+      - indicator: "Issuance - No. of licenses issued"
+        target: 600
+      - indicator: "Issuance - No. of permits issued"
+        target: 50
+      - indicator: "Issuance - No. of certificates issued"
+        target: 500
+      - indicator: "Radio Operators Exam - No. of exams administered"
+        target: "Amateur: 2; Commercial: 1"
+      - indicator: "Spectrum Planning and Management - No. of validations for broadcast station signal strength"
+        target: 5
+      - indicator: "Spectrum Planning and Management - Formulation of Bangsamoro Telecommunications Master Plan"
+        target: 1
+      - indicator: "Adjudicatory Program - No. of en banc sessions"
+        target: 10
+      - indicator: "Adjudicatory Program - No. of hearings"
+        target: 8
+      - indicator: "Adjudicatory Program - No. of decisions served"
+        target: 5
+      - indicator: "Adjudicatory Program - No. of coordination meetings"
+        target: 6
+      - indicator: "Adjudicatory Program - No. of public consultations"
+        target: 2
+    approved_budget: 45155773.00
+special_provisions:
+  - title: "Bangsamoro Airport Authority"
+    details: |
+      Sixty Million Pesos (P60,000,000.00) shall be used exclusively for the implementation of the Bangsamoro Airport Authority, subject to submission of common engineering documents, and allocated as follows:
+        (a) P20,000,000.00 for the construction of a concession building at Cotabato Airport;
+        (b) P20,000,000.00 for the construction of a perimeter fence at Cotabato (Awang) Airport; and
+        (c) P20,000,000.00 for the construction of a perimeter fence at Sanga-Sanga Airport.
+  - title: "Bangsamoro Land Transportation Office"
+    details: |
+      One Hundred Twenty-Six Million Four Hundred Sixty-Four Thousand Sixty Pesos (P126,464,060.00) shall be used exclusively for customization, installation, and configuration of the Land Transportation Management System (LTMS), subject to Program Implementation Plan and Guidelines and quarterly status report to MFBM.
+  - title: "Bangsamoro Land Transportation Franchising and Regulatory Board"
+    details: |
+      Thirty Million Pesos (P30,000,000.00) shall be used exclusively for construction of BLTFRB District Desk Offices in Maguindanao del Norte, Cotabato City, and Lanao del Sur, subject to submission of common engineering documents.
+
+      Eighteen Million Seven Hundred Fifty Thousand Pesos (P18,750,000.00) appropriated under the Pantawid Pasada Program shall be used exclusively to provide financial assistance to Public Utility Vehicle operators holding valid BLTFRB franchises, subject to Program Implementation Plan and Guidelines, validated beneficiary list, and quarterly status report to MFBM.
+  - title: "Bangsamoro Ports Management Authority"
+    details: |
+      Fifty Million Pesos (P50,000,000.00) shall be used exclusively for the construction of lake ports at Bairan, Bayang, Lanao del Sur and Barangay Abdullah Buisan, Masiu, Lanao del Sur, subject to submission of common engineering documents.
+  - title: "Bangsamoro Telecommunications Commission"
+    details: |
+      Ten Million Pesos (P10,000,000.00) shall be used exclusively to procure consulting services for the formulation of the Bangsamoro Telecommunications Master Plan with feasibility study, subject to Program Implementation Plan and Guidelines and quarterly status report to MFBM.
+  - title: "Reporting and Posting Requirements"
+    details: |
+      Implementing M/O/As shall submit quarterly reports on financial and physical accomplishments within thirty (30) days after the end of every quarter through:
+        (a) Submission of hardcopy to the MFBM;
+        (b) Submission of reports through electronic means; and
+        (c) Publication to M/O/A's website.
+
+      The implementing M/O/As shall send written notice when the reports have been submitted or posted on their website to the MFBM and other offices where submission of reports is required under existing laws, rules, and regulations. The date of such notice shall be considered the date of compliance with this requirement.

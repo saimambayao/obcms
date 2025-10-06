@@ -1,4 +1,5 @@
 <!-- DEBUG: view_mode={{ view_mode }}, group_by={{ group_by }}, pipeline_count={{ pipeline|length }} -->
+{% load task_tags %}
 {% if pipeline %}
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6" data-board data-group-by="{{ group_by }}" data-update-url="{{ update_url }}">
     {% for column in pipeline %}
@@ -15,7 +16,8 @@
         <div class="flex-1 p-4 space-y-4 overflow-y-auto" style="max-height: 44rem;" data-drop-zone>
             <div class="space-y-4" data-task-list>
                 {% for task in column.tasks %}
-                <article class="task-card bg-white border border-gray-200 rounded-xl shadow-sm p-4 space-y-4 hover:border-emerald-300 transition-shadow transition-transform duration-200 hover:scale-[1.02]" data-task-id="{{ task.id }}" data-task-status="{{ task.status }}" data-task-priority="{{ task.priority }}" data-task-team="{{ task.team.slug|default:'unassigned' }}" data-modal-url="{% url 'common:staff_task_modal' task.id %}" draggable="true">
+                {% task_action_url task 'detail' as task_modal_url %}
+                <article class="task-card bg-white border border-gray-200 rounded-xl shadow-sm p-4 space-y-4 hover:border-emerald-300 transition-shadow transition-transform duration-200 hover:scale-[1.02]" data-task-id="{{ task.id }}" data-task-status="{{ task.status }}" data-task-priority="{{ task.priority }}" data-task-team="{{ task.team.slug|default:'unassigned' }}" data-modal-url="{{ task_modal_url }}" draggable="true">
                     <div class="flex items-start justify-between gap-3">
                         <div class="space-y-1">
                             <h4 class="text-sm font-semibold text-gray-900">{{ task.title }}</h4>
@@ -135,21 +137,21 @@
         <div class="px-4 pt-2 pb-4">
             {% if group_by == 'priority' %}
                 {% with modal_query='?priority='|add:column.status_key|add:'&group='|add:group_by %}
-                <a href="{% url 'common:staff_task_modal_create' %}{{ modal_query }}" data-modal-link class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors">
+                <a href="{% url 'common:work_item_create' %}{{ modal_query }}" data-modal-link class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors">
                     <i class="fas fa-plus"></i>
                     Add Task
                 </a>
                 {% endwith %}
             {% elif group_by == 'team' %}
                 {% with modal_query='?team='|add:column.status_key|add:'&group='|add:group_by %}
-                <a href="{% url 'common:staff_task_modal_create' %}{{ modal_query }}" data-modal-link class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors">
+                <a href="{% url 'common:work_item_create' %}{{ modal_query }}" data-modal-link class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors">
                     <i class="fas fa-plus"></i>
                     Add Task
                 </a>
                 {% endwith %}
             {% else %}
                 {% with modal_query='?status='|add:column.status_key|add:'&group='|add:group_by %}
-                <a href="{% url 'common:staff_task_modal_create' %}{{ modal_query }}" data-modal-link class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors">
+                <a href="{% url 'common:work_item_create' %}{{ modal_query }}" data-modal-link class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors">
                     <i class="fas fa-plus"></i>
                     Add Task
                 </a>

@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}{{ ppa.title }} - MOA PPA{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-6 space-y-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <nav aria-label="breadcrumb" class="mb-2 text-sm">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'project_central:moa_ppa_list' %}">MOA PPAs</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ ppa.title|truncatechars:60 }}</li>
+                </ol>
+            </nav>
+            <h1 class="text-3xl font-bold text-gray-900">{{ ppa.title }}</h1>
+            <p class="text-sm text-gray-600 max-w-3xl">Program code {{ ppa.program_code|default:"N/A" }} • Implemented by {{ ppa.implementing_moa.name|default:"Unassigned" }} • Status {{ ppa.get_status_display }}</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <a href="{% url 'project_central:moa_ppa_edit' ppa.id %}"
+               class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow hover:bg-gray-50 transition">
+                <i class="fas fa-pen"></i>
+                Edit PPA
+            </a>
+            <a href="{% url 'project_central:moa_ppa_delete' ppa.id %}"
+               class="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 shadow hover:bg-rose-100 transition">
+                <i class="fas fa-trash"></i>
+                Delete
+            </a>
+        </div>
+    </div>
+
+    {% if review_delete %}
+    <div class="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 flex items-start gap-3 text-sm text-rose-700">
+        <i class="fas fa-triangle-exclamation mt-1"></i>
+        <div>
+            <p class="font-semibold">Review before deletion</p>
+            <p>Deleting this MOA PPA removes its monitoring record and any linked Project Central workflow. Confirm the details below before continuing. The next page will ask for final confirmation.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="rounded-2xl bg-white border border-gray-200 shadow-sm p-5">
+            <div class="text-xs font-semibold uppercase tracking-wide text-emerald-600 mb-1">Overall Budget</div>
+            <div class="text-2xl font-bold text-gray-900">₱{{ ppa.budget_allocation|default:0|floatformat:2|intcomma }}</div>
+            <p class="text-xs text-gray-500 mt-1">OBC allocation: ₱{{ ppa.budget_obc_allocation|default:0|floatformat:2|intcomma }}</p>
+        </div>
+        <div class="rounded-2xl bg-white border border-gray-200 shadow-sm p-5">
+            <div class="text-xs font-semibold uppercase tracking-wide text-blue-600 mb-1">Progress</div>
+            <div class="text-2xl font-bold text-gray-900">{{ ppa.progress|default:0 }}%</div>
+            <p class="text-xs text-gray-500 mt-1">Target completion {{ ppa.target_end_date|date:"M d, Y"|default:"Not set" }}</p>
+        </div>
+        <div class="rounded-2xl bg-white border border-gray-200 shadow-sm p-5">
+            <div class="text-xs font-semibold uppercase tracking-wide text-purple-600 mb-1">Beneficiaries</div>
+            <div class="text-2xl font-bold text-gray-900">{{ ppa.obc_slots|default:0|intcomma }}</div>
+            <p class="text-xs text-gray-500 mt-1">Total slots allocated to OBCs</p>
+        </div>
+        <div class="rounded-2xl bg-white border border-gray-200 shadow-sm p-5">
+            <div class="text-xs font-semibold uppercase tracking-wide text-amber-600 mb-1">Fiscal Year</div>
+            <div class="text-2xl font-bold text-gray-900">{{ ppa.fiscal_year|default:"--" }}</div>
+            <p class="text-xs text-gray-500 mt-1">Plan reference {{ ppa.plan_reference|default:"N/A" }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2"><i class="fas fa-circle-info text-emerald-600"></i> PPA Details</h2>
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                    <div>
+                        <dt class="text-gray-500">Implementing MOA</dt>
+                        <dd class="text-gray-900 font-medium">{{ ppa.implementing_moa.name|default:"Unassigned" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">Sector</dt>
+                        <dd class="text-gray-900 font-medium">{{ ppa.get_sector_display|default:"--" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">Appropriation Class</dt>
+                        <dd class="text-gray-900 font-medium">{{ ppa.get_appropriation_class_display|default:"--" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">Funding Source</dt>
+                        <dd class="text-gray-900 font-medium">{{ ppa.get_funding_source_display|default:"--" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">Coverage</dt>
+                        <dd class="text-gray-900 font-medium">{{ ppa.coverage_region.name|default:"Region" }}{% if ppa.coverage_province %}, {{ ppa.coverage_province.name }}{% endif %}{% if ppa.coverage_municipality %}, {{ ppa.coverage_municipality.name }}{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">Communities</dt>
+                        <dd class="text-gray-900 font-medium">
+                            {% if community_names %}
+                                {% for name in community_names %}
+                                    {{ name }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div class="md:col-span-2">
+                        <dt class="text-gray-500">Summary</dt>
+                        <dd class="text-gray-900">{{ ppa.summary|default:"No summary provided." }}</dd>
+                    </div>
+                    <div class="md:col-span-2">
+                        <dt class="text-gray-500">OBCs Benefited</dt>
+                        <dd class="text-gray-900">{{ ppa.obcs_benefited|linebreaksbr|default:"Not documented." }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <i class="fas fa-diagram-project text-blue-600"></i>
+                        Project Workflow
+                    </h2>
+                    {% if workflow %}
+                        <a href="{% url 'common:work_item_detail' pk=workflow.work_item_id %}"
+                           class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow hover:from-blue-600 hover:to-indigo-600 transition">
+                            <i class="fas fa-eye"></i>
+                            View Workflow
+                        </a>
+                    {% else %}
+                        <a href="{% url 'project_central:create_workflow_from_ppa' ppa.id %}"
+                           class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow hover:from-emerald-600 hover:to-teal-600 transition">
+                            <i class="fas fa-plus-circle"></i>
+                            Create Workflow
+                        </a>
+                    {% endif %}
+                </div>
+                {% if workflow %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-gray-500">Current Stage</p>
+                            <p class="font-semibold text-gray-900">{{ workflow.get_current_stage_display }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Priority Level</p>
+                            <p class="font-semibold text-gray-900">{{ workflow.get_priority_level_display }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Project Lead</p>
+                            <p class="font-semibold text-gray-900">{{ workflow.project_lead.get_full_name|default:workflow.project_lead.username|default:"Not assigned" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Primary Need</p>
+                            <p class="font-semibold text-gray-900">{{ workflow.primary_need.title }}</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray-600">No Project Central workflow has been created yet. Launch one to track tasks, budget approvals, and implementation activities.</p>
+                {% endif %}
+            </div>
+
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <i class="fas fa-calendar-alt text-emerald-600"></i>
+                        Activities &amp; Sub-programs
+                    </h2>
+                    {% if workflow %}
+                        <a href="{% url 'common:coordination_event_add' %}?related_project={{ workflow.id }}&is_project_activity=true"
+                           class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow hover:from-blue-600 hover:to-indigo-600 transition">
+                            <i class="fas fa-plus"></i>
+                            Add Activity
+                        </a>
+                    {% endif %}
+                </div>
+                {% if not workflow %}
+                    <p class="text-sm text-gray-600">Create a project workflow to start scheduling implementation activities linked to this PPA.</p>
+                {% elif activities %}
+                    <div class="space-y-3">
+                        {% for activity in activities %}
+                        <div class="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <div>
+                                <p class="font-semibold text-gray-900">{{ activity.title }}</p>
+                                <p class="text-xs text-gray-500">{{ activity.start_date|date:"M d, Y" }}{% if activity.start_time %} • {{ activity.start_time|time:"g:i A" }}{% endif %} • {{ activity.get_status_display }}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <a href="{% url 'common:coordination_event_edit_instance' activity.id %}"
+                                   class="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition">
+                                    <i class="fas fa-pen"></i>
+                                    Edit
+                                </a>
+                                <a href="{% url 'common:coordination_event_delete' activity.id %}"
+                                   class="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-100 transition">
+                                    <i class="fas fa-trash"></i>
+                                    Delete
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray-600">No activities recorded yet. Add coordination meetings, sub-project launches, or monitoring visits to keep implementation on track.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="space-y-6">
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">Status Updates</h2>
+                <ul class="space-y-2 text-sm">
+                    <li><span class="text-gray-500">Request status:</span> <span class="font-semibold text-gray-900">{{ ppa.get_request_status_display|default:"Not applicable" }}</span></li>
+                    <li><span class="text-gray-500">Approval status:</span> <span class="font-semibold text-gray-900">{{ ppa.get_approval_status_display|default:"Draft" }}</span></li>
+                    <li><span class="text-gray-500">Last updated:</span> <span class="font-semibold text-gray-900">{{ ppa.updated_at|date:"M d, Y" }}</span></li>
+                    <li><span class="text-gray-500">Created by:</span> <span class="font-semibold text-gray-900">{{ ppa.created_by.get_full_name|default:ppa.created_by.username|default:"—" }}</span></li>
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">Strategic Alignment</h2>
+                <ul class="space-y-2 text-sm">
+                    <li><span class="text-gray-500">Moral Governance Pillar:</span> <span class="font-semibold text-gray-900">{{ ppa.moral_governance_pillar|default:"—" }}</span></li>
+                    <li><span class="text-gray-500">Supports SDGs:</span> <span class="font-semibold text-gray-900">{{ sdg_display }}</span></li>
+                    <li><span class="text-gray-500">Peace Agenda:</span> <span class="font-semibold text-gray-900">{% if ppa.supports_peace_agenda %}Yes{% else %}No{% endif %}</span></li>
+                    <li><span class="text-gray-500">GAD Compliant:</span> <span class="font-semibold text-gray-900">{% if ppa.compliance_gad %}Yes{% else %}No{% endif %}</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

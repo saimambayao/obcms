@@ -24,3 +24,10 @@ def sync_municipality_coverage_on_delete(sender, instance, **kwargs):
     MunicipalityCoverage.sync_for_municipality(municipality)
     if municipality and municipality.province:
         ProvinceCoverage.sync_for_province(municipality.province)
+
+
+@receiver(post_delete, sender=MunicipalityCoverage)
+def sync_provincial_coverage_on_municipal_delete(sender, instance, **kwargs):
+    """Sync provincial coverage when municipal coverage is hard deleted."""
+    if instance.municipality and instance.municipality.province:
+        ProvinceCoverage.sync_for_province(instance.municipality.province)

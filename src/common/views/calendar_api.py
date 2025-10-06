@@ -11,8 +11,8 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from common.models import StaffTask
-from coordination.models import Event, StakeholderEngagement
+from common.models import WorkItem
+from coordination.models import StakeholderEngagement
 
 logger = logging.getLogger(__name__)
 
@@ -90,70 +90,76 @@ def calendar_event_update(request):
 
         if event_type == "event":
             try:
-                event = Event.objects.get(pk=normalized_id)
+                # Event is now WorkItem with work_type='activity' or 'sub_activity'
+                activity = WorkItem.objects.get(
+                    pk=normalized_id,
+                    work_type__in=[WorkItem.WORK_TYPE_ACTIVITY, WorkItem.WORK_TYPE_SUB_ACTIVITY]
+                )
 
                 # Check permissions
                 if not (
                     request.user.is_staff
                     or request.user.is_superuser
-                    or event.created_by == request.user
-                    or request.user.has_perm("coordination.change_event")
+                    or activity.created_by == request.user
+                    or request.user.has_perm("common.change_workitem")
                 ):
                     return JsonResponse(
                         {"success": False, "error": "Permission denied"}, status=403
                     )
 
-                # Update event fields
-                event.start_date = start_dt.date()
+                # Update activity fields
+                activity.start_date = start_dt.date()
 
                 if all_day:
-                    event.start_time = None
-                    event.end_time = None
+                    activity.start_time = None
+                    activity.end_time = None
                     if end_dt:
                         # FullCalendar adds 1 day to end for all-day events
-                        event.end_date = (end_dt - timedelta(days=1)).date()
+                        activity.due_date = (end_dt - timedelta(days=1)).date()
                     else:
-                        event.end_date = start_dt.date()
+                        activity.due_date = start_dt.date()
                 else:
-                    event.start_time = start_dt.time()
+                    activity.start_time = start_dt.time()
 
                     if end_dt:
                         if end_dt.date() == start_dt.date():
-                            event.end_time = end_dt.time()
-                            event.end_date = None
+                            activity.end_time = end_dt.time()
+                            activity.due_date = None
                         else:
-                            event.end_date = end_dt.date()
-                            event.end_time = end_dt.time()
+                            activity.due_date = end_dt.date()
+                            activity.end_time = end_dt.time()
 
-                        # Calculate duration
+                        # Calculate duration and store in activity_data
                         duration = end_dt - start_dt
-                        event.duration_hours = duration.total_seconds() / 3600
+                        if not activity.activity_data:
+                            activity.activity_data = {}
+                        activity.activity_data['duration_hours'] = duration.total_seconds() / 3600
 
-                event.save(
+                activity.save(
                     update_fields=[
                         "start_date",
                         "start_time",
-                        "end_date",
+                        "due_date",
                         "end_time",
-                        "duration_hours",
+                        "activity_data",
                     ]
                 )
 
                 logger.info(
-                    f"Event {event_id} rescheduled by {request.user.username}: "
+                    f"Activity {event_id} rescheduled by {request.user.username}: "
                     f"{start_dt} to {end_dt}"
                 )
 
                 return JsonResponse(
                     {
                         "success": True,
-                        "message": f"Event '{event.title}' rescheduled successfully",
+                        "message": f"Activity '{activity.title}' rescheduled successfully",
                     }
                 )
 
-            except Event.DoesNotExist:
+            except WorkItem.DoesNotExist:
                 return JsonResponse(
-                    {"success": False, "error": "Event not found"}, status=404
+                    {"success": False, "error": "Activity not found"}, status=404
                 )
 
         elif event_type == "engagement" or event_type == "activity":
@@ -209,10 +215,11 @@ def calendar_event_update(request):
         else:
             if event_type in {"staff_task", "task"}:
                 try:
-                    task = StaffTask.objects.select_related("created_by").get(
-                        pk=_strip_known_prefix(str(event_id))
+                    task = WorkItem.objects.select_related("created_by").get(
+                        pk=_strip_known_prefix(str(event_id)),
+                        work_type__in=[WorkItem.WORK_TYPE_TASK, WorkItem.WORK_TYPE_SUBTASK]
                     )
-                except StaffTask.DoesNotExist:
+                except WorkItem.DoesNotExist:
                     return JsonResponse(
                         {"success": False, "error": "Task not found"}, status=404
                     )
@@ -221,7 +228,7 @@ def calendar_event_update(request):
                     request.user.is_staff
                     or request.user.is_superuser
                     or task.created_by == request.user
-                    or request.user.has_perm("common.change_stafftask")
+                    or request.user.has_perm("common.change_workitem")
                 ):
                     return JsonResponse(
                         {"success": False, "error": "Permission denied"},

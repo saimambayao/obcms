@@ -7,7 +7,8 @@ from django.db.models import Sum
 from django.utils import timezone
 import json
 
-from .models import ProjectWorkflow, Alert
+from common.models import WorkItem
+from .models import Alert
 from mana.models import Need
 from monitoring.models import MonitoringEntry
 from coordination.models import Organization
