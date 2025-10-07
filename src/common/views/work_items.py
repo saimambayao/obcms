@@ -263,11 +263,15 @@ def work_item_detail(request, pk):
     # Get permissions for current user
     permissions = get_work_item_permissions(request.user, work_item)
 
+    # Get related items (includes both manually linked and siblings)
+    related_items = work_item.get_related_and_siblings()
+
     context = {
         'work_item': work_item,
         'breadcrumb': breadcrumb,
         'children': children,
         'type_specific_data': type_specific_data,
+        'related_items': related_items,
         'can_edit': permissions['can_edit'],
         'can_delete': permissions['can_delete'],
     }

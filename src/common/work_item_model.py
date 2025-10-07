@@ -417,6 +417,50 @@ class WorkItem(MPTTModel):
         """Get ancestors of specific type."""
         return self.get_ancestors().filter(work_type=work_type)
 
+    def get_siblings(self, include_self=False):
+        """
+        Get sibling work items (items with the same parent).
+
+        Args:
+            include_self: If True, include this item in the result. Default False.
+
+        Returns:
+            QuerySet of sibling WorkItem objects.
+        """
+        if self.parent:
+            siblings = self.parent.get_children()
+            if not include_self:
+                siblings = siblings.exclude(pk=self.pk)
+            return siblings
+        else:
+            # Top-level items: get other top-level items
+            siblings = WorkItem.objects.filter(parent__isnull=True)
+            if not include_self:
+                siblings = siblings.exclude(pk=self.pk)
+            return siblings
+
+    def get_related_and_siblings(self):
+        """
+        Get both manually linked related items and siblings combined.
+        Useful for showing all contextually related work items.
+
+        Returns:
+            QuerySet of related WorkItem objects (related_items + siblings, deduplicated)
+        """
+        from django.db.models import Q
+
+        # Get related items IDs
+        related_ids = list(self.related_items.values_list('pk', flat=True))
+
+        # Get sibling IDs
+        sibling_ids = list(self.get_siblings().values_list('pk', flat=True))
+
+        # Combine and deduplicate
+        all_ids = list(set(related_ids + sibling_ids))
+
+        # Return queryset
+        return WorkItem.objects.filter(pk__in=all_ids).distinct()
+
     # ========== PROGRESS CALCULATION ==========
 
     def calculate_progress_from_children(self):

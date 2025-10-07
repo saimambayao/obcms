@@ -1,9 +1,9 @@
 {% load static %}
 {# Related Items List Partial - for HTMX swaps #}
 <div id="related-items-list">
-    {% if work_item.related_items.exists %}
+    {% if work_item.get_related_and_siblings %}
         <div class="space-y-2">
-            {% for related in work_item.related_items.all %}
+            {% for related in work_item.get_related_and_siblings %}
                 <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
                     <div class="flex-1">
                         <div class="flex items-center space-x-2">

@@ -19,7 +19,7 @@
                 <button
                     hx-get="{% url 'common:work_item_tree_partial' pk=work_item.pk %}"
                     hx-target="#children-placeholder-{{ work_item.id }}"
-                    hx-swap="afterend swap:300ms"
+                    hx-swap="afterend"
                     hx-trigger="click once"
                     hx-indicator="#loading-indicator-{{ work_item.id }}"
                     hx-disabled-elt="this"

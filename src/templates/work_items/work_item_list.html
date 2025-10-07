@@ -183,20 +183,20 @@
         </div>
 
         <form method="get" class="space-y-4">
-            <!-- First Row: Search Input (Full Width) -->
-            <div>
-                <label for="search" class="block text-sm font-medium text-gray-700 mb-2">
-                    Search
-                </label>
-                <input type="text" id="search" name="q" value="{{ search_query }}"
-                       class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200"
-                       placeholder="Search by title or description...">
-            </div>
+            <!-- All Filters in One Row: Search (40%) + Type/Status/Priority (20% each) -->
+            <div class="flex flex-col md:flex-row gap-4">
+                <!-- Search Input (40%) -->
+                <div class="md:w-[40%]">
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-2">
+                        Search
+                    </label>
+                    <input type="text" id="search" name="q" value="{{ search_query }}"
+                           class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200"
+                           placeholder="Search by title or description...">
+                </div>
 
-            <!-- Second Row: Filter Dropdowns -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Work Type Filter -->
-                <div>
+                <!-- Work Type Filter (20%) -->
+                <div class="md:w-[20%]">
                     <label for="work_type" class="block text-sm font-medium text-gray-700 mb-2">
                         Type
                     </label>
@@ -216,8 +216,8 @@
                     </div>
                 </div>
 
-                <!-- Status Filter -->
-                <div>
+                <!-- Status Filter (20%) -->
+                <div class="md:w-[20%]">
                     <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
                         Status
                     </label>
@@ -237,8 +237,8 @@
                     </div>
                 </div>
 
-                <!-- Priority Filter -->
-                <div>
+                <!-- Priority Filter (20%) -->
+                <div class="md:w-[20%]">
                     <label for="priority" class="block text-sm font-medium text-gray-700 mb-2">
                         Priority
                     </label>
