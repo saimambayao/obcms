@@ -115,6 +115,7 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [PostGIS Migration Guide](improvements/geography/POSTGIS_MIGRATION_GUIDE.md) 📋 **Reference Only (NOT Recommended)**
 
   **Other Guides:**
+  - [PostgreSQL Migration Next Steps](deployment/POSTGRESQL_MIGRATION_NEXT_STEPS.md) 🆕 **When Ready to Migrate**
   - [PostgreSQL Migration Guide](deployment/postgres-migration-guide.md)
   - [Regional MANA Deployment Checklist](deployment/regional_mana_deployment_checklist.md)
 
@@ -171,6 +172,8 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 
 ### 🔧 Improvements & Implementation
 - **System-Wide:**
+  - [Directory Structure Reorganization - COMPLETE](improvements/DIRECTORY_REORGANIZATION_COMPLETE.md) 🆕 **Oct 2025 - Django Best Practices**
+  - [Directory Reorganization Plan](improvements/DIRECTORY_STRUCTURE_REORGANIZATION_PLAN.md) 🆕 **Planning Document**
   - [Corrections Applied](improvements/CORRECTIONS_APPLIED.md)
   - [Implementation Complete](improvements/IMPLEMENTATION_COMPLETE.md)
   - [System Isolation Complete](improvements/SYSTEM_ISOLATION_COMPLETE.md)
