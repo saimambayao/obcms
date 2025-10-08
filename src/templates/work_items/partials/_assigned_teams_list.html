@@ -1,0 +1,47 @@
+{% load static %}
+{# Assigned Teams List Partial - for HTMX swaps #}
+<div id="assigned-teams-list">
+    {% if work_item.teams.exists %}
+        <div class="hidden" aria-hidden="true" data-autosave-sync>
+            {% for team in work_item.teams.all %}
+                <input type="hidden" name="teams" value="{{ team.pk }}">
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% if work_item.teams.exists %}
+        <div class="space-y-2">
+            {% for team in work_item.teams.all %}
+                <div class="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg border border-emerald-100 hover:from-emerald-100 hover:to-blue-100 transition-colors">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-emerald-500 text-white text-xs font-medium shadow-sm">
+                                <i class="fas fa-users"></i>
+                            </span>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ team.name }}
+                                </div>
+                                {% if team.description %}
+                                    <div class="text-xs text-gray-500">{{ team.description|truncatewords:10 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2 ml-3">
+                        {# Remove Team Button #}
+                        <button type="button"
+                                hx-post="{% url 'common:work_item_remove_team' work_item.pk team.pk %}"
+                                hx-target="#assigned-teams-list"
+                                hx-swap="outerHTML"
+                                class="text-gray-600 hover:text-red-600 transition-colors"
+                                title="Remove team">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-sm text-gray-500 italic py-2">No teams assigned yet</p>
+    {% endif %}
+</div>

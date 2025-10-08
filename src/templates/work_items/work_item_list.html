@@ -182,11 +182,11 @@
             </div>
         </div>
 
-        <form method="get" class="space-y-4">
-            <!-- All Filters in One Row: Search (40%) + Type/Status/Priority (20% each) -->
-            <div class="flex flex-col md:flex-row gap-4">
-                <!-- Search Input (40%) -->
-                <div class="md:w-[40%]">
+        <form method="get">
+            <!-- All Filters and Buttons in One Row -->
+            <div class="flex flex-wrap lg:flex-nowrap gap-3 items-end">
+                <!-- Search Input (flex-grow) -->
+                <div class="flex-1 min-w-[200px]">
                     <label for="search" class="block text-sm font-medium text-gray-700 mb-2">
                         Search
                     </label>
@@ -195,14 +195,14 @@
                            placeholder="Search by title or description...">
                 </div>
 
-                <!-- Work Type Filter (20%) -->
-                <div class="md:w-[20%]">
+                <!-- Work Type Filter -->
+                <div class="w-[150px]">
                     <label for="work_type" class="block text-sm font-medium text-gray-700 mb-2">
                         Type
                     </label>
                     <div class="relative">
                         <select id="work_type" name="work_type"
-                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-10 bg-white transition-all duration-200">
                             <option value="">All Types</option>
                             {% for value, label in work_type_choices %}
                                 <option value="{{ value }}" {% if work_type_filter == value %}selected{% endif %}>
@@ -210,20 +210,20 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                             <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
                         </span>
                     </div>
                 </div>
 
-                <!-- Status Filter (20%) -->
-                <div class="md:w-[20%]">
+                <!-- Status Filter -->
+                <div class="w-[150px]">
                     <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
                         Status
                     </label>
                     <div class="relative">
                         <select id="status" name="status"
-                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-10 bg-white transition-all duration-200">
                             <option value="">All Statuses</option>
                             {% for value, label in status_choices %}
                                 <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
@@ -231,20 +231,20 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                             <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
                         </span>
                     </div>
                 </div>
 
-                <!-- Priority Filter (20%) -->
-                <div class="md:w-[20%]">
+                <!-- Priority Filter -->
+                <div class="w-[150px]">
                     <label for="priority" class="block text-sm font-medium text-gray-700 mb-2">
                         Priority
                     </label>
                     <div class="relative">
                         <select id="priority" name="priority"
-                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-10 bg-white transition-all duration-200">
                             <option value="">All Priorities</option>
                             {% for value, label in priority_choices %}
                                 <option value="{{ value }}" {% if priority_filter == value %}selected{% endif %}>
@@ -252,29 +252,25 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                             <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
                         </span>
                     </div>
                 </div>
-            </div>
 
-            <!-- Action Buttons Row -->
-            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
-                <div class="flex gap-3 w-full sm:w-auto">
-                    <button type="submit" class="flex-1 sm:flex-initial inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-emerald-600 text-white rounded-xl font-semibold hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
-                        <i class="fas fa-filter mr-2"></i>
-                        Apply Filters
+                <!-- Apply Button -->
+                <div class="w-[120px]">
+                    <button type="submit" class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-emerald-600 text-white rounded-xl font-semibold hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 min-h-[48px]">
+                        Apply
                     </button>
-                    <a href="{% url 'common:work_item_list' %}" class="flex-1 sm:flex-initial inline-flex items-center justify-center px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors duration-200">
-                        <i class="fas fa-times mr-2"></i>
-                        Clear Filters
+                </div>
+
+                <!-- Clear Button -->
+                <div class="w-[100px]">
+                    <a href="{% url 'common:work_item_list' %}" class="block w-full py-3 px-4 text-center border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors duration-200 min-h-[48px] flex items-center justify-center">
+                        Clear
                     </a>
                 </div>
-                <a href="{% url 'common:work_item_create' %}" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-emerald-600 text-white rounded-xl font-semibold hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
-                    <i class="fas fa-plus mr-2"></i>
-                    Create Work Item
-                </a>
             </div>
         </form>
     </div>
@@ -302,6 +298,13 @@
                         class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-150">
                     <i class="fas fa-compress-alt mr-1.5"></i>
                     Collapse All
+                </button>
+                <button onclick="openSidebarAndLoad(this)"
+                        data-hx-get="{% url 'common:work_item_sidebar_create' %}"
+                        data-hx-target="#sidebar-content"
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-blue-600 to-emerald-600 hover:shadow-lg rounded-lg transition-all duration-150">
+                    <i class="fas fa-plus mr-1.5"></i>
+                    Add Work Item
                 </button>
             </div>
         </div>
@@ -365,6 +368,21 @@
                             </td>
                         </tr>
                     {% endfor %}
+
+                    {% if work_items %}
+                    <!-- Add Work Item Button Row - Always at bottom -->
+                    <tr class="bg-gray-50/50 hover:bg-gray-100/50 transition-colors duration-150">
+                        <td colspan="7" class="px-4 py-3">
+                            <button onclick="openSidebarAndLoad(this)"
+                                    data-hx-get="{% url 'common:work_item_sidebar_create' %}"
+                                    data-hx-target="#sidebar-content"
+                                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-all duration-150 border border-emerald-200">
+                                <i class="fas fa-plus-circle mr-2"></i>
+                                Add Work Item
+                            </button>
+                        </td>
+                    </tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>

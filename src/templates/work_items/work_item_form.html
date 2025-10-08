@@ -34,7 +34,10 @@
         {% endif %}
     </div>
 
-    <form method="post" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <form id="work-item-form"
+          method="post"
+          class="grid grid-cols-1 lg:grid-cols-2 gap-6"
+          {% if work_item %}data-autosave="true"{% endif %}>
         {% csrf_token %}
 
         {% if form.non_field_errors %}
@@ -224,6 +227,26 @@
                         <p class="mt-1 text-sm text-red-600">{{ form.end_time.errors.0 }}</p>
                     {% endif %}
                 </div>
+
+                <!-- Calendar Visibility -->
+                <div>
+                    <label class="flex items-center space-x-2">
+                        {{ form.is_calendar_visible }}
+                        <span class="text-sm text-gray-700">Show in calendar</span>
+                    </label>
+                    <p class="mt-1 text-sm text-gray-500 ml-7">Display this work item on the OOBC calendar</p>
+                </div>
+
+                <!-- Calendar Color -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Calendar Color
+                    </label>
+                    {{ form.calendar_color }}
+                    {% if form.calendar_color.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.calendar_color.errors.0 }}</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
         </div>
@@ -237,84 +260,193 @@
                 <i class="fas fa-users text-amber-500 mr-2"></i>
                 Assignment
             </h3>
-            <div class="space-y-4">
-                <!-- Assignees -->
-                <div x-data="searchableMultiSelect('{{ form.assignees.auto_id }}')" x-init="init()" class="space-y-3">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <label for="{{ form.assignees.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Assigned Users
-                        </label>
-                        <div class="relative w-full sm:w-72">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                                <i class="fas fa-search text-sm"></i>
-                            </span>
-                            <input type="search"
-                                   x-model="query"
-                                   @input.debounce.150ms="filterOptions"
-                                   @keydown.stop
-                                   placeholder="Search users..."
-                                   class="block w-full pl-9 pr-10 py-2.5 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-sm transition-all duration-200"
-                                   aria-label="Search users"
-                            />
+            <div class="space-y-6">
+                <!-- Assigned Users -->
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium text-gray-700">
+                        Assigned Users
+                    </label>
+                    {% if work_item %}
+                        {% include 'work_items/partials/_assigned_users_list.html' %}
+                        <div class="mt-3">
                             <button type="button"
-                                    x-show="query"
-                                    @click="clearQuery"
-                                    class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-gray-600 transition-colors"
-                                    :aria-label="'Clear user search'"
-                                    >
-                                <i class="fas fa-times-circle text-sm"></i>
+                                    id="show-add-user-form"
+                                    onclick="document.getElementById('add-user-form').classList.toggle('hidden'); this.classList.toggle('hidden');"
+                                    class="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-600 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-200">
+                                <i class="fas fa-user-plus mr-2"></i>
+                                Assign User
                             </button>
+                            <div id="add-user-form" class="hidden mt-4 p-5 bg-gradient-to-br from-emerald-50 to-blue-50 rounded-xl border border-emerald-200">
+                                <form hx-post="{% url 'common:work_item_add_assignee' work_item.pk %}"
+                                      hx-target="#assigned-users-list"
+                                      hx-swap="outerHTML"
+                                      class="space-y-4">
+                                    {% csrf_token %}
+
+                                    <!-- Combined Search & Select -->
+                                    <div class="space-y-4">
+                                        <div class="flex items-center gap-3">
+                                            <label class="text-sm font-medium text-gray-700 flex items-center gap-2 whitespace-nowrap">
+                                                <i class="fas fa-search text-emerald-500"></i>
+                                                Search & Select User
+                                            </label>
+
+                                            <!-- Search Input with Dropdown -->
+                                            <div class="relative flex-1 max-w-md">
+                                                <input type="text"
+                                                       id="user-search"
+                                                       name="search"
+                                                       placeholder="Type to search by name or position..."
+                                                       class="block w-full py-2.5 px-4 pl-10 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white transition-all duration-200"
+                                                       hx-get="{% url 'common:work_item_search_users' work_item.pk %}"
+                                                       hx-trigger="keyup changed delay:300ms"
+                                                       hx-target="#user-select"
+                                                       hx-swap="innerHTML"
+                                                       hx-include="[name='search']">
+                                                <i class="fas fa-search absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                                            </div>
+                                        </div>
+
+                                        <!-- Dropdown Results -->
+                                        <div class="mt-0">
+                                            <div class="relative">
+                                                <select name="user_id"
+                                                        id="user-select"
+                                                        required
+                                                        class="block w-full py-3 px-4 pr-10 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white appearance-none transition-all duration-200">
+                                                    <option value="">Choose a user...</option>
+                                                    {% for user in form.assignees.field.queryset %}
+                                                        {% if user not in work_item.assignees.all %}
+                                                            <option value="{{ user.pk }}">{{ user.get_full_name }}{% if user.position %} - {{ user.position }}{% endif %}</option>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </select>
+                                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="flex gap-2 pt-2">
+                                        <button type="button"
+                                                hx-post="{% url 'common:work_item_add_assignee' work_item.pk %}"
+                                                hx-target="#assigned-users-list"
+                                                hx-swap="outerHTML"
+                                                hx-include="closest form"
+                                                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-emerald-600 text-white font-semibold text-sm rounded-xl shadow-md hover:from-blue-700 hover:to-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200">
+                                            <i class="fas fa-user-plus text-white"></i>
+                                            Assign User
+                                        </button>
+                                        <button type="button"
+                                                onclick="document.getElementById('add-user-form').classList.add('hidden'); document.getElementById('show-add-user-form').classList.remove('hidden');"
+                                                class="px-4 py-2.5 bg-white text-gray-700 font-medium text-sm rounded-xl border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
-                    </div>
-                    <div class="relative">
-                        {{ form.assignees }}
-                    </div>
-                    {% if form.assignees.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.assignees.errors.0 }}</p>
+                    {% else %}
+                        <div class="text-sm text-gray-500 italic py-2">Save this work item first to assign users</div>
+                        <!-- Hidden inputs to preserve form data during creation -->
+                        <div class="hidden">{{ form.assignees }}</div>
                     {% endif %}
-                    <p class="mt-1 text-sm text-gray-500 flex items-center gap-2">
-                        <i class="fas fa-info-circle text-blue-400"></i>
-                        Use Ctrl/Cmd + Click to select multiple users. Selected users stay visible while searching.
-                    </p>
                 </div>
 
-                <!-- Teams -->
-                <div x-data="searchableMultiSelect('{{ form.teams.auto_id }}')" x-init="init()" class="space-y-3">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <label for="{{ form.teams.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Assigned Teams
-                        </label>
-                        <div class="relative w-full sm:w-72">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                                <i class="fas fa-search text-sm"></i>
-                            </span>
-                            <input type="search"
-                                   x-model="query"
-                                   @input.debounce.150ms="filterOptions"
-                                   @keydown.stop
-                                   placeholder="Search teams..."
-                                   class="block w-full pl-9 pr-10 py-2.5 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-sm transition-all duration-200"
-                                   aria-label="Search teams"
-                            />
+                <!-- Assigned Teams -->
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium text-gray-700">
+                        Assigned Teams
+                    </label>
+                    {% if work_item %}
+                        {% include 'work_items/partials/_assigned_teams_list.html' %}
+                        <div class="mt-3">
                             <button type="button"
-                                    x-show="query"
-                                    @click="clearQuery"
-                                    class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-gray-600 transition-colors"
-                                    :aria-label="'Clear team search'">
-                                <i class="fas fa-times-circle text-sm"></i>
+                                    id="show-add-team-form"
+                                    onclick="document.getElementById('add-team-form').classList.toggle('hidden'); this.classList.toggle('hidden');"
+                                    class="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-600 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-200">
+                                <i class="fas fa-users mr-2"></i>
+                                Assign Team
                             </button>
+                            <div id="add-team-form" class="hidden mt-4 p-5 bg-gradient-to-br from-emerald-50 to-blue-50 rounded-xl border border-emerald-200">
+                                <form hx-post="{% url 'common:work_item_add_team' work_item.pk %}"
+                                      hx-target="#assigned-teams-list"
+                                      hx-swap="outerHTML"
+                                      class="space-y-4">
+                                    {% csrf_token %}
+
+                                    <!-- Combined Search & Select -->
+                                    <div class="space-y-4">
+                                        <div class="flex items-center gap-3">
+                                            <label class="text-sm font-medium text-gray-700 flex items-center gap-2 whitespace-nowrap">
+                                                <i class="fas fa-search text-emerald-500"></i>
+                                                Search & Select Team
+                                            </label>
+
+                                            <!-- Search Input with Dropdown -->
+                                            <div class="relative flex-1 max-w-md">
+                                                <input type="text"
+                                                       id="team-search"
+                                                       name="search"
+                                                       placeholder="Type to search teams..."
+                                                       class="block w-full py-2.5 px-4 pl-10 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white transition-all duration-200"
+                                                       hx-get="{% url 'common:work_item_search_teams' work_item.pk %}"
+                                                       hx-trigger="keyup changed delay:300ms"
+                                                       hx-target="#team-select"
+                                                       hx-swap="innerHTML"
+                                                       hx-include="[name='search']">
+                                                <i class="fas fa-search absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                                            </div>
+                                        </div>
+
+                                        <!-- Dropdown Results -->
+                                        <div class="mt-0">
+                                            <div class="relative">
+                                                <select name="team_id"
+                                                        id="team-select"
+                                                        required
+                                                        class="block w-full py-3 px-4 pr-10 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white appearance-none transition-all duration-200">
+                                                    <option value="">Choose a team...</option>
+                                                    {% for team in form.teams.field.queryset %}
+                                                        {% if team not in work_item.teams.all %}
+                                                            <option value="{{ team.pk }}">{{ team.name }}</option>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </select>
+                                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="flex gap-2 pt-2">
+                                        <button type="button"
+                                                hx-post="{% url 'common:work_item_add_team' work_item.pk %}"
+                                                hx-target="#assigned-teams-list"
+                                                hx-swap="outerHTML"
+                                                hx-include="closest form"
+                                                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-emerald-600 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-emerald-700 hover:shadow-lg transition-all duration-200">
+                                            <i class="fas fa-users"></i>
+                                            Assign Team
+                                        </button>
+                                        <button type="button"
+                                                onclick="document.getElementById('add-team-form').classList.add('hidden'); document.getElementById('show-add-team-form').classList.remove('hidden');"
+                                                class="px-4 py-2.5 bg-white text-gray-700 font-medium text-sm rounded-xl border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
-                    </div>
-                    <div class="relative">
-                        {{ form.teams }}
-                    </div>
-                    {% if form.teams.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.teams.errors.0 }}</p>
+                    {% else %}
+                        <div class="text-sm text-gray-500 italic py-2">Save this work item first to assign teams</div>
+                        <!-- Hidden inputs to preserve form data during creation -->
+                        <div class="hidden">{{ form.teams }}</div>
                     {% endif %}
-                    <p class="mt-1 text-sm text-gray-500 flex items-center gap-2">
-                        <i class="fas fa-info-circle text-blue-400"></i>
-                        Use Ctrl/Cmd + Click to select multiple teams. Selected teams stay visible while searching.
-                    </p>
                 </div>
             </div>
         </div>
@@ -347,29 +479,31 @@
                                 {% csrf_token %}
 
                                 <!-- Combined Search & Select -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        <i class="fas fa-search text-emerald-500 mr-1.5"></i>
-                                        Search & Select Work Item
-                                    </label>
+                                <div class="space-y-4">
+                                    <div class="flex items-center gap-3">
+                                        <label class="text-sm font-medium text-gray-700 flex items-center gap-2 whitespace-nowrap">
+                                            <i class="fas fa-search text-emerald-500"></i>
+                                            Search & Select Work Item
+                                        </label>
 
-                                    <!-- Search Input with Dropdown -->
-                                    <div class="relative">
-                                        <input type="text"
-                                               id="related-item-search"
-                                               name="search"
-                                               placeholder="Type to search by title or type..."
-                                               class="block w-full py-3 px-4 pl-10 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white transition-all duration-200"
-                                               hx-get="{% url 'common:work_item_search_related' work_item.pk %}"
-                                               hx-trigger="keyup changed delay:300ms"
-                                               hx-target="#related-item-select"
-                                               hx-swap="innerHTML"
-                                               hx-include="[name='search']">
-                                        <i class="fas fa-search absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                                        <!-- Search Input with Dropdown -->
+                                        <div class="relative flex-1 max-w-md">
+                                            <input type="text"
+                                                   id="related-item-search"
+                                                   name="search"
+                                                   placeholder="Type to search by title or type..."
+                                                   class="block w-full py-2.5 px-4 pl-10 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white transition-all duration-200"
+                                                   hx-get="{% url 'common:work_item_search_related' work_item.pk %}"
+                                                   hx-trigger="keyup changed delay:300ms"
+                                                   hx-target="#related-item-select"
+                                                   hx-swap="innerHTML"
+                                                   hx-include="[name='search']">
+                                            <i class="fas fa-search absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                                        </div>
                                     </div>
 
                                     <!-- Dropdown Results -->
-                                    <div class="mt-4">
+                                    <div class="mt-0">
                                         <div class="relative">
                                             <select name="related_item_id"
                                                     id="related-item-select"
@@ -432,13 +566,13 @@
                             <button type="button"
                                     id="add-child-button"
                                     onclick="toggleChildForm()"
-                                    class="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-600 hover:border-purple-400 hover:text-purple-600 hover:bg-purple-50 transition-all duration-200">
+                                    class="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-600 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-200">
                                 <i class="fas fa-plus-circle mr-2"></i>
                                 Add Child Item
                             </button>
 
                             <!-- Enhanced Quick Add Child Form (Hidden by default) -->
-                            <div id="child-form" class="hidden mt-4 p-4 bg-gray-50 rounded-lg border-2 border-purple-200">
+                            <div id="child-form" class="hidden mt-4 p-5 bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl border border-emerald-200 shadow-sm">
                                 <form hx-post="{% url 'common:work_item_quick_create_child' work_item.pk %}"
                                       hx-target="#children-items-list"
                                       hx-swap="outerHTML"
@@ -451,25 +585,35 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                                 Child Work Type <span class="text-red-500">*</span>
                                             </label>
-                                            <select id="child-work-type" name="child_work_type" required
-                                                    class="block w-full py-2 px-3 text-sm rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
-                                                <option value="">Select type...</option>
-                                                {% for code, label in allowed_child_type_choices %}
-                                                    <option value="{{ code }}">{{ label }}</option>
-                                                {% endfor %}
-                                            </select>
+                                            <div class="relative">
+                                                <select id="child-work-type" name="child_work_type" required
+                                                        class="block w-full py-3 px-4 pr-10 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white appearance-none transition-all duration-200">
+                                                    <option value="">Select type...</option>
+                                                    {% for code, label in allowed_child_type_choices %}
+                                                        <option value="{{ code }}">{{ label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                                </span>
+                                            </div>
                                         </div>
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                                 Status
                                             </label>
-                                            <select name="child_status"
-                                                    class="block w-full py-2 px-3 text-sm rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
-                                                <option value="not_started">Not Started</option>
-                                                <option value="in_progress">In Progress</option>
-                                                <option value="on_hold">On Hold</option>
-                                                <option value="completed">Completed</option>
-                                            </select>
+                                            <div class="relative">
+                                                <select name="child_status"
+                                                        class="block w-full py-3 px-4 pr-10 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white appearance-none transition-all duration-200">
+                                                    <option value="not_started">Not Started</option>
+                                                    <option value="in_progress">In Progress</option>
+                                                    <option value="on_hold">On Hold</option>
+                                                    <option value="completed">Completed</option>
+                                                </select>
+                                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -478,7 +622,7 @@
                                             Child Title <span class="text-red-500">*</span>
                                         </label>
                                         <input id="child-title" type="text" name="child_title" required
-                                               class="block w-full py-2 px-3 text-sm rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500"
+                                               class="block w-full py-3 px-4 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                                                placeholder="Enter child item title...">
                                     </div>
 
@@ -488,27 +632,32 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                                 Priority
                                             </label>
-                                            <select name="child_priority"
-                                                    class="block w-full py-2 px-3 text-sm rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
-                                                <option value="low">Low</option>
-                                                <option value="medium" selected>Medium</option>
-                                                <option value="high">High</option>
-                                                <option value="urgent">Urgent</option>
-                                            </select>
+                                            <div class="relative">
+                                                <select name="child_priority"
+                                                        class="block w-full py-3 px-4 pr-10 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white appearance-none transition-all duration-200">
+                                                    <option value="low">Low</option>
+                                                    <option value="medium" selected>Medium</option>
+                                                    <option value="high">High</option>
+                                                    <option value="urgent">Urgent</option>
+                                                </select>
+                                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                                </span>
+                                            </div>
                                         </div>
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                                 <i class="far fa-calendar text-blue-500"></i> Start Date
                                             </label>
                                             <input type="date" name="child_start_date"
-                                                   class="block w-full py-2 px-3 text-sm rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                                                   class="block w-full py-3 px-4 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
                                         </div>
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                                 <i class="far fa-calendar-check text-emerald-500"></i> End Date
                                             </label>
                                             <input type="date" name="child_end_date"
-                                                   class="block w-full py-2 px-3 text-sm rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                                                   class="block w-full py-3 px-4 text-sm rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
                                         </div>
                                     </div>
 
@@ -519,13 +668,13 @@
                                                 hx-target="#children-items-list"
                                                 hx-swap="outerHTML"
                                                 hx-include="closest form"
-                                                class="flex-1 px-3 py-2 bg-gradient-to-r from-blue-600 to-emerald-600 text-white text-sm rounded-lg hover:shadow-md transition-all">
-                                            <i class="fas fa-save mr-1"></i>
+                                                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-emerald-600 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-emerald-700 hover:shadow-lg transition-all duration-200">
+                                            <i class="fas fa-save"></i>
                                             Create Child
                                         </button>
                                         <button type="button"
                                                 onclick="toggleChildForm()"
-                                                class="px-3 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition-all">
+                                                class="px-4 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
@@ -544,48 +693,41 @@
             </div>
         </div>
 
-        <!-- Calendar Settings Section -->
-        <div class="bg-white rounded-xl p-6 border border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <i class="fas fa-cog text-gray-500 mr-2"></i>
-                Calendar Settings
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Calendar Visibility -->
-                <div>
-                    <label class="flex items-center space-x-2">
-                        {{ form.is_calendar_visible }}
-                        <span class="text-sm text-gray-700">Show in calendar</span>
-                    </label>
-                    <p class="mt-1 text-sm text-gray-500 ml-7">Display this work item on the OOBC calendar</p>
-                </div>
-
-                <!-- Calendar Color -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Calendar Color
-                    </label>
-                    {{ form.calendar_color }}
-                    {% if form.calendar_color.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.calendar_color.errors.0 }}</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
         </div>
         <!-- END RIGHT COLUMN -->
 
         <!-- Form Actions -->
-        <div class="lg:col-span-2 flex flex-col sm:flex-row justify-end gap-4 pt-6 border-t border-gray-200">
-            <button type="submit" class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <i class="fas fa-save mr-2"></i>
-                Save Work Item
-            </button>
-            <a href="{% if work_item %}{% url 'common:work_item_detail' pk=work_item.pk %}{% else %}{% url 'common:work_item_list' %}{% endif %}"
-               class="inline-flex items-center justify-center px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200">
-                <i class="fas fa-times mr-2"></i>
-                Cancel
-            </a>
+        <div class="lg:col-span-2 flex flex-col gap-4 pt-6 border-t border-gray-200">
+            {% if work_item %}
+            <div id="autosave-status"
+                 class="flex items-center gap-2 text-sm text-emerald-600"
+                 aria-live="polite"
+                 role="status">
+                <i class="fas fa-check-circle text-emerald-500 text-base" data-state-icon></i>
+                <span data-state-text>All changes saved</span>
+            </div>
+            {% endif %}
+            <div class="flex flex-col sm:flex-row justify-end gap-4">
+                <button type="submit" class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                    <i class="fas fa-save mr-2"></i>
+                    Save Work Item
+                </button>
+                {% if work_item %}
+                <button type="button"
+                        hx-get="{% url 'common:work_item_delete_modal' pk=work_item.pk %}"
+                        hx-target="#delete-modal-container"
+                        hx-swap="innerHTML"
+                        class="inline-flex items-center justify-center px-6 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                    <i class="fas fa-trash-alt mr-2"></i>
+                    Delete
+                </button>
+                {% endif %}
+                <a href="{% if work_item %}{% url 'common:work_item_detail' pk=work_item.pk %}{% else %}{% url 'common:work_item_list' %}{% endif %}"
+                   class="inline-flex items-center justify-center px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancel
+                </a>
+            </div>
         </div>
     </form>
 </div>
@@ -627,6 +769,193 @@ function saveChildItem() {
 }
 
 // Enhanced multi-select styling
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('work-item-form');
+    if (!form || !form.dataset.autosave) {
+        return;
+    }
+
+    const statusEl = document.getElementById('autosave-status');
+    const statusIcon = statusEl ? statusEl.querySelector('[data-state-icon]') : null;
+    const statusText = statusEl ? statusEl.querySelector('[data-state-text]') : null;
+    const colorClasses = ['text-emerald-600', 'text-amber-600', 'text-blue-600', 'text-red-600', 'text-gray-500'];
+    const errorClassList = ['ring-2', 'ring-red-500', 'border-red-500'];
+    const errorFields = new Set();
+    const autosaveDelay = 1500;
+    const csrfTokenInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
+
+    let autosaveTimer = null;
+    let isSaving = false;
+    let hasPendingChanges = false;
+
+    const states = {
+        idle: {
+            iconClass: 'fas fa-check-circle text-emerald-500 text-base',
+            textClass: 'text-emerald-600',
+            defaultText: 'All changes saved',
+        },
+        pending: {
+            iconClass: 'fas fa-ellipsis-h text-amber-500 text-base animate-pulse',
+            textClass: 'text-amber-600',
+            defaultText: 'Unsaved changes…',
+        },
+        saving: {
+            iconClass: 'fas fa-cloud-upload-alt text-blue-500 text-base animate-pulse',
+            textClass: 'text-blue-600',
+            defaultText: 'Saving…',
+        },
+        error: {
+            iconClass: 'fas fa-exclamation-circle text-red-500 text-base',
+            textClass: 'text-red-600',
+            defaultText: 'Autosave failed. Please try again.',
+        },
+    };
+
+    const updateStatus = (state, message) => {
+        if (!statusEl || !statusIcon || !statusText) {
+            return;
+        }
+
+        const config = states[state] || states.idle;
+        colorClasses.forEach(cls => statusEl.classList.remove(cls));
+        statusEl.classList.add(config.textClass);
+        statusIcon.className = config.iconClass;
+        statusText.textContent = message || config.defaultText;
+    };
+
+    const clearFieldHighlights = () => {
+        errorFields.forEach(field => {
+            errorClassList.forEach(cls => field.classList.remove(cls));
+            field.removeAttribute('data-autosave-error');
+        });
+        errorFields.clear();
+    };
+
+    const applyFieldErrors = (errors) => {
+        if (!errors) {
+            return;
+        }
+
+        clearFieldHighlights();
+
+        Object.entries(errors).forEach(([fieldName, fieldErrors]) => {
+            if (fieldName === '__all__') {
+                if (fieldErrors && fieldErrors.length) {
+                    updateStatus('error', fieldErrors[0]);
+                }
+                return;
+            }
+
+            const field = form.querySelector(`[name="${fieldName}"]`);
+            if (field) {
+                field.setAttribute('data-autosave-error', 'true');
+                errorClassList.forEach(cls => field.classList.add(cls));
+                errorFields.add(field);
+            }
+        });
+    };
+
+    const formatSavedTimestamp = (isoString) => {
+        if (!isoString) {
+            return states.idle.defaultText;
+        }
+
+        const parsedDate = new Date(isoString);
+        if (Number.isNaN(parsedDate.getTime())) {
+            return states.idle.defaultText;
+        }
+
+        return `Saved ${parsedDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    };
+
+    const triggerAutosave = async () => {
+        if (isSaving || !hasPendingChanges) {
+            return;
+        }
+
+        isSaving = true;
+        hasPendingChanges = false;
+        updateStatus('saving');
+
+        const formData = new FormData(form);
+        const headers = {
+            'X-Autosave': 'true',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        };
+
+        if (csrfTokenInput) {
+            headers['X-CSRFToken'] = csrfTokenInput.value;
+        }
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers,
+            });
+
+            const responseData = await response.json().catch(() => ({}));
+
+            if (!response.ok || !responseData.success) {
+                applyFieldErrors(responseData.errors);
+                updateStatus('error', responseData.errors ? 'Autosave failed. Review highlighted fields.' : undefined);
+                hasPendingChanges = true;
+                return;
+            }
+
+            clearFieldHighlights();
+            updateStatus('idle', formatSavedTimestamp(responseData.saved_at));
+        } catch (error) {
+            updateStatus('error', 'Autosave failed due to a network error.');
+            hasPendingChanges = true;
+        } finally {
+            isSaving = false;
+        }
+    };
+
+    const scheduleAutosave = () => {
+        clearTimeout(autosaveTimer);
+        autosaveTimer = setTimeout(triggerAutosave, autosaveDelay);
+    };
+
+    const handleFieldMutation = (event) => {
+        if (event.target.form !== form) {
+            return;
+        }
+
+        if (event.target.getAttribute('data-autosave-error') === 'true') {
+            errorClassList.forEach(cls => event.target.classList.remove(cls));
+            event.target.removeAttribute('data-autosave-error');
+            errorFields.delete(event.target);
+        }
+
+        hasPendingChanges = true;
+        updateStatus('pending');
+        scheduleAutosave();
+    };
+
+    const watchedElements = form.querySelectorAll('input, textarea, select');
+    watchedElements.forEach(element => {
+        element.addEventListener('input', handleFieldMutation);
+        element.addEventListener('change', handleFieldMutation);
+    });
+
+    form.addEventListener('submit', () => {
+        clearTimeout(autosaveTimer);
+        hasPendingChanges = false;
+    });
+
+    window.addEventListener('beforeunload', (event) => {
+        if (isSaving || hasPendingChanges) {
+            event.preventDefault();
+            event.returnValue = '';
+        }
+    });
+
+    updateStatus('idle');
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     // Style multi-select elements
     const multiSelects = document.querySelectorAll('select[multiple]');

@@ -711,6 +711,37 @@ urlpatterns = [
         views.work_item_quick_create_child,
         name="work_item_quick_create_child",
     ),
+    # Assignment management
+    path(
+        "oobc-management/work-items/<uuid:pk>/search-users/",
+        views.work_item_search_users,
+        name="work_item_search_users",
+    ),
+    path(
+        "oobc-management/work-items/<uuid:pk>/add-assignee/",
+        views.work_item_add_assignee,
+        name="work_item_add_assignee",
+    ),
+    path(
+        "oobc-management/work-items/<uuid:pk>/remove-assignee/<int:user_id>/",
+        views.work_item_remove_assignee,
+        name="work_item_remove_assignee",
+    ),
+    path(
+        "oobc-management/work-items/<uuid:pk>/search-teams/",
+        views.work_item_search_teams,
+        name="work_item_search_teams",
+    ),
+    path(
+        "oobc-management/work-items/<uuid:pk>/add-team/",
+        views.work_item_add_team,
+        name="work_item_add_team",
+    ),
+    path(
+        "oobc-management/work-items/<uuid:pk>/remove-team/<int:team_id>/",
+        views.work_item_remove_team,
+        name="work_item_remove_team",
+    ),
     # ============================================================================
     # LEGACY URL REDIRECTS REMOVED
     # ============================================================================

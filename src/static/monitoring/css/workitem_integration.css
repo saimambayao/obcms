@@ -1,0 +1,714 @@
+/**
+ * WorkItem Integration UI Styles
+ *
+ * Custom CSS for WorkItem integration components following OBCMS UI standards.
+ * Complements Tailwind CSS utility classes with specialized components.
+ *
+ * Design System:
+ * - 3D milk white cards with subtle shadows
+ * - Gradient buttons (blue-to-teal primary)
+ * - Semantic colors (emerald success, blue info, amber warning, red critical)
+ * - Smooth transitions (300ms movements, 200ms deletions)
+ * - WCAG 2.1 AA compliant (4.5:1 contrast minimum)
+ *
+ * Compatibility: Tailwind CSS v3+, Modern browsers (Chrome 90+, Firefox 88+, Safari 14+)
+ * Graceful degradation: IE11+ (reduced animations, fallback colors)
+ *
+ * @version 1.0.0
+ * @author OBCMS Development Team
+ */
+
+/* ==========================================================================
+   1. 3D Milk White Stat Cards
+   ========================================================================== */
+
+/**
+ * Base stat card with 3D milk white aesthetic
+ * Features: Gradient background, layered shadows, top accent border on hover
+ */
+.stat-card-3d {
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.05),           /* Subtle base shadow */
+        0 10px 15px -3px rgba(0, 0, 0, 0.05),    /* Mid-layer depth */
+        0 4px 6px -2px rgba(0, 0, 0, 0.03);      /* Soft ambient shadow */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/**
+ * Top accent border (gradient) - revealed on hover
+ * Provides visual feedback without overwhelming the clean design
+ */
+.stat-card-3d::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/**
+ * Hover state: Slight lift with enhanced shadow
+ * Creates interactive depth effect
+ */
+.stat-card-3d:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 4px 6px rgba(0, 0, 0, 0.07),
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.stat-card-3d:hover::before {
+    opacity: 1;
+}
+
+/**
+ * Icon container within stat cards
+ * Semantic colored backgrounds with gradient depth
+ */
+.stat-card-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+/* Semantic icon color variants */
+.stat-icon-blue {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #3b82f6;
+}
+
+.stat-icon-emerald {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #10b981;
+}
+
+.stat-icon-purple {
+    background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
+    color: #a855f7;
+}
+
+.stat-icon-amber {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #f59e0b;
+}
+
+.stat-icon-red {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #ef4444;
+}
+
+/* ==========================================================================
+   2. Tree View Connectors
+   ========================================================================== */
+
+/**
+ * Container for hierarchical tree structure
+ * Uses system fonts for optimal rendering
+ */
+.tree-container {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/**
+ * Individual tree node
+ * Includes vertical/horizontal connector lines via pseudo-elements
+ */
+.tree-node {
+    position: relative;
+    min-height: 3rem;
+    transition: background-color 0.2s ease;
+}
+
+.tree-node:hover {
+    background-color: #f9fafb;
+}
+
+/**
+ * Vertical connector line (from parent to this node)
+ * Positioned based on depth level using CSS custom property
+ */
+.tree-node::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--depth) * 1.5rem + 0.5rem);
+    top: 0;
+    bottom: 50%;
+    width: 1px;
+    background-color: #d1d5db;
+}
+
+/**
+ * Horizontal connector line (from vertical line to node content)
+ */
+.tree-node::after {
+    content: '';
+    position: absolute;
+    left: calc(var(--depth) * 1.5rem + 0.5rem);
+    top: 50%;
+    width: 1rem;
+    height: 1px;
+    background-color: #d1d5db;
+}
+
+/**
+ * Last child: Vertical line stops at midpoint
+ * Prevents connector extending below last sibling
+ */
+.tree-node:last-child::before {
+    bottom: 50%;
+}
+
+/**
+ * Tree node content wrapper
+ * Indentation based on depth level
+ */
+.tree-node-content {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    padding-left: calc(var(--depth) * 1.5rem + 2.5rem);
+    gap: 0.75rem;
+}
+
+/**
+ * Expand/collapse chevron icon
+ * Interactive with scale animation on hover
+ */
+.tree-chevron {
+    width: 1.25rem;
+    height: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #6b7280;
+}
+
+.tree-chevron:hover {
+    color: #10b981;
+    transform: scale(1.1);
+}
+
+/**
+ * Children container with smooth expand/collapse animation
+ * Uses max-height transition for smooth reveal
+ */
+.children-container {
+    overflow: hidden;
+    max-height: 10000px; /* Large enough to accommodate deep trees */
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.children-container.hidden {
+    max-height: 0;
+}
+
+/* ==========================================================================
+   3. Work Type Badges
+   ========================================================================== */
+
+/**
+ * Base badge style for work types (Project, Sub-Project, Activity, Task, Subtask)
+ * Pill-shaped with uppercase text
+ */
+.work-type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Work type color variants - semantic hierarchy */
+.work-type-project {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.work-type-sub-project {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.work-type-activity {
+    background-color: #e9d5ff;
+    color: #6b21a8;
+}
+
+.work-type-task {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.work-type-subtask {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+/* ==========================================================================
+   4. Status Badges
+   ========================================================================== */
+
+/**
+ * Status badge for workflow states
+ * Slightly larger than work type badges for prominence
+ */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Status color variants - workflow states */
+.status-pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status-in-progress {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status-completed {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-blocked {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.status-on-hold {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+/* ==========================================================================
+   5. Progress Bars
+   ========================================================================== */
+
+/**
+ * Progress bar container
+ * Provides background track for fill
+ */
+.progress-bar-container {
+    width: 100%;
+    height: 0.5rem;
+    background-color: #e5e7eb;
+    border-radius: 9999px;
+    overflow: hidden;
+    position: relative;
+}
+
+/**
+ * Animated progress fill
+ * Features gradient and shimmer effect for visual interest
+ */
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    border-radius: 9999px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+/**
+ * Shimmer animation overlay
+ * Creates subtle moving highlight effect
+ */
+.progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/**
+ * Progress percentage label
+ * Displayed below progress bar
+ */
+.progress-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #10b981;
+    margin-top: 0.25rem;
+}
+
+/* ==========================================================================
+   6. Budget Variance Indicators
+   ========================================================================== */
+
+/**
+ * Budget variance badge
+ * Shows spending status (under/near/over budget)
+ */
+.variance-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Variance color states */
+.variance-under-budget {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.variance-near-budget {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.variance-over-budget {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* ==========================================================================
+   7. Modal Styling
+   ========================================================================== */
+
+/**
+ * Modal overlay (backdrop)
+ * Full-screen with blur effect
+ */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/**
+ * Modal container
+ * Slide-up animation with enhanced shadow
+ */
+.modal-container {
+    background: white;
+    border-radius: 1rem;
+    max-width: 56rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(0, 0, 0, 0.05);
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(1rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================================================
+   8. Radio Cards
+   ========================================================================== */
+
+/**
+ * Radio card for method selection
+ * Interactive card-based radio button alternative
+ */
+.radio-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+/**
+ * Hover state: Green border with subtle shadow
+ */
+.radio-card:hover {
+    border-color: #10b981;
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1);
+    transform: translateY(-2px);
+}
+
+/**
+ * Selected state: Green border with gradient background
+ */
+.radio-card.selected {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+}
+
+/**
+ * Checkmark indicator on selected card
+ * Positioned in top-right corner
+ */
+.radio-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    background-color: #10b981;
+    color: white;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   9. Gradient Buttons
+   ========================================================================== */
+
+/**
+ * Primary gradient button (OBCMS standard)
+ * Blue-to-teal gradient with lift effect on hover
+ */
+.btn-gradient-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.btn-gradient-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+}
+
+.btn-gradient-primary:active {
+    transform: translateY(0);
+}
+
+.btn-gradient-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ==========================================================================
+   10. Loading Spinners
+   ========================================================================== */
+
+/**
+ * Loading spinner
+ * Circular spinner with rotating animation
+ */
+.loading-spinner {
+    display: inline-block;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/**
+ * HTMX loading indicator
+ * Shows spinner during HTMX requests
+ */
+.htmx-request .loading-spinner {
+    display: inline-block;
+}
+
+.htmx-request:not(.htmx-request) .loading-spinner {
+    display: none;
+}
+
+/* ==========================================================================
+   11. Responsive Utilities
+   ========================================================================== */
+
+/**
+ * Mobile adjustments (tablets and phones)
+ * Reduces padding, adjusts tree indentation, optimizes modal size
+ */
+@media (max-width: 768px) {
+    .stat-card-3d {
+        padding: 1rem;
+    }
+
+    .tree-node-content {
+        flex-wrap: wrap;
+        padding-left: calc(var(--depth) * 1rem + 1.5rem);
+    }
+
+    .modal-container {
+        max-width: 95vw;
+        margin: 1rem;
+    }
+
+    /* Stack badges vertically on mobile */
+    .work-type-badge,
+    .status-badge {
+        font-size: 0.6875rem;
+    }
+}
+
+/**
+ * Dark mode support (prefers-color-scheme)
+ * Inverts colors for dark theme
+ * Note: Currently optional, not implemented system-wide
+ */
+@media (prefers-color-scheme: dark) {
+    .stat-card-3d {
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        border-color: #374151;
+        color: #f9fafb;
+    }
+
+    .tree-node:hover {
+        background-color: #1f2937;
+    }
+
+    .modal-container {
+        background: #1f2937;
+        color: #f9fafb;
+    }
+
+    /* Adjust text colors for dark mode */
+    .tree-node::before,
+    .tree-node::after {
+        background-color: #4b5563;
+    }
+}
+
+/* ==========================================================================
+   12. Accessibility Enhancements
+   ========================================================================== */
+
+/**
+ * Focus indicators for keyboard navigation
+ * High contrast outline for all interactive elements
+ */
+.stat-card-3d:focus-within,
+.radio-card:focus-within,
+.btn-gradient-primary:focus {
+    outline: 2px solid #10b981;
+    outline-offset: 2px;
+}
+
+/**
+ * Reduced motion support
+ * Disables animations for users with motion sensitivity
+ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/**
+ * High contrast mode support
+ * Ensures borders remain visible in Windows High Contrast mode
+ */
+@media (prefers-contrast: high) {
+    .stat-card-3d,
+    .radio-card,
+    .modal-container {
+        border: 2px solid currentColor;
+    }
+}
+
+/* ==========================================================================
+   13. Print Styles
+   ========================================================================== */
+
+/**
+ * Print optimizations
+ * Removes shadows, adjusts colors for print media
+ */
+@media print {
+    .stat-card-3d,
+    .modal-container {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+
+    .btn-gradient-primary {
+        background: #000;
+        color: #fff;
+    }
+
+    /* Hide interactive elements */
+    .tree-chevron,
+    .loading-spinner {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   End of WorkItem Integration Styles
+   ========================================================================== */

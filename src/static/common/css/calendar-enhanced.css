@@ -1,0 +1,801 @@
+/* ============================================
+   OBCMS Enhanced Calendar Styles
+   Version: 2.0
+   Purpose: Modern calendar event styling with Font Awesome icons
+   Author: Claude Code (AI-assisted development)
+   Date: 2025-10-06
+   ============================================ */
+
+/* ============================================
+   BASE EVENT STYLING - COMPACT GOOGLE CALENDAR PATTERN
+   ============================================ */
+
+.fc-event {
+    border-radius: 4px !important;
+    border-left-width: 3px !important;
+    border-left-style: solid !important;
+    padding: 2px 6px !important;
+    margin-bottom: 1px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    transition: box-shadow 0.15s ease !important;
+    cursor: pointer !important;
+    position: relative !important;
+    min-height: 22px !important;
+    max-height: 32px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    line-height: 1.3 !important;
+    font-size: 12px !important;
+}
+
+/* CRITICAL FIX: Override FullCalendar's default white text */
+.fc-event,
+.fc-event *,
+.fc-event .fc-event-title,
+.fc-event-title-container,
+.fc-daygrid-event .fc-event-title {
+    color: inherit !important;
+}
+
+/* Hover State - Subtle Elevation (No Transform) */
+.fc-event:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12) !important;
+    z-index: 10 !important;
+}
+
+/* Active/Focus State */
+.fc-event:active,
+.fc-event:focus {
+    outline: 2px solid #3B82F6 !important;
+    outline-offset: 2px !important;
+}
+
+/* ============================================
+   WORK TYPE COLORS (Primary Dimension)
+   ============================================ */
+
+/* Projects - Blue Spectrum (Strategic) */
+.fc-event[data-work-type="project"] {
+    background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%) !important;
+    border-left-color: #3B82F6 !important;
+    color: #1E3A8A !important;
+}
+
+.fc-event[data-work-type="sub_project"] {
+    background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%) !important;
+    border-left-color: #0EA5E9 !important;
+    color: #0C4A6E !important;
+}
+
+/* Activities - Emerald Spectrum (Operational) */
+.fc-event[data-work-type="activity"] {
+    background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%) !important;
+    border-left-color: #059669 !important;
+    color: #064E3B !important;
+}
+
+.fc-event[data-work-type="sub_activity"] {
+    background: linear-gradient(135deg, #DCFCE7 0%, #BBF7D0 100%) !important;
+    border-left-color: #16A34A !important;
+    color: #14532D !important;
+}
+
+/* Tasks - Purple Spectrum (Tactical) */
+.fc-event[data-work-type="task"] {
+    background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%) !important;
+    border-left-color: #7C3AED !important;
+    color: #4C1D95 !important;
+}
+
+.fc-event[data-work-type="subtask"] {
+    background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%) !important;
+    border-left-color: #9333EA !important;
+    color: #581C87 !important;
+}
+
+/* ============================================
+   STATUS OVERRIDES (Secondary Dimension)
+   Higher specificity to override work type colors
+   ============================================ */
+
+.fc-event[data-status="blocked"] {
+    border-left-color: #EF4444 !important;
+    border-left-width: 5px !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1),
+                0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+.fc-event[data-status="at_risk"] {
+    border-left-color: #F59E0B !important;
+    border-left-width: 5px !important;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1),
+                0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+.fc-event[data-status="completed"] {
+    opacity: 0.7 !important;
+    background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%) !important;
+    color: #6B7280 !important;
+    border-left-color: #10B981 !important;
+    text-decoration: line-through !important;
+}
+
+.fc-event[data-status="cancelled"] {
+    opacity: 0.5 !important;
+    background: #F9FAFB !important;
+    color: #9CA3AF !important;
+    border-left-color: #6B7280 !important;
+    text-decoration: line-through !important;
+}
+
+.fc-event[data-status="in_progress"] {
+    border-left-width: 5px !important;
+}
+
+/* ============================================
+   PRIORITY ENHANCEMENTS (Tertiary Dimension)
+   ============================================ */
+
+.fc-event[data-priority="critical"] {
+    animation: pulse-critical 2s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
+    border-left-width: 6px !important;
+    font-weight: 700 !important;
+}
+
+@keyframes pulse-critical {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4),
+                    0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1),
+                    0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+}
+
+.fc-event[data-priority="urgent"] {
+    border-left-width: 5px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2),
+                0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+.fc-event[data-priority="high"] {
+    font-weight: 600 !important;
+}
+
+.fc-event[data-priority="low"] {
+    opacity: 0.85 !important;
+    font-weight: 400 !important;
+}
+
+/* ============================================
+   HIERARCHY INDENTATION
+   ============================================ */
+
+.fc-event.hierarchy-level-1 {
+    margin-left: 20px !important;
+    border-left-style: dashed !important;
+}
+
+.fc-event.hierarchy-level-2 {
+    margin-left: 40px !important;
+    border-left-style: dotted !important;
+}
+
+.fc-event.hierarchy-level-3 {
+    margin-left: 60px !important;
+    border-left-style: dotted !important;
+    opacity: 0.9 !important;
+}
+
+/* ============================================
+   BADGES & INDICATORS
+   ============================================ */
+
+.calendar-recurring-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    padding: 1px 4px !important;
+    background: rgba(59, 130, 246, 0.15) !important;
+    border-radius: 3px !important;
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    color: #1E40AF !important;
+    margin-left: 0 !important;
+    border: none !important;
+    flex-shrink: 0 !important;
+}
+
+.calendar-project-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    padding: 1px 4px !important;
+    background: rgba(16, 185, 129, 0.15) !important;
+    border-radius: 3px !important;
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    color: #047857 !important;
+    margin-top: 0 !important;
+    border: none !important;
+    flex-shrink: 0 !important;
+}
+
+.calendar-project-badge i,
+.calendar-recurring-badge i {
+    font-size: 8px !important;
+}
+
+.calendar-time-display {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    opacity: 0.7 !important;
+    margin-top: 0 !important;
+    margin-left: 0 !important;
+    flex-shrink: 0 !important;
+}
+
+/* ============================================
+   BREADCRUMB TOOLTIP
+   ============================================ */
+
+.calendar-breadcrumb-tooltip {
+    position: fixed;
+    z-index: 9999;
+    background: #1F2937;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.25),
+                0 4px 6px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+    max-width: 320px;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+.calendar-breadcrumb-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 16px;
+    width: 8px;
+    height: 8px;
+    background: #1F2937;
+    transform: rotate(45deg);
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 768px) {
+    .fc-event {
+        font-size: 11px !important;
+        padding: 2px 4px !important;
+        min-height: 20px !important;
+        max-height: 28px !important;
+    }
+
+    .calendar-recurring-badge,
+    .calendar-project-badge {
+        font-size: 8px !important;
+        padding: 1px 3px !important;
+    }
+
+    .calendar-time-display {
+        font-size: 9px !important;
+    }
+
+    .fc-event-title {
+        font-size: 11px !important;
+    }
+
+    .fc-event.hierarchy-level-1 {
+        margin-left: 10px !important;
+    }
+
+    .fc-event.hierarchy-level-2 {
+        margin-left: 20px !important;
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY ENHANCEMENTS
+   ============================================ */
+
+/* Keyboard Focus - WCAG 2.1 AA Compliant */
+.fc-event:focus-visible {
+    outline: 3px solid #3B82F6 !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .fc-event {
+        border-left-width: 6px !important;
+        font-weight: 600 !important;
+    }
+}
+
+/* Reduced Motion Support - Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .fc-event,
+    .fc-event:hover {
+        transition: none !important;
+        animation: none !important;
+        transform: none !important;
+    }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+    .fc-event {
+        box-shadow: none !important;
+        border: 1px solid #000 !important;
+        break-inside: avoid !important;
+    }
+
+    .fc-event[data-status="completed"],
+    .fc-event[data-status="cancelled"] {
+        opacity: 0.5 !important;
+    }
+}
+
+/* ============================================
+   LEGACY BROWSER FALLBACKS
+   ============================================ */
+
+/* Fallback for browsers that don't support CSS custom properties */
+@supports not (background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)) {
+    .fc-event[data-work-type="project"] {
+        background: #DBEAFE !important;
+    }
+
+    .fc-event[data-work-type="activity"] {
+        background: #D1FAE5 !important;
+    }
+
+    .fc-event[data-work-type="task"] {
+        background: #EDE9FE !important;
+    }
+}
+
+/* ============================================
+   ADDITIONAL UI POLISH
+   ============================================ */
+
+/* Event title container - INLINE LAYOUT */
+.fc-event-title-container {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex: 1 !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Event title - inline with badges */
+.fc-event-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    flex: 1 !important;
+    font-weight: 500 !important;
+}
+
+/* Ensure icons don't wrap awkwardly */
+.fc-event-title i {
+    flex-shrink: 0 !important;
+    font-size: 11px !important;
+}
+
+/* Status badge styling - COMPACT */
+.fc-event .status-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 1px 4px !important;
+    border-radius: 3px !important;
+    font-size: 8px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important;
+    flex-shrink: 0 !important;
+}
+
+/* Priority critical badge - COMPACT */
+.fc-event .priority-critical-badge {
+    background: #FEE2E2 !important;
+    color: #991B1B !important;
+    border: none !important;
+    animation: badge-pulse 2s ease-in-out infinite !important;
+    font-size: 8px !important;
+    padding: 1px 4px !important;
+}
+
+@keyframes badge-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Smooth calendar loading */
+#calendar {
+    opacity: 0;
+    animation: fadeIn 0.3s ease-in forwards;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+/* ============================================
+   FULLCALENDAR OVERRIDES FOR COMPACT LAYOUT
+   ============================================ */
+
+/* Compact event time text */
+.fc-event-time {
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    display: inline !important;
+    margin-right: 4px !important;
+}
+
+/* Compact event main content */
+.fc-event-main {
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: hidden !important;
+}
+
+/* Compact daygrid event */
+.fc-daygrid-event {
+    padding: 2px 4px !important;
+    margin-bottom: 1px !important;
+}
+
+/* Compact timegrid event */
+.fc-timegrid-event {
+    padding: 2px 4px !important;
+}
+
+/* Remove extra margins in event content */
+.fc-event-main-frame {
+    display: flex !important;
+    align-items: center !important;
+    flex: 1 !important;
+    overflow: hidden !important;
+}
+
+/* Compact list view events */
+.fc-list-event {
+    font-size: 12px !important;
+    margin: 0 !important;  /* Remove any default margins */
+    border-spacing: 0 !important;
+}
+
+.fc-list-event-time,
+.fc-list-event-title {
+    padding: 4px !important;
+}
+
+/* Remove spacing between list rows */
+.fc-list-table tr {
+    margin: 0 !important;
+    padding: 0 !important;
+    border-spacing: 0 !important;
+}
+
+.fc-list-table {
+    border-spacing: 0 !important;
+    border-collapse: collapse !important;
+}
+
+/* ============================================
+   LIST VIEW SPECIFIC FIXES - HIDE BLOCKING ELEMENTS
+   ============================================ */
+
+/* Hide hierarchy indicators (└) in list view - they block text */
+.fc-list-event .fc-event-title span[aria-hidden="true"]:first-child {
+    display: none !important;
+}
+
+/* SHOW work type icons in list view marker column (not as dots!) */
+/* Icons should appear in the marker column, not in the title */
+.fc-list-event .fc-event-title i.fa-project-diagram,
+.fc-list-event .fc-event-title i.fa-folder-tree,
+.fc-list-event .fc-event-title i.fa-clipboard-list,
+.fc-list-event .fc-event-title i.fa-list-check,
+.fc-list-event .fc-event-title i.fa-tasks,
+.fc-list-event .fc-event-title i.fa-check-square {
+    display: none !important;  /* Hide from title, will show in marker column */
+}
+
+/* Ensure list view event titles are clean and readable */
+.fc-list-event .fc-event-title {
+    display: block !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    line-height: 1.4 !important;
+    padding: 4px 4px 4px 4px !important;  /* Reduced from 8px for compact layout */
+    flex: 1 !important;
+}
+
+/* List view: ensure flex containers don't cause overlap */
+.fc-list-event .fc-event-title > div {
+    display: block !important;
+    gap: 0 !important;
+}
+
+/* List view: show only essential text, hide decorative elements */
+.fc-list-event .fc-event-title .leading-none {
+    display: none !important;
+}
+
+/* List view: status and priority icons should be inline, not blocking */
+.fc-list-event .fc-event-title i {
+    margin-left: 4px !important;
+    margin-right: 0 !important;
+    display: inline !important;
+    vertical-align: middle !important;
+}
+
+/* List view: text should wrap properly */
+.fc-list-event .fc-event-title .truncate {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+}
+
+/* List view: remove flex layout that causes stacking */
+.fc-list-event .fc-event-title .flex {
+    display: inline !important;
+}
+
+.fc-list-event .fc-event-title .flex-1 {
+    flex: none !important;
+    display: inline !important;
+}
+
+/* List view: icon styling (replaces colored dots) */
+.fc-list-event-dot {
+    display: none !important;  /* Hide default dot, replaced by icon */
+}
+
+/* List view: Font Awesome icons in marker column */
+.fc-list-event-graphic i {
+    font-size: 16px !important;
+    line-height: 1 !important;
+    display: block !important;
+}
+
+/* List view: ensure proper spacing for event title after icon */
+/* High specificity to ensure immediate application on first render */
+.fc-list-event .fc-list-event-title,
+.fc-list-event-title,
+td.fc-list-event-title {
+    padding-left: 4px !important;
+    margin-left: 0 !important;
+}
+
+/* List view: the entire event row should have proper structure */
+.fc-list-event {
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* List view: the event graphic container (contains the icon) */
+/* High specificity to ensure immediate application on first render */
+.fc-list-event .fc-list-event-graphic,
+.fc-list-event-graphic {
+    padding: 4px !important;  /* Compact layout */
+    min-width: 32px !important;
+    width: 32px !important;
+    max-width: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+}
+
+/* Note: Icon colors are now defined inline in JavaScript (getWorkItemIconListView)
+   No need for CSS color overrides - icons already have semantic colors:
+   - Projects: Blue (#3B82F6)
+   - Activities: Emerald (#059669)
+   - Tasks: Purple (#7C3AED)
+*/
+
+/* List view: clean text display with proper contrast */
+.fc-list-event-title {
+    color: #1F2937 !important;
+    font-weight: 500 !important;
+    padding-left: 4px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+/* CRITICAL FIX: Prevent text from being clipped behind the dot */
+.fc-list-item {
+    display: flex !important;
+    align-items: stretch !important;
+}
+
+.fc-list-item-time,
+.fc-list-item-marker,
+.fc-list-item-title {
+    display: flex !important;
+    align-items: center !important;
+    padding: 4px 4px !important;  /* Reduced from 8px for compact layout */
+}
+
+.fc-list-item-marker {
+    min-width: 32px !important;
+    width: 32px !important;
+    justify-content: center !important;
+    padding: 4px 2px !important;  /* Reduced from 8px for compact layout */
+}
+
+.fc-list-item-title {
+    flex: 1 !important;
+    padding-left: 4px !important;
+    overflow: visible !important;
+}
+
+/* List view: date column styling */
+.fc-list-day-cushion {
+    background-color: #F9FAFB !important;
+    color: #374151 !important;
+    font-weight: 600 !important;
+    padding: 8px 12px !important;
+}
+
+/* List view: time column */
+.fc-list-event-time {
+    color: #6B7280 !important;
+    font-weight: 500 !important;
+    padding: 8px 12px !important;
+    min-width: 100px !important;
+}
+
+/* ADDITIONAL FIX: Force proper layout structure for list events */
+/* High specificity to override FullCalendar defaults immediately */
+.fc-list-table tbody > tr,
+.fc-list-table tr {
+    display: table-row !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.fc-list-table tbody td,
+.fc-list-table td,
+.fc-list td {
+    vertical-align: middle !important;
+    padding: 2px 4px !important;  /* Compact rows - force on first render */
+    margin: 0 !important;
+}
+
+/* Ensure the marker (icon) column has fixed width and doesn't overlap */
+/* High specificity to override FullCalendar defaults immediately */
+.fc-list-table tbody tr td.fc-list-event-graphic,
+.fc-list-table .fc-list-event-graphic,
+td.fc-list-event-graphic {
+    width: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    text-align: center !important;
+    padding: 4px !important;  /* Compact layout - force on first render */
+}
+
+/* Ensure title column takes remaining space */
+.fc-list-table tbody tr td.fc-list-event-title,
+.fc-list-table .fc-list-event-title,
+td.fc-list-event-title {
+    width: auto !important;
+    padding-left: 4px !important;
+}
+
+/* Remove any negative margins that might cause overlap */
+.fc-list-event * {
+    margin-left: 0 !important;
+}
+
+/* ============================================
+   EVENT OVERFLOW HANDLING ("+N more" link)
+   ============================================ */
+
+/* "+N more" link styling - Google Calendar pattern */
+.fc-daygrid-more-link {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 2px 6px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #2563EB !important;
+    background: rgba(59, 130, 246, 0.08) !important;
+    border-radius: 4px !important;
+    margin-top: 1px !important;
+    transition: all 0.15s ease !important;
+}
+
+.fc-daygrid-more-link:hover {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #1E40AF !important;
+}
+
+/* Popover container */
+.fc-popover {
+    border-radius: 8px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15),
+                0 4px 10px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid #E5E7EB !important;
+    overflow: hidden !important;
+    max-width: 320px !important;
+    z-index: 9999 !important;
+}
+
+/* Popover header */
+.fc-popover-header {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%) !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    border-bottom: none !important;
+}
+
+/* Popover body */
+.fc-popover-body {
+    padding: 6px !important;
+    max-height: 400px !important;
+    overflow-y: auto !important;
+    background: white !important;
+}
+
+/* Popover close button */
+.fc-popover-close {
+    color: white !important;
+    opacity: 0.9 !important;
+    font-size: 18px !important;
+    transition: opacity 0.15s ease !important;
+}
+
+.fc-popover-close:hover {
+    opacity: 1 !important;
+}
+
+/* Events inside popover - maintain compact styling */
+.fc-popover .fc-event {
+    margin-bottom: 2px !important;
+}
+
+/* Responsive adjustments for popover */
+@media (max-width: 768px) {
+    .fc-popover {
+        max-width: 280px !important;
+    }
+
+    .fc-popover-body {
+        max-height: 300px !important;
+    }
+}

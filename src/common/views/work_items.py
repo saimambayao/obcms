@@ -17,6 +17,7 @@ from django.db import models
 from django.db.models import Q, Count
 from django.views.decorators.http import require_POST, require_http_methods
 from django.core.exceptions import PermissionDenied
+from django.utils import timezone
 
 from common.work_item_model import WorkItem
 from common.forms.work_items import WorkItemForm
@@ -371,6 +372,7 @@ def work_item_edit(request, pk):
         raise PermissionDenied('You do not have permission to edit this work item.')
 
     if request.method == 'POST':
+        is_autosave = request.headers.get('X-Autosave') == 'true'
         form = WorkItemForm(request.POST, instance=work_item)
 
         if form.is_valid():
@@ -384,12 +386,24 @@ def work_item_edit(request, pk):
             invalidate_calendar_cache(request.user.id)
             invalidate_work_item_tree_cache(work_item)  # Invalidate tree cache
 
+            if is_autosave:
+                saved_at = timezone.localtime()
+                return JsonResponse({
+                    'success': True,
+                    'saved_at': saved_at.isoformat(),
+                })
+
             messages.success(
                 request,
                 f'{work_item.get_work_type_display()} "{work_item.title}" updated successfully.'
             )
             return redirect('common:work_item_detail', pk=work_item.pk)
         else:
+            if is_autosave:
+                return JsonResponse({
+                    'success': False,
+                    'errors': form.errors,
+                }, status=400)
             messages.error(request, 'Please correct the errors below.')
     else:
         form = WorkItemForm(instance=work_item)
@@ -1182,15 +1196,14 @@ def work_item_add_related(request, pk):
 
         # Return updated related items list
         context = {'work_item': work_item}
-        return render(request, 'work_items/partials/_related_items_list.html', context,
-            headers={
-                'HX-Trigger': json.dumps({
-                    'showToast': {
-                        'message': f'Linked to "{related_item.title}"',
-                        'level': 'success'
-                    }
-                })
-            })
+        response = render(request, 'work_items/partials/_related_items_list.html', context)
+        response['HX-Trigger'] = json.dumps({
+            'showToast': {
+                'message': f'Linked to "{related_item.title}"',
+                'level': 'success'
+            }
+        })
+        return response
 
     except WorkItem.DoesNotExist:
         return HttpResponse(
@@ -1235,19 +1248,41 @@ def work_item_remove_related(request, pk, related_id):
 
     try:
         related_item = WorkItem.objects.get(pk=related_id)
-        work_item.related_items.remove(related_item)
+
+        # Check if it's a manually linked item or a sibling
+        is_manually_linked = work_item.related_items.filter(pk=related_id).exists()
+        is_sibling = (
+            work_item.parent
+            and related_item.parent
+            and work_item.parent.pk == related_item.parent.pk
+        )
+
+        if is_manually_linked:
+            # Remove from manually linked items
+            work_item.related_items.remove(related_item)
+            message = f'Unlinked from "{related_item.title}"'
+        elif is_sibling:
+            # Remove parent to break sibling relationship (makes it top-level)
+            related_item.parent = None
+            related_item.save()
+            message = f'Unlinked sibling "{related_item.title}" (moved to top level)'
+        else:
+            # Not related - shouldn't happen, but handle it gracefully
+            message = f'Item "{related_item.title}" is not related'
+
+        # Refresh work_item from database to get updated related_items
+        work_item = WorkItem.objects.get(pk=pk)
 
         # Return updated related items list
         context = {'work_item': work_item}
-        return render(request, 'work_items/partials/_related_items_list.html', context,
-            headers={
-                'HX-Trigger': json.dumps({
-                    'showToast': {
-                        'message': f'Unlinked from "{related_item.title}"',
-                        'level': 'success'
-                    }
-                })
-            })
+        response = render(request, 'work_items/partials/_related_items_list.html', context)
+        response['HX-Trigger'] = json.dumps({
+            'showToast': {
+                'message': message,
+                'level': 'success'
+            }
+        })
+        return response
 
     except WorkItem.DoesNotExist:
         return HttpResponse(
@@ -1385,6 +1420,360 @@ def work_item_quick_create_child(request, pk):
                 'HX-Trigger': json.dumps({
                     'showToast': {
                         'message': f'Error creating child item: {str(e)}',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+
+@login_required
+def work_item_search_users(request, pk):
+    """
+    HTMX endpoint: Search for users to assign to work item.
+
+    Returns filtered dropdown options based on search query.
+    """
+    from common.models import User
+    from django.db.models import Case, IntegerField, Value, When
+    from common.constants import STAFF_DIRECTORY_PRIORITY
+
+    work_item = get_object_or_404(WorkItem, pk=pk)
+    search_query = request.GET.get('q', '').strip()
+
+    # Get active users, excluding already assigned
+    users = (
+        User.objects.filter(is_active=True)
+        .exclude(pk__in=work_item.assignees.values_list('pk', flat=True))
+        .annotate(
+            preferred_order=Case(
+                *[
+                    When(username=username, then=Value(idx))
+                    for idx, username in enumerate(STAFF_DIRECTORY_PRIORITY)
+                ],
+                default=Value(len(STAFF_DIRECTORY_PRIORITY)),
+                output_field=IntegerField(),
+            ),
+            user_type_order=Case(
+                When(user_type="oobc_executive", then=Value(0)),
+                When(user_type="oobc_staff", then=Value(1)),
+                When(user_type="admin", then=Value(2)),
+                default=Value(3),
+                output_field=IntegerField(),
+            ),
+        )
+    )
+
+    # Apply search filter if query provided
+    if search_query:
+        users = users.filter(
+            models.Q(first_name__icontains=search_query) |
+            models.Q(last_name__icontains=search_query) |
+            models.Q(username__icontains=search_query) |
+            models.Q(position__icontains=search_query)
+        )
+
+    # Order and limit results
+    users = users.order_by('preferred_order', 'user_type_order', 'last_name', 'first_name')[:50]
+
+    # Return HTML options
+    context = {
+        'users': users,
+        'search_query': search_query
+    }
+    return render(request, 'work_items/partials/_assignee_options.html', context)
+
+
+@login_required
+@require_POST
+def work_item_add_assignee(request, pk):
+    """
+    HTMX endpoint: Add a user to work item assignees.
+
+    Returns updated assignees list HTML for instant update.
+    """
+    import json
+    from common.models import User
+
+    work_item = get_object_or_404(WorkItem, pk=pk)
+
+    # Check edit permissions
+    permissions = get_work_item_permissions(request.user, work_item)
+    if not permissions['can_edit']:
+        return HttpResponse(
+            status=403,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'You do not have permission to modify this work item.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    user_id = request.POST.get('user_id')
+    if not user_id:
+        return HttpResponse(
+            status=400,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'Please select a user to assign.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    try:
+        user = User.objects.get(pk=user_id)
+
+        # Add to assignees
+        work_item.assignees.add(user)
+
+        # Return updated assignees list
+        context = {'work_item': work_item}
+        response = render(request, 'work_items/partials/_assigned_users_list.html', context)
+        response['HX-Trigger'] = json.dumps({
+            'showToast': {
+                'message': f'Assigned to {user.get_full_name()}',
+                'level': 'success'
+            }
+        })
+        return response
+
+    except User.DoesNotExist:
+        return HttpResponse(
+            status=404,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'User not found.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+
+@login_required
+@require_POST
+def work_item_remove_assignee(request, pk, user_id):
+    """
+    HTMX endpoint: Remove a user from work item assignees.
+
+    Returns updated assignees list HTML for instant update.
+    """
+    import json
+    from common.models import User
+
+    work_item = get_object_or_404(WorkItem, pk=pk)
+
+    # Check edit permissions
+    permissions = get_work_item_permissions(request.user, work_item)
+    if not permissions['can_edit']:
+        return HttpResponse(
+            status=403,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'You do not have permission to modify this work item.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    try:
+        user = User.objects.get(pk=user_id)
+        work_item.assignees.remove(user)
+
+        # Return updated assignees list
+        context = {'work_item': work_item}
+        response = render(request, 'work_items/partials/_assigned_users_list.html', context)
+        response['HX-Trigger'] = json.dumps({
+            'showToast': {
+                'message': f'Removed {user.get_full_name()} from assignees',
+                'level': 'success'
+            }
+        })
+        return response
+
+    except User.DoesNotExist:
+        return HttpResponse(
+            status=404,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'User not found.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+
+@login_required
+def work_item_search_teams(request, pk):
+    """
+    HTMX endpoint: Search for teams to assign to work item.
+
+    Returns filtered dropdown options based on search query.
+    """
+    from common.models import StaffTeam
+
+    work_item = get_object_or_404(WorkItem, pk=pk)
+    search_query = request.GET.get('q', '').strip()
+
+    # Get active teams, excluding already assigned
+    teams = (
+        StaffTeam.objects.filter(is_active=True)
+        .exclude(pk__in=work_item.teams.values_list('pk', flat=True))
+        .order_by('name')
+    )
+
+    # Apply search filter if query provided
+    if search_query:
+        teams = teams.filter(
+            models.Q(name__icontains=search_query) |
+            models.Q(description__icontains=search_query)
+        )
+
+    # Limit results
+    teams = teams[:50]
+
+    # Return HTML options
+    context = {
+        'teams': teams,
+        'search_query': search_query
+    }
+    return render(request, 'work_items/partials/_team_options.html', context)
+
+
+@login_required
+@require_POST
+def work_item_add_team(request, pk):
+    """
+    HTMX endpoint: Add a team to work item teams.
+
+    Returns updated teams list HTML for instant update.
+    """
+    import json
+    from common.models import StaffTeam
+
+    work_item = get_object_or_404(WorkItem, pk=pk)
+
+    # Check edit permissions
+    permissions = get_work_item_permissions(request.user, work_item)
+    if not permissions['can_edit']:
+        return HttpResponse(
+            status=403,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'You do not have permission to modify this work item.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    team_id = request.POST.get('team_id')
+    if not team_id:
+        return HttpResponse(
+            status=400,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'Please select a team to assign.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    try:
+        team = StaffTeam.objects.get(pk=team_id)
+
+        # Add to teams
+        work_item.teams.add(team)
+
+        # Return updated teams list
+        context = {'work_item': work_item}
+        response = render(request, 'work_items/partials/_assigned_teams_list.html', context)
+        response['HX-Trigger'] = json.dumps({
+            'showToast': {
+                'message': f'Assigned to team "{team.name}"',
+                'level': 'success'
+            }
+        })
+        return response
+
+    except StaffTeam.DoesNotExist:
+        return HttpResponse(
+            status=404,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'Team not found.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+
+@login_required
+@require_POST
+def work_item_remove_team(request, pk, team_id):
+    """
+    HTMX endpoint: Remove a team from work item teams.
+
+    Returns updated teams list HTML for instant update.
+    """
+    import json
+    from common.models import StaffTeam
+
+    work_item = get_object_or_404(WorkItem, pk=pk)
+
+    # Check edit permissions
+    permissions = get_work_item_permissions(request.user, work_item)
+    if not permissions['can_edit']:
+        return HttpResponse(
+            status=403,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'You do not have permission to modify this work item.',
+                        'level': 'error'
+                    }
+                })
+            }
+        )
+
+    try:
+        team = StaffTeam.objects.get(pk=team_id)
+        work_item.teams.remove(team)
+
+        # Return updated teams list
+        context = {'work_item': work_item}
+        response = render(request, 'work_items/partials/_assigned_teams_list.html', context)
+        response['HX-Trigger'] = json.dumps({
+            'showToast': {
+                'message': f'Removed team "{team.name}" from assignment',
+                'level': 'success'
+            }
+        })
+        return response
+
+    except StaffTeam.DoesNotExist:
+        return HttpResponse(
+            status=404,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'showToast': {
+                        'message': 'Team not found.',
                         'level': 'error'
                     }
                 })

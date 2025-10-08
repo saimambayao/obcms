@@ -1,0 +1,13 @@
+{# Team Dropdown Options for HTMX Search #}
+<option value="">Choose a team...</option>
+{% for team in teams %}
+    <option value="{{ team.pk }}">
+        {{ team.name }}
+    </option>
+{% empty %}
+    {% if search_query %}
+        <option value="" disabled>No teams found matching "{{ search_query }}"</option>
+    {% else %}
+        <option value="" disabled>No available teams to assign</option>
+    {% endif %}
+{% endfor %}

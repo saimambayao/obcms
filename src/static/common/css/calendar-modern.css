@@ -1,0 +1,542 @@
+/* ============================================
+   OBCMS Modern Calendar Styles
+   Version: 1.0
+   Purpose: Modern calendar UI with sidebar, filters, and detail panel
+   Author: Claude Code (AI-assisted development)
+   Date: 2025-10-06
+   ============================================ */
+
+/* ============================================
+   VIEW SWITCHER BUTTONS
+   ============================================ */
+
+.view-btn {
+    background: white;
+    border: 2px solid #E5E7EB;
+    color: #6B7280;
+    position: relative;
+}
+
+.view-btn:hover {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
+    color: #374151;
+}
+
+.view-btn.active {
+    background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);
+}
+
+.view-btn:focus {
+    outline: none;
+    ring: 2px solid #3B82F6;
+    ring-offset: 2px;
+}
+
+/* Mobile view button text */
+@media (max-width: 640px) {
+    .view-btn {
+        padding: 0.5rem;
+        min-width: 44px;
+    }
+}
+
+/* ============================================
+   MINI CALENDAR
+   ============================================ */
+
+.mini-calendar {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.mini-calendar .fc {
+    font-size: 12px;
+}
+
+.mini-calendar .fc-toolbar {
+    padding: 8px;
+    background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%);
+}
+
+.mini-calendar .fc-toolbar-title {
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.mini-calendar .fc-button {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+.mini-calendar .fc-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.mini-calendar .fc-button:disabled {
+    opacity: 0.5;
+}
+
+.mini-calendar .fc-daygrid-day {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.mini-calendar .fc-daygrid-day:hover {
+    background-color: #EBF8FF;
+}
+
+.mini-calendar .fc-daygrid-day.fc-day-today {
+    background-color: #DBEAFE;
+}
+
+.mini-calendar .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+    background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%);
+    color: white;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.mini-calendar .fc-daygrid-day-number {
+    padding: 4px;
+    font-size: 12px;
+    color: #374151;
+}
+
+.mini-calendar .fc-day-other .fc-daygrid-day-number {
+    color: #9CA3AF;
+}
+
+/* ============================================
+   SIDEBAR STYLING
+   ============================================ */
+
+#leftSidebar {
+    animation: slideInLeft 0.3s ease-out;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+    cursor: pointer;
+}
+
+input[type="checkbox"]:checked {
+    background-size: 100% 100%;
+}
+
+/* Filter section hover effects */
+.group:hover i {
+    transform: scale(1.1);
+}
+
+/* ============================================
+   EVENT DETAIL PANEL
+   ============================================ */
+
+#eventDetailPanel {
+    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.1);
+}
+
+#eventDetailPanel.open {
+    transform: translateX(0);
+}
+
+#detailPanelBackdrop.visible {
+    display: block;
+    opacity: 1;
+}
+
+/* Panel content sections */
+.detail-section {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.detail-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.detail-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6B7280;
+    margin-bottom: 6px;
+}
+
+.detail-value {
+    font-size: 15px;
+    color: #1F2937;
+    font-weight: 500;
+}
+
+/* Status badge in detail panel */
+.status-badge-detail {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    gap: 6px;
+}
+
+.status-badge-detail.not-started {
+    background: #F3F4F6;
+    color: #6B7280;
+}
+
+.status-badge-detail.in-progress {
+    background: #DBEAFE;
+    color: #1E40AF;
+}
+
+.status-badge-detail.completed {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.status-badge-detail.blocked {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.status-badge-detail.at-risk {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+/* Priority badge in detail panel */
+.priority-badge-detail {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    gap: 6px;
+}
+
+.priority-badge-detail.critical {
+    background: #FEE2E2;
+    color: #991B1B;
+    border: 1px solid #FCA5A5;
+}
+
+.priority-badge-detail.high {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.priority-badge-detail.medium {
+    background: #DBEAFE;
+    color: #1E40AF;
+}
+
+.priority-badge-detail.low {
+    background: #F3F4F6;
+    color: #6B7280;
+}
+
+/* Action buttons in detail panel */
+.detail-action-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.detail-action-btn.primary {
+    background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%);
+    color: white;
+}
+
+.detail-action-btn.primary:hover {
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    transform: translateY(-1px);
+}
+
+.detail-action-btn.secondary {
+    background: white;
+    border: 2px solid #E5E7EB;
+    color: #374151;
+}
+
+.detail-action-btn.secondary:hover {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
+}
+
+.detail-action-btn.danger {
+    background: white;
+    border: 2px solid #FCA5A5;
+    color: #DC2626;
+}
+
+.detail-action-btn.danger:hover {
+    background: #FEF2F2;
+    border-color: #EF4444;
+}
+
+/* ============================================
+   CALENDAR CONTAINER ENHANCEMENTS
+   ============================================ */
+
+#calendar {
+    min-height: 600px;
+}
+
+/* Header toolbar styling */
+.fc .fc-toolbar {
+    padding: 16px 0;
+    margin-bottom: 16px;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1F2937;
+}
+
+.fc .fc-button {
+    background: white;
+    border: 2px solid #E5E7EB;
+    color: #6B7280;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.fc .fc-button:hover {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
+    color: #374151;
+}
+
+.fc .fc-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+    background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%);
+    border-color: transparent;
+    color: white;
+}
+
+/* ============================================
+   LOADING STATES
+   ============================================ */
+
+.calendar-loading {
+    position: relative;
+}
+
+.calendar-loading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.calendar-loading::before {
+    content: '\f110';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    color: #3B82F6;
+    z-index: 1001;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablet adjustments */
+@media (max-width: 1024px) {
+    #leftSidebar {
+        position: fixed;
+        inset-y: 0;
+        left: 0;
+        width: 320px;
+        background: white;
+        z-index: 60;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
+    }
+
+    #leftSidebar.open {
+        transform: translateX(0);
+    }
+
+    /* Toggle button for sidebar */
+    #sidebarToggle {
+        position: fixed;
+        bottom: 24px;
+        left: 24px;
+        z-index: 70;
+        background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%);
+        color: white;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    #sidebarToggle:hover {
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+        transform: translateY(-2px);
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+    #eventDetailPanel {
+        width: 100%;
+    }
+
+    .fc .fc-toolbar {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 20px;
+    }
+
+    .fc .fc-button {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    #calendar {
+        min-height: 400px;
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY ENHANCEMENTS
+   ============================================ */
+
+/* Focus visible styles */
+*:focus-visible {
+    outline: 2px solid #3B82F6;
+    outline-offset: 2px;
+}
+
+/* Screen reader only content */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .view-btn {
+        border-width: 3px;
+    }
+
+    .fc .fc-button {
+        border-width: 3px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+    #leftSidebar,
+    #eventDetailPanel,
+    #detailPanelBackdrop,
+    .view-btn,
+    #todayBtn,
+    #sidebarToggle {
+        display: none !important;
+    }
+
+    #calendar {
+        box-shadow: none !important;
+        border: 1px solid #000;
+    }
+
+    .fc .fc-toolbar {
+        display: none;
+    }
+}

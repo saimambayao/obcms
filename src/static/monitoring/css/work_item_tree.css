@@ -1,0 +1,286 @@
+/**
+ * Work Item Tree Component Styles
+ *
+ * Features:
+ * - Visual tree connectors
+ * - Smooth expand/collapse animations
+ * - Responsive design
+ * - Print-friendly styles
+ */
+
+/* ========== Tree Connector Lines ========== */
+
+.tree-line {
+    background-color: #d1d5db; /* gray-300 */
+    pointer-events: none;
+}
+
+.tree-branch {
+    background-color: #d1d5db; /* gray-300 */
+    pointer-events: none;
+}
+
+/* Lighter connectors for deeper levels */
+[data-depth="3"] .tree-line,
+[data-depth="3"] .tree-branch {
+    background-color: #e5e7eb; /* gray-200 */
+}
+
+[data-depth="4"] .tree-line,
+[data-depth="4"] .tree-branch {
+    background-color: #f3f4f6; /* gray-100 */
+}
+
+[data-depth="5"] .tree-line,
+[data-depth="5"] .tree-branch,
+[data-depth="6"] .tree-line,
+[data-depth="6"] .tree-branch {
+    background-color: #f9fafb; /* gray-50 */
+}
+
+/* ========== Node Animations ========== */
+
+/* Expand/Collapse Icon Rotation */
+.expand-toggle[aria-expanded="true"] i {
+    transform: rotate(90deg);
+}
+
+/* Children Container Slide Animation */
+.children-container {
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+    max-height: 0;
+    opacity: 0;
+}
+
+.children-container.expanded {
+    max-height: none;
+    opacity: 1;
+}
+
+/* Node Card Hover Effects */
+.node-card:hover {
+    transform: translateY(-1px);
+}
+
+.node-card:active {
+    transform: translateY(0);
+}
+
+/* ========== Loading Indicator ========== */
+
+.htmx-indicator {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+.htmx-request .htmx-indicator {
+    display: block;
+}
+
+/* Hide expand button during HTMX request */
+.htmx-request .expand-toggle i {
+    opacity: 0;
+}
+
+/* ========== Budget Variance Indicators ========== */
+
+/* Pulse animation for over-budget items */
+@keyframes pulse-red {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.budget-over-limit {
+    animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ========== Accessibility Enhancements ========== */
+
+/* Focus visible for keyboard navigation */
+.tree-node:focus-visible {
+    outline: 2px solid #10b981; /* emerald-500 */
+    outline-offset: 2px;
+    border-radius: 0.75rem;
+}
+
+.expand-toggle:focus-visible {
+    outline: 2px solid #10b981; /* emerald-500 */
+    outline-offset: 2px;
+}
+
+/* Keyboard navigation highlight */
+.tree-node.keyboard-focus {
+    background-color: rgba(16, 185, 129, 0.05); /* emerald-500 at 5% */
+    border-radius: 0.75rem;
+}
+
+/* ========== Responsive Adjustments ========== */
+
+/* Mobile: Reduce indentation */
+@media (max-width: 640px) {
+    .node-card {
+        margin-left: 0 !important;
+    }
+
+    .tree-connectors {
+        display: none;
+    }
+
+    /* Stack budget cards */
+    .budget-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Smaller expand toggle */
+    .expand-toggle {
+        width: 1.75rem !important;
+        height: 1.75rem !important;
+    }
+
+    /* Smaller work type icon */
+    .work-type-icon {
+        width: 2rem !important;
+        height: 2rem !important;
+    }
+}
+
+/* Tablet: Moderate indentation */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .node-card {
+        margin-left: calc(var(--depth, 0) * 12px) !important;
+    }
+
+    .tree-connectors {
+        width: calc(var(--depth, 0) * 12px) !important;
+    }
+
+    .tree-line {
+        left: calc(var(--line-index, 0) * 12px + 6px) !important;
+    }
+
+    .tree-branch {
+        left: calc(var(--depth, 0) * 12px - 6px) !important;
+    }
+}
+
+/* ========== Print Styles ========== */
+
+@media print {
+    /* Expand all nodes for printing */
+    .children-container {
+        display: block !important;
+        max-height: none !important;
+        opacity: 1 !important;
+    }
+
+    /* Hide interactive elements */
+    .expand-toggle,
+    .action-buttons {
+        display: none !important;
+    }
+
+    /* Simplify tree connectors */
+    .tree-line,
+    .tree-branch {
+        background-color: #000;
+    }
+
+    /* Flatten shadows */
+    .node-card {
+        box-shadow: none !important;
+        border: 1px solid #d1d5db !important;
+    }
+
+    /* Ensure proper page breaks */
+    .tree-node {
+        page-break-inside: avoid;
+    }
+
+    /* Black and white mode for budget indicators */
+    .budget-variance {
+        color: #000 !important;
+    }
+}
+
+/* ========== Dark Mode Support (Optional) ========== */
+
+@media (prefers-color-scheme: dark) {
+    .tree-line,
+    .tree-branch {
+        background-color: #4b5563; /* gray-600 */
+    }
+
+    .node-card {
+        background-color: #1f2937; /* gray-800 */
+        border-color: #374151; /* gray-700 */
+    }
+
+    .node-card:hover {
+        background-color: #111827; /* gray-900 */
+    }
+}
+
+/* ========== Empty State ========== */
+
+.tree-empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: #9ca3af; /* gray-400 */
+}
+
+.tree-empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* ========== Utility Classes ========== */
+
+/* Depth-based margin helpers */
+.ml-0 { margin-left: 0; }
+.ml-24 { margin-left: 1.5rem; }
+.ml-48 { margin-left: 3rem; }
+.ml-72 { margin-left: 4.5rem; }
+.ml-96 { margin-left: 6rem; }
+.ml-120 { margin-left: 7.5rem; }
+.ml-144 { margin-left: 9rem; }
+
+/* Line clamp for truncation */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Smooth transitions */
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+.duration-200 {
+    transition-duration: 200ms;
+}
+
+.duration-300 {
+    transition-duration: 300ms;
+}
+
+.duration-500 {
+    transition-duration: 500ms;
+}
+
+.ease-out {
+    transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}

@@ -71,6 +71,12 @@ from .work_items import (
     work_item_add_related,
     work_item_remove_related,
     work_item_quick_create_child,
+    work_item_search_users,
+    work_item_add_assignee,
+    work_item_remove_assignee,
+    work_item_search_teams,
+    work_item_add_team,
+    work_item_remove_team,
 )
 
 # Import task_detail for calendar integration

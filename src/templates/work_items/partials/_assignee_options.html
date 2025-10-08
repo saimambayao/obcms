@@ -1,0 +1,13 @@
+{# User Dropdown Options for HTMX Search #}
+<option value="">Choose a user...</option>
+{% for user in users %}
+    <option value="{{ user.pk }}">
+        {{ user.get_full_name }}{% if user.position %} - {{ user.position }}{% endif %}
+    </option>
+{% empty %}
+    {% if search_query %}
+        <option value="" disabled>No users found matching "{{ search_query }}"</option>
+    {% else %}
+        <option value="" disabled>No available users to assign</option>
+    {% endif %}
+{% endfor %}

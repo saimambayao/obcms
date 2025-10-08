@@ -21,7 +21,11 @@ env = environ.Env(
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# __file__ = src/obc_management/settings/base.py
+# .parent = src/obc_management/settings/
+# .parent = src/obc_management/
+# .parent = src/ (this is BASE_DIR - the Django project root)
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Take environment variables from .env file if it exists
 environ.Env.read_env(os.path.join(BASE_DIR.parent, ".env"))
@@ -201,7 +205,7 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [
-    BASE_DIR.parent / "static",  # Points to src/static/ directory
+    BASE_DIR / "static",  # Points to src/static/ directory
 ]
 
 # Django 4.2+ STORAGES configuration

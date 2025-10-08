@@ -148,6 +148,7 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [AI Agents Overview](../AGENTS.md)
   - [Claude Configuration](../CLAUDE.md) ⚙️
   - [Gemini Configuration](../GEMINI.md)
+  - [Constitutional Workflow Agent Integration](ai/agents/CONSTITUTIONAL_WORKFLOW_AGENT.md)
 - [Development README](development/README.md) - Setup guide
 - [Task Template Automation Service Guide](development/task_template_automation.md) ⭐ **NEW - Automation Contract & Examples**
 

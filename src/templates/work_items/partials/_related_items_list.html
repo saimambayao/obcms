@@ -37,23 +37,15 @@
                            title="Edit related item">
                             <i class="fas fa-edit"></i>
                         </a>
-                        {# Remove Link Button #}
+                        {# Remove Link Button - Works for both manually linked items and siblings #}
                         <button type="button"
                                 hx-post="{% url 'common:work_item_remove_related' work_item.pk related.pk %}"
                                 hx-target="#related-items-list"
                                 hx-swap="outerHTML"
+                                hx-confirm="Are you sure you want to unlink this item? This won't delete the item, just remove the relationship."
                                 class="text-gray-600 hover:text-red-600 transition-colors"
                                 title="Remove link">
                             <i class="fas fa-unlink"></i>
-                        </button>
-                        {# Delete Button #}
-                        <button type="button"
-                                hx-get="{% url 'common:work_item_delete_modal' pk=related.pk %}"
-                                hx-target="#delete-modal-container"
-                                hx-swap="innerHTML"
-                                class="text-gray-600 hover:text-red-600 transition-colors"
-                                title="Delete related item">
-                            <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>

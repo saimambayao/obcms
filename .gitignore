@@ -28,6 +28,7 @@ MANIFEST
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+*.backup
 
 # Environment variables
 .env
@@ -38,16 +39,21 @@ ENV/
 env.bak/
 venv.bak/
 
-# Media files
+# Media files (user uploads)
+/src/media/
 media/
 
-# Static files
+# Static files (collected)
+/src/staticfiles/
 staticfiles/
-static/
+
+# Keep source static files but ignore collected ones
 !src/static/
-src/static/*
-!src/static/admin/
-!src/static/admin/**
+src/static/collected/
+
+# Logs
+/src/logs/
+logs/
 
 # IDE
 .vscode/

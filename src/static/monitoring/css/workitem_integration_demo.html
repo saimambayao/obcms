@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WorkItem Integration CSS Demo</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- WorkItem Integration CSS -->
+    <link rel="stylesheet" href="./workitem_integration.css">
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-7xl mx-auto">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">WorkItem Integration CSS Demo</h1>
+            <p class="text-gray-600">Visual demonstration of all components</p>
+        </div>
+
+        <!-- Section 1: Stat Cards -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">1. 3D Milk White Stat Cards</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                <div class="stat-card-3d">
+                    <div class="stat-card-icon stat-icon-blue">
+                        <i class="fas fa-info-circle text-2xl"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-gray-900">42</div>
+                    <div class="text-sm text-gray-600">Total Items</div>
+                </div>
+                
+                <div class="stat-card-3d">
+                    <div class="stat-card-icon stat-icon-emerald">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-gray-900">28</div>
+                    <div class="text-sm text-gray-600">Completed</div>
+                </div>
+                
+                <div class="stat-card-3d">
+                    <div class="stat-card-icon stat-icon-purple">
+                        <i class="fas fa-tasks text-2xl"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-gray-900">14</div>
+                    <div class="text-sm text-gray-600">Activities</div>
+                </div>
+                
+                <div class="stat-card-3d">
+                    <div class="stat-card-icon stat-icon-amber">
+                        <i class="fas fa-clock text-2xl"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-gray-900">8</div>
+                    <div class="text-sm text-gray-600">Pending</div>
+                </div>
+                
+                <div class="stat-card-3d">
+                    <div class="stat-card-icon stat-icon-red">
+                        <i class="fas fa-exclamation-triangle text-2xl"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-gray-900">2</div>
+                    <div class="text-sm text-gray-600">Overdue</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Work Type & Status Badges -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">2. Badges</h2>
+            
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Work Type Badges</h3>
+                <div class="flex flex-wrap gap-3">
+                    <span class="work-type-badge work-type-project">PROJECT</span>
+                    <span class="work-type-badge work-type-sub-project">SUB-PROJECT</span>
+                    <span class="work-type-badge work-type-activity">ACTIVITY</span>
+                    <span class="work-type-badge work-type-task">TASK</span>
+                    <span class="work-type-badge work-type-subtask">SUBTASK</span>
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Status Badges</h3>
+                <div class="flex flex-wrap gap-3">
+                    <span class="status-badge status-pending">
+                        <i class="fas fa-clock"></i> Pending
+                    </span>
+                    <span class="status-badge status-in-progress">
+                        <i class="fas fa-spinner fa-spin"></i> In Progress
+                    </span>
+                    <span class="status-badge status-completed">
+                        <i class="fas fa-check-circle"></i> Completed
+                    </span>
+                    <span class="status-badge status-blocked">
+                        <i class="fas fa-exclamation-triangle"></i> Blocked
+                    </span>
+                    <span class="status-badge status-on-hold">
+                        <i class="fas fa-pause-circle"></i> On Hold
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Progress Bars -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">3. Progress Bars</h2>
+            <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-6">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">Project Alpha</span>
+                        <span class="text-sm text-gray-600">85%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: 85%"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">Infrastructure Build</span>
+                        <span class="text-sm text-gray-600">60%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: 60%"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">Community Survey</span>
+                        <span class="text-sm text-gray-600">35%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: 35%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Budget Variance -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">4. Budget Variance Indicators</h2>
+            <div class="flex flex-wrap gap-4">
+                <span class="variance-indicator variance-under-budget">
+                    <i class="fas fa-arrow-down"></i> 12% Under Budget
+                </span>
+                <span class="variance-indicator variance-near-budget">
+                    <i class="fas fa-equals"></i> Within Budget
+                </span>
+                <span class="variance-indicator variance-over-budget">
+                    <i class="fas fa-arrow-up"></i> 8% Over Budget
+                </span>
+            </div>
+        </div>
+
+        <!-- Section 5: Tree View -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">5. Tree View</h2>
+            <div class="bg-white rounded-xl border border-gray-200">
+                <div class="tree-container p-6">
+                    <!-- Root node -->
+                    <div class="tree-node" style="--depth: 0">
+                        <div class="tree-node-content">
+                            <span class="tree-chevron" onclick="toggleNode(this)">
+                                <i class="fas fa-chevron-down"></i>
+                            </span>
+                            <span class="work-type-badge work-type-project">PROJECT</span>
+                            <span class="font-semibold text-gray-900">BARMM Infrastructure Development</span>
+                            <span class="status-badge status-in-progress ml-auto">
+                                <i class="fas fa-spinner fa-spin"></i> In Progress
+                            </span>
+                        </div>
+                        
+                        <!-- Children -->
+                        <div class="children-container">
+                            <!-- Child 1 -->
+                            <div class="tree-node" style="--depth: 1">
+                                <div class="tree-node-content">
+                                    <span class="tree-chevron" onclick="toggleNode(this)">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </span>
+                                    <span class="work-type-badge work-type-sub-project">SUB-PROJECT</span>
+                                    <span class="text-gray-900">Road Construction Initiative</span>
+                                    <div class="ml-auto w-32">
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar-fill" style="width: 65%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Grandchildren -->
+                                <div class="children-container">
+                                    <div class="tree-node" style="--depth: 2">
+                                        <div class="tree-node-content">
+                                            <span class="work-type-badge work-type-activity">ACTIVITY</span>
+                                            <span class="text-gray-900">Phase 1: Site Preparation</span>
+                                            <span class="status-badge status-completed ml-auto">
+                                                <i class="fas fa-check-circle"></i> Completed
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="tree-node" style="--depth: 2">
+                                        <div class="tree-node-content">
+                                            <span class="work-type-badge work-type-activity">ACTIVITY</span>
+                                            <span class="text-gray-900">Phase 2: Foundation Work</span>
+                                            <span class="status-badge status-in-progress ml-auto">
+                                                <i class="fas fa-spinner fa-spin"></i> In Progress
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Child 2 -->
+                            <div class="tree-node" style="--depth: 1">
+                                <div class="tree-node-content">
+                                    <span class="work-type-badge work-type-activity">ACTIVITY</span>
+                                    <span class="text-gray-900">Community Consultation</span>
+                                    <span class="status-badge status-pending ml-auto">
+                                        <i class="fas fa-clock"></i> Pending
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 6: Radio Cards -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">6. Radio Cards</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label class="radio-card selected">
+                    <input type="radio" name="method" value="blank" class="sr-only" checked>
+                    <div class="flex items-start gap-3">
+                        <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-file text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-gray-900">Create from Blank</div>
+                            <div class="text-sm text-gray-600">Start with an empty project</div>
+                        </div>
+                    </div>
+                </label>
+                
+                <label class="radio-card">
+                    <input type="radio" name="method" value="template" class="sr-only">
+                    <div class="flex items-start gap-3">
+                        <div class="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-copy text-emerald-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-gray-900">Use Template</div>
+                            <div class="text-sm text-gray-600">Copy from existing project</div>
+                        </div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Section 7: Buttons & Spinners -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">7. Buttons & Spinners</h2>
+            <div class="flex flex-wrap gap-4 items-center">
+                <button class="btn-gradient-primary">
+                    Create Work Item
+                </button>
+                
+                <button class="btn-gradient-primary">
+                    <span class="loading-spinner mr-2"></span>
+                    Creating...
+                </button>
+                
+                <button class="btn-gradient-primary" disabled>
+                    Cannot Submit
+                </button>
+                
+                <span class="loading-spinner" style="width: 2rem; height: 2rem; border-color: #3b82f6; border-top-color: #10b981;"></span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript for Tree Toggle -->
+    <script>
+        function toggleNode(chevronElement) {
+            const node = chevronElement.closest('.tree-node');
+            const container = node.querySelector(':scope > .children-container');
+            const icon = chevronElement.querySelector('i');
+            
+            if (container) {
+                container.classList.toggle('hidden');
+                icon.classList.toggle('fa-chevron-down');
+                icon.classList.toggle('fa-chevron-right');
+            }
+        }
+        
+        // Radio card selection
+        document.querySelectorAll('.radio-card input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.querySelectorAll('.radio-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                if (this.checked) {
+                    this.closest('.radio-card').classList.add('selected');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
