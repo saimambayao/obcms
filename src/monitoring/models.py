@@ -1475,7 +1475,7 @@ class MonitoringEntryFunding(models.Model):
     funding_source_other = models.CharField(
         max_length=255,
         blank=True,
-        help_text="Specify the funding source when using Others",
+        help_text="Specify the funding source when using Other Funding Sources",
     )
     scheduled_date = models.DateField(
         null=True,
