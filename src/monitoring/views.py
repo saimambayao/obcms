@@ -21,11 +21,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from common.utils.moa_permissions import (
-    moa_can_edit_ppa,
-    moa_no_access,
-    moa_view_only,
-)
+from common.utils.moa_permissions import moa_can_edit_ppa
 
 from common.services.locations import build_location_data, get_object_centroid
 from communities.models import OBCCommunity
@@ -430,28 +426,10 @@ def monitoring_dashboard(request):
 
 
 @login_required
-@moa_view_only
 def monitoring_entry_detail(request, pk):
     """Display a monitoring entry with recent updates and linked data."""
 
     entry = get_object_or_404(_prefetch_entries(), pk=pk)
-
-    # MOA RBAC: Check if MOA user can access this PPA
-    if request.user.is_authenticated and request.user.is_moa_staff:
-        if entry.category == "moa_ppa":
-            # MOA user can only view their own MOA's PPAs
-            if entry.implementing_moa != request.user.moa_organization:
-                raise PermissionDenied(
-                    "You can only view PPAs for your MOA. "
-                    f"This PPA belongs to {entry.implementing_moa}."
-                )
-        else:
-            # MOA user cannot view OOBC initiatives or OBC requests
-            raise PermissionDenied(
-                "MOA users do not have access to this entry type. "
-                "This is an OOBC internal function."
-            )
-
     update_form = MonitoringUpdateForm()
 
     if request.method == "POST" and request.POST.get("action") == "add_update":
@@ -743,17 +721,6 @@ def moa_ppas_dashboard(request):
     """Dedicated dashboard for MOA PPAs (Ministries, Offices, and Agencies Programs, Projects, and Activities)."""
 
     all_moa_entries = _prefetch_entries().filter(category="moa_ppa")
-
-    # MOA RBAC: Filter to only show their own MOA's PPAs
-    if request.user.is_authenticated and request.user.is_moa_staff:
-        if request.user.moa_organization:
-            all_moa_entries = all_moa_entries.filter(
-                implementing_moa=request.user.moa_organization
-            )
-        else:
-            # MOA user with no organization assigned - show nothing
-            all_moa_entries = all_moa_entries.none()
-
     current_year = timezone.now().year
 
     status_filter = request.GET.get("status", "").strip()
@@ -1484,7 +1451,6 @@ def schedule_moa_review(request):
 
 
 @login_required
-@moa_no_access
 def oobc_initiatives_dashboard(request):
     """Dedicated dashboard for OOBC Initiatives."""
 
@@ -1926,7 +1892,6 @@ def obc_requests_dashboard(request):
 
 # Placeholder views for OOBC Initiatives quick actions
 @login_required
-@moa_no_access
 def oobc_impact_report(request):
     """Placeholder for OOBC impact assessment report."""
     messages.info(request, "Impact Assessment feature coming soon!")
@@ -1934,7 +1899,6 @@ def oobc_impact_report(request):
 
 
 @login_required
-@moa_no_access
 def oobc_unit_performance(request):
     """Placeholder for OOBC unit performance comparison."""
     messages.info(request, "Unit Performance feature coming soon!")
@@ -1942,7 +1906,6 @@ def oobc_unit_performance(request):
 
 
 @login_required
-@moa_no_access
 def export_oobc_data(request):
     """Placeholder for OOBC data export."""
     messages.info(request, "OOBC Data Export feature coming soon!")
@@ -1950,7 +1913,6 @@ def export_oobc_data(request):
 
 
 @login_required
-@moa_no_access
 def oobc_budget_review(request):
     """Placeholder for OOBC budget review."""
     messages.info(request, "Budget Review feature coming soon!")
@@ -1958,7 +1920,6 @@ def oobc_budget_review(request):
 
 
 @login_required
-@moa_no_access
 def oobc_community_feedback(request):
     """Placeholder for OOBC community feedback."""
     messages.info(request, "Community Feedback feature coming soon!")

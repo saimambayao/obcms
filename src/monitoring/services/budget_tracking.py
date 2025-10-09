@@ -18,20 +18,8 @@ def _normalise_decimal(value) -> Decimal:
 
 
 def _aggregate_work_items(ppas: Sequence[MonitoringEntry]) -> MutableMapping[str, list[WorkItem]]:
-    """
-    Return a mapping of PPA ID to related work items for faster lookups.
-
-    Excludes execution project roots (parent IS NULL and work_type='project')
-    because they are just containers with the PPA's total budget.
-    Only actual child work items (activities, tasks, subtasks) are counted.
-    """
-    work_items = WorkItem.objects.filter(
-        related_ppa__in=ppas
-    ).exclude(
-        # Exclude execution project roots (containers, not actual work items)
-        parent__isnull=True,
-        work_type=WorkItem.WORK_TYPE_PROJECT,
-    ).only(
+    """Return a mapping of PPA ID to related work items for faster lookups."""
+    work_items = WorkItem.objects.filter(related_ppa__in=ppas).only(
         "related_ppa_id",
         "allocated_budget",
         "actual_expenditure",

@@ -247,7 +247,6 @@ def create_workshop_activities(assessment, post_data):
         )
 
 
-@moa_no_access
 @login_required
 def assessment_detail(request, assessment_id):
     """View detailed information about an assessment."""
@@ -268,7 +267,6 @@ def assessment_detail(request, assessment_id):
     return render(request, "mana/assessment_detail.html", context)
 
 
-@moa_no_access
 @login_required
 def workshop_detail(request, workshop_id):
     """View detailed information about a workshop."""
@@ -288,7 +286,6 @@ def workshop_detail(request, workshop_id):
     return render(request, "mana/workshop_detail.html", context)
 
 
-@moa_no_access
 @login_required
 def add_workshop_participant(request, workshop_id):
     """Add a participant to a workshop."""
@@ -319,7 +316,6 @@ def add_workshop_participant(request, workshop_id):
     return redirect("mana:workshop_detail", workshop_id=workshop_id)
 
 
-@moa_no_access
 @login_required
 def add_workshop_output(request, workshop_id):
     """Add an output to a workshop."""
@@ -344,7 +340,6 @@ def add_workshop_output(request, workshop_id):
     return redirect("mana:workshop_detail", workshop_id=workshop_id)
 
 
-@moa_no_access
 @login_required
 def generate_mana_report(request, assessment_id):
     """Generate or view the MANA report for an assessment."""
@@ -409,7 +404,6 @@ def generate_mana_report(request, assessment_id):
 # ==================== PHASE 2: MANA INTEGRATION VIEWS ====================
 
 
-@moa_no_access
 @login_required
 def assessment_tasks_board(request, assessment_id):
     """Display kanban board for assessment tasks organized by phase."""
@@ -481,7 +475,6 @@ def assessment_tasks_board(request, assessment_id):
     return render(request, "mana/assessment_tasks_board.html", context)
 
 
-@moa_no_access
 @login_required
 def assessment_calendar(request, assessment_id):
     """Display calendar view for assessment milestones, tasks, and events."""
@@ -494,7 +487,6 @@ def assessment_calendar(request, assessment_id):
     return render(request, "mana/assessment_calendar.html", context)
 
 
-@moa_no_access
 @login_required
 def assessment_calendar_feed(request, assessment_id):
     """JSON feed for FullCalendar showing milestones, tasks, and events."""
@@ -629,7 +621,6 @@ def assessment_calendar_feed(request, assessment_id):
     return JsonResponse(events, safe=False)
 
 
-@moa_no_access
 @login_required
 def needs_prioritization_board(request):
     """Interactive board for ranking and prioritizing community needs."""
@@ -693,7 +684,6 @@ def needs_prioritization_board(request):
     return render(request, "mana/needs_prioritization_board.html", context)
 
 
-@moa_no_access
 @login_required
 def needs_update_ranking(request):
     """Update ranking order for needs via AJAX."""
@@ -726,7 +716,6 @@ def needs_update_ranking(request):
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
-@moa_no_access
 @login_required
 def need_vote(request, need_id):
     """Register a community vote for a need via AJAX."""
@@ -769,7 +758,6 @@ def need_vote(request, need_id):
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
-@moa_no_access
 @login_required
 def needs_export(request):
     """Export needs to Excel format."""
