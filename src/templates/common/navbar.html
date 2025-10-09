@@ -41,6 +41,14 @@
             {% else %}
             <!-- Main Navigation - Desktop -->
             <div class="hidden lg:flex items-center space-x-1">
+                {% if user|is_moa_focal_user_filter %}
+                <div class="relative group">
+                    <a href="{% get_coordination_url user %}" class="nav-item px-3 xl:px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors duration-200 flex items-center space-x-2">
+                        <i class="fas fa-building text-sm"></i>
+                        <span class="text-sm xl:text-base">{{ user|get_coordination_label }}</span>
+                    </a>
+                </div>
+                {% endif %}
                 <div class="relative group">
                     <a href="{% url 'common:communities_home' %}" class="nav-item px-3 xl:px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors duration-200 flex items-center space-x-2">
                         <i class="fas fa-users text-sm"></i>
@@ -128,6 +136,7 @@
                 </div>
                 {% endif %}
 
+                {% if not user|is_moa_focal_user_filter %}
                 <div class="relative group">
                     {% if user|is_moa_focal_user_filter %}
                         {# MOA users: Direct link to their organization (no dropdown) #}
@@ -170,6 +179,7 @@
                         </div>
                     {% endif %}
                 </div>
+                {% endif %}
 
                 {% if user|can_access_policies %}
                     <div class="relative group">
@@ -388,6 +398,16 @@
         </div>
         {% else %}
         <div class="px-2 pt-2 pb-3 space-y-2 max-h-screen overflow-y-auto">
+            {% if user|is_moa_focal_user_filter %}
+            <a href="{% get_coordination_url user %}" class="mobile-nav-item block px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
+                <span class="flex items-center space-x-2">
+                    <i class="fas fa-building w-5"></i>
+                    <span>{{ user|get_coordination_label }}</span>
+                </span>
+            </a>
+            {% endif %}
+
+            {% if not user|is_moa_focal_user_filter %}
             <div class="mobile-section space-y-2">
                 <button type="button"
                         class="mobile-section-toggle mobile-nav-item w-full px-3 py-2 rounded-md text-left text-white bg-white bg-opacity-5 flex items-center justify-between"
@@ -421,6 +441,7 @@
                     {% endif %}
                 </div>
             </div>
+            {% endif %}
 
             {% if user|can_access_mana_filter %}
             <div class="mobile-section space-y-2">
@@ -460,16 +481,8 @@
             </div>
             {% endif %}
 
+            {% if not user|is_moa_focal_user_filter %}
             <div class="mobile-section space-y-2">
-                {% if user|is_moa_focal_user_filter %}
-                    {# MOA users: Direct link to their organization (no dropdown) #}
-                    <a href="{% get_coordination_url user %}" class="mobile-nav-item block px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
-                        <span class="flex items-center space-x-2">
-                            <i class="fas fa-building w-5"></i>
-                            <span>{{ user|get_coordination_label }}</span>
-                        </span>
-                    </a>
-                {% else %}
                     {# OOBC staff: Full Coordination module with dropdown #}
                     <button type="button"
                             class="mobile-section-toggle mobile-nav-item w-full px-3 py-2 rounded-md text-left text-white bg-white bg-opacity-5 flex items-center justify-between"
@@ -496,8 +509,8 @@
                         <span class="block text-xs text-white text-opacity-70">Events, meetings, and action items</span>
                     </a>
                 </div>
-                {% endif %}
             </div>
+            {% endif %}
 
             {% if user|can_access_policies %}
             <div class="mobile-section space-y-2">

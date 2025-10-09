@@ -247,7 +247,7 @@ class MOAPPAFormValidationTests(MOAPPABaseTestCase):
             "target_end_date": "2025-12-15",
         }
 
-        form = MonitoringMOAEntryForm(data=form_data)
+        form = MonitoringMOAEntryForm(data=form_data, user=self.user)
         self.assertTrue(form.is_valid(), form.errors)
 
         entry = form.save(commit=False)
@@ -272,7 +272,7 @@ class MOAPPAFormValidationTests(MOAPPABaseTestCase):
             "target_end_date": "2025-12-31",
         }
 
-        form = MonitoringMOAEntryForm(data=form_data)
+        form = MonitoringMOAEntryForm(data=form_data, user=self.user)
         self.assertFalse(form.is_valid())
         self.assertIn("implementing_moa", form.errors)
 
@@ -290,7 +290,7 @@ class MOAPPAFormValidationTests(MOAPPABaseTestCase):
             "target_end_date": "2025-12-31",
         }
 
-        form = MonitoringMOAEntryForm(data=form_data)
+        form = MonitoringMOAEntryForm(data=form_data, user=self.user)
         self.assertFalse(form.is_valid())
         # This validation is handled by model clean(), which is called during save
 
@@ -312,7 +312,7 @@ class MOAPPAFormValidationTests(MOAPPABaseTestCase):
             "progress": "0",
         }
 
-        form = MonitoringMOAEntryForm(data=form_data)
+        form = MonitoringMOAEntryForm(data=form_data, user=self.user)
         self.assertFalse(form.is_valid())
         self.assertIn("coverage_province", form.errors)
 

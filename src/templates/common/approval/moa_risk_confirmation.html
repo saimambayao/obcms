@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Confirm High-Risk Approval - OBCMS{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="bg-white rounded-2xl shadow-xl border border-red-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-red-600 to-rose-600 px-6 py-5">
+            <h1 class="text-2xl font-bold text-white flex items-center">
+                <i class="fas fa-exclamation-triangle mr-3"></i>
+                Approval Without Focal Endorsement
+            </h1>
+        </div>
+
+        <div class="px-8 py-6 space-y-6">
+            <div class="rounded-xl border border-red-200 bg-red-50 p-5">
+                <h2 class="text-lg font-semibold text-red-800 mb-2">High-Risk Action</h2>
+                <p class="text-sm text-red-700 leading-relaxed">
+                    This registrant has <strong>not</strong> been endorsed by their designated
+                    MOA/NGA/LGU focal person. Proceeding will grant the account full access without
+                    local validation. Please confirm that you accept responsibility for this action.
+                </p>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl border border-gray-200 p-5">
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Registrant Details</h3>
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                    <div>
+                        <dt class="text-gray-500">Full Name</dt>
+                        <dd class="text-gray-900 font-medium">{{ pending_user.get_full_name }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">Username</dt>
+                        <dd class="text-gray-900">@{{ pending_user.username }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">Organization</dt>
+                        <dd class="text-gray-900">{{ pending_user.organization|default:"—" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">Position</dt>
+                        <dd class="text-gray-900">{{ pending_user.position|default:"—" }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="text-sm text-gray-600">
+                    <p class="font-medium text-gray-800">Recommended Next Steps</p>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>Reach out to the MOA focal person to confirm endorsement.</li>
+                        <li>Document the rationale for manual approval in the approvals log.</li>
+                        <li>Ensure sensitive modules remain in read-only mode until orientation is complete.</li>
+                    </ul>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <a href="{{ back_url }}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Cancel
+                    </a>
+                    <form method="post" action="{{ approve_url }}?stage={{ stage }}" class="inline-flex">
+                        {% csrf_token %}
+                        <input type="hidden" name="override" value="1">
+                        <input type="hidden" name="stage" value="{{ stage }}">
+                        <button type="submit" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
+                            <i class="fas fa-shield-alt mr-2"></i>
+                            Approve With Risk
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

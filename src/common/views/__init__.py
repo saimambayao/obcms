@@ -11,6 +11,8 @@ from .auth import (
 )
 from .approval import (
     MOAApprovalListView,
+    moa_approval_risk_prompt,
+    approve_moa_user_stage_one,
     approve_moa_user,
     reject_moa_user,
 )
@@ -255,6 +257,8 @@ __all__ = [
     "MOARegistrationView",
     "MOARegistrationSuccessView",
     "MOAApprovalListView",
+    "moa_approval_risk_prompt",
+    "approve_moa_user_stage_one",
     "approve_moa_user",
     "reject_moa_user",
     "profile",

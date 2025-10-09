@@ -427,7 +427,7 @@
         }
 
         // Load modal content via HTMX
-        const ppaId = getPPAIdFromURL();
+        const ppaId = getCurrentPPAId();
         if (ppaId) {
             htmx.ajax('GET', `/monitoring/moa-ppas/${ppaId}/budget-distribution-modal/`, {
                 target: '#budgetDistributionModalContent',
@@ -456,8 +456,20 @@
      * @returns {string|null} PPA ID
      */
     function getPPAIdFromURL() {
-        const match = window.location.pathname.match(/\/monitoring\/entry\/(\d+)\//);
+        const match = window.location.pathname.match(/\/monitoring\/entry\/([^/]+)\//);
         return match ? match[1] : null;
+    }
+
+    /**
+     * Determine the current PPA identifier using DOM hints or URL.
+     * @returns {string|null}
+     */
+    function getCurrentPPAId() {
+        const container = document.getElementById('work-items-tab-container');
+        if (container && container.dataset.entryId) {
+            return container.dataset.entryId;
+        }
+        return getPPAIdFromURL();
     }
 
     /**
@@ -655,7 +667,7 @@
         const counters = document.querySelectorAll('[data-counter-type]');
         counters.forEach(counter => {
             const type = counter.dataset.counterType;
-            const ppaId = getPPAIdFromURL();
+            const ppaId = getCurrentPPAId();
 
             if (ppaId) {
                 htmx.ajax('GET', `/monitoring/moa-ppas/${ppaId}/counters/${type}/`, {
@@ -673,7 +685,7 @@
         const progressBars = document.querySelectorAll('[data-progress-bar]');
         progressBars.forEach(bar => {
             const workItemId = bar.dataset.workItemId;
-            const ppaId = getPPAIdFromURL();
+            const ppaId = getCurrentPPAId();
 
             if (ppaId && workItemId) {
                 htmx.ajax('GET', `/monitoring/moa-ppas/${ppaId}/work-items/${workItemId}/progress/`, {
@@ -688,7 +700,7 @@
      * Refresh work items tree via HTMX
      */
     function refreshWorkItemsTree() {
-        const ppaId = getPPAIdFromURL();
+        const ppaId = getCurrentPPAId();
         if (ppaId) {
             htmx.ajax('GET', `/monitoring/moa-ppas/${ppaId}/work-items-tab/`, {
                 target: '#work-items-tab-content',
@@ -696,6 +708,47 @@
             });
         }
     }
+
+    /**
+     * Refresh the Work Items summary metrics without reloading the tab.
+     * @param {string} [entryId] - Optional override for the entry identifier.
+     */
+    window.refreshPPAWorkItemsSummary = function(entryId) {
+        if (typeof htmx === 'undefined') {
+            console.warn('[PPA Summary] HTMX is not available – cannot refresh summary.');
+            return;
+        }
+
+        const summaryContainer = document.getElementById('work-items-summary');
+        const resolvedId = entryId || getCurrentPPAId();
+
+        if (!summaryContainer || !resolvedId) {
+            console.warn('[PPA Summary] Missing summary container or entry identifier.', {
+                hasContainer: Boolean(summaryContainer),
+                hasEntryId: Boolean(resolvedId)
+            });
+            return;
+        }
+
+        summaryContainer.classList.add('opacity-60', 'pointer-events-none');
+
+        const cleanup = () => {
+            summaryContainer.classList.remove('opacity-60', 'pointer-events-none');
+        };
+
+        const request = htmx.ajax('GET', `/monitoring/entry/${resolvedId}/work-items-summary/`, {
+            target: '#work-items-summary',
+            swap: 'innerHTML'
+        });
+
+        if (request && typeof request.finally === 'function') {
+            request.finally(cleanup);
+        } else if (request && typeof request.then === 'function') {
+            request.then(cleanup, cleanup);
+        } else {
+            cleanup();
+        }
+    };
 
     /**
      * Show toast notification
@@ -914,7 +967,8 @@
             toggleWorkItemChildren: window.toggleWorkItemChildren,
             openBudgetDistributionModal: window.openBudgetDistributionModal,
             closeBudgetDistributionModal: window.closeBudgetDistributionModal,
-            calculateBudgetVariance: calculateBudgetVariance
+            calculateBudgetVariance: calculateBudgetVariance,
+            refreshPPAWorkItemsSummary: window.refreshPPAWorkItemsSummary
         };
     }
 })();

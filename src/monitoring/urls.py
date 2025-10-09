@@ -79,6 +79,11 @@ urlpatterns = [
         name="sync_progress",
     ),
     path(
+        "entry/<uuid:pk>/work-items-summary/",
+        views.work_items_summary_partial,
+        name="work_items_summary",
+    ),
+    path(
         "work-items/<uuid:work_item_id>/children/",
         views.work_item_children,
         name="work_item_children",

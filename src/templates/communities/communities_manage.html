@@ -209,6 +209,7 @@
     <div class="mt-8">
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% if can_manage_communities %}
             <a href="{% url 'common:communities_add' %}" class="group bg-white rounded-xl shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4">
@@ -226,6 +227,7 @@
                     </div>
                 </div>
             </a>
+            {% endif %}
 
             <a href="{% url 'common:communities_stakeholders' %}" class="group bg-white rounded-xl shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">

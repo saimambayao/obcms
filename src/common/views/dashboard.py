@@ -1,10 +1,119 @@
 """Dashboard landing views."""
 
+from datetime import timedelta
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from common.constants import STAFF_USER_TYPES
+
+
+def _render_moa_dashboard(request):
+    """Render the dedicated dashboard for MOA focal persons and staff."""
+
+    from django.db.models import Avg, Count, Sum
+
+    from common.work_item_model import WorkItem
+    from monitoring.models import MonitoringEntry
+    from recommendations.policy_tracking.models import PolicyRecommendation
+
+    user = request.user
+    organization = getattr(user, "moa_organization", None)
+
+    ppa_qs = MonitoringEntry.objects.filter(category="moa_ppa")
+    if organization:
+        ppa_qs = ppa_qs.filter(implementing_moa=organization)
+    else:
+        ppa_qs = ppa_qs.none()
+
+    total_ppas = ppa_qs.count()
+    ongoing_ppas = ppa_qs.filter(status__in=["planning", "ongoing"]).count()
+    completed_ppas = ppa_qs.filter(status="completed").count()
+    stalled_ppas = ppa_qs.filter(status__in=["on_hold", "cancelled"]).count()
+    avg_progress = ppa_qs.aggregate(avg=Avg("progress"))["avg"] or 0
+    total_budget = ppa_qs.aggregate(total=Sum("budget_allocation"))["total"] or 0
+    community_count = (
+        ppa_qs.values("communities")
+        .exclude(communities=None)
+        .distinct()
+        .count()
+    )
+
+    recent_ppas = list(
+        ppa_qs.select_related("implementing_moa", "lead_organization")
+        .prefetch_related("communities")
+        .order_by("-updated_at", "-created_at")[:5]
+    )
+
+    work_item_qs = WorkItem.objects.none()
+    if organization:
+        work_item_qs = WorkItem.objects.filter(
+            ppa_category="moa_ppa",
+            implementing_moa=organization,
+        )
+
+    open_statuses = [
+        WorkItem.STATUS_NOT_STARTED,
+        WorkItem.STATUS_IN_PROGRESS,
+        WorkItem.STATUS_AT_RISK,
+        WorkItem.STATUS_BLOCKED,
+    ]
+
+    today = timezone.now().date()
+    upcoming_threshold = today + timedelta(days=14)
+
+    open_items_qs = work_item_qs.filter(status__in=open_statuses)
+    open_work_items = list(
+        open_items_qs.order_by("due_date", "title")[:5]
+    )
+
+    overdue_count = open_items_qs.filter(due_date__lt=today).count()
+    due_soon_count = open_items_qs.filter(
+        due_date__gte=today,
+        due_date__lte=upcoming_threshold,
+    ).count()
+    completed_work_items = work_item_qs.filter(status=WorkItem.STATUS_COMPLETED).count()
+
+    policy_qs = PolicyRecommendation.objects.filter(proposed_by=user)
+    policy_stats = {
+        "total": policy_qs.count(),
+        "under_review": policy_qs.filter(status__in=["under_review", "needs_revision"]).count(),
+        "approved": policy_qs.filter(status__in=["approved", "in_implementation"]).count(),
+        "implemented": policy_qs.filter(status="implemented").count(),
+    }
+    recent_policies = list(
+        policy_qs.order_by("-updated_at", "-created_at")[:4]
+    )
+
+    status_breakdown = list(
+        ppa_qs.values("status").annotate(count=Count("id")).order_by("-count")
+    ) if organization else []
+
+    context = {
+        "organization": organization,
+        "ppa_stats": {
+            "total": total_ppas,
+            "ongoing": ongoing_ppas,
+            "completed": completed_ppas,
+            "stalled": stalled_ppas,
+            "avg_progress": avg_progress,
+            "total_budget": total_budget,
+            "community_count": community_count,
+            "status_breakdown": status_breakdown,
+        },
+        "recent_ppas": recent_ppas,
+        "open_work_items": open_work_items,
+        "work_item_summary": {
+            "open": open_items_qs.count(),
+            "overdue": overdue_count,
+            "due_soon": due_soon_count,
+            "completed": completed_work_items,
+        },
+        "policy_stats": policy_stats,
+        "recent_policies": recent_policies,
+    }
+    return render(request, "common/dashboard_moa.html", context)
 
 
 @login_required
@@ -34,6 +143,9 @@ def dashboard(request):
                 except WorkshopParticipantAccount.DoesNotExist:
                     # No participant account - redirect to regional overview
                     return redirect("common:mana_regional_overview")
+
+    if request.user.is_moa_staff:
+        return _render_moa_dashboard(request)
 
     from django.db.models import Avg, Count
 

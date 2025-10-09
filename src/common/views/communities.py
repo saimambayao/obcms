@@ -376,6 +376,7 @@ def communities_home(request):
         "communities": communities[:20],
         "municipality_coverages": municipality_coverages[:20],
         "province_coverages": province_coverages[:20],
+        "show_geographic_links": not getattr(request.user, "is_moa_staff", False),
     }
     return render(request, "communities/communities_home.html", context)
 

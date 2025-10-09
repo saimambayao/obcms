@@ -143,11 +143,23 @@
                         </div>
                         <div>
                             <p class="text-gray-500">Project Lead</p>
-                            <p class="font-semibold text-gray-900">{{ workflow.project_lead.get_full_name|default:workflow.project_lead.username|default:"Not assigned" }}</p>
+                            <p class="font-semibold text-gray-900">
+                                {% if workflow.project_lead %}
+                                    {{ workflow.project_lead.get_full_name|default:workflow.project_lead.username }}
+                                {% else %}
+                                    Not assigned
+                                {% endif %}
+                            </p>
                         </div>
                         <div>
                             <p class="text-gray-500">Primary Need</p>
-                            <p class="font-semibold text-gray-900">{{ workflow.primary_need.title }}</p>
+                            <p class="font-semibold text-gray-900">
+                                {% if workflow.primary_need %}
+                                    {{ workflow.primary_need.title }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </p>
                         </div>
                     </div>
                 {% else %}
@@ -206,7 +218,16 @@
                     <li><span class="text-gray-500">Request status:</span> <span class="font-semibold text-gray-900">{{ ppa.get_request_status_display|default:"Not applicable" }}</span></li>
                     <li><span class="text-gray-500">Approval status:</span> <span class="font-semibold text-gray-900">{{ ppa.get_approval_status_display|default:"Draft" }}</span></li>
                     <li><span class="text-gray-500">Last updated:</span> <span class="font-semibold text-gray-900">{{ ppa.updated_at|date:"M d, Y" }}</span></li>
-                    <li><span class="text-gray-500">Created by:</span> <span class="font-semibold text-gray-900">{{ ppa.created_by.get_full_name|default:ppa.created_by.username|default:"—" }}</span></li>
+                    <li>
+                        <span class="text-gray-500">Created by:</span>
+                        <span class="font-semibold text-gray-900">
+                            {% if ppa.created_by %}
+                                {{ ppa.created_by.get_full_name|default:ppa.created_by.username }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </span>
+                    </li>
                 </ul>
             </div>
 

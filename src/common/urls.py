@@ -290,6 +290,8 @@ urlpatterns = [
     ),
     path("oobc-management/", views.oobc_management_home, name="oobc_management_home"),
     path("oobc-management/user-approvals/", views.MOAApprovalListView.as_view(), name="moa_approval_list"),
+    path("oobc-management/approvals/<int:user_id>/endorse/", views.approve_moa_user_stage_one, name="approve_moa_user_stage_one"),
+    path("oobc-management/approvals/<int:user_id>/risk/", views.moa_approval_risk_prompt, name="moa_approval_risk_prompt"),
     path("oobc-management/approvals/<int:user_id>/approve/", views.approve_moa_user, name="approve_moa_user"),
     path("oobc-management/approvals/<int:user_id>/reject/", views.reject_moa_user, name="reject_moa_user"),
     path("oobc-management/calendar/", views.oobc_calendar, name="oobc_calendar"),

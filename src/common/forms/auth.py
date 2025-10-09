@@ -360,16 +360,39 @@ class MOARegistrationForm(UserCreationForm):
         )
         self.fields["password2"].help_text = "Enter the same password for verification"
 
-        # Populate organization choices dynamically to keep the list in sync
-        self.fields["organization"].queryset = (
-            Organization.objects.filter(
-                organization_type__in=self.MOA_ORGANIZATION_TYPES,
-                is_active=True,
-            )
-            .order_by("name")
-        )
+        # Prepare organization queryset and filter based on selected user type
+        base_queryset = Organization.objects.filter(
+            organization_type__in=self.MOA_ORGANIZATION_TYPES,
+            is_active=True,
+        ).order_by("name")
+
+        selected_type = None
+        if self.data and self.data.get("user_type") in self.MOA_ORGANIZATION_TYPES:
+            selected_type = self.data.get("user_type")
+        elif self.initial.get("user_type") in self.MOA_ORGANIZATION_TYPES:
+            selected_type = self.initial.get("user_type")
+        else:
+            selected_type = self.MOA_USER_TYPES[0][0]
+
+        self.fields["user_type"].initial = selected_type
+        self.fields["user_type"].widget.attrs.setdefault("data-initial", selected_type)
+
+        selected_org_id = ""
+        if self.data and self.data.get("organization"):
+            selected_org_id = str(self.data.get("organization"))
+        else:
+            initial_org = self.initial.get("organization")
+            if initial_org:
+                selected_org_id = str(getattr(initial_org, "pk", initial_org))
+
+        filtered_queryset = base_queryset.filter(organization_type=selected_type)
+        self.fields["organization"].queryset = filtered_queryset
         self.fields["organization"].empty_label = "Select your organization"
-        self.fields["organization"].widget.attrs.setdefault("data-placeholder", "Select your organization")
+        placeholder_text = self.fields["organization"].empty_label or "Select your organization"
+        self.fields["organization"].widget.attrs.setdefault("data-placeholder", placeholder_text)
+        self.fields["organization"].widget.attrs["data-selected"] = selected_org_id
+        self.fields["organization"].widget.attrs["data-selected-type"] = selected_type
+        self.fields["organization"].widget.attrs["data-default-type"] = self.MOA_USER_TYPES[0][0]
 
         # Display acronym-first naming when available
         self.fields["organization"].label_from_instance = (

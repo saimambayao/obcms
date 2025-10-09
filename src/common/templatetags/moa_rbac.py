@@ -286,7 +286,7 @@ def get_coordination_label(user):
     if not user:
         return "Coordination"
     if getattr(user, "is_moa_staff", False) and getattr(user, "moa_organization", None):
-        return "My MOA Profile"
+        return "MOA Profile"
     return "Coordination"
 
 

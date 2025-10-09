@@ -158,6 +158,27 @@ def _render_workitems_tab(request, entry, *, status=200, triggers=None):
 
 
 @login_required
+def work_items_summary_partial(request, pk):
+    """
+    HTMX endpoint: return refreshed Work Items summary metrics.
+
+    Used to update the stat cards and budget overview without reloading the tab.
+    """
+    entry = get_object_or_404(_prefetch_entries(), pk=pk)
+
+    if not getattr(entry, "execution_project", None):
+        return HttpResponse(status=204)
+
+    context = {"entry": entry}
+    context.update(_build_workitem_context(entry))
+    return render(
+        request,
+        "monitoring/partials/work_items_summary.html",
+        context,
+    )
+
+
+@login_required
 def monitoring_dashboard(request):
     """Render the consolidated Monitoring & Evaluation workspace."""
     # Restrict access for MANA participants
@@ -729,6 +750,16 @@ def moa_ppas_dashboard(request):
     search_query = request.GET.get("q", "").strip()
 
     filtered_entries = all_moa_entries
+
+    if request.user.is_authenticated and request.user.is_moa_staff:
+        user_moa = getattr(request.user, "moa_organization", None)
+        if user_moa:
+            all_moa_entries = all_moa_entries.filter(implementing_moa=user_moa)
+            filtered_entries = all_moa_entries
+            moa_filter = str(user_moa.pk)
+        else:
+            all_moa_entries = all_moa_entries.none()
+            filtered_entries = all_moa_entries
 
     if status_filter:
         filtered_entries = filtered_entries.filter(status=status_filter)

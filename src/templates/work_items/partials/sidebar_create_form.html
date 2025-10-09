@@ -253,28 +253,6 @@
         return;
     }
 
-    function hideSidebarHeader(containerId, headerId) {
-        const container = document.getElementById(containerId);
-        const header = document.getElementById(headerId);
-
-        if (!container || !header) {
-            return;
-        }
-
-        header.classList.add('hidden');
-
-        const restoreHeader = (event) => {
-            if (event.target === container) {
-                header.classList.remove('hidden');
-                container.removeEventListener('htmx:beforeSwap', restoreHeader);
-            }
-        };
-
-        container.addEventListener('htmx:beforeSwap', restoreHeader);
-    }
-
-    hideSidebarHeader('ppa-sidebar-content', 'ppa-work-item-sidebar-header');
-
     // Focus on first input when form loads
     setTimeout(() => {
         let firstInput = formEl.querySelector('input, select, textarea');

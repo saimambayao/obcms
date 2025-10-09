@@ -179,19 +179,34 @@ class MonitoringEntry(models.Model):
         (APPROPRIATION_CLASS_CO, "Capital Outlay"),
     ]
 
-    FUNDING_SOURCE_GAA = "gaa"
-    FUNDING_SOURCE_BLOCK_GRANT = "block_grant"
-    FUNDING_SOURCE_LGU = "lgu_counterpart"
-    FUNDING_SOURCE_DONOR = "donor"
-    FUNDING_SOURCE_INTERNAL = "internal"
-    FUNDING_SOURCE_OTHERS = "others"
+    FUNDING_SOURCE_GAAB_2025 = "gaab_2025"
+    FUNDING_SOURCE_SUPPLEMENTAL_BUDGET = "supplemental_budget"
+    FUNDING_SOURCE_SDF = "sdf"
+    FUNDING_SOURCE_TDIF = "tdif"
+    FUNDING_SOURCE_ALLOCATION_MP = "allocation_for_mp"
+    FUNDING_SOURCE_NATIONAL_PROGRAM = "national_program"
+    FUNDING_SOURCE_LOCAL_PROGRAM = "local_program"
+    FUNDING_SOURCE_ODA = "oda"
+    FUNDING_SOURCE_OTHERS = "other_sources"
     FUNDING_SOURCE_CHOICES = [
-        (FUNDING_SOURCE_GAA, "General Appropriations Act"),
-        (FUNDING_SOURCE_BLOCK_GRANT, "BARMM Block Grant"),
-        (FUNDING_SOURCE_LGU, "LGU Counterpart"),
-        (FUNDING_SOURCE_DONOR, "Donor / Development Partner"),
-        (FUNDING_SOURCE_INTERNAL, "OOBC / BARMM Internal"),
-        (FUNDING_SOURCE_OTHERS, "Others"),
+        (
+            FUNDING_SOURCE_GAAB_2025,
+            "General Appropriations Act of the Bangsamoro (GAAB) 2025",
+        ),
+        (FUNDING_SOURCE_SUPPLEMENTAL_BUDGET, "Supplemental Budget (SB)"),
+        (FUNDING_SOURCE_SDF, "Special Development Fund (SDF)"),
+        (FUNDING_SOURCE_TDIF, "Transitional Development Impact Fund (TDIF)"),
+        (FUNDING_SOURCE_ALLOCATION_MP, "Allocation for MP"),
+        (
+            FUNDING_SOURCE_NATIONAL_PROGRAM,
+            "National Program (from the National Government)",
+        ),
+        (
+            FUNDING_SOURCE_LOCAL_PROGRAM,
+            "Local Program (from the Local Government)",
+        ),
+        (FUNDING_SOURCE_ODA, "Official Development Assistance (ODA)"),
+        (FUNDING_SOURCE_OTHERS, "Other Funding Sources"),
     ]
 
     SECTOR_ECONOMIC = "economic"
@@ -398,7 +413,7 @@ class MonitoringEntry(models.Model):
     funding_source_other = models.CharField(
         max_length=255,
         blank=True,
-        help_text="Specify funding source when tagged as Others",
+        help_text="Specify funding source when tagged as Other Funding Sources",
     )
     program_code = models.CharField(
         max_length=100,
@@ -734,7 +749,7 @@ class MonitoringEntry(models.Model):
 
         # Validate funding_source_other required when funding_source=others
         if self.funding_source == self.FUNDING_SOURCE_OTHERS and not self.funding_source_other:
-            errors['funding_source_other'] = 'Please specify the funding source when selecting "Others".'
+            errors['funding_source_other'] = 'Please specify the funding source when selecting "Other Funding Sources".'
 
         # Validate date ranges
         if self.start_date and self.target_end_date:

@@ -823,18 +823,30 @@ def work_item_sidebar_detail(request, pk):
     # Get permissions for current user
     permissions = get_work_item_permissions(request.user, work_item)
 
+    referer = request.META.get('HTTP_REFERER', '')
+    hx_target = request.headers.get('HX-Target', '')
+
+    is_sidebar_target = hx_target in {'sidebar-content', 'ppa-sidebar-content'}
+    is_work_items_tree = 'work-items' in referer or is_sidebar_target
+    is_staff_profile = '/staff/profiles/' in referer or '/profile/' in referer
+    use_sidebar_templates = is_work_items_tree or is_staff_profile
+
+    if hx_target:
+        sidebar_target_id = hx_target
+    elif use_sidebar_templates:
+        sidebar_target_id = 'sidebar-content'
+    else:
+        sidebar_target_id = 'detailPanelBody'
+
     context = {
         'work_item': work_item,
         'can_edit': permissions['can_edit'],
         'can_delete': permissions['can_delete'],
+        'sidebar_target_id': sidebar_target_id,
     }
 
-    # Use different template based on referrer (work items tree vs calendar)
-    referer = request.META.get('HTTP_REFERER', '')
-    if 'work-items' in referer:
-        return render(request, 'work_items/partials/sidebar_detail.html', context)
-    else:
-        return render(request, 'common/partials/calendar_event_detail.html', context)
+    template = 'work_items/partials/sidebar_detail.html' if use_sidebar_templates else 'common/partials/calendar_event_detail.html'
+    return render(request, template, context)
 
 
 @login_required
@@ -851,11 +863,25 @@ def work_item_sidebar_edit(request, pk):
     # Check edit permissions
     permissions = get_work_item_permissions(request.user, work_item)
 
-    # Determine which template to use based on referrer
     referer = request.META.get('HTTP_REFERER', '')
-    is_work_items_tree = 'work-items' in referer
-    detail_template = 'work_items/partials/sidebar_detail.html' if is_work_items_tree else 'common/partials/calendar_event_detail.html'
-    edit_template = 'work_items/partials/sidebar_edit_form.html' if is_work_items_tree else 'common/partials/calendar_event_edit_form.html'
+    hx_target = request.headers.get('HX-Target', '')
+
+    is_tree_page = 'work-items' in referer
+    is_ppa_sidebar = hx_target == 'ppa-sidebar-content' or '/monitoring/entry/' in referer
+    is_staff_sidebar = '/staff/profiles/' in referer or '/profile/' in referer
+
+    use_sidebar_templates = is_tree_page or is_ppa_sidebar or is_staff_sidebar
+    should_update_oob_row = is_tree_page or is_ppa_sidebar
+
+    detail_template = 'work_items/partials/sidebar_detail.html' if use_sidebar_templates else 'common/partials/calendar_event_detail.html'
+    edit_template = 'work_items/partials/sidebar_edit_form.html' if use_sidebar_templates else 'common/partials/calendar_event_edit_form.html'
+
+    if hx_target:
+        sidebar_target_id = hx_target
+    elif use_sidebar_templates:
+        sidebar_target_id = 'sidebar-content'
+    else:
+        sidebar_target_id = 'detailPanelBody'
 
     # For GET requests: If user can't edit, gracefully show detail view instead
     if request.method == 'GET' and not permissions['can_edit']:
@@ -864,6 +890,7 @@ def work_item_sidebar_edit(request, pk):
             'work_item': work_item,
             'can_edit': permissions['can_edit'],
             'can_delete': permissions['can_delete'],
+            'sidebar_target_id': sidebar_target_id,
         }
         return render(request, detail_template, context)
 
@@ -903,27 +930,34 @@ def work_item_sidebar_edit(request, pk):
             # For calendar: return detail view and trigger calendar refresh
             import json
 
-            if is_work_items_tree:
+            if should_update_oob_row:
                 # Return updated edit form for sidebar + updated tree row for instant update
                 from django.template.loader import render_to_string
                 from common.forms.work_items import WorkItemQuickEditForm
 
                 # Re-render the edit form with updated data (keep sidebar open)
                 form = WorkItemQuickEditForm(instance=work_item, user=request.user)
-                context = {'form': form, 'work_item': work_item}
+                context = {
+                    'form': form,
+                    'work_item': work_item,
+                    'sidebar_target_id': sidebar_target_id,
+                }
                 edit_form_html = render_to_string(edit_template, context, request=request)
 
-                # Render the updated tree row for out-of-band swap
-                # Template now has id="work-item-row-{{ work_item.id }}" for HTMX targeting
-                row_html = render_to_string('work_items/_work_item_tree_row.html', {
-                    'work_item': work_item
-                }, request=request)
+                # Render the updated row for out-of-band swap
+                if is_tree_page:
+                    row_template = 'work_items/_work_item_tree_row.html'
+                else:
+                    row_template = 'monitoring/partials/_ppa_work_item_row.html'
+
+                row_html = render_to_string(row_template, {'work_item': work_item}, request=request)
 
                 # Extract ONLY the main <tr> (exclude placeholder and skeleton rows)
                 import re
-                # Match the main row: from opening <tr id="work-item-row-X"> to its closing </tr>
+                # Match the main row: from opening <tr id="..."> to its closing </tr>
                 # Use non-greedy match to get just the first <tr>...</tr>
-                pattern = rf'(<tr\s+id="work-item-row-{work_item.id}"[^>]*>.*?</tr>)'
+                row_id = f'work-item-row-{work_item.id}' if is_tree_page else f'ppa-work-item-row-{work_item.id}'
+                pattern = rf'(<tr\s+id="{row_id}"[^>]*>.*?</tr>)'
                 match = re.search(pattern, row_html, re.DOTALL)
 
                 if match:
@@ -965,31 +999,49 @@ def work_item_sidebar_edit(request, pk):
                 })
                 return response
             else:
-                # Calendar: Return updated detail view HTML
+                # Return updated detail view HTML (calendar, PPA sidebar, or staff sidebar)
                 context = {
                     'work_item': work_item,
                     'can_edit': permissions['can_edit'],
                     'can_delete': permissions['can_delete'],
+                    'sidebar_target_id': sidebar_target_id,
                 }
                 response = render(request, detail_template, context)
-                response['HX-Trigger'] = json.dumps({
-                    'calendarRefresh': {'eventId': str(work_item.pk)},
+
+                triggers = {
                     'showToast': {
                         'message': f'{work_item.get_work_type_display()} updated successfully',
                         'level': 'success'
                     }
-                })
+                }
+                if not use_sidebar_templates:
+                    triggers['calendarRefresh'] = {'eventId': str(work_item.pk)}
+                if is_ppa_sidebar:
+                    triggers['refreshPPAWorkItems'] = {
+                        'reload': False,
+                        'workItemId': str(work_item.pk)
+                    }
+
+                response['HX-Trigger'] = json.dumps(triggers)
                 return response
         else:
             # Return form with errors
-            context = {'form': form, 'work_item': work_item}
+            context = {
+                'form': form,
+                'work_item': work_item,
+                'sidebar_target_id': sidebar_target_id,
+            }
             return render(request, edit_template, context)
 
     else:  # GET
         from common.forms.work_items import WorkItemQuickEditForm
 
         form = WorkItemQuickEditForm(instance=work_item, user=request.user)
-        context = {'form': form, 'work_item': work_item}
+        context = {
+            'form': form,
+            'work_item': work_item,
+            'sidebar_target_id': sidebar_target_id,
+        }
         return render(request, edit_template, context)
 
 

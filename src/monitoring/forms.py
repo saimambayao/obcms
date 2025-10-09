@@ -56,13 +56,22 @@ class BaseMonitoringEntryForm(forms.ModelForm):
         }
 
         for name, field in self.fields.items():
-            existing_classes = field.widget.attrs.get("class", "")
-            field.widget.attrs["class"] = f"{existing_classes} {tailwind_input}".strip()
-            placeholder_source = field.help_text or field.label
-            if placeholder_source and not isinstance(
-                field.widget, (forms.Select, forms.SelectMultiple)
-            ):
-                field.widget.attrs.setdefault("placeholder", placeholder_source)
+            widget = field.widget
+            existing_classes = widget.attrs.get("class", "").strip()
+
+            if isinstance(widget, forms.CheckboxInput):
+                # Keep checkbox widgets lean so templates can apply custom styling
+                widget.attrs["class"] = existing_classes
+                widget.attrs.setdefault("data-component", "checkbox")
+            else:
+                widget.attrs["class"] = (
+                    f"{existing_classes} {tailwind_input}".strip()
+                )
+                placeholder_source = field.help_text or field.label
+                if placeholder_source and not isinstance(
+                    widget, (forms.Select, forms.SelectMultiple)
+                ):
+                    widget.attrs.setdefault("placeholder", placeholder_source)
             widget_input_type = getattr(field.widget, "input_type", None)
             if widget_input_type == "select-multiple":
                 field.widget.attrs.setdefault("size", 4)
@@ -123,7 +132,7 @@ class BaseMonitoringEntryForm(forms.ModelForm):
         ):
             self.add_error(
                 "funding_source_other",
-                "Specify the funding source when selecting Others.",
+                "Specify the funding source when selecting Other Funding Sources.",
             )
         return cleaned_data
 
@@ -152,6 +161,51 @@ class BaseMonitoringEntryForm(forms.ModelForm):
 
 class MonitoringMOAEntryForm(BaseMonitoringEntryForm):
     """Quick-create form for MOA PPAs accessible by OBCs."""
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+
+        instance_exists = bool(getattr(self.instance, "pk", None))
+        if instance_exists and getattr(self.user, "is_moa_staff", False):
+            locked_fields = {
+                "implementing_moa": {
+                    "disabled": True,
+                    "extra_classes": "cursor-not-allowed bg-gray-100 text-gray-600",
+                    "attrs": {
+                        "aria-disabled": "true",
+                        "data-lock-reason": "moa-staff",
+                    },
+                },
+                "title": {
+                    "readonly": True,
+                    "extra_classes": "cursor-not-allowed bg-gray-100 text-gray-600",
+                    "attrs": {
+                        "aria-readonly": "true",
+                        "data-lock-reason": "moa-staff",
+                    },
+                },
+            }
+
+            for field_name, options in locked_fields.items():
+                field = self.fields.get(field_name)
+                if not field:
+                    continue
+
+                widget = field.widget
+                if options.get("disabled"):
+                    field.disabled = True
+                if options.get("readonly"):
+                    widget.attrs["readonly"] = True
+
+                existing_class = widget.attrs.get("class", "").strip()
+                if options.get("extra_classes"):
+                    widget.attrs["class"] = (
+                        f"{existing_class} {options['extra_classes']}".strip()
+                    )
+
+                for attr_name, attr_value in options.get("attrs", {}).items():
+                    widget.attrs[attr_name] = attr_value
 
     class Meta(BaseMonitoringEntryForm.Meta):
         fields = [

@@ -14,6 +14,7 @@ from django.views.generic import CreateView, TemplateView
 from ..constants import STAFF_USER_TYPES
 from ..forms import CustomLoginForm, UserRegistrationForm, MOARegistrationForm
 from ..models import StaffProfile, User
+from coordination.models import Organization
 from ..security_logging import (
     log_failed_login,
     log_successful_login,
@@ -159,6 +160,37 @@ class MOARegistrationView(CreateView):
     form_class = MOARegistrationForm
     template_name = "common/auth/moa_register.html"
     success_url = reverse_lazy("common:moa_register_success")
+
+    def get_context_data(self, **kwargs):
+        """Inject organization directory metadata for dynamic filtering."""
+        context = super().get_context_data(**kwargs)
+
+        organizations = (
+            Organization.objects.filter(
+                organization_type__in=MOARegistrationForm.MOA_ORGANIZATION_TYPES,
+                is_active=True,
+            )
+            .order_by("name")
+        )
+        grouped = {choice[0]: [] for choice in MOARegistrationForm.MOA_USER_TYPES}
+        for org in organizations:
+            grouped.setdefault(org.organization_type, []).append(
+                {
+                    "id": str(org.id),
+                    "name": org.display_name if hasattr(org, "display_name") else org.name,
+                }
+            )
+
+        context["organizations_by_type"] = grouped
+
+        organization_field = context["form"].fields["organization"]
+        context["organization_placeholder"] = (
+            organization_field.widget.attrs.get("data-placeholder")
+            or organization_field.empty_label
+            or "Select your organization"
+        )
+
+        return context
 
     def form_valid(self, form):
         """Process valid MOA registration with email notifications."""

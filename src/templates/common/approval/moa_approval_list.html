@@ -14,9 +14,19 @@
                     MOA Staff Approvals
                 </h1>
                 <p class="text-gray-600 mt-2">
-                    Review and approve MOA staff registrations
+                    {{ stage_title }}
                 </p>
             </div>
+            {% if stage_options %}
+                <div class="flex items-center space-x-2">
+                    {% for option in stage_options %}
+                        <a href="{{ option.url }}"
+                           class="inline-flex items-center px-3 py-1.5 rounded-lg border text-sm font-medium transition-all duration-200 {% if option.active %}bg-emerald-600 text-white border-emerald-600 shadow-md{% else %}border-gray-300 text-gray-600 hover:bg-gray-50{% endif %}">
+                            {{ option.label }}
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
             <a href="{% url 'common:dashboard' %}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <i class="fas fa-arrow-left mr-2 text-gray-500"></i>
                 Back to Dashboard
@@ -37,7 +47,7 @@
                 </div>
             </div>
             <p class="text-4xl font-bold text-amber-600">{{ stats.pending_count }}</p>
-            <p class="text-sm text-gray-500 mt-1">Awaiting Review</p>
+            <p class="text-sm text-gray-500 mt-1">{{ pending_label }}</p>
         </div>
 
         <!-- Approved Users -->
@@ -94,6 +104,11 @@
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Position
                             </th>
+                            {% if show_endorsed_column %}
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Endorsed By
+                                </th>
+                            {% endif %}
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Registered
                             </th>
@@ -102,7 +117,7 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200" id="pending-users-tbody" hx-trigger="user-approved, user-rejected from:body" hx-get="{% url 'common:moa_approval_list' %}" hx-select="#pending-users-tbody" hx-swap="outerHTML">
+                    <tbody class="bg-white divide-y divide-gray-200" id="pending-users-tbody" hx-trigger="user-approved, user-rejected from:body" hx-get="{% url 'common:moa_approval_list' %}{% if approval_stage %}?stage={{ approval_stage }}{% endif %}" hx-select="#pending-users-tbody" hx-swap="outerHTML">
                         {% for user in pending_users %}
                             <tr class="hover:bg-gray-50 transition-colors" data-user-id="{{ user.id }}">
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -136,26 +151,49 @@
                                 <td class="px-6 py-4 text-sm text-gray-900">
                                     {{ user.position|default:"—" }}
                                 </td>
+                                {% if show_endorsed_column %}
+                                    <td class="px-6 py-4 text-sm text-gray-900">
+                                        {% if user.moa_first_level_approved %}
+                                            <div>{{ user.moa_first_level_approved_by.get_full_name|default:user.moa_first_level_approved_by.username }}</div>
+                                            <div class="text-xs text-gray-500">
+                                                {{ user.moa_first_level_approved_at|date:"M d, Y h:i A" }}
+                                            </div>
+                                        {% else %}
+                                            <span class="text-xs text-amber-600">Awaiting focal endorsement</span>
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">{{ user.date_joined|date:"M d, Y" }}</div>
                                     <div class="text-xs text-gray-500">{{ user.date_joined|timesince }} ago</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
-                                        <!-- Approve Button -->
-                                        <button
-                                            hx-post="{% url 'approve_moa_user' user.id %}"
-                                            hx-confirm="Approve {{ user.get_full_name }}? They will receive an email notification."
-                                            class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-medium rounded-lg hover:shadow-md transition-all duration-200"
-                                            title="Approve Registration"
-                                        >
-                                            <i class="fas fa-check mr-1"></i>
-                                            Approve
-                                        </button>
+                                        {% if approval_stage == 'final' and not user.moa_first_level_approved %}
+                                            <a
+                                                href="{% url 'common:moa_approval_risk_prompt' user.id %}?stage={{ approval_stage }}"
+                                                class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white text-xs font-medium rounded-lg hover:shadow-md transition-all duration-200"
+                                                title="Review risk confirmation"
+                                            >
+                                                <i class="fas fa-exclamation mr-1"></i>
+                                                Review Risk Warning
+                                            </a>
+                                        {% else %}
+                                            <!-- Approve Button -->
+                                            <button
+                                                hx-post="{% url approve_url_name user.id %}{% if approval_stage %}?stage={{ approval_stage }}{% endif %}"
+                                                hx-confirm="{% if approval_stage == 'focal' %}Endorse {{ user.get_full_name }} to OOBC for final approval?{% else %}Approve {{ user.get_full_name }}? They will receive an email notification.{% endif %}"
+                                                class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-medium rounded-lg hover:shadow-md transition-all duration-200"
+                                                title="Approve Registration"
+                                            >
+                                                <i class="{{ approve_button_icon }} mr-1"></i>
+                                                {{ approve_button_label }}
+                                            </button>
+                                        {% endif %}
 
                                         <!-- Reject Button -->
                                         <button
-                                            hx-post="{% url 'reject_moa_user' user.id %}"
+                                            hx-post="{% url 'common:reject_moa_user' user.id %}{% if approval_stage %}?stage={{ approval_stage }}{% endif %}"
                                             hx-confirm="Reject {{ user.get_full_name }}? This will deactivate their account."
                                             class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors"
                                             title="Reject Registration"
@@ -204,7 +242,7 @@
                     No Pending Approvals
                 </h3>
                 <p class="text-gray-500">
-                    All MOA staff registrations have been reviewed.
+                    No registrations currently require {{ stage_title|lower }}.
                 </p>
             </div>
         {% endif %}

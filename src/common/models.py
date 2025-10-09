@@ -76,6 +76,23 @@ class User(AbstractUser):
         related_name='moa_staff_users',
         help_text='MOA organization this user belongs to (for MOA staff only)',
     )
+    moa_first_level_approved = models.BooleanField(
+        default=False,
+        help_text="Whether the user has been endorsed by their MOA/NGA/LGU focal person",
+    )
+    moa_first_level_approved_by = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="moa_first_level_approvals",
+        help_text="Focal person who provided the first-level endorsement",
+    )
+    moa_first_level_approved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp of focal person endorsement",
+    )
 
     class Meta:
         db_table = "auth_user"

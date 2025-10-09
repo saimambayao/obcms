@@ -189,10 +189,12 @@
                 <i class="fas fa-city text-4xl mb-4"></i>
                 <p class="text-lg font-medium">No municipal OBC records found</p>
                 <p class="text-sm">Try adjusting filters or add a new municipal coverage.</p>
-                <a href="{% url 'common:communities_add_municipality' %}" class="mt-4 inline-flex items-center bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
-                    <i class="fas fa-plus mr-2"></i>Add Municipal OBC
-                </a>
-            </div>
+            {% if can_manage_communities %}
+            <a href="{% url 'common:communities_add_municipality' %}" class="mt-4 inline-flex items-center bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                <i class="fas fa-plus mr-2"></i>Add Municipal OBC
+            </a>
             {% endif %}
+        </div>
+        {% endif %}
         </div>
     </div>

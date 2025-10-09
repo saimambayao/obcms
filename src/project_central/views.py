@@ -58,6 +58,128 @@ PRIORITY_LEVELS = [
 ]
 
 
+# ========== Helpers ==========
+
+
+def _build_moa_ppa_form_sections(form):
+    """Structure form fields into UI-friendly sections."""
+
+    seen: set[str] = set()
+
+    def _fields(*names):
+        collected = []
+        for name in names:
+            if name in form.fields:
+                collected.append(form[name])
+                seen.add(name)
+        return collected
+
+    sections = [
+        {
+            "title": "MOA Overview",
+            "icon": "fas fa-diagram-project",
+            "description": "Core identifiers that anchor this PPA to the implementing MOA.",
+            "grid_class": "grid-cols-1 md:grid-cols-2",
+            "full_width_fields": {"summary"},
+            "fields": _fields("implementing_moa", "title", "summary"),
+        },
+        {
+            "title": "Planning & Alignment",
+            "icon": "fas fa-bullseye-arrow",
+            "description": "Fiscal targeting, sector alignment, and strategic codes.",
+            "grid_class": "grid-cols-1 md:grid-cols-2",
+            "full_width_fields": {"goal_alignment"},
+            "fields": _fields(
+                "plan_year",
+                "fiscal_year",
+                "sector",
+                "appropriation_class",
+                "funding_source",
+                "funding_source_other",
+                "program_code",
+                "plan_reference",
+                "goal_alignment",
+            ),
+        },
+        {
+            "title": "Compliance & Impact Tags",
+            "icon": "fas fa-ribbon",
+            "description": "Toggle the governance and impact flags tracked in dashboards.",
+            "grid_class": "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+            "full_width_fields": set(),
+            "fields": _fields(
+                "moral_governance_pillar",
+                "compliance_gad",
+                "compliance_ccet",
+                "benefits_indigenous_peoples",
+                "supports_peace_agenda",
+                "supports_sdg",
+            ),
+        },
+        {
+            "title": "Budget & Capacity",
+            "icon": "fas fa-coins",
+            "description": "Track allocation ceilings, approved budgets, and beneficiary capacity.",
+            "grid_class": "grid-cols-1 md:grid-cols-2",
+            "full_width_fields": set(),
+            "fields": _fields(
+                "budget_ceiling",
+                "budget_allocation",
+                "budget_obc_allocation",
+                "total_slots",
+                "obc_slots",
+            ),
+        },
+        {
+            "title": "Coverage & Communities",
+            "icon": "fas fa-map-location-dot",
+            "description": "Identify geographic coverage and communities served.",
+            "grid_class": "grid-cols-1 md:grid-cols-2",
+            "full_width_fields": {"communities", "obcs_benefited"},
+            "fields": _fields(
+                "coverage_region",
+                "coverage_province",
+                "coverage_municipality",
+                "coverage_barangay",
+                "communities",
+                "obcs_benefited",
+            ),
+        },
+        {
+            "title": "Timeline & Status",
+            "icon": "fas fa-stopwatch",
+            "description": "Maintain status, progress, and scheduling milestones.",
+            "grid_class": "grid-cols-1 md:grid-cols-2",
+            "full_width_fields": set(),
+            "fields": _fields(
+                "status",
+                "progress",
+                "start_date",
+                "target_end_date",
+            ),
+        },
+    ]
+
+    remaining = [
+        form[name]
+        for name in form.fields.keys()
+        if name not in seen
+    ]
+    if remaining:
+        sections.append(
+            {
+                "title": "Additional Details",
+                "icon": "fas fa-layer-group",
+                "description": "Fields not yet mapped to a primary section.",
+                "grid_class": "grid-cols-1 md:grid-cols-2",
+                "full_width_fields": set(),
+                "fields": remaining,
+            }
+        )
+
+    return sections
+
+
 # ========== Deprecation Decorator ==========
 
 def deprecated_workflow_view(replacement_info=None):
@@ -481,7 +603,7 @@ def create_moa_ppa_view(request):
     """Create a new MOA PPA entry from Project Management Portal."""
 
     if request.method == "POST":
-        form = MonitoringMOAEntryForm(request.POST)
+        form = MonitoringMOAEntryForm(request.POST, user=request.user)
         if form.is_valid():
             ppa = form.save(commit=False)
             if not ppa.created_by:
@@ -494,13 +616,15 @@ def create_moa_ppa_view(request):
             )
             return redirect("project_central:moa_ppa_detail", ppa_id=ppa.id)
     else:
-        form = MonitoringMOAEntryForm()
+        form = MonitoringMOAEntryForm(user=request.user)
 
     context = {
         "form": form,
         "form_title": "Add MOA PPA",
         "submit_label": "Save PPA",
         "ppa": None,
+        "form_sections": _build_moa_ppa_form_sections(form),
+        "is_moa_staff": request.user.is_moa_staff,
     }
     return render(request, "project_central/ppas/form.html", context)
 
@@ -512,7 +636,7 @@ def edit_moa_ppa_view(request, ppa_id):
     ppa = get_object_or_404(MonitoringEntry, id=ppa_id, category="moa_ppa")
 
     if request.method == "POST":
-        form = MonitoringMOAEntryForm(request.POST, instance=ppa)
+        form = MonitoringMOAEntryForm(request.POST, instance=ppa, user=request.user)
         if form.is_valid():
             updated_ppa = form.save(commit=False)
             updated_ppa.updated_by = request.user
@@ -521,13 +645,15 @@ def edit_moa_ppa_view(request, ppa_id):
             messages.success(request, "MOA PPA updated.")
             return redirect("project_central:moa_ppa_detail", ppa_id=ppa.id)
     else:
-        form = MonitoringMOAEntryForm(instance=ppa)
+        form = MonitoringMOAEntryForm(instance=ppa, user=request.user)
 
     context = {
         "form": form,
         "form_title": "Edit MOA PPA",
         "submit_label": "Update PPA",
         "ppa": ppa,
+        "form_sections": _build_moa_ppa_form_sections(form),
+        "is_moa_staff": request.user.is_moa_staff,
     }
     return render(request, "project_central/ppas/form.html", context)
 

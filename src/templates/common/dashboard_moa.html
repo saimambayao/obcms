@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}MOA Dashboard - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <span class="text-neutral-800 font-semibold">MOA Dashboard</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <header class="relative overflow-hidden rounded-3xl bg-bangsamoro-gradient text-white shadow-2xl">
+        <div class="absolute inset-0 bg-white/10 opacity-20 mix-blend-overlay"></div>
+        <div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48"></div>
+        <div class="absolute bottom-0 left-0 w-72 h-72 bg-white/10 rounded-full -ml-40 mb-12"></div>
+
+        <div class="relative flex flex-col lg:flex-row">
+            <div class="flex-1 p-8 space-y-6">
+                <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-3 py-1 rounded-full text-sm font-semibold uppercase tracking-wide">
+                    <i class="fas fa-handshake"></i>
+                    <span>MOA Partner Operations</span>
+                </div>
+                <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
+                    <div class="flex items-start gap-4">
+                        <span class="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-3xl">
+                            <i class="fas fa-building"></i>
+                        </span>
+                        <div>
+                            <h1 class="text-3xl font-bold leading-tight">Welcome back, {{ request.user.get_full_name|default:request.user.username }}.</h1>
+                            {% if organization %}
+                            <p class="mt-2 text-white/70 text-lg max-w-2xl">
+                                Tracking MOA programmes and requests for
+                                <span class="font-semibold text-white">{{ organization.name }}</span>
+                                {% if organization.get_organization_type_display %}
+                                    · {{ organization.get_organization_type_display }}
+                                {% endif %}.
+                            </p>
+                            {% else %}
+                            <p class="mt-2 text-white/70 text-lg max-w-2xl">
+                                Your MOA access is active. An OOBC coordinator will link your account to an implementing organization shortly.
+                                Reach out to the OOBC team if you need assistance.
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if organization %}
+                    <div class="bg-white/15 rounded-2xl px-5 py-4 backdrop-blur-sm border border-white/20 w-full xl:w-auto">
+                        <p class="text-sm font-semibold uppercase tracking-wide text-white/70">Focal Contact</p>
+                        <div class="mt-2 space-y-1 text-sm">
+                            {% if organization.focal_person %}
+                            <p class="font-semibold">{{ organization.focal_person }}</p>
+                            {% endif %}
+                            {% if organization.focal_person_position %}
+                            <p class="text-white/80">{{ organization.focal_person_position }}</p>
+                            {% endif %}
+                            {% if organization.focal_person_email %}
+                            <p class="text-white/80 flex items-center gap-2">
+                                <i class="fas fa-envelope text-white/60"></i>
+                                <span>{{ organization.focal_person_email }}</span>
+                            </p>
+                            {% endif %}
+                            {% if not organization.focal_person and not organization.focal_person_email %}
+                            <p class="text-white/70">No focal person listed yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#F7F4EE] rounded-2xl p-6 shadow-lg transition-transform duration-300 hover:-translate-y-1">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total MOA PPAs</p>
+                    <p class="mt-2 text-4xl font-extrabold text-gray-900">{{ ppa_stats.total|intcomma }}</p>
+                </div>
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                    <i class="fas fa-project-diagram"></i>
+                </span>
+            </div>
+            <div class="mt-4 grid grid-cols-2 gap-3 text-sm text-gray-600">
+                <div>
+                    <p class="font-semibold text-gray-800">Ongoing</p>
+                    <p>{{ ppa_stats.ongoing|intcomma }}</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-800">Completed</p>
+                    <p>{{ ppa_stats.completed|intcomma }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#F3F7F9] rounded-2xl p-6 shadow-lg transition-transform duration-300 hover:-translate-y-1">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Communities Supported</p>
+                    <p class="mt-2 text-4xl font-extrabold text-gray-900">{{ ppa_stats.community_count|intcomma }}</p>
+                </div>
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
+                    <i class="fas fa-map-marker-alt"></i>
+                </span>
+            </div>
+            <p class="mt-4 text-sm text-gray-600">
+                Total initiatives: {{ ppa_stats.total|intcomma }}
+            </p>
+        </div>
+
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#F6FBF5] rounded-2xl p-6 shadow-lg transition-transform duration-300 hover:-translate-y-1">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Budget Monitored</p>
+                    <p class="mt-2 text-3xl font-extrabold text-gray-900">₱{% with total=ppa_stats.total_budget|default:0 %}{{ total|floatformat:2|intcomma }}{% endwith %}</p>
+                </div>
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+                    <i class="fas fa-coins"></i>
+                </span>
+            </div>
+            <p class="mt-4 text-sm text-gray-600">
+                Monitoring coverage includes all funding records encoded for your MOA PPAs.
+            </p>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <article class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Recent MOA PPAs</h2>
+                    <p class="text-sm text-gray-500">Latest project updates captured in the monitoring system.</p>
+                </div>
+            </div>
+            <div class="divide-y divide-gray-100">
+                {% if recent_ppas %}
+                    {% for ppa in recent_ppas %}
+                    <div class="px-6 py-5">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <div>
+                                <p class="text-base font-semibold text-gray-900">{{ ppa.title }}</p>
+                                <p class="text-sm text-gray-500">
+                                    Status: <span class="font-medium text-gray-700">{{ ppa.get_status_display }}</span>
+                                    · Progress: <span class="font-medium text-gray-700">{{ ppa.progress }}%</span>
+                                </p>
+                                {% if ppa.lead_organization %}
+                                <p class="text-xs text-gray-500">Lead: {{ ppa.lead_organization.name }}</p>
+                                {% endif %}
+                            </div>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+                                {% if ppa.status == 'completed' %}bg-emerald-100 text-emerald-700
+                                {% elif ppa.status == 'ongoing' %}bg-blue-100 text-blue-700
+                                {% elif ppa.status == 'planning' %}bg-indigo-100 text-indigo-700
+                                {% elif ppa.status == 'on_hold' %}bg-amber-100 text-amber-700
+                                {% elif ppa.status == 'cancelled' %}bg-gray-200 text-gray-700
+                                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ ppa.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="mt-4">
+                            <div class="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                                <div class="h-full bg-emerald-500" style="width: {{ ppa.progress|default:0 }}%"></div>
+                            </div>
+                            <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">
+                                {% if ppa.communities.all|length %}
+                                    {% for community in ppa.communities.all|slice:':3' %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                                        <i class="fas fa-map-pin"></i>{{ community.name|default:community.display_name|default:'Community' }}
+                                    </span>
+                                    {% endfor %}
+                                    {% if ppa.communities.count > 3 %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">+{{ ppa.communities.count|add:'-3' }} more</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-gray-400">No communities linked yet.</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="px-6 py-12 text-center text-sm text-gray-500">
+                    <i class="fas fa-clipboard-list text-4xl text-emerald-400 mb-3"></i>
+                    <p class="font-medium text-gray-700">No MOA PPAs recorded yet.</p>
+                    <p>Connect with OOBC to begin encoding your programmes.</p>
+                </div>
+                {% endif %}
+            </div>
+        </article>
+
+        <article class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Work Item Overview</h2>
+                    <p class="text-sm text-gray-500">Tasks linked to your MOA PPAs.</p>
+                </div>
+            </div>
+            <div class="px-6 pt-5">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="rounded-xl bg-indigo-50 border border-indigo-100 px-4 py-3">
+                        <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Open</p>
+                        <p class="mt-1 text-2xl font-bold text-indigo-700">{{ work_item_summary.open|intcomma }}</p>
+                    </div>
+                    <div class="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
+                        <p class="text-xs font-semibold text-amber-600 uppercase tracking-wide">Due Soon</p>
+                        <p class="mt-1 text-2xl font-bold text-amber-700">{{ work_item_summary.due_soon|intcomma }}</p>
+                    </div>
+                    <div class="rounded-xl bg-rose-50 border border-rose-100 px-4 py-3">
+                        <p class="text-xs font-semibold text-rose-600 uppercase tracking-wide">Overdue</p>
+                        <p class="mt-1 text-2xl font-bold text-rose-700">{{ work_item_summary.overdue|intcomma }}</p>
+                    </div>
+                    <div class="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+                        <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wide">Completed</p>
+                        <p class="mt-1 text-2xl font-bold text-emerald-700">{{ work_item_summary.completed|intcomma }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 divide-y divide-gray-100">
+                {% if open_work_items %}
+                    {% for item in open_work_items %}
+                    <div class="px-6 py-4 flex flex-col gap-2">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="font-semibold text-gray-900">{{ item.title }}</p>
+                                <p class="text-xs text-gray-500">{{ item.get_status_display }}{% if item.due_date %} · Due {{ item.due_date|date:"M d, Y" }}{% endif %}</p>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600">
+                                {{ item.get_work_type_display }}
+                            </span>
+                        </div>
+                        {% if item.description %}
+                        <p class="text-sm text-gray-600 line-clamp-2">{{ item.description }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="px-6 py-10 text-center text-sm text-gray-500">
+                    <i class="fas fa-tasks text-3xl text-emerald-400 mb-2"></i>
+                    <p>No open work items at the moment.</p>
+                </div>
+                {% endif %}
+            </div>
+        </article>
+    </section>
+
+    <section class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900">Policy Recommendations Submitted</h2>
+                <p class="text-sm text-gray-500">Drafts and policy proposals authored by your account.</p>
+            </div>
+        </div>
+        <div class="px-6 py-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
+                    <p class="text-xs font-semibold text-slate-600 uppercase tracking-wide">Total</p>
+                    <p class="mt-1 text-2xl font-bold text-slate-800">{{ policy_stats.total|intcomma }}</p>
+                </div>
+                <div class="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
+                    <p class="text-xs font-semibold text-amber-600 uppercase tracking-wide">Under Review</p>
+                    <p class="mt-1 text-2xl font-bold text-amber-700">{{ policy_stats.under_review|intcomma }}</p>
+                </div>
+                <div class="rounded-xl bg-indigo-50 border border-indigo-100 px-4 py-3">
+                    <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Approved/In Implementation</p>
+                    <p class="mt-1 text-2xl font-bold text-indigo-700">{{ policy_stats.approved|intcomma }}</p>
+                </div>
+                <div class="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+                    <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wide">Implemented</p>
+                    <p class="mt-1 text-2xl font-bold text-emerald-700">{{ policy_stats.implemented|intcomma }}</p>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                {% if recent_policies %}
+                <ul class="space-y-4">
+                    {% for policy in recent_policies %}
+                    <li class="rounded-2xl border border-gray-100 px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div>
+                            <p class="font-semibold text-gray-900">{{ policy.title }}</p>
+                            <p class="text-xs text-gray-500">Status: {{ policy.get_status_display }} · Updated {{ policy.updated_at|date:"M d, Y" }}</p>
+                        </div>
+                        <a href="{% url 'common:recommendations_view' policy.id %}" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+                            View details
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="rounded-2xl border border-dashed border-gray-200 px-5 py-8 text-center text-sm text-gray-500">
+                    <i class="fas fa-lightbulb text-3xl text-amber-400 mb-3"></i>
+                    <p>No policy recommendations recorded yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
