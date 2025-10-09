@@ -90,28 +90,6 @@ def moa_can_edit_work_item(view_func):
     return wrapper
 
 
-def moa_can_edit_service(view_func):
-    """
-    Decorator: Allow MOA users to edit their own MOA services only.
-
-    Checks pk or service_id in URL kwargs.
-    """
-    @wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.is_moa_staff:
-            service_id = kwargs.get('pk') or kwargs.get('service_id')
-            if service_id:
-                from services.models import ServiceOffering
-                service = get_object_or_404(ServiceOffering, pk=service_id)
-                if service.offering_mao != request.user.moa_organization:
-                    raise PermissionDenied(
-                        "You can only edit services for your own MOA. "
-                        f"This service belongs to {service.offering_mao}."
-                    )
-        return view_func(request, *args, **kwargs)
-    return wrapper
-
-
 def moa_no_access(view_func):
     """
     Decorator: Block MOA users from accessing this view entirely.
@@ -138,33 +116,4 @@ def user_can_access_mana(user):
     if user.is_superuser or user.is_oobc_staff:
         return True
     # MOA users cannot access MANA
-    return not user.is_moa_staff
-
-
-def user_can_access_policies(user):
-    """Check if user can access policy recommendations."""
-    if not user.is_authenticated:
-        return False
-    # MOA users CAN access policies (filtered to their MOA's policies only)
-    # OOBC staff see all policies
-    return user.is_superuser or user.is_oobc_staff or user.is_moa_staff
-
-
-def user_can_access_oobc_initiatives(user):
-    """Check if user can access OOBC initiatives."""
-    if not user.is_authenticated:
-        return False
-    if user.is_superuser or user.is_oobc_staff:
-        return True
-    # MOA users cannot access OOBC initiatives
-    return not user.is_moa_staff
-
-
-def user_can_access_me_analytics(user):
-    """Check if user can access M&E analytics."""
-    if not user.is_authenticated:
-        return False
-    if user.is_superuser or user.is_oobc_staff:
-        return True
-    # MOA users cannot access strategic M&E analytics
     return not user.is_moa_staff

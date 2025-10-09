@@ -4,7 +4,7 @@
       hx-target="{% if ppa_id %}#ppa-sidebar-content{% else %}#sidebar-content{% endif %}"
       hx-swap="innerHTML"
       hx-indicator="#formSubmitIndicator"
-      hx-disabled-elt="find button[type='submit']"
+      hx-disabled-elt="{% if ppa_id %}#ppa-sidebar-content{% else %}#sidebar-content{% endif %} button[type='submit']"
       hx-on::after-request="
           if(!event.detail.successful) {
               console.error('[Sidebar] Create failed');

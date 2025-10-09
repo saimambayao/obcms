@@ -354,7 +354,7 @@ def test_count_projects_by_type():
         'How many project entries?',
         'Count program PPAs',
         'Total activity entries',
-        'Count program entries'  # Fixed: pattern requires 'entries' or 'ppas' after type
+        'number of programs'
     ]
 
     for query in test_queries:
@@ -370,7 +370,7 @@ def test_count_overdue_projects():
         'How many overdue projects?',
         'Count delayed PPAs',
         'Total late programs',
-        'Count overdue programs'  # Fixed: pattern requires 'how many', 'count', or 'total' at start
+        'number of overdue projects'
     ]
 
     for query in test_queries:
@@ -386,7 +386,7 @@ def test_count_projects_by_year():
         'How many projects in 2025?',
         'Count PPAs started in 2024',
         'Total programs from 2023',
-        'Count projects in 2024'  # Fixed: pattern requires 'how many', 'count', or 'total' at start
+        'projects in 2024'
     ]
 
     for query in test_queries:

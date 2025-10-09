@@ -13,7 +13,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from common.utils.moa_permissions import moa_no_access, moa_view_only
+from common.utils.moa_permissions import moa_view_only
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils.dataframe import dataframe_to_rows
@@ -374,10 +374,10 @@ class CommunityInfrastructureViewSet(viewsets.ModelViewSet):
 # Geographic Data Views
 
 
+@moa_view_only
 @login_required
-@moa_no_access
 def add_data_layer(request):
-    """Create a new geographic data layer (blocked for MOA users)."""
+    """Create a new geographic data layer."""
     if request.method == "POST":
         form = GeographicDataLayerForm(request.POST, user=request.user)
         if form.is_valid():
@@ -397,10 +397,10 @@ def add_data_layer(request):
     return render(request, "communities/add_data_layer.html", context)
 
 
+@moa_view_only
 @login_required
-@moa_no_access
 def create_visualization(request):
-    """Create a new map visualization (blocked for MOA users)."""
+    """Create a new map visualization."""
     if request.method == "POST":
         form = MapVisualizationForm(request.POST, user=request.user)
         if form.is_valid():
@@ -420,10 +420,10 @@ def create_visualization(request):
     return render(request, "communities/create_visualization.html", context)
 
 
+@moa_view_only
 @login_required
-@moa_no_access
 def geographic_data_list(request):
-    """List geographic data layers and visualizations (blocked for MOA users)."""
+    """List geographic data layers and visualizations."""
     data_layers = GeographicDataLayer.objects.all().order_by("-created_at")
     visualizations = MapVisualization.objects.all().order_by("-created_at")
 

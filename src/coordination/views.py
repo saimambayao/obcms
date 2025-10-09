@@ -16,11 +16,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 
-from common.utils.moa_permissions import (
-    moa_can_edit_organization,
-    moa_no_access,
-    moa_view_only,
-)
+from common.utils.moa_permissions import moa_can_edit_organization
 
 from common.models import RecurringEventPattern
 from common.work_item_model import WorkItem
@@ -127,7 +123,6 @@ def _organization_form(request, organization_id=None):
 
 
 @login_required
-@moa_no_access
 def organization_create(request):
     """Render and process the frontend organization creation form."""
 
@@ -143,9 +138,8 @@ def organization_edit(request, organization_id):
 
 
 @login_required
-@moa_view_only
 def organization_detail(request, organization_id):
-    """Display organization details in the frontend directory (MOA users: own org only)."""
+    """Display organization details in the frontend directory."""
 
     organization = get_object_or_404(
         Organization.objects.select_related("created_by").prefetch_related(
@@ -155,14 +149,6 @@ def organization_detail(request, organization_id):
         ),
         pk=organization_id,
     )
-
-    # MOA users can only view their own organization
-    if request.user.is_authenticated and request.user.is_moa_staff:
-        if not request.user.owns_moa_organization(organization_id):
-            raise PermissionDenied(
-                "You can only view your own MOA profile. "
-                "This organization does not belong to your MOA."
-            )
 
     led_partnerships = list(organization.led_partnerships.all())
     led_partnership_ids = {partnership.pk for partnership in led_partnerships}

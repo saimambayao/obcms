@@ -19,7 +19,6 @@ from django.views.decorators.http import require_POST, require_http_methods
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 
-from common.utils.moa_permissions import moa_can_edit_work_item
 from common.work_item_model import WorkItem
 from common.forms.work_items import WorkItemForm
 
@@ -393,7 +392,6 @@ def work_item_create(request):
 
 
 @login_required
-@moa_can_edit_work_item
 @require_http_methods(["GET", "POST"])
 def work_item_edit(request, pk):
     """
@@ -534,7 +532,6 @@ def work_item_delete_modal(request, pk):
     })
 
 
-@moa_can_edit_work_item
 @login_required
 @require_http_methods(["GET", "POST", "DELETE"])
 def work_item_delete(request, pk):
@@ -827,10 +824,7 @@ def work_item_sidebar_detail(request, pk):
 
     # Use different template based on referrer (work items tree vs calendar)
     referer = request.META.get('HTTP_REFERER', '')
-    is_work_items_tree = 'work-items' in referer
-    is_monitoring_detail = '/monitoring/entry/' in referer
-
-    if is_work_items_tree or is_monitoring_detail:
+    if 'work-items' in referer:
         return render(request, 'work_items/partials/sidebar_detail.html', context)
     else:
         return render(request, 'common/partials/calendar_event_detail.html', context)
@@ -853,15 +847,8 @@ def work_item_sidebar_edit(request, pk):
     # Determine which template to use based on referrer
     referer = request.META.get('HTTP_REFERER', '')
     is_work_items_tree = 'work-items' in referer
-    is_monitoring_detail = '/monitoring/entry/' in referer
-    detail_template = 'work_items/partials/sidebar_detail.html' if (is_work_items_tree or is_monitoring_detail) else 'common/partials/calendar_event_detail.html'
-    edit_template = 'work_items/partials/sidebar_edit_form.html' if (is_work_items_tree or is_monitoring_detail) else 'common/partials/calendar_event_edit_form.html'
-
-    # Determine sidebar target ID based on page context
-    if is_monitoring_detail:
-        sidebar_target_id = 'ppa-sidebar-content'
-    else:
-        sidebar_target_id = 'sidebar-content'
+    detail_template = 'work_items/partials/sidebar_detail.html' if is_work_items_tree else 'common/partials/calendar_event_detail.html'
+    edit_template = 'work_items/partials/sidebar_edit_form.html' if is_work_items_tree else 'common/partials/calendar_event_edit_form.html'
 
     # For GET requests: If user can't edit, gracefully show detail view instead
     if request.method == 'GET' and not permissions['can_edit']:
@@ -870,7 +857,6 @@ def work_item_sidebar_edit(request, pk):
             'work_item': work_item,
             'can_edit': permissions['can_edit'],
             'can_delete': permissions['can_delete'],
-            'sidebar_target_id': sidebar_target_id,
         }
         return render(request, detail_template, context)
 
@@ -906,34 +892,31 @@ def work_item_sidebar_edit(request, pk):
             # Refresh work_item from database to get all updated fields
             work_item.refresh_from_db()
 
-            # For work items tree or monitoring detail: return detail view + updated row via out-of-band swap
+            # For work items tree: return detail view + updated row via out-of-band swap
             # For calendar: return detail view and trigger calendar refresh
             import json
 
-            if is_work_items_tree or is_monitoring_detail:
+            if is_work_items_tree:
                 # Return updated edit form for sidebar + updated tree row for instant update
                 from django.template.loader import render_to_string
                 from common.forms.work_items import WorkItemQuickEditForm
 
                 # Re-render the edit form with updated data (keep sidebar open)
                 form = WorkItemQuickEditForm(instance=work_item, user=request.user)
-                context = {'form': form, 'work_item': work_item, 'sidebar_target_id': sidebar_target_id}
+                context = {'form': form, 'work_item': work_item}
                 edit_form_html = render_to_string(edit_template, context, request=request)
 
                 # Render the updated tree row for out-of-band swap
-                # Use the appropriate row template based on page context
-                row_template = 'monitoring/partials/_ppa_work_item_row.html' if is_monitoring_detail else 'work_items/_work_item_tree_row.html'
-                row_id = f'ppa-work-item-row-{work_item.id}' if is_monitoring_detail else f'work-item-row-{work_item.id}'
-
-                row_html = render_to_string(row_template, {
+                # Template now has id="work-item-row-{{ work_item.id }}" for HTMX targeting
+                row_html = render_to_string('work_items/_work_item_tree_row.html', {
                     'work_item': work_item
                 }, request=request)
 
                 # Extract ONLY the main <tr> (exclude placeholder and skeleton rows)
                 import re
-                # Match the main row: from opening <tr id="[row_id]"> to its closing </tr>
+                # Match the main row: from opening <tr id="work-item-row-X"> to its closing </tr>
                 # Use non-greedy match to get just the first <tr>...</tr>
-                pattern = rf'(<tr\s+id="{row_id}"[^>]*>.*?</tr>)'
+                pattern = rf'(<tr\s+id="work-item-row-{work_item.id}"[^>]*>.*?</tr>)'
                 match = re.search(pattern, row_html, re.DOTALL)
 
                 if match:
@@ -980,7 +963,6 @@ def work_item_sidebar_edit(request, pk):
                     'work_item': work_item,
                     'can_edit': permissions['can_edit'],
                     'can_delete': permissions['can_delete'],
-                    'sidebar_target_id': sidebar_target_id,
                 }
                 response = render(request, detail_template, context)
                 response['HX-Trigger'] = json.dumps({
@@ -993,14 +975,14 @@ def work_item_sidebar_edit(request, pk):
                 return response
         else:
             # Return form with errors
-            context = {'form': form, 'work_item': work_item, 'sidebar_target_id': sidebar_target_id}
+            context = {'form': form, 'work_item': work_item}
             return render(request, edit_template, context)
 
     else:  # GET
         from common.forms.work_items import WorkItemQuickEditForm
 
         form = WorkItemQuickEditForm(instance=work_item, user=request.user)
-        context = {'form': form, 'work_item': work_item, 'sidebar_target_id': sidebar_target_id}
+        context = {'form': form, 'work_item': work_item}
         return render(request, edit_template, context)
 
 
