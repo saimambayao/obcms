@@ -69,8 +69,16 @@ def user_can_view_ppa(context, ppa):
 @register.simple_tag(takes_context=True)
 def user_can_delete_ppa(context, ppa):
     """Check if current user can delete the PPA."""
-    # Same permissions as edit
-    return user_can_edit_ppa(context, ppa)
+    user = context.get('request').user if 'request' in context else context.get('user')
+
+    if not user or not user.is_authenticated:
+        return False
+
+    can_delete = getattr(user, "can_delete_ppa", None)
+    if callable(can_delete):
+        return can_delete(ppa)
+
+    return False
 
 
 @register.simple_tag(takes_context=True)

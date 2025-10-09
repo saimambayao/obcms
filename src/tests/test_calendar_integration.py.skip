@@ -187,7 +187,7 @@ class CalendarEventWorkflowTests(TestCase):
         )
 
         response = self.client.post(
-            reverse("common:coordination_event_add"),
+            reverse("common:coordination_activity_add"),
             data=serialize_form_data(event_data),
         )
 

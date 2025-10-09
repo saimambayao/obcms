@@ -537,6 +537,9 @@ LOGGING["loggers"]["api"] = {
 # ========== AI CONFIGURATION ==========
 # Google Gemini API Key for AI features
 GOOGLE_API_KEY = env.str("GOOGLE_API_KEY", default="")
+ENABLE_GEMINI_INTEGRATION_TESTS = env.bool(
+    "ENABLE_GEMINI_INTEGRATION_TESTS", default=False
+)
 
 # ========== WORK HIERARCHY CONFIGURATION ==========
 # WorkItem Migration Completed: October 5, 2025

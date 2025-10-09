@@ -807,6 +807,12 @@ class MonitoringEntry(models.Model):
         return self.category == "obc_request"
 
     @property
+    def is_gaab_2025_funded(self) -> bool:
+        """Check if the entry is tagged as GAAB 2025."""
+
+        return self.funding_source == self.FUNDING_SOURCE_GAAB_2025
+
+    @property
     def total_allocations(self) -> Decimal:
         """Total allocation tranches recorded."""
         return Decimal(

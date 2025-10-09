@@ -473,7 +473,7 @@ PROVINCE_TEMPLATES = [
 
 MUNICIPALITY_TEMPLATES = [
     QueryTemplate(
-        id='count_all_municipalities_geographic',
+        id='count_all_municipalities',
         category='geographic',
         pattern=r'\b(how many|count|total|number of)\s+municipalities\b',
         query_template='Municipality.objects.filter(municipality_type="municipality").count()',

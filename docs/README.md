@@ -47,6 +47,7 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 - **Platform-Specific Guides:**
   - [Coolify Deployment Plan](deployment/coolify-deployment-plan.md)
   - [Coolify Deployment Checklist](deployment/deployment-coolify.md)
+  - [Staging on DigitalOcean via Coolify](deployment/STAGING_COOLIFY_DIGITALOCEAN.md)
   - [Docker Guide](deployment/docker-guide.md)
 
 - **Django 5.2 LTS Upgrade:**

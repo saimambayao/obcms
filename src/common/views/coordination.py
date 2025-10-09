@@ -40,13 +40,12 @@ def coordination_home(request):
     from django.utils import timezone
 
     from coordination.models import (
-        Event,
-        EventParticipant,
         Organization,
         Partnership,
         PartnershipSignatory,
         StakeholderEngagement,
     )
+    from common.work_item_model import WorkItem
 
     now = timezone.now()
 
@@ -85,28 +84,22 @@ def coordination_home(request):
         "lgu": lgu_partnerships,
     }
 
-    completed_events = Event.objects.filter(status="completed")
+    # WorkItem activities (replaced Event model)
+    completed_activities = WorkItem.objects.filter(
+        work_type=WorkItem.WORK_TYPE_ACTIVITY,
+        status=WorkItem.STATUS_COMPLETED
+    )
     completed_engagements = StakeholderEngagement.objects.filter(status="completed")
 
     total_completed_activities = (
-        completed_events.count() + completed_engagements.count()
+        completed_activities.count() + completed_engagements.count()
     )
 
-    bmoa_events = (
-        completed_events.filter(participants__organization__organization_type="bmoa")
-        .distinct()
-        .count()
-    )
-    nga_events = (
-        completed_events.filter(participants__organization__organization_type="nga")
-        .distinct()
-        .count()
-    )
-    lgu_events = (
-        completed_events.filter(participants__organization__organization_type="lgu")
-        .distinct()
-        .count()
-    )
+    # For now, set organization type stats to 0 since WorkItem doesn't have participant tracking
+    # This would need to be implemented via activity_data JSON field if needed
+    bmoa_events = 0
+    nga_events = 0
+    lgu_events = 0
 
     coordination_activities_done_stats = {
         "total": total_completed_activities,
@@ -115,30 +108,22 @@ def coordination_home(request):
         "lgu": lgu_events,
     }
 
-    planned_events = Event.objects.filter(
-        status__in=["planned", "scheduled"], start_date__gte=now.date()
+    # WorkItem planned activities (replaced Event model)
+    planned_activities = WorkItem.objects.filter(
+        work_type=WorkItem.WORK_TYPE_ACTIVITY,
+        status__in=[WorkItem.STATUS_NOT_STARTED, WorkItem.STATUS_IN_PROGRESS],
+        start_date__gte=now.date()
     )
     planned_engagements = StakeholderEngagement.objects.filter(
         status__in=["planned", "scheduled"], planned_date__gte=now
     )
 
-    total_planned_activities = planned_events.count() + planned_engagements.count()
+    total_planned_activities = planned_activities.count() + planned_engagements.count()
 
-    bmoa_planned = (
-        planned_events.filter(participants__organization__organization_type="bmoa")
-        .distinct()
-        .count()
-    )
-    nga_planned = (
-        planned_events.filter(participants__organization__organization_type="nga")
-        .distinct()
-        .count()
-    )
-    lgu_planned = (
-        planned_events.filter(participants__organization__organization_type="lgu")
-        .distinct()
-        .count()
-    )
+    # For now, set organization type stats to 0 since WorkItem doesn't have participant tracking
+    bmoa_planned = 0
+    nga_planned = 0
+    lgu_planned = 0
 
     planned_coordination_activities_stats = {
         "total": total_planned_activities,
@@ -147,13 +132,18 @@ def coordination_home(request):
         "lgu": lgu_planned,
     }
 
-    recent_events = Event.objects.order_by("-updated_at", "-created_at")[:10]
+    # Recent WorkItem activities (replaced Event model)
+    recent_events = WorkItem.objects.filter(
+        work_type=WorkItem.WORK_TYPE_ACTIVITY
+    ).order_by("-updated_at", "-created_at")[:10]
 
+    # Event types from activity_data JSON field
+    all_activities = WorkItem.objects.filter(work_type=WorkItem.WORK_TYPE_ACTIVITY)
     event_by_type = {
-        "meeting": Event.objects.filter(event_type="meeting").count(),
-        "workshop": Event.objects.filter(event_type="workshop").count(),
-        "conference": Event.objects.filter(event_type="conference").count(),
-        "consultation": Event.objects.filter(event_type="consultation").count(),
+        "meeting": sum(1 for a in all_activities if (a.activity_data or {}).get("event_type") == "meeting"),
+        "workshop": sum(1 for a in all_activities if (a.activity_data or {}).get("event_type") == "workshop"),
+        "conference": sum(1 for a in all_activities if (a.activity_data or {}).get("event_type") == "conference"),
+        "consultation": sum(1 for a in all_activities if (a.activity_data or {}).get("event_type") == "consultation"),
     }
 
     active_partnerships_list = Partnership.objects.filter(status="active").order_by(
@@ -516,14 +506,23 @@ def coordination_view_all(request):
     from django.db.models import Count
     from django.utils import timezone
 
-    from coordination.models import Event, Organization, Partnership
+    from coordination.models import Organization, Partnership
+    from common.work_item_model import WorkItem
 
-    events = Event.objects.select_related("community", "organizer")
+    # WorkItem activities (replaced Event model)
+    activities = WorkItem.objects.filter(work_type=WorkItem.WORK_TYPE_ACTIVITY)
     partnerships = Partnership.objects.select_related("lead_organization")
     organizations = Organization.objects.filter(is_active=True)
 
     now = timezone.now()
     last_30_days = now.date() - timedelta(days=30)
+
+    # Count event types from activity_data JSON field
+    event_type_counts = {}
+    for activity in activities:
+        event_type = (activity.activity_data or {}).get("event_type")
+        if event_type:
+            event_type_counts[event_type] = event_type_counts.get(event_type, 0) + 1
 
     stats = {
         "organizations": {
@@ -539,14 +538,14 @@ def coordination_view_all(request):
             "by_status": partnerships.values("status").annotate(count=Count("id")),
         },
         "events": {
-            "total": events.count(),
-            "upcoming": events.filter(start_date__gte=now.date()).count(),
-            "recent": events.filter(start_date__gte=last_30_days).count(),
-            "by_type": events.values("event_type").annotate(count=Count("id"))[:5],
+            "total": activities.count(),
+            "upcoming": activities.filter(start_date__gte=now.date()).count(),
+            "recent": activities.filter(created_at__gte=last_30_days).count(),
+            "by_type": [{"event_type": k, "count": v} for k, v in list(event_type_counts.items())[:5]],
         },
     }
 
-    recent_events = events.order_by("-created_at")[:5]
+    recent_events = activities.order_by("-created_at")[:5]
     recent_partnerships = partnerships.order_by("-created_at")[:5]
 
     context = {

@@ -321,7 +321,7 @@ PROJECTS_COUNT_TEMPLATES = [
     QueryTemplate(
         id='count_projects_by_type',
         category='projects',
-        pattern=r'\b(how many|count|total)\s+(?P<type>project|program|activity)\s+(entries?|ppas?)\b',
+        pattern=r'\b(how many|count|total|number of)\s+(?P<type>project|program|activity)s?(?:\s+(entries?|ppas?))?\b',
         query_template='MonitoringEntry.objects.filter(entry_type__icontains="{type}").count()',
         required_entities=['type'],
         optional_entities=[],

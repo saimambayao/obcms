@@ -44,6 +44,55 @@ logger = logging.getLogger(__name__)
 # _calendar_iso, _combine_event_datetime, _serialize_coordination_event deleted
 
 
+def _split_paragraphs(text_value):
+    """Normalize multiline text into readable paragraph blocks."""
+
+    if not text_value:
+        return []
+
+    normalized = text_value.replace("\r\n", "\n").replace("\r", "\n").strip()
+    if not normalized:
+        return []
+
+    paragraphs = [
+        paragraph.strip()
+        for paragraph in normalized.split("\n\n")
+        if paragraph.strip()
+    ]
+    if paragraphs:
+        return paragraphs
+
+    # Fall back to a single paragraph when only single newlines are present.
+    single_lines = [
+        line.strip()
+        for line in normalized.split("\n")
+        if line.strip()
+    ]
+    if single_lines:
+        return [" ".join(single_lines)]
+
+    return []
+
+
+def _split_list_items(text_value):
+    """Convert a newline or bullet separated string into a clean list."""
+
+    if not text_value:
+        return []
+
+    normalized = text_value.replace("\r\n", "\n").replace("\r", "\n")
+
+    items = []
+    for line in normalized.split("\n"):
+        cleaned = line.strip()
+        if not cleaned:
+            continue
+        cleaned = cleaned.lstrip("-•*").strip()
+        if cleaned:
+            items.append(cleaned)
+    return items
+
+
 def _organization_form(request, organization_id=None):
     """Shared create/update handler for organization form flow."""
 
@@ -242,6 +291,11 @@ def organization_detail(request, organization_id):
         moa_budget_stats = budget_context["moa_budget_stats"]
         moa_ppas_total_budget = moa_budget_stats["total_budget"]
 
+    mandate_paragraphs = _split_paragraphs(organization.mandate)
+    powers_and_functions_items = _split_list_items(
+        organization.powers_and_functions
+    )
+
     context = {
         "organization": organization,
         "contacts": contacts,
@@ -259,6 +313,8 @@ def organization_detail(request, organization_id):
         "moa_work_items": moa_work_items,
         "moa_work_items_stats": moa_work_items_stats,
         "moa_budget_stats": moa_budget_stats,
+        "organization_mandate_paragraphs": mandate_paragraphs,
+        "organization_powers_and_functions": powers_and_functions_items,
     }
     return render(request, "coordination/organization_detail.html", context)
 

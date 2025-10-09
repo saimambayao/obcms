@@ -39,8 +39,12 @@ services:
       target: production
     command: >
       sh -c "cd src &&
+             echo '=== Running deployment checks ===' &&
              python manage.py check --deploy &&
-             python manage.py migrate --noinput"
+             echo '=== Running database migrations ===' &&
+             python manage.py migrate --noinput &&
+             echo '=== Migration complete ===' &&
+             python manage.py showmigrations --list | grep '\[X\]' | wc -l | xargs echo 'Applied migrations:'"
     environment:
       - DJANGO_SETTINGS_MODULE=obc_management.settings.production
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
@@ -54,6 +58,7 @@ services:
       - EMAIL_USE_TLS=${EMAIL_USE_TLS:-1}
       - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
     depends_on:
       db:
         condition: service_healthy

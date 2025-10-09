@@ -165,6 +165,30 @@ class User(AbstractUser):
             return ppa.implementing_moa == self.moa_organization
         return False
 
+    def can_delete_ppa(self, ppa):
+        """Check if user can delete the given PPA."""
+        if self.is_superuser or self.is_oobc_executive:
+            return True
+
+        is_gaab_funded = False
+        if hasattr(ppa, "is_gaab_2025_funded"):
+            is_gaab_funded = ppa.is_gaab_2025_funded
+        else:
+            is_gaab_funded = getattr(ppa, "funding_source", None) == getattr(
+                ppa, "FUNDING_SOURCE_GAAB_2025", "gaab_2025"
+            )
+
+        if self.is_oobc_staff:
+            # OOBC staff without executive authority cannot delete GAAB-funded PPAs.
+            return not is_gaab_funded
+
+        if self.is_moa_staff:
+            if is_gaab_funded:
+                return False
+            return self.can_edit_ppa(ppa)
+
+        return False
+
     def can_edit_work_item(self, work_item):
         """Check if user can edit the given work item."""
         if self.is_superuser or self.is_oobc_staff:

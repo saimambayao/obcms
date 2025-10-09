@@ -540,7 +540,7 @@ class EventCreateViewTests(TestCase):
     """Validate the coordination event creation workflow."""
 
     def setUp(self):
-        self.url = reverse("common:coordination_event_add")
+        self.url = reverse("common:coordination_activity_add")
         self.user = User.objects.create_user(
             username="event_coordinator",
             password="secret123",

@@ -94,7 +94,7 @@ class Command(BaseCommand):
             updates["ceiling_backfill"] += 1
 
         if not entry.funding_source:
-            entry.funding_source = MonitoringEntry.FUNDING_SOURCE_INTERNAL
+            entry.funding_source = MonitoringEntry.FUNDING_SOURCE_OTHERS
             fields_to_update.append("funding_source")
             updates["funding_source_default"] += 1
 
@@ -151,7 +151,7 @@ class Command(BaseCommand):
             updates["allocations_created"] += 1
             scheduled = entry.start_date or entry.created_at.date() or today
             funding_source = (
-                entry.funding_source or MonitoringEntry.FUNDING_SOURCE_INTERNAL
+                entry.funding_source or MonitoringEntry.FUNDING_SOURCE_OTHERS
             )
             if not dry_run:
                 MonitoringEntryFunding.objects.create(

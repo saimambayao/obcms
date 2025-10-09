@@ -10,7 +10,7 @@ from django import forms
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Avg, Count, Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -663,6 +663,9 @@ def delete_moa_ppa_view(request, ppa_id):
     """Confirm and delete a MOA PPA."""
 
     ppa = get_object_or_404(MonitoringEntry, id=ppa_id, category="moa_ppa")
+
+    if not request.user.can_delete_ppa(ppa):
+        raise PermissionDenied("You do not have permission to delete this MOA PPA.")
 
     if request.method == "POST":
         ppa.delete()

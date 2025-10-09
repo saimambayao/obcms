@@ -25,15 +25,13 @@ class Migration(migrations.Migration):
                 ('location', models.CharField(blank=True, max_length=255)),
                 ('is_available', models.BooleanField(default=True, help_text='Whether resource is currently available for booking')),
                 ('booking_requires_approval', models.BooleanField(default=False, help_text='Whether bookings require approval')),
-                ('cost_per_use', models.DecimalField(blank=True, decimal_places=2, help_text='Cost per use (optional)', max_digits=10, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('modified_at', models.DateTimeField(auto_now=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
             ],
             options={
                 'verbose_name': 'Calendar Resource',
                 'verbose_name_plural': 'Calendar Resources',
                 'db_table': 'common_calendar_resource',
-                'ordering': ['resource_type', 'name'],
             },
         ),
         migrations.CreateModel(
