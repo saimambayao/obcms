@@ -16,7 +16,8 @@
     </div>
 
     <!-- Budget Summary Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+    <!-- Row 1: Budget metrics (3 columns) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Total MOA Budget -->
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
             <div class="flex items-center justify-between">
@@ -35,7 +36,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Total PPA Budget</p>
-                    <p class="mt-2 text-2xl font-bold text-emerald-600">₱{{ moa_budget_stats.total_allocated|floatformat:2|intcomma|default:"0.00" }}</p>
+                    <p class="mt-2 text-2xl font-bold text-emerald-600">₱{{ moa_budget_stats.total_budget|floatformat:2|intcomma|default:"0.00" }}</p>
                 </div>
                 <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
                     <i class="fas fa-hand-holding-usd text-emerald-600 text-xl"></i>
@@ -43,11 +44,11 @@
             </div>
         </div>
 
-        <!-- Total Work Item Budget -->
+        <!-- Total PPA Work Item Budget -->
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Total Work Item Budget</p>
+                    <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Total PPA Work Item Budget</p>
                     <p class="mt-2 text-2xl font-bold text-orange-600">₱{{ moa_budget_stats.total_work_item_budget|floatformat:2|intcomma|default:"0.00" }}</p>
                 </div>
                 <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
@@ -55,7 +56,10 @@
                 </div>
             </div>
         </div>
+    </div>
 
+    <!-- Row 2: Utilization metrics (2 columns) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Total Expenditure -->
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
             <div class="flex items-center justify-between">
@@ -186,7 +190,7 @@
                             ₱{{ moa_budget_stats.total_budget|floatformat:2|intcomma|default:"0.00" }}
                         </td>
                         <td class="px-6 py-4 text-right text-sm text-gray-900">
-                            ₱{{ moa_budget_stats.total_allocated|floatformat:2|intcomma|default:"0.00" }}
+                            ₱{{ moa_budget_stats.total_work_item_budget|floatformat:2|intcomma|default:"0.00" }}
                         </td>
                         <td class="px-6 py-4 text-right text-sm text-purple-600">
                             ₱{{ moa_budget_stats.total_expenditure|floatformat:2|intcomma|default:"0.00" }}

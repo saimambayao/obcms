@@ -13,10 +13,6 @@ Tests cover:
 
 import pytest
 
-pytest.skip(
-    "Legacy WorkItem generation tests require updated fixtures after refactor.",
-    allow_module_level=True,
-)
 
 from datetime import date, timedelta
 from decimal import Decimal

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static math_extras moa_rbac %}
 
 {% block title %}{{ work_item.title }} - Work Item{% endblock %}
 
@@ -36,20 +36,35 @@
             <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
                 <i class="fas fa-tasks text-blue-600"></i>
                 <span>{{ work_item.title }}</span>
-                {% if work_item.status == 'active' %}
+                {% if work_item.status == 'completed' %}
                 <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
-                    <i class="fas fa-check-circle mr-1"></i>
-                    Active
-                </span>
-                {% elif work_item.status == 'pending' %}
-                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
-                    <i class="fas fa-clock mr-1"></i>
-                    Pending
-                </span>
-                {% elif work_item.status == 'completed' %}
-                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                     <i class="fas fa-check-double mr-1"></i>
                     Completed
+                </span>
+                {% elif work_item.status == 'in_progress' %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <i class="fas fa-spinner mr-1"></i>
+                    In Progress
+                </span>
+                {% elif work_item.status == 'not_started' %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                    <i class="fas fa-pause-circle mr-1"></i>
+                    Not Started
+                </span>
+                {% elif work_item.status == 'at_risk' %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    At Risk
+                </span>
+                {% elif work_item.status == 'blocked' %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                    <i class="fas fa-ban mr-1"></i>
+                    Blocked
+                </span>
+                {% elif work_item.status == 'cancelled' %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                    <i class="fas fa-times-circle mr-1"></i>
+                    Cancelled
                 </span>
                 {% else %}
                 <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
@@ -63,18 +78,24 @@
         </div>
 
         <!-- Action Buttons -->
+        {% can_manage_work_item user work_item as can_edit %}
+        {% if can_edit %}
         <div class="flex flex-wrap gap-2">
             <a href="{% url 'common:work_item_edit' pk=work_item.pk %}"
                class="inline-flex items-center bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                 <i class="fas fa-edit mr-2"></i>
                 Edit
             </a>
-            <a href="{% url 'common:work_item_delete' pk=work_item.pk %}"
-               class="inline-flex items-center border-2 border-red-300 text-red-700 px-6 py-3 rounded-xl font-semibold hover:bg-red-50 transition-colors duration-200">
+            <button type="button"
+                    hx-get="{% url 'common:work_item_delete_modal' pk=work_item.pk %}"
+                    hx-target="#delete-modal-container"
+                    hx-swap="innerHTML"
+                    class="inline-flex items-center border-2 border-red-300 text-red-700 px-6 py-3 rounded-xl font-semibold hover:bg-red-50 transition-colors duration-200">
                 <i class="fas fa-trash mr-2"></i>
                 Delete
-            </a>
+            </button>
         </div>
+        {% endif %}
     </div>
 
     <!-- Main Content Grid (mirrors edit form layout) -->
@@ -88,20 +109,13 @@
                     Basic Information
                 </h2>
                 <div class="space-y-4">
+                    <!-- Work Type -->
                     <div>
-                        <h3 class="text-sm font-medium text-gray-600 mb-1">Title</h3>
-                        <p class="text-base font-semibold text-gray-900">{{ work_item.title }}</p>
+                        <h3 class="text-sm font-medium text-gray-600 mb-1">Work Type</h3>
+                        <p class="text-base text-gray-900">{{ work_item.get_work_type_display }}</p>
                     </div>
-                    <div>
-                        <h3 class="text-sm font-medium text-gray-600 mb-1">Description</h3>
-                        <p class="text-gray-700 whitespace-pre-wrap">{{ work_item.description|default:"No description provided." }}</p>
-                    </div>
-                    {% if work_item.notes %}
-                    <div class="pt-3 border-t border-gray-200">
-                        <h3 class="text-sm font-medium text-gray-600 mb-1">Notes</h3>
-                        <p class="text-gray-700 whitespace-pre-wrap">{{ work_item.notes }}</p>
-                    </div>
-                    {% endif %}
+
+                    <!-- Parent Work Item -->
                     {% if parent %}
                     <div class="pt-3 border-t border-gray-200">
                         <h3 class="text-sm font-medium text-gray-600 mb-1">Parent Work Item</h3>
@@ -112,15 +126,45 @@
                         </a>
                     </div>
                     {% endif %}
-                    <div class="pt-3 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-600">Work Type</h3>
-                            <p class="mt-1 text-sm text-gray-900">{{ work_item.get_work_type_display }}</p>
+
+                    <!-- MOA and PPA Information (NEW) -->
+                    {% if work_item.related_ppa %}
+                    <div class="pt-3 border-t border-gray-200">
+                        <div class="space-y-3">
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-600 mb-1">
+                                    <i class="fas fa-building text-blue-500 mr-1"></i>
+                                    Implementing MOA
+                                </h3>
+                                <p class="text-base text-gray-900">
+                                    {% if work_item.related_ppa.implementing_moa %}
+                                        {{ work_item.related_ppa.implementing_moa.name }}
+                                    {% else %}
+                                        <span class="italic text-gray-500">Not specified</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-600 mb-1">
+                                    <i class="fas fa-tasks text-emerald-500 mr-1"></i>
+                                    Related PPA
+                                </h3>
+                                <p class="text-base text-gray-900">{{ work_item.related_ppa.title }}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-600">Auto Progress</h3>
-                            <p class="mt-1 text-sm text-gray-900">{% if work_item.auto_calculate_progress %}Enabled{% else %}Disabled{% endif %}</p>
-                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Title -->
+                    <div class="pt-3 border-t border-gray-200">
+                        <h3 class="text-sm font-medium text-gray-600 mb-1">Title</h3>
+                        <p class="text-base font-semibold text-gray-900">{{ work_item.title }}</p>
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-600 mb-1">Description</h3>
+                        <p class="text-gray-700 whitespace-pre-wrap">{{ work_item.description|default:"No description provided." }}</p>
                     </div>
                 </div>
             </section>
@@ -135,20 +179,35 @@
                     <div>
                         <dt class="text-sm font-medium text-gray-600 mb-1">Status</dt>
                         <dd>
-                            {% if work_item.status == 'active' %}
+                            {% if work_item.status == 'completed' %}
                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
-                                <i class="fas fa-check-circle mr-1"></i>
-                                Active
-                            </span>
-                            {% elif work_item.status == 'pending' %}
-                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
-                                <i class="fas fa-clock mr-1"></i>
-                                Pending
-                            </span>
-                            {% elif work_item.status == 'completed' %}
-                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                                 <i class="fas fa-check-double mr-1"></i>
                                 Completed
+                            </span>
+                            {% elif work_item.status == 'in_progress' %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                <i class="fas fa-spinner mr-1"></i>
+                                In Progress
+                            </span>
+                            {% elif work_item.status == 'not_started' %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                <i class="fas fa-pause-circle mr-1"></i>
+                                Not Started
+                            </span>
+                            {% elif work_item.status == 'at_risk' %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                At Risk
+                            </span>
+                            {% elif work_item.status == 'blocked' %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                <i class="fas fa-ban mr-1"></i>
+                                Blocked
+                            </span>
+                            {% elif work_item.status == 'cancelled' %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                <i class="fas fa-times-circle mr-1"></i>
+                                Cancelled
                             </span>
                             {% else %}
                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
@@ -166,20 +225,25 @@
                                 <i class="fas fa-exclamation-circle mr-1"></i>
                                 Critical
                             </span>
-                            {% elif work_item.priority == 'high' %}
+                            {% elif work_item.priority == 'urgent' %}
                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                Urgent
+                            </span>
+                            {% elif work_item.priority == 'high' %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
                                 <i class="fas fa-arrow-up mr-1"></i>
                                 High
                             </span>
                             {% elif work_item.priority == 'medium' %}
-                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                                 <i class="fas fa-minus mr-1"></i>
                                 Medium
                             </span>
                             {% else %}
                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                                 <i class="fas fa-arrow-down mr-1"></i>
-                                {{ work_item.get_priority_display }}
+                                Low
                             </span>
                             {% endif %}
                         </dd>
@@ -197,6 +261,115 @@
                             </div>
                         </dd>
                     </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-600 mb-1">Auto-Calculate Progress</dt>
+                        <dd class="text-sm text-gray-900">
+                            {% if work_item.auto_calculate_progress %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Enabled
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-gray-800 text-xs font-medium">
+                                    <i class="fas fa-times-circle mr-1"></i>
+                                    Disabled
+                                </span>
+                            {% endif %}
+                        </dd>
+                    </div>
+                </dl>
+            </section>
+
+            <!-- Budget Tracking (NEW) -->
+            <section class="bg-white rounded-xl p-6 border border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-wallet text-emerald-500 mr-2"></i>
+                    Budget Tracking
+                </h2>
+
+                <!-- PPA Total Budget (if applicable) -->
+                {% if work_item.related_ppa.budget_allocation %}
+                <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 class="text-sm font-medium text-blue-900 mb-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Total PPA Budget
+                    </h3>
+                    <p class="text-2xl font-bold text-blue-900">
+                        {{ work_item.related_ppa.budget_allocation|currency_php }}
+                    </p>
+                    <p class="mt-2 text-xs text-blue-700">
+                        <i class="fas fa-lightbulb mr-1"></i>
+                        This is the total budget allocated to the PPA.
+                    </p>
+                </div>
+                {% endif %}
+
+                <dl class="space-y-4">
+                    <!-- Allocated Budget -->
+                    <div>
+                        <dt class="text-sm font-medium text-gray-600 mb-1">Allocated Budget</dt>
+                        <dd class="text-lg font-semibold text-gray-900">
+                            {% if work_item.allocated_budget %}
+                                {{ work_item.allocated_budget|currency_php }}
+                            {% else %}
+                                <span class="text-sm italic text-gray-500">Not allocated</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <!-- Actual Expenditure -->
+                    <div>
+                        <dt class="text-sm font-medium text-gray-600 mb-1">Actual Expenditure</dt>
+                        <dd class="text-lg font-semibold text-gray-900">
+                            {% if work_item.actual_expenditure %}
+                                {{ work_item.actual_expenditure|currency_php }}
+                            {% else %}
+                                <span class="text-sm italic text-gray-500">No expenditure recorded</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <!-- Budget Variance -->
+                    {% if work_item.allocated_budget %}
+                    <div class="pt-3 border-t border-gray-200">
+                        <dt class="text-sm font-medium text-gray-600 mb-2">Budget Variance</dt>
+                        <dd>
+                            {% with variance=work_item.allocated_budget|add:work_item.actual_expenditure|add:"-"|floatformat:2 %}
+                            {% with percentage=work_item.actual_expenditure|percentage_of:work_item.allocated_budget %}
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-gray-700">Remaining</span>
+                                <span class="text-lg font-bold {% if variance < 0 %}text-red-600{% else %}text-emerald-600{% endif %}">
+                                    {{ variance|currency_php }}
+                                </span>
+                            </div>
+                            <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div class="h-full {% if percentage >= 95 %}bg-red-500{% elif percentage >= 80 %}bg-amber-500{% else %}bg-emerald-500{% endif %} transition-all duration-300"
+                                     style="width: {% if percentage > 100 %}100{% else %}{{ percentage }}{% endif %}%"></div>
+                            </div>
+                            <p class="mt-2 text-xs {% if percentage >= 95 %}text-red-600{% elif percentage >= 80 %}text-amber-600{% else %}text-emerald-600{% endif %}">
+                                {{ percentage|floatformat:1 }}% utilized
+                                {% if percentage >= 100 %}
+                                    - Over budget
+                                {% elif percentage >= 95 %}
+                                    - Near budget limit
+                                {% else %}
+                                    - Within budget
+                                {% endif %}
+                            </p>
+                            {% endwith %}
+                            {% endwith %}
+                        </dd>
+                    </div>
+                    {% endif %}
+
+                    <!-- Budget Notes -->
+                    {% if work_item.budget_notes %}
+                    <div class="pt-3 border-t border-gray-200">
+                        <dt class="text-sm font-medium text-gray-600 mb-1">Budget Notes</dt>
+                        <dd class="text-sm text-gray-700 whitespace-pre-wrap">{{ work_item.budget_notes }}</dd>
+                    </div>
+                    {% endif %}
                 </dl>
             </section>
 
@@ -251,6 +424,15 @@
                             {% endif %}
                         </dd>
                     </div>
+                    {% if work_item.completed_at %}
+                    <div class="md:col-span-2 pt-3 border-t border-gray-200">
+                        <dt class="text-sm font-medium text-gray-600 mb-1">Completed At</dt>
+                        <dd class="text-sm text-gray-900">
+                            <i class="fas fa-check-double text-emerald-500 mr-1"></i>
+                            {{ work_item.completed_at|date:"M d, Y, g:i A" }}
+                        </dd>
+                    </div>
+                    {% endif %}
                 </dl>
             </section>
         </div>
@@ -274,6 +456,9 @@
                                         <i class="fas fa-user"></i>
                                     </span>
                                     {{ assignee.get_full_name }}
+                                    {% if assignee.position %}
+                                        <span class="text-xs text-gray-500">- {{ assignee.position }}</span>
+                                    {% endif %}
                                 </li>
                                 {% endfor %}
                             </ul>
@@ -298,6 +483,15 @@
                             <p class="text-sm text-gray-500 italic">No teams assigned.</p>
                         {% endif %}
                     </div>
+                    {% if work_item.created_by %}
+                    <div class="pt-3 border-t border-gray-200">
+                        <h3 class="text-sm font-medium text-gray-600 mb-1">Created By</h3>
+                        <p class="text-sm text-gray-900">
+                            <i class="fas fa-user-circle text-gray-400 mr-1"></i>
+                            {{ work_item.created_by.get_full_name }}
+                        </p>
+                    </div>
+                    {% endif %}
                 </div>
             </section>
 
@@ -350,20 +544,35 @@
                         </div>
                         <div class="flex items-center justify-between text-xs text-gray-500">
                             <span>
-                                {% if child.status == 'active' %}
+                                {% if child.status == 'completed' %}
                                 <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">
-                                    <i class="fas fa-check-circle"></i>
-                                    Active
-                                </span>
-                                {% elif child.status == 'pending' %}
-                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-700">
-                                    <i class="fas fa-clock"></i>
-                                    Pending
-                                </span>
-                                {% elif child.status == 'completed' %}
-                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 text-blue-700">
                                     <i class="fas fa-check-double"></i>
                                     Completed
+                                </span>
+                                {% elif child.status == 'in_progress' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                                    <i class="fas fa-spinner"></i>
+                                    In Progress
+                                </span>
+                                {% elif child.status == 'not_started' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                                    <i class="fas fa-pause-circle"></i>
+                                    Not Started
+                                </span>
+                                {% elif child.status == 'at_risk' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-orange-100 text-orange-700">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    At Risk
+                                </span>
+                                {% elif child.status == 'blocked' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 text-red-700">
+                                    <i class="fas fa-ban"></i>
+                                    Blocked
+                                </span>
+                                {% elif child.status == 'cancelled' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                                    <i class="fas fa-times-circle"></i>
+                                    Cancelled
                                 </span>
                                 {% else %}
                                 <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-600">
@@ -394,7 +603,7 @@
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <h3 class="text-sm font-medium text-gray-600 mb-1">Show in calendar</h3>
+                        <h3 class="text-sm font-medium text-gray-600 mb-1">Show in Calendar</h3>
                         <p class="text-sm text-gray-900 flex items-center gap-2">
                             {% if work_item.is_calendar_visible %}
                                 <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
@@ -416,13 +625,36 @@
                             <span class="text-sm text-gray-900">{{ work_item.calendar_color|default:"Not set" }}</span>
                         </div>
                     </div>
-                    <div class="md:col-span-2">
-                        <h3 class="text-sm font-medium text-gray-600 mb-1">Audit Trail</h3>
-                        <p class="text-xs text-gray-500">Created {{ work_item.created_at|date:"M d, Y, g:i A" }} · Updated {{ work_item.updated_at|date:"M d, Y, g:i A" }}</p>
-                    </div>
                 </div>
+            </section>
+
+            <!-- Metadata -->
+            <section class="bg-white rounded-xl p-6 border border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-info-circle text-gray-500 mr-2"></i>
+                    Audit Trail
+                </h2>
+                <dl class="space-y-3">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-600 mb-1">Created</dt>
+                        <dd class="text-sm text-gray-900">
+                            <i class="fas fa-calendar-plus text-gray-400 mr-1"></i>
+                            {{ work_item.created_at|date:"M d, Y, g:i A" }}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-600 mb-1">Last Updated</dt>
+                        <dd class="text-sm text-gray-900">
+                            <i class="fas fa-clock text-gray-400 mr-1"></i>
+                            {{ work_item.updated_at|date:"M d, Y, g:i A" }}
+                        </dd>
+                    </div>
+                </dl>
             </section>
         </div>
     </div>
 </div>
+
+<!-- Delete Modal Container (for HTMX delete confirmations) -->
+<div id="delete-modal-container" aria-live="polite" role="region" aria-label="Delete confirmation modal"></div>
 {% endblock %}

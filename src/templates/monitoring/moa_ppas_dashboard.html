@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load humanize moa_rbac %}
 
 {% block title %}MOA PPAs Management{% endblock %}
 
@@ -21,9 +21,17 @@
     <header class="rounded-3xl bg-bangsamoro-gradient text-white shadow-xl overflow-hidden">
         <div class="flex flex-col lg:flex-row lg:items-stretch">
             <div class="flex-1 p-8 space-y-5">
-                <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-3 py-1 rounded-full text-sm font-semibold">
-                    <i class="{{ hero_config.badge_icon }}"></i>
-                    <span>{{ hero_config.badge_text }}</span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-3 py-1 rounded-full text-sm font-semibold">
+                        <i class="{{ hero_config.badge_icon }}"></i>
+                        <span>{{ hero_config.badge_text }}</span>
+                    </div>
+                    {% if user|is_moa_focal_user_filter %}
+                    <div class="inline-flex items-center gap-2 bg-emerald-500/20 backdrop-blur px-3 py-1 rounded-full text-sm font-semibold">
+                        <i class="fas fa-building"></i>
+                        <span>{{ user|user_moa_name_filter }}</span>
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="space-y-3">
                     <h1 class="text-3xl font-semibold leading-tight">
@@ -75,10 +83,12 @@
                         <p class="flex items-center gap-2"><i class="fas fa-peso-sign"></i><span>{{ hero_config.overview.budget_label }}: {{ hero_budget_total_display }}</span></p>
                     </div>
                 </div>
+                {% if user|can_create_ppa_filter %}
                 <a href="{% url 'monitoring:create_moa' %}" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-emerald-600 font-semibold px-5 py-3 shadow-md hover:bg-emerald-50 transition-all duration-200">
                     <i class="fas fa-plus-circle"></i>
                     Add MOA PPA
                 </a>
+                {% endif %}
             </div>
         </div>
     </header>

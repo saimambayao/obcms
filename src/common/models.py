@@ -123,10 +123,14 @@ class User(AbstractUser):
 
     def owns_moa_organization(self, organization):
         """Check if user owns/belongs to the given MOA organization."""
+        import uuid
         if not self.is_moa_staff:
             return False
-        if isinstance(organization, str):
-            # organization is an ID
+        if not self.moa_organization:
+            return False
+        # Handle different organization ID types
+        if isinstance(organization, (str, int, uuid.UUID)):
+            # organization is an ID (string, integer, or UUID)
             return str(self.moa_organization_id) == str(organization)
         # organization is a model instance
         return self.moa_organization == organization
@@ -154,6 +158,23 @@ class User(AbstractUser):
             return True
         if self.is_moa_staff and work_item.related_ppa:
             return work_item.related_ppa.implementing_moa == self.moa_organization
+        return False
+
+    def can_edit_service(self, service):
+        """Check if user can edit the given service offering."""
+        if self.is_superuser or self.is_oobc_staff:
+            return True
+        if self.is_moa_staff:
+            return service.offering_mao == self.moa_organization
+        return False
+
+    def can_view_service(self, service):
+        """Check if user can view the given service offering."""
+        if self.is_superuser or self.is_oobc_staff:
+            return True
+        if self.is_moa_staff:
+            # Can view their own MOA's services
+            return service.offering_mao == self.moa_organization
         return False
 
 

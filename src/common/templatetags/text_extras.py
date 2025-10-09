@@ -72,3 +72,16 @@ def divide(value, arg):
         return int(value) // int(arg)
     except (ValueError, TypeError):
         return 0
+
+
+@register.filter(name='split')
+def split(value, arg):
+    """
+    Splits a string by the given argument.
+
+    Usage: {{ value|split:arg }}
+    Example: {{ "a,b,c"|split:"," }} returns ['a', 'b', 'c']
+    """
+    if isinstance(value, str):
+        return value.split(arg)
+    return value

@@ -33,6 +33,14 @@ def recommendations_home(request):
     recommendations = PolicyRecommendation.objects.select_related(
         "proposed_by", "lead_author"
     )
+
+    # Filter for MOA users - show only policies related to their MOA
+    if user.is_moa_staff and user.moa_organization:
+        # Since responsible_agencies is a TextField, we filter by name match
+        recommendations = recommendations.filter(
+            responsible_agencies__icontains=user.moa_organization.name
+        )
+
     evidence = PolicyEvidence.objects.select_related("policy")
 
     policy_categories = ["governance", "legal_framework", "administrative"]
@@ -198,6 +206,13 @@ def recommendations_stats_cards(request):
     from recommendations.policy_tracking.models import PolicyRecommendation
 
     recommendations = PolicyRecommendation.objects.all()
+
+    # Filter for MOA users - show only policies related to their MOA
+    user = request.user
+    if user.is_moa_staff and user.moa_organization:
+        recommendations = recommendations.filter(
+            responsible_agencies__icontains=user.moa_organization.name
+        )
 
     policy_categories = ["governance", "legal_framework", "administrative"]
     program_categories = [
@@ -476,6 +491,13 @@ def recommendations_manage(request):
         .order_by("-created_at")
     )
 
+    # Filter for MOA users - show only policies related to their MOA
+    user = request.user
+    if user.is_moa_staff and user.moa_organization:
+        recommendations = recommendations.filter(
+            responsible_agencies__icontains=user.moa_organization.name
+        )
+
     status_filter = request.GET.get("status")
     category_filter = request.GET.get("category")
     area_filter = request.GET.get("area")
@@ -542,6 +564,13 @@ def _recommendations_by_type(request, recommendation_type: str):
         .order_by("-created_at")
     )
 
+    # Filter for MOA users - show only recommendations related to their MOA
+    user = request.user
+    if user.is_moa_staff and user.moa_organization:
+        queryset = queryset.filter(
+            responsible_agencies__icontains=user.moa_organization.name
+        )
+
     status_filter = request.GET.get("status")
     priority_filter = request.GET.get("priority")
 
@@ -590,6 +619,7 @@ def recommendations_services(request):
 def recommendations_view(request, pk):
     """Display a read-only view of a policy recommendation."""
     from django.shortcuts import get_object_or_404
+    from django.core.exceptions import PermissionDenied
     from recommendations.policy_tracking.models import PolicyRecommendation
 
     recommendation = get_object_or_404(
@@ -609,6 +639,14 @@ def recommendations_view(request, pk):
         pk=pk
     )
 
+    # MOA users can only view recommendations related to their MOA
+    user = request.user
+    if user.is_moa_staff and user.moa_organization:
+        if not recommendation.is_related_to_moa(user.moa_organization):
+            raise PermissionDenied(
+                "You can only view recommendations related to your MOA."
+            )
+
     context = {
         "recommendation": recommendation,
         "areas_data": RECOMMENDATIONS_AREAS,
@@ -620,6 +658,7 @@ def recommendations_view(request, pk):
 def recommendations_edit(request, pk):
     """Edit an existing policy recommendation."""
     from django.shortcuts import get_object_or_404
+    from django.core.exceptions import PermissionDenied
     from recommendations.policy_tracking.models import PolicyRecommendation
     from communities.models import OBCCommunity
     from mana.models import Assessment
@@ -632,6 +671,14 @@ def recommendations_edit(request, pk):
         ),
         pk=pk
     )
+
+    # MOA users can only edit recommendations related to their MOA
+    user = request.user
+    if user.is_moa_staff and user.moa_organization:
+        if not recommendation.is_related_to_moa(user.moa_organization):
+            raise PermissionDenied(
+                "You can only edit recommendations related to your MOA."
+            )
 
     if request.method == "POST":
         # Check if this is an AJAX auto-save request
@@ -823,9 +870,18 @@ def recommendations_edit(request, pk):
 @login_required
 def recommendations_delete(request, pk):
     """Delete a recommendation."""
+    from django.core.exceptions import PermissionDenied
     from recommendations.policy_tracking.models import PolicyRecommendation
 
     recommendation = get_object_or_404(PolicyRecommendation, id=pk)
+
+    # MOA users can only delete recommendations related to their MOA
+    user = request.user
+    if user.is_moa_staff and user.moa_organization:
+        if not recommendation.is_related_to_moa(user.moa_organization):
+            raise PermissionDenied(
+                "You can only delete recommendations related to your MOA."
+            )
 
     if request.method == "POST":
         # Store reference number for success message
@@ -875,6 +931,13 @@ def recommendations_by_area(request, area_slug):
         )
         .annotate(evidence_count=Count("evidence"))
     )
+
+    # Filter for MOA users - show only recommendations related to their MOA
+    user = request.user
+    if user.is_moa_staff and user.moa_organization:
+        recommendations = recommendations.filter(
+            responsible_agencies__icontains=user.moa_organization.name
+        )
 
     submitted_statuses = [
         "submitted",

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static text_extras %}
 
 {% block title %}Coordination Management - Coordination{% endblock %}
 
@@ -188,7 +188,9 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm text-gray-900">
-                                {{ data.venue|default:data.address|default:"TBD" }}
+                                {% with venue=data|get_item:'venue' address=data|get_item:'address' %}
+                                    {{ venue|default:address|default:"TBD" }}
+                                {% endwith %}
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">

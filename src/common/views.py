@@ -1124,7 +1124,7 @@ def mana_geographic_data(request):
 
 @login_required
 def coordination_organizations(request):
-    """Manage coordination organizations page."""
+    """Manage coordination organizations page (MOA users: own org only)."""
     from coordination.models import Organization, OrganizationContact
     from django.db.models import Count
 
@@ -1132,6 +1132,13 @@ def coordination_organizations(request):
     organizations = Organization.objects.annotate(
         contacts_count=Count("contacts"), partnerships_count=Count("led_partnerships")
     ).order_by("name")
+
+    # MOA users can only see their own organization
+    if request.user.is_authenticated and request.user.is_moa_staff:
+        if request.user.moa_organization:
+            organizations = organizations.filter(id=request.user.moa_organization.id)
+        else:
+            organizations = organizations.none()  # No organization assigned
 
     # Filter functionality
     type_filter = request.GET.get("type")

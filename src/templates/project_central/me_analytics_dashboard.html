@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static humanize %}
+{% load static humanize text_extras %}
 
 {% block title %}M&E Analytics Dashboard - PPA Management{% endblock %}
 
@@ -9,17 +9,6 @@
         position: relative;
         height: 300px;
         margin-bottom: 1rem;
-    }
-    .stat-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-    }
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
     }
 </style>
 {% endblock %}
@@ -37,8 +26,8 @@ document.addEventListener('DOMContentLoaded', function() {
             datasets: [{
                 data: [{% for sector in budget_by_sector.sectors %}{{ sector.total_budget }},{% endfor %}],
                 backgroundColor: [
-                    '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444',
-                    '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#6366f1'
+                    '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
+                    '#06b6d4', '#ec4899', '#14b8a6', '#f97316'
                 ]
             }]
         },
@@ -162,31 +151,87 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- Key Metrics -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
-            <div class="stat-card">
-                <div class="text-white-50 small">Total Budget</div>
-                <div class="stat-value">₱{{ budget_by_sector.totals.total_budget|floatformat:0|intcomma }}</div>
-                <div class="small mt-1">{{ budget_by_sector.totals.project_count }} projects</div>
+            <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300 h-100"
+                 style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+                <div class="relative p-4 d-flex flex-column h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total Budget</p>
+                            <p class="text-4xl font-extrabold text-gray-800 mt-1">₱{{ budget_by_sector.totals.total_budget|floatformat:0|intcomma }}</p>
+                        </div>
+                        <div class="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
+                             style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                            <i class="fas fa-money-bill-wave text-2xl text-amber-600"></i>
+                        </div>
+                    </div>
+                    <div class="mt-auto">
+                        <p class="text-sm text-gray-500">{{ budget_by_sector.totals.project_count }} projects</p>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stat-card">
-                <div class="text-white-50 small">Disbursement Rate</div>
-                <div class="stat-value">{{ utilization_rates.ppa_utilization.disbursement_rate|floatformat:1 }}%</div>
-                <div class="small mt-1">₱{{ utilization_rates.ppa_utilization.total_disbursed|floatformat:0|intcomma }} disbursed</div>
+            <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300 h-100"
+                 style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+                <div class="relative p-4 d-flex flex-column h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Disbursement Rate</p>
+                            <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ utilization_rates.ppa_utilization.disbursement_rate|floatformat:1 }}%</p>
+                        </div>
+                        <div class="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
+                             style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                            <i class="fas fa-chart-line text-2xl text-emerald-600"></i>
+                        </div>
+                    </div>
+                    <div class="mt-auto">
+                        <p class="text-sm text-gray-500">₱{{ utilization_rates.ppa_utilization.total_disbursed|floatformat:0|intcomma }} disbursed</p>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stat-card">
-                <div class="text-white-50 small">Active Workflows</div>
-                <div class="stat-value">{{ workflow_performance.total_workflows }}</div>
-                <div class="small mt-1">{{ workflow_performance.on_track_pct|floatformat:1 }}% on track</div>
+            <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300 h-100"
+                 style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+                <div class="relative p-4 d-flex flex-column h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Active Workflows</p>
+                            <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ workflow_performance.total_workflows }}</p>
+                        </div>
+                        <div class="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
+                             style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                            <i class="fas fa-diagram-project text-2xl text-blue-600"></i>
+                        </div>
+                    </div>
+                    <div class="mt-auto">
+                        <p class="text-sm text-gray-500">{{ workflow_performance.on_track_pct|floatformat:1 }}% on track</p>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stat-card">
-                <div class="text-white-50 small">Cost Effectiveness</div>
-                <div class="stat-value">₱{{ cost_effectiveness.overall.overall_cost_per_beneficiary|floatformat:0|intcomma }}</div>
-                <div class="small mt-1">per beneficiary</div>
+            <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300 h-100"
+                 style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+                <div class="relative p-4 d-flex flex-column h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Cost Effectiveness</p>
+                            <p class="text-4xl font-extrabold text-gray-800 mt-1">₱{{ cost_effectiveness.overall.overall_cost_per_beneficiary|floatformat:0|intcomma }}</p>
+                        </div>
+                        <div class="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
+                             style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                            <i class="fas fa-bullseye text-2xl text-orange-600"></i>
+                        </div>
+                    </div>
+                    <div class="mt-auto">
+                        <p class="text-sm text-gray-500">per beneficiary</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

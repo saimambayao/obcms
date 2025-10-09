@@ -13,10 +13,6 @@ Test Coverage:
 
 import pytest
 
-pytest.skip(
-    "Legacy WorkItem performance tests require updated fixtures after refactor.",
-    allow_module_level=True,
-)
 
 import time
 from datetime import date, timedelta

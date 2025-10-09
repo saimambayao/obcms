@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load moa_rbac %}
 
 {% block title %}{{ organization.name }}{% if organization.acronym %} ({{ organization.acronym }}){% endif %} - Coordination System{% endblock %}
 
@@ -54,13 +55,14 @@
                 <i class="fas fa-arrow-left mr-2"></i>
                 Back to directory
             </a>
-            {% if perms.coordination.change_organization %}
+            {% can_manage_moa user organization as can_edit %}
+            {% if can_edit and perms.coordination.change_organization %}
             <a href="{% url 'common:coordination_organization_edit' organization.id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700">
                 <i class="fas fa-edit mr-2"></i>
                 Edit details
             </a>
             {% endif %}
-            {% if perms.coordination.delete_organization %}
+            {% if can_edit and perms.coordination.delete_organization %}
             <a href="{% url 'common:coordination_organization_delete' organization.id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow hover:bg-red-700">
                 <i class="fas fa-trash mr-2"></i>
                 Delete

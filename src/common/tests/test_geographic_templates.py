@@ -152,7 +152,7 @@ class TestGeographicTemplates:
         """Test: How many municipalities?"""
         matches = registry.search_templates("How many municipalities?")
         assert len(matches) > 0, "No matches found"
-        assert any(m.id == 'count_all_municipalities' for m in matches)
+        assert any(m.id == 'count_all_municipalities_geographic' for m in matches)
 
     def test_list_municipalities(self, registry):
         """Test: Show me all municipalities"""
@@ -322,9 +322,9 @@ class TestGeographicTemplates:
         for template in list_templates:
             assert template.priority == 10, f"Template {template.id} should have priority 10"
 
-        # Count templates should have priority 8
+        # Count templates should have priority 15 (CRITICAL: higher than all community templates)
         for template in count_templates:
-            assert template.priority == 8, f"Template {template.id} should have priority 8"
+            assert template.priority == 15, f"Template {template.id} should have priority 15"
 
     def test_result_types_correct(self, registry):
         """Test that templates have correct result_type metadata."""

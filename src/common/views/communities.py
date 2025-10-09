@@ -31,6 +31,7 @@ from ..forms import (
 from ..models import Barangay, Municipality, Province, Region
 from ..services.enhanced_geocoding import enhanced_ensure_location_coordinates
 from ..services.locations import build_location_data, get_object_centroid
+from ..utils.moa_permissions import moa_no_access, moa_view_only
 
 
 DEFAULT_MAP_CENTER = (7.1907, 125.4553, 6)
@@ -361,8 +362,9 @@ def communities_home(request):
 
 
 @login_required
+@moa_no_access
 def communities_add(request):
-    """Add new community page."""
+    """Add new community page (barangay OBC create - blocked for MOA users)."""
     from communities.models import OBCCommunity
 
     if request.method == "POST":
@@ -399,8 +401,9 @@ def communities_add(request):
 
 
 @login_required
+@moa_no_access
 def communities_add_municipality(request):
-    """Record a municipality or city with Bangsamoro communities."""
+    """Record a municipality or city with Bangsamoro communities (municipal OBC create - blocked for MOA users)."""
     from communities.models import MunicipalityCoverage, OBCCommunity, ProvinceCoverage
 
     if request.method == "POST":
@@ -440,6 +443,7 @@ def communities_add_municipality(request):
 
 
 @login_required
+@moa_no_access
 def communities_add_province(request):
     """Record a province-level Bangsamoro coverage profile."""
     from communities.models import ProvinceCoverage
@@ -816,36 +820,29 @@ def communities_manage_municipal(request):
     province_options_json = json.dumps(province_options, cls=DjangoJSONEncoder)
 
     total_coverages = coverages.count()
-    barangay_population_subquery = (
-        OBCCommunity.objects.filter(
-            barangay__municipality=OuterRef("municipality")
-        )
-        .values("barangay__municipality")
+
+    # OPTIMIZED: Pre-compute barangay populations per municipality (avoids slow subquery)
+    from communities.models import OBCCommunity
+
+    municipality_ids = coverages.values_list("municipality_id", flat=True)
+    barangay_populations = (
+        OBCCommunity.objects
+        .filter(barangay__municipality_id__in=municipality_ids)
+        .values("barangay__municipality_id")
         .annotate(total=Sum("estimated_obc_population"))
-        .values("total")
     )
+    barangay_pop_dict = {
+        item["barangay__municipality_id"]: item["total"] or 0
+        for item in barangay_populations
+    }
 
-    coverages_with_population = coverages.annotate(
-        barangay_population=Coalesce(
-            Subquery(barangay_population_subquery, output_field=IntegerField()), 0
-        )
-    )
-
-    total_population = (
-        coverages_with_population.aggregate(
-            total=Sum(
-                Case(
-                    When(
-                        estimated_obc_population__isnull=False,
-                        then="estimated_obc_population",
-                    ),
-                    default=F("barangay_population"),
-                    output_field=IntegerField(),
-                )
-            )
-        )["total"]
-        or 0
-    )
+    # Calculate total population: use coverage estimate or fall back to barangay sum
+    total_population = 0
+    for coverage in coverages:
+        if coverage.estimated_obc_population is not None:
+            total_population += coverage.estimated_obc_population
+        else:
+            total_population += barangay_pop_dict.get(coverage.municipality_id, 0)
     total_communities = (
         coverages.aggregate(total=Sum("total_obc_communities"))["total"] or 0
     )
@@ -1268,8 +1265,9 @@ def communities_manage_provincial(request):
 
 
 @login_required
+@moa_view_only
 def communities_view(request, community_id):
-    """Display a read-only view of a barangay-level OBC community."""
+    """Display a read-only view of a barangay-level OBC community (MOA users: view-only)."""
     from django.db.models import Q
 
     from communities.models import MunicipalityCoverage, OBCCommunity
@@ -1368,8 +1366,9 @@ def communities_view(request, community_id):
 
 
 @login_required
+@moa_view_only
 def communities_view_municipal(request, coverage_id):
-    """Display a read-only view of a municipal-level OBC coverage."""
+    """Display a read-only view of a municipal-level OBC coverage (MOA users: view-only)."""
     from django.db.models import Q
 
     from communities.models import MunicipalityCoverage, OBCCommunity
@@ -1461,6 +1460,7 @@ def communities_view_municipal(request, coverage_id):
 
 
 @login_required
+@moa_view_only
 def communities_view_provincial(request, coverage_id):
     """Display a read-only view of a province-level OBC coverage."""
     from django.db.models import Q
@@ -1654,8 +1654,9 @@ def location_centroid(request):
 
 
 @login_required
+@moa_no_access
 def communities_edit(request, community_id):
-    """Edit an existing barangay-level community."""
+    """Edit an existing barangay-level community (blocked for MOA users)."""
     from communities.models import OBCCommunity
 
     community = get_object_or_404(
@@ -1695,9 +1696,10 @@ def communities_edit(request, community_id):
 
 
 @login_required
+@moa_no_access
 @require_POST
 def communities_delete(request, community_id):
-    """Delete an existing barangay-level community."""
+    """Delete an existing barangay-level community (blocked for MOA users)."""
     from communities.models import OBCCommunity
 
     community = get_object_or_404(
@@ -1795,8 +1797,9 @@ def communities_stakeholders(request):
 
 
 @login_required
+@moa_no_access
 def communities_edit_municipal(request, coverage_id):
-    """Edit an existing municipality coverage record."""
+    """Edit an existing municipality coverage record (blocked for MOA users)."""
     from communities.models import MunicipalityCoverage
 
     coverage = get_object_or_404(
@@ -1838,6 +1841,7 @@ def communities_edit_municipal(request, coverage_id):
 
 
 @login_required
+@moa_no_access
 def communities_edit_provincial(request, coverage_id):
     """Edit an existing province-level coverage record."""
     from communities.models import ProvinceCoverage
@@ -1908,9 +1912,10 @@ def communities_edit_provincial(request, coverage_id):
 
 
 @login_required
+@moa_no_access
 @require_POST
 def communities_delete_municipal(request, coverage_id):
-    """Delete a municipality coverage record."""
+    """Delete a municipality coverage record (blocked for MOA users)."""
     from communities.models import MunicipalityCoverage, ProvinceCoverage
 
     coverage = get_object_or_404(
@@ -1956,6 +1961,7 @@ def communities_restore_municipal(request, coverage_id):
 
 
 @login_required
+@moa_no_access
 @require_POST
 def communities_delete_provincial(request, coverage_id):
     """Delete a province coverage record."""

@@ -34,12 +34,14 @@ class UserAdmin(BaseUserAdmin):
         "last_name",
         "user_type",
         "organization",
+        "moa_organization",
         "is_approved",
         "is_active",
         "date_joined",
     )
     list_filter = (
         "user_type",
+        "moa_organization",
         "is_approved",
         "is_active",
         "is_staff",
@@ -48,11 +50,20 @@ class UserAdmin(BaseUserAdmin):
     )
     search_fields = ("username", "first_name", "last_name", "email", "organization")
     ordering = ("-date_joined",)
+    autocomplete_fields = ("moa_organization",)
 
     fieldsets = BaseUserAdmin.fieldsets + (
         (
             "OBC Information",
             {"fields": ("user_type", "organization", "position", "contact_number")},
+        ),
+        (
+            "MOA Access",
+            {
+                "fields": ("moa_organization",),
+                "description": "For MOA/LGU/NGA users: Select the organization this user belongs to. "
+                              "This grants them permission to manage their organization profile and PPAs.",
+            },
         ),
         ("Approval Status", {"fields": ("is_approved", "approved_by", "approved_at")}),
     )
@@ -61,6 +72,13 @@ class UserAdmin(BaseUserAdmin):
         (
             "OBC Information",
             {"fields": ("user_type", "organization", "position", "contact_number")},
+        ),
+        (
+            "MOA Access",
+            {
+                "fields": ("moa_organization",),
+                "description": "For MOA/LGU/NGA users: Select the organization this user belongs to.",
+            },
         ),
     )
 

@@ -74,3 +74,20 @@ def currency_php(value):
         return f"₱ {formatted}"
     except (ValueError, TypeError):
         return "₱ 0.00"
+
+
+@register.filter(name='percentage_of')
+def percentage_of(value, total):
+    """Calculate percentage of value relative to total.
+
+    Usage: {{ value|percentage_of:total }}
+    Example: {{ 50|percentage_of:200 }} returns 25.0
+    """
+    try:
+        val = float(value) if value is not None else 0
+        tot = float(total) if total is not None else 0
+        if tot == 0:
+            return 0
+        return (val / tot) * 100
+    except (ValueError, TypeError, ZeroDivisionError):
+        return 0

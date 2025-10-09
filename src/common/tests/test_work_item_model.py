@@ -15,10 +15,6 @@ Test Coverage:
 
 import pytest
 
-pytest.skip(
-    "Legacy WorkItem model tests require updated factories after refactor.",
-    allow_module_level=True,
-)
 
 from datetime import date, timedelta
 from decimal import Decimal

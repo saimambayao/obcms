@@ -7,10 +7,6 @@ legacy tests require updates to the new routes and data fixtures. Skipping for n
 
 import pytest
 
-pytest.skip(
-    "Legacy WorkItem calendar tests require updated routes/fixtures.",
-    allow_module_level=True,
-)
 
 import json
 from datetime import date, timedelta

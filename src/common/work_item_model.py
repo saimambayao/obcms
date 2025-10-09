@@ -814,6 +814,27 @@ class WorkItem(MPTTModel):
         self.project_data["workflow_stage"] = value
 
     @property
+    def stage_history(self):
+        """
+        Backward compatibility for legacy ProjectWorkflow.stage_history.
+
+        Stage history entries were migrated into project_data; provide a safe accessor
+        so existing analytics/views can continue to read the timeline.
+        """
+        if not self.project_data:
+            return []
+
+        history = self.project_data.get("stage_history")
+        return history or []
+
+    @stage_history.setter
+    def stage_history(self, value):
+        if not self.project_data:
+            self.project_data = {}
+        # Persist lists only; coerce None to empty list for predictable reads
+        self.project_data["stage_history"] = value or []
+
+    @property
     def event_type(self):
         """Backward compatibility with Event.event_type."""
         return self.activity_data.get("event_type", "other")
