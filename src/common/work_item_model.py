@@ -255,6 +255,29 @@ class WorkItem(MPTTModel):
         help_text="Related Policy Recommendation",
     )
 
+    # ========== MOA/OOBC ISOLATION (RBAC) ==========
+    # These fields enable efficient filtering and permission checks
+    # without requiring joins through the PPA relationship
+
+    ppa_category = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Category from related PPA (denormalized for performance). "
+        "Choices: moa_ppa, oobc_ppa, obc_request. Auto-populated from PPA.",
+    )
+
+    implementing_moa = models.ForeignKey(
+        "coordination.Organization",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="moa_work_items",
+        help_text="Implementing MOA organization (denormalized for filtering). "
+        "Auto-populated from PPA's implementing_moa field.",
+    )
+
     # ========== BUDGET TRACKING ==========
 
     allocated_budget = models.DecimalField(
@@ -299,6 +322,10 @@ class WorkItem(MPTTModel):
             models.Index(fields=["related_ppa"], name="wi_rel_ppa_idx"),
             models.Index(fields=["related_assessment"], name="wi_rel_assessment_idx"),
             models.Index(fields=["related_policy"], name="wi_rel_policy_idx"),
+            # MOA/OOBC isolation indexes (RBAC)
+            models.Index(fields=["ppa_category"], name="wi_ppa_category_idx"),
+            models.Index(fields=["implementing_moa"], name="wi_implementing_moa_idx"),
+            models.Index(fields=["ppa_category", "implementing_moa"], name="wi_moa_filter_idx"),
             # MPTT tree traversal indexes (critical for tree queries)
             models.Index(fields=["tree_id", "lft", "rght"], name="wi_tree_traversal_idx"),
             models.Index(fields=["parent_id"], name="wi_parent_idx"),
@@ -421,6 +448,9 @@ class WorkItem(MPTTModel):
         """
         Get sibling work items (items with the same parent).
 
+        MOA/OOBC Isolation: For top-level items, filters by same ppa_category
+        and implementing_moa to enforce MOA/OOBC separation.
+
         Args:
             include_self: If True, include this item in the result. Default False.
 
@@ -428,15 +458,25 @@ class WorkItem(MPTTModel):
             QuerySet of sibling WorkItem objects.
         """
         if self.parent:
+            # Has parent: get all children of that parent (they share the same PPA context)
             siblings = self.parent.get_children()
             if not include_self:
                 siblings = siblings.exclude(pk=self.pk)
             return siblings
         else:
-            # Top-level items: get other top-level items
-            siblings = WorkItem.objects.filter(parent__isnull=True)
+            # Top-level items: filter by same category and MOA to enforce isolation
+            siblings = WorkItem.objects.filter(
+                parent__isnull=True,
+                ppa_category=self.ppa_category
+            )
+
+            # For MOA PPAs, also filter by implementing_moa
+            if self.ppa_category == 'moa_ppa' and self.implementing_moa:
+                siblings = siblings.filter(implementing_moa=self.implementing_moa)
+
             if not include_self:
                 siblings = siblings.exclude(pk=self.pk)
+
             return siblings
 
     def get_related_and_siblings(self):
@@ -547,7 +587,6 @@ class WorkItem(MPTTModel):
 
     # ========== PPA INTEGRATION METHODS ==========
 
-    @property
     def get_ppa_source(self):
         """
         Get the source PPA for this work item.
@@ -563,7 +602,7 @@ class WorkItem(MPTTModel):
 
         Example:
             >>> task = WorkItem.objects.get(title="Prepare venue")
-            >>> ppa = task.get_ppa_source
+            >>> ppa = task.get_ppa_source()
             >>> print(ppa.title)
             "Livelihood Training Program for OBCs"
         """
@@ -577,10 +616,44 @@ class WorkItem(MPTTModel):
 
         # Traverse up the parent hierarchy
         if self.parent:
-            return self.parent.get_ppa_source
+            return self.parent.get_ppa_source()
 
         # No PPA found in hierarchy
         return None
+
+    def populate_isolation_fields(self):
+        """
+        Auto-populate ppa_category and implementing_moa from the source PPA.
+
+        This method should be called:
+        - When creating a new work item linked to a PPA
+        - When updating the related_ppa field
+        - During data migrations to backfill existing work items
+
+        Returns:
+            bool: True if fields were populated, False if no PPA source found
+
+        Example:
+            >>> work_item = WorkItem(title="New Task", work_type="task")
+            >>> work_item.related_ppa = some_moa_ppa
+            >>> work_item.populate_isolation_fields()
+            True
+            >>> print(work_item.ppa_category)
+            "moa_ppa"
+        """
+        ppa = self.get_ppa_source()
+
+        if not ppa:
+            # No PPA source - clear isolation fields
+            self.ppa_category = None
+            self.implementing_moa = None
+            return False
+
+        # Populate from PPA
+        self.ppa_category = ppa.category
+        self.implementing_moa = ppa.implementing_moa
+
+        return True
 
     def calculate_budget_from_children(self):
         """
@@ -679,7 +752,7 @@ class WorkItem(MPTTModel):
             >>> print(result)
             {'progress_synced': True, 'status_synced': True, 'ppa_id': '...'}
         """
-        ppa = self.get_ppa_source
+        ppa = self.get_ppa_source()
 
         if not ppa:
             return {

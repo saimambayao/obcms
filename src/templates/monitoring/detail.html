@@ -104,6 +104,13 @@
                     {% endif %}
                 </button>
                 <button type="button"
+                        onclick="switchPPATab('calendar')"
+                        id="tab-calendar"
+                        class="ppa-tab border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 text-sm font-medium">
+                    <i class="fas fa-calendar-alt mr-2"></i>
+                    Calendar
+                </button>
+                <button type="button"
                         onclick="switchPPATab('budget')"
                         id="tab-budget"
                         class="ppa-tab border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 text-sm font-medium">
@@ -125,12 +132,21 @@
                 {% include "monitoring/partials/work_items_tab.html" %}
             </div>
 
+            <!-- Calendar Tab -->
+            <div id="calendar-tab-content" class="tab-content-panel hidden">
+                {% include "monitoring/partials/ppa_calendar_tab.html" %}
+            </div>
+
             <!-- Budget Tab -->
             <div id="budget-tab-content" class="tab-content-panel hidden">
-                <div class="text-center py-10 text-gray-500">
-                    <i class="fas fa-chart-line text-4xl mb-3 text-gray-400"></i>
-                    <p>Budget tracking details coming soon...</p>
-                </div>
+                {% if entry.implementing_moa %}
+                    {% include "coordination/partials/moa_budget_tab.html" with organization=entry.implementing_moa moa_ppas=moa_ppas moa_budget_stats=moa_budget_stats %}
+                {% else %}
+                    <div class="text-center py-10 text-gray-500">
+                        <i class="fas fa-chart-line text-4xl mb-3 text-gray-400"></i>
+                        <p>Assign an implementing MOA to enable budget tracking.</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </section>

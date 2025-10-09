@@ -4,8 +4,15 @@ from .auth import (
     CustomLoginView,
     CustomLogoutView,
     UserRegistrationView,
+    MOARegistrationView,
+    MOARegistrationSuccessView,
     page_restricted,
     profile,
+)
+from .approval import (
+    MOAApprovalListView,
+    approve_moa_user,
+    reject_moa_user,
 )
 from .redirects import (
     DeprecatedRedirectView,
@@ -245,6 +252,11 @@ __all__ = [
     "CustomLoginView",
     "CustomLogoutView",
     "UserRegistrationView",
+    "MOARegistrationView",
+    "MOARegistrationSuccessView",
+    "MOAApprovalListView",
+    "approve_moa_user",
+    "reject_moa_user",
     "profile",
     "page_restricted",
     "dashboard",

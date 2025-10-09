@@ -1,6 +1,7 @@
+{% load math_extras %}
 <!-- Work Item Sidebar Create Form -->
-<form hx-post="{% url 'common:work_item_sidebar_create' %}"
-      hx-target="#sidebar-content"
+<form hx-post="{% url 'common:work_item_sidebar_create' %}{% if ppa_id %}?ppa_id={{ ppa_id }}{% endif %}"
+      hx-target="{% if ppa_id %}#ppa-sidebar-content{% else %}#sidebar-content{% endif %}"
       hx-swap="innerHTML"
       hx-indicator="#formSubmitIndicator"
       hx-disabled-elt="find button[type='submit']"
@@ -17,6 +18,8 @@
       "
       class="space-y-4">
     {% csrf_token %}
+    {% if ppa_id %}<input type="hidden" name="ppa_id" value="{{ ppa_id }}">{% endif %}
+    {% if assignee_id %}<input type="hidden" name="assignee_id" value="{{ assignee_id }}">{% endif %}
 
     <!-- Header -->
     <div class="flex items-center justify-between pb-3 border-b border-gray-200">
@@ -25,7 +28,7 @@
             Create New Work Item
         </h3>
         <button type="button"
-                onclick="closeSidebar()"
+                onclick="{% if ppa_id %}closePPASidebar(){% else %}closeSidebar(){% endif %}"
                 class="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
             <i class="fas fa-times"></i>
         </button>
@@ -56,8 +59,50 @@
         {% endif %}
     </div>
 
+    <!-- Assignee Information (Auto-populated from staff profile, Non-editable) -->
+    {% if assignee_user %}
+    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+        <label class="block text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-1">
+            <i class="fas fa-user-check mr-1"></i> Assigned To
+        </label>
+        <div class="bg-white rounded border border-emerald-200 px-3 py-2 text-sm text-gray-900 font-medium">
+            {{ assignee_user.get_full_name|default:assignee_user.username }}
+        </div>
+        <p class="mt-1 text-xs text-emerald-600">This work item will be automatically assigned to this user</p>
+    </div>
+    {% endif %}
+
+    <!-- PPA and MOA Information (Auto-populated, Non-editable) -->
+    {% if ppa_info %}
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+        <div>
+            <label class="block text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
+                <i class="fas fa-folder mr-1"></i> Related PPA
+            </label>
+            <div class="bg-white rounded border border-blue-200 px-3 py-2 text-sm text-gray-900 font-medium">
+                {{ ppa_info.title }}
+            </div>
+            <p class="mt-1 text-xs text-blue-600">This work item will be linked to this PPA</p>
+        </div>
+        {% if ppa_info.implementing_moa %}
+        <div>
+            <label class="block text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
+                <i class="fas fa-building mr-1"></i> Implementing MOA
+            </label>
+            <div class="bg-white rounded border border-blue-200 px-3 py-2 text-sm text-gray-900 font-medium">
+                {{ ppa_info.implementing_moa.name }}
+                {% if ppa_info.implementing_moa.acronym %}
+                <span class="text-gray-500">({{ ppa_info.implementing_moa.acronym }})</span>
+                {% endif %}
+            </div>
+            <p class="mt-1 text-xs text-blue-600">This work item will be linked to this MOA</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Parent (if applicable, from query param) -->
-    {% if form.parent %}
+    {% if form.parent and not ppa_info %}
     {{ form.parent.as_hidden }}
     <div class="bg-blue-50 rounded-lg p-3">
         <p class="text-sm text-blue-900 font-medium flex items-center gap-2">
@@ -122,6 +167,45 @@
         </div>
     </div>
 
+    <!-- Budget Tracking Section -->
+    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 space-y-3">
+        <h4 class="text-sm font-semibold text-emerald-900 flex items-center gap-2">
+            <i class="fas fa-wallet text-emerald-600"></i>
+            Budget Tracking
+        </h4>
+
+        <!-- PPA Total Budget (if applicable) -->
+        {% if ppa_info.budget_allocation %}
+        <div class="bg-white border border-emerald-200 rounded-lg p-3">
+            <label class="block text-xs font-medium text-gray-600 mb-1">
+                Total PPA Budget
+            </label>
+            <div class="text-base font-semibold text-gray-900" id="ppa-total-budget" data-value="{{ ppa_info.budget_allocation }}">
+                {{ ppa_info.budget_allocation|currency_php }}
+            </div>
+            <p class="mt-1 text-xs text-gray-500">Available budget from the related PPA</p>
+        </div>
+        {% endif %}
+
+        <!-- Allocated Budget -->
+        <div>
+            <label for="{{ form.allocated_budget.id_for_label }}" class="block text-xs font-medium text-gray-700 mb-1">
+                Allocated Budget
+            </label>
+            <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">₱</span>
+                {{ form.allocated_budget }}
+            </div>
+            <div id="budget-error-message" class="hidden mt-1 text-xs text-red-600 flex items-center gap-1">
+                <i class="fas fa-exclamation-circle"></i>
+                <span></span>
+            </div>
+            {% if form.allocated_budget.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ form.allocated_budget.errors.0 }}</p>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Description -->
     <div>
         <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
@@ -144,7 +228,7 @@
             Create Work Item
         </button>
         <button type="button"
-                onclick="closeSidebar()"
+                onclick="{% if ppa_id %}closePPASidebar(){% else %}closeSidebar(){% endif %}"
                 class="inline-flex items-center justify-center px-4 py-2.5 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-all shadow-sm">
             <i class="fas fa-times mr-2"></i>
             Cancel
@@ -163,12 +247,113 @@
 (function() {
     'use strict';
 
+    const formEl = document.currentScript?.previousElementSibling;
+
+    if (!(formEl instanceof HTMLFormElement)) {
+        return;
+    }
+
+    function hideSidebarHeader(containerId, headerId) {
+        const container = document.getElementById(containerId);
+        const header = document.getElementById(headerId);
+
+        if (!container || !header) {
+            return;
+        }
+
+        header.classList.add('hidden');
+
+        const restoreHeader = (event) => {
+            if (event.target === container) {
+                header.classList.remove('hidden');
+                container.removeEventListener('htmx:beforeSwap', restoreHeader);
+            }
+        };
+
+        container.addEventListener('htmx:beforeSwap', restoreHeader);
+    }
+
+    hideSidebarHeader('sidebar-content', 'work-item-sidebar-header');
+    hideSidebarHeader('ppa-sidebar-content', 'ppa-work-item-sidebar-header');
+
     // Focus on first input when form loads
     setTimeout(() => {
-        const firstInput = document.querySelector('#sidebar-content input, #sidebar-content select, #sidebar-content textarea');
+        let firstInput = formEl.querySelector('input, select, textarea');
+
+        if (!firstInput) {
+            const containers = ['#sidebar-content', '#ppa-sidebar-content'];
+            for (const selector of containers) {
+                const container = document.querySelector(selector);
+                if (container) {
+                    const candidate = container.querySelector('input, select, textarea');
+                    if (candidate) {
+                        firstInput = candidate;
+                        break;
+                    }
+                }
+            }
+        }
+
         if (firstInput) {
             firstInput.focus();
         }
+    }, 100);
+
+    // Budget validation for sidebar create form
+    function validateSidebarCreateBudget() {
+        const allocatedInput = document.getElementById('{{ form.allocated_budget.id_for_label }}');
+        const ppaTotalBudgetEl = document.getElementById('ppa-total-budget');
+        const submitBtn = formEl.querySelector('button[type="submit"]');
+        const errorMessageDiv = document.getElementById('budget-error-message');
+        const errorMessageSpan = errorMessageDiv?.querySelector('span');
+
+        if (!allocatedInput) return;
+
+        const allocated = parseFloat(allocatedInput.value) || 0;
+        const ppaTotalBudget = ppaTotalBudgetEl ? parseFloat(ppaTotalBudgetEl.dataset.value) || 0 : 0;
+
+        // Format currency with comma separators
+        const formatCurrency = (value) => {
+            return '₱ ' + value.toLocaleString('en-PH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        };
+
+        // Validate against PPA budget
+        if (ppaTotalBudget > 0 && allocated > ppaTotalBudget) {
+            allocatedInput.classList.add('ring-2', 'ring-red-500', 'border-red-500');
+            if (errorMessageDiv && errorMessageSpan) {
+                errorMessageSpan.textContent = `Allocated budget cannot exceed PPA total budget (${formatCurrency(ppaTotalBudget)})`;
+                errorMessageDiv.classList.remove('hidden');
+            }
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        } else {
+            allocatedInput.classList.remove('ring-2', 'ring-red-500', 'border-red-500');
+            if (errorMessageDiv) {
+                errorMessageDiv.classList.add('hidden');
+            }
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    }
+
+    // Initialize and attach event listeners
+    setTimeout(() => {
+        const allocatedInput = document.getElementById('{{ form.allocated_budget.id_for_label }}');
+
+        if (allocatedInput) {
+            allocatedInput.addEventListener('input', validateSidebarCreateBudget);
+            allocatedInput.addEventListener('change', validateSidebarCreateBudget);
+        }
+
+        // Validate on initial load
+        validateSidebarCreateBudget();
     }, 100);
 })();
 </script>

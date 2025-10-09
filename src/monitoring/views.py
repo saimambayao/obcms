@@ -1,20 +1,27 @@
 """Views for Monitoring & Evaluation dashboard and detail pages."""
 
 from collections import defaultdict
+from decimal import Decimal
+import csv
+import json
+import logging
+from datetime import datetime, timedelta
+import uuid
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Avg, Count, Max, Q, Sum
-from django.http import HttpResponse, JsonResponse
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from django.db import transaction
+from django.db.models import Avg, Count, Max, Q, Sum
 from django.forms import modelformset_factory
-import csv
-import json
-from datetime import datetime, timedelta
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+
+from common.utils.moa_permissions import moa_can_edit_ppa
 
 from common.services.locations import build_location_data, get_object_centroid
 from communities.models import OBCCommunity
@@ -29,6 +36,10 @@ from .forms import (
     MonitoringOBCQuickCreateForm,
 )
 from .models import MonitoringEntry, MonitoringUpdate
+from .services import BudgetDistributionService, build_moa_budget_tracking
+
+
+logger = logging.getLogger(__name__)
 
 
 def _normalise_float(value):
@@ -44,6 +55,106 @@ def _prefetch_entries():
     """Return a queryset with the relations needed across views."""
     # Use custom manager's with_related() for optimal performance
     return MonitoringEntry.objects.with_related()
+
+
+def _build_workitem_context(entry):
+    """
+    Assemble context data for the Work Items tab.
+
+    Returns metrics even when tracking is disabled so the template stays stable.
+    """
+    default_stats = {
+        "total_budget_allocated": Decimal("0.00"),
+        "total_work_items": 0,
+        "avg_progress": 0,
+        "budget_variance_pct": 0.0,
+        "unallocated_budget": Decimal("0.00"),
+    }
+    context = {
+        "work_items": None,
+        "budget_summary": None,
+        "progress_by_type": {},
+        "workitem_stats": default_stats,
+    }
+
+    execution_project = getattr(entry, "execution_project", None)
+    if not execution_project:
+        return context
+
+    descendants = entry.work_items.all()
+    child_items = descendants.exclude(work_type=WorkItem.WORK_TYPE_PROJECT)
+
+    total_budget_allocated = (
+        child_items.aggregate(total=Sum("allocated_budget"))["total"]
+        or Decimal("0.00")
+    )
+    total_budget_allocated = Decimal(str(total_budget_allocated))
+
+    budget = entry.budget_allocation or Decimal("0.00")
+    budget = Decimal(str(budget))
+    unallocated_budget = budget - total_budget_allocated
+
+    variance_pct = 0.0
+    if budget != Decimal("0.00"):
+        variance_pct = float(
+            ((total_budget_allocated - budget) / budget) * Decimal("100.0")
+        )
+
+    average_progress = descendants.aggregate(avg=Avg("progress"))["avg"]
+    if average_progress is None:
+        average_progress_value = 0
+    else:
+        average_progress_value = int(round(float(average_progress)))
+
+    progress_by_type = {}
+    for work_type_key, work_type_label in WorkItem.WORK_TYPE_CHOICES:
+        items_of_type = descendants.filter(work_type=work_type_key)
+        if items_of_type.exists():
+            avg_value = items_of_type.aggregate(avg=Avg("progress"))["avg"] or 0
+            progress_by_type[work_type_label] = {
+                "count": items_of_type.count(),
+                "avg_progress": round(float(avg_value), 1),
+            }
+
+    # Get only root-level work items (immediate children of execution_project)
+    # The tree template will recursively load descendants via HTMX
+    root_work_items = execution_project.get_children().select_related("created_by")
+
+    context.update(
+        {
+            "work_items": root_work_items,
+            "budget_summary": {
+                "total": budget,
+                "allocated": total_budget_allocated,
+                "remaining": unallocated_budget,
+            },
+            "progress_by_type": progress_by_type,
+            "workitem_stats": {
+                "total_budget_allocated": total_budget_allocated,
+                "total_work_items": descendants.count(),
+                "avg_progress": average_progress_value,
+                "budget_variance_pct": variance_pct,
+                "unallocated_budget": unallocated_budget,
+            },
+        }
+    )
+    return context
+
+
+def _render_workitems_tab(request, entry, *, status=200, triggers=None):
+    """Render the Work Items tab partial with refreshed context."""
+    context = {"entry": entry}
+    context.update(_build_workitem_context(entry))
+
+    response = render(
+        request,
+        "monitoring/partials/work_items_tab.html",
+        context,
+        status=status,
+    )
+    if triggers:
+        response["HX-Trigger"] = json.dumps(triggers)
+    return response
 
 
 @login_required
@@ -366,40 +477,31 @@ def monitoring_entry_detail(request, pk):
         special_provision_text = provision_block.strip()
         support_text_clean = additional_support.strip()
 
-    # WorkItem Integration Context (for MOA PPAs)
-    work_items = None
-    budget_summary = None
-    progress_by_type = {}
+    workitem_context = _build_workitem_context(entry)
 
-    if entry.category == "moa_ppa" and entry.execution_project:
-        from common.work_item_model import WorkItem
-        from decimal import Decimal
-
-        # Get root-level work items (children of execution_project)
-        work_items = entry.execution_project.get_children().select_related('created_by')
-
-        # Calculate budget summary
-        total_budget = entry.budget_allocation or Decimal('0.00')
-        allocated_sum = entry.work_items.aggregate(
-            total=Sum('allocated_budget')
-        )['total'] or Decimal('0.00')
-
-        budget_summary = {
-            'total': total_budget,
-            'allocated': allocated_sum,
-            'remaining': total_budget - allocated_sum,
-        }
-
-        # Calculate progress by work type
-        all_work_items = entry.work_items.all()
-        for work_type_key, work_type_label in WorkItem.WORK_TYPE_CHOICES:
-            items_of_type = all_work_items.filter(work_type=work_type_key)
-            if items_of_type.exists():
-                avg_progress = items_of_type.aggregate(avg=Avg('progress'))['avg'] or 0
-                progress_by_type[work_type_label] = {
-                    'count': items_of_type.count(),
-                    'avg_progress': round(avg_progress, 1),
-                }
+    budget_context = {
+        "moa_ppas": [],
+        "moa_budget_stats": {
+            "total_budget": Decimal("0.00"),
+            "total_allocated": Decimal("0.00"),
+            "total_expenditure": Decimal("0.00"),
+            "utilization_rate": 0.0,
+            "total_variance": Decimal("0.00"),
+        },
+    }
+    if entry.category == "moa_ppa" and entry.implementing_moa:
+        moa_ppas_queryset = (
+            MonitoringEntry.objects.filter(
+                category="moa_ppa",
+                implementing_moa=entry.implementing_moa,
+            )
+            .select_related("implementing_moa")
+            .order_by("-updated_at")
+        )
+        budget_context = build_moa_budget_tracking(
+            entry.implementing_moa,
+            moa_ppas_queryset,
+        )
 
     context = {
         "entry": entry,
@@ -408,11 +510,9 @@ def monitoring_entry_detail(request, pk):
         "related_entries": related_entries,
         "special_provision_text": special_provision_text,
         "support_text_clean": support_text_clean,
-        # WorkItem Integration
-        "work_items": work_items,
-        "budget_summary": budget_summary,
-        "progress_by_type": progress_by_type,
     }
+    context.update(workitem_context)
+    context.update(budget_context)
     return render(request, "monitoring/detail.html", context)
 
 
@@ -1864,6 +1964,292 @@ def export_obc_data(request):
 
 # ==================== WORKITEM INTEGRATION VIEWS ====================
 
+
+@moa_can_edit_ppa
+@login_required
+@require_POST
+def enable_workitem_tracking(request, pk):
+    """
+    HTMX endpoint: Enable WorkItem tracking for a MonitoringEntry.
+
+    Creates execution project hierarchy and updates tracking flags.
+    """
+    entry = get_object_or_404(MonitoringEntry, pk=pk)
+
+    if entry.category != "moa_ppa":
+        message = "Work item tracking is only available for MOA PPAs."
+        return _render_workitems_tab(
+            request, entry, status=400, triggers={"show-toast": message}
+        )
+
+    if entry.execution_project:
+        return _render_workitems_tab(
+            request,
+            entry,
+            triggers={"show-toast": "Work item tracking already enabled."},
+        )
+
+    template_type = (
+        request.POST.get("template_type")
+        or request.POST.get("structure_template")
+        or "activity"
+    )
+    template_choices = {"program", "activity", "milestone", "minimal"}
+    if template_type not in template_choices:
+        template_type = "activity"
+
+    policy = (
+        request.POST.get("budget_distribution_policy")
+        or entry.budget_distribution_policy
+        or "equal"
+    )
+    policy_choices = {"equal", "weighted", "manual"}
+    if policy not in policy_choices:
+        policy = "equal"
+
+    try:
+        with transaction.atomic():
+            project = entry.create_execution_project(
+                structure_template=template_type, created_by=request.user
+            )
+            entry.execution_project = project
+            entry.enable_workitem_tracking = True
+            entry.budget_distribution_policy = policy
+            entry.updated_by = request.user
+            entry.save(
+                update_fields=[
+                    "execution_project",
+                    "enable_workitem_tracking",
+                    "budget_distribution_policy",
+                    "updated_by",
+                    "updated_at",
+                ]
+            )
+    except ValidationError as exc:
+        message = "; ".join(exc.messages) if hasattr(exc, "messages") else str(exc)
+        logger.warning(
+            "Failed to enable WorkItem tracking for %s: %s", entry.id, message
+        )
+        return _render_workitems_tab(
+            request, entry, status=400, triggers={"show-toast": message}
+        )
+    except Exception:
+        logger.exception(
+            "Unexpected error while enabling WorkItem tracking for %s", entry.id
+        )
+        return _render_workitems_tab(
+            request,
+            entry,
+            status=500,
+            triggers={
+                "show-toast": "Unable to enable work item tracking right now. Please try again."
+            },
+        )
+
+    entry.refresh_from_db()
+    return _render_workitems_tab(
+        request,
+        entry,
+        triggers={
+            "show-toast": "Work item tracking enabled. Execution project created.",
+            "refresh-counters": True,
+        },
+    )
+
+
+@moa_can_edit_ppa
+@login_required
+@require_POST
+def disable_workitem_tracking(request, pk):
+    """
+    HTMX/JSON endpoint: Disable WorkItem tracking and remove execution project.
+    """
+    entry = get_object_or_404(MonitoringEntry, pk=pk)
+
+    if not request.user.is_superuser:
+        message = "Only superuser administrators can disable work item tracking."
+        if request.headers.get("HX-Request"):
+            return _render_workitems_tab(
+                request, entry, status=403, triggers={"show-toast": message}
+            )
+        return JsonResponse({"error": message}, status=403)
+
+    if not entry.execution_project:
+        message = "This PPA does not have an execution project to disable."
+        if request.headers.get("HX-Request"):
+            return _render_workitems_tab(
+                request, entry, status=400, triggers={"show-toast": message}
+            )
+        return JsonResponse({"error": message}, status=400)
+
+    try:
+        with transaction.atomic():
+            entry.disable_workitem_tracking(updated_by=request.user)
+    except Exception:
+        logger.exception("Failed to disable WorkItem tracking for %s", entry.id)
+        message = "Unable to disable work item tracking right now. Please try again."
+        if request.headers.get("HX-Request"):
+            return _render_workitems_tab(
+                request, entry, status=500, triggers={"show-toast": message}
+            )
+        return JsonResponse({"error": message}, status=500)
+
+    entry.refresh_from_db()
+    if request.headers.get("HX-Request"):
+        return _render_workitems_tab(
+            request,
+            entry,
+            triggers={"show-toast": "Work item tracking disabled. Execution project removed."},
+        )
+
+    return JsonResponse({"success": True})
+
+
+@moa_can_edit_ppa
+@login_required
+@require_POST
+def distribute_budget(request, pk):
+    """
+    HTMX/JSON endpoint: Distribute PPA budget across work items.
+
+    Supports direct HTMX calls (uses stored policy) and JSON payload submissions
+    from the budget distribution modal.
+    """
+    entry = get_object_or_404(MonitoringEntry, pk=pk)
+
+    if not entry.execution_project:
+        message = "Enable work item tracking before distributing budget."
+        if request.headers.get("HX-Request"):
+            return _render_workitems_tab(
+                request, entry, status=400, triggers={"show-toast": message}
+            )
+        return JsonResponse({"error": message}, status=400)
+
+    payload_method = request.POST.get("method")
+    distribution_payload = None
+
+    if request.content_type and "application/json" in request.content_type:
+        try:
+            payload = json.loads(request.body or "{}")
+        except json.JSONDecodeError:
+            payload = {}
+        method = payload.get("method") or payload_method
+        distribution_payload = payload.get("distribution")
+    else:
+        method = payload_method
+        distribution_raw = request.POST.get("distribution")
+        if distribution_raw:
+            try:
+                distribution_payload = json.loads(distribution_raw)
+            except json.JSONDecodeError:
+                distribution_payload = None
+
+    if not method:
+        method = entry.budget_distribution_policy or "equal"
+
+    allowed_methods = {"equal", "weighted", "manual"}
+    if method not in allowed_methods:
+        method = "equal"
+
+    try:
+        if distribution_payload:
+            distribution = {}
+            for key, value in distribution_payload.items():
+                try:
+                    item_id = uuid.UUID(str(key))
+                except (TypeError, ValueError) as exc:
+                    raise ValidationError(f"Invalid work item id: {key}") from exc
+                distribution[item_id] = Decimal(str(value or 0))
+        elif method == "equal":
+            distribution = BudgetDistributionService.distribute_equal(entry)
+        else:
+            raise ValidationError(
+                "Detailed distribution data is required for this method."
+            )
+
+        with transaction.atomic():
+            entry.budget_distribution_policy = method
+            entry.updated_by = request.user
+            entry.save(update_fields=["budget_distribution_policy", "updated_by", "updated_at"])
+            BudgetDistributionService.apply_distribution(entry, distribution)
+    except ValidationError as exc:
+        message = "; ".join(exc.messages) if hasattr(exc, "messages") else str(exc)
+        if request.headers.get("HX-Request"):
+            return _render_workitems_tab(
+                request, entry, status=400, triggers={"show-toast": message}
+            )
+        return JsonResponse({"error": message}, status=400)
+    except Exception:
+        logger.exception("Failed to distribute budget for %s", entry.id)
+        message = "Unable to distribute budget. Please try again."
+        if request.headers.get("HX-Request"):
+            return _render_workitems_tab(
+                request, entry, status=500, triggers={"show-toast": message}
+            )
+        return JsonResponse({"error": message}, status=500)
+
+    entry.refresh_from_db()
+    if request.headers.get("HX-Request"):
+        return _render_workitems_tab(
+            request,
+            entry,
+            triggers={"show-toast": "Budget distributed successfully."},
+        )
+
+    workitem_stats = _build_workitem_context(entry)["workitem_stats"]
+    return JsonResponse(
+        {
+            "success": True,
+            "entry_id": str(entry.id),
+            "method": method,
+            "totals": {
+                "allocated": str(workitem_stats["total_budget_allocated"]),
+                "unallocated": str(workitem_stats["unallocated_budget"]),
+            },
+        }
+    )
+
+
+@login_required
+@require_POST
+def sync_progress(request, pk):
+    """
+    HTMX/JSON endpoint: Sync MonitoringEntry progress and status from WorkItems.
+    """
+    entry = get_object_or_404(MonitoringEntry, pk=pk)
+
+    if not entry.execution_project:
+        message = "Enable work item tracking before syncing progress."
+        if request.headers.get("HX-Request"):
+            return _render_workitems_tab(
+                request, entry, status=400, triggers={"show-toast": message}
+            )
+        return JsonResponse({"error": message}, status=400)
+
+    try:
+        progress = entry.sync_progress_from_workitem()
+        status_value = entry.sync_status_from_workitem()
+    except Exception:
+        logger.exception("Failed to sync progress for %s", entry.id)
+        message = "Unable to sync progress right now. Please try again."
+        if request.headers.get("HX-Request"):
+            return _render_workitems_tab(
+                request, entry, status=500, triggers={"show-toast": message}
+            )
+        return JsonResponse({"error": message}, status=500)
+
+    entry.refresh_from_db()
+    if request.headers.get("HX-Request"):
+        return _render_workitems_tab(
+            request,
+            entry,
+            triggers={"show-toast": "Progress synchronized from Work Items."},
+        )
+    return JsonResponse(
+        {"success": True, "progress": progress, "status": status_value}
+    )
+
+
 @login_required
 def work_item_children(request, work_item_id):
     """
@@ -2069,3 +2455,95 @@ def coa_variance_report_download(request):
     except Exception as e:
         messages.error(request, f"Error generating COA report: {str(e)}")
         return redirect('monitoring:reports_dashboard')
+
+
+@login_required
+def ppa_calendar_feed(request, entry_id):
+    """
+    Calendar feed endpoint for a specific PPA.
+
+    Returns JSON calendar events containing only work items from this PPA's
+    execution hierarchy (filtered by ppa_category and implementing_moa for isolation).
+
+    Args:
+        entry_id: UUID of the MonitoringEntry (PPA)
+
+    Returns:
+        JsonResponse with calendar events in FullCalendar format
+    """
+    from common.work_item_model import WorkItem
+    from django.http import JsonResponse
+    import json
+
+    try:
+        entry = MonitoringEntry.objects.get(id=entry_id)
+    except MonitoringEntry.DoesNotExist:
+        return JsonResponse({'error': 'PPA not found'}, status=404)
+
+    # Get all work items for this PPA (execution project + descendants)
+    # Filter by related_ppa to get direct PPA work items
+    # Also include work items in the execution project hierarchy
+    work_items = WorkItem.objects.filter(
+        related_ppa=entry,
+        is_calendar_visible=True
+    ).select_related(
+        'created_by',
+        'related_ppa'
+    )
+
+    # Also include execution project work items if exists
+    if entry.execution_project:
+        execution_items = entry.execution_project.get_descendants(include_self=True).filter(
+            is_calendar_visible=True
+        )
+        # Combine querysets
+        from itertools import chain
+        work_items = list(chain(work_items, execution_items))
+
+    # Build calendar events
+    events = []
+    for item in work_items:
+        # Skip items without dates
+        if not item.start_date:
+            continue
+
+        # Determine color based on work type
+        color_map = {
+            'project': '#3b82f6',  # Blue
+            'activity': '#10b981',  # Emerald
+            'task': '#8b5cf6',     # Purple
+            'subtask': '#f59e0b',  # Amber
+        }
+
+        event = {
+            'id': str(item.id),
+            'title': item.title,
+            'start': item.start_date.isoformat(),
+            'end': (item.due_date or item.start_date).isoformat(),
+            'allDay': not (item.start_time and item.end_time),
+            'backgroundColor': color_map.get(item.work_type, '#6b7280'),
+            'borderColor': color_map.get(item.work_type, '#6b7280'),
+            'textColor': '#ffffff',
+            'extendedProps': {
+                'work_item_id': str(item.id),
+                'work_type': item.work_type,
+                'status': item.status,
+                'priority': item.priority,
+                'progress': item.progress,
+                'description': item.description or '',
+            }
+        }
+
+        # Add time if available
+        if item.start_time:
+            from datetime import datetime, time
+            start_datetime = datetime.combine(item.start_date, item.start_time)
+            event['start'] = start_datetime.isoformat()
+
+        if item.end_time and item.due_date:
+            end_datetime = datetime.combine(item.due_date, item.end_time)
+            event['end'] = end_datetime.isoformat()
+
+        events.append(event)
+
+    return JsonResponse(events, safe=False)

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Registration Submitted - OBCMS{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full">
+        <!-- Success Card -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 text-center">
+            <!-- Success Icon -->
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full shadow-lg mb-6">
+                <i class="fas fa-check text-white text-3xl"></i>
+            </div>
+
+            <!-- Success Message -->
+            <h2 class="text-2xl font-bold text-gray-900 mb-3">
+                Registration Submitted Successfully!
+            </h2>
+
+            <p class="text-gray-600 mb-6 leading-relaxed">
+                Thank you for registering with OBCMS. Your account has been created and is pending approval from our administrators.
+            </p>
+
+            <!-- Info Box -->
+            <div class="rounded-xl border-l-4 border-blue-500 bg-blue-50 p-4 text-left mb-6">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-500 mt-0.5 mr-3 flex-shrink-0"></i>
+                    <div class="text-sm text-blue-700">
+                        <p class="font-semibold mb-2">What happens next?</p>
+                        <ul class="space-y-1 list-disc list-inside">
+                            <li>OOBC administrators will review your registration</li>
+                            <li>You will receive an email notification once approved</li>
+                            <li>After approval, you can log in with your credentials</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Support Box -->
+            <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-left mb-6">
+                <p class="text-sm text-gray-700">
+                    <i class="fas fa-envelope text-gray-400 mr-2"></i>
+                    <strong>Need help?</strong> Contact us at
+                    <a href="mailto:support@oobc.gov.ph" class="text-emerald-600 hover:text-emerald-700 font-medium">
+                        support@oobc.gov.ph
+                    </a>
+                </p>
+            </div>
+
+            <!-- Back to Login Button -->
+            <a href="{% url 'login' %}" class="inline-flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-base font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Return to Login
+            </a>
+        </div>
+
+        <!-- Footer Note -->
+        <p class="text-center text-sm text-gray-500 mt-6">
+            Approval typically takes 1-2 business days
+        </p>
+    </div>
+</div>
+{% endblock %}

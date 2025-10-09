@@ -995,6 +995,38 @@ class MonitoringEntry(models.Model):
 
         return project
 
+    def disable_workitem_tracking(self, *, delete_project=True, updated_by=None):
+        """
+        Disable WorkItem tracking by removing the execution project link.
+
+        Args:
+            delete_project (bool): When True (default) delete the execution project tree.
+            updated_by (User): Optional user performing the action.
+        """
+        project = self.execution_project
+
+        if delete_project and project:
+            # Delete project and descendants in one go
+            project.delete()
+
+        # Reset tracking fields
+        self.execution_project = None
+        self.enable_workitem_tracking = False
+        self.budget_distribution_policy = ""
+
+        update_fields = [
+            "execution_project",
+            "enable_workitem_tracking",
+            "budget_distribution_policy",
+            "updated_at",
+        ]
+
+        if updated_by is not None:
+            self.updated_by = updated_by
+            update_fields.append("updated_by")
+
+        self.save(update_fields=update_fields)
+
     def _map_monitoring_status_to_workitem(self):
         """Map MonitoringEntry status to WorkItem status."""
         from common.work_item_model import WorkItem

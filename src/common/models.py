@@ -68,6 +68,14 @@ class User(AbstractUser):
     approved_at = models.DateTimeField(
         null=True, blank=True, help_text="When the account was approved"
     )
+    moa_organization = models.ForeignKey(
+        'coordination.Organization',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='moa_staff_users',
+        help_text='MOA organization this user belongs to (for MOA staff only)',
+    )
 
     class Meta:
         db_table = "auth_user"
@@ -103,6 +111,50 @@ class User(AbstractUser):
             self.user_type in ["admin", "oobc_staff", "oobc_executive"]
             and self.is_superuser
         )
+
+    @property
+    def is_moa_staff(self):
+        """Check if user is MOA staff (any type)."""
+        return self.user_type in ['bmoa', 'lgu', 'nga']
+
+    def needs_approval(self):
+        """Check if user needs approval to login."""
+        return self.is_moa_staff and not self.is_approved
+
+    def owns_moa_organization(self, organization):
+        """Check if user owns/belongs to the given MOA organization."""
+        if not self.is_moa_staff:
+            return False
+        if isinstance(organization, str):
+            # organization is an ID
+            return str(self.moa_organization_id) == str(organization)
+        # organization is a model instance
+        return self.moa_organization == organization
+
+    def can_edit_ppa(self, ppa):
+        """Check if user can edit the given PPA."""
+        if self.is_superuser or self.is_oobc_staff:
+            return True
+        if self.is_moa_staff:
+            return ppa.implementing_moa == self.moa_organization
+        return False
+
+    def can_view_ppa(self, ppa):
+        """Check if user can view the given PPA."""
+        if self.is_superuser or self.is_oobc_staff:
+            return True
+        if self.is_moa_staff:
+            # Can view their own MOA's PPAs
+            return ppa.implementing_moa == self.moa_organization
+        return False
+
+    def can_edit_work_item(self, work_item):
+        """Check if user can edit the given work item."""
+        if self.is_superuser or self.is_oobc_staff:
+            return True
+        if self.is_moa_staff and work_item.related_ppa:
+            return work_item.related_ppa.implementing_moa == self.moa_organization
+        return False
 
 
 class Region(models.Model):

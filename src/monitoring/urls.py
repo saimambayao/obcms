@@ -59,6 +59,26 @@ urlpatterns = [
     path("entry/<uuid:pk>/", views.monitoring_entry_detail, name="detail"),
     # WorkItem Integration (HTMX endpoints)
     path(
+        "entry/<uuid:pk>/enable-tracking/",
+        views.enable_workitem_tracking,
+        name="enable_workitem_tracking",
+    ),
+    path(
+        "entry/<uuid:pk>/disable-tracking/",
+        views.disable_workitem_tracking,
+        name="disable_workitem_tracking",
+    ),
+    path(
+        "entry/<uuid:pk>/distribute-budget/",
+        views.distribute_budget,
+        name="distribute_budget",
+    ),
+    path(
+        "entry/<uuid:pk>/sync-progress/",
+        views.sync_progress,
+        name="sync_progress",
+    ),
+    path(
         "work-items/<uuid:work_item_id>/children/",
         views.work_item_children,
         name="work_item_children",
@@ -121,5 +141,11 @@ urlpatterns = [
         "reports/coa-variance/",
         views.coa_variance_report_download,
         name="coa_variance_report",
+    ),
+    # PPA Calendar Feed
+    path(
+        "entry/<uuid:entry_id>/calendar-feed/",
+        views.ppa_calendar_feed,
+        name="ppa_calendar_feed",
     ),
 ]

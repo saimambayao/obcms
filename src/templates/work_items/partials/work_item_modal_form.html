@@ -1,0 +1,348 @@
+{% load static %}
+
+<!-- Modal Container with Form -->
+<div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+    <!-- Modal Header -->
+    <div class="sticky top-0 z-10 bg-gradient-to-r from-blue-600 to-emerald-600 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-plus-circle text-white text-2xl"></i>
+            <h2 class="text-2xl font-bold text-white">{{ action }} Work Item</h2>
+        </div>
+        <button type="button"
+                onclick="document.getElementById('workItemModal').classList.add('hidden')"
+                class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all duration-200">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+    </div>
+
+    {% if parent %}
+    <div class="bg-blue-50 border-l-4 border-blue-500 px-6 py-3">
+        <p class="text-sm text-blue-800">
+            <i class="fas fa-sitemap mr-2"></i>
+            Parent: <span class="font-semibold">{{ parent.title }}</span>
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Form Content -->
+    <form method="post"
+          action="{% url 'common:work_item_create' %}{% if ppa_id %}?ppa_id={{ ppa_id }}{% endif %}"
+          hx-post="{% url 'common:work_item_create' %}{% if ppa_id %}?ppa_id={{ ppa_id }}{% endif %}"
+          hx-target="#workItemModal"
+          hx-swap="innerHTML"
+          class="p-6">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="mb-6 bg-red-50 border-l-4 border-red-500 rounded-r-lg p-4">
+            <div class="flex">
+                <i class="fas fa-exclamation-circle text-red-500 text-xl mt-0.5 mr-3"></i>
+                <div class="text-red-700">
+                    {{ form.non_field_errors }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- LEFT COLUMN -->
+            <div class="space-y-6">
+                <!-- Basic Information -->
+                <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                    <h3 class="text-base font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                        Basic Information
+                    </h3>
+                    <div class="space-y-4">
+                        <!-- Work Type -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Work Type<span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                {{ form.work_type }}
+                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                </span>
+                            </div>
+                            {% if form.work_type.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.work_type.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Parent -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Parent Work Item
+                            </label>
+                            <div class="relative">
+                                {{ form.parent }}
+                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                </span>
+                            </div>
+                            {% if form.parent.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.parent.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">Select a parent to create a hierarchical structure</p>
+                        </div>
+
+                        <!-- PPA and MOA Information (Auto-populated, Non-editable) -->
+                        {% if ppa_info %}
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
+                                    <i class="fas fa-folder mr-1"></i> Related PPA (Program/Project/Activity)
+                                </label>
+                                <div class="bg-white rounded border border-blue-200 px-3 py-2 text-sm text-gray-900 font-medium">
+                                    {{ ppa_info.title }}
+                                </div>
+                                <p class="mt-1 text-xs text-blue-600">This work item will be automatically linked to this PPA</p>
+                            </div>
+                            {% if ppa_info.implementing_moa %}
+                            <div>
+                                <label class="block text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
+                                    <i class="fas fa-building mr-1"></i> Implementing MOA (Ministry/Office/Agency)
+                                </label>
+                                <div class="bg-white rounded border border-blue-200 px-3 py-2 text-sm text-gray-900 font-medium">
+                                    {{ ppa_info.implementing_moa.name }}
+                                    {% if ppa_info.implementing_moa.acronym %}
+                                    <span class="text-gray-500">({{ ppa_info.implementing_moa.acronym }})</span>
+                                    {% endif %}
+                                </div>
+                                <p class="mt-1 text-xs text-blue-600">This work item will be automatically linked to this MOA</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Title -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Title<span class="text-red-500">*</span>
+                            </label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Description
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status & Priority -->
+                <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                    <h3 class="text-base font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-tasks text-emerald-500 mr-2"></i>
+                        Status & Priority
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Status -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Status
+                            </label>
+                            <div class="relative">
+                                {{ form.status }}
+                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                </span>
+                            </div>
+                            {% if form.status.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Priority -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Priority
+                            </label>
+                            <div class="relative">
+                                {{ form.priority }}
+                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                </span>
+                            </div>
+                            {% if form.priority.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.priority.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Progress -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Progress (%)
+                            </label>
+                            {{ form.progress }}
+                            {% if form.progress.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.progress.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Auto Calculate -->
+                        <div class="flex items-end pb-3">
+                            <label class="flex items-center space-x-2">
+                                {{ form.auto_calculate_progress }}
+                                <span class="text-sm text-gray-700">Auto-calculate from children</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="space-y-6">
+                <!-- Schedule & Timeline -->
+                <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                    <h3 class="text-base font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-calendar-alt text-purple-500 mr-2"></i>
+                        Schedule & Timeline
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Start Date -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Start Date
+                            </label>
+                            {{ form.start_date }}
+                            {% if form.start_date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.start_date.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Start Time -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Start Time
+                            </label>
+                            {{ form.start_time }}
+                            {% if form.start_time.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.start_time.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Due Date -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Due Date
+                            </label>
+                            {{ form.due_date }}
+                            {% if form.due_date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.due_date.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- End Time -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                End Time
+                            </label>
+                            {{ form.end_time }}
+                            {% if form.end_time.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.end_time.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Calendar Visibility -->
+                        <div class="col-span-2">
+                            <label class="flex items-center space-x-2">
+                                {{ form.is_calendar_visible }}
+                                <span class="text-sm text-gray-700">Show in calendar</span>
+                            </label>
+                            <p class="mt-1 text-sm text-gray-500 ml-7">Display this work item on the OOBC calendar</p>
+                        </div>
+
+                        <!-- Calendar Color -->
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Calendar Color
+                            </label>
+                            {{ form.calendar_color }}
+                            {% if form.calendar_color.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.calendar_color.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignment Note -->
+                <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                    <h3 class="text-base font-semibold text-gray-900 mb-3 flex items-center">
+                        <i class="fas fa-users text-amber-500 mr-2"></i>
+                        Assignment
+                    </h3>
+                    <div class="space-y-2">
+                        <p class="text-sm text-gray-600">
+                            <i class="fas fa-user text-blue-500 mr-2"></i>
+                            <strong>Assigned Users</strong>
+                        </p>
+                        <p class="text-sm text-gray-500 ml-6">
+                            Save this work item first to assign users
+                        </p>
+                        <p class="text-sm text-gray-600 mt-3">
+                            <i class="fas fa-users-cog text-emerald-500 mr-2"></i>
+                            <strong>Assigned Teams</strong>
+                        </p>
+                        <p class="text-sm text-gray-500 ml-6">
+                            Save this work item first to assign teams
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Related Items Note -->
+                <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                    <h3 class="text-base font-semibold text-gray-900 mb-3 flex items-center">
+                        <i class="fas fa-link text-purple-500 mr-2"></i>
+                        Related Items
+                    </h3>
+                    <p class="text-sm text-gray-600">
+                        Link this work item to related projects, activities, or tasks for better organization and dependency tracking.
+                    </p>
+                    <p class="text-sm text-gray-500 mt-2">
+                        Save this work item first to add related items
+                    </p>
+                </div>
+
+                <!-- Children Items Note -->
+                <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                    <h3 class="text-base font-semibold text-gray-900 mb-3 flex items-center">
+                        <i class="fas fa-sitemap text-indigo-500 mr-2"></i>
+                        Children Items
+                    </h3>
+                    <p class="text-sm text-gray-600">
+                        Quickly create child items (sub-projects, activities, tasks, or subtasks) under this work item.
+                    </p>
+                    <p class="text-sm text-gray-500 mt-2">
+                        Save this work item first to add children items
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
+            <button type="submit"
+                    class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-emerald-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
+                <i class="fas fa-save"></i>
+                Save Work Item
+            </button>
+            <button type="button"
+                    onclick="document.getElementById('workItemModal').classList.add('hidden')"
+                    class="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </form>
+</div>

@@ -13,6 +13,13 @@ Usage:
     python manage.py shell < ../scripts/test_work_item_tree_performance.py
 """
 
+import pytest
+
+pytest.skip(
+    "Work item tree performance script is not intended for automated pytest runs post-refactor.",
+    allow_module_level=True,
+)
+
 import os
 import time
 from decimal import Decimal

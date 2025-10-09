@@ -1,3 +1,4 @@
+{% load math_extras %}
 <!-- Work Item Sidebar Edit Form -->
 <form hx-post="{% url 'common:work_item_sidebar_edit' pk=work_item.pk %}"
       hx-target="#sidebar-content"
@@ -123,6 +124,57 @@
         {% endif %}
     </div>
 
+    <!-- Budget Tracking Section -->
+    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 space-y-3">
+        <h4 class="text-sm font-semibold text-emerald-900 flex items-center gap-2">
+            <i class="fas fa-wallet text-emerald-600"></i>
+            Budget Tracking
+        </h4>
+
+        <!-- PPA Total Budget (if applicable) -->
+        {% if work_item.related_ppa.budget_allocation %}
+        <div class="bg-white border border-emerald-200 rounded-lg p-3">
+            <label class="block text-xs font-medium text-gray-600 mb-1">
+                Total PPA Budget
+            </label>
+            <div class="text-base font-semibold text-gray-900" id="ppa-total-budget-edit" data-value="{{ work_item.related_ppa.budget_allocation }}">
+                {{ work_item.related_ppa.budget_allocation|currency_php }}
+            </div>
+            <p class="mt-1 text-xs text-gray-500">Available budget from the related PPA</p>
+        </div>
+        {% endif %}
+
+        <!-- Allocated Budget -->
+        <div>
+            <label for="{{ form.allocated_budget.id_for_label }}" class="block text-xs font-medium text-gray-700 mb-1">
+                Allocated Budget
+            </label>
+            <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">₱</span>
+                {{ form.allocated_budget }}
+            </div>
+            <div class="mt-1 flex justify-between text-xs text-gray-500">
+                <span>Formatted</span>
+                <span id="allocated-budget-formatted-edit" class="font-semibold text-gray-700">
+                    {% if work_item and work_item.allocated_budget %}
+                        {{ work_item.allocated_budget|currency_php }}
+                    {% elif form.initial.allocated_budget %}
+                        {{ form.initial.allocated_budget|currency_php }}
+                    {% else %}
+                        ₱ 0.00
+                    {% endif %}
+                </span>
+            </div>
+            <div id="budget-error-message-edit" class="hidden mt-1 text-xs text-red-600 flex items-center gap-1">
+                <i class="fas fa-exclamation-circle"></i>
+                <span></span>
+            </div>
+            {% if form.allocated_budget.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ form.allocated_budget.errors.0 }}</p>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Description -->
     <div>
         <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
@@ -166,12 +218,111 @@
 (function() {
     'use strict';
 
+    const currencyFormatter = new Intl.NumberFormat('en-PH', {
+        style: 'currency',
+        currency: 'PHP',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+
+    const numberFormatter = new Intl.NumberFormat('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+
+    const toNumeric = (value) => {
+        if (value === null || value === undefined || value === '') {
+            return 0;
+        }
+        if (typeof value === 'number') {
+            return Number.isFinite(value) ? value : 0;
+        }
+        const parsed = parseFloat(String(value).replace(/,/g, ''));
+        return Number.isFinite(parsed) ? parsed : 0;
+    };
+
+    const formatCurrency = (value) => currencyFormatter.format(toNumeric(value));
+    const formatNumberWithGrouping = (value) => numberFormatter.format(toNumeric(value));
+
     // Focus on first input when form loads
     setTimeout(() => {
         const firstInput = document.querySelector('#sidebar-content input, #sidebar-content select, #sidebar-content textarea');
         if (firstInput) {
             firstInput.focus();
         }
+    }, 100);
+
+    // Budget validation for sidebar edit form
+    function validateSidebarEditBudget() {
+        const allocatedInput = document.getElementById('{{ form.allocated_budget.id_for_label }}');
+        const ppaTotalBudgetEl = document.getElementById('ppa-total-budget-edit');
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const errorMessageDiv = document.getElementById('budget-error-message-edit');
+        const errorMessageSpan = errorMessageDiv?.querySelector('span');
+        const formattedDisplay = document.getElementById('allocated-budget-formatted-edit');
+
+        if (!allocatedInput) return;
+
+        const allocated = toNumeric(allocatedInput.value);
+        const ppaTotalBudget = ppaTotalBudgetEl ? toNumeric(ppaTotalBudgetEl.dataset.value) : 0;
+
+        if (ppaTotalBudgetEl) {
+            ppaTotalBudgetEl.textContent = formatCurrency(ppaTotalBudget);
+        }
+        if (formattedDisplay) {
+            formattedDisplay.textContent = formatCurrency(allocated);
+        }
+
+        // Validate against PPA budget
+        if (ppaTotalBudget > 0 && allocated > ppaTotalBudget) {
+            allocatedInput.classList.add('ring-2', 'ring-red-500', 'border-red-500');
+            if (errorMessageDiv && errorMessageSpan) {
+                errorMessageSpan.textContent = `Allocated budget cannot exceed PPA total budget (${formatCurrency(ppaTotalBudget)})`;
+                errorMessageDiv.classList.remove('hidden');
+            }
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        } else {
+            allocatedInput.classList.remove('ring-2', 'ring-red-500', 'border-red-500');
+            if (errorMessageDiv) {
+                errorMessageDiv.classList.add('hidden');
+            }
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    }
+
+    // Initialize and attach event listeners
+    setTimeout(() => {
+        const allocatedInput = document.getElementById('{{ form.allocated_budget.id_for_label }}');
+
+        if (allocatedInput) {
+            if (allocatedInput.value.trim() !== '') {
+                allocatedInput.value = formatNumberWithGrouping(allocatedInput.value);
+            }
+
+            allocatedInput.addEventListener('focus', () => {
+                allocatedInput.value = allocatedInput.value.replace(/,/g, '');
+            });
+            allocatedInput.addEventListener('blur', () => {
+                if (allocatedInput.value.trim() === '') {
+                    allocatedInput.value = '';
+                } else {
+                    allocatedInput.value = formatNumberWithGrouping(allocatedInput.value);
+                }
+                validateSidebarEditBudget();
+            });
+
+            allocatedInput.addEventListener('input', validateSidebarEditBudget);
+            allocatedInput.addEventListener('change', validateSidebarEditBudget);
+        }
+
+        // Validate on initial load
+        validateSidebarEditBudget();
     }, 100);
 })();
 </script>

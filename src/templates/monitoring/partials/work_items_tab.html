@@ -371,45 +371,138 @@
                         <i class="fas fa-external-link-alt"></i>
                         <span>View Full Hierarchy</span>
                     </a>
+                    {% if request.user.is_superuser %}
+                    <button type="button"
+                            hx-post="{% url 'monitoring:disable_workitem_tracking' entry.id %}"
+                            hx-target="#work-items-tab-container"
+                            hx-swap="outerHTML swap:300ms"
+                            hx-confirm="Disable Work Item tracking? This will remove the generated execution project and its tasks."
+                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-all duration-200 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                            aria-label="Disable work item tracking and remove execution project">
+                        <i class="fas fa-power-off"></i>
+                        <span>Disable Tracking</span>
+                    </button>
+                    {% endif %}
                 </div>
             </div>
         </div>
         {% endif %}
 
-        {# Work Items Hierarchy Tree #}
+        {# Work Items Hierarchy Table #}
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <span class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
                         <i class="fas fa-sitemap"></i>
                     </span>
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900">Work Items Hierarchy</h3>
-                        <p class="text-sm text-gray-500">Expandable tree view of execution structure</p>
+                        <p class="text-sm text-gray-500">{{ work_items|length }} items displayed</p>
                     </div>
                 </div>
-                <button type="button"
-                        hx-get="{% url 'common:work_item_create' %}?ppa_id={{ entry.id }}"
-                        hx-target="#workItemModal"
-                        hx-swap="innerHTML"
-                        onclick="document.getElementById('workItemModal').classList.remove('hidden')"
-                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-blue-600 to-teal-600 text-white hover:shadow-lg transition-all duration-200 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        aria-label="Add new work item">
-                    <i class="fas fa-plus"></i>
-                    <span>Add Work Item</span>
-                </button>
+                <div class="flex items-center gap-2">
+                    <button id="ppa-expand-all-btn"
+                            class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-150">
+                        <i class="fas fa-expand-alt mr-1.5"></i>
+                        Expand All
+                    </button>
+                    <button id="ppa-collapse-all-btn"
+                            class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-150">
+                        <i class="fas fa-compress-alt mr-1.5"></i>
+                        Collapse All
+                    </button>
+                    <button type="button"
+                            onclick="openPPASidebarAndLoad(this)"
+                            data-hx-get="{% url 'common:work_item_sidebar_create' %}?ppa_id={{ entry.id }}"
+                            data-hx-target="#ppa-sidebar-content"
+                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-blue-600 to-teal-600 text-white hover:shadow-lg transition-all duration-200 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            aria-label="Add new work item">
+                        <i class="fas fa-plus"></i>
+                        <span>Add Work Item</span>
+                    </button>
+                </div>
             </div>
-            <div class="p-6" id="work-items-tree">
-                {% if work_items %}
-                    {% for item in work_items %}
-                        {% include "monitoring/partials/work_item_tree.html" with work_item=item depth=0 %}
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-10 text-gray-500">
-                        <i class="fas fa-inbox text-4xl mb-3 text-gray-400"></i>
-                        <p>No work items found. Click "Distribute Budget" to generate initial structure.</p>
-                    </div>
-                {% endif %}
+
+            <div class="overflow-x-auto">
+                <table class="w-full divide-y divide-gray-200 border-collapse" style="table-layout: fixed; min-width: 1200px;">
+                    <colgroup>
+                        <col style="width: 40%;">  <!-- Title & Hierarchy -->
+                        <col style="width: 10%;">  <!-- Type -->
+                        <col style="width: 10%;">  <!-- Status -->
+                        <col style="width: 8%;">   <!-- Priority -->
+                        <col style="width: 12%;">  <!-- Progress -->
+                        <col style="width: 12%;">  <!-- Dates -->
+                        <col style="width: 8%;">   <!-- Actions -->
+                    </colgroup>
+                    <thead class="bg-gradient-to-r from-blue-600 to-teal-600">
+                        <tr>
+                            <th scope="col" class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                                <div class="flex items-center">
+                                    <i class="fas fa-stream mr-2"></i>
+                                    Title & Hierarchy
+                                </div>
+                            </th>
+                            <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
+                                Type
+                            </th>
+                            <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
+                                Status
+                            </th>
+                            <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
+                                Priority
+                            </th>
+                            <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
+                                Progress
+                            </th>
+                            <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
+                                Dates
+                            </th>
+                            <th scope="col" class="px-3 py-4 text-right text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for item in work_items %}
+                            {% include 'monitoring/partials/_ppa_work_item_row.html' with work_item=item %}
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="px-6 py-16 text-center">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                                            <i class="fas fa-inbox text-4xl text-gray-400"></i>
+                                        </div>
+                                        <p class="text-lg font-semibold text-gray-900 mb-2">No work items found</p>
+                                        <p class="text-sm text-gray-600 mb-6">Click "Distribute Budget" to generate initial structure</p>
+                                        <button type="button"
+                                                onclick="openPPASidebarAndLoad(this)"
+                                                data-hx-get="{% url 'common:work_item_sidebar_create' %}?ppa_id={{ entry.id }}"
+                                                data-hx-target="#ppa-sidebar-content"
+                                                class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all duration-200 shadow-sm">
+                                            <i class="fas fa-plus mr-2"></i>
+                                            Create Work Item
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+
+                        {% if work_items %}
+                        <!-- Add Work Item Button Row - Always at bottom -->
+                        <tr class="bg-gray-50/50 hover:bg-gray-100/50 transition-colors duration-150">
+                            <td colspan="7" class="px-4 py-3">
+                                <button onclick="openPPASidebarAndLoad(this)"
+                                        data-hx-get="{% url 'common:work_item_sidebar_create' %}?ppa_id={{ entry.id }}"
+                                        data-hx-target="#ppa-sidebar-content"
+                                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-all duration-150 border border-emerald-200">
+                                    <i class="fas fa-plus-circle mr-2"></i>
+                                    Add Work Item
+                                </button>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -513,14 +606,39 @@
     {% endif %}
 </div>
 
-{# Work Item Modal Container #}
-<div id="workItemModal"
-     class="fixed inset-0 hidden z-50 flex items-center justify-center px-4 sm:px-6"
-     role="dialog"
-     aria-modal="true">
-    <div class="absolute inset-0 bg-gray-900 bg-opacity-50" onclick="document.getElementById('workItemModal').classList.add('hidden')"></div>
-    <div class="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto" id="workItemModalContent"></div>
+<!-- Right Sidebar Panel for Work Items -->
+<aside id="ppa-work-item-sidebar"
+       class="fixed top-0 right-0 h-full w-96 bg-white border-l border-gray-200 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+    <div class="h-full flex flex-col">
+        <!-- Sidebar Header -->
+        <div id="ppa-work-item-sidebar-header" class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Work Item Details</h2>
+            <button id="ppa-sidebar-close-btn"
+                    onclick="closePPASidebar()"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+                    aria-label="Close sidebar">
+                <i class="fas fa-times text-gray-600"></i>
+            </button>
+        </div>
+
+        <!-- Sidebar Content (HTMX target) -->
+        <div id="ppa-sidebar-content" class="flex-1 overflow-y-auto p-6">
+            <div class="text-center text-gray-500 py-8">
+                <i class="fas fa-tasks text-4xl mb-3"></i>
+                <p>Click an action button to view details</p>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- Sidebar Backdrop -->
+<div id="ppa-sidebar-backdrop"
+     class="fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none transition-opacity duration-300"
+     onclick="closePPASidebar()">
 </div>
+
+{# Delete Modal Container - HTMX will inject modal content here #}
+<div id="ppa-delete-modal-container" aria-live="polite" role="region" aria-label="Delete confirmation modal"></div>
 
 <!-- Budget Distribution Modal Container -->
 <div id="budgetDistributionModal"
@@ -532,11 +650,155 @@
     <div class="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto" id="budgetDistributionModalContent"></div>
 </div>
 
-<!-- Work Item Modal Container -->
-<div id="workItemModal"
-     class="fixed inset-0 hidden z-50 flex items-center justify-center px-4 sm:px-6"
-     role="dialog"
-     aria-modal="true">
-    <div class="absolute inset-0 bg-gray-900 bg-opacity-50" onclick="document.getElementById('workItemModal').classList.add('hidden')"></div>
-    <div class="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto" id="workItemModalContent"></div>
-</div>
+<script>
+    // ============================================================================
+    // PPA WORK ITEM SIDEBAR PANEL FUNCTIONALITY
+    // ============================================================================
+
+    /**
+     * Open the PPA sidebar panel with smooth transition
+     */
+    window.openPPASidebar = function() {
+        const sidebar = document.getElementById('ppa-work-item-sidebar');
+        const backdrop = document.getElementById('ppa-sidebar-backdrop');
+
+        if (sidebar && backdrop) {
+            sidebar.classList.remove('translate-x-full');
+            backdrop.classList.remove('opacity-0', 'pointer-events-none');
+            backdrop.classList.add('opacity-100', 'pointer-events-auto');
+            console.log('[PPA Sidebar] Opened');
+        }
+    };
+
+    /**
+     * Open PPA sidebar and load content via HTMX
+     * @param {HTMLElement} button - Button element with data-hx-get and data-hx-target attributes
+     */
+    window.openPPASidebarAndLoad = function(button) {
+        // First, open the sidebar
+        openPPASidebar();
+
+        // Get HTMX attributes from button
+        const url = button.getAttribute('data-hx-get');
+        const target = button.getAttribute('data-hx-target');
+
+        if (!url || !target) {
+            console.error('[PPA Sidebar] Missing data-hx-get or data-hx-target attribute');
+            return;
+        }
+
+        // Wait a tiny bit for sidebar animation to start, then trigger HTMX
+        setTimeout(() => {
+            htmx.ajax('GET', url, {
+                target: target,
+                swap: 'innerHTML'
+            });
+        }, 50);
+    };
+
+    /**
+     * Close the PPA sidebar panel and clear content
+     */
+    window.closePPASidebar = function() {
+        const sidebar = document.getElementById('ppa-work-item-sidebar');
+        const backdrop = document.getElementById('ppa-sidebar-backdrop');
+
+        if (sidebar && backdrop) {
+            sidebar.classList.add('translate-x-full');
+            backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+            backdrop.classList.add('opacity-0', 'pointer-events-none');
+            console.log('[PPA Sidebar] Closed');
+        }
+    };
+
+    /**
+     * Listen for HTMX afterSwap to process loaded content in PPA sidebar
+     */
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        if (event.detail.target.id === 'ppa-sidebar-content') {
+            console.log('[PPA Sidebar] Content loaded');
+            // Process HTMX attributes in the new content
+            htmx.process(event.detail.target);
+        }
+    });
+
+    /**
+     * Listen for HTMX oobAfterSwap for PPA work item updates
+     */
+    document.body.addEventListener('htmx:oobAfterSwap', function(event) {
+        console.log('[PPA OOB] After swap:', {
+            target: event.detail.target,
+            fragment: event.detail.fragment
+        });
+        // Visual feedback: briefly highlight the updated row
+        if (event.detail.target && event.detail.target.tagName === 'TR' && event.detail.target.id.startsWith('ppa-work-item-row-')) {
+            const row = event.detail.target;
+            row.classList.add('bg-emerald-50');
+            setTimeout(() => {
+                row.classList.remove('bg-emerald-50');
+                row.classList.add('transition-colors', 'duration-500');
+            }, 300);
+            setTimeout(() => {
+                row.classList.remove('transition-colors', 'duration-500');
+            }, 800);
+        }
+    });
+
+    /**
+     * Listen for custom event to refresh PPA work items tab
+     */
+    document.body.addEventListener('refreshPPAWorkItems', function(event) {
+        console.log('[PPA Work Items] Refresh triggered');
+        // Reload the current page to refresh the work items tab
+        window.location.reload();
+    });
+
+    /**
+     * Listen for custom event to close PPA sidebar
+     */
+    document.body.addEventListener('closePPASidebar', function(event) {
+        console.log('[PPA Sidebar] Close triggered by event');
+        closePPASidebar();
+    });
+
+    // ============================================================================
+    // EXPAND/COLLAPSE ALL FUNCTIONALITY FOR PPA WORK ITEMS
+    // ============================================================================
+
+    document.getElementById('ppa-expand-all-btn')?.addEventListener('click', function() {
+        console.log('[PPA Tree] Expanding all nodes');
+        const toggleButtons = document.querySelectorAll('#work-items-tab-container button[data-toggle]');
+        toggleButtons.forEach(btn => {
+            const icon = btn.querySelector('.toggle-icon');
+            if (icon && !icon.classList.contains('fa-rotate-90')) {
+                btn.click();
+            }
+        });
+    });
+
+    document.getElementById('ppa-collapse-all-btn')?.addEventListener('click', function() {
+        console.log('[PPA Tree] Collapsing all nodes');
+        const childContainers = document.querySelectorAll('#work-items-tab-container .work-item-children-placeholder');
+        childContainers.forEach(container => {
+            // Find all child rows and remove them
+            let nextSibling = container.nextElementSibling;
+            while (nextSibling && !nextSibling.classList.contains('work-item-children-placeholder')) {
+                const toRemove = nextSibling;
+                nextSibling = nextSibling.nextElementSibling;
+                toRemove.remove();
+            }
+            // Reset toggle button
+            const parentId = container.getAttribute('data-parent-id');
+            const toggleBtn = document.querySelector(`#work-items-tab-container button[data-item-id="${parentId}"]`);
+            if (toggleBtn) {
+                const icon = toggleBtn.querySelector('.toggle-icon');
+                if (icon) {
+                    icon.classList.remove('fa-rotate-90');
+                    icon.classList.add('fa-chevron-right');
+                }
+            }
+        });
+    });
+
+    console.log('✅ PPA Work Item sidebar and tree controls initialized');
+</script>

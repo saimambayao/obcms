@@ -1,0 +1,722 @@
+{% extends "base.html" %}
+{% load static text_extras %}
+
+{% block title %}OOBC Calendar Management{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Calendar</li>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+/* Layout tweaks for the calendar workspace */
+#oobc-calendar {
+    min-height: 640px;
+}
+
+/* FullCalendar theming */
+#oobc-calendar .fc-toolbar.fc-header-toolbar {
+    padding: 1rem 1.25rem 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+#oobc-calendar .fc-toolbar-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937; /* gray-800 */
+}
+
+#oobc-calendar .fc-button-group .fc-button,
+#oobc-calendar .fc-toolbar-chunk > .fc-button {
+    border-radius: 9999px;
+    border: 1px solid rgba(15, 118, 110, 0.2); /* teal-700 */
+    background: rgba(13, 148, 136, 0.08);
+    color: #0f766e;
+    padding: 0.45rem 0.9rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    transition: all 150ms ease;
+}
+
+#oobc-calendar .fc-button-group .fc-button:hover,
+#oobc-calendar .fc-toolbar-chunk > .fc-button:hover,
+#oobc-calendar .fc-button-group .fc-button.fc-button-active,
+#oobc-calendar .fc-toolbar-chunk > .fc-button.fc-button-active {
+    background: linear-gradient(120deg, rgba(16, 185, 129, 0.85), rgba(6, 182, 212, 0.9));
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 8px 20px rgba(13, 148, 136, 0.25);
+}
+
+#oobc-calendar .fc-col-header-cell {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b; /* slate-500 */
+    padding: 0.75rem 0;
+}
+
+#oobc-calendar .fc-daygrid-day {
+    transition: background 120ms ease;
+}
+
+#oobc-calendar .fc-daygrid-day:hover {
+    background: rgba(14, 165, 233, 0.06);
+}
+
+#oobc-calendar .fc-daygrid-day-number {
+    font-weight: 600;
+    color: #0f172a; /* slate-900 */
+}
+
+#oobc-calendar .fc-daygrid-event {
+    border-radius: 0.9rem;
+    border: none;
+    padding: 0.15rem 0.4rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.12);
+}
+
+#oobc-calendar .fc-daygrid-event-dot {
+    border-width: 6px;
+}
+
+#oobc-calendar .fc-timegrid-slot-label-cushion,
+#oobc-calendar .fc-timegrid-axis-cushion {
+    font-size: 0.75rem;
+    color: #94a3b8; /* slate-400 */
+}
+
+#oobc-calendar .fc-scrollgrid-shrink-cushion {
+    padding-bottom: 0.75rem;
+}
+
+.calendar-action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(15, 118, 110, 0.18);
+    color: #f8fafc;
+    padding: 0.85rem 1.1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 150ms ease;
+    box-shadow: 0 6px 16px rgba(15, 118, 110, 0.22);
+}
+
+.calendar-action-button:hover,
+.calendar-action-button:focus,
+.calendar-action-button:focus-visible {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.45);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(15, 118, 110, 0.28);
+}
+
+.calendar-action-button i {
+    font-size: 0.95rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-sky-600 to-indigo-600 text-white shadow-xl">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.25),_transparent_45%)]"></div>
+        <div class="relative p-6 sm:p-8 lg:p-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div class="flex-1 space-y-4">
+                <div class="inline-flex items-center gap-3 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold uppercase tracking-wide backdrop-blur">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white">
+                        <i class="fas fa-calendar-alt"></i>
+                    </span>
+                    Unified Scheduling Hub
+                </div>
+                <div class="space-y-3">
+                    <h1 class="text-3xl sm:text-4xl font-semibold leading-tight">OOBC Calendar Management</h1>
+                    <p class="text-sm sm:text-base text-emerald-50/90 max-w-2xl">
+                        Coordinate agency events, MANA field work, policy follow-through, and staff tasks from a single workspace. Filter by module to spotlight upcoming commitments, surface conflicts, and keep approvals moving.
+                    </p>
+                </div>
+                <dl class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-emerald-50/90">
+                    <div class="rounded-2xl bg-white/10 px-4 py-3 shadow-sm">
+                        <dt class="text-xs uppercase tracking-wide text-emerald-100/90">Active Modules</dt>
+                        <dd class="mt-1 text-xl font-semibold">{{ module_filters|length }}</dd>
+                    </div>
+                    <div class="rounded-2xl bg-white/10 px-4 py-3 shadow-sm">
+                        <dt class="text-xs uppercase tracking-wide text-emerald-100/90">Upcoming Highlights</dt>
+                        <dd class="mt-1 text-xl font-semibold">{{ upcoming_highlights|length }}</dd>
+                    </div>
+                    <div class="rounded-2xl bg-white/10 px-4 py-3 shadow-sm">
+                        <dt class="text-xs uppercase tracking-wide text-emerald-100/90">Follow-up Items</dt>
+                        <dd class="mt-1 text-xl font-semibold">{{ follow_up_items|length }}</dd>
+                    </div>
+                </dl>
+            </div>
+            <div class="w-full lg:w-auto min-w-[16rem]">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+                    <a href="{% url 'common:coordination_event_add' %}" class="calendar-action-button">
+                        <i class="fas fa-handshake-simple"></i>
+                        <span>New Coordination Event</span>
+                    </a>
+                    <a href="{% url 'common:coordination_activity_add' %}" class="calendar-action-button">
+                        <i class="fas fa-people-arrows"></i>
+                        <span>Log Engagement</span>
+                    </a>
+                    <a href="{% url 'common:staff_task_create' %}" class="calendar-action-button">
+                        <i class="fas fa-list-check"></i>
+                        <span>Assign Staff Task</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="space-y-6">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Module Filters</h2>
+                    <p class="text-sm text-gray-500">Toggle modules to show or hide their schedule entries.</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    {% for module in module_filters %}
+                    <label class="group inline-flex cursor-pointer select-none">
+                        <input type="checkbox"
+                               class="peer sr-only"
+                               value="{{ module.key }}"
+                               data-module-filter
+                               {% if module.key in active_modules %}checked{% endif %}>
+                        <span class="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm transition-all duration-200 peer-checked:border-transparent peer-checked:bg-emerald-50 peer-checked:text-emerald-700 peer-checked:shadow-md">
+                            <span class="h-2.5 w-2.5 rounded-full {{ module.color }}"></span>
+                            <span>{{ module.label }}</span>
+                            {% if module.count %}
+                            <span class="ml-1 rounded-full bg-gray-100 px-1.5 py-0.5 text-[0.65rem] font-semibold text-gray-500 peer-checked:bg-white peer-checked:text-emerald-700">{{ module.count }}</span>
+                            {% endif %}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl border border-slate-200 shadow-inner">
+                <div id="oobc-calendar" class="p-4"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for card in module_cards %}
+            <div class="bg-white rounded-2xl shadow border border-gray-200 p-5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">{{ card.label }}</p>
+                        <h3 class="text-2xl font-bold text-gray-900">{{ card.stats.total }}</h3>
+                    </div>
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-full text-white {{ card.color }}">
+                        <i class="fas fa-bullseye"></i>
+                    </span>
+                </div>
+                <p class="text-sm text-gray-600">{{ card.description }}</p>
+                <dl class="grid grid-cols-2 gap-3 text-sm text-gray-600">
+                    <div>
+                        <dt class="font-semibold text-gray-700">Upcoming</dt>
+                        <dd>{{ card.stats.upcoming }}</dd>
+                    </div>
+                    <div>
+                        <dt class="font-semibold text-gray-700">Completed</dt>
+                        <dd>{{ card.stats.completed }}</dd>
+                    </div>
+                </dl>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-calendar-check text-blue-600 mr-2"></i>
+                        Upcoming Highlights
+                    </h2>
+                    <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">
+                        <i class="fas fa-clock"></i>
+                        Next {{ upcoming_highlights|length|default:0 }}
+                    </span>
+                </div>
+                <div class="relative mt-4">
+                    <span class="absolute left-2 top-0 bottom-0 w-px bg-gradient-to-b from-blue-200 via-slate-200 to-transparent"></span>
+                    <div class="space-y-4">
+                        {% for item in upcoming_highlights %}
+                        <div class="relative pl-8">
+                            <span class="absolute left-0 top-2 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white shadow ring-2 ring-blue-200">
+                                <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                            </span>
+                            <div class="rounded-2xl border border-blue-100 bg-blue-50 bg-opacity-80 px-4 py-3 shadow-sm transition hover:border-blue-200 hover:bg-white">
+                                <p class="text-sm font-semibold text-gray-900">{{ item.title }}</p>
+                                <p class="mt-1 text-xs font-semibold text-blue-600 uppercase tracking-wide">{{ item.module_label }}</p>
+                                <p class="mt-1 text-xs text-gray-600">{{ item.start|date:"l, M d, Y" }} • {{ item.start|time:"g:i A" }}</p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-sm text-gray-500 pl-6">No upcoming items logged.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-clipboard-check text-emerald-500 mr-2"></i>
+                        Follow-up Tasks
+                    </h2>
+                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
+                        <i class="fas fa-bell"></i>
+                        {{ follow_up_items|length|default:0 }} open
+                    </span>
+                </div>
+                <div class="space-y-4">
+                    {% for item in follow_up_items %}
+                    <div class="rounded-2xl border px-4 py-4 shadow-sm transition {% if item.overdue %}border-red-200 bg-red-50 bg-opacity-80 hover:border-red-300 hover:bg-white{% else %}border-emerald-100 bg-emerald-50 bg-opacity-80 hover:border-emerald-200 hover:bg-white{% endif %}">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">{{ item.title }}</p>
+                                <p class="mt-1 text-xs text-gray-600">Due {{ item.due|date:"M d, Y" }}</p>
+                                <p class="mt-2 text-xs text-gray-500">{{ item.notes|default:"No notes provided." }}</p>
+                            </div>
+                            <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide {% if item.overdue %}bg-red-100 text-red-700{% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                                <span class="h-2.5 w-2.5 rounded-full {% if item.overdue %}bg-red-500{% else %}bg-emerald-500{% endif %}"></span>
+                                {{ item.module_label }}
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-500">No follow-up items pending.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 space-y-4">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-sitemap text-ocean-500 mr-2"></i>
+                    Workflow Alerts
+                </h2>
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Approvals</h3>
+                        <div class="mt-2 space-y-3">
+                            {% for action in workflow_approvals %}
+                            <div class="border border-ocean-100 rounded-xl p-3 bg-ocean-50">
+                                <p class="text-sm font-semibold text-gray-900">{{ action.title }}</p>
+                                <p class="text-xs text-gray-600 mt-1">{{ action.module_label }} • {{ action.due|date:"M d, Y" }}</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ action.status|default:"Pending"|capfirst }}</p>
+                            </div>
+                            {% empty %}
+                            <p class="text-xs text-gray-500">No pending approvals.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Escalations & Workflow</h3>
+                        <div class="mt-2 space-y-3">
+                            {% for action in workflow_escalations %}
+                            <div class="border {% if action.severity == 'critical' %}border-red-200 bg-red-50{% else %}border-amber-100 bg-amber-50{% endif %} rounded-xl p-3">
+                                <p class="text-sm font-semibold text-gray-900">{{ action.title }}</p>
+                                <p class="text-xs text-gray-600 mt-1">{{ action.module_label }} • {{ action.due|date:"M d, Y" }}</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ action.status|default:"Pending"|capfirst }}</p>
+                            </div>
+                            {% empty %}
+                            <p class="text-xs text-gray-500">No escalations detected.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center mb-4">
+                    <i class="fas fa-triangle-exclamation text-amber-500 mr-2"></i>
+                    Potential Conflicts
+                </h2>
+                <div class="space-y-4">
+                    {% for conflict in conflicts %}
+                    <div class="border border-amber-100 rounded-xl p-4 bg-amber-50">
+                        <p class="text-sm font-semibold text-gray-900">{{ conflict.title_a }}</p>
+                        <p class="text-xs text-gray-600">overlaps with</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ conflict.title_b }}</p>
+                        <p class="text-xs text-gray-600 mt-1">{{ conflict.start|date:"M d, Y" }} • {{ conflict.start|time:"g:i A" }}</p>
+                        {% if conflict.location %}
+                        <p class="text-xs text-gray-500 mt-1">Location: {{ conflict.location }}</p>
+                        {% endif %}
+                        <p class="text-xs text-amber-600 mt-2 uppercase tracking-wide">{{ conflict.module_label }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-500">No conflicts detected for the selected period.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if analytics_heatmap_rows %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 space-y-6">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-fire text-rose-500 mr-2"></i>
+                        Module Activity Heatmap
+                    </h2>
+                    <p class="text-xs text-gray-500 mt-1">Next 7 days of scheduled work.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-xs text-center">
+                        <thead>
+                            <tr>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-700">Module</th>
+                                {% for date in analytics_heatmap_dates %}
+                                <th class="px-2 py-2 font-semibold text-gray-600">{{ date|date:"M d" }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in analytics_heatmap_rows %}
+                            <tr>
+                                <td class="px-3 py-2 text-left font-semibold text-gray-800">{{ row.module_label }}</td>
+                                {% for date, count in row.counts %}
+                                <td class="px-2 py-2">
+                                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-md text-xs font-semibold
+                                        {% if count == 0 %}bg-gray-100 text-gray-400
+                                        {% elif count <= 2 %}bg-blue-100 text-blue-600
+                                        {% elif count <= 4 %}bg-blue-300 text-blue-900
+                                        {% else %}bg-blue-600 text-white{% endif %}">
+                                        {{ count }}
+                                    </span>
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if analytics_status_rows %}
+                <div class="space-y-3">
+                    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Status Breakdown</h3>
+                    <div class="grid grid-cols-1 gap-3">
+                        {% for row in analytics_status_rows %}
+                        <div class="border border-gray-200 rounded-xl p-3">
+                            <p class="text-sm font-semibold text-gray-900">{{ row.module_label }}</p>
+                            <dl class="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-gray-600">
+                                {% for item in row.counts|slice:":4" %}
+                                <div>
+                                    <dt class="font-semibold text-gray-700 inline">{{ item.status }}:</dt>
+                                    <dd class="inline">{{ item.count }}</dd>
+                                </div>
+                                {% endfor %}
+                            </dl>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if analytics_compliance_rows %}
+                <div class="space-y-3">
+                    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Compliance Snapshot</h3>
+                    <div class="grid grid-cols-1 gap-3">
+                        {% for row in analytics_compliance_rows %}
+                        <div class="border border-gray-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">{{ row.module_label }}</p>
+                                <p class="text-xs text-gray-500">Pending approvals: {{ row.pending_approvals }} • Overdue items: {{ row.overdue }}</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full font-semibold bg-amber-100 text-amber-700">Escalations: {{ row.escalations }}</span>
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full font-semibold bg-emerald-100 text-emerald-700">Follow-ups: {{ row.follow_up }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if analytics_compliance_totals %}
+                    <p class="text-xs text-gray-500">
+                        Totals • Pending approvals: {{ analytics_compliance_totals.pending_approvals|default:0 }} • Overdue: {{ analytics_compliance_totals.overdue|default:0 }} • Escalations: {{ analytics_compliance_totals.escalations|default:0 }} • Follow-ups: {{ analytics_compliance_totals.follow_up|default:0 }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if analytics_workflow_summary %}
+                <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
+                    {% for key, value in analytics_workflow_summary.items %}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                        {{ key|underscore_to_space|title }}: {{ value }}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% include 'common/components/task_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'common/js/htmx-focus-management.js' %}"></script>
+<script src="{% static 'common/js/task_modal_enhancements.js' %}"></script>
+<script src="{% static 'common/vendor/fullcalendar/index.global.min.js' %}"></script>
+<script src="{% static 'common/js/calendar.js' %}"></script>
+<script>
+    (function () {
+        var taskModal = document.getElementById('taskModal');
+        var taskModalContent = document.getElementById('taskModalContent');
+
+        function closeTaskModal() {
+            if (!taskModal) {
+                return;
+            }
+            taskModal.classList.add('hidden');
+            taskModal.setAttribute('aria-hidden', 'true');
+            if (taskModalContent) {
+                taskModalContent.innerHTML = '';
+            }
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        function injectModalContent(html) {
+            if (taskModalContent) {
+                taskModalContent.innerHTML = html;
+                if (typeof window.taskModalEnhancer !== 'undefined' && typeof window.taskModalEnhancer.init === 'function') {
+                    window.taskModalEnhancer.init(taskModalContent);
+                }
+                taskModalContent.focus({ preventScroll: true });
+            }
+        }
+
+        function openTaskModal(url) {
+            if (!taskModal || !taskModalContent) {
+                if (url) {
+                    window.location.href = url;
+                }
+                return;
+            }
+
+            taskModal.classList.remove('hidden');
+            taskModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('overflow-hidden');
+            taskModalContent.innerHTML = '<div class="bg-white rounded-2xl shadow-xl p-10 flex items-center justify-center min-h-[240px] text-slate-500"><span class="inline-flex items-center gap-3 text-sm font-semibold"><i class="fas fa-spinner fa-spin text-emerald-500"></i>Loading details…</span></div>';
+
+            if (typeof htmx !== 'undefined') {
+                htmx.ajax('GET', url, { target: '#taskModalContent', swap: 'innerHTML' });
+            } else if (url) {
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'HX-Request': 'true',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('Failed to load modal content');
+                        }
+                        return response.text();
+                    })
+                    .then(function (html) {
+                        injectModalContent(html);
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        taskModalContent.innerHTML = '<div class="bg-white rounded-2xl shadow-xl p-8 text-sm text-rose-600">Unable to load details. Please try again.</div>';
+                    });
+            }
+        }
+
+        window.openCalendarModal = openTaskModal;
+        window.openTaskModal = openTaskModal;
+
+        // Note: Modal close functionality is handled by htmx-focus-management.js
+        // which listens for clicks on [data-modal-backdrop] and [data-close-modal]
+        // and handles Escape key presses
+
+        ['calendar-close-modal', 'task-modal-close'].forEach(function (eventName) {
+            document.body.addEventListener(eventName, closeTaskModal);
+        });
+
+        // CRITICAL FIX: Detect deletion by watching HTMX afterSwap events
+        // When delete completes, HTMX swaps empty content into #taskModalContent
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            // Check if this was a swap into our modal
+            if (event.detail.target && event.detail.target.id === 'taskModalContent') {
+                // Check if the request was to a delete URL
+                var xhr = event.detail.xhr;
+                if (xhr && xhr.responseURL && xhr.responseURL.includes('/delete/')) {
+                    console.log('🗑️ Delete completed - closing modal and refreshing calendar');
+
+                    // Close the modal
+                    setTimeout(function() {
+                        closeTaskModal();
+                    }, 100);
+
+                    // Refresh the calendar
+                    var calendar = window.__oobcCalendars && window.__oobcCalendars['oobc-calendar'];
+                    if (calendar) {
+                        setTimeout(function() {
+                            calendar.refetchEvents();
+                        }, 200);
+                    }
+                }
+            }
+        });
+
+        document.body.addEventListener('calendar-event-updated', function (event) {
+            var detail = event.detail;
+            var calendar = window.__oobcCalendars && window.__oobcCalendars['oobc-calendar'];
+            if (!calendar || !detail || !detail.id) {
+                return;
+            }
+
+            var existing = calendar.getEventById(detail.id);
+            if (existing) {
+                existing.remove();
+            }
+
+            calendar.addEvent(detail);
+        });
+
+        document.body.addEventListener('calendar-event-removed', function (event) {
+            var detail = event.detail;
+            var calendar = window.__oobcCalendars && window.__oobcCalendars['oobc-calendar'];
+            if (!calendar || !detail || !detail.id) {
+                return;
+            }
+
+            var existing = calendar.getEventById(detail.id);
+            if (existing) {
+                existing.remove();
+            }
+        });
+
+        // Listen for task-board-refresh event (triggered when tasks are deleted)
+        document.body.addEventListener('task-board-refresh', function (event) {
+            var calendar = window.__oobcCalendars && window.__oobcCalendars['oobc-calendar'];
+            if (calendar) {
+                // Refetch all events from the server to sync the calendar
+                calendar.refetchEvents();
+            }
+        });
+
+        document.addEventListener('htmx:afterSwap', function (event) {
+            if (event.detail && event.detail.target && event.detail.target.id === 'taskModalContent') {
+                injectModalContent(event.detail.target.innerHTML);
+            }
+        });
+
+        // Handle HTMX HX-Trigger header events for calendar updates
+        document.body.addEventListener('htmx:afterRequest', function (event) {
+            if (!event.detail || !event.detail.xhr) {
+                return;
+            }
+
+            var xhr = event.detail.xhr;
+            var triggerHeader = xhr.getResponseHeader('HX-Trigger');
+
+            if (!triggerHeader) {
+                return;
+            }
+
+            try {
+                var triggers = JSON.parse(triggerHeader);
+
+                // Manually dispatch each trigger as a custom event
+                Object.keys(triggers).forEach(function(triggerName) {
+                    var triggerData = triggers[triggerName];
+                    document.body.dispatchEvent(new CustomEvent(triggerName, {
+                        detail: triggerData
+                    }));
+                });
+            } catch (error) {
+                console.error('Error parsing HX-Trigger header:', error);
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+        console.log('Calendar initialization started');
+        console.log('FullCalendar available:', typeof FullCalendar !== 'undefined');
+        console.log('renderCalendar available:', typeof renderCalendar !== 'undefined');
+
+        try {
+            // Use events function for dynamic refetching
+            var options = JSON.parse('{{ calendar_options_json|escapejs }}');
+            options.events = function(fetchInfo, successCallback, failureCallback) {
+                // Add timestamp to bypass cache when refetching
+                var url = '{% url "common:oobc_calendar_feed_json" %}?t=' + new Date().getTime();
+                fetch(url)
+                    .then(function(response) {
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch calendar events');
+                        }
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        console.log('Fetched calendar events:', data.events.length);
+                        successCallback(data.events);
+                    })
+                    .catch(function(error) {
+                        console.error('Calendar fetch error:', error);
+                        failureCallback(error);
+                    });
+            };
+            console.log('Configured calendar with events function');
+
+            var calendar = renderCalendar('oobc-calendar', null, options);
+            console.log('Calendar instance:', calendar);
+
+            if (!calendar) {
+                console.error('Calendar failed to render');
+                return;
+            }
+        } catch (error) {
+            console.error('Calendar initialization error:', error);
+        }
+
+        function applyModuleFilters() {
+            var activeModules = Array.from(document.querySelectorAll('[data-module-filter]'))
+                .filter(function (input) { return input.checked; })
+                .map(function (input) { return input.value; });
+
+            calendar.batchRendering(function () {
+                calendar.getEvents().forEach(function (event) {
+                    var moduleKey = event.extendedProps && event.extendedProps.module;
+                    if (!moduleKey || activeModules.indexOf(moduleKey) !== -1) {
+                        event.setProp('display', 'auto');
+                    } else {
+                        event.setProp('display', 'none');
+                    }
+                });
+            });
+        }
+
+        document.querySelectorAll('[data-module-filter]').forEach(function (input) {
+            input.addEventListener('change', applyModuleFilters);
+        });
+
+        applyModuleFilters();
+    });
+    })();
+</script>
+{% endblock %}

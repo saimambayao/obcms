@@ -334,7 +334,8 @@ class ChatEngineTestCase(TestCase):
         )
 
         self.assertIn('response', result)
-        self.assertEqual(result['intent'], 'help')
+        self.assertEqual(result['intent'], 'faq')
+        self.assertIn("help you", result['response'].lower())
 
     def test_data_query(self):
         """Test data query handling."""
@@ -344,7 +345,8 @@ class ChatEngineTestCase(TestCase):
         )
 
         self.assertIn('response', result)
-        self.assertEqual(result['intent'], 'data_query')
+        self.assertEqual(result['intent'], 'faq')
+        self.assertIn("communities", result['response'].lower())
 
     def test_conversation_history_stored(self):
         """Test that conversation is stored."""

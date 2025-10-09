@@ -1,6 +1,6 @@
 """Public form interfaces for the common app."""
 
-from .auth import CustomLoginForm, UserProfileForm, UserRegistrationForm
+from .auth import CustomLoginForm, UserProfileForm, UserRegistrationForm, MOARegistrationForm
 from .calendar import (
     CalendarResourceBookingForm,
     CalendarResourceForm,
@@ -32,6 +32,7 @@ __all__ = [
     "CustomLoginForm",
     "UserProfileForm",
     "UserRegistrationForm",
+    "MOARegistrationForm",
     "CalendarResourceForm",
     "CalendarResourceBookingForm",
     "StaffLeaveForm",

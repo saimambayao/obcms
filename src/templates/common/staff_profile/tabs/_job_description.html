@@ -4,11 +4,13 @@
             <i class="fas fa-clipboard-list text-emerald-600"></i>
             Job purpose & design
         </h2>
+        {% if can_edit_profile %}
         <a href="{% url 'common:staff_profile_update' profile.pk %}"
            class="inline-flex items-center text-sm font-semibold text-emerald-600 hover:text-emerald-700">
             Update job details
             <i class="fas fa-arrow-right ml-2 text-xs"></i>
         </a>
+        {% endif %}
     </div>
     {% if profile.job_purpose %}
     <p class="text-sm text-gray-600">{{ profile.job_purpose|linebreaksbr }}</p>

@@ -216,8 +216,205 @@ class UserProfileForm(forms.ModelForm):
         return email
 
 
+class MOARegistrationForm(UserCreationForm):
+    """
+    Self-registration form specifically for MOA staff.
+    Creates unapproved accounts that require admin approval.
+    """
+
+    # MOA-specific user types only
+    MOA_USER_TYPES = [
+        ('bmoa', 'BARMM Ministry/Agency/Office'),
+        ('lgu', 'Local Government Unit'),
+        ('nga', 'National Government Agency'),
+    ]
+
+    first_name = forms.CharField(
+        max_length=30,
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] bg-white transition-all duration-200",
+                "placeholder": "Enter your first name",
+            }
+        ),
+        help_text="Your official first name as it appears in government records"
+    )
+
+    last_name = forms.CharField(
+        max_length=30,
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] bg-white transition-all duration-200",
+                "placeholder": "Enter your last name",
+            }
+        ),
+        help_text="Your official last name as it appears in government records"
+    )
+
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(
+            attrs={
+                "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] bg-white transition-all duration-200",
+                "placeholder": "your.email@agency.gov.ph",
+            }
+        ),
+        help_text="Use your official government/organization email address"
+    )
+
+    user_type = forms.ChoiceField(
+        choices=MOA_USER_TYPES,
+        required=True,
+        widget=forms.Select(
+            attrs={
+                "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200"
+            }
+        ),
+        help_text="Select the type of organization you represent"
+    )
+
+    organization = forms.CharField(
+        max_length=255,
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] bg-white transition-all duration-200",
+                "placeholder": "e.g., Department of Agriculture - BARMM",
+            }
+        ),
+        help_text="Full official name of your organization or agency"
+    )
+
+    position = forms.CharField(
+        max_length=255,
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] bg-white transition-all duration-200",
+                "placeholder": "e.g., Program Manager, Regional Coordinator",
+            }
+        ),
+        help_text="Your official position or title within the organization"
+    )
+
+    contact_number = forms.CharField(
+        max_length=20,
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] bg-white transition-all duration-200",
+                "placeholder": "+63 9XX XXX XXXX",
+            }
+        ),
+        help_text="Your official contact number for verification purposes"
+    )
+
+    class Meta:
+        model = User
+        fields = (
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "user_type",
+            "organization",
+            "position",
+            "contact_number",
+            "password1",
+            "password2",
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Style username field
+        self.fields["username"].widget.attrs.update(
+            {
+                "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] bg-white transition-all duration-200",
+                "placeholder": "Choose a unique username",
+            }
+        )
+        self.fields["username"].help_text = "Letters, digits and @/./+/-/_ only"
+
+        # Style password fields
+        self.fields["password1"].widget.attrs.update(
+            {
+                "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] bg-white transition-all duration-200",
+                "placeholder": "Create a strong password",
+            }
+        )
+        self.fields["password1"].help_text = "At least 8 characters, not entirely numeric"
+
+        self.fields["password2"].widget.attrs.update(
+            {
+                "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] bg-white transition-all duration-200",
+                "placeholder": "Confirm your password",
+            }
+        )
+        self.fields["password2"].help_text = "Enter the same password for verification"
+
+    def clean_email(self):
+        """Validate that email is unique and from a government domain."""
+        email = self.cleaned_data.get("email")
+
+        if email:
+            # Check for existing email
+            if User.objects.filter(email=email).exists():
+                raise forms.ValidationError(
+                    "This email address is already registered. "
+                    "Please use a different email or contact support if this is an error."
+                )
+
+            # Recommend (but don't require) government email
+            if not any(domain in email.lower() for domain in ['.gov.ph', '.edu.ph']):
+                # Add a warning but allow the registration
+                pass  # Could add a soft warning in the future
+
+        return email
+
+    def clean_contact_number(self):
+        """Validate Philippine contact number format."""
+        contact_number = self.cleaned_data.get("contact_number")
+
+        if contact_number:
+            # Remove common separators
+            cleaned = contact_number.replace(' ', '').replace('-', '').replace('+', '')
+
+            # Check if it's a valid Philippine number pattern
+            if not (cleaned.startswith('63') or cleaned.startswith('09')):
+                raise forms.ValidationError(
+                    "Please enter a valid Philippine contact number "
+                    "(e.g., +63 9XX XXX XXXX or 09XX XXX XXXX)"
+                )
+
+        return contact_number
+
+    def save(self, commit=True):
+        """Create user account with is_approved=False."""
+        user = super().save(commit=False)
+        user.email = self.cleaned_data["email"]
+        user.first_name = self.cleaned_data["first_name"]
+        user.last_name = self.cleaned_data["last_name"]
+        user.user_type = self.cleaned_data["user_type"]
+        user.organization = self.cleaned_data["organization"]
+        user.position = self.cleaned_data["position"]
+        user.contact_number = self.cleaned_data["contact_number"]
+
+        # Critical: Set is_approved=False for MOA staff
+        user.is_approved = False
+        user.is_active = True  # Active but not approved
+
+        if commit:
+            user.save()
+
+        return user
+
+
 __all__ = [
     "CustomLoginForm",
     "UserRegistrationForm",
     "UserProfileForm",
+    "MOARegistrationForm",
 ]

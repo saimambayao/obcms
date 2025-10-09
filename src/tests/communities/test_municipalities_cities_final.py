@@ -1,74 +1,89 @@
-#!/usr/bin/env python
-"""Test municipalities and cities queries separately."""
-import os
-import django
+"""Regression tests for FAQ statistics on municipalities and cities."""
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'obc_management.settings')
-django.setup()
+import pytest
+from django.core.cache import cache
 
 from common.ai_services.chat.faq_handler import get_faq_handler
-from common.ai_services.chat.chat_engine import ConversationalAssistant
-from communities.models import Municipality
+from common.models import Barangay, Municipality, Province, Region
+from communities.models import OBCCommunity
 
-# Step 1: Update FAQ cache
-print("=" * 70)
-print("STEP 1: Updating FAQ Cache")
-print("=" * 70)
-faq_handler = get_faq_handler()
-faq_handler.update_stats_cache()
-print("✅ FAQ cache updated")
-print()
 
-# Step 2: Get actual counts from database
-municipalities_count = Municipality.objects.filter(municipality_type="municipality").count()
-cities_count = Municipality.objects.exclude(municipality_type="municipality").count()
-total_count = Municipality.objects.count()
+@pytest.fixture
+def municipality_stats_dataset(db):
+    """Set up geographic data supporting municipality/city FAQ answers."""
+    cache.clear()
 
-print("=" * 70)
-print("DATABASE COUNTS")
-print("=" * 70)
-print(f"Municipalities only: {municipalities_count}")
-print(f"Cities only: {cities_count}")
-print(f"Total (both): {total_count}")
-print("=" * 70)
-print()
+    region = Region.objects.create(code="R-FAQ", name="FAQ Region")
+    province = Province.objects.create(region=region, code="P-FAQ", name="FAQ Province")
 
-# Step 3: Test both queries
-assistant = ConversationalAssistant()
-user_id = 1
+    municipality_alpha = Municipality.objects.create(
+        province=province,
+        code="M-ALPHA",
+        name="Alpha",
+        municipality_type="municipality",
+    )
+    municipality_beta = Municipality.objects.create(
+        province=province,
+        code="M-BETA",
+        name="Beta",
+        municipality_type="municipality",
+    )
+    municipality_gamma = Municipality.objects.create(
+        province=province,
+        code="C-GAMMA",
+        name="Gamma City",
+        municipality_type="independent_city",
+    )
 
-test_queries = [
-    ("How many municipalities", municipalities_count),
-    ("How many cities", cities_count),
-]
+    barangay_alpha = Barangay.objects.create(
+        municipality=municipality_alpha,
+        code="B-ALPHA",
+        name="Barangay Alpha",
+    )
+    barangay_beta = Barangay.objects.create(
+        municipality=municipality_beta,
+        code="B-BETA",
+        name="Barangay Beta",
+    )
+    barangay_gamma = Barangay.objects.create(
+        municipality=municipality_gamma,
+        code="B-GAMMA",
+        name="Barangay Gamma",
+    )
 
-for query, expected_count in test_queries:
-    print(f"TESTING: '{query}'")
-    print("-" * 70)
+    OBCCommunity.objects.create(name="Alpha Community", barangay=barangay_alpha)
+    OBCCommunity.objects.create(name="Beta Community", barangay=barangay_beta)
+    OBCCommunity.objects.create(name="Gamma Community", barangay=barangay_gamma)
 
-    try:
-        result = assistant.chat(user_id, query)
-        response = result.get('response', 'No response')
+    faq_handler = get_faq_handler()
+    stats = faq_handler.update_stats_cache()
 
-        print(f"Response: {response}")
-        print(f"Intent: {result.get('intent', 'Unknown')}")
-        print(f"Confidence: {result.get('confidence', 0):.2f}")
-        print()
+    return {
+        "stats": stats,
+        "municipality_total": Municipality.objects.filter(
+            municipality_type="municipality"
+        ).count(),
+        "city_total": Municipality.objects.exclude(
+            municipality_type="municipality"
+        ).count(),
+    }
 
-        # Verify correctness
-        response_str = str(response)
-        if str(expected_count) in response_str:
-            print(f"✅ PASS: Contains correct count ({expected_count})")
-        else:
-            print(f"❌ FAIL: Expected count {expected_count} not found in response")
 
-        # Check it doesn't contain wrong counts
-        for wrong_count in [municipalities_count, cities_count, total_count]:
-            if wrong_count != expected_count and str(wrong_count) in response_str:
-                print(f"⚠️  WARNING: Response also contains {wrong_count} (should only show {expected_count})")
+@pytest.mark.django_db
+def test_municipality_stats_string_contains_count(municipality_stats_dataset):
+    """The FAQ stats should include the correct municipality total."""
+    stats = municipality_stats_dataset["stats"]
+    municipality_total = municipality_stats_dataset["municipality_total"]
 
-    except Exception as e:
-        print(f"❌ ERROR: {e}")
+    assert "municipalities_only" in stats
+    assert f"There are {municipality_total} municipalities" in stats["municipalities_only"]
 
-    print("=" * 70)
-    print()
+
+@pytest.mark.django_db
+def test_city_stats_string_contains_count(municipality_stats_dataset):
+    """The FAQ stats should include the correct city total."""
+    stats = municipality_stats_dataset["stats"]
+    city_total = municipality_stats_dataset["city_total"]
+
+    assert "cities_only" in stats
+    assert f"There are {city_total} cities" in stats["cities_only"]

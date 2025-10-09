@@ -1,6 +1,8 @@
 {% load humanize %}
+{% load text_extras %}
+{% load math_extras %}
 
-<!--
+{% comment %}
     Recursive Work Item Tree Component
 
     Features:
@@ -14,9 +16,10 @@
 
     Usage:
         {% include "monitoring/partials/work_item_tree.html" with work_item=root_item depth=0 %}
--->
+{% endcomment %}
 
 <!-- Tree Node Container -->
+{% with has_children=work_item.get_children.exists children_count=work_item.get_children.count %}
 <div class="tree-node relative"
      id="node-{{ work_item.id }}"
      data-node-id="{{ work_item.id }}"
@@ -24,7 +27,7 @@
      data-depth="{{ depth }}"
      role="treeitem"
      aria-level="{{ depth|add:1 }}"
-     {% if work_item.get_children %}aria-expanded="false"{% endif %}
+     {% if has_children %}aria-expanded="false"{% endif %}
      tabindex="{% if depth == 0 %}0{% else %}-1{% endif %}">
 
     <!-- Tree Connector Lines -->
@@ -60,7 +63,7 @@
 
                 <!-- Expand/Collapse Icon -->
                 <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-                    {% if work_item.get_children %}
+                    {% if has_children %}
                         <button type="button"
                                 class="expand-toggle w-8 h-8 rounded-lg bg-gray-100 hover:bg-emerald-100 flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                                 data-work-item-id="{{ work_item.id }}"
@@ -70,7 +73,7 @@
                                 hx-trigger="click once"
                                 hx-indicator="#loading-{{ work_item.id }}"
                                 onclick="toggleWorkItemNode(this, '{{ work_item.id }}')"
-                                aria-label="{% if work_item.get_children.count %}Expand to show {{ work_item.get_children.count }} sub-items{% else %}Expand sub-items{% endif %}"
+                                aria-label="{% if children_count %}Expand to show {{ children_count }} sub-items{% else %}Expand sub-items{% endif %}"
                                 aria-controls="children-{{ work_item.id }}">
                             <i class="fas fa-chevron-right transition-transform duration-200 text-gray-600 text-sm"
                                id="toggle-icon-{{ work_item.id }}"></i>
@@ -353,7 +356,7 @@
     </div>
 
     <!-- Children Container (Lazy Loaded) -->
-    {% if work_item.get_children %}
+    {% if has_children %}
     <div class="children-container hidden"
          id="children-{{ work_item.id }}"
          role="group"
@@ -363,3 +366,4 @@
     {% endif %}
 
 </div>
+{% endwith %}

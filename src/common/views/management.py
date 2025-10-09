@@ -75,6 +75,7 @@ from common.services.staff import (
     ensure_staff_profiles_for_users,
 )
 from common.services.calendar import CALENDAR_CACHE_TTL, build_calendar_payload
+from common.security_logging import log_unauthorized_access
 from monitoring.models import (
     MonitoringEntry,
     MonitoringEntryFunding,
@@ -157,6 +158,149 @@ class _StaffTaskStub:
         pass
 
     objects = _StaffTaskManagerStub()
+
+STAFF_PROFILE_EDIT_AUTHORIZED_POSITIONS = [
+    "Executive Director",
+    "Deputy Executive Director",
+    "DMO IV",
+    "DMO III",
+    "Information System Analyst",
+    "Information System Analyst II",
+    "Planning Officer I",
+    "Planning Officer II",
+    "Community Development Officer I",
+]
+
+_AUTHORIZED_STAFF_POSITION_LOOKUP = {
+    position.lower(): position for position in STAFF_PROFILE_EDIT_AUTHORIZED_POSITIONS
+}
+
+
+def _has_authorized_staff_position(user: User) -> bool:
+    """Check if the user holds an authorized OOBC staff position."""
+
+    if not getattr(user, "position", None):
+        return False
+
+    position_value = user.position.strip().lower()
+    return bool(position_value) and position_value in _AUTHORIZED_STAFF_POSITION_LOOKUP
+
+
+def _can_edit_staff_profile(user: User) -> bool:
+    """Determine if the user may edit staff profiles."""
+
+    if not getattr(user, "is_authenticated", False):
+        return False
+
+    if user.is_superuser or user.user_type == "admin":
+        return True
+
+    if user.has_perm("common.change_staffprofile"):
+        return True
+
+    return _has_authorized_staff_position(user)
+
+
+def build_staff_profile_detail_context(
+    request,
+    profile: StaffProfile,
+    *,
+    base_url: str,
+    viewing_user=None,
+    allow_delete: bool = True,
+    can_edit_profile: bool | None = None,
+) -> dict:
+    """Assemble context payload for staff profile detail experiences."""
+
+    tab_definitions = (
+        {
+            "key": "account",
+            "label": "User Profile",
+            "icon": "fas fa-id-card",
+        },
+        {
+            "key": "overview",
+            "label": "Overview",
+            "icon": "fas fa-layer-group",
+        },
+        {
+            "key": "job",
+            "label": "Job Description",
+            "icon": "fas fa-briefcase",
+        },
+        {
+            "key": "competency",
+            "label": "Competencies",
+            "icon": "fas fa-lightbulb",
+        },
+        {
+            "key": "performance",
+            "label": "Performance",
+            "icon": "fas fa-chart-line",
+        },
+        {
+            "key": "tasks",
+            "label": "Tasks",
+            "icon": "fas fa-tasks",
+        },
+    )
+
+    default_tab = tab_definitions[0]["key"]
+    requested_tab = (request.GET.get("tab") or default_tab).lower()
+    allowed_tab_keys = {tab["key"] for tab in tab_definitions}
+    active_tab = requested_tab if requested_tab in allowed_tab_keys else default_tab
+
+    tabs = [
+        {
+            **tab,
+            "url": base_url if tab["key"] == default_tab else f"{base_url}?tab={tab['key']}",
+            "is_active": tab["key"] == active_tab,
+        }
+        for tab in tab_definitions
+    ]
+
+    memberships = (
+        profile.user.team_memberships.select_related("team")
+        .filter(is_active=True)
+        .order_by("team__name")
+    )
+    recent_tasks = (
+        WorkItem.objects.filter(assignees=profile.user)
+        .prefetch_related("teams", "assignees")
+        .order_by("-updated_at")[:10]
+    )
+    trainings = profile.training_enrollments.select_related("program")
+    development_plans = profile.development_plans.all()
+    performance_targets = profile.performance_targets.select_related("team")
+
+    tasks_by_status = {
+        label: profile.user.assigned_work_items.filter(status=status).count()
+        for status, label in WorkItem.STATUS_CHOICES
+    }
+
+    viewer = viewing_user or request.user
+    can_edit = (
+        _can_edit_staff_profile(viewer)
+        if can_edit_profile is None
+        else bool(can_edit_profile)
+    )
+
+    return {
+        "profile": profile,
+        "memberships": memberships,
+        "recent_tasks": recent_tasks,
+        "trainings": trainings,
+        "development_plans": development_plans,
+        "performance_targets": performance_targets,
+        "competency_categories": STAFF_COMPETENCY_CATEGORIES,
+        "competency_levels": STAFF_COMPETENCY_PROFICIENCY_LEVELS,
+        "tasks_by_status": tasks_by_status,
+        "tabs": tabs,
+        "active_tab": active_tab,
+        "is_self_profile": viewer == profile.user,
+        "allow_delete": allow_delete,
+        "can_edit_profile": can_edit,
+    }
 
 StaffTask = _StaffTaskStub
 
@@ -315,18 +459,8 @@ def _get_performance_status_weights():
         WorkItem.STATUS_AT_RISK: 0.1,
     }
 
-# Positions authorized to approve user accounts
-USER_APPROVAL_AUTHORIZED_POSITIONS = [
-    "Executive Director",
-    "Deputy Executive Director",
-    "DMO IV",
-    "DMO III",
-    "Information System Analyst",
-    "Information System Analyst II",
-    "Planning Officer I",
-    "Planning Officer II",
-    "Community Development Officer I",
-]
+# Positions authorized to approve user accounts (aligned with staff profile editors)
+USER_APPROVAL_AUTHORIZED_POSITIONS = list(STAFF_PROFILE_EDIT_AUTHORIZED_POSITIONS)
 
 
 def _can_approve_users(user):
@@ -2950,6 +3084,14 @@ def staff_profile_create(request):
 def staff_profile_update(request, pk):
     """Update an existing staff profile."""
 
+    if not _can_edit_staff_profile(request.user):
+        log_unauthorized_access(request, request.path, request.user)
+        messages.error(
+            request,
+            "You do not have permission to edit OOBC staff profiles.",
+        )
+        return redirect("common:page_restricted")
+
     profile = get_object_or_404(StaffProfile.objects.select_related("user"), pk=pk)
     form = StaffProfileForm(request.POST or None, instance=profile, request=request)
     form.fields["user"].queryset = User.objects.filter(pk=profile.user_id)
@@ -2979,85 +3121,12 @@ def staff_profiles_detail(request, pk):
 
     profile = get_object_or_404(StaffProfile.objects.select_related("user"), pk=pk)
 
-    tab_definitions = (
-        {
-            "key": "overview",
-            "label": "Overview",
-            "icon": "fas fa-layer-group",
-        },
-        {
-            "key": "job",
-            "label": "Job Description",
-            "icon": "fas fa-briefcase",
-        },
-        {
-            "key": "competency",
-            "label": "Competency Framework",
-            "icon": "fas fa-lightbulb",
-        },
-        {
-            "key": "performance",
-            "label": "Performance Dashboard",
-            "icon": "fas fa-chart-line",
-        },
-        {
-            "key": "tasks",
-            "label": "Assigned Tasks",
-            "icon": "fas fa-tasks",
-        },
-    )
-
-    requested_tab = (request.GET.get("tab") or "overview").lower()
-    allowed_tab_keys = {tab["key"] for tab in tab_definitions}
-    active_tab = requested_tab if requested_tab in allowed_tab_keys else "overview"
-
     detail_url = reverse("common:staff_profiles_detail", args=[profile.pk])
-    tabs = [
-        {
-            **tab,
-            "url": (
-                detail_url
-                if tab["key"] == "overview"
-                else f"{detail_url}?tab={tab['key']}"
-            ),
-            "is_active": tab["key"] == active_tab,
-        }
-        for tab in tab_definitions
-    ]
-
-    active_memberships = (
-        profile.user.team_memberships.select_related("team")
-        .filter(is_active=True)
-        .order_by("team__name")
+    context = build_staff_profile_detail_context(
+        request,
+        profile,
+        base_url=detail_url,
     )
-
-    recent_tasks = (
-        WorkItem.objects.filter(work_type='task', assignees=profile.user)
-        .prefetch_related("teams", "assignees")
-        .order_by("-updated_at")[:10]
-    )
-    trainings = profile.training_enrollments.select_related("program")
-    development_plans = profile.development_plans.all()
-    performance_targets = profile.performance_targets.select_related("team")
-
-    tasks_by_status = {
-        label: profile.user.assigned_work_items.filter(work_type='task', status=status).count()
-        for status, label in WorkItem.STATUS_CHOICES
-    }
-
-    context = {
-        "profile": profile,
-        "memberships": active_memberships,
-        "recent_tasks": recent_tasks,
-        "trainings": trainings,
-        "development_plans": development_plans,
-        "performance_targets": performance_targets,
-        "competency_categories": STAFF_COMPETENCY_CATEGORIES,
-        "competency_levels": STAFF_COMPETENCY_PROFICIENCY_LEVELS,
-        "tasks_by_status": tasks_by_status,
-        "tabs": tabs,
-        "active_tab": active_tab,
-    }
     return render(request, "common/staff_profile_detail.html", context)
 
 

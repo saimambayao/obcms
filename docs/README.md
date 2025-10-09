@@ -208,6 +208,26 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 - **Calendar System:**
   - [Advanced Calendar Architecture](improvements/CALENDAR_ADVANCED_ARCHITECTURE.md) ⭐ **NEW - Google Calendar-Inspired UI Design**
 
+- **MOA RBAC System:** 🔐 **NEW - Role-Based Access Control for MOA Users**
+  - [MOA RBAC Quick Reference](improvements/MOA_RBAC_QUICK_REFERENCE.md) 🚀 **START HERE - Developer Quick Reference**
+    - Quick access decision matrix (can MOA user do X?)
+    - Code snippets cheat sheet (10 common patterns)
+    - Template tags reference with examples
+    - Common pitfalls and solutions
+    - Performance tips and troubleshooting
+  - [MOA RBAC Design](improvements/MOA_RBAC_DESIGN.md) ⭐ **Complete Architecture & Implementation Guide**
+    - Comprehensive RBAC design for Ministry/Agency/Office focal users
+    - Three-tier access model: View-Only, Edit-Own, No-Access
+    - Database schema changes (moa_organization FK)
+    - Permission decorators, mixins, and template tags
+    - Defense-in-depth security (view/model/template layers)
+    - 7-phase implementation plan with testing strategy
+  - [MOA RBAC Implementation Status](improvements/MOA_RBAC_IMPLEMENTATION_STATUS.md) 📊 **Track Implementation Progress**
+    - Phase-by-phase task tracking
+    - Deployment checklist and validation steps
+    - Known issues and risk mitigation
+  - [MOA/OOBC Separation Analysis](improvements/MOA_OOBC_SEPARATION_ANALYSIS.md) 📋 **Requirements & Access Control Matrix**
+
 - **Task Management System:** ⭐ **NEW - 100% COMPLETE** ✅
   - [Integrated Task Management Evaluation Plan](improvements/integrated_staff_task_management_evaluation_plan.md) - Original plan
   - [Implementation Status](improvements/TASK_MANAGEMENT_IMPLEMENTATION_STATUS.md) - Initial progress

@@ -16,10 +16,13 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 
+from common.utils.moa_permissions import moa_can_edit_organization
+
 from common.models import RecurringEventPattern
 from common.work_item_model import WorkItem
 from common.forms.work_items import WorkItemForm
 from monitoring.models import MonitoringEntry
+from monitoring.services import build_moa_budget_tracking
 
 from .forms import (
     OrganizationContactFormSet,
@@ -126,6 +129,7 @@ def organization_create(request):
     return _organization_form(request)
 
 
+@moa_can_edit_organization
 @login_required
 def organization_edit(request, organization_id):
     """Render and process the frontend organization edit form."""
@@ -187,6 +191,57 @@ def organization_detail(request, organization_id):
             "text": support_text,
         })
 
+    # Collect work items and budget data for MOA tabs
+    moa_work_items = []
+    moa_work_items_stats = {
+        "total": 0,
+        "in_progress": 0,
+        "completed": 0,
+        "avg_progress": 0,
+    }
+    moa_budget_stats = {
+        "total_budget": Decimal("0.00"),
+        "total_allocated": Decimal("0.00"),
+        "total_expenditure": Decimal("0.00"),
+        "utilization_rate": 0.0,
+        "total_variance": Decimal("0.00"),
+    }
+
+    if organization.organization_type == "bmoa" and moa_ppas:
+        # Get all work items for this MOA's PPAs
+        moa_work_items = WorkItem.objects.filter(
+            ppa_category="moa_ppa",
+            implementing_moa=organization,
+        ).select_related(
+            "related_ppa",
+            "created_by",
+        ).prefetch_related(
+            "assignees",
+            "teams",
+        ).order_by("-created_at")[
+            :100
+        ]  # Limit to 100 most recent
+
+        # Calculate work items stats
+        work_items_list = list(moa_work_items)
+        moa_work_items_stats = {
+            "total": len(work_items_list),
+            "in_progress": sum(
+                1 for wi in work_items_list if wi.status == "in_progress"
+            ),
+            "completed": sum(1 for wi in work_items_list if wi.status == "completed"),
+            "avg_progress": (
+                sum(wi.progress for wi in work_items_list) / len(work_items_list)
+                if work_items_list
+                else 0
+            ),
+        }
+
+        budget_context = build_moa_budget_tracking(organization, moa_ppas)
+        moa_ppas = budget_context["moa_ppas"]
+        moa_budget_stats = budget_context["moa_budget_stats"]
+        moa_ppas_total_budget = moa_budget_stats["total_budget"]
+
     context = {
         "organization": organization,
         "contacts": contacts,
@@ -200,10 +255,15 @@ def organization_detail(request, organization_id):
         "organization_notes_display": display_notes,
         "moa_special_provisions_text": auto_special_text,
         "ppa_special_provisions": ppa_special_provisions,
+        # MOA tabs data
+        "moa_work_items": moa_work_items,
+        "moa_work_items_stats": moa_work_items_stats,
+        "moa_budget_stats": moa_budget_stats,
     }
     return render(request, "coordination/organization_detail.html", context)
 
 
+@moa_can_edit_organization
 @login_required
 def organization_delete(request, organization_id):
     """Handle deletion of an organization from the frontend UI."""
@@ -1208,3 +1268,88 @@ def event_check_in(request, event_id):
             f'<div class="p-4 bg-red-50 rounded-lg text-red-800">Error: {str(e)}</div>',
             status=400,
         )
+
+
+@login_required
+def moa_calendar_feed(request, organization_id):
+    """
+    Calendar feed endpoint for a specific MOA.
+
+    Returns JSON calendar events containing all work items from all PPAs
+    implemented by this MOA (filtered by implementing_moa for isolation).
+
+    Args:
+        organization_id: UUID of the Organization (MOA)
+
+    Returns:
+        JsonResponse with calendar events in FullCalendar format
+    """
+    from common.work_item_model import WorkItem
+    from django.http import JsonResponse
+    from datetime import datetime
+
+    try:
+        organization = Organization.objects.get(id=organization_id)
+    except Organization.DoesNotExist:
+        return JsonResponse({'error': 'Organization not found'}, status=404)
+
+    # Get all work items for this MOA's PPAs
+    work_items = WorkItem.objects.filter(
+        ppa_category='moa_ppa',
+        implementing_moa=organization,
+        is_calendar_visible=True
+    ).select_related(
+        'related_ppa',
+        'created_by'
+    ).prefetch_related(
+        'assignees',
+        'teams'
+    )
+
+    # Build calendar events
+    events = []
+    for item in work_items:
+        # Skip items without dates
+        if not item.start_date:
+            continue
+
+        # Determine color based on work type
+        color_map = {
+            'project': '#3b82f6',  # Blue
+            'activity': '#10b981',  # Emerald
+            'task': '#8b5cf6',     # Purple
+            'subtask': '#f59e0b',  # Amber
+        }
+
+        event = {
+            'id': str(item.id),
+            'title': item.title,
+            'start': item.start_date.isoformat(),
+            'end': (item.due_date or item.start_date).isoformat(),
+            'allDay': not (item.start_time and item.end_time),
+            'backgroundColor': color_map.get(item.work_type, '#6b7280'),
+            'borderColor': color_map.get(item.work_type, '#6b7280'),
+            'textColor': '#ffffff',
+            'extendedProps': {
+                'work_item_id': str(item.id),
+                'work_type': item.work_type,
+                'status': item.status,
+                'priority': item.priority,
+                'progress': item.progress,
+                'description': item.description or '',
+                'ppa_title': item.related_ppa.title if item.related_ppa else '',
+            }
+        }
+
+        # Add time if available
+        if item.start_time:
+            start_datetime = datetime.combine(item.start_date, item.start_time)
+            event['start'] = start_datetime.isoformat()
+
+        if item.end_time and item.due_date:
+            end_datetime = datetime.combine(item.due_date, item.end_time)
+            event['end'] = end_datetime.isoformat()
+
+        events.append(event)
+
+    return JsonResponse(events, safe=False)

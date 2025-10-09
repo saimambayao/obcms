@@ -1,60 +1,117 @@
-#!/usr/bin/env python
-"""Test the full chat pipeline for municipality queries."""
-import os
-import django
+"""Tests for municipality-related FAQ responses in the chat assistant."""
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'obc_management.settings')
-django.setup()
+import pytest
+from django.contrib.auth import get_user_model
+from django.core.cache import cache
 
 from common.ai_services.chat.chat_engine import ConversationalAssistant
-from communities.models import Municipality, OBCCommunity
+from common.ai_services.chat.faq_handler import get_faq_handler
+from common.models import Barangay, Municipality, Province, Region
+from communities.models import OBCCommunity
 
-# Get actual counts from database
-municipality_count = Municipality.objects.all().count()
-community_count = OBCCommunity.objects.count()
 
-print("=" * 70)
-print("DATABASE COUNTS")
-print("=" * 70)
-print(f"Total Municipalities: {municipality_count}")
-print(f"Total OBC Communities: {community_count}")
-print("=" * 70)
+User = get_user_model()
 
-# Test the chat system
-assistant = ConversationalAssistant()
 
-# Test query
-user_id = 1
-query = "How many municipalities"
+@pytest.fixture
+def chat_user(db):
+    """Create a user for storing chat history."""
+    return User.objects.create_user(
+        username="chat_user", email="chat.user@example.com", password="pass1234"
+    )
 
-print("\nTESTING CHAT SYSTEM")
-print("=" * 70)
-print(f"Query: {query}")
-print("-" * 70)
 
-try:
-    result = assistant.chat(user_id, query)
+@pytest.fixture
+def faq_dataset(db):
+    """Populate minimal geographic data for FAQ statistics."""
+    cache.clear()
 
-    print(f"Response: {result.get('response', 'No response')}")
-    print(f"Intent: {result.get('intent', 'Unknown')}")
-    print(f"Confidence: {result.get('confidence', 0):.2f}")
+    region = Region.objects.create(code="R-TST", name="Test Region")
+    province = Province.objects.create(
+        region=region,
+        code="P-TST",
+        name="Test Province",
+    )
 
-    if result.get('data'):
-        print(f"Data: {result['data']}")
+    municipality_a = Municipality.objects.create(
+        province=province,
+        code="MUN-001",
+        name="Lakeview",
+        municipality_type="municipality",
+    )
+    municipality_b = Municipality.objects.create(
+        province=province,
+        code="MUN-002",
+        name="Riverside",
+        municipality_type="municipality",
+    )
+    municipality_city = Municipality.objects.create(
+        province=province,
+        code="CITY-001",
+        name="Metrofield",
+        municipality_type="component_city",
+    )
 
-    # Check if response is correct
-    response_text = str(result.get('response', ''))
+    barangay_a = Barangay.objects.create(
+        municipality=municipality_a,
+        code="BRGY-001",
+        name="Barangay One",
+    )
+    barangay_b = Barangay.objects.create(
+        municipality=municipality_a,
+        code="BRGY-002",
+        name="Barangay Two",
+    )
+    barangay_c = Barangay.objects.create(
+        municipality=municipality_city,
+        code="BRGY-003",
+        name="Barangay Three",
+    )
 
-    if str(municipality_count) in response_text:
-        print(f"\n✅ PASS: Response contains correct municipality count ({municipality_count})")
-    elif str(community_count) in response_text:
-        print(f"\n❌ FAIL: Response contains community count ({community_count}) instead of municipality count")
-    else:
-        print(f"\n⚠️  WARNING: Response doesn't contain expected count")
+    # Populate communities so that community totals differ from municipality totals
+    OBCCommunity.objects.create(name="Community Alpha", barangay=barangay_a)
+    OBCCommunity.objects.create(name="Community Beta", barangay=barangay_b)
+    OBCCommunity.objects.create(name="Community Gamma", barangay=barangay_c)
 
-except Exception as e:
-    print(f"\n❌ ERROR: {e}")
-    import traceback
-    traceback.print_exc()
+    faq_handler = get_faq_handler()
+    faq_handler.update_stats_cache()
 
-print("=" * 70)
+    return {
+        "municipality_count": Municipality.objects.filter(
+            municipality_type="municipality"
+        ).count(),
+        "city_count": Municipality.objects.exclude(
+            municipality_type="municipality"
+        ).count(),
+        "community_count": OBCCommunity.objects.count(),
+    }
+
+
+@pytest.mark.django_db
+def test_chat_returns_municipality_count(chat_user, faq_dataset):
+    """Ensure the assistant answers with the municipality-only count."""
+    assistant = ConversationalAssistant()
+
+    result = assistant.chat(chat_user.id, "How many municipalities")
+
+    response = result["response"]
+    expected_count = faq_dataset["municipality_count"]
+
+    assert result["intent"] == "faq"
+    assert f"There are {expected_count} municipalities" in response
+    # Ensure community totals are not erroneously returned
+    assert str(faq_dataset["community_count"]) not in response
+
+
+@pytest.mark.django_db
+def test_chat_returns_city_count(chat_user, faq_dataset):
+    """Ensure the assistant answers with the city-only count."""
+    assistant = ConversationalAssistant()
+
+    result = assistant.chat(chat_user.id, "How many cities")
+
+    response = result["response"]
+    expected_count = faq_dataset["city_count"]
+
+    assert result["intent"] == "faq"
+    assert f"There are {expected_count} cities" in response

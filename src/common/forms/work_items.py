@@ -8,6 +8,8 @@ Supports:
 - Type-specific data validation
 """
 
+from decimal import Decimal, InvalidOperation
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Case, IntegerField, Value, When
@@ -60,6 +62,30 @@ class WorkItemForm(forms.ModelForm):
         })
     )
 
+    allocated_budget = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'block w-full pl-10 pr-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px]',
+            'placeholder': '0.00',
+            'data-currency-input': 'true',
+            'inputmode': 'decimal',
+            'oninput': 'calculateBudgetVariance()',
+            'autocomplete': 'off',
+        })
+    )
+
+    actual_expenditure = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'block w-full pl-10 pr-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px]',
+            'placeholder': '0.00',
+            'data-currency-input': 'true',
+            'inputmode': 'decimal',
+            'oninput': 'calculateBudgetVariance()',
+            'autocomplete': 'off',
+        })
+    )
+
     class Meta:
         model = WorkItem
         fields = [
@@ -69,6 +95,8 @@ class WorkItemForm(forms.ModelForm):
             'description',
             'status',
             'priority',
+            'allocated_budget',
+            'actual_expenditure',
             'start_date',
             'due_date',
             'start_time',
@@ -140,46 +168,68 @@ class WorkItemForm(forms.ModelForm):
         """Initialize form with dynamic parent queryset."""
         super().__init__(*args, **kwargs)
 
-        # Surface OOBC leaders ahead of broader staff roster for assignments
-        self.fields['assignees'].queryset = (
-            User.objects.filter(is_active=True)
-            .annotate(
-                preferred_order=Case(
-                    *[
-                        When(username=username, then=Value(idx))
-                        for idx, username in enumerate(STAFF_DIRECTORY_PRIORITY)
-                    ],
-                    default=Value(len(STAFF_DIRECTORY_PRIORITY)),
-                    output_field=IntegerField(),
-                ),
-                user_type_order=Case(
-                    When(user_type="oobc_executive", then=Value(0)),
-                    When(user_type="oobc_staff", then=Value(1)),
-                    When(user_type="admin", then=Value(2)),
-                    default=Value(3),
-                    output_field=IntegerField(),
-                ),
-                leadership_order=Case(
-                    When(position__iexact="Executive Director", then=Value(0)),
-                    When(
-                        position__iexact="Deputy Executive Director",
-                        then=Value(1),
+        # Determine MOA vs OOBC context for filtering
+        is_moa_ppa = False
+        if self.instance and self.instance.pk:
+            is_moa_ppa = self.instance.ppa_category == 'moa_ppa'
+
+        # Filter assignees based on context
+        if is_moa_ppa:
+            # MOA PPAs: Only MOA staff (bmoa, lgu, nga)
+            # Only show approved and active users
+            self.fields['assignees'].queryset = (
+                User.objects.filter(
+                    is_active=True,
+                    is_approved=True,
+                    user_type__in=['bmoa', 'lgu', 'nga']
+                )
+                .order_by('organization', 'last_name', 'first_name')
+            )
+
+            # Teams: Empty for MOA (teams are OOBC-only)
+            self.fields['teams'].queryset = StaffTeam.objects.none()
+            self.fields['teams'].help_text = "Team assignment not available for MOA PPAs"
+        else:
+            # OOBC work items: Surface OOBC leaders ahead of broader staff roster
+            self.fields['assignees'].queryset = (
+                User.objects.filter(is_active=True)
+                .annotate(
+                    preferred_order=Case(
+                        *[
+                            When(username=username, then=Value(idx))
+                            for idx, username in enumerate(STAFF_DIRECTORY_PRIORITY)
+                        ],
+                        default=Value(len(STAFF_DIRECTORY_PRIORITY)),
+                        output_field=IntegerField(),
                     ),
-                    When(position__icontains="DMO IV", then=Value(2)),
-                    When(position__icontains="DMO III", then=Value(3)),
-                    default=Value(4),
-                    output_field=IntegerField(),
-                ),
+                    user_type_order=Case(
+                        When(user_type="oobc_executive", then=Value(0)),
+                        When(user_type="oobc_staff", then=Value(1)),
+                        When(user_type="admin", then=Value(2)),
+                        default=Value(3),
+                        output_field=IntegerField(),
+                    ),
+                    leadership_order=Case(
+                        When(position__iexact="Executive Director", then=Value(0)),
+                        When(
+                            position__iexact="Deputy Executive Director",
+                            then=Value(1),
+                        ),
+                        When(position__icontains="DMO IV", then=Value(2)),
+                        When(position__icontains="DMO III", then=Value(3)),
+                        default=Value(4),
+                        output_field=IntegerField(),
+                    ),
+                )
+                .order_by(
+                    "preferred_order",
+                    "user_type_order",
+                    "leadership_order",
+                    "last_name",
+                    "first_name",
+                    "username",
+                )
             )
-            .order_by(
-                "preferred_order",
-                "user_type_order",
-                "leadership_order",
-                "last_name",
-                "first_name",
-                "username",
-            )
-        )
 
         # Filter parent queryset based on work_type
         if (
@@ -253,6 +303,34 @@ class WorkItemForm(forms.ModelForm):
 
         return instance
 
+    def clean_allocated_budget(self):
+        """Allow currency strings with grouping separators."""
+        return self._clean_currency_value('allocated_budget')
+
+    def clean_actual_expenditure(self):
+        """Allow currency strings with grouping separators."""
+        return self._clean_currency_value('actual_expenditure')
+
+    def _clean_currency_value(self, field_name):
+        """Normalize formatted currency strings to Decimal values."""
+        value = self.cleaned_data.get(field_name)
+        if value in (None, ''):
+            return None
+
+        if isinstance(value, Decimal):
+            return value
+
+        normalized = str(value).strip().replace(',', '')
+        if normalized == '':
+            return None
+
+        try:
+            decimal_value = Decimal(normalized)
+        except (InvalidOperation, ValueError):
+            raise forms.ValidationError('Enter a valid amount (e.g., 1,234.56).')
+
+        return decimal_value
+
 
 class WorkItemQuickEditForm(forms.ModelForm):
     """
@@ -262,6 +340,18 @@ class WorkItemQuickEditForm(forms.ModelForm):
     in the calendar detail panel, providing a streamlined UX for quick updates
     and calendar-based creation.
     """
+
+    # Add allocated_budget as CharField to handle formatted currency input
+    allocated_budget = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'block w-full pl-10 pr-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px]',
+            'placeholder': '0.00',
+            'data-currency-input': 'true',
+            'inputmode': 'decimal',
+            'autocomplete': 'off',
+        })
+    )
 
     def __init__(self, *args, **kwargs):
         """Initialize form with user for created_by field."""
@@ -280,6 +370,7 @@ class WorkItemQuickEditForm(forms.ModelForm):
             'due_date',
             'description',
             'progress',
+            'allocated_budget',  # Added for budget tracking
         ]
         widgets = {
             'work_type': forms.Select(attrs={
@@ -315,6 +406,26 @@ class WorkItemQuickEditForm(forms.ModelForm):
                 'step': 1  # Allow any integer 0-100
             }),
         }
+
+    def clean_allocated_budget(self):
+        """Allow currency strings with grouping separators."""
+        value = self.cleaned_data.get('allocated_budget')
+        if value in (None, ''):
+            return None
+
+        if isinstance(value, Decimal):
+            return value
+
+        normalized = str(value).strip().replace(',', '')
+        if normalized == '':
+            return None
+
+        try:
+            decimal_value = Decimal(normalized)
+        except (InvalidOperation, ValueError):
+            raise forms.ValidationError('Enter a valid amount (e.g., 1,234.56).')
+
+        return decimal_value
 
     def clean(self):
         """Validate form data."""

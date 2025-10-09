@@ -30,6 +30,7 @@ def work_items_calendar_feed(request):
         - status: Filter by status
         - start: Start date (ISO format)
         - end: End date (ISO format)
+        - assignee: Filter by assignee user ID
 
     Response Format:
         {
@@ -66,6 +67,7 @@ def work_items_calendar_feed(request):
     # Optional filters
     work_type = request.GET.get('type')  # project, activity, task
     status = request.GET.get('status')
+    assignee_id = request.GET.get('assignee')  # Filter by assignee user ID
     start_date_str = request.GET.get('start')
     end_date_str = request.GET.get('end')
 
@@ -100,7 +102,7 @@ def work_items_calendar_feed(request):
     # Version invalidates ALL caches when any work item changes
     user_id = request.user.id
     cache_version = cache.get(f'calendar_version:{user_id}') or 0
-    cache_key = f"calendar_feed:{user_id}:v{cache_version}:{work_type}:{status}:{start_date}:{end_date}"
+    cache_key = f"calendar_feed:{user_id}:v{cache_version}:{work_type}:{status}:{assignee_id}:{start_date}:{end_date}"
     cached = cache.get(cache_key)
     if cached:
         return JsonResponse(cached, safe=False)
@@ -132,6 +134,13 @@ def work_items_calendar_feed(request):
     # Status filter
     if status:
         queryset = queryset.filter(status=status)
+
+    # Assignee filter
+    if assignee_id:
+        queryset = queryset.filter(assignees__id=assignee_id)
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Filtering calendar by assignee ID: {assignee_id}, found {queryset.count()} work items")
 
     # Serialize to calendar format
     work_items = []

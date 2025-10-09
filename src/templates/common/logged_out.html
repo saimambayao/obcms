@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Logged Out - OBC Management System{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50 flex items-center justify-center px-4">
+    <div class="max-w-md w-full">
+        <!-- Logo and Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 mb-4">
+                <i class="fas fa-check text-white text-3xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Logged Out</h1>
+            <p class="text-gray-600">You have been successfully logged out.</p>
+        </div>
+
+        <!-- Card -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+            <div class="text-center space-y-6">
+                <!-- Success Message -->
+                <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-emerald-500 mt-0.5 mr-3"></i>
+                        <p class="text-sm text-emerald-700">
+                            Thanks for spending some quality time with the web site today.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Login Button -->
+                <a href="{% url 'common:login' %}?next=/"
+                   class="block w-full py-3 px-6 text-center text-white font-medium rounded-xl bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-md hover:shadow-lg">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Log In Again
+                </a>
+
+                <!-- Additional Links -->
+                <div class="pt-4 border-t border-gray-200">
+                    <p class="text-sm text-gray-600 mb-3">Need help?</p>
+                    <div class="flex justify-center space-x-4 text-sm">
+                        <a href="mailto:support@oobc.gov.ph" class="text-blue-600 hover:text-blue-800 hover:underline">
+                            <i class="fas fa-envelope mr-1"></i>
+                            Contact Support
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 text-center text-sm text-gray-600">
+            <p>&copy; {% now "Y" %} Office for Other Bangsamoro Communities</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

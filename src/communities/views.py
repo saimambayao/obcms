@@ -12,6 +12,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
+
+from common.utils.moa_permissions import moa_view_only
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils.dataframe import dataframe_to_rows
@@ -372,6 +374,7 @@ class CommunityInfrastructureViewSet(viewsets.ModelViewSet):
 # Geographic Data Views
 
 
+@moa_view_only
 @login_required
 def add_data_layer(request):
     """Create a new geographic data layer."""
@@ -394,6 +397,7 @@ def add_data_layer(request):
     return render(request, "communities/add_data_layer.html", context)
 
 
+@moa_view_only
 @login_required
 def create_visualization(request):
     """Create a new map visualization."""
@@ -416,6 +420,7 @@ def create_visualization(request):
     return render(request, "communities/create_visualization.html", context)
 
 
+@moa_view_only
 @login_required
 def geographic_data_list(request):
     """List geographic data layers and visualizations."""

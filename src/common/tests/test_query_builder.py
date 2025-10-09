@@ -43,6 +43,7 @@ class QueryBuilderServiceTest(TestCase):
 
         self.barangay = Barangay.objects.create(
             name="Estaka",
+            code="EST",
             municipality=self.municipality,
         )
 
@@ -195,6 +196,7 @@ class QueryBuilderServiceTest(TestCase):
 
         Barangay.objects.create(
             name="Poblacion",
+            code="POB",
             municipality=municipality2,
         )
 
@@ -226,7 +228,7 @@ class QueryBuilderViewsTest(TestCase):
             username="testuser", password="testpass123", email="test@example.com"
         )
 
-        self.client.login(username="testuser", password="testpass123")
+        self.client.force_login(self.user)
 
         # Create test data
         self.region = Region.objects.create(

@@ -1,0 +1,60 @@
+# OBCMS Environment Configuration Template
+# Copy this file to .env and configure your values
+
+# Django Settings
+SECRET_KEY=django-insecure-change-this-in-production-minimum-50-characters
+DEBUG=1
+ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+
+# Database Configuration
+# For development - Local PostgreSQL (recommended for production-like testing)
+DATABASE_URL=sqlite:///db.sqlite3
+
+# For Docker PostgreSQL (uncomment to use Docker)
+# DATABASE_URL=postgres://obcms:obcms_dev_password@localhost:5432/obcms
+
+# For SQLite (uncomment to switch back to SQLite)
+# DATABASE_URL not set = defaults to sqlite:///src/db.sqlite3
+POSTGRES_DB=obcms_prod
+POSTGRES_USER=obcms_user
+POSTGRES_PASSWORD=secure-database-password
+
+# Redis & Celery Configuration
+REDIS_URL=redis://redis:6379/0
+CELERY_BROKER_URL=redis://redis:6379/0
+
+# Email Configuration
+# Development (console backend)
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+
+# Production (SMTP - uncomment and configure)
+# EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+# EMAIL_HOST=smtp.yourdomain.com
+# EMAIL_PORT=587
+# EMAIL_USE_TLS=1
+# EMAIL_HOST_USER=noreply@yourdomain.com
+# EMAIL_HOST_PASSWORD=email-password
+
+# Site Configuration
+SITE_NAME=OBC Management System
+SITE_DESCRIPTION=Other Bangsamoro Communities Management System
+
+# Google AI Services (Gemini API)
+GOOGLE_API_KEY=AIzaSyCkOiwSPnWRHDIyRPMW0F43PBc8Uoe18G0
+# GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/google-credentials.json
+
+# Security Headers (Production only)
+# SECURE_SSL_REDIRECT=1
+# SECURE_PROXY_SSL_HEADER=HTTP_X_FORWARDED_PROTO,https
+# SESSION_COOKIE_SECURE=1
+# CSRF_COOKIE_SECURE=1
+
+# Logging Level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+LOG_LEVEL=INFO
+# WorkItem Unified Hierarchy System (Added 2025-10-05)
+USE_WORKITEM_MODEL=1
+DUAL_WRITE_ENABLED=1
+LEGACY_MODELS_READONLY=0
+USE_UNIFIED_CALENDAR=1
+WORKITEM_MIGRATION_AUTO_FIX=0
+WORKITEM_MIGRATION_STRICT_MODE=0

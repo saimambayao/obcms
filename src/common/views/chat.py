@@ -88,7 +88,14 @@ def chat_history(request):
 
     Returns JSON array of recent messages.
     """
-    limit = int(request.GET.get('limit', 20))
+    limit_param = request.GET.get('limit', '20')
+    try:
+        limit = int(limit_param)
+    except (TypeError, ValueError):
+        limit = 20
+
+    if limit <= 0:
+        limit = 20
 
     messages = ChatMessage.objects.filter(
         user=request.user

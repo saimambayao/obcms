@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from common.utils.moa_permissions import moa_no_access
 from communities.models import OBCCommunity
 
 from .models import (
@@ -26,6 +27,7 @@ from .models import (
 )
 
 
+@moa_no_access
 @login_required
 def new_assessment(request):
     """Create a new OBC-MANA assessment."""

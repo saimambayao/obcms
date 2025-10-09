@@ -406,81 +406,92 @@ def coordination_activity_create(request):
 
 @login_required
 def coordination_events(request):
-    """Coordination management dashboard."""
-    from django.db.models import Count
+    """Coordination management dashboard built on WorkItem activities."""
+    from django.db.models import Q
     from django.utils import timezone
 
-    from coordination.models import Event, EventParticipant
-    from project_central.models import ProjectWorkflow
+    from common.work_item_model import WorkItem
 
-    events = (
-        Event.objects.select_related("community", "organizer", "related_project")
-        .prefetch_related("staff_tasks")
-        .annotate(participants_count=Count("participants"))
-        .order_by("-start_date")
+    search_query = (request.GET.get("search") or "").strip()
+    status_filter = (request.GET.get("status") or "").strip()
+    type_filter = (request.GET.get("event_type") or request.GET.get("type") or "").strip()
+
+    base_queryset = (
+        WorkItem.objects.filter(work_type=WorkItem.WORK_TYPE_ACTIVITY)
+        .select_related("created_by")
+        .prefetch_related("assignees", "teams")
     )
 
-    status_filter = request.GET.get("status")
-    type_filter = request.GET.get("type")
-    project_filter = request.GET.get("project")
-    is_project_activity_filter = request.GET.get("is_project_activity")
+    # Build event type options before filters are applied so dropdown shows all choices
+    type_options = sorted(
+        {
+            event_type
+            for event_type in base_queryset.exclude(
+                activity_data__event_type__isnull=True
+            ).values_list("activity_data__event_type", flat=True)
+            if event_type
+        }
+    )
+
+    activities_qs = base_queryset
+
+    if search_query:
+        activities_qs = activities_qs.filter(
+            Q(title__icontains=search_query)
+            | Q(description__icontains=search_query)
+            | Q(activity_data__venue__icontains=search_query)
+            | Q(activity_data__address__icontains=search_query)
+        )
 
     if status_filter:
-        events = events.filter(status=status_filter)
+        activities_qs = activities_qs.filter(status=status_filter)
 
     if type_filter:
-        events = events.filter(event_type=type_filter)
+        activities_qs = activities_qs.filter(activity_data__event_type=type_filter)
 
-    # Project-related filters
-    if project_filter:
-        try:
-            project_id = int(project_filter)
-            events = events.filter(related_project_id=project_id)
-        except (TypeError, ValueError):
-            pass
-
-    if is_project_activity_filter:
-        if is_project_activity_filter.lower() == "true":
-            events = events.filter(is_project_activity=True)
-        elif is_project_activity_filter.lower() == "false":
-            events = events.filter(is_project_activity=False)
-
-    status_choices = Event.STATUS_CHOICES if hasattr(Event, "STATUS_CHOICES") else []
-    type_choices = (
-        Event.EVENT_TYPE_CHOICES if hasattr(Event, "EVENT_TYPE_CHOICES") else []
-    )
+    activities_qs = activities_qs.order_by("-start_date", "-created_at")
+    activities = list(activities_qs)
 
     now = timezone.now().date()
-    upcoming_events = events.filter(start_date__gte=now)
-    past_events = events.filter(start_date__lt=now)
-    completed_events_count = events.filter(status="completed").count()
-
-    stats = {
-        "total_coordination": events.count(),
-        "upcoming_coordination": upcoming_events.count(),
-        "completed_coordination": completed_events_count,
-        "total_participants": EventParticipant.objects.count(),
-    }
-
-    # Get projects with events for filter dropdown
-    project_options = (
-        ProjectWorkflow.objects.filter(events__isnull=False)
-        .annotate(event_count=Count("events"))
-        .order_by("-event_count", "title")
-        .distinct()
+    upcoming_activities = [
+        activity
+        for activity in activities
+        if activity.start_date and activity.start_date >= now
+    ]
+    past_activities = [
+        activity
+        for activity in activities
+        if activity.start_date and activity.start_date < now
+    ]
+    completed_count = sum(
+        1 for activity in activities if activity.status == WorkItem.STATUS_COMPLETED
     )
 
+    total_participants = 0
+    for activity in activities:
+        data = activity.activity_data or {}
+        total_participants += (
+            data.get("actual_participants")
+            or data.get("expected_participants")
+            or 0
+        )
+
+    stats = {
+        "total_coordination": len(activities),
+        "upcoming_coordination": len(upcoming_activities),
+        "completed_coordination": completed_count,
+        "total_participants": total_participants,
+    }
+
     context = {
-        "events": events,
-        "upcoming_events": upcoming_events[:10],
-        "past_events": past_events[:10],
-        "status_choices": status_choices,
-        "type_choices": type_choices,
+        "activities": activities,
+        "upcoming_activities": upcoming_activities[:10],
+        "past_activities": past_activities[:10],
+        "status_choices": WorkItem.STATUS_CHOICES,
+        "event_type_options": type_options,
         "current_status": status_filter,
         "current_type": type_filter,
-        "current_project": project_filter,
-        "current_is_project_activity": is_project_activity_filter,
-        "project_options": project_options,
+        "search_query": search_query,
         "stats": stats,
         "upcoming_coordination_count": stats["upcoming_coordination"],
         "completed_coordination_count": stats["completed_coordination"],

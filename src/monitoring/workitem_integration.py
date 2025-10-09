@@ -105,6 +105,10 @@ def create_execution_project(self, structure_template='activity', created_by=Non
     project.object_id = self.id
     project.save()
 
+    # Populate isolation fields for MOA/OOBC filtering
+    project.populate_isolation_fields()
+    project.save(update_fields=['ppa_category', 'implementing_moa'])
+
     # Phase 2: Call WorkItemGenerationService to generate child structure
     # This will be implemented in Phase 2
     # from common.services.workitem_generation import WorkItemGenerationService

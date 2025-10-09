@@ -1,0 +1,242 @@
+{% load static %}
+{# PPA Work Item Tree Row - Table-based display for PPA detail page #}
+
+<tr id="ppa-work-item-row-{{ work_item.id }}"
+    class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 group"
+    data-work-item-id="{{ work_item.id }}"
+    data-level="{{ work_item.level }}">
+
+    {# Title column with hierarchy #}
+    <td class="px-4 py-3 align-middle overflow-hidden">
+        <div class="flex items-center gap-2 min-w-0">
+            {# Subtle hierarchy indentation - 1.25rem per level #}
+            {% if work_item.level > 0 %}
+                <div class="flex-shrink-0" style="width: calc({{ work_item.level }} * 1.25rem);"></div>
+            {% endif %}
+
+            {# Expand/Collapse button #}
+            {% if work_item.children_count > 0 %}
+                <button
+                    hx-get="{% url 'common:work_item_tree_partial' pk=work_item.pk %}"
+                    hx-target="#ppa-children-placeholder-{{ work_item.id }}"
+                    hx-swap="afterend"
+                    hx-trigger="click once"
+                    hx-indicator="#ppa-loading-indicator-{{ work_item.id }}"
+                    hx-disabled-elt="this"
+                    class="flex-shrink-0 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors duration-150"
+                    aria-label="Expand/Collapse"
+                    data-toggle="ppa-children-{{ work_item.id }}"
+                    data-item-id="{{ work_item.id }}"
+                    title="Click to expand/collapse">
+                    <i class="fas fa-chevron-right toggle-icon text-xs"></i>
+                    <i id="ppa-loading-indicator-{{ work_item.id }}" class="fas fa-spinner fa-spin text-xs htmx-indicator"></i>
+                </button>
+            {% else %}
+                <span class="flex-shrink-0 w-6 h-6"></span>
+            {% endif %}
+
+            {# Work type icon (semantic color) #}
+            <div class="flex-shrink-0">
+                {% if work_item.work_type == 'project' or work_item.work_type == 'sub_project' %}
+                    <i class="fas fa-folder text-blue-600" title="{{ work_item.get_work_type_display }}"></i>
+                {% elif work_item.work_type == 'activity' or work_item.work_type == 'sub_activity' %}
+                    <i class="fas fa-calendar-check text-emerald-600" title="{{ work_item.get_work_type_display }}"></i>
+                {% elif work_item.work_type == 'task' or work_item.work_type == 'subtask' %}
+                    <i class="fas fa-tasks text-purple-600" title="{{ work_item.get_work_type_display }}"></i>
+                {% endif %}
+            </div>
+
+            {# Title link #}
+            <div class="flex-1 min-w-0 flex items-center gap-2">
+                <a href="{% url 'common:work_item_detail' pk=work_item.pk %}"
+                   class="text-gray-900 hover:text-blue-600 font-medium transition-colors duration-150 truncate block"
+                   title="{{ work_item.title }}">
+                    {{ work_item.title }}
+                </a>
+
+                {# Children count badge #}
+                {% if work_item.children_count > 0 %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 whitespace-nowrap flex-shrink-0">
+                        {{ work_item.children_count }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </td>
+
+    {# Type Badge - Semantic Colors #}
+    <td class="px-3 py-3 whitespace-nowrap align-middle text-left">
+        {% if work_item.work_type == 'project' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                <i class="fas fa-folder mr-1"></i>Project
+            </span>
+        {% elif work_item.work_type == 'sub_project' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-blue-50 text-blue-700">
+                <i class="fas fa-folder-open mr-1"></i>Sub-Project
+            </span>
+        {% elif work_item.work_type == 'activity' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                <i class="fas fa-calendar-check mr-1"></i>Activity
+            </span>
+        {% elif work_item.work_type == 'sub_activity' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700">
+                <i class="fas fa-calendar mr-1"></i>Sub-Activity
+            </span>
+        {% elif work_item.work_type == 'task' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                <i class="fas fa-tasks mr-1"></i>Task
+            </span>
+        {% elif work_item.work_type == 'subtask' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-purple-50 text-purple-700">
+                <i class="fas fa-check-square mr-1"></i>Subtask
+            </span>
+        {% endif %}
+    </td>
+
+    {# Status Badge - Semantic Colors #}
+    <td class="px-3 py-3 whitespace-nowrap align-middle text-left">
+        {% if work_item.status == 'not_started' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                <i class="fas fa-circle mr-1"></i>Not Started
+            </span>
+        {% elif work_item.status == 'in_progress' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                <i class="fas fa-spinner mr-1"></i>In Progress
+            </span>
+        {% elif work_item.status == 'at_risk' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                <i class="fas fa-exclamation-triangle mr-1"></i>At Risk
+            </span>
+        {% elif work_item.status == 'blocked' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                <i class="fas fa-ban mr-1"></i>Blocked
+            </span>
+        {% elif work_item.status == 'completed' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                <i class="fas fa-check-circle mr-1"></i>Completed
+            </span>
+        {% elif work_item.status == 'cancelled' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                <i class="fas fa-times-circle mr-1"></i>Cancelled
+            </span>
+        {% endif %}
+    </td>
+
+    {# Priority Badge - Semantic Colors #}
+    <td class="px-3 py-3 whitespace-nowrap align-middle text-left">
+        {% if work_item.priority == 'low' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                Low
+            </span>
+        {% elif work_item.priority == 'medium' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                Medium
+            </span>
+        {% elif work_item.priority == 'high' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                High
+            </span>
+        {% elif work_item.priority == 'urgent' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                Urgent
+            </span>
+        {% elif work_item.priority == 'critical' %}
+            <span class="px-2 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-red-200 text-red-900">
+                Critical
+            </span>
+        {% endif %}
+    </td>
+
+    {# Progress Bar #}
+    <td class="px-3 py-3 whitespace-nowrap align-middle text-left">
+        <div class="flex items-center gap-2">
+            <div class="w-20 bg-gray-200 rounded-full h-2">
+                <div class="bg-emerald-600 h-2 rounded-full transition-all duration-300"
+                     style="width: {{ work_item.progress }}%"
+                     title="{{ work_item.progress }}% complete"></div>
+            </div>
+            <span class="text-xs text-gray-700 font-medium whitespace-nowrap">{{ work_item.progress }}%</span>
+        </div>
+    </td>
+
+    {# Dates #}
+    <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-500 align-middle text-left">
+        {% if work_item.start_date or work_item.due_date %}
+            <div class="flex flex-col gap-1">
+                {% if work_item.start_date %}
+                    <span class="flex items-center gap-1.5">
+                        <i class="fas fa-play-circle text-emerald-500 text-xs"></i>
+                        <span class="text-xs">{{ work_item.start_date|date:"M d, Y" }}</span>
+                    </span>
+                {% endif %}
+                {% if work_item.due_date %}
+                    <span class="flex items-center gap-1.5">
+                        <i class="fas fa-flag-checkered text-red-500 text-xs"></i>
+                        <span class="text-xs">{{ work_item.due_date|date:"M d, Y" }}</span>
+                    </span>
+                {% endif %}
+            </div>
+        {% else %}
+            <span class="text-gray-400 text-xs">No dates</span>
+        {% endif %}
+    </td>
+
+    {# Actions - Opens sidebar instead of modal #}
+    <td class="px-3 py-3 whitespace-nowrap text-right text-sm font-medium align-middle">
+        <div class="flex justify-end gap-1.5">
+            <button type="button"
+                    data-hx-get="{% url 'common:work_item_sidebar_detail' pk=work_item.pk %}"
+                    data-hx-target="#ppa-sidebar-content"
+                    onclick="openPPASidebarAndLoad(this)"
+                    class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1.5 rounded transition-colors duration-150"
+                    title="View Details">
+                <i class="fas fa-eye text-sm"></i>
+            </button>
+            <button type="button"
+                    data-hx-get="{% url 'common:work_item_sidebar_edit' pk=work_item.pk %}"
+                    data-hx-target="#ppa-sidebar-content"
+                    onclick="openPPASidebarAndLoad(this)"
+                    class="text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 p-1.5 rounded transition-colors duration-150"
+                    title="Edit">
+                <i class="fas fa-edit text-sm"></i>
+            </button>
+            <button type="button"
+                    data-hx-get="{% url 'common:work_item_sidebar_create' %}?parent={{ work_item.pk }}"
+                    data-hx-target="#ppa-sidebar-content"
+                    onclick="openPPASidebarAndLoad(this)"
+                    class="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-1.5 rounded transition-colors duration-150"
+                    title="Add Child Item">
+                <i class="fas fa-plus-circle text-sm"></i>
+            </button>
+            <button type="button"
+                    hx-get="{% url 'common:work_item_delete_modal' pk=work_item.pk %}"
+                    hx-target="#ppa-delete-modal-container"
+                    hx-swap="innerHTML"
+                    class="text-red-600 hover:text-red-800 hover:bg-red-50 p-1.5 rounded transition-colors duration-150"
+                    title="Delete"
+                    aria-label="Delete work item">
+                <i class="fas fa-trash-alt text-sm"></i>
+            </button>
+        </div>
+    </td>
+</tr>
+
+{# Children placeholder row (child rows will be inserted after this via HTMX afterend swap) #}
+{% if work_item.children_count > 0 %}
+<tr id="ppa-children-placeholder-{{ work_item.id }}"
+    class="work-item-children-placeholder hidden"
+    data-parent-id="{{ work_item.id }}"
+    style="display: none;">
+    {# Child rows will be inserted after this placeholder, then it will be removed via JavaScript #}
+</tr>
+
+{# Skeleton loading row - shown during HTMX request #}
+<tr id="ppa-skeleton-row-{{ work_item.id }}" class="skeleton-row" style="display: none;" data-parent-id="{{ work_item.id }}">
+    <td colspan="7" class="px-4 py-3">
+        <div class="flex items-center gap-2 pl-8 animate-pulse">
+            <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+            <div class="h-4 bg-gray-100 rounded w-20"></div>
+        </div>
+    </td>
+</tr>
+{% endif %}

@@ -185,6 +185,18 @@ def work_item_list(request):
     # Children are loaded on-demand via HTMX when user expands
     queryset = queryset.filter(level=0)
 
+    # CRITICAL: Exclude PPA-specific work items from general OOBC list
+    # PPA work items should only appear in PPA/MOA contexts
+    # Work items are PPA-specific if ANY of these fields are populated:
+    # - related_ppa: Linked to a specific PPA
+    # - ppa_category: Has a PPA category (moa_ppa, oobc_ppa, obc_request)
+    # - implementing_moa: Linked to a specific MOA organization
+    queryset = queryset.filter(
+        related_ppa__isnull=True,      # Exclude items linked to a PPA
+        ppa_category__isnull=True,     # Exclude items with PPA category
+        implementing_moa__isnull=True  # Exclude items with MOA
+    )
+
     # Annotate with children count
     queryset = queryset.annotate(
         children_count=Count('children')
@@ -299,6 +311,18 @@ def work_item_create(request):
     if parent_id:
         parent = get_object_or_404(WorkItem, pk=parent_id)
 
+    # Get ppa_id from query params (for "Add Work Item" from PPA page)
+    ppa_id = request.GET.get('ppa_id')
+    related_ppa = None
+    if ppa_id:
+        from monitoring.models import MonitoringEntry
+        related_ppa = get_object_or_404(MonitoringEntry, pk=ppa_id)
+
+        # Auto-set parent to execution project if it exists
+        # This ensures the work item appears in the PPA's work item tree
+        if related_ppa.execution_project and not parent:
+            parent = related_ppa.execution_project
+
     if request.method == 'POST':
         form = WorkItemForm(request.POST)
         form.user = request.user  # For created_by field
@@ -306,8 +330,17 @@ def work_item_create(request):
         if form.is_valid():
             work_item = form.save(commit=False)
             work_item.created_by = request.user
+
+            # Set related_ppa if provided via query parameter
+            if related_ppa:
+                work_item.related_ppa = related_ppa
+
             work_item.save()
             form.save_m2m()  # Save many-to-many fields
+
+            # Auto-populate isolation fields (ppa_category, implementing_moa) from PPA source
+            if work_item.populate_isolation_fields():
+                work_item.save(update_fields=['ppa_category', 'implementing_moa'])
 
             # Invalidate caches
             invalidate_calendar_cache(request.user.id)
@@ -346,7 +379,14 @@ def work_item_create(request):
         'parent': parent,
         'breadcrumb': breadcrumb,
         'allowed_child_type_choices': [],
+        'ppa': related_ppa,  # Pass PPA context to template
+        'ppa_info': related_ppa,  # Alias for template clarity
+        'ppa_id': ppa_id,  # Pass ppa_id for form submission
     }
+
+    # If HTMX request, return modal partial
+    if request.headers.get('HX-Request'):
+        return render(request, 'work_items/partials/work_item_modal_form.html', context)
 
     return render(request, 'work_items/work_item_form.html', context)
 
@@ -377,6 +417,11 @@ def work_item_edit(request, pk):
 
         if form.is_valid():
             work_item = form.save()
+
+            # Auto-populate isolation fields (ppa_category, implementing_moa) from PPA source
+            # This handles cases where parent or related_ppa was changed
+            if work_item.populate_isolation_fields():
+                work_item.save(update_fields=['ppa_category', 'implementing_moa'])
 
             # Update progress of parent if auto_calculate is enabled
             if work_item.parent and work_item.parent.auto_calculate_progress:
@@ -420,15 +465,19 @@ def work_item_edit(request, pk):
     ]
 
     # Get related items limited to same level within same parent
+    # IMPORTANT: Filter by ppa_category to enforce MOA/OOBC isolation
     related_parent_id = work_item.parent_id
-    related_queryset = (
-        WorkItem.objects
-        .filter(work_type=work_item.work_type, parent_id=related_parent_id)
-        .exclude(pk=work_item.pk)
-        .exclude(pk__in=work_item.related_items.values_list('pk', flat=True))
-        .only('id', 'work_type', 'title')
-        .order_by('title')[:100]
-    )
+    related_queryset = WorkItem.objects.filter(
+        work_type=work_item.work_type,
+        parent_id=related_parent_id,
+        ppa_category=work_item.ppa_category  # Same category (moa_ppa/oobc_ppa/obc_request)
+    ).exclude(pk=work_item.pk).exclude(pk__in=work_item.related_items.values_list('pk', flat=True))
+
+    # For MOA PPAs, also filter by implementing_moa to ensure MOA-specific isolation
+    if work_item.ppa_category == 'moa_ppa' and work_item.implementing_moa:
+        related_queryset = related_queryset.filter(implementing_moa=work_item.implementing_moa)
+
+    related_queryset = related_queryset.only('id', 'work_type', 'title').order_by('title')[:100]
 
     context = {
         'form': form,
@@ -713,18 +762,41 @@ def work_item_calendar_feed(request):
     JSON feed for FullCalendar integration.
 
     Returns all calendar-visible work items as FullCalendar events.
+
+    CRITICAL: This endpoint is for the general OOBC calendar at /oobc-management/calendar/
+    It should ONLY show general OOBC work items, NOT PPA-specific work items.
+    PPA calendars have their own separate endpoints.
+
+    Query Parameters:
+        - start: Start date filter
+        - end: End date filter
+        - assignee: Filter by assignee user ID (for staff-specific calendars)
     """
-    # Get date range from query params
+    # Get date range and assignee from query params
     start = request.GET.get('start')
     end = request.GET.get('end')
+    assignee_id = request.GET.get('assignee')
 
-    # Filter work items
-    queryset = WorkItem.objects.filter(is_calendar_visible=True)
+    # Filter work items - ONLY general OOBC work items (no PPA-specific items)
+    queryset = WorkItem.objects.filter(
+        is_calendar_visible=True,
+        # Exclude PPA-specific work items from general OOBC calendar
+        related_ppa__isnull=True,
+        ppa_category__isnull=True,
+        implementing_moa__isnull=True
+    )
 
     if start:
         queryset = queryset.filter(due_date__gte=start)
     if end:
         queryset = queryset.filter(start_date__lte=end)
+
+    # Filter by assignee (for staff-specific calendars)
+    if assignee_id:
+        queryset = queryset.filter(assignees__id=assignee_id)
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Staff calendar: Filtering by assignee ID {assignee_id}, found {queryset.count()} work items")
 
     # Convert to FullCalendar events
     events = [work_item.get_calendar_event() for work_item in queryset]
@@ -979,24 +1051,69 @@ def work_item_duplicate(request, pk):
 @require_http_methods(["GET", "POST"])
 def work_item_sidebar_create(request):
     """
-    HTMX endpoint: Create work item from sidebar (calendar or work items tree).
+    HTMX endpoint: Create work item from sidebar (calendar, work items tree, or PPA page).
 
     GET: Return create form HTML with pre-populated date from query params
     POST: Process form submission and return success response with refresh trigger
 
     This enables quick creation: double-click date → create form opens
     """
+    # Get PPA ID from query params (if creating from PPA page)
+    ppa_id = request.GET.get('ppa_id') or request.POST.get('ppa_id')
+    related_ppa = None
+    if ppa_id:
+        from monitoring.models import MonitoringEntry
+        try:
+            related_ppa = MonitoringEntry.objects.get(pk=ppa_id)
+        except MonitoringEntry.DoesNotExist:
+            pass
+
     # Determine which template to use based on referrer
     referer = request.META.get('HTTP_REFERER', '')
     is_work_items_tree = 'work-items' in referer
-    create_template = 'work_items/partials/sidebar_create_form.html' if is_work_items_tree else 'common/partials/calendar_event_create_form.html'
+    is_ppa_page = '/monitoring/entry/' in referer or ppa_id is not None
+    is_staff_profile = '/staff/profiles/' in referer or '/profile/' in referer
+
+    # Use PPA-specific template if on PPA page, otherwise use sidebar template
+    if is_ppa_page:
+        create_template = 'work_items/partials/sidebar_create_form.html'
+    elif is_work_items_tree or is_staff_profile:
+        create_template = 'work_items/partials/sidebar_create_form.html'
+    else:
+        create_template = 'common/partials/calendar_event_create_form.html'
+
     if request.method == 'POST':
         from common.forms.work_items import WorkItemQuickEditForm
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
 
         form = WorkItemQuickEditForm(request.POST, user=request.user)
         if form.is_valid():
             # Form handles created_by and assignee conversion
             work_item = form.save()
+
+            # Handle assignee from hidden field (if creating from staff profile)
+            assignee_id = request.POST.get('assignee_id')
+            if assignee_id:
+                try:
+                    assignee_user = User.objects.get(pk=assignee_id)
+                    work_item.assigned_users.add(assignee_user)
+                except User.DoesNotExist:
+                    pass
+
+            # Link to PPA if ppa_id was provided
+            if related_ppa:
+                work_item.related_ppa = related_ppa
+
+                # CRITICAL FIX: Auto-parent to execution_project if it exists
+                # This ensures the work item appears in the PPA's Work Items Hierarchy
+                if related_ppa.execution_project and not work_item.parent:
+                    work_item.parent = related_ppa.execution_project
+
+                # Auto-populate isolation fields (ppa_category, implementing_moa)
+                work_item.populate_isolation_fields()
+                # Save all fields together (include parent now)
+                work_item.save(update_fields=['related_ppa', 'parent', 'ppa_category', 'implementing_moa'])
 
             # Invalidate caches
             invalidate_calendar_cache(request.user.id)
@@ -1006,7 +1123,18 @@ def work_item_sidebar_create(request):
             import json
             response = HttpResponse(status=204)  # No Content
 
-            if is_work_items_tree:
+            if is_ppa_page:
+                # PPA page: trigger tab refresh and close sidebar
+                response['HX-Trigger'] = json.dumps({
+                    'workItemCreated': {'workItemId': str(work_item.pk), 'ppaId': ppa_id},
+                    'refreshPPAWorkItems': True,  # Custom event to refresh PPA work items tab
+                    'showToast': {
+                        'message': f'{work_item.get_work_type_display()} created successfully',
+                        'level': 'success'
+                    },
+                    'closePPASidebar': True
+                })
+            elif is_work_items_tree:
                 # Work items tree: trigger reload and close sidebar
                 response['HX-Trigger'] = json.dumps({
                     'workItemCreated': {'workItemId': str(work_item.pk)},
@@ -1034,18 +1162,35 @@ def work_item_sidebar_create(request):
             logger.error(f"POST data: {request.POST}")
 
             # Return form with errors
-            context = {'form': form, 'is_create': True}
+            context = {
+                'form': form,
+                'is_create': True,
+                'ppa_id': ppa_id,
+                'ppa_info': related_ppa
+            }
             return render(request, create_template, context)
 
     else:  # GET
         from common.forms.work_items import WorkItemQuickEditForm
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
 
         # Get pre-populated date from query params
         start_date = request.GET.get('start_date')
         due_date = request.GET.get('due_date', start_date)  # Default due_date = start_date
         parent_id = request.GET.get('parent')  # For "Add Child" action
+        assignee_id = request.GET.get('assignee')  # For pre-filling assignee (from staff profile)
 
         initial = {}
+        assignee_user = None
+
+        # Handle assignee pre-fill (from staff profile)
+        if assignee_id:
+            try:
+                assignee_user = User.objects.get(pk=assignee_id)
+            except User.DoesNotExist:
+                pass
+
         if start_date:
             initial['start_date'] = start_date
         if due_date:
@@ -1063,6 +1208,10 @@ def work_item_sidebar_create(request):
                     initial['work_type'] = WorkItem.WORK_TYPE_SUBTASK
             except WorkItem.DoesNotExist:
                 pass
+        elif related_ppa and related_ppa.execution_project:
+            # If creating from PPA and execution project exists, default to activity
+            initial['parent'] = related_ppa.execution_project
+            initial['work_type'] = WorkItem.WORK_TYPE_ACTIVITY
 
         # Default values for new work items
         if 'status' not in initial:
@@ -1075,7 +1224,14 @@ def work_item_sidebar_create(request):
             initial['work_type'] = 'task'  # Default to task
 
         form = WorkItemQuickEditForm(initial=initial, user=request.user)
-        context = {'form': form, 'is_create': True}
+        context = {
+            'form': form,
+            'is_create': True,
+            'ppa_id': ppa_id,
+            'ppa_info': related_ppa,
+            'assignee_user': assignee_user,  # Pass assignee info to template
+            'assignee_id': assignee_id  # Pass assignee ID for hidden field
+        }
         return render(request, create_template, context)
 
 
@@ -1091,12 +1247,16 @@ def work_item_search_related(request, pk):
     search_query = request.GET.get('q', '').strip()
 
     # Get work items at same level and parent, excluding current or already related
-    work_items = (
-        WorkItem.objects
-        .filter(work_type=work_item.work_type, parent_id=work_item.parent_id)
-        .exclude(pk=work_item.pk)
-        .exclude(pk__in=work_item.related_items.values_list('pk', flat=True))
-    )
+    # IMPORTANT: Filter by ppa_category to enforce MOA/OOBC isolation
+    work_items = WorkItem.objects.filter(
+        work_type=work_item.work_type,
+        parent_id=work_item.parent_id,
+        ppa_category=work_item.ppa_category  # Same category (moa_ppa/oobc_ppa/obc_request)
+    ).exclude(pk=work_item.pk).exclude(pk__in=work_item.related_items.values_list('pk', flat=True))
+
+    # For MOA PPAs, also filter by implementing_moa to ensure MOA-specific isolation
+    if work_item.ppa_category == 'moa_ppa' and work_item.implementing_moa:
+        work_items = work_items.filter(implementing_moa=work_item.implementing_moa)
 
     # Apply search filter if query provided
     if search_query:

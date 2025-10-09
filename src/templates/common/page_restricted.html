@@ -38,7 +38,7 @@
             </div>
 
             <!-- Authorized Modules -->
-            {% if user.has_perm('mana.can_access_regional_mana') and not user.is_staff and not user.is_superuser %}
+            {% if perms.mana.can_access_regional_mana and not user.is_staff and not user.is_superuser %}
             <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
                 <h3 class="text-sm font-semibold text-blue-900 mb-3">Your Authorized Modules:</h3>
                 <div class="space-y-2 text-sm text-blue-800">

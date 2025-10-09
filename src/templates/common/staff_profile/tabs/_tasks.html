@@ -26,11 +26,14 @@
                 Assigned tasks
             </h2>
             <div class="flex items-center gap-3">
-                <a href="{% url 'common:work_item_create' %}"
-                   class="inline-flex items-center px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-600 hover:bg-emerald-50 text-xs font-semibold transition-colors">
+                <button type="button"
+                        onclick="openSidebarAndLoad(this)"
+                        data-hx-get="{% url 'common:work_item_sidebar_create' %}?assignee={{ profile.user.pk }}"
+                        data-hx-target="#sidebar-content"
+                        class="inline-flex items-center px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-600 hover:bg-emerald-50 text-xs font-semibold transition-colors">
                     <i class="fas fa-plus mr-1"></i>
                     Create work item
-                </a>
+                </button>
                 <a href="{% url 'common:work_item_list' %}?assignee={{ profile.user.pk }}"
                    class="inline-flex items-center px-3 py-1.5 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 text-xs font-semibold transition-colors">
                     <i class="fas fa-external-link-alt mr-1"></i>
@@ -53,8 +56,7 @@
                             {% else %}bg-gray-200 text-gray-600{% endif %}">
                             {{ task.get_status_display }}
                         </span>
-                        {% task_action_url task 'detail' as profile_task_url %}
-                        <a href="{{ profile_task_url }}"
+                        <a href="{% url 'common:work_item_detail' pk=task.pk %}"
                            class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold text-emerald-600 border border-emerald-200 rounded-lg hover:bg-emerald-50 transition-colors"
                            data-modal-link>
                             <i class="fas fa-eye text-[0.7rem]"></i>
@@ -77,6 +79,179 @@
         {% endif %}
     </div>
 </div>
+
+<!-- User's Work Items Calendar -->
+<div class="mt-8">
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <i class="fas fa-calendar-alt text-emerald-600"></i>
+                {% if profile.user == request.user %}My{% else %}{{ profile.user.get_full_name|default:profile.user.username }}'s{% endif %} Work Items Calendar
+            </h2>
+            <p class="text-sm text-gray-600 mt-1">View all work items assigned to {% if profile.user == request.user %}you{% else %}{{ profile.user.get_full_name|default:profile.user.username }}{% endif %} in calendar format</p>
+        </div>
+
+        <!-- Calendar Implementation -->
+        <div style="padding: 1.5rem;">
+            <div id="staffCalendar" style="min-height: 650px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Calendar Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let staffCalendar = null;
+    let calendarInitialized = false;
+
+    function initStaffCalendar() {
+        if (calendarInitialized) {
+            console.log('Staff calendar already initialized');
+            return;
+        }
+
+        const calendarEl = document.getElementById('staffCalendar');
+        if (!calendarEl) {
+            console.warn('Staff calendar element not found');
+            return;
+        }
+
+        console.log('Initializing staff calendar for user {{ profile.user.id }}...');
+
+        const workTypeColors = {
+            'project': '#3b82f6',
+            'activity': '#10b981',
+            'task': '#d97706',
+            'coordination': '#14b8a6'
+        };
+
+        const workTypeIcons = {
+            'project': 'fa-folder',
+            'activity': 'fa-calendar-check',
+            'task': 'fa-tasks',
+            'coordination': 'fa-handshake'
+        };
+
+        staffCalendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            buttonText: {
+                today: 'Today',
+                month: 'Month',
+                week: 'Week',
+                day: 'Day'
+            },
+            height: 'auto',
+            contentHeight: 600,
+            aspectRatio: 1.8,
+            editable: false,
+            selectable: false,
+            nowIndicator: true,
+            navLinks: true,
+            weekends: true,
+            dayMaxEvents: true,
+
+            // Fetch events filtered by assignee
+            events: function(fetchInfo, successCallback, failureCallback) {
+                const cacheBuster = Date.now();
+                const userId = '{{ profile.user.id }}';
+                const url = `/oobc-management/work-items/calendar/feed/?assignee=${userId}&_=${cacheBuster}`;
+
+                console.log('Staff Calendar - Fetching events for user ID:', userId);
+                console.log('Staff Calendar - Full URL:', url);
+
+                fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                    cache: 'no-store'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(`Loaded ${data.length} events for user {{ profile.user.id }}`);
+                    console.log('Staff calendar events:', data);
+
+                    // Log each event's assignees for debugging
+                    if (data.length > 0) {
+                        console.log('Sample event assignees:', data[0].extendedProps?.assignees);
+                    }
+
+                    successCallback(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching staff calendar events:', error);
+                    failureCallback(error);
+                });
+            },
+
+            // Event click handler
+            eventClick: function(info) {
+                info.jsEvent.preventDefault();
+                const workItemId = info.event.id.replace('work-item-', '');
+                const detailUrl = `/oobc-management/work-items/${workItemId}/`;
+                window.location.href = detailUrl;
+            },
+
+            // Event rendering with colors and icons
+            eventDidMount: function(info) {
+                const workType = info.event.extendedProps.workType;
+
+                // Apply work type colors
+                if (workType && workTypeColors[workType]) {
+                    info.el.style.backgroundColor = workTypeColors[workType];
+                    info.el.style.borderColor = workTypeColors[workType];
+                }
+
+                // Add work type icons
+                if (workType && workTypeIcons[workType]) {
+                    const iconClass = workTypeIcons[workType];
+                    const eventTitle = info.el.querySelector('.fc-event-title');
+                    if (eventTitle && !eventTitle.querySelector('.event-type-icon')) {
+                        const icon = document.createElement('i');
+                        icon.className = `fas ${iconClass} event-type-icon`;
+                        icon.style.marginRight = '4px';
+                        icon.style.display = 'inline';
+                        eventTitle.insertBefore(icon, eventTitle.firstChild);
+                    }
+                }
+            },
+
+            loading: function(isLoading) {
+                console.log(isLoading ? 'Loading staff calendar events...' : 'Staff calendar events loaded');
+            }
+        });
+
+        staffCalendar.render();
+        calendarInitialized = true;
+        console.log('Staff calendar rendered successfully');
+    }
+
+    // Initialize calendar when tasks tab becomes visible
+    const tasksTab = document.querySelector('[data-tab-target="tasks"]');
+    if (tasksTab) {
+        tasksTab.addEventListener('click', function() {
+            console.log('Tasks tab clicked, initializing calendar...');
+            // Delay to ensure tab panel is visible
+            setTimeout(initStaffCalendar, 150);
+        });
+
+        // Check if tasks tab is already active on page load
+        const tasksPanel = document.getElementById('tasks-panel');
+        if (tasksPanel && !tasksPanel.classList.contains('hidden')) {
+            console.log('Tasks tab is active on page load, initializing calendar...');
+            setTimeout(initStaffCalendar, 150);
+        }
+    }
+});
+</script>
 
 <div id="taskModal" class="fixed inset-0 hidden z-50 flex items-center justify-center px-4 sm:px-6">
     <div class="absolute inset-0 bg-gray-900 bg-opacity-50" data-modal-backdrop></div>

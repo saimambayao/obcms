@@ -1,0 +1,169 @@
+{% load static %}
+
+<!-- MOA Work Items Tab -->
+<!-- Displays all work items across all PPAs implemented by this MOA -->
+
+<div class="space-y-6">
+    <!-- Description -->
+    <div class="bg-blue-50 border-l-4 border-blue-500 rounded-r-lg p-4">
+        <div class="flex items-start">
+            <i class="fas fa-info-circle text-blue-500 text-xl mt-0.5 mr-3"></i>
+            <div class="text-sm text-blue-800">
+                <p class="font-semibold mb-1">MOA Work Items Overview</p>
+                <p>This section displays all work items across all PPAs implemented by <strong>{{ organization.name }}</strong>. Use this to track cross-PPA progress and coordination.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Items Summary Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- Total Work Items -->
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Total Work Items</p>
+                    <p class="mt-2 text-3xl font-bold text-gray-900">{{ moa_work_items_stats.total|default:0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-tasks text-blue-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- In Progress -->
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">In Progress</p>
+                    <p class="mt-2 text-3xl font-bold text-emerald-600">{{ moa_work_items_stats.in_progress|default:0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-spinner text-emerald-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed -->
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Completed</p>
+                    <p class="mt-2 text-3xl font-bold text-teal-600">{{ moa_work_items_stats.completed|default:0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-check-circle text-teal-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Avg Progress -->
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Avg Progress</p>
+                    <p class="mt-2 text-3xl font-bold text-purple-600">{{ moa_work_items_stats.avg_progress|default:0|floatformat:0 }}%</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Items List -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-list text-blue-600 mr-2"></i>
+                All Work Items
+            </h3>
+            <p class="text-sm text-gray-500 mt-1">Sorted by PPA and work item hierarchy</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gradient-to-r from-blue-600 to-emerald-600">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                            Work Item
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                            PPA
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                            Type
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                            Progress
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                            Due Date
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for work_item in moa_work_items %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ work_item.title }}</div>
+                            {% if work_item.description %}
+                            <div class="text-sm text-gray-500 truncate max-w-xs">{{ work_item.description|truncatewords:10 }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ work_item.related_ppa.title|default:"—" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if work_item.work_type == 'project' %}bg-blue-100 text-blue-800
+                                {% elif work_item.work_type == 'activity' %}bg-emerald-100 text-emerald-800
+                                {% elif work_item.work_type == 'task' %}bg-purple-100 text-purple-800
+                                {% else %}bg-amber-100 text-amber-800{% endif %}">
+                                {{ work_item.get_work_type_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if work_item.status == 'completed' %}bg-green-100 text-green-800
+                                {% elif work_item.status == 'in_progress' %}bg-yellow-100 text-yellow-800
+                                {% elif work_item.status == 'at_risk' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ work_item.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                    <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full" style="width: {{ work_item.progress }}%"></div>
+                                </div>
+                                <span class="text-sm text-gray-700">{{ work_item.progress }}%</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ work_item.due_date|date:"M j, Y"|default:"—" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <a href="{% url 'common:work_item_detail' pk=work_item.id %}" class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-eye mr-1"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-10 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl text-gray-400 mb-3"></i>
+                            <p>No work items found for this MOA's PPAs.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

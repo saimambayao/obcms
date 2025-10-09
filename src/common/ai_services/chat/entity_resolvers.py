@@ -106,18 +106,23 @@ class LocationResolver:
             >>> resolve("communities in zamboanga")
             {'type': 'region', 'value': 'Region IX', 'confidence': 0.85}
         """
-        # Try region patterns first (highest priority)
-        region = self._match_region(query)
-        if region:
-            return region
+        if not query:
+            return None
 
-        # Try province patterns
-        province = self._match_province(query)
+        normalized_query = query.lower()
+
+        # Try province patterns first (more specific the region names)
+        province = self._match_province(normalized_query)
         if province:
             return province
 
+        # Try region patterns
+        region = self._match_region(normalized_query)
+        if region:
+            return region
+
         # Try database lookup for municipalities
-        municipality = self._match_municipality(query)
+        municipality = self._match_municipality(normalized_query)
         if municipality:
             return municipality
 
@@ -127,7 +132,8 @@ class LocationResolver:
         """Match region from query using pattern matching."""
         for region_code, region_data in self.REGION_PATTERNS.items():
             for name_variant in region_data['names']:
-                if name_variant in query:
+                pattern = rf"\b{re.escape(name_variant)}\b"
+                if re.search(pattern, query):
                     # Calculate confidence based on match quality
                     confidence = 0.95 if name_variant.startswith('region') else 0.85
 
@@ -143,7 +149,8 @@ class LocationResolver:
         """Match province from query using fuzzy matching."""
         for province_name, variations in self.PROVINCE_VARIATIONS.items():
             for variant in variations:
-                if variant in query:
+                pattern = rf"\b{re.escape(variant)}\b"
+                if re.search(pattern, query):
                     # Calculate confidence based on match length
                     confidence = min(0.92, 0.7 + (len(variant) / 20))
 
@@ -224,8 +231,8 @@ class EthnicGroupResolver:
         'meranaw': ['maranao', 'marano', 'meranaw', 'meranaos', 'maranaos'],
         'maguindanaon': ['maguindanao', 'maguindanaon', 'magindanao', 'maguindanons'],
         'tausug': ['tausug', 'tausog', 'tausugs', 'tau sug'],
-        'sama': ['sama', 'sama-bajau', 'sama bajau', 'bajau', 'badjao'],
-        'badjao': ['badjao', 'badjaos', 'bajo', 'sama badjao'],
+        'sama': ['sama'],
+        'badjao': ['badjao', 'badjaos', 'bajo', 'sama badjao', 'sama-bajau', 'sama bajau', 'bajau'],
         'yakan': ['yakan', 'yakans', 'yaken'],
         'iranun': ['iranun', 'iranon', 'ilanun', 'iranuns'],
         'kagan_kalagan': ['kalagan', 'kagan', 'kagan kalagan', 'kaagan'],

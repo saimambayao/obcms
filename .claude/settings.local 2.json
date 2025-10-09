@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/Users/saidamenmambayao/Library/Mobile Documents/com~apple~CloudDocs/BTA/OOBC/obcms/venv/bin/python3 manage.py migrate monitoring 0017)",
+      "Bash(python manage.py:*)",
+      "Bash(/Users/saidamenmambayao/Library/Mobile Documents/com~apple~CloudDocs/BTA/OOBC/obcms/venv/bin/python -c \"import sqlite3; conn = sqlite3.connect(''db.sqlite3''); cursor = conn.cursor(); cursor.execute(''PRAGMA table_info(monitoring_monitoringentry)''); print(''\\n''.join([str(row) for row in cursor.fetchall()]))\")"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enableAllProjectMcpServers": false
+}

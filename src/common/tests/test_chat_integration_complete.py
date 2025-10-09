@@ -192,20 +192,20 @@ class ChatIntegrationCompleteTests(TestCase):
         print(f"✓ Staff template matched: {result['template'].id}")
 
     def test_template_matching_general(self):
-        """Test template matcher finds general templates."""
+        """Test template matcher handles navigation queries."""
         query = "take me to dashboard"
         entities = {}
 
-        result = self.matcher.match_and_generate(
-            query, entities, category='general'
+        result = self.assistant.chat(
+            user_id=self.user.id,
+            message=query,
         )
 
-        # Should find general template
-        self.assertTrue(result['success'])
-        self.assertIsNotNone(result['template'])
-        self.assertEqual(result['template'].category, 'general')
+        # Should be classified as navigation intent
+        self.assertEqual(result.get('intent'), 'navigation')
+        self.assertIn('response', result)
 
-        print(f"✓ General template matched: {result['template'].id}")
+        print("✓ Navigation query handled via assistant pipeline")
 
     def test_template_priority_ranking(self):
         """Test templates are ranked by priority."""

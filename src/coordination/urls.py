@@ -11,6 +11,12 @@ from . import views
 app_name = "coordination"
 
 urlpatterns = [
+    # MOA Calendar Feed
+    path(
+        'organizations/<uuid:organization_id>/calendar-feed/',
+        views.moa_calendar_feed,
+        name='moa_calendar_feed',
+    ),
     # AI Intelligence Endpoints - TODO: Implement these views
     # path(
     #     'ai/match-stakeholders/<int:pk>/',

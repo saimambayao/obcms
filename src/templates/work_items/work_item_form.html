@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static math_extras %}
 
 {% block title %}{{ action }} Work Item{% endblock %}
 
@@ -174,6 +174,105 @@
                         <span class="text-sm text-gray-700">Auto-calculate from children</span>
                     </label>
                 </div>
+            </div>
+        </div>
+
+        <!-- Budget Tracking Section -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-wallet text-emerald-500 mr-2"></i>
+                Budget Tracking
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Total PPA Budget (Read-only) -->
+                {% if work_item.related_ppa.budget_allocation %}
+                <div class="md:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <label class="block text-sm font-medium text-blue-900 mb-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Total PPA Budget
+                    </label>
+                    <div class="flex items-baseline gap-2">
+                        <span id="ppa-total-budget-main"
+                              class="text-2xl font-bold text-blue-900"
+                              data-value="{{ work_item.related_ppa.budget_allocation }}">
+                            {{ work_item.related_ppa.budget_allocation|currency_php }}
+                        </span>
+                    </div>
+                    <p class="mt-2 text-xs text-blue-700">
+                        <i class="fas fa-lightbulb mr-1"></i>
+                        This is the total budget allocated to the PPA. Work item allocations should not exceed this amount.
+                    </p>
+                </div>
+                {% endif %}
+
+                <!-- Allocated Budget -->
+                <div class="space-y-2">
+                    <label for="id_allocated_budget" class="block text-sm font-medium text-gray-700">
+                        Allocated Budget
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">₱</span>
+                        {{ form.allocated_budget }}
+                    </div>
+                    <div class="mt-1 flex justify-between text-xs text-gray-500">
+                        <span>Formatted</span>
+                        <span id="allocated-budget-formatted" class="font-semibold text-gray-700">
+                            {% if work_item and work_item.allocated_budget %}
+                                {{ work_item.allocated_budget|currency_php }}
+                            {% elif form.initial.allocated_budget %}
+                                {{ form.initial.allocated_budget|currency_php }}
+                            {% else %}
+                                ₱ 0.00
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div id="budget-error-message-main" class="hidden mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span></span>
+                    </div>
+                    {% if form.allocated_budget.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.allocated_budget.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Actual Expenditure -->
+                <div class="space-y-2">
+                    <label for="id_actual_expenditure" class="block text-sm font-medium text-gray-700">
+                        Actual Expenditure
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">₱</span>
+                        {{ form.actual_expenditure }}
+                    </div>
+                    <div class="mt-1 flex justify-between text-xs text-gray-500">
+                        <span>Formatted</span>
+                        <span id="actual-expenditure-formatted" class="font-semibold text-gray-700">
+                            {% if work_item and work_item.actual_expenditure %}
+                                {{ work_item.actual_expenditure|currency_php }}
+                            {% elif form.initial.actual_expenditure %}
+                                {{ form.initial.actual_expenditure|currency_php }}
+                            {% else %}
+                                ₱ 0.00
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if form.actual_expenditure.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.actual_expenditure.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Budget Variance Display -->
+            <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700">Budget Variance:</span>
+                    <span id="budget-variance-display" class="text-lg font-bold text-gray-900">₱0.00</span>
+                </div>
+                <div class="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div id="budget-variance-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="budget-variance-status" class="mt-2 text-xs text-gray-500"></p>
             </div>
         </div>
 
@@ -768,6 +867,63 @@ function saveChildItem() {
     toggleChildForm();
 }
 
+// Shared currency formatter for budget fields
+const currencyFormatter = new Intl.NumberFormat('en-PH', {
+    style: 'currency',
+    currency: 'PHP',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+});
+
+const numberFormatter = new Intl.NumberFormat('en-PH', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+});
+
+const toNumeric = (value) => {
+    if (value === null || value === undefined || value === '') {
+        return 0;
+    }
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : 0;
+    }
+    const parsed = parseFloat(String(value).replace(/,/g, ''));
+    return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const formatCurrency = (value) => currencyFormatter.format(toNumeric(value));
+const formatNumberWithGrouping = (value) => numberFormatter.format(toNumeric(value));
+
+const initializeCurrencyInputs = () => {
+    document.querySelectorAll('[data-currency-input="true"]').forEach((input) => {
+        if (!(input instanceof HTMLInputElement)) {
+            return;
+        }
+
+        const formatForDisplay = () => {
+            if (input.value.trim() === '') {
+                return;
+            }
+            input.value = formatNumberWithGrouping(input.value);
+        };
+
+        formatForDisplay();
+
+        input.addEventListener('focus', () => {
+            input.value = input.value.replace(/,/g, '');
+        });
+
+        input.addEventListener('blur', () => {
+            if (input.value.trim() === '') {
+                input.value = '';
+            } else {
+                input.value = formatNumberWithGrouping(input.value);
+            }
+            calculateBudgetVariance();
+        });
+    });
+};
+
 // Enhanced multi-select styling
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('work-item-form');
@@ -1016,5 +1172,116 @@ function searchableMultiSelect(selectId) {
         },
     };
 }
+
+// Budget variance calculation with PPA validation
+function calculateBudgetVariance() {
+    const allocatedInput = document.getElementById('id_allocated_budget');
+    const expenditureInput = document.getElementById('id_actual_expenditure');
+    const ppaTotalBudgetEl = document.getElementById('ppa-total-budget-main');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const errorMessageDiv = document.getElementById('budget-error-message-main');
+    const errorMessageSpan = errorMessageDiv?.querySelector('span');
+
+    if (!allocatedInput || !expenditureInput) return;
+
+    const allocated = toNumeric(allocatedInput.value);
+    const expenditure = toNumeric(expenditureInput.value);
+    const ppaTotalBudget = ppaTotalBudgetEl ? toNumeric(ppaTotalBudgetEl.dataset.value) : 0;
+    const variance = allocated - expenditure;
+    const percentage = allocated > 0 ? (expenditure / allocated) * 100 : 0;
+
+    // Update formatted displays
+    if (ppaTotalBudgetEl) {
+        ppaTotalBudgetEl.textContent = formatCurrency(ppaTotalBudget);
+    }
+    const allocatedFormattedEl = document.getElementById('allocated-budget-formatted');
+    if (allocatedFormattedEl) {
+        allocatedFormattedEl.textContent = formatCurrency(allocated);
+    }
+    const expenditureFormattedEl = document.getElementById('actual-expenditure-formatted');
+    if (expenditureFormattedEl) {
+        expenditureFormattedEl.textContent = formatCurrency(expenditure);
+    }
+
+    // Update variance display
+    const varianceDisplay = document.getElementById('budget-variance-display');
+    const varianceBar = document.getElementById('budget-variance-bar');
+    const varianceStatus = document.getElementById('budget-variance-status');
+
+    if (!varianceDisplay || !varianceBar || !varianceStatus) {
+        return;
+    }
+
+    varianceDisplay.textContent = formatCurrency(Math.abs(variance));
+
+    // Validate against PPA budget
+    let hasError = false;
+    if (ppaTotalBudget > 0 && allocated > ppaTotalBudget) {
+        hasError = true;
+        allocatedInput.classList.add('ring-2', 'ring-red-500', 'border-red-500');
+        if (errorMessageDiv && errorMessageSpan) {
+            errorMessageSpan.textContent = `Allocated budget cannot exceed PPA total budget (${formatCurrency(ppaTotalBudget)})`;
+            errorMessageDiv.classList.remove('hidden');
+        }
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    } else {
+        allocatedInput.classList.remove('ring-2', 'ring-red-500', 'border-red-500');
+        if (errorMessageDiv) {
+            errorMessageDiv.classList.add('hidden');
+        }
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+
+    // Color coding for variance
+    if (variance < 0) {
+        // Over budget
+        varianceDisplay.className = 'text-lg font-bold text-red-600';
+        varianceBar.className = 'h-full bg-red-500 transition-all duration-300';
+        varianceBar.style.width = '100%';
+        varianceStatus.textContent = `Over budget by ${formatCurrency(Math.abs(variance))}`;
+        varianceStatus.className = 'mt-2 text-xs text-red-600 font-medium';
+    } else if (percentage >= 95 && percentage < 100) {
+        // Near limit
+        varianceDisplay.className = 'text-lg font-bold text-amber-600';
+        varianceBar.className = 'h-full bg-amber-500 transition-all duration-300';
+        varianceBar.style.width = percentage + '%';
+        varianceStatus.textContent = `${percentage.toFixed(1)}% utilized - Near budget limit`;
+        varianceStatus.className = 'mt-2 text-xs text-amber-600 font-medium';
+    } else {
+        // Under budget
+        varianceDisplay.className = 'text-lg font-bold text-emerald-600';
+        varianceBar.className = 'h-full bg-emerald-500 transition-all duration-300';
+        varianceBar.style.width = percentage + '%';
+        varianceStatus.textContent = allocated > 0 ? `${percentage.toFixed(1)}% utilized - Within budget` : 'No budget allocated';
+        varianceStatus.className = 'mt-2 text-xs text-emerald-600 font-medium';
+    }
+}
+
+// Initialize budget variance on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCurrencyInputs();
+
+    // Attach event listeners to budget inputs
+    const allocatedInput = document.getElementById('id_allocated_budget');
+    const expenditureInput = document.getElementById('id_actual_expenditure');
+
+    if (allocatedInput) {
+        allocatedInput.addEventListener('input', calculateBudgetVariance);
+        allocatedInput.addEventListener('change', calculateBudgetVariance);
+    }
+    if (expenditureInput) {
+        expenditureInput.addEventListener('input', calculateBudgetVariance);
+        expenditureInput.addEventListener('change', calculateBudgetVariance);
+    }
+
+    // Calculate initial variance if values exist
+    calculateBudgetVariance();
+});
 </script>
 {% endblock %}

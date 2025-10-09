@@ -3,6 +3,11 @@
 
 {% block title %}{{ profile.user.get_full_name|default:profile.user.username }} - Staff Profile{% endblock %}
 
+{% block extra_css %}
+<!-- FullCalendar CSS for calendar widget -->
+<link href="{% static 'common/vendor/fullcalendar/main.min.css' %}" rel="stylesheet">
+{% endblock %}
+
 {% block breadcrumb %}
 <li class="flex items-center space-x-2">
     <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
@@ -19,6 +24,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- FullCalendar JS for calendar widget -->
+<script src="{% static 'common/vendor/fullcalendar/index.global.min.js' %}"></script>
+
 <script src="{% static 'common/js/task_modal_enhancements.js' %}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -247,16 +255,20 @@
             {% if profile.employment_type %}
             <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-semibold">{{ profile.get_employment_type_display }}</span>
             {% endif %}
+            {% if can_edit_profile %}
             <a href="{% url 'common:staff_profile_update' profile.pk %}"
                class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition-colors">
                 <i class="fas fa-edit mr-2"></i>
                 Edit profile
             </a>
+            {% endif %}
+            {% if allow_delete %}
             <a href="{% url 'common:staff_profile_delete' profile.pk %}"
                class="inline-flex items-center px-4 py-2 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 text-sm font-semibold rounded-lg transition-colors">
                 <i class="fas fa-trash mr-2"></i>
                 Delete
             </a>
+            {% endif %}
         </div>
     </div>
 
@@ -282,12 +294,15 @@
         </div>
         <div class="p-6 bg-gray-50 border-t border-gray-100">
             <p class="text-sm text-gray-500">
-                Use the tabs to explore {{ profile.user.get_full_name|default:profile.user.username }}'s role, competencies, performance, and assigned tasks.
+                Use the tabs to review account information, role expectations, competencies, performance, and tasks for {{ profile.user.get_full_name|default:profile.user.username }}.
             </p>
         </div>
     </div>
 
     <div class="space-y-8" id="staffProfileTabPanels" data-active-tab="{{ active_tab }}">
+        <div class="space-y-8 {% if active_tab != 'account' %}hidden{% endif %}" id="account-panel" data-tab-content="account" role="tabpanel" aria-labelledby="account-tab">
+            {% include 'common/staff_profile/tabs/_account.html' %}
+        </div>
         <div class="space-y-8 {% if active_tab != 'overview' %}hidden{% endif %}" id="overview-panel" data-tab-content="overview" role="tabpanel" aria-labelledby="overview-tab">
             {% include 'common/staff_profile/tabs/_overview.html' %}
         </div>
@@ -305,4 +320,192 @@
         </div>
     </div>
 </div>
+
+<!-- Right Sidebar Panel for Work Item Creation -->
+<aside id="work-item-sidebar"
+       class="fixed top-0 right-0 h-full w-96 bg-white border-l border-gray-200 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+    <div class="h-full flex flex-col">
+        <!-- Sidebar Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Work Item Details</h2>
+            <button id="sidebar-close-btn"
+                    onclick="closeSidebar()"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+                    aria-label="Close sidebar">
+                <i class="fas fa-times text-gray-600"></i>
+            </button>
+        </div>
+
+        <!-- Sidebar Content (HTMX target) -->
+        <div id="sidebar-content" class="flex-1 overflow-y-auto p-6">
+            <div class="text-center text-gray-500 py-8">
+                <i class="fas fa-tasks text-4xl mb-3"></i>
+                <p>Click "Create work item" to get started</p>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- Sidebar Backdrop -->
+<div id="sidebar-backdrop"
+     class="fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none transition-opacity duration-300"
+     onclick="closeSidebar()"></div>
+
+<script>
+/**
+ * Sidebar Panel Functionality for Staff Profile Work Items
+ */
+(function() {
+    'use strict';
+
+    /**
+     * Open the sidebar panel with smooth transition
+     */
+    window.openSidebar = function() {
+        const sidebar = document.getElementById('work-item-sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+
+        if (sidebar && backdrop) {
+            sidebar.classList.remove('translate-x-full');
+            backdrop.classList.remove('opacity-0', 'pointer-events-none');
+            backdrop.classList.add('opacity-100', 'pointer-events-auto');
+            console.log('[Sidebar] Opened');
+        }
+    };
+
+    /**
+     * Open sidebar and load content via HTMX
+     * @param {HTMLElement} button - Button element with data-hx-get and data-hx-target attributes
+     */
+    window.openSidebarAndLoad = function(button) {
+        // First, open the sidebar
+        openSidebar();
+
+        // Get HTMX attributes from button
+        const url = button.getAttribute('data-hx-get');
+        const target = button.getAttribute('data-hx-target');
+
+        if (!url || !target) {
+            console.error('[Sidebar] Missing data-hx-get or data-hx-target attribute');
+            return;
+        }
+
+        // Wait a tiny bit for sidebar animation to start, then trigger HTMX
+        setTimeout(() => {
+            htmx.ajax('GET', url, {
+                target: target,
+                swap: 'innerHTML'
+            });
+        }, 50);
+    };
+
+    /**
+     * Close the sidebar panel and clear content
+     */
+    window.closeSidebar = function() {
+        const sidebar = document.getElementById('work-item-sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+
+        if (sidebar && backdrop) {
+            sidebar.classList.add('translate-x-full');
+            backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+            backdrop.classList.add('opacity-0', 'pointer-events-none');
+            console.log('[Sidebar] Closed');
+        }
+    };
+
+    /**
+     * Listen for HTMX afterSwap to process loaded content in sidebar
+     */
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        if (event.detail.target.id === 'sidebar-content') {
+            console.log('[Sidebar] Content loaded');
+            // Process HTMX attributes in the new content
+            htmx.process(event.detail.target);
+        }
+    });
+
+    /**
+     * Listen for workItemCreated event to close sidebar and refresh tasks tab
+     */
+    document.body.addEventListener('workItemCreated', function(event) {
+        console.log('[Sidebar] Work item created, closing sidebar and reloading tasks tab');
+        closeSidebar();
+        // Reload page to show new work item in tasks list
+        window.location.reload();
+    });
+
+    /**
+     * Listen for custom close event from backend
+     */
+    document.body.addEventListener('closeSidebar', function(event) {
+        console.log('[Sidebar] Close event triggered');
+        closeSidebar();
+    });
+
+    /**
+     * Display toast notification
+     * @param {string} message - Notification message
+     * @param {string} level - Notification level (success, error, warning, info)
+     */
+    function showToast(message, level = 'info') {
+        // Remove existing toasts
+        const existingToast = document.getElementById('work-item-toast');
+        if (existingToast) existingToast.remove();
+
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.id = 'work-item-toast';
+        toast.className = 'fixed top-20 right-4 z-[9999] px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-300 ease-out';
+
+        // Color schemes based on level
+        const colors = {
+            success: 'bg-emerald-600 text-white',
+            error: 'bg-red-600 text-white',
+            warning: 'bg-amber-600 text-white',
+            info: 'bg-blue-600 text-white'
+        };
+
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-times-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
+
+        toast.className += ' ' + (colors[level] || colors.info);
+
+        toast.innerHTML = `
+            <div class="flex items-center gap-3">
+                <i class="fas ${icons[level] || icons.info} text-xl"></i>
+                <span class="font-medium">${message}</span>
+                <button onclick="this.closest('#work-item-toast').remove()" class="ml-4 text-white/80 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+
+        // Add to DOM with animation
+        document.body.appendChild(toast);
+        setTimeout(() => toast.style.transform = 'translateY(0)', 10);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            toast.style.transform = 'translateY(-100%)';
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
+    /**
+     * Listen for showToast events from HTMX responses
+     */
+    document.body.addEventListener('showToast', function(event) {
+        const { message, level } = event.detail;
+        showToast(message, level);
+    });
+
+    console.log('✅ Staff profile sidebar functionality initialized');
+})();
+</script>
 {% endblock %}

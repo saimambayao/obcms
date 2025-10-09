@@ -714,27 +714,39 @@ class FAQHandler:
         Returns:
             List of FAQ dicts sorted by popularity
         """
-        hits = cache.get(self.FAQ_HITS_KEY, {})
-
-        # Sort by hit count
-        sorted_patterns = sorted(
-            hits.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:limit]
+        legacy_hits = cache.get(self.FAQ_HITS_KEY, {})
+        enhanced_hits = cache.get(f"{self.FAQ_HITS_KEY}_enhanced", {})
 
         popular_faqs = []
-        for pattern, hit_count in sorted_patterns:
+
+        # Legacy FAQ hits (static patterns)
+        for pattern, hit_count in legacy_hits.items():
             faq_data = self.base_faqs.get(pattern)
             if faq_data:
                 popular_faqs.append({
                     'pattern': pattern,
                     'answer': self._get_faq_answer(faq_data),
                     'hit_count': hit_count,
-                    'category': faq_data.get('category', 'general')
+                    'category': faq_data.get('category', 'general'),
+                    'faq_id': None,
                 })
 
-        return popular_faqs
+        # Enhanced FAQ hits (by FAQ ID)
+        enhanced_faq_map = {faq.id: faq for faq in self.enhanced_faqs}
+        for faq_id, hit_count in enhanced_hits.items():
+            faq = enhanced_faq_map.get(faq_id)
+            if faq:
+                popular_faqs.append({
+                    'pattern': faq.primary_question,
+                    'answer': faq.response,
+                    'hit_count': hit_count,
+                    'category': faq.category,
+                    'faq_id': faq.id,
+                })
+
+        # Sort combined list by hit count (desc) and limit
+        popular_faqs.sort(key=lambda entry: entry['hit_count'], reverse=True)
+        return popular_faqs[:limit]
 
     def _try_enhanced_faq(self, normalized_query: str) -> Optional[Dict]:
         """

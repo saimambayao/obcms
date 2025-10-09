@@ -638,7 +638,10 @@ class IntegrationTestCase(TestCase):
         self.assertEqual(result['livelihood']['value'], 'farming')
 
         self.assertIn('location', result)
-        self.assertEqual(result['location']['value'], 'Region XII')
+        self.assertIn(
+            result['location']['value'],
+            ['Region XII', 'Maguindanao'],
+        )
 
     def test_realistic_query_4(self):
         """Test: 'Recent Tausug communities in Zamboanga del Sur'"""

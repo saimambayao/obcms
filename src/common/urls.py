@@ -10,6 +10,8 @@ urlpatterns = [
     path("login/", views.CustomLoginView.as_view(), name="login"),
     path("logout/", views.CustomLogoutView.as_view(), name="logout"),
     path("register/", views.UserRegistrationView.as_view(), name="register"),
+    path("register/moa/", views.MOARegistrationView.as_view(), name="moa_register"),
+    path("register/moa/success/", views.MOARegistrationSuccessView.as_view(), name="moa_register_success"),
     path("dashboard/", views.dashboard, name="dashboard"),
     path("profile/", views.profile, name="profile"),
     path("restricted/", views.page_restricted, name="page_restricted"),
@@ -210,6 +212,12 @@ urlpatterns = [
         views.organization_detail,
         name="coordination_organization_detail",
     ),
+    # TODO: Implement organization calendar feed if needed
+    # path(
+    #     "coordination/organizations/<uuid:organization_id>/calendar-feed/",
+    #     views.organization_calendar_feed,  # Function doesn't exist yet
+    #     name="coordination_organization_calendar_feed",
+    # ),
     path(
         "coordination/partnerships/",
         views.coordination_partnerships,
@@ -281,6 +289,9 @@ urlpatterns = [
         name="recommendations_by_area",
     ),
     path("oobc-management/", views.oobc_management_home, name="oobc_management_home"),
+    path("oobc-management/user-approvals/", views.MOAApprovalListView.as_view(), name="moa_approval_list"),
+    path("oobc-management/approvals/<int:user_id>/approve/", views.approve_moa_user, name="approve_moa_user"),
+    path("oobc-management/approvals/<int:user_id>/reject/", views.reject_moa_user, name="reject_moa_user"),
     path("oobc-management/calendar/", views.oobc_calendar, name="oobc_calendar"),
     path("oobc-management/calendar/modern/", views.oobc_calendar_modern, name="oobc_calendar_modern"),
     path("oobc-management/calendar/advanced-modern/", views.oobc_calendar_advanced_modern, name="oobc_calendar_advanced_modern"),

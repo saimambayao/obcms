@@ -1,35 +1,5 @@
-{#
-Reusable Modal Dialog Component
-
-Expected context:
-- modal_id: unique identifier for the modal (string, optional - defaults to random ID)
-- title: modal title text (string)
-- size: modal size - 'sm', 'md', 'lg', 'xl', 'full' (default: 'md')
-- content: HTML content as string (optional)
-- content_template: path to template to include for modal body (optional)
-- footer_template: path to template to include for modal footer (optional)
-- footer_html: HTML for footer as string (optional)
-- closeable: boolean, show close button (default: True)
-- backdrop_dismiss: boolean, allow clicking backdrop to close (default: True)
-- show_footer: boolean, render footer section (default: False unless footer_template or footer_html provided)
-
-Usage:
-{% include "components/modal.html" with
-    modal_id="task-modal"
-    title="Task Details"
-    content_template="tasks/task_detail_modal_content.html"
-    size="lg"
-%}
-
-Or with inline content:
-{% include "components/modal.html" with
-    title="Confirmation"
-    content="<p>Are you sure?</p>"
-    footer_html="<button onclick='closeModal()'>Cancel</button>"
-    size="sm"
-%}
-#}
 {% load static %}
+{# Modal Component: modal_id, title, size, content/content_template, footer, closeable, backdrop_dismiss #}
 
 {# Generate unique modal ID if not provided #}
 {% now "U" as timestamp %}
