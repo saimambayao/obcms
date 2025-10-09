@@ -28,9 +28,19 @@ class MOAFilteredQuerySetMixin:
             self.request.user.is_moa_staff and
             self.moa_filter_field):
 
+            # Determine the filter value based on field type
+            moa_org = self.request.user.moa_organization
+
+            # If filtering by an ID field (id, pk, or *_id), use the organization's PK
+            # Otherwise, use the organization object for ForeignKey lookups
+            if self.moa_filter_field in ('id', 'pk') or self.moa_filter_field.endswith('_id'):
+                filter_value = moa_org.pk if moa_org else None
+            else:
+                filter_value = moa_org
+
             # Filter to user's MOA only
             filter_kwargs = {
-                self.moa_filter_field: self.request.user.moa_organization
+                self.moa_filter_field: filter_value
             }
             qs = qs.filter(**filter_kwargs)
 

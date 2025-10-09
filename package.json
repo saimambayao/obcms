@@ -9,14 +9,30 @@
     "dev": "npm run watch:css"
   },
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.1.10",
-    "@playwright/test": "^1.55.1"
+    "@anthropic-ai/claude-agent-sdk": "^0.1.10"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.0",
     "autoprefixer": "^10.4.21",
     "cssnano": "^7.1.1",
     "postcss": "^8.5.6",
     "postcss-cli": "^11.0.0",
     "tailwindcss": "^3.4.17"
-  }
+  },
+  "main": "CALENDAR_DEBUG_SNIPPETS.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tech-bangsamoro/obcms.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tech-bangsamoro/obcms/issues"
+  },
+  "homepage": "https://github.com/tech-bangsamoro/obcms#readme"
 }

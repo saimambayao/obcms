@@ -1,7 +1,8 @@
 {% load math_extras %}
 <!-- Work Item Sidebar Edit Form -->
+{% with target_id=sidebar_target_id|default:'sidebar-content' %}
 <form hx-post="{% url 'common:work_item_sidebar_edit' pk=work_item.pk %}"
-      hx-target="#sidebar-content"
+      hx-target="#{{ target_id }}"
       hx-swap="innerHTML"
       hx-indicator="#formSubmitIndicator"
       hx-disabled-elt="find button[type='submit']"
@@ -14,6 +15,8 @@
                       level: 'error'
                   }
               }));
+          } else {
+              console.log('[Sidebar] Save successful');
           }
       "
       class="space-y-4">
@@ -30,11 +33,8 @@
         </h3>
         <button type="button"
                 hx-get="{% url 'common:work_item_sidebar_detail' pk=work_item.pk %}"
-                hx-target="#sidebar-content"
+                hx-target="#{{ target_id }}"
                 hx-swap="innerHTML"
-                onclick="event.preventDefault(); event.stopPropagation();
-                         const target = document.getElementById('sidebar-content') || document.getElementById('detailPanelBody');
-                         if (target) htmx.ajax('GET', this.getAttribute('hx-get'), {target: '#' + target.id, swap: 'innerHTML'});"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all">
             <i class="fas fa-eye text-xs"></i>
             View Details
@@ -195,11 +195,8 @@
         </button>
         <button type="button"
                 hx-get="{% url 'common:work_item_sidebar_detail' pk=work_item.pk %}"
-                hx-target="#sidebar-content"
+                hx-target="#{{ target_id }}"
                 hx-swap="innerHTML"
-                onclick="event.preventDefault(); event.stopPropagation();
-                         const target = document.getElementById('sidebar-content') || document.getElementById('detailPanelBody');
-                         if (target) htmx.ajax('GET', this.getAttribute('hx-get'), {target: '#' + target.id, swap: 'innerHTML'});"
                 class="inline-flex items-center justify-center px-4 py-2.5 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-all shadow-sm">
             <i class="fas fa-times mr-2"></i>
             Cancel
@@ -246,7 +243,8 @@
 
     // Focus on first input when form loads
     setTimeout(() => {
-        const firstInput = document.querySelector('#sidebar-content input, #sidebar-content select, #sidebar-content textarea');
+        const targetId = '{{ target_id }}';
+        const firstInput = document.querySelector(`#${targetId} input, #${targetId} select, #${targetId} textarea`);
         if (firstInput) {
             firstInput.focus();
         }
@@ -326,3 +324,4 @@
     }, 100);
 })();
 </script>
+{% endwith %}

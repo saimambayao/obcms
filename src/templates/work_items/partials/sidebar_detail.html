@@ -188,9 +188,9 @@
     <!-- Action Buttons -->
     <div class="pt-4 border-t border-gray-200 space-y-2">
         {% if can_edit %}
-        <button hx-get="{% url 'common:work_item_sidebar_edit' pk=work_item.pk %}"
-                hx-target="#sidebar-content"
-                hx-swap="innerHTML"
+        <button data-work-item-id="{{ work_item.pk }}"
+                data-edit-url="{% url 'common:work_item_sidebar_edit' pk=work_item.pk %}"
+                onclick="handleWorkItemEditClick(this)"
                 class="w-full inline-flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-emerald-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-emerald-700 transition-all shadow-sm">
             <i class="fas fa-edit mr-2"></i>
             Edit

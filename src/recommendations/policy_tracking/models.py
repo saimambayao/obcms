@@ -570,6 +570,28 @@ class PolicyRecommendation(models.Model):
             return (timezone.now().date() - self.submission_date).days
         return None
 
+    def is_related_to_moa(self, moa_organization):
+        """
+        Check if this policy/program/service is related to the given MOA organization.
+
+        Since responsible_agencies is a TextField (comma-separated), we check if the
+        organization name is mentioned in the field.
+
+        Args:
+            moa_organization: Organization instance
+
+        Returns:
+            bool: True if organization is mentioned in responsible_agencies
+        """
+        if not moa_organization:
+            return False
+
+        # Check if organization name appears in responsible_agencies field
+        if self.responsible_agencies and moa_organization.name:
+            return moa_organization.name.lower() in self.responsible_agencies.lower()
+
+        return False
+
 
 class PolicyEvidence(models.Model):
     """Model for documenting evidence supporting policy recommendations."""

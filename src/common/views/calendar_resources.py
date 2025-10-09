@@ -26,9 +26,11 @@ from common.models import (
     CalendarResourceBooking,
     StaffLeave,
 )
+from common.utils.moa_permissions import moa_no_access
 
 
 @login_required
+@moa_no_access
 def resource_list(request):
     """Display all calendar resources with filtering and search."""
 
@@ -97,6 +99,7 @@ def resource_list(request):
 
 
 @login_required
+@moa_no_access
 def resource_create(request):
     """Create a new calendar resource."""
 
@@ -127,6 +130,7 @@ def resource_create(request):
 
 
 @login_required
+@moa_no_access
 def resource_detail(request, resource_id):
     """View resource details and booking history."""
 
@@ -177,6 +181,7 @@ def resource_detail(request, resource_id):
 
 
 @login_required
+@moa_no_access
 def resource_edit(request, resource_id):
     """Edit an existing calendar resource."""
 
@@ -211,6 +216,7 @@ def resource_edit(request, resource_id):
 
 @login_required
 @require_POST
+@moa_no_access
 def resource_delete(request, resource_id):
     """Delete a calendar resource."""
 
@@ -244,6 +250,7 @@ def resource_delete(request, resource_id):
 
 
 @login_required
+@moa_no_access
 def resource_calendar(request, resource_id):
     """Calendar view showing resource availability and bookings."""
 
@@ -292,6 +299,7 @@ def resource_calendar(request, resource_id):
 
 
 @login_required
+@moa_no_access
 def booking_request(request, resource_id=None):
     """Request a resource booking."""
 
@@ -363,6 +371,7 @@ def booking_request(request, resource_id=None):
 
 
 @login_required
+@moa_no_access
 def booking_approve(request, booking_id):
     """Approve or reject a booking request."""
 
@@ -420,6 +429,7 @@ def booking_approve(request, booking_id):
 
 
 @login_required
+@moa_no_access
 def booking_list(request):
     """List all bookings with filtering."""
 
@@ -459,6 +469,7 @@ def booking_list(request):
 
 
 @login_required
+@moa_no_access
 def staff_leave_request(request):
     """Submit a staff leave request."""
 
@@ -490,6 +501,7 @@ def staff_leave_request(request):
 
 
 @login_required
+@moa_no_access
 def staff_leave_list(request):
     """List all leave requests."""
 
@@ -512,6 +524,7 @@ def staff_leave_list(request):
 
 @login_required
 @require_POST
+@moa_no_access
 def staff_leave_approve(request, leave_id):
     """Approve or reject a leave request."""
 

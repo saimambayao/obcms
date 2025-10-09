@@ -11,6 +11,70 @@
     'use strict';
 
     /**
+     * Handle work item edit button click with dynamic sidebar detection
+     * Detects which sidebar container the button is in and loads the edit form accordingly
+     * @param {HTMLElement} button - Edit button element
+     */
+    window.handleWorkItemEditClick = function(button) {
+        const editUrl = button.dataset.editUrl;
+        const workItemId = button.dataset.workItemId;
+
+        if (!editUrl) {
+            console.error('[Work Item Edit] No edit URL found on button');
+            return;
+        }
+
+        // Auto-detect which sidebar container we're in
+        const ppaSidebar = document.getElementById('ppa-sidebar-content');
+        const workItemsSidebar = document.getElementById('sidebar-content');
+        const calendarPanel = document.getElementById('detailPanelBody');
+
+        let targetId = 'sidebar-content';  // default
+        let targetElement = null;
+
+        // Check which container the button is in
+        if (ppaSidebar && ppaSidebar.contains(button)) {
+            targetId = 'ppa-sidebar-content';
+            targetElement = ppaSidebar;
+            console.log('[Work Item Edit] Detected PPA sidebar container');
+        } else if (workItemsSidebar && workItemsSidebar.contains(button)) {
+            targetId = 'sidebar-content';
+            targetElement = workItemsSidebar;
+            console.log('[Work Item Edit] Detected Work Items sidebar container');
+        } else if (calendarPanel && calendarPanel.contains(button)) {
+            targetId = 'detailPanelBody';
+            targetElement = calendarPanel;
+            console.log('[Work Item Edit] Detected Calendar panel container');
+        } else {
+            console.warn('[Work Item Edit] Could not detect sidebar container, using default');
+            targetElement = document.getElementById(targetId);
+        }
+
+        if (!targetElement) {
+            console.error('[Work Item Edit] Target element not found:', targetId);
+            showToast('Error loading edit form', 'error');
+            return;
+        }
+
+        console.log('[Work Item Edit] Loading edit form:', {
+            workItemId: workItemId,
+            targetId: targetId,
+            editUrl: editUrl
+        });
+
+        // Use HTMX to load the edit form into the detected container
+        htmx.ajax('GET', editUrl, {
+            target: '#' + targetId,
+            swap: 'innerHTML'
+        }).then(() => {
+            console.log('[Work Item Edit] Edit form loaded successfully');
+        }).catch((error) => {
+            console.error('[Work Item Edit] Failed to load edit form:', error);
+            showToast('Failed to load edit form', 'error');
+        });
+    };
+
+    /**
      * Toggle work item children visibility
      * @param {string} workItemId - ID of the work item
      */

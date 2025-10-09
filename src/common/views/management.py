@@ -76,6 +76,7 @@ from common.services.staff import (
 )
 from common.services.calendar import CALENDAR_CACHE_TTL, build_calendar_payload
 from common.security_logging import log_unauthorized_access
+from common.utils.moa_permissions import moa_no_access
 from monitoring.models import (
     MonitoringEntry,
     MonitoringEntryFunding,
@@ -544,6 +545,7 @@ def staff_queryset():
 
 
 @login_required
+@moa_no_access
 def oobc_management_home(request):
     """Surface OOBC management overview data for internal operations."""
     # Restrict access for MANA participants
@@ -607,6 +609,7 @@ def oobc_management_home(request):
 
 
 @login_required
+@moa_no_access
 def oobc_calendar(request):
     """Present the organization-wide calendar workspace."""
 
@@ -797,6 +800,7 @@ def oobc_calendar(request):
 
 
 @login_required
+@moa_no_access
 def oobc_calendar_modern(request):
     """
     Modern calendar view with multi-view support (Month/Week/Day/Year),
@@ -809,6 +813,7 @@ def oobc_calendar_modern(request):
 
 
 @login_required
+@moa_no_access
 def oobc_calendar_advanced_modern(request):
     """
     Advanced modern calendar view (Calendar #3) with Google Calendar-inspired design.
@@ -830,6 +835,7 @@ def oobc_calendar_advanced_modern(request):
 
 
 @login_required
+@moa_no_access
 @cache_page(CALENDAR_CACHE_TTL)
 def oobc_calendar_feed_json(request):
     """Return calendar events as JSON for integrations."""
@@ -879,6 +885,7 @@ def oobc_calendar_feed_json(request):
 
 
 @login_required
+@moa_no_access
 @cache_page(CALENDAR_CACHE_TTL)
 def oobc_calendar_feed_ics(request):
     """Provide an ICS feed of calendar events."""
@@ -983,6 +990,7 @@ def oobc_calendar_feed_ics(request):
 
 
 @login_required
+@moa_no_access
 def oobc_calendar_brief(request):
     """Render a printable brief summarising upcoming events and tasks."""
 
@@ -1039,6 +1047,7 @@ def oobc_calendar_brief(request):
 
 
 @login_required
+@moa_no_access
 def staff_management(request):
     """Detailed staffing dashboard for OOBC administrators."""
 
@@ -1275,6 +1284,7 @@ def staff_management(request):
 
 
 @login_required
+@moa_no_access
 def staff_task_create(request):
     """Dedicated interface for creating staff tasks.
 
@@ -1317,6 +1327,7 @@ def staff_task_create(request):
 
 
 @login_required
+@moa_no_access
 def staff_task_modal_create(request):
     """Render the new-task modal and process submissions from the board.
 
@@ -1514,6 +1525,7 @@ def _task_relation_tokens(
 
 
 @login_required
+@moa_no_access
 def staff_task_board(request):
     """Task workspace with Kanban-style grouping and filters.
 
@@ -2249,6 +2261,7 @@ def staff_task_update(request):
 
 
 @login_required
+@moa_no_access
 def staff_task_modal(request, task_id: int):
     """Render or process the task modal for view/edit flows."""
 
@@ -2538,6 +2551,7 @@ def staff_task_update_field(request, task_id: int):
 
 
 @login_required
+@moa_no_access
 def staff_api_assignees(request):
     """API endpoint to get staff members for assignee dropdown."""
     staff_members = (
@@ -2606,6 +2620,7 @@ def staff_api_assignees(request):
 
 
 @login_required
+@moa_no_access
 def staff_api_teams(request):
     """API endpoint to get teams for team dropdown."""
     teams = StaffTeam.objects.filter(is_active=True).order_by("name")
@@ -2637,6 +2652,7 @@ def staff_api_teams(request):
 
 
 @login_required
+@moa_no_access
 def staff_task_inline_update(request, task_id: int):
     """Inline edit handler for the table view."""
 
@@ -2704,6 +2720,7 @@ def staff_task_inline_update(request, task_id: int):
 
 
 @login_required
+@moa_no_access
 def staff_team_assign(request):
     """Dedicated interface for mapping staff members to teams."""
 
@@ -2732,6 +2749,7 @@ def staff_team_assign(request):
 
 
 @login_required
+@moa_no_access
 def staff_team_manage(request):
     """Dedicated interface for creating or updating staff teams."""
 
@@ -2847,6 +2865,7 @@ def staff_team_manage(request):
 
 
 @login_required
+@moa_no_access
 def staff_profiles_list(request):
     """List and filter staff profiles with quick insights."""
 
@@ -3052,6 +3071,7 @@ def staff_profiles_list(request):
 
 
 @login_required
+@moa_no_access
 def staff_profile_create(request):
     """Create a staff profile entry."""
 
@@ -3081,6 +3101,7 @@ def staff_profile_create(request):
 
 
 @login_required
+@moa_no_access
 def staff_profile_update(request, pk):
     """Update an existing staff profile."""
 
@@ -3116,6 +3137,7 @@ def staff_profile_update(request, pk):
 
 
 @login_required
+@moa_no_access
 def staff_profiles_detail(request, pk):
     """Display staff profile information organised into tabs."""
 
@@ -3131,6 +3153,7 @@ def staff_profiles_detail(request, pk):
 
 
 @login_required
+@moa_no_access
 def staff_profile_delete(request, pk):
     """Delete a staff profile after confirmation."""
 
@@ -3149,6 +3172,7 @@ def staff_profile_delete(request, pk):
 
 
 @login_required
+@moa_no_access
 def staff_performance_dashboard(request):
     """Dashboard for staff and team performance targets."""
 
@@ -3263,6 +3287,7 @@ def staff_performance_dashboard(request):
 
 
 @login_required
+@moa_no_access
 def staff_training_development(request):
     """Training catalogue, enrollments, and development plans."""
 
@@ -3339,6 +3364,7 @@ ZERO_FLOAT = Value(0, output_field=FloatField())
 
 
 @login_required
+@moa_no_access
 def planning_budgeting(request):
     """Planning and budgeting dashboard summarising PPAs and allocations."""
     entries = MonitoringEntry.objects.select_related(
@@ -3729,6 +3755,7 @@ def staff_task_create_api(request):
 
 
 @login_required
+@moa_no_access
 def user_approvals(request):
     """User approval management page - review and approve pending user accounts."""
 
@@ -3827,6 +3854,7 @@ def user_approval_action(request, user_id: int):
 
 
 @login_required
+@moa_no_access
 def gap_analysis_dashboard(request):
     """
     Gap Analysis Dashboard - Show unfunded community needs.
@@ -3887,6 +3915,7 @@ def gap_analysis_dashboard(request):
 
 
 @login_required
+@moa_no_access
 def policy_budget_matrix(request):
     """
     Policy-Budget Matrix - Show which policies are funded and which aren't.
@@ -3971,6 +4000,7 @@ def policy_budget_matrix(request):
 
 
 @login_required
+@moa_no_access
 def mao_focal_persons_registry(request):
     """
     MAO Focal Persons Registry - Directory of all MAO focal persons.
@@ -4027,6 +4057,7 @@ def mao_focal_persons_registry(request):
 
 
 @login_required
+@moa_no_access
 def community_need_submit(request):
     """Allow community leaders to submit needs directly into the MANA pipeline."""
 
@@ -4060,6 +4091,7 @@ def community_need_submit(request):
 
 
 @login_required
+@moa_no_access
 def community_needs_summary(request):
     """
     Community Needs Summary - Overview of all community needs.
@@ -4158,6 +4190,7 @@ def community_needs_summary(request):
 
 
 @login_required
+@moa_no_access
 def community_voting_browse(request):
     """
     Browse community needs and cast votes.
@@ -4291,6 +4324,7 @@ def community_voting_vote(request):
 
 
 @login_required
+@moa_no_access
 def community_voting_results(request):
     """
     View detailed voting results and analytics.
@@ -4379,6 +4413,7 @@ def community_voting_results(request):
 
 
 @login_required
+@moa_no_access
 def budget_feedback_dashboard(request):
     """
     Dashboard showing budget allocation feedback and satisfaction ratings.
@@ -4469,6 +4504,7 @@ def budget_feedback_dashboard(request):
 
 
 @login_required
+@moa_no_access
 def submit_service_feedback(request, application_id):
     """
     Submit feedback for a completed service application.
@@ -4516,6 +4552,7 @@ def submit_service_feedback(request, application_id):
 
 
 @login_required
+@moa_no_access
 def transparency_dashboard(request):
     """
     Public-facing transparency dashboard showing budget allocations and outcomes.
@@ -4670,6 +4707,7 @@ __all__ = [
 
 
 @login_required
+@moa_no_access
 def strategic_goals_dashboard(request):
     """
     Dashboard for strategic goals tracking and alignment.
@@ -4759,6 +4797,7 @@ def strategic_goals_dashboard(request):
 
 
 @login_required
+@moa_no_access
 def annual_planning_dashboard(request):
     """
     Dashboard for annual planning cycles and budget tracking.
@@ -4867,6 +4906,7 @@ def annual_planning_dashboard(request):
 
 
 @login_required
+@moa_no_access
 def regional_development_alignment(request):
     """
     Dashboard showing alignment between PPAs and Regional Development Plans.
@@ -4940,6 +4980,7 @@ def regional_development_alignment(request):
 
 
 @login_required
+@moa_no_access
 def scenario_list(request):
     """
     List all budget scenarios with filtering and status overview.
@@ -5001,6 +5042,7 @@ def scenario_list(request):
 
 
 @login_required
+@moa_no_access
 def scenario_create(request):
     """
     Create a new budget scenario with PPAs allocation.
@@ -5058,6 +5100,7 @@ def scenario_create(request):
 
 
 @login_required
+@moa_no_access
 def scenario_detail(request, scenario_id):
     """
     View and edit a budget scenario with PPA allocations.
@@ -5164,6 +5207,7 @@ def scenario_detail(request, scenario_id):
 
 
 @login_required
+@moa_no_access
 def scenario_compare(request):
     """
     Compare multiple budget scenarios side-by-side.
@@ -5371,6 +5415,7 @@ def scenario_optimize(request, scenario_id):
 
 
 @login_required
+@moa_no_access
 def analytics_dashboard(request):
     """
     Comprehensive analytics dashboard with trends, forecasts, and insights.
@@ -5399,6 +5444,7 @@ def analytics_dashboard(request):
 
 
 @login_required
+@moa_no_access
 def budget_forecasting(request):
     """
     Budget forecasting tool with multiple scenarios and predictions.
@@ -5437,6 +5483,7 @@ def budget_forecasting(request):
 
 
 @login_required
+@moa_no_access
 def trend_analysis(request):
     """
     Detailed trend analysis across multiple dimensions.
@@ -5487,6 +5534,7 @@ def trend_analysis(request):
 
 
 @login_required
+@moa_no_access
 def impact_assessment(request):
     """
     Impact assessment dashboard measuring outcomes and effectiveness.

@@ -43,6 +43,62 @@ class OrganizationContactInline(admin.TabularInline):
     )
 
 
+class MOAFocalUserInline(admin.TabularInline):
+    """
+    Inline admin to display MOA focal users (staff assigned to this organization).
+
+    Shows users who have this organization set as their moa_organization.
+    Part of MOA RBAC implementation (Phase 5).
+    """
+
+    model = None  # We'll use from_queryset approach
+    verbose_name = "MOA Focal User"
+    verbose_name_plural = "MOA Focal Users (System Users)"
+    extra = 0
+    can_delete = False
+    show_change_link = True
+
+    fields = (
+        "user_link",
+        "user_type",
+        "email",
+        "contact_number",
+        "is_approved",
+        "is_active",
+    )
+    readonly_fields = (
+        "user_link",
+        "user_type",
+        "email",
+        "contact_number",
+        "is_approved",
+        "is_active",
+    )
+
+    def has_add_permission(self, request, obj=None):
+        """Cannot add users via inline - must be done via User admin."""
+        return False
+
+    def user_link(self, obj):
+        """Link to user admin page."""
+        if obj and obj.pk:
+            url = reverse("admin:common_user_change", args=[obj.pk])
+            return format_html('<a href="{}">{}</a>', url, obj.username)
+        return "-"
+
+    user_link.short_description = "Username"
+
+    def get_queryset(self, request):
+        """Get users assigned to this organization."""
+        qs = super().get_queryset(request)
+        # Import here to avoid circular import
+        from common.models import User
+
+        if hasattr(self, "parent_obj") and self.parent_obj:
+            return User.objects.filter(moa_organization=self.parent_obj)
+        return User.objects.none()
+
+
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
     """Admin interface for Organizations."""
@@ -53,6 +109,7 @@ class OrganizationAdmin(admin.ModelAdmin):
         "partnership_status",
         "primary_contact_display",
         "address",
+        "moa_focal_users_count",
         "partnership_count",
     )
     list_filter = ("organization_type", "partnership_status", "created_at")
@@ -140,6 +197,64 @@ class OrganizationAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
     inlines = [OrganizationContactInline]
 
+    def get_inlines(self, request, obj):
+        """
+        Dynamically add MOAFocalUserInline only for MOA-type organizations.
+
+        This shows users who have this organization assigned as their moa_organization.
+        """
+        inlines = [OrganizationContactInline]
+
+        # Only show focal users inline for MOA/LGU/NGA organizations
+        if obj and obj.organization_type in ["bmoa", "lgu", "nga"]:
+            # Create a custom inline class that knows about the parent object
+            class DynamicMOAFocalUserInline(admin.TabularInline):
+                from common.models import User
+
+                model = User
+                verbose_name = "MOA Focal User"
+                verbose_name_plural = "MOA Focal Users (System Users)"
+                extra = 0
+                can_delete = False
+                show_change_link = True
+                fk_name = "moa_organization"
+
+                fields = (
+                    "user_link",
+                    "user_type",
+                    "email",
+                    "contact_number",
+                    "is_approved",
+                    "is_active",
+                )
+                readonly_fields = (
+                    "user_link",
+                    "user_type",
+                    "email",
+                    "contact_number",
+                    "is_approved",
+                    "is_active",
+                )
+
+                def has_add_permission(self, request, obj=None):
+                    """Cannot add users via inline - must be done via User admin."""
+                    return False
+
+                def user_link(self, obj):
+                    """Link to user admin page."""
+                    if obj and obj.pk:
+                        url = reverse("admin:common_user_change", args=[obj.pk])
+                        return format_html(
+                            '<a href="{}">{}</a>', url, obj.username or obj.email
+                        )
+                    return "-"
+
+                user_link.short_description = "Username"
+
+            inlines.append(DynamicMOAFocalUserInline)
+
+        return inlines
+
     def primary_contact_display(self, obj):
         """Display primary contact information."""
         primary = obj.contacts.filter(is_primary=True, is_active=True).first()
@@ -148,6 +263,19 @@ class OrganizationAdmin(admin.ModelAdmin):
         return "No primary contact"
 
     primary_contact_display.short_description = "Primary Contact"
+
+    def moa_focal_users_count(self, obj):
+        """Display number of MOA focal users (system users assigned to this org)."""
+        if obj.organization_type in ["bmoa", "lgu", "nga"]:
+            count = obj.moa_staff_users.filter(is_active=True).count()
+            return format_html(
+                '<span style="color: {};">{} users</span>',
+                "green" if count > 0 else "gray",
+                count,
+            )
+        return "-"
+
+    moa_focal_users_count.short_description = "MOA Users"
 
     def partnership_count(self, obj):
         """Display number of partnerships."""

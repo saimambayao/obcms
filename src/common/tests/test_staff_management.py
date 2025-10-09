@@ -2,10 +2,6 @@
 
 import pytest
 
-pytest.skip(
-    "Legacy staff management tests require updates for the WorkItem-based pipeline.",
-    allow_module_level=True,
-)
 
 import json
 from datetime import date, timedelta

@@ -18,6 +18,7 @@ from communities.models import OBCCommunity
 
 from ..models import Barangay, Municipality, Province, Region, StaffProfile
 from ..services.locations import build_location_data
+from ..utils.moa_permissions import moa_no_access
 from common.forms import ProvinceForm
 from common.services.geodata import serialize_layers_for_map
 from mana.forms import (
@@ -3133,8 +3134,9 @@ def mana_activity_processing(request):
 
 
 @login_required
+@moa_no_access
 def mana_geographic_data(request):
-    """MANA geographic data and mapping page with location-aware filters."""
+    """MANA geographic data and mapping page with location-aware filters (blocked for MOA users)."""
     from django.db.models import Count
 
     from communities.models import GeographicDataLayer, MapVisualization, OBCCommunity

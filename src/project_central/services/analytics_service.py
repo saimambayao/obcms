@@ -446,31 +446,39 @@ class AnalyticsService:
             dict: Workflow performance data
         """
         from project_central.models import ProjectWorkflow
+        from common.work_item_model import WorkItem
 
         queryset = ProjectWorkflow.objects.all()
 
         if fiscal_year:
             queryset = queryset.filter(
-                Q(initiated_date__year=fiscal_year) | Q(ppa__fiscal_year=fiscal_year)
+                Q(start_date__year=fiscal_year)
+                | Q(related_ppa__fiscal_year=fiscal_year)
             )
 
         # Overall metrics
         total_workflows = queryset.count()
-        on_track = queryset.filter(is_on_track=True).count()
-        blocked = queryset.filter(is_blocked=True).count()
+        on_track = queryset.exclude(
+            status__in=[WorkItem.STATUS_AT_RISK, WorkItem.STATUS_BLOCKED]
+        ).count()
+        blocked = queryset.filter(status=WorkItem.STATUS_BLOCKED).count()
 
         # By stage
-        stage_distribution = dict(
-            queryset.values("current_stage")
+        stage_distribution_raw = list(
+            queryset.values("project_data__workflow_stage")
             .annotate(count=Count("id"))
-            .values_list("current_stage", "count")
+            .values_list("project_data__workflow_stage", "count")
         )
+        stage_distribution = {
+            (stage or "need_identification"): count
+            for stage, count in stage_distribution_raw
+        }
 
         # By priority
         priority_distribution = dict(
-            queryset.values("priority_level")
+            queryset.values("priority")
             .annotate(count=Count("id"))
-            .values_list("priority_level", "count")
+            .values_list("priority", "count")
         )
 
         # Calculate average time in each stage
@@ -499,7 +507,9 @@ class AnalyticsService:
             )
 
         # Completion rate
-        completed = queryset.filter(current_stage="completion").count()
+        completed = queryset.filter(
+            project_data__workflow_stage="completion"
+        ).count()
         completion_rate = (
             (completed / total_workflows * 100) if total_workflows > 0 else 0
         )

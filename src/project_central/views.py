@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 from common.models import WorkItem
 from common.proxies import ProjectWorkflowProxy as ProjectWorkflow
 from common.services.task_automation import create_tasks_from_template
+from common.utils.moa_permissions import moa_no_access
 from coordination.models import Organization
 from mana.models import Need
 from monitoring.forms import MonitoringMOAEntryForm
@@ -1048,6 +1049,7 @@ def budget_planning_dashboard(request):
 
 
 @login_required
+@moa_no_access
 def me_analytics_dashboard(request):
     """M&E Analytics Dashboard with comprehensive project metrics."""
     from .services import AnalyticsService
@@ -1073,6 +1075,7 @@ def me_analytics_dashboard(request):
 
 
 @login_required
+@moa_no_access
 def sector_analytics(request, sector):
     """Detailed analytics for a specific sector."""
     from .services import AnalyticsService
@@ -1112,6 +1115,7 @@ def sector_analytics(request, sector):
 
 
 @login_required
+@moa_no_access
 def geographic_analytics(request):
     """Geographic distribution of budget and projects."""
     from .services import AnalyticsService
@@ -1130,6 +1134,7 @@ def geographic_analytics(request):
 
 
 @login_required
+@moa_no_access
 def policy_analytics(request, policy_id):
     """Analytics for a specific policy recommendation."""
     from policy_tracking.models import PolicyRecommendation

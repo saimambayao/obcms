@@ -1,0 +1,52 @@
+{% load i18n %}
+<fieldset class="module obc-fieldset {{ fieldset.classes }}">
+    {% if fieldset.name or fieldset.description %}
+        <div class="obc-fieldset__header">
+            {% if fieldset.name %}
+                <h2 class="obc-fieldset__title">{{ fieldset.name }}</h2>
+            {% endif %}
+            {% if fieldset.description %}
+                <p class="obc-fieldset__description">{{ fieldset.description|safe }}</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <div class="obc-fieldset__content">
+        {% for line in fieldset %}
+            {% with field_count=line.fields|length %}
+            <div class="form-row obc-form-row{% if field_count == 1 and line.errors %} errors{% endif %}{% if not line.has_visible_field %} hidden{% endif %}{% for field in line %}{% if field.field.name %} field-{{ field.field.name }}{% endif %}{% endfor %}">
+                {% if field_count == 1 and line.errors %}
+                    <div class="obc-form-row__errors">{{ line.errors }}</div>
+                {% endif %}
+                <div class="obc-form-row__grid{% if field_count != 1 %} obc-form-row__grid--multi{% endif %}">
+                    {% for field in line %}
+                        <div class="obc-form-field{% if field.field.is_hidden %} hidden{% endif %}{% if field.is_checkbox %} obc-form-field--checkbox{% endif %}{% if not field.is_readonly and field.errors %} has-error{% endif %}">
+                            {% if field_count != 1 and not field.is_readonly and field.errors %}
+                                <div class="obc-form-field__errors">{{ field.errors }}</div>
+                            {% endif %}
+                            {% if field.is_checkbox %}
+                                <div class="obc-form-field__checkbox">
+                                    {{ field.field }}
+                                    {{ field.label_tag }}
+                                </div>
+                            {% else %}
+                                <div class="obc-form-field__label">{{ field.label_tag }}</div>
+                                <div class="obc-form-field__widget">
+                                    {% if field.is_readonly %}
+                                        <div class="obc-form-field__readonly">{{ field.contents }}</div>
+                                    {% else %}
+                                        {{ field.field }}
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            {% if field.field.help_text %}
+                                <p class="help"{% if field.field.id_for_label %} id="{{ field.field.id_for_label }}_helptext"{% endif %}>{{ field.field.help_text|safe }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endwith %}
+        {% endfor %}
+    </div>
+</fieldset>
