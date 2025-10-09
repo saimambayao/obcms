@@ -1,5 +1,7 @@
 """Custom math template filters for Django templates."""
 
+from decimal import Decimal, InvalidOperation
+
 from django import template
 
 register = template.Library()
@@ -67,10 +69,21 @@ def currency_php(value):
     Example: {{ 2003400|currency_php }} returns "₱ 2,003,400.00"
     """
     try:
-        # Convert to float first
         num = float(value) if value is not None else 0
-        # Format with thousand separators and 2 decimal places
         formatted = "{:,.2f}".format(num)
         return f"₱ {formatted}"
     except (ValueError, TypeError):
         return "₱ 0.00"
+
+
+@register.filter(name='percentage_of')
+def percentage_of(value, total):
+    """Return the percentage (value / total * 100) safely for Decimal values."""
+    try:
+        total_decimal = Decimal(str(total))
+        if total_decimal == 0:
+            return Decimal('0')
+        value_decimal = Decimal(str(value)) if value is not None else Decimal('0')
+        return (value_decimal / total_decimal) * Decimal('100')
+    except (InvalidOperation, TypeError, ValueError):
+        return Decimal('0')

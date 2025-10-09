@@ -3,6 +3,8 @@
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 
+from common.constants import STAFF_USER_TYPES
+
 
 def can_approve_moa_users(user):
     """
@@ -58,7 +60,25 @@ def get_pending_moa_count():
     ).count()
 
 
+def has_oobc_management_access(user):
+    """
+    Determine whether a user can manage OOBC-controlled records.
+
+    Grants access to superusers and OOBC leadership/staff roles defined in
+    STAFF_USER_TYPES. MOA focal persons and other external roles receive
+    read-only access.
+    """
+    if not user or not user.is_authenticated:
+        return False
+
+    if user.is_superuser:
+        return True
+
+    return getattr(user, "user_type", None) in STAFF_USER_TYPES
+
+
 __all__ = [
     'can_approve_moa_users',
     'get_pending_moa_count',
+    'has_oobc_management_access',
 ]

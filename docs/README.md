@@ -190,7 +190,6 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [PostGIS Migration Guide](improvements/geography/POSTGIS_MIGRATION_GUIDE.md) 📋 **Reference Only (Future)**
 
 - **Module-Specific:**
-  - [Budget Tracking Tab Fix](improvements/BUDGET_TRACKING_TAB_FIX.md) 🆕 **Oct 2025 - Work Item Budget Calculation Fix** ✅
   - [Planning & Budgeting Implementation Evaluation](improvements/planning_budgeting_implementation_evaluation.md) ⭐ **NEW - Codebase Analysis**
   - [Planning & Budgeting Comprehensive Plan](improvements/planning_budgeting_comprehensive_plan.md) ⭐ **NEW - Research-based**
   - [Planning & Budgeting Module Improvements](improvements/planning_budgeting_module_improvements.md)
@@ -209,7 +208,7 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 - **Calendar System:**
   - [Advanced Calendar Architecture](improvements/CALENDAR_ADVANCED_ARCHITECTURE.md) ⭐ **NEW - Google Calendar-Inspired UI Design**
 
-- **MOA RBAC System:** 🔐 **NEW - Role-Based Access Control for MOA Users** ✅ **100% COMPLETE**
+- **MOA RBAC System:** 🔐 **NEW - Role-Based Access Control for MOA Users**
   - [MOA RBAC Quick Reference](improvements/MOA_RBAC_QUICK_REFERENCE.md) 🚀 **START HERE - Developer Quick Reference**
     - Quick access decision matrix (can MOA user do X?)
     - Code snippets cheat sheet (10 common patterns)
@@ -223,15 +222,6 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
     - Permission decorators, mixins, and template tags
     - Defense-in-depth security (view/model/template layers)
     - 7-phase implementation plan with testing strategy
-  - [MOA RBAC Phase 1 Implementation](improvements/MOA_RBAC_PHASE1_IMPLEMENTATION.md) ✅ **Phase 1 Complete**
-    - OBC forms view-only access
-    - Geographic data management blocked
-    - MOA profile edit restrictions
-  - [MOA RBAC Phase 2 Implementation](improvements/MOA_RBAC_PHASE2_IMPLEMENTATION.md) ✅ **Phase 2 Complete** 🆕
-    - Policies/Programs/Services filtering by MOA
-    - PPA access restrictions strengthened
-    - OOBC initiatives completely blocked
-    - M&E analytics completely blocked
   - [MOA RBAC Implementation Status](improvements/MOA_RBAC_IMPLEMENTATION_STATUS.md) 📊 **Track Implementation Progress**
     - Phase-by-phase task tracking
     - Deployment checklist and validation steps

@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import (
@@ -31,10 +32,29 @@ from ..forms import (
 from ..models import Barangay, Municipality, Province, Region
 from ..services.enhanced_geocoding import enhanced_ensure_location_coordinates
 from ..services.locations import build_location_data, get_object_centroid
+from ..utils.permissions import has_oobc_management_access
 
 
 DEFAULT_MAP_CENTER = (7.1907, 125.4553, 6)
 PAGE_SIZE_OPTIONS = (10, 25, 50)
+
+
+def _ensure_can_manage_communities(user):
+    """
+    Raise PermissionDenied if the user is limited to read-only access.
+
+    MOA focal persons and staff accounts operate in a read-only mode for
+    community records. Other authenticated users retain their existing
+    permissions and downstream checks (e.g., MANA participants).
+    """
+
+    if not user or not user.is_authenticated:
+        raise PermissionDenied("Authentication is required to manage communities.")
+
+    if getattr(user, "is_moa_staff", False):
+        raise PermissionDenied(
+            "MOA focal persons have read-only access to community records."
+        )
 
 
 def _sanitize_filter_value(value: Optional[str]) -> Optional[str]:
@@ -363,6 +383,8 @@ def communities_home(request):
 @login_required
 def communities_add(request):
     """Add new community page."""
+    _ensure_can_manage_communities(request.user)
+
     from communities.models import OBCCommunity
 
     if request.method == "POST":
@@ -401,6 +423,8 @@ def communities_add(request):
 @login_required
 def communities_add_municipality(request):
     """Record a municipality or city with Bangsamoro communities."""
+    _ensure_can_manage_communities(request.user)
+
     from communities.models import MunicipalityCoverage, OBCCommunity, ProvinceCoverage
 
     if request.method == "POST":
@@ -442,6 +466,8 @@ def communities_add_municipality(request):
 @login_required
 def communities_add_province(request):
     """Record a province-level Bangsamoro coverage profile."""
+    _ensure_can_manage_communities(request.user)
+
     from communities.models import ProvinceCoverage
 
     if request.method == "POST":
@@ -483,6 +509,8 @@ def communities_add_province(request):
 @login_required
 def communities_manage(request):
     """Manage communities page."""
+    can_manage_communities = has_oobc_management_access(request.user)
+
     from django.db.models import Count, Q
 
     from communities.models import MunicipalityCoverage, OBCCommunity
@@ -668,8 +696,30 @@ def communities_manage(request):
     )
 
     page_title = "Manage Barangay OBC"
-    page_description = (
-        "View, edit, and manage barangay-level Bangsamoro coverage data"
+    if can_manage_communities:
+        page_description = (
+            "View, edit, and manage barangay-level Bangsamoro coverage data."
+        )
+    else:
+        page_description = "Review barangay-level Bangsamoro coverage data."
+
+    hero_actions = []
+    if can_manage_communities:
+        hero_actions.append(
+            {
+                "href": reverse("common:communities_add"),
+                "label": "Add barangay OBC",
+                "icon": "fas fa-plus",
+                "variant": "primary",
+            }
+        )
+    hero_actions.append(
+        {
+            "href": reverse("common:communities_manage_municipal"),
+            "label": "Go to municipal view",
+            "icon": "fas fa-landmark",
+            "variant": "ghost",
+        }
     )
 
     hero_config = {
@@ -684,20 +734,7 @@ def communities_manage(request):
         ),
         "meta_cards": [],
         "metrics": [],
-        "actions": [
-            {
-                "href": reverse("common:communities_add"),
-                "label": "Add barangay OBC",
-                "icon": "fas fa-plus",
-                "variant": "primary",
-            },
-            {
-                "href": reverse("common:communities_manage_municipal"),
-                "label": "Go to municipal view",
-                "icon": "fas fa-landmark",
-                "variant": "ghost",
-            },
-        ],
+        "actions": hero_actions,
     }
 
     context = {
@@ -730,6 +767,7 @@ def communities_manage(request):
         "municipalities": municipalities,
         "current_municipality": municipality_filter,
         "municipality_options_json": municipality_options_json,
+        "can_manage_communities": can_manage_communities,
     }
     template_name = "communities/communities_manage.html"
     if request.headers.get("HX-Request"):
@@ -740,6 +778,8 @@ def communities_manage(request):
 @login_required
 def communities_manage_municipal(request):
     """Manage municipality-level OBC coverage."""
+    can_manage_communities = has_oobc_management_access(request.user)
+
     from django.db.models import Count, Q
 
     from communities.models import MunicipalityCoverage, OBCCommunity, ProvinceCoverage
@@ -905,17 +945,56 @@ def communities_manage_municipal(request):
 
     stat_cards_grid_class = "mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
 
-    page_title = "Archived Municipal OBCs" if show_archived else "Manage Municipal OBC"
-    page_description = (
-        "Review archived municipality-level Bangsamoro coverage data"
-        if show_archived
-        else "View, edit, and manage municipality-level Bangsamoro coverage data"
-    )
+    if show_archived:
+        page_title = "Archived Municipal OBCs"
+        page_description = "Review archived municipality-level Bangsamoro coverage data."
+    else:
+        page_title = "Manage Municipal OBC"
+        if can_manage_communities:
+            page_description = (
+                "View, edit, and manage municipality-level Bangsamoro coverage data."
+            )
+        else:
+            page_description = "Review municipality-level Bangsamoro coverage data."
 
     badge_text = (
         "OBC Data - Municipal (Archived)"
         if show_archived
         else "OBC Data - Municipal"
+    )
+
+    hero_actions = [
+        {
+            "href": (
+                reverse("common:communities_manage_municipal")
+                if show_archived
+                else f"{reverse('common:communities_manage_municipal')}?archived=1"
+            ),
+            "label": (
+                "Back to active records"
+                if show_archived
+                else "View archived records"
+            ),
+            "icon": "fas fa-list" if show_archived else "fas fa-archive",
+            "variant": "secondary",
+        }
+    ]
+    if can_manage_communities:
+        hero_actions.append(
+            {
+                "href": reverse("common:communities_add_municipality"),
+                "label": "Add municipal OBC",
+                "icon": "fas fa-plus",
+                "variant": "primary",
+            }
+        )
+    hero_actions.append(
+        {
+            "href": reverse("common:communities_manage_provincial"),
+            "label": "Go to provincial view",
+            "icon": "fas fa-flag",
+            "variant": "ghost",
+        }
     )
 
     hero_config = {
@@ -930,34 +1009,7 @@ def communities_manage_municipal(request):
         ),
         "meta_cards": [],
         "metrics": [],
-        "actions": [
-            {
-                "href": (
-                    reverse("common:communities_manage_municipal")
-                    if show_archived
-                    else f"{reverse('common:communities_manage_municipal')}?archived=1"
-                ),
-                "label": (
-                    "Back to active records"
-                    if show_archived
-                    else "View archived records"
-                ),
-                "icon": "fas fa-archive" if not show_archived else "fas fa-list",
-                "variant": "secondary",
-            },
-            {
-                "href": reverse("common:communities_add_municipality"),
-                "label": "Add municipal OBC",
-                "icon": "fas fa-plus",
-                "variant": "primary",
-            },
-            {
-                "href": reverse("common:communities_manage_provincial"),
-                "label": "Go to provincial view",
-                "icon": "fas fa-flag",
-                "variant": "ghost",
-            },
-        ],
+        "actions": hero_actions,
     }
 
     page_size = _resolve_page_size(request, "municipality_page_size")
@@ -991,6 +1043,7 @@ def communities_manage_municipal(request):
         "municipality_page_size_options": PAGE_SIZE_OPTIONS,
         "municipality_base_querystring": coverage_base_querystring,
         "municipality_total_pages": max(coverages_page.paginator.num_pages, 1),
+        "can_manage_communities": can_manage_communities,
     }
     template_name = "communities/municipal_manage.html"
     if request.headers.get("HX-Request"):
@@ -1001,6 +1054,8 @@ def communities_manage_municipal(request):
 @login_required
 def communities_manage_provincial(request):
     """Manage province-level OBC coverage."""
+    can_manage_communities = has_oobc_management_access(request.user)
+
     from django.db.models import Q
 
     from communities.models import ProvinceCoverage
@@ -1172,19 +1227,56 @@ def communities_manage_provincial(request):
 
     stat_cards_grid_class = "mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
 
-    page_title = (
-        "Archived Provincial OBCs" if show_archived else "Manage Provincial OBC"
-    )
-    page_description = (
-        "Review archived province-level Bangsamoro coverage data"
-        if show_archived
-        else "View, edit, and manage province-level Bangsamoro coverage data"
-    )
+    if show_archived:
+        page_title = "Archived Provincial OBCs"
+        page_description = "Review archived province-level Bangsamoro coverage data."
+    else:
+        page_title = "Manage Provincial OBC"
+        if can_manage_communities:
+            page_description = (
+                "View, edit, and manage province-level Bangsamoro coverage data."
+            )
+        else:
+            page_description = "Review province-level Bangsamoro coverage data."
 
     badge_text = (
         "OBC Data - Provincial (Archived)"
         if show_archived
         else "OBC Data - Provincial"
+    )
+
+    hero_actions = [
+        {
+            "href": (
+                reverse("common:communities_manage_provincial")
+                if show_archived
+                else f"{reverse('common:communities_manage_provincial')}?archived=1"
+            ),
+            "label": (
+                "Back to active records"
+                if show_archived
+                else "View archived records"
+            ),
+            "icon": "fas fa-list" if show_archived else "fas fa-archive",
+            "variant": "secondary",
+        }
+    ]
+    if can_manage_communities:
+        hero_actions.append(
+            {
+                "href": reverse("common:communities_add_province"),
+                "label": "Add provincial OBC",
+                "icon": "fas fa-plus",
+                "variant": "primary",
+            }
+        )
+    hero_actions.append(
+        {
+            "href": reverse("common:communities_manage_municipal"),
+            "label": "Go to municipal view",
+            "icon": "fas fa-city",
+            "variant": "ghost",
+        }
     )
 
     hero_config = {
@@ -1199,34 +1291,7 @@ def communities_manage_provincial(request):
         ),
         "meta_cards": [],
         "metrics": [],
-        "actions": [
-            {
-                "href": (
-                    reverse("common:communities_manage_provincial")
-                    if show_archived
-                    else f"{reverse('common:communities_manage_provincial')}?archived=1"
-                ),
-                "label": (
-                    "Back to active records"
-                    if show_archived
-                    else "View archived records"
-                ),
-                "icon": "fas fa-list" if show_archived else "fas fa-archive",
-                "variant": "secondary",
-            },
-            {
-                "href": reverse("common:communities_add_province"),
-                "label": "Add provincial OBC",
-                "icon": "fas fa-plus",
-                "variant": "primary",
-            },
-            {
-                "href": reverse("common:communities_manage_municipal"),
-                "label": "Go to municipal view",
-                "icon": "fas fa-city",
-                "variant": "ghost",
-            },
-        ],
+        "actions": hero_actions,
     }
 
     page_size = _resolve_page_size(request, "province_page_size")
@@ -1260,6 +1325,7 @@ def communities_manage_provincial(request):
         "province_page_size_options": PAGE_SIZE_OPTIONS,
         "province_base_querystring": coverage_base_querystring,
         "province_total_pages": max(coverages_page.paginator.num_pages, 1),
+        "can_manage_communities": can_manage_communities,
     }
     template_name = "communities/provincial_manage.html"
     if request.headers.get("HX-Request"):
@@ -1656,6 +1722,8 @@ def location_centroid(request):
 @login_required
 def communities_edit(request, community_id):
     """Edit an existing barangay-level community."""
+    _ensure_can_manage_communities(request.user)
+
     from communities.models import OBCCommunity
 
     community = get_object_or_404(
@@ -1698,6 +1766,8 @@ def communities_edit(request, community_id):
 @require_POST
 def communities_delete(request, community_id):
     """Delete an existing barangay-level community."""
+    _ensure_can_manage_communities(request.user)
+
     from communities.models import OBCCommunity
 
     community = get_object_or_404(
@@ -1724,6 +1794,8 @@ def communities_delete(request, community_id):
 @require_POST
 def communities_restore(request, community_id):
     """Restore a previously archived barangay-level community."""
+    _ensure_can_manage_communities(request.user)
+
     from communities.models import OBCCommunity
 
     community = get_object_or_404(
@@ -1797,6 +1869,8 @@ def communities_stakeholders(request):
 @login_required
 def communities_edit_municipal(request, coverage_id):
     """Edit an existing municipality coverage record."""
+    _ensure_can_manage_communities(request.user)
+
     from communities.models import MunicipalityCoverage
 
     coverage = get_object_or_404(
@@ -1840,8 +1914,9 @@ def communities_edit_municipal(request, coverage_id):
 @login_required
 def communities_edit_provincial(request, coverage_id):
     """Edit an existing province-level coverage record."""
+    _ensure_can_manage_communities(request.user)
+
     from communities.models import ProvinceCoverage
-    from django.core.exceptions import PermissionDenied
 
     coverage = get_object_or_404(
         ProvinceCoverage.objects.select_related("province__region", "created_by"),
@@ -1911,6 +1986,8 @@ def communities_edit_provincial(request, coverage_id):
 @require_POST
 def communities_delete_municipal(request, coverage_id):
     """Delete a municipality coverage record."""
+    _ensure_can_manage_communities(request.user)
+
     from communities.models import MunicipalityCoverage, ProvinceCoverage
 
     coverage = get_object_or_404(
@@ -1935,6 +2012,8 @@ def communities_delete_municipal(request, coverage_id):
 @require_POST
 def communities_restore_municipal(request, coverage_id):
     """Restore a previously archived municipality coverage record."""
+    _ensure_can_manage_communities(request.user)
+
     from communities.models import MunicipalityCoverage, ProvinceCoverage
 
     coverage = get_object_or_404(
@@ -1959,8 +2038,9 @@ def communities_restore_municipal(request, coverage_id):
 @require_POST
 def communities_delete_provincial(request, coverage_id):
     """Delete a province coverage record."""
+    _ensure_can_manage_communities(request.user)
+
     from communities.models import ProvinceCoverage
-    from django.core.exceptions import PermissionDenied
 
     coverage = get_object_or_404(
         ProvinceCoverage.objects.select_related("province__region", "created_by"),
@@ -2057,8 +2137,9 @@ def communities_submit_provincial(request, coverage_id):
 @require_POST
 def communities_restore_provincial(request, coverage_id):
     """Restore a previously archived province coverage record."""
+    _ensure_can_manage_communities(request.user)
+
     from communities.models import ProvinceCoverage
-    from django.core.exceptions import PermissionDenied
 
     coverage = get_object_or_404(
         ProvinceCoverage.all_objects.select_related("province__region", "created_by"),

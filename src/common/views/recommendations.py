@@ -2,10 +2,26 @@
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from ..constants import RECOMMENDATIONS_AREAS
+from ..utils.permissions import has_oobc_management_access
+
+
+def _ensure_can_manage_recommendations(user):
+    """
+    Raise PermissionDenied for MOA staff attempting to modify recommendations.
+    """
+
+    if not user or not user.is_authenticated:
+        raise PermissionDenied("Authentication is required to manage recommendations.")
+
+    if getattr(user, "is_moa_staff", False):
+        raise PermissionDenied(
+            "MOA focal persons have read-only access to recommendations."
+        )
 
 
 @login_required
@@ -265,6 +281,8 @@ def recommendations_stats_cards(request):
 @login_required
 def recommendations_new(request):
     """Create new recommendation page."""
+    _ensure_can_manage_recommendations(request.user)
+
     from recommendations.policy_tracking.models import PolicyRecommendation
     from communities.models import OBCCommunity
     from mana.models import Assessment
@@ -299,6 +317,8 @@ def recommendations_new(request):
 @login_required
 def recommendations_create(request):
     """Handle recommendation creation (POST)."""
+    _ensure_can_manage_recommendations(request.user)
+
     if request.method != 'POST':
         return redirect('common:recommendations_new')
 
@@ -445,6 +465,8 @@ def recommendations_create(request):
 @login_required
 def recommendations_autosave(request):
     """Auto-save recommendation draft (AJAX)."""
+    _ensure_can_manage_recommendations(request.user)
+
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'POST required'}, status=400)
 
@@ -455,6 +477,8 @@ def recommendations_autosave(request):
 @login_required
 def recommendations_manage(request):
     """Manage recommendations page."""
+    can_manage_recommendations = has_oobc_management_access(request.user)
+
     from django.db.models import Count
 
     from recommendations.policy_tracking.models import (
@@ -517,12 +541,15 @@ def recommendations_manage(request):
         "current_area": area_filter,
         "stats": stats,
         "areas_data": RECOMMENDATIONS_AREAS,
+        "can_manage_recommendations": can_manage_recommendations,
     }
     return render(request, "recommendations/recommendations_manage.html", context)
 
 
 def _recommendations_by_type(request, recommendation_type: str):
     """Shared handler to list recommendations filtered by type."""
+    can_manage_recommendations = has_oobc_management_access(request.user)
+
     from django.db.models import Count
 
     from recommendations.policy_tracking.models import PolicyRecommendation
@@ -569,6 +596,7 @@ def _recommendations_by_type(request, recommendation_type: str):
         "status_filter": status_filter,
         "priority_filter": priority_filter,
         "stats": stats,
+        "can_manage_recommendations": can_manage_recommendations,
     }
     template_name = "recommendations/recommendations_type_list.html"
     return render(request, template_name, context)
@@ -619,6 +647,8 @@ def recommendations_view(request, pk):
 @login_required
 def recommendations_edit(request, pk):
     """Edit an existing policy recommendation."""
+    _ensure_can_manage_recommendations(request.user)
+
     from django.shortcuts import get_object_or_404
     from recommendations.policy_tracking.models import PolicyRecommendation
     from communities.models import OBCCommunity
@@ -823,6 +853,8 @@ def recommendations_edit(request, pk):
 @login_required
 def recommendations_delete(request, pk):
     """Delete a recommendation."""
+    _ensure_can_manage_recommendations(request.user)
+
     from recommendations.policy_tracking.models import PolicyRecommendation
 
     recommendation = get_object_or_404(PolicyRecommendation, id=pk)

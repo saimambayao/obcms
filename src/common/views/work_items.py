@@ -276,8 +276,8 @@ def work_item_detail(request, pk):
     # Get permissions for current user
     permissions = get_work_item_permissions(request.user, work_item)
 
-    # Get related items (includes both manually linked and siblings)
-    related_items = work_item.get_related_and_siblings()
+    # Get related items (manual links only; siblings are linked bidirectionally)
+    related_items = work_item.related_items.order_by('title')
 
     context = {
         'work_item': work_item,
@@ -342,6 +342,9 @@ def work_item_create(request):
             if work_item.populate_isolation_fields():
                 work_item.save(update_fields=['ppa_category', 'implementing_moa'])
 
+            # Link to existing siblings (if any)
+            work_item.sync_sibling_related_links()
+
             # Invalidate caches
             invalidate_calendar_cache(request.user.id)
             invalidate_work_item_tree_cache(work_item)  # Invalidate tree cache
@@ -403,7 +406,10 @@ def work_item_edit(request, pk):
     - Allow changing type (with data preservation)
     - Update children progress if parent completed
     """
-    work_item = get_object_or_404(WorkItem, pk=pk)
+    work_item = get_object_or_404(
+        WorkItem.objects.prefetch_related('related_items'),
+        pk=pk
+    )
 
     # Check edit permissions
     permissions = get_work_item_permissions(request.user, work_item)
@@ -486,6 +492,7 @@ def work_item_edit(request, pk):
         'breadcrumb': breadcrumb,
         'all_work_items': related_queryset,
         'allowed_child_type_choices': allowed_child_type_choices,
+        'related_items': work_item.related_items.order_by('title'),
     }
 
     return render(request, 'work_items/work_item_form.html', context)
@@ -1351,11 +1358,19 @@ def work_item_add_related(request, pk):
                 }
             )
 
-        # Add to related items
-        work_item.related_items.add(related_item)
+        # Add to related items (bidirectional)
+        work_item.add_related_link(related_item)
 
         # Return updated related items list
-        context = {'work_item': work_item}
+        updated_work_item = (
+            WorkItem.objects
+            .prefetch_related('related_items')
+            .get(pk=pk)
+        )
+        context = {
+            'work_item': updated_work_item,
+            'related_items': updated_work_item.related_items.order_by('title'),
+        }
         response = render(request, 'work_items/partials/_related_items_list.html', context)
         response['HX-Trigger'] = json.dumps({
             'showToast': {
@@ -1409,36 +1424,39 @@ def work_item_remove_related(request, pk, related_id):
     try:
         related_item = WorkItem.objects.get(pk=related_id)
 
-        # Check if it's a manually linked item or a sibling
-        is_manually_linked = work_item.related_items.filter(pk=related_id).exists()
-        is_sibling = (
-            work_item.parent
-            and related_item.parent
-            and work_item.parent.pk == related_item.parent.pk
-        )
+        # Ensure the link exists before attempting to remove it
+        if not work_item.related_items.filter(pk=related_id).exists():
+            return HttpResponse(
+                status=400,
+                headers={
+                    'HX-Trigger': json.dumps({
+                        'showToast': {
+                            'message': f'"{related_item.title}" is not linked to this work item.',
+                            'level': 'error'
+                        }
+                    })
+                }
+            )
 
-        if is_manually_linked:
-            # Remove from manually linked items
-            work_item.related_items.remove(related_item)
-            message = f'Unlinked from "{related_item.title}"'
-        elif is_sibling:
-            # Remove parent to break sibling relationship (makes it top-level)
-            related_item.parent = None
-            related_item.save()
-            message = f'Unlinked sibling "{related_item.title}" (moved to top level)'
-        else:
-            # Not related - shouldn't happen, but handle it gracefully
-            message = f'Item "{related_item.title}" is not related'
+        # Remove from manually linked items only; do not impact hierarchy
+        work_item.remove_related_link(related_item)
 
         # Refresh work_item from database to get updated related_items
-        work_item = WorkItem.objects.get(pk=pk)
+        work_item = (
+            WorkItem.objects
+            .prefetch_related('related_items')
+            .get(pk=pk)
+        )
 
         # Return updated related items list
-        context = {'work_item': work_item}
+        context = {
+            'work_item': work_item,
+            'related_items': work_item.related_items.order_by('title'),
+        }
         response = render(request, 'work_items/partials/_related_items_list.html', context)
         response['HX-Trigger'] = json.dumps({
             'showToast': {
-                'message': message,
+                'message': f'Unlinked from "{related_item.title}"',
                 'level': 'success'
             }
         })
@@ -1556,6 +1574,9 @@ def work_item_quick_create_child(request, pk):
     try:
         child.full_clean()  # Validate model
         child.save()
+
+        # Ensure new child is linked to its siblings for related items list
+        child.sync_sibling_related_links()
 
         # Invalidate caches
         invalidate_calendar_cache(request.user.id)

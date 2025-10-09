@@ -30,13 +30,6 @@ class CustomLoginView(LoginView):
     form_class = CustomLoginForm
     redirect_authenticated_user = True
 
-    def get_context_data(self, **kwargs):
-        """Add MOA registration form to context for integrated tabs."""
-        context = super().get_context_data(**kwargs)
-        # Add MOA registration form (empty) for the Register tab
-        context['moa_form'] = MOARegistrationForm()
-        return context
-
     def form_valid(self, form):
         """Process valid login form with security logging."""
         user = form.get_user()
@@ -165,7 +158,7 @@ class MOARegistrationView(CreateView):
     model = User
     form_class = MOARegistrationForm
     template_name = "common/auth/moa_register.html"
-    success_url = reverse_lazy("moa_register_success")
+    success_url = reverse_lazy("common:moa_register_success")
 
     def form_valid(self, form):
         """Process valid MOA registration with email notifications."""
@@ -236,7 +229,7 @@ class MOARegistrationView(CreateView):
                         f"Position: {self.object.position}\n"
                         f"Contact: {self.object.contact_number}\n\n"
                         f"Please review and approve this registration at:\n"
-                        f"{self.request.build_absolute_uri(reverse('moa_approval_list'))}\n\n"
+                f"{self.request.build_absolute_uri(reverse('common:moa_approval_list'))}\n\n"
                         f"OOBC Management System"
                     ),
                     from_email=settings.DEFAULT_FROM_EMAIL,

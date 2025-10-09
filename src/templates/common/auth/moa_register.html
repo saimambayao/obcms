@@ -133,7 +133,12 @@
                         <label for="{{ form.organization.id_for_label }}" class="block text-sm font-medium text-gray-700">
                             {{ form.organization.label }}<span class="text-red-500">*</span>
                         </label>
-                        {{ form.organization }}
+                        <div class="relative">
+                            {{ form.organization }}
+                            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                            </span>
+                        </div>
                         {% if form.organization.help_text %}
                             <p class="text-xs text-gray-500">{{ form.organization.help_text }}</p>
                         {% endif %}
@@ -222,7 +227,7 @@
 
                 <!-- Submit Button -->
                 <div class="flex items-center justify-between pt-4">
-                    <a href="{% url 'login' %}" class="text-sm text-gray-600 hover:text-emerald-600 transition-colors">
+                    <a href="{% url 'common:login' %}" class="text-sm text-gray-600 hover:text-emerald-600 transition-colors">
                         <i class="fas fa-arrow-left mr-1"></i>
                         Back to Login
                     </a>
@@ -237,7 +242,7 @@
         <!-- Footer Note -->
         <p class="text-center text-sm text-gray-500 mt-6">
             Already have an approved account?
-            <a href="{% url 'login' %}" class="text-emerald-600 hover:text-emerald-700 font-medium">
+            <a href="{% url 'common:login' %}" class="text-emerald-600 hover:text-emerald-700 font-medium">
                 Sign in here
             </a>
         </p>

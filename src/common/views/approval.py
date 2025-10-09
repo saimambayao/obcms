@@ -150,7 +150,7 @@ def approve_moa_user(request, user_id):
         f"Successfully approved {user_to_approve.get_full_name()}"
     )
     from django.shortcuts import redirect
-    return redirect('moa_approval_list')
+    return redirect('common:moa_approval_list')
 
 
 @login_required
@@ -236,7 +236,7 @@ def reject_moa_user(request, user_id):
         f"Rejected registration for {user_to_reject.get_full_name()}"
     )
     from django.shortcuts import redirect
-    return redirect('moa_approval_list')
+    return redirect('common:moa_approval_list')
 
 
 __all__ = [

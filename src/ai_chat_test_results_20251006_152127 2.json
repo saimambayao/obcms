@@ -1,0 +1,516 @@
+{
+  "metadata": {
+    "test_date": "2025-10-06T15:21:27.970037",
+    "total_tests": 25,
+    "passed": 8,
+    "warnings": 15,
+    "failed": 2,
+    "total_duration_seconds": 81.50730299949646,
+    "average_response_ms": 3260.2637100219727,
+    "has_gemini": true
+  },
+  "results": [
+    {
+      "query": "Tell me about OBC communities in Davao City",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "Tell me about OBC communities in Davao City"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 5389.343023300171,
+      "issues": [
+        "Intent mismatch: expected data_query, got None",
+        "Error message in response",
+        "Slow response (5389ms)"
+      ]
+    },
+    {
+      "query": "How many communities are in Region IX?",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "How many communities are in Region IX?"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 3838.2859230041504,
+      "issues": [
+        "Intent mismatch: expected data_query, got None",
+        "Error message in response",
+        "Slow response (3838ms)"
+      ]
+    },
+    {
+      "query": "Show me assessments in Zamboanga del Sur",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "Show me assessments in Zamboanga del Sur"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 6085.3681564331055,
+      "issues": [
+        "Intent mismatch: expected data_query, got None",
+        "Error message in response",
+        "Slow response (6085ms)"
+      ]
+    },
+    {
+      "query": "List communities in Northern Mindanao",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "List communities in Northern Mindanao"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 3946.3443756103516,
+      "issues": [
+        "Intent mismatch: expected data_query, got None",
+        "Error message in response",
+        "Slow response (3946ms)"
+      ]
+    },
+    {
+      "query": "How many communities are there?",
+      "status": "FAIL",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "How many communities are there?"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 2291.861057281494,
+      "issues": [
+        "Intent mismatch: expected data_query, got None",
+        "Error message in response"
+      ]
+    },
+    {
+      "query": "Count workshops in the system",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "Count workshops in the system"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 5000.661134719849,
+      "issues": [
+        "Intent mismatch: expected data_query, got None",
+        "Error message in response",
+        "Slow response (5001ms)"
+      ]
+    },
+    {
+      "query": "Total number of policy recommendations",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "Total number of policy recommendations"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 11250.354051589966,
+      "issues": [
+        "Intent mismatch: expected data_query, got None",
+        "Error message in response",
+        "Slow response (11250ms)"
+      ]
+    },
+    {
+      "query": "How many projects do we have?",
+      "status": "FAIL",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "How many projects do we have?"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 2969.174861907959,
+      "issues": [
+        "Intent mismatch: expected data_query, got None",
+        "Error message in response"
+      ]
+    },
+    {
+      "query": "Show me approved policy recommendations",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "Show me approved policy recommendations"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 3317.0549869537354,
+      "issues": [
+        "Intent mismatch: expected data_query, got None",
+        "Error message in response",
+        "Slow response (3317ms)"
+      ]
+    },
+    {
+      "query": "List active projects",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "List active projects"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 4407.400131225586,
+      "issues": [
+        "Intent mismatch: expected data_query, got None",
+        "Error message in response",
+        "Slow response (4407ms)"
+      ]
+    },
+    {
+      "query": "Find completed workshops",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "Find completed workshops"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 3276.6029834747314,
+      "issues": [
+        "Intent mismatch: expected data_query, got None",
+        "Error message in response",
+        "Slow response (3277ms)"
+      ]
+    },
+    {
+      "query": "List all coordination activities",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "List all coordination activities"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 3343.403100967407,
+      "issues": [
+        "Intent mismatch: expected data_query, got None",
+        "Error message in response",
+        "Slow response (3343ms)"
+      ]
+    },
+    {
+      "query": "Show me all organizations",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "Show me all organizations"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 3044.1229343414307,
+      "issues": [
+        "Intent mismatch: expected data_query, got None",
+        "Error message in response",
+        "Slow response (3044ms)"
+      ]
+    },
+    {
+      "query": "Display all regions",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "Display all regions"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 3241.819143295288,
+      "issues": [
+        "Intent mismatch: expected data_query, got None",
+        "Error message in response",
+        "Slow response (3242ms)"
+      ]
+    },
+    {
+      "query": "What can you help me with?",
+      "status": "PASS",
+      "intent": "help",
+      "confidence": 0.3,
+      "response": "**OBCMS AI Assistant Help**\n\nI can help you with:\n\n**Data Queries**\n- 'How many communities are in Zamboanga?'\n- 'List all workshops in 2025'\n- 'Show me active policy recommendations'\n\n**Analysis**\n- 'What are the top needs in Region IX?'\n- 'Analyze MANA assessment trends'\n- 'Compare project completion rates'\n\n**Navigation**\n- 'Take me to the dashboard'\n- 'Open the MANA module'\n\nJust ask me in natural language!",
+      "data": {
+        "topic": null
+      },
+      "suggestions": [
+        "How many communities are there?",
+        "Show me recent workshops",
+        "What can you analyze?"
+      ],
+      "duration_ms": 2.744913101196289,
+      "issues": []
+    },
+    {
+      "query": "What data do you have?",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "What data do you have?"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 3293.1551933288574,
+      "issues": [
+        "Intent mismatch: expected help, got None",
+        "Error message in response",
+        "Slow response (3293ms)"
+      ]
+    },
+    {
+      "query": "How do I use this?",
+      "status": "PASS",
+      "intent": "help",
+      "confidence": 0.8,
+      "response": "**OBCMS AI Assistant Help**\n\nI can help you with:\n\n**Data Queries**\n- 'How many communities are in Zamboanga?'\n- 'List all workshops in 2025'\n- 'Show me active policy recommendations'\n\n**Analysis**\n- 'What are the top needs in Region IX?'\n- 'Analyze MANA assessment trends'\n- 'Compare project completion rates'\n\n**Navigation**\n- 'Take me to the dashboard'\n- 'Open the MANA module'\n\nJust ask me in natural language!",
+      "data": {
+        "topic": null
+      },
+      "suggestions": [
+        "How many communities are there?",
+        "Show me recent workshops",
+        "What can you analyze?"
+      ],
+      "duration_ms": 1.0890960693359375,
+      "issues": []
+    },
+    {
+      "query": "Show me example queries",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "Show me example queries"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 8379.546165466309,
+      "issues": [
+        "Intent mismatch: expected help, got None",
+        "Error message in response",
+        "Slow response (8380ms)"
+      ]
+    },
+    {
+      "query": "Hello",
+      "status": "PASS",
+      "intent": "general",
+      "confidence": 0.8,
+      "response": "Hello! I'm the OBCMS AI Assistant.\n\nI can help you:\n- Find data about communities, workshops, and projects\n- Analyze trends and patterns\n- Navigate the system\n\nWhat would you like to know?",
+      "data": {},
+      "suggestions": [
+        "How many communities are in the system?",
+        "Show me recent MANA assessments",
+        "What are the top priorities?"
+      ],
+      "duration_ms": 2.1779537200927734,
+      "issues": []
+    },
+    {
+      "query": "Good morning",
+      "status": "WARNING",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "Good morning"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 3360.0268363952637,
+      "issues": [
+        "Intent mismatch: expected general, got None",
+        "Error message in response",
+        "Slow response (3360ms)"
+      ]
+    },
+    {
+      "query": "Thank you",
+      "status": "PASS",
+      "intent": "general",
+      "confidence": 0.8,
+      "response": "You're welcome! Is there anything else I can help you with?",
+      "data": {},
+      "suggestions": [
+        "How many communities are there?",
+        "Show me recent assessments",
+        "What can you do?"
+      ],
+      "duration_ms": 1.5749931335449219,
+      "issues": []
+    },
+    {
+      "query": "Thanks for your help",
+      "status": "PASS",
+      "intent": "general",
+      "confidence": 0.8,
+      "response": "You're welcome! Is there anything else I can help you with?",
+      "data": {},
+      "suggestions": [
+        "How many communities are there?",
+        "Show me recent assessments",
+        "What can you do?"
+      ],
+      "duration_ms": 2.351045608520508,
+      "issues": []
+    },
+    {
+      "query": "asdfghjkl",
+      "status": "PASS",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": "asdfghjkl"
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 2114.0949726104736,
+      "issues": []
+    },
+    {
+      "query": "",
+      "status": "PASS",
+      "intent": null,
+      "confidence": 0,
+      "response": "I encountered an issue processing your request:\n\n*An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'*\n\nYou can try:\n- Rephrasing your question\n- Being more specific\n- Asking for help with available commands",
+      "data": {
+        "error": "An error occurred: 'ConversationalAssistant' object has no attribute '_fallback_to_gemini'",
+        "query": ""
+      },
+      "suggestions": [
+        "What can you help me with?",
+        "Show me example queries",
+        "Help with search"
+      ],
+      "duration_ms": 2945.261001586914,
+      "issues": []
+    },
+    {
+      "query": "Tell me everything about everything",
+      "status": "PASS",
+      "intent": "general",
+      "confidence": 0.3,
+      "response": "Hello! I'm the OBCMS AI Assistant.\n\nI can help you:\n- Find data about communities, workshops, and projects\n- Analyze trends and patterns\n- Navigate the system\n\nWhat would you like to know?",
+      "data": {},
+      "suggestions": [
+        "How many communities are in the system?",
+        "Show me recent MANA assessments",
+        "What are the top priorities?"
+      ],
+      "duration_ms": 2.7747154235839844,
+      "issues": []
+    }
+  ]
+}

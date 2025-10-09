@@ -481,25 +481,52 @@ class WorkItem(MPTTModel):
 
     def get_related_and_siblings(self):
         """
-        Get both manually linked related items and siblings combined.
-        Useful for showing all contextually related work items.
+        Return manually linked related items.
 
-        Returns:
-            QuerySet of related WorkItem objects (related_items + siblings, deduplicated)
+        Maintained for backward compatibility—sibling relationships are now
+        handled by syncing to the related_items M2M table, so this simply
+        proxies to that queryset.
         """
-        from django.db.models import Q
+        return self.related_items.all()
 
-        # Get related items IDs
-        related_ids = list(self.related_items.values_list('pk', flat=True))
+    # ========== RELATED ITEM HELPERS ==========
 
-        # Get sibling IDs
-        sibling_ids = list(self.get_siblings().values_list('pk', flat=True))
+    def add_related_link(self, other):
+        """Ensure a bidirectional related-item link exists."""
+        if not other or other == self:
+            return
 
-        # Combine and deduplicate
-        all_ids = list(set(related_ids + sibling_ids))
+        if not self.related_items.filter(pk=other.pk).exists():
+            self.related_items.add(other)
 
-        # Return queryset
-        return WorkItem.objects.filter(pk__in=all_ids).distinct()
+        if not other.related_items.filter(pk=self.pk).exists():
+            other.related_items.add(self)
+
+    def remove_related_link(self, other):
+        """Remove bidirectional related-item link if present."""
+        if not other or other == self:
+            return
+
+        self.related_items.remove(other)
+        other.related_items.remove(self)
+
+    def sync_sibling_related_links(self):
+        """
+        Ensure this work item is linked to all siblings (same parent).
+
+        Only applies to non-top-level items to avoid linking independent roots.
+        """
+        if not self.parent_id:
+            return
+
+        siblings = (
+            WorkItem.objects
+            .filter(parent_id=self.parent_id)
+            .exclude(pk=self.pk)
+        )
+
+        for sibling in siblings:
+            self.add_related_link(sibling)
 
     # ========== PROGRESS CALCULATION ==========
 

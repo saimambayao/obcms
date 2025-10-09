@@ -102,7 +102,7 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200" id="pending-users-tbody" hx-trigger="user-approved, user-rejected from:body" hx-get="{% url 'moa_approval_list' %}" hx-select="#pending-users-tbody" hx-swap="outerHTML">
+                    <tbody class="bg-white divide-y divide-gray-200" id="pending-users-tbody" hx-trigger="user-approved, user-rejected from:body" hx-get="{% url 'common:moa_approval_list' %}" hx-select="#pending-users-tbody" hx-swap="outerHTML">
                         {% for user in pending_users %}
                             <tr class="hover:bg-gray-50 transition-colors" data-user-id="{{ user.id }}">
                                 <td class="px-6 py-4 whitespace-nowrap">

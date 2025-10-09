@@ -4,6 +4,8 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
+from coordination.models import Organization
+
 from ..models import User
 
 
@@ -275,16 +277,19 @@ class MOARegistrationForm(UserCreationForm):
         help_text="Select the type of organization you represent"
     )
 
-    organization = forms.CharField(
-        max_length=255,
+    MOA_ORGANIZATION_TYPES = [choice[0] for choice in MOA_USER_TYPES]
+
+    organization = forms.ModelChoiceField(
+        queryset=Organization.objects.none(),
         required=True,
-        widget=forms.TextInput(
+        widget=forms.Select(
             attrs={
-                "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] bg-white transition-all duration-200",
-                "placeholder": "e.g., Department of Agriculture - BARMM",
+                "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200",
             }
         ),
-        help_text="Full official name of your organization or agency"
+        help_text="Select your organization or agency from the registered MOA directory",
+        label="Organization",
+        empty_label=None,
     )
 
     position = forms.CharField(
@@ -355,6 +360,22 @@ class MOARegistrationForm(UserCreationForm):
         )
         self.fields["password2"].help_text = "Enter the same password for verification"
 
+        # Populate organization choices dynamically to keep the list in sync
+        self.fields["organization"].queryset = (
+            Organization.objects.filter(
+                organization_type__in=self.MOA_ORGANIZATION_TYPES,
+                is_active=True,
+            )
+            .order_by("name")
+        )
+        self.fields["organization"].empty_label = "Select your organization"
+        self.fields["organization"].widget.attrs.setdefault("data-placeholder", "Select your organization")
+
+        # Display acronym-first naming when available
+        self.fields["organization"].label_from_instance = (
+            lambda obj: obj.display_name
+        )
+
     def clean_email(self):
         """Validate that email is unique and from a government domain."""
         email = self.cleaned_data.get("email")
@@ -391,6 +412,22 @@ class MOARegistrationForm(UserCreationForm):
 
         return contact_number
 
+    def clean(self):
+        """Ensure the selected organization aligns with the declared user type."""
+        cleaned_data = super().clean()
+        organization = cleaned_data.get("organization")
+        user_type = cleaned_data.get("user_type")
+
+        if organization and user_type and organization.organization_type != user_type:
+            self.add_error(
+                "organization",
+                "The selected organization is registered as "
+                f"{organization.get_organization_type_display()}. "
+                "Please choose an organization that matches your user type.",
+            )
+
+        return cleaned_data
+
     def save(self, commit=True):
         """Create user account with is_approved=False."""
         user = super().save(commit=False)
@@ -398,7 +435,9 @@ class MOARegistrationForm(UserCreationForm):
         user.first_name = self.cleaned_data["first_name"]
         user.last_name = self.cleaned_data["last_name"]
         user.user_type = self.cleaned_data["user_type"]
-        user.organization = self.cleaned_data["organization"]
+        selected_org = self.cleaned_data["organization"]
+        user.organization = selected_org.display_name if hasattr(selected_org, "display_name") else selected_org.name
+        user.moa_organization = selected_org
         user.position = self.cleaned_data["position"]
         user.contact_number = self.cleaned_data["contact_number"]
 
