@@ -49,7 +49,7 @@ BUDGET_TEMPLATES = [
     QueryTemplate(
         id='budget_ceiling_utilization',
         category='budget',
-        pattern=r'\b(budget|ceilings?)\s+(near\s*limit|utilization|usage|allocation)\s+(by\s*sector)?',
+        pattern=r'\b(?:(show|list|which)\s+)?(budget|ceiling|ceilings?)\s+(?:are\s+)?(near\s*limit|utilization|usage|allocation)(?:\s+(rates?|levels?|percentages?))?(?:\s+by\s*sector)?',
         query_template="BudgetCeiling.objects.filter(is_active=True).annotate(utilization_rate=ExpressionWrapper(F('allocated_amount') / F('ceiling_amount') * 100, output_field=FloatField())).values('name', 'sector', 'fiscal_year', 'ceiling_amount', 'allocated_amount', 'utilization_rate').order_by('-utilization_rate')",
         required_entities=[],
         optional_entities=[],

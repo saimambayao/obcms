@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block title %}OBC Requests Management{% endblock %}
 
@@ -36,6 +37,142 @@
             </a>
         </div>
     </header>
+
+    <!-- Filter Controls -->
+    <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-4">
+        <form method="get" class="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+            <div class="space-y-1">
+                <label for="status-filter" class="text-sm font-medium text-neutral-700">Status</label>
+                <select id="status-filter" name="status" class="block w-full py-2.5 px-3 text-sm rounded-xl border border-neutral-200 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All statuses</option>
+                    {% for value, label in filter_options.statuses %}
+                        <option value="{{ value }}" {% if active_filters.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label for="priority-filter" class="text-sm font-medium text-neutral-700">Priority</label>
+                <select id="priority-filter" name="priority" class="block w-full py-2.5 px-3 text-sm rounded-xl border border-neutral-200 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All priorities</option>
+                    {% for value, label in filter_options.priorities %}
+                        <option value="{{ value }}" {% if active_filters.priority == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label for="source-filter" class="text-sm font-medium text-neutral-700">Submission Channel</label>
+                <select id="source-filter" name="source" class="block w-full py-2.5 px-3 text-sm rounded-xl border border-neutral-200 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All channels</option>
+                    {% for value, label in filter_options.sources %}
+                        <option value="{{ value }}" {% if active_filters.source == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label for="organization-filter" class="text-sm font-medium text-neutral-700">Receiving Organization</label>
+                <select id="organization-filter" name="organization" class="block w-full py-2.5 px-3 text-sm rounded-xl border border-neutral-200 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All organizations</option>
+                    {% for org in filter_options.organizations %}
+                        <option value="{{ org.id }}" {% if active_filters.organization == org.id|stringformat:"s" %}selected{% endif %}>{{ org.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label for="disaster-filter" class="text-sm font-medium text-neutral-700">Disaster Tag</label>
+                <select id="disaster-filter" name="disaster" class="block w-full py-2.5 px-3 text-sm rounded-xl border border-neutral-200 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All requests</option>
+                    <option value="yes" {% if active_filters.disaster == 'yes' %}selected{% endif %}>Disaster-related</option>
+                    <option value="no" {% if active_filters.disaster == 'no' %}selected{% endif %}>Not disaster-related</option>
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label for="search-query" class="text-sm font-medium text-neutral-700">Search</label>
+                <input id="search-query" type="search" name="q" value="{{ active_filters.query }}" placeholder="Search title, requester, summary" class="block w-full py-2.5 px-3 text-sm rounded-xl border border-neutral-200 focus:ring-emerald-500 focus:border-emerald-500">
+            </div>
+            <div class="lg:col-span-6 flex flex-wrap items-center gap-3 pt-2">
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700">
+                    <i class="fas fa-filter"></i>
+                    Apply Filters
+                </button>
+                <a href="{% url 'monitoring:obc_requests' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-neutral-300 text-neutral-600 text-sm hover:bg-neutral-100">
+                    <i class="fas fa-undo"></i>
+                    Reset
+                </a>
+                <span class="text-sm text-neutral-500">Showing {{ filtered_count }} matching requests.</span>
+            </div>
+        </form>
+    </section>
+
+    <!-- Analytics Snapshot -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <article class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-3">
+            <header class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center"><i class="fas fa-coins"></i></span>
+                <div>
+                    <h3 class="text-lg font-semibold text-neutral-800">Budget Overview</h3>
+                    <p class="text-sm text-neutral-500">Aggregate of estimated amounts for filtered requests.</p>
+                </div>
+            </header>
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-neutral-600">
+                <div class="p-4 bg-neutral-50 border border-neutral-200 rounded-xl">
+                    <dt class="text-xs uppercase tracking-wide text-neutral-500">Total Estimated Budget</dt>
+                    <dd class="text-xl font-semibold text-neutral-900">₱{{ estimated_budget_total|floatformat:2|intcomma }}</dd>
+                </div>
+                <div class="p-4 bg-neutral-50 border border-neutral-200 rounded-xl">
+                    <dt class="text-xs uppercase tracking-wide text-neutral-500">Average Per Request</dt>
+                    <dd class="text-xl font-semibold text-neutral-900">₱{{ average_budget|floatformat:0|intcomma }}</dd>
+                </div>
+                <div class="p-4 bg-neutral-50 border border-neutral-200 rounded-xl">
+                    <dt class="text-xs uppercase tracking-wide text-neutral-500">Disaster / Emergency Tagged</dt>
+                    <dd class="text-xl font-semibold text-neutral-900">{{ disaster_related_count }}</dd>
+                </div>
+                <div class="p-4 bg-neutral-50 border border-neutral-200 rounded-xl">
+                    <dt class="text-xs uppercase tracking-wide text-neutral-500">Response Rate</dt>
+                    <dd class="text-xl font-semibold text-neutral-900">{{ response_rate }}%</dd>
+                </div>
+            </dl>
+        </article>
+
+        <article class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6">
+            <header class="flex items-center gap-3 mb-4">
+                <span class="w-9 h-9 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center"><i class="fas fa-signal"></i></span>
+                <div>
+                    <h3 class="text-lg font-semibold text-neutral-800">Submission Channels</h3>
+                    <p class="text-sm text-neutral-500">Breakdown by request origin.</p>
+                </div>
+            </header>
+            <ul class="space-y-3">
+                {% for source in source_breakdown %}
+                <li class="flex items-center justify-between text-sm text-neutral-600">
+                    <span>{{ source.label }}</span>
+                    <span class="font-semibold text-neutral-900">{{ source.total }}</span>
+                </li>
+                {% empty %}
+                <li class="text-sm text-neutral-500">No submission data available.</li>
+                {% endfor %}
+            </ul>
+        </article>
+
+        <article class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6">
+            <header class="flex items-center gap-3 mb-4">
+                <span class="w-9 h-9 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center"><i class="fas fa-layer-group"></i></span>
+                <div>
+                    <h3 class="text-lg font-semibold text-neutral-800">Priority Distribution</h3>
+                    <p class="text-sm text-neutral-500">Monitor urgency mix across filtered records.</p>
+                </div>
+            </header>
+            <ul class="space-y-3">
+                {% for item in priority_breakdown %}
+                <li class="flex items-center justify-between text-sm text-neutral-600">
+                    <span>{{ item.label }}</span>
+                    <span class="font-semibold text-neutral-900">{{ item.total }}</span>
+                </li>
+                {% empty %}
+                <li class="text-sm text-neutral-500">No priority data available.</li>
+                {% endfor %}
+            </ul>
+        </article>
+    </section>
 
     <!-- Statistics Cards - 3D Milk White Design -->
     <section class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -131,34 +268,40 @@
                     <table class="min-w-full divide-y divide-neutral-200 text-sm">
                         <thead class="bg-neutral-50">
                             <tr>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-700">Request & Priority</th>
+                                <th class="px-4 py-3 text-left font-medium text-neutral-700">Request</th>
                                 <th class="px-4 py-3 text-left font-medium text-neutral-700">Requesting Community</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-700">Status</th>
                                 <th class="px-4 py-3 text-left font-medium text-neutral-700">Receiving Organization</th>
+                                <th class="px-4 py-3 text-left font-medium text-neutral-700">Linked PPAs</th>
+                                <th class="px-4 py-3 text-right font-medium text-neutral-700">Estimated Budget</th>
                                 <th class="px-4 py-3 text-right font-medium text-neutral-700">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-100">
                             {% for entry in obc_entries|slice:":10" %}
                             <tr class="hover:bg-neutral-50">
-                                <td class="px-4 py-3">
-                                    <div class="flex items-start space-x-2">
-                                        <div class="flex-1">
-                                            <p class="font-semibold text-neutral-900 truncate max-w-xs">{{ entry.title }}</p>
-                                            <div class="flex items-center space-x-2 mt-1">
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {% if entry.priority == 'urgent' %}bg-red-100 text-red-800{% elif entry.priority == 'high' %}bg-orange-100 text-orange-800{% elif entry.priority == 'medium' %}bg-yellow-100 text-yellow-800{% else %}bg-green-100 text-green-800{% endif %}">
-                                                    {% if entry.priority == 'urgent' %}
-                                                        <i class="fas fa-exclamation-triangle mr-1"></i>
-                                                    {% elif entry.priority == 'high' %}
-                                                        <i class="fas fa-flag mr-1"></i>
-                                                    {% endif %}
-                                                    {{ entry.get_priority_display }}
-                                                </span>
-                                            </div>
+                                <td class="px-4 py-3 align-top">
+                                    <div class="space-y-2">
+                                        <p class="font-semibold text-neutral-900 truncate max-w-xs">
+                                            {{ entry.title }}
+                                        </p>
+                                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full font-medium {% if entry.request_status == 'completed' %}bg-green-100 text-green-800{% elif entry.request_status == 'approved' or entry.request_status == 'in_progress' %}bg-blue-100 text-blue-800{% elif entry.request_status == 'under_review' or entry.request_status == 'endorsed' %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-700{% endif %}">
+                                                {{ entry.get_request_status_display|default:"Submitted" }}
+                                            </span>
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full font-medium {% if entry.priority == 'urgent' %}bg-red-100 text-red-800{% elif entry.priority == 'high' %}bg-orange-100 text-orange-800{% elif entry.priority == 'medium' %}bg-yellow-100 text-yellow-800{% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                                                {% if entry.priority == 'urgent' %}<i class="fas fa-exclamation-triangle mr-1"></i>{% elif entry.priority == 'high' %}<i class="fas fa-flag mr-1"></i>{% endif %}
+                                                {{ entry.get_priority_display }}
+                                            </span>
+                                            {% if entry.request_source %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full bg-purple-50 text-purple-600 font-medium">
+                                                <i class="fas fa-share-from-square mr-1"></i>{{ entry.get_request_source_display }}
+                                            </span>
+                                            {% endif %}
                                         </div>
+                                        <p class="text-xs text-neutral-400">Updated {{ entry.updated_at|date:"M j, Y" }}</p>
                                     </div>
                                 </td>
-                                <td class="px-4 py-3">
+                                <td class="px-4 py-3 align-top">
                                     {% if entry.submitted_by_community %}
                                     <div>
                                         <p class="font-medium text-neutral-900 truncate">{{ entry.submitted_by_community.name }}</p>
@@ -168,23 +311,54 @@
                                     <p class="text-xs text-neutral-400">No community specified</p>
                                     {% endif %}
                                 </td>
-                                <td class="px-4 py-3">
-                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {% if entry.request_status == 'completed' %}bg-green-100 text-green-800{% elif entry.request_status == 'approved' or entry.request_status == 'in_progress' %}bg-blue-100 text-blue-800{% elif entry.request_status == 'under_review' or entry.request_status == 'endorsed' %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-800{% endif %}">
-                                        {{ entry.get_request_status_display|default:"Submitted" }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3">
+                                <td class="px-4 py-3 align-top">
                                     {% if entry.submitted_to_organization %}
                                     <div>
                                         <p class="font-medium text-neutral-900 text-xs truncate">{{ entry.submitted_to_organization.name }}</p>
-                                        <p class="text-xs text-neutral-500">{{ entry.submitted_to_organization.organization_type }}</p>
+                                        <p class="text-xs text-neutral-500 uppercase tracking-wide">{{ entry.submitted_to_organization.organization_type|default:"" }}</p>
                                     </div>
                                     {% else %}
                                     <p class="text-xs text-neutral-400">No organization specified</p>
                                     {% endif %}
                                 </td>
-                                <td class="px-4 py-3 text-right">
-                                    <a href="{% url 'monitoring:detail' entry.pk %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                <td class="px-4 py-3 align-top text-xs text-neutral-600">
+                                    {% with ppas=entry.related_ppas.all %}
+                                        {% if ppas %}
+                                            <ul class="space-y-1">
+                                                {% for ppa in ppas|slice:":3" %}
+                                                    <li class="truncate">
+                                                        <a href="{% url 'monitoring:detail' ppa.pk %}" class="text-indigo-600 hover:text-indigo-700">
+                                                            {{ ppa.title }}
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                                {% if ppas|length > 3 %}
+                                                    <li class="text-neutral-400">+{{ ppas|length|add:"-3" }} more</li>
+                                                {% endif %}
+                                            </ul>
+                                        {% else %}
+                                            <span class="text-neutral-400">No PPA linked</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td class="px-4 py-3 align-top text-right text-sm">
+                                    <div class="font-semibold text-neutral-900">
+                                        {% if entry.estimated_total_amount %}
+                                            ₱{{ entry.estimated_total_amount|floatformat:2|intcomma }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </div>
+                                    {% if entry.is_disaster_related %}
+                                    <span class="inline-flex items-center justify-end gap-1 px-2 py-1 mt-2 rounded-full bg-rose-100 text-rose-600 text-xs font-medium">
+                                        <i class="fas fa-bolt"></i>
+                                        Disaster
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 align-top text-right">
+                                    <a href="{% url 'monitoring:detail' entry.pk %}" class="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700">
+                                        <i class="fas fa-eye"></i>
                                         View
                                     </a>
                                 </td>
@@ -193,10 +367,9 @@
                         </tbody>
                     </table>
                 </div>
-                {% if obc_entries.count > 10 %}
+                {% if filtered_count > 10 %}
                 <div class="mt-4 text-center">
-                    <p class="text-sm text-neutral-500">Showing first 10 of {{ obc_entries.count }} OBC Requests</p>
-                    <button class="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium">View All Requests</button>
+                    <p class="text-sm text-neutral-500">Showing first 10 of {{ filtered_count }} filtered requests. Use Export or filters for full list.</p>
                 </div>
                 {% endif %}
                 {% else %}

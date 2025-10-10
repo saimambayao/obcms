@@ -19,7 +19,12 @@ def _normalise_decimal(value) -> Decimal:
 
 def _aggregate_work_items(ppas: Sequence[MonitoringEntry]) -> MutableMapping[str, list[WorkItem]]:
     """Return a mapping of PPA ID to related work items for faster lookups."""
-    work_items = WorkItem.objects.filter(related_ppa__in=ppas).only(
+    work_items = WorkItem.objects.filter(
+        related_ppa__in=ppas,
+    ).exclude(
+        parent__isnull=True,
+        auto_calculate_progress=True,
+    ).only(
         "related_ppa_id",
         "allocated_budget",
         "actual_expenditure",
@@ -48,6 +53,7 @@ def build_moa_budget_tracking(
         "total_expenditure": Decimal("0.00"),
         "utilization_rate": 0.0,
         "total_variance": Decimal("0.00"),
+        "has_work_item_budget": False,
     }
 
     if organization is None:
@@ -74,6 +80,7 @@ def build_moa_budget_tracking(
     total_budget = Decimal("0.00")
     total_allocated = Decimal("0.00")
     total_expenditure = Decimal("0.00")
+    has_work_item_budget = False
 
     for ppa in moa_ppas_list:
         ppa_budget = _normalise_decimal(ppa.budget_allocation)
@@ -97,9 +104,12 @@ def build_moa_budget_tracking(
             if ppa_budget > Decimal("0.00")
             else 0.0
         )
+        ppa.has_work_item_budget = ppa_allocated > Decimal("0.00")
 
         total_allocated += ppa_allocated
         total_expenditure += ppa_expenditure
+        if ppa_allocated > Decimal("0.00"):
+            has_work_item_budget = True
 
     utilization_rate = (
         float((total_expenditure / total_budget) * 100)
@@ -114,7 +124,7 @@ def build_moa_budget_tracking(
         "total_expenditure": total_expenditure,
         "utilization_rate": utilization_rate,
         "total_variance": total_budget - total_expenditure,
+        "has_work_item_budget": has_work_item_budget,
     }
 
     return {"moa_ppas": moa_ppas_list, "moa_budget_stats": moa_budget_stats}
-

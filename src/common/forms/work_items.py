@@ -12,7 +12,11 @@ from decimal import Decimal, InvalidOperation
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db.models import Case, IntegerField, Value, When
+from django.db.models import Case, IntegerField, Value, When, Q
+
+from coordination.models import Organization
+from monitoring.models import MonitoringEntry
+
 from common.constants import STAFF_DIRECTORY_PRIORITY
 from common.work_item_model import WorkItem
 from common.models import User, StaffTeam
@@ -28,6 +32,16 @@ class WorkItemForm(forms.ModelForm):
     - Parent selection with hierarchy validation
     - Assignees and teams multi-select
     """
+
+    related_ppa = forms.ModelChoiceField(
+        queryset=MonitoringEntry.objects.none(),
+        required=False,
+        empty_label="No related PPA",
+        help_text="Select the OOBC PPA that this work item supports.",
+        widget=forms.Select(attrs={
+            'class': ''
+        })
+    )
 
     # Override parent field for better UI
     parent = forms.ModelChoiceField(
@@ -95,6 +109,7 @@ class WorkItemForm(forms.ModelForm):
             'description',
             'status',
             'priority',
+            'related_ppa',
             'allocated_budget',
             'actual_expenditure',
             'start_date',
@@ -255,6 +270,39 @@ class WorkItemForm(forms.ModelForm):
         # Make parent select prettier with hierarchy display
         self.fields['parent'].label_from_instance = self._parent_label
 
+        # Populate Related PPA options (OOBC-focused by default)
+        related_ppa_filter = Q(category='oobc_ppa')
+
+        oobc_org = (
+            Organization.objects.filter(name__iexact="Office for Other Bangsamoro Communities (OOBC)").first()
+            or Organization.objects.filter(acronym__iexact="OOBC").first()
+        )
+        if oobc_org:
+            related_ppa_filter |= Q(category='moa_ppa', implementing_moa=oobc_org)
+
+        current_related = None
+        if self.instance and self.instance.related_ppa_id:
+            current_related = self.instance.related_ppa_id
+        elif isinstance(self.initial.get('related_ppa'), MonitoringEntry):
+            current_related = self.initial['related_ppa'].pk
+        elif self.initial.get('related_ppa'):
+            current_related = self.initial['related_ppa']
+
+        if current_related:
+            related_ppa_filter |= Q(pk=current_related)
+
+        related_queryset = (
+            MonitoringEntry.objects.filter(related_ppa_filter)
+            .select_related('implementing_moa')
+            .order_by('title')
+        )
+        self.fields['related_ppa'].queryset = related_queryset
+        if is_moa_ppa:
+            self.fields['related_ppa'].widget.attrs['disabled'] = True
+            self.fields['related_ppa'].help_text = (
+                "MOA-linked work items manage PPAs from the MOA module."
+            )
+
     def _parent_label(self, obj):
         """Custom label for parent select showing hierarchy."""
         indent = "  " * obj.level
@@ -353,11 +401,36 @@ class WorkItemQuickEditForm(forms.ModelForm):
         })
     )
 
+    implementing_moa = forms.ModelChoiceField(
+        queryset=Organization.objects.none(),
+        required=False,
+        empty_label="Select implementing MOA...",
+        widget=forms.Select(attrs={
+            'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none',
+        })
+    )
+
+    related_ppa = forms.ModelChoiceField(
+        queryset=MonitoringEntry.objects.none(),
+        required=False,
+        empty_label="Select a PPA (optional)",
+        widget=forms.Select(attrs={
+            'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none',
+        })
+    )
+
     def __init__(self, *args, **kwargs):
         """Initialize form with user for created_by field."""
         # Extract user for created_by field
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+
+        # Populate dropdowns after initialization to avoid circular imports during app loading
+        self.fields['implementing_moa'].queryset = Organization.objects.order_by('name')
+        self.fields['related_ppa'].queryset = (
+            MonitoringEntry.objects.filter(category__in=['moa_ppa', 'oobc_ppa'])
+            .order_by('title')
+        )
 
     class Meta:
         model = WorkItem
@@ -371,6 +444,8 @@ class WorkItemQuickEditForm(forms.ModelForm):
             'description',
             'progress',
             'allocated_budget',  # Added for budget tracking
+            'implementing_moa',
+            'related_ppa',
         ]
         widgets = {
             'work_type': forms.Select(attrs={

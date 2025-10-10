@@ -1,10 +1,15 @@
-from django.urls import path
+from django.urls import path, re_path
 from django.views.generic import RedirectView
 from . import views
 from communities import data_utils
 from coordination import views as coordination_views
 
 app_name = "common"
+
+UUID_OR_HEX_PATTERN = (
+    r"[0-9a-fA-F]{32}"
+    r"|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+)
 
 urlpatterns = [
     path("login/", views.CustomLoginView.as_view(), name="login"),
@@ -197,18 +202,23 @@ urlpatterns = [
         views.organization_create,
         name="coordination_organization_add",
     ),
-    path(
-        "coordination/organizations/<uuid:organization_id>/edit/",
+    re_path(
+        rf"^coordination/organizations/(?P<organization_id>{UUID_OR_HEX_PATTERN})/edit/$",
         views.organization_edit,
         name="coordination_organization_edit",
     ),
-    path(
-        "coordination/organizations/<uuid:organization_id>/delete/",
+    re_path(
+        rf"^coordination/organizations/(?P<organization_id>{UUID_OR_HEX_PATTERN})/delete/$",
         views.organization_delete,
         name="coordination_organization_delete",
     ),
-    path(
-        "coordination/organizations/<uuid:organization_id>/",
+    re_path(
+        rf"^coordination/organizations/(?P<organization_id>{UUID_OR_HEX_PATTERN})/work-items/partial/$",
+        views.organization_work_items_partial,
+        name="coordination_organization_work_items_partial",
+    ),
+    re_path(
+        rf"^coordination/organizations/(?P<organization_id>{UUID_OR_HEX_PATTERN})/$",
         views.organization_detail,
         name="coordination_organization_detail",
     ),
@@ -228,18 +238,18 @@ urlpatterns = [
         views.partnership_create,
         name="coordination_partnership_add",
     ),
-    path(
-        "coordination/partnerships/<uuid:partnership_id>/",
+    re_path(
+        rf"^coordination/partnerships/(?P<partnership_id>{UUID_OR_HEX_PATTERN})/$",
         views.partnership_detail,
         name="coordination_partnership_view",
     ),
-    path(
-        "coordination/partnerships/<uuid:partnership_id>/edit/",
+    re_path(
+        rf"^coordination/partnerships/(?P<partnership_id>{UUID_OR_HEX_PATTERN})/edit/$",
         views.partnership_update,
         name="coordination_partnership_edit",
     ),
-    path(
-        "coordination/partnerships/<uuid:partnership_id>/delete/",
+    re_path(
+        rf"^coordination/partnerships/(?P<partnership_id>{UUID_OR_HEX_PATTERN})/delete/$",
         views.partnership_delete,
         name="coordination_partnership_delete",
     ),
@@ -254,6 +264,16 @@ urlpatterns = [
         "coordination/activities/add/",
         views.coordination_activity_create,
         name="coordination_activity_add",
+    ),
+    path(
+        "coordination/notes/add/",
+        views.coordination_note_create,
+        name="coordination_note_add",
+    ),
+    path(
+        "coordination/notes/activity-options/",
+        views.coordination_note_activity_options,
+        name="coordination_note_activity_options",
     ),
     path(
         "coordination/view-all/",

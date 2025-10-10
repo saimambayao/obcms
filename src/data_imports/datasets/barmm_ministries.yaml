@@ -45,6 +45,15 @@ ministries:
           Leads the promotion of welfare and addresses issues and concerns of
           settler communities, guaranteeing their rights under the Bangsamoro
           Organic Law, the Constitution, and subsequent legislation.
+      - name: Office for Other Bangsamoro Communities
+        acronym: OOBC
+        mandate: >-
+          Recommends policies and systematic programs for promoting the welfare of
+          Bangsamoro communities outside the region, including provision of services.
+        powers_and_functions:
+          - Gather socio-economic data and assess needs of Bangsamoro communities outside BARMM to inform responsive interventions.
+          - Coordinate with BARMM ministries, offices, and agencies to integrate Other Bangsamoro Communities priorities into policies, programs, and services.
+          - Facilitate partnerships with NGAs, LGUs, and development partners to protect OBC rights and advance socio-economic and cultural development.
       - name: Bangsamoro Pilgrimage Authority
         acronym: BPA
         mandate: >-

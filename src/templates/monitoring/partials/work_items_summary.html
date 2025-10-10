@@ -166,12 +166,22 @@
                 <i class="fas fa-sync"></i>
                 <span>Sync Progress</span>
             </button>
-            <a href="{% url 'common:work_item_detail' entry.execution_project.id %}"
-               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all duration-200 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-               aria-label="View full execution project hierarchy">
-                <i class="fas fa-external-link-alt"></i>
-                <span>View Full Hierarchy</span>
-            </a>
+            {% if entry.execution_project %}
+                <a href="{% url 'common:work_item_detail' entry.execution_project.id %}"
+                   class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all duration-200 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                   aria-label="View full execution project hierarchy">
+                    <i class="fas fa-external-link-alt"></i>
+                    <span>View Full Hierarchy</span>
+                </a>
+            {% else %}
+                <button type="button"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-gray-50 text-gray-500 border border-gray-200 cursor-not-allowed opacity-70 min-h-[44px]"
+                        aria-disabled="true"
+                        title="Execution project not available yet">
+                    <i class="fas fa-external-link-alt"></i>
+                    <span>View Full Hierarchy</span>
+                </button>
+            {% endif %}
             {% if request.user.is_superuser %}
             <button type="button"
                     hx-post="{% url 'monitoring:disable_workitem_tracking' entry.id %}"

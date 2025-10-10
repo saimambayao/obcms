@@ -53,7 +53,7 @@ STAKEHOLDER_TEMPLATES = [
     QueryTemplate(
         id='count_stakeholders_by_type',
         category='stakeholders',
-        pattern=r'\b(how many|count|total)\s+(?P<stakeholder_type>religious|ulama|imam|ustadz|youth|women|community|barangay|tribal|business|cooperative|health|madrasa|arabic)\s+(leaders?|stakeholders?|teachers?|workers?|captains?)',
+        pattern=r'\b(how many|count|total)\s+(?P<stakeholder_type>religious|ulama|imam|ustadz|youth|women|community|barangay|tribal|business|cooperative|health|madrasa|arabic)(\s+(leaders?|stakeholders?|teachers?|workers?|captains?))?\b',
         query_template="Stakeholder.objects.filter(stakeholder_type__icontains='{stakeholder_type}').count()",
         required_entities=['stakeholder_type'],
         optional_entities=[],

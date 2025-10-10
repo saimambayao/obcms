@@ -72,6 +72,12 @@ echo -e "${YELLOW}⚙ Running database migrations...${NC}"
 docker-compose -f docker-compose.prod.yml --env-file .env.production up migrate
 echo -e "${GREEN}✓ Migrations complete${NC}\n"
 
+# Collect static assets (ensures hashed files in shared volume)
+echo -e "${YELLOW}⚙ Collecting static files...${NC}"
+docker-compose -f docker-compose.prod.yml --env-file .env.production run --rm web \
+    python src/manage.py collectstatic --noinput
+echo -e "${GREEN}✓ Static files collected${NC}\n"
+
 # Start all services
 echo -e "${YELLOW}⚙ Starting all services...${NC}"
 docker-compose -f docker-compose.prod.yml --env-file .env.production up -d

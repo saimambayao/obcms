@@ -16,11 +16,13 @@ from django.http import JsonResponse, HttpResponse
 from django.db import models
 from django.db.models import Q, Count
 from django.views.decorators.http import require_POST, require_http_methods
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.utils import timezone
 
 from common.work_item_model import WorkItem
 from common.forms.work_items import WorkItemForm
+from coordination.models import Organization
+from coordination.utils.organizations import get_oobc_organization
 
 
 def invalidate_calendar_cache(user_id):
@@ -185,17 +187,17 @@ def work_item_list(request):
     # Children are loaded on-demand via HTMX when user expands
     queryset = queryset.filter(level=0)
 
-    # CRITICAL: Exclude PPA-specific work items from general OOBC list
-    # PPA work items should only appear in PPA/MOA contexts
-    # Work items are PPA-specific if ANY of these fields are populated:
-    # - related_ppa: Linked to a specific PPA
-    # - ppa_category: Has a PPA category (moa_ppa, oobc_ppa, obc_request)
-    # - implementing_moa: Linked to a specific MOA organization
-    queryset = queryset.filter(
-        related_ppa__isnull=True,      # Exclude items linked to a PPA
-        ppa_category__isnull=True,     # Exclude items with PPA category
-        implementing_moa__isnull=True  # Exclude items with MOA
-    )
+    # CRITICAL: Exclude MOA PPAs owned by external implementers, but keep OOBC-owned items visible.
+    oobc_org = get_oobc_organization()
+
+    moa_filter = Q(ppa_category='moa_ppa') | Q(related_ppa__category='moa_ppa')
+    if oobc_org:
+        oobc_owned_moa = Q(implementing_moa=oobc_org) | Q(
+            related_ppa__implementing_moa=oobc_org
+        )
+        queryset = queryset.exclude(moa_filter & ~oobc_owned_moa)
+    else:
+        queryset = queryset.exclude(moa_filter)
 
     # Annotate with children count
     queryset = queryset.annotate(
@@ -215,6 +217,9 @@ def work_item_list(request):
         'priority_filter': priority_filter,
         'search_query': search_query,
     }
+
+    if request.headers.get('HX-Request') and request.GET.get('partial') == 'tree':
+        return render(request, 'work_items/partials/tree_wrapper.html', context)
 
     return render(request, 'work_items/work_item_list.html', context)
 
@@ -323,6 +328,9 @@ def work_item_create(request):
         if related_ppa.execution_project and not parent:
             parent = related_ppa.execution_project
 
+    requested_work_type = request.GET.get('work_type')
+    valid_work_types = {code for code, _ in WorkItem.WORK_TYPE_CHOICES}
+
     if request.method == 'POST':
         form = WorkItemForm(request.POST)
         form.user = request.user  # For created_by field
@@ -330,10 +338,6 @@ def work_item_create(request):
         if form.is_valid():
             work_item = form.save(commit=False)
             work_item.created_by = request.user
-
-            # Set related_ppa if provided via query parameter
-            if related_ppa:
-                work_item.related_ppa = related_ppa
 
             work_item.save()
             form.save_m2m()  # Save many-to-many fields
@@ -368,6 +372,12 @@ def work_item_create(request):
                 initial['work_type'] = WorkItem.WORK_TYPE_TASK
             elif parent.work_type == WorkItem.WORK_TYPE_TASK:
                 initial['work_type'] = WorkItem.WORK_TYPE_SUBTASK
+
+        if related_ppa:
+            initial['related_ppa'] = related_ppa
+
+        if requested_work_type in valid_work_types and 'work_type' not in initial:
+            initial['work_type'] = requested_work_type
 
         form = WorkItemForm(initial=initial)
 
@@ -579,6 +589,10 @@ def work_item_delete(request, pk):
     descendants = work_item.get_descendants()
     descendants_count = descendants.count()
 
+    current_url = request.headers.get('HX-Current-URL', '') or ''
+    referer = request.META.get('HTTP_REFERER', '') or ''
+    is_moa_page = '/coordination/organizations/' in current_url or '/coordination/organizations/' in referer
+
     # Handle HTMX DELETE request (from calendar modal)
     if request.method == 'DELETE':
         import json
@@ -597,23 +611,31 @@ def work_item_delete(request, pk):
         invalidate_calendar_cache(request.user.id)
 
         # Return empty response with HX-Trigger to update calendar
-        return HttpResponse(
-            status=200,
-            headers={
-                'HX-Trigger': json.dumps({
-                    'workItemDeleted': {
-                        'id': work_item_id,
-                        'title': work_title,
-                        'type': work_type_display
-                    },
-                    'showToast': {
-                        'message': f'{work_type_display} "{work_title}" deleted successfully',
-                        'level': 'success'
-                    },
-                    'refreshCalendar': True
-                })
-            }
+        organization_id = (
+            work_item.implementing_moa_id
+            or (work_item.related_ppa.implementing_moa_id if work_item.related_ppa else None)
         )
+
+        trigger_payload = {
+            'workItemDeleted': {
+                'id': work_item_id,
+                'title': work_title,
+                'type': work_type_display
+            },
+            'showToast': {
+                'message': f'{work_type_display} "{work_title}" deleted successfully',
+                'level': 'success'
+            },
+            'refreshCalendar': True
+        }
+
+        if is_moa_page:
+            trigger_payload['refreshMoaWorkItems'] = {
+                'organizationId': str(organization_id) if organization_id else None,
+                'workItemId': work_item_id,
+            }
+
+        return HttpResponse(status=200, headers={'HX-Trigger': json.dumps(trigger_payload)})
 
     if request.method == 'POST':
         action = request.POST.get('action', 'cancel')
@@ -824,12 +846,15 @@ def work_item_sidebar_detail(request, pk):
     permissions = get_work_item_permissions(request.user, work_item)
 
     referer = request.META.get('HTTP_REFERER', '')
-    hx_target = request.headers.get('HX-Target', '')
+    hx_target_raw = request.headers.get('HX-Target', '') or ''
+    hx_target = hx_target_raw.lstrip('#')
 
     is_sidebar_target = hx_target in {'sidebar-content', 'ppa-sidebar-content'}
     is_work_items_tree = 'work-items' in referer or is_sidebar_target
     is_staff_profile = '/staff/profiles/' in referer or '/profile/' in referer
-    use_sidebar_templates = is_work_items_tree or is_staff_profile
+    is_ppa_sidebar = hx_target == 'ppa-sidebar-content'
+    use_sidebar_templates = is_work_items_tree or is_staff_profile or is_ppa_sidebar
+    is_calendar_context = not use_sidebar_templates
 
     if hx_target:
         sidebar_target_id = hx_target
@@ -838,15 +863,23 @@ def work_item_sidebar_detail(request, pk):
     else:
         sidebar_target_id = 'detailPanelBody'
 
+    close_action = 'closeSidebar'
+    if sidebar_target_id.endswith('detailPanelBody'):
+        prefix = sidebar_target_id[: -len('detailPanelBody')].rstrip('-')
+        close_action = f'{prefix}_closeDetailPanel' if prefix else 'closeDetailPanel'
+
+    if is_ppa_sidebar:
+        close_action = 'closePPASidebar'
+
     context = {
         'work_item': work_item,
         'can_edit': permissions['can_edit'],
         'can_delete': permissions['can_delete'],
         'sidebar_target_id': sidebar_target_id,
+        'close_action': close_action,
     }
 
-    template = 'work_items/partials/sidebar_detail.html' if use_sidebar_templates else 'common/partials/calendar_event_detail.html'
-    return render(request, template, context)
+    return render(request, 'work_items/partials/sidebar_detail.html', context)
 
 
 @login_required
@@ -864,17 +897,16 @@ def work_item_sidebar_edit(request, pk):
     permissions = get_work_item_permissions(request.user, work_item)
 
     referer = request.META.get('HTTP_REFERER', '')
-    hx_target = request.headers.get('HX-Target', '')
+    hx_target_raw = request.headers.get('HX-Target', '') or ''
+    hx_target = hx_target_raw.lstrip('#')
 
     is_tree_page = 'work-items' in referer
-    is_ppa_sidebar = hx_target == 'ppa-sidebar-content' or '/monitoring/entry/' in referer
+    is_moa_page = '/coordination/organizations/' in referer
+    is_ppa_sidebar = hx_target == 'ppa-sidebar-content' or ('/monitoring/entry/' in referer and not is_moa_page)
     is_staff_sidebar = '/staff/profiles/' in referer or '/profile/' in referer
 
-    use_sidebar_templates = is_tree_page or is_ppa_sidebar or is_staff_sidebar
+    use_sidebar_templates = is_tree_page or is_ppa_sidebar or is_staff_sidebar or is_moa_page
     should_update_oob_row = is_tree_page or is_ppa_sidebar
-
-    detail_template = 'work_items/partials/sidebar_detail.html' if use_sidebar_templates else 'common/partials/calendar_event_detail.html'
-    edit_template = 'work_items/partials/sidebar_edit_form.html' if use_sidebar_templates else 'common/partials/calendar_event_edit_form.html'
 
     if hx_target:
         sidebar_target_id = hx_target
@@ -882,6 +914,14 @@ def work_item_sidebar_edit(request, pk):
         sidebar_target_id = 'sidebar-content'
     else:
         sidebar_target_id = 'detailPanelBody'
+
+    close_action = 'closeSidebar'
+    if sidebar_target_id.endswith('detailPanelBody'):
+        prefix = sidebar_target_id[: -len('detailPanelBody')].rstrip('-')
+        close_action = f'{prefix}_closeDetailPanel' if prefix else 'closeDetailPanel'
+
+    if is_ppa_sidebar:
+        close_action = 'closePPASidebar'
 
     # For GET requests: If user can't edit, gracefully show detail view instead
     if request.method == 'GET' and not permissions['can_edit']:
@@ -891,8 +931,9 @@ def work_item_sidebar_edit(request, pk):
             'can_edit': permissions['can_edit'],
             'can_delete': permissions['can_delete'],
             'sidebar_target_id': sidebar_target_id,
+            'close_action': close_action,
         }
-        return render(request, detail_template, context)
+        return render(request, 'work_items/partials/sidebar_detail.html', context)
 
     # For POST requests: If user can't edit, return 403 error
     if request.method == 'POST' and not permissions['can_edit']:
@@ -941,8 +982,9 @@ def work_item_sidebar_edit(request, pk):
                     'form': form,
                     'work_item': work_item,
                     'sidebar_target_id': sidebar_target_id,
+                    'close_action': close_action,
                 }
-                edit_form_html = render_to_string(edit_template, context, request=request)
+                edit_form_html = render_to_string('work_items/partials/sidebar_edit_form.html', context, request=request)
 
                 # Render the updated row for out-of-band swap
                 if is_tree_page:
@@ -1005,8 +1047,9 @@ def work_item_sidebar_edit(request, pk):
                     'can_edit': permissions['can_edit'],
                     'can_delete': permissions['can_delete'],
                     'sidebar_target_id': sidebar_target_id,
+                    'close_action': close_action,
                 }
-                response = render(request, detail_template, context)
+                response = render(request, 'work_items/partials/sidebar_detail.html', context)
 
                 triggers = {
                     'showToast': {
@@ -1021,6 +1064,16 @@ def work_item_sidebar_edit(request, pk):
                         'reload': False,
                         'workItemId': str(work_item.pk)
                     }
+                if is_moa_page:
+                    organization_id = (
+                        work_item.implementing_moa_id
+                        or (work_item.related_ppa.implementing_moa_id if work_item.related_ppa else None)
+                    )
+                    triggers['refreshMoaWorkItems'] = {
+                        'organizationId': str(organization_id) if organization_id else None,
+                        'workItemId': str(work_item.pk),
+                    }
+                    triggers['closeSidebar'] = True
 
                 response['HX-Trigger'] = json.dumps(triggers)
                 return response
@@ -1030,8 +1083,9 @@ def work_item_sidebar_edit(request, pk):
                 'form': form,
                 'work_item': work_item,
                 'sidebar_target_id': sidebar_target_id,
+                'close_action': close_action,
             }
-            return render(request, edit_template, context)
+            return render(request, 'work_items/partials/sidebar_edit_form.html', context)
 
     else:  # GET
         from common.forms.work_items import WorkItemQuickEditForm
@@ -1041,8 +1095,9 @@ def work_item_sidebar_edit(request, pk):
             'form': form,
             'work_item': work_item,
             'sidebar_target_id': sidebar_target_id,
+            'close_action': close_action,
         }
-        return render(request, edit_template, context)
+        return render(request, 'work_items/partials/sidebar_edit_form.html', context)
 
 
 @login_required
@@ -1089,9 +1144,19 @@ def work_item_duplicate(request, pk):
     # Load edit form for the duplicate
     from common.forms.work_items import WorkItemQuickEditForm
     form = WorkItemQuickEditForm(instance=duplicate, user=request.user)
-    context = {'form': form, 'work_item': duplicate}
+    target_id = request.headers.get('HX-Target', '').lstrip('#') or 'detailPanelBody'
+    close_action = 'closeSidebar'
+    if target_id.endswith('detailPanelBody'):
+        prefix = target_id[: -len('detailPanelBody')].rstrip('-')
+        close_action = f'{prefix}_closeDetailPanel' if prefix else 'closeDetailPanel'
+    context = {
+        'form': form,
+        'work_item': duplicate,
+        'sidebar_target_id': target_id,
+        'close_action': close_action,
+    }
 
-    response = render(request, 'common/partials/calendar_event_edit_form.html', context)
+    response = render(request, 'work_items/partials/sidebar_edit_form.html', context)
 
     # Trigger calendar refresh and success toast
     import json
@@ -1117,63 +1182,289 @@ def work_item_sidebar_create(request):
 
     This enables quick creation: double-click date → create form opens
     """
+    from coordination.models import Organization
+    from monitoring.models import MonitoringEntry
+
     # Get PPA ID from query params (if creating from PPA page)
     ppa_id = request.GET.get('ppa_id') or request.POST.get('ppa_id')
+    if not ppa_id:
+        ppa_id = None
     related_ppa = None
     if ppa_id:
-        from monitoring.models import MonitoringEntry
         try:
             related_ppa = MonitoringEntry.objects.get(pk=ppa_id)
         except MonitoringEntry.DoesNotExist:
-            pass
+            related_ppa = None
+
+    implementing_moa_param = request.GET.get('implementing_moa') or request.POST.get('implementing_moa')
+    if not implementing_moa_param:
+        implementing_moa_param = None
+    ppa_options = []
+    has_disabled_ppa_options = False
+    if not related_ppa and implementing_moa_param:
+        ppa_queryset = MonitoringEntry.objects.filter(
+            category='moa_ppa',
+            implementing_moa_id=implementing_moa_param,
+        ).order_by('title')
+        ppa_options = [
+            {
+                'id': str(ppa.pk),
+                'title': ppa.title,
+                'tracking_enabled': ppa.enable_workitem_tracking,
+            }
+            for ppa in ppa_queryset
+        ]
+        tracking_enabled = [option for option in ppa_options if option['tracking_enabled']]
+        has_disabled_ppa_options = any(not option['tracking_enabled'] for option in ppa_options)
+        if len(tracking_enabled) == 1:
+            try:
+                related_ppa = MonitoringEntry.objects.get(pk=tracking_enabled[0]['id'])
+                ppa_id = tracking_enabled[0]['id']
+            except MonitoringEntry.DoesNotExist:
+                related_ppa = None
 
     # Determine which template to use based on referrer
     referer = request.META.get('HTTP_REFERER', '')
-    is_work_items_tree = 'work-items' in referer
-    is_ppa_page = '/monitoring/entry/' in referer or ppa_id is not None
-    is_staff_profile = '/staff/profiles/' in referer or '/profile/' in referer
+    hx_current_url = request.META.get('HTTP_HX_CURRENT_URL', '')
+    path_context = f'{referer} {hx_current_url}'
+
+    is_moa_page = (
+        '/coordination/organizations/' in path_context
+        or bool(implementing_moa_param)
+    )
+    is_work_items_tree = 'work-items' in path_context
+    is_oobc_dashboard = (
+        '/monitoring/oobc-initiatives/' in path_context
+        or request.GET.get('oobc_dashboard') == '1'
+    )
+    is_staff_profile = '/staff/profiles/' in path_context or '/profile/' in path_context
+    is_ppa_page = (
+        '/monitoring/entry/' in path_context
+        or (ppa_id is not None and not is_moa_page)
+    )
+    use_ppa_sidebar = bool(is_ppa_page and not is_moa_page)
+
+    hx_target_raw = request.headers.get('HX-Target', '') or ''
+    hx_target = hx_target_raw.lstrip('#')
+
+    is_calendar_context = not (is_ppa_page or is_moa_page or is_work_items_tree or is_staff_profile)
+
+    if hx_target:
+        sidebar_target_id = hx_target
+    elif use_ppa_sidebar:
+        sidebar_target_id = 'ppa-sidebar-content'
+    elif is_calendar_context:
+        sidebar_target_id = 'detailPanelBody'
+    else:
+        sidebar_target_id = 'sidebar-content'
+
+    close_action = 'closeSidebar'
+    if sidebar_target_id.endswith('detailPanelBody'):
+        prefix = sidebar_target_id[: -len('detailPanelBody')].rstrip('-')
+        close_action = f'{prefix}_closeDetailPanel' if prefix else 'closeDetailPanel'
+
+    if use_ppa_sidebar:
+        close_action = 'closePPASidebar'
+
+    oobc_org = (
+        Organization.objects.filter(name__iexact="Office for Other Bangsamoro Communities (OOBC)").first()
+        or Organization.objects.filter(acronym__iexact="OOBC").first()
+    )
+    auto_assign_oobc = bool(
+        (is_work_items_tree or is_oobc_dashboard)
+        and not is_moa_page
+        and not is_ppa_page
+        and oobc_org
+    )
+
+    implementing_moa_obj = None
+    if related_ppa and related_ppa.implementing_moa:
+        implementing_moa_obj = related_ppa.implementing_moa
+    elif implementing_moa_param:
+        try:
+            implementing_moa_obj = Organization.objects.get(pk=implementing_moa_param)
+        except Organization.DoesNotExist:
+            implementing_moa_obj = None
+    elif auto_assign_oobc:
+        implementing_moa_obj = oobc_org
+
+    resolved_implementing_moa_id = str(implementing_moa_obj.pk) if implementing_moa_obj else None
+    lock_implementing_moa = bool(implementing_moa_obj and (auto_assign_oobc or is_moa_page or related_ppa))
+    requires_related_ppa_flag = bool(
+        is_ppa_page or is_moa_page or (implementing_moa_param and not auto_assign_oobc)
+    )
+    if is_work_items_tree:
+        requires_related_ppa_flag = False
+    if auto_assign_oobc:
+        requires_related_ppa_flag = False
+
+    oobc_ppa_queryset = MonitoringEntry.objects.none()
+    if auto_assign_oobc:
+        oobc_ppa_queryset = MonitoringEntry.objects.filter(
+            category="moa_ppa",
+            implementing_moa=oobc_org,
+        ).order_by("title")
+
+    # Surface PPA options for auto-assigned OOBC context or when MOA was resolved indirectly
+    if not related_ppa and not ppa_options and implementing_moa_obj:
+        if auto_assign_oobc:
+            ppa_queryset = oobc_ppa_queryset
+        else:
+            ppa_queryset = (
+                MonitoringEntry.objects.filter(
+                    category__in=["moa_ppa", "oobc_ppa"],
+                    implementing_moa=implementing_moa_obj,
+                )
+                .order_by("title")
+            )
+
+        ppa_options = [
+            {
+                "id": str(ppa.pk),
+                "title": ppa.title,
+                "tracking_enabled": ppa.enable_workitem_tracking,
+            }
+            for ppa in ppa_queryset
+        ]
+        tracking_enabled = [option for option in ppa_options if option["tracking_enabled"]]
+        has_disabled_ppa_options = any(not option["tracking_enabled"] for option in ppa_options)
+        if len(tracking_enabled) == 1 and not ppa_id:
+            try:
+                related_ppa = MonitoringEntry.objects.get(pk=tracking_enabled[0]["id"])
+                ppa_id = tracking_enabled[0]["id"]
+            except MonitoringEntry.DoesNotExist:
+                related_ppa = None
 
     # Use PPA-specific template if on PPA page, otherwise use sidebar template
-    if is_ppa_page:
-        create_template = 'work_items/partials/sidebar_create_form.html'
-    elif is_work_items_tree or is_staff_profile:
-        create_template = 'work_items/partials/sidebar_create_form.html'
-    else:
-        create_template = 'common/partials/calendar_event_create_form.html'
+    create_template = 'work_items/partials/sidebar_create_form.html'
 
     if request.method == 'POST':
         from common.forms.work_items import WorkItemQuickEditForm
         from django.contrib.auth import get_user_model
         User = get_user_model()
 
-        form = WorkItemQuickEditForm(request.POST, user=request.user)
+        post_data = request.POST.copy()
+        if auto_assign_oobc and oobc_org and not post_data.get('implementing_moa'):
+            post_data['implementing_moa'] = str(oobc_org.pk)
+
+        form = WorkItemQuickEditForm(post_data, user=request.user)
+        if auto_assign_oobc:
+            form.fields['related_ppa'].queryset = oobc_ppa_queryset
+            if oobc_org:
+                form.fields['implementing_moa'].queryset = Organization.objects.filter(pk=oobc_org.pk)
+        assignee_id = post_data.get('assignee_id')
+        assignee_user = None
+        if assignee_id:
+            try:
+                assignee_user = User.objects.get(pk=assignee_id)
+            except User.DoesNotExist:
+                assignee_user = None
+
         if form.is_valid():
+            cleaned_related_ppa = form.cleaned_data.get('related_ppa')
+            target_related_ppa = cleaned_related_ppa or related_ppa
+
+            # Only enforce PPA selection when working within PPA-anchored flows
+            if not target_related_ppa and requires_related_ppa_flag:
+                if ppa_options:
+                    form.add_error(None, "Please select a MOA PPA before creating a work item.")
+                else:
+                    form.add_error(None, "Unable to determine the related PPA. Open this form from a specific PPA detail page and try again.")
+                context = {
+                    'form': form,
+                    'is_create': True,
+                    'ppa_id': ppa_id,
+                    'ppa_info': related_ppa,
+                    'ppa_options': ppa_options,
+                    'selected_ppa_id': post_data.get('ppa_id') or ppa_id,
+                    'implementing_moa_id': resolved_implementing_moa_id,
+                    'has_disabled_ppa_options': has_disabled_ppa_options,
+                    'use_ppa_sidebar': use_ppa_sidebar,
+                    'sidebar_target_id': sidebar_target_id,
+                    'lock_implementing_moa': lock_implementing_moa,
+                    'implementing_moa_obj': implementing_moa_obj,
+                    'auto_assign_oobc': auto_assign_oobc,
+                    'assignee_user': assignee_user,
+                    'assignee_id': assignee_id,
+                    'requires_related_ppa': requires_related_ppa_flag and not auto_assign_oobc,
+                    'close_action': close_action,
+                }
+                return render(request, create_template, context)
+
             # Form handles created_by and assignee conversion
-            work_item = form.save()
+            work_item = form.save(commit=False)
 
-            # Handle assignee from hidden field (if creating from staff profile)
-            assignee_id = request.POST.get('assignee_id')
-            if assignee_id:
-                try:
-                    assignee_user = User.objects.get(pk=assignee_id)
-                    work_item.assigned_users.add(assignee_user)
-                except User.DoesNotExist:
-                    pass
+            # Adopt the PPA selected in the form (if any) as the active related PPA
+            if target_related_ppa:
+                related_ppa = target_related_ppa
 
-            # Link to PPA if ppa_id was provided
             if related_ppa:
+                import json
+                import logging
+
+                logger = logging.getLogger(__name__)
+
+                try:
+                    project = related_ppa.ensure_execution_project(
+                        created_by=request.user,
+                        updated_by=request.user,
+                    )
+                except ValidationError as exc:
+                    message = "; ".join(exc.messages) if hasattr(exc, "messages") else str(exc)
+                    logger.warning(
+                        "Unable to ensure execution project for PPA %s: %s",
+                        related_ppa.pk,
+                        message,
+                    )
+                    return HttpResponse(
+                        status=400,
+                        headers={
+                            'HX-Trigger': json.dumps({
+                                'showToast': {
+                                    'message': message,
+                                    'level': 'error'
+                                }
+                            })
+                        }
+                    )
+                except Exception:
+                    logger = logging.getLogger(__name__)
+                    logger.exception(
+                        "Unexpected error ensuring execution project for PPA %s",
+                        related_ppa.pk,
+                    )
+                    return HttpResponse(
+                        status=500,
+                        headers={
+                            'HX-Trigger': json.dumps({
+                                'showToast': {
+                                    'message': 'Unable to create the work item right now. Please try again.',
+                                    'level': 'error'
+                                }
+                            })
+                        }
+                    )
+
                 work_item.related_ppa = related_ppa
 
-                # CRITICAL FIX: Auto-parent to execution_project if it exists
-                # This ensures the work item appears in the PPA's Work Items Hierarchy
-                if related_ppa.execution_project and not work_item.parent:
-                    work_item.parent = related_ppa.execution_project
+                # Auto-parent to the ensured execution project when none supplied
+                if project and not work_item.parent:
+                    work_item.parent = project
+
+                # Align implementing MOA with related PPA when available
+                if related_ppa.implementing_moa:
+                    work_item.implementing_moa = related_ppa.implementing_moa
 
                 # Auto-populate isolation fields (ppa_category, implementing_moa)
                 work_item.populate_isolation_fields()
-                # Save all fields together (include parent now)
-                work_item.save(update_fields=['related_ppa', 'parent', 'ppa_category', 'implementing_moa'])
 
+            work_item.save()
+
+            # Handle assignee from hidden field (if creating from staff profile)
+            if assignee_user:
+                work_item.assigned_users.add(assignee_user)
+
+            # Link to PPA if ppa_id was provided
             # Invalidate caches
             invalidate_calendar_cache(request.user.id)
             invalidate_work_item_tree_cache(work_item)
@@ -1183,10 +1474,15 @@ def work_item_sidebar_create(request):
             response = HttpResponse(status=204)  # No Content
 
             if is_ppa_page:
-                # PPA page: trigger tab refresh and close sidebar
+                # PPA page: refresh tab content via HTMX helpers (no full reload)
+                trigger_payload = {
+                    'reload': False,
+                    'entryId': str(related_ppa.pk) if related_ppa else ppa_id,
+                    'workItemId': str(work_item.pk),
+                }
                 response['HX-Trigger'] = json.dumps({
                     'workItemCreated': {'workItemId': str(work_item.pk), 'ppaId': ppa_id},
-                    'refreshPPAWorkItems': True,  # Custom event to refresh PPA work items tab
+                    'refreshPPAWorkItems': trigger_payload,
                     'showToast': {
                         'message': f'{work_item.get_work_type_display()} created successfully',
                         'level': 'success'
@@ -1201,6 +1497,28 @@ def work_item_sidebar_create(request):
                         'message': f'{work_item.get_work_type_display()} created successfully',
                         'level': 'success'
                     }
+                })
+            elif is_moa_page:
+                org_id = (
+                    resolved_implementing_moa_id
+                    or (str(related_ppa.implementing_moa_id) if related_ppa and related_ppa.implementing_moa_id else None)
+                )
+                response['HX-Trigger'] = json.dumps({
+                    'workItemCreated': {
+                        'workItemId': str(work_item.pk),
+                        'context': 'moa',
+                        'organizationId': org_id,
+                    },
+                    'refreshMoaWorkItems': {
+                        'organizationId': org_id,
+                        'workItemId': str(work_item.pk),
+                        'reason': 'created',
+                    },
+                    'showToast': {
+                        'message': f'{work_item.get_work_type_display()} created successfully',
+                        'level': 'success'
+                    },
+                    'closeSidebar': True,
                 })
             else:
                 # Calendar: trigger calendar refresh and close panel
@@ -1218,14 +1536,27 @@ def work_item_sidebar_create(request):
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Work item creation failed. Errors: {form.errors.as_json()}")
-            logger.error(f"POST data: {request.POST}")
+            logger.error(f"POST data: {post_data}")
 
             # Return form with errors
             context = {
                 'form': form,
                 'is_create': True,
                 'ppa_id': ppa_id,
-                'ppa_info': related_ppa
+                'ppa_info': related_ppa,
+                'ppa_options': ppa_options,
+                'selected_ppa_id': post_data.get('ppa_id') or ppa_id,
+                'implementing_moa_id': resolved_implementing_moa_id,
+                'has_disabled_ppa_options': has_disabled_ppa_options,
+                'use_ppa_sidebar': use_ppa_sidebar,
+                'sidebar_target_id': sidebar_target_id,
+                'assignee_user': assignee_user,
+                'assignee_id': assignee_id,
+                'lock_implementing_moa': lock_implementing_moa,
+                'implementing_moa_obj': implementing_moa_obj,
+                'auto_assign_oobc': auto_assign_oobc,
+                    'requires_related_ppa': requires_related_ppa_flag and not auto_assign_oobc,
+                'close_action': close_action,
             }
             return render(request, create_template, context)
 
@@ -1272,6 +1603,12 @@ def work_item_sidebar_create(request):
             initial['parent'] = related_ppa.execution_project
             initial['work_type'] = WorkItem.WORK_TYPE_ACTIVITY
 
+        if implementing_moa_obj:
+            initial['implementing_moa'] = implementing_moa_obj
+
+        if related_ppa:
+            initial['related_ppa'] = related_ppa
+
         # Default values for new work items
         if 'status' not in initial:
             initial['status'] = 'not_started'
@@ -1283,13 +1620,28 @@ def work_item_sidebar_create(request):
             initial['work_type'] = 'task'  # Default to task
 
         form = WorkItemQuickEditForm(initial=initial, user=request.user)
+        if auto_assign_oobc:
+            form.fields['related_ppa'].queryset = oobc_ppa_queryset
+            if oobc_org:
+                form.fields['implementing_moa'].queryset = Organization.objects.filter(pk=oobc_org.pk)
         context = {
             'form': form,
             'is_create': True,
             'ppa_id': ppa_id,
             'ppa_info': related_ppa,
+            'ppa_options': ppa_options,
+            'selected_ppa_id': ppa_id,
+            'implementing_moa_id': resolved_implementing_moa_id,
+            'has_disabled_ppa_options': has_disabled_ppa_options,
             'assignee_user': assignee_user,  # Pass assignee info to template
-            'assignee_id': assignee_id  # Pass assignee ID for hidden field
+            'assignee_id': assignee_id,  # Pass assignee ID for hidden field
+            'use_ppa_sidebar': use_ppa_sidebar,
+            'sidebar_target_id': sidebar_target_id,
+            'lock_implementing_moa': lock_implementing_moa,
+            'implementing_moa_obj': implementing_moa_obj,
+            'auto_assign_oobc': auto_assign_oobc,
+            'requires_related_ppa': requires_related_ppa_flag and not auto_assign_oobc,
+            'close_action': close_action,
         }
         return render(request, create_template, context)
 

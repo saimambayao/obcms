@@ -467,28 +467,23 @@
      * Listen for custom event to refresh PPA work items tab
      */
     document.body.addEventListener('refreshPPAWorkItems', function(event) {
-        const detail = event.detail;
-        let shouldReload = true;
+        const detail = event.detail || {};
+        const shouldReload = detail === true || (typeof detail === 'object' && detail.reload === true);
+        const entryId =
+            typeof detail === 'object' && detail && detail.entryId
+                ? detail.entryId
+                : undefined;
 
-        if (detail !== undefined && detail !== null) {
-            if (detail === false) {
-                shouldReload = false;
-            } else if (typeof detail === 'object' && detail.reload === false) {
-                shouldReload = false;
-            }
-        }
-
-        console.log('[PPA Work Items] Refresh triggered', { detail, shouldReload });
+        console.log('[PPA Work Items] Refresh triggered', { detail, shouldReload, entryId });
 
         if (shouldReload) {
             window.location.reload();
             return;
         }
 
-        const entryId =
-            typeof detail === 'object' && detail && detail.entryId
-                ? detail.entryId
-                : undefined;
+        if (typeof refreshWorkItemsTree === 'function') {
+            refreshWorkItemsTree(entryId);
+        }
 
         if (typeof window.refreshPPAWorkItemsSummary === 'function') {
             window.refreshPPAWorkItemsSummary(entryId);
@@ -546,3 +541,4 @@
 
     console.log('✅ PPA Work Item sidebar and tree controls initialized');
 </script>
+{% include 'work_items/partials/sidebar_init_scripts.html' %}

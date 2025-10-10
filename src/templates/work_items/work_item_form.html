@@ -33,52 +33,6 @@
             </p>
         {% endif %}
     </div>
-
-    <!-- MOA/PPA Context (Read-Only) -->
-    {% if work_item.related_ppa %}
-    <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6 shadow-sm">
-        <h3 class="text-sm font-semibold text-blue-900 mb-4 flex items-center">
-            <i class="fas fa-info-circle mr-2 text-blue-600"></i>
-            Work Item Context
-        </h3>
-
-        <div class="space-y-3">
-            <!-- Implementing MOA -->
-            <div class="flex items-start">
-                <div class="flex-shrink-0 mt-0.5">
-                    <i class="fas fa-building text-blue-600 text-lg"></i>
-                </div>
-                <div class="ml-3">
-                    <p class="text-xs font-medium text-blue-700 uppercase tracking-wide">Implementing MOA</p>
-                    <p class="text-base text-blue-900 font-medium mt-0.5">
-                        {% if work_item.related_ppa.implementing_moa %}
-                            {{ work_item.related_ppa.implementing_moa.name }}
-                        {% else %}
-                            <span class="italic text-blue-600">Not specified</span>
-                        {% endif %}
-                    </p>
-                </div>
-            </div>
-
-            <!-- Related PPA -->
-            <div class="flex items-start">
-                <div class="flex-shrink-0 mt-0.5">
-                    <i class="fas fa-tasks text-emerald-600 text-lg"></i>
-                </div>
-                <div class="ml-3">
-                    <p class="text-xs font-medium text-blue-700 uppercase tracking-wide">Related PPA</p>
-                    <p class="text-base text-blue-900 font-medium mt-0.5">{{ work_item.related_ppa.title }}</p>
-                </div>
-            </div>
-        </div>
-
-        <p class="mt-4 text-xs text-blue-700 flex items-start">
-            <i class="fas fa-lock mr-1.5 mt-0.5 flex-shrink-0"></i>
-            <span>This work item belongs to the PPA shown above. MOA and PPA associations cannot be changed from this form.</span>
-        </p>
-    </div>
-    {% endif %}
-
     <form id="work-item-form"
           method="post"
           class="grid grid-cols-1 lg:grid-cols-2 gap-6"
@@ -398,6 +352,49 @@
 
         <!-- RIGHT COLUMN -->
         <div class="space-y-6">
+        {% with current=form.instance %}
+            <!-- MOA & PPA Context -->
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-project-diagram text-emerald-500 mr-2"></i>
+                    Implementing MOA & Related PPA
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex items-start gap-3">
+                        <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                            <i class="fas fa-building text-lg"></i>
+                        </span>
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Implementing MOA</p>
+                            <p class="text-base text-gray-900 mt-1">
+                                {% with moa=current.implementing_moa %}
+                                    {% if moa %}
+                                        {{ moa.name }}
+                                    {% elif current.related_ppa and current.related_ppa.implementing_moa %}
+                                        {{ current.related_ppa.implementing_moa.name }}
+                                    {% else %}
+                                        Office for Other Bangsamoro Communities (OOBC)
+                                    {% endif %}
+                                {% endwith %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 border-t border-gray-100 pt-4">
+                        <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                            <i class="fas fa-sitemap text-lg"></i>
+                        </span>
+                        <div class="flex-1">
+                            {% include "components/form_field_select.html" with field=form.related_ppa label="Related PPA" placeholder="Select related PPA" %}
+                        </div>
+                    </div>
+                </div>
+                <p class="mt-4 text-xs text-gray-600 flex items-start">
+                    <i class="fas fa-lock mr-1.5 mt-0.5 flex-shrink-0 text-gray-400"></i>
+                    <span>Implementing MOA stays with OOBC. Choose a Related PPA to link this work item to an OOBC initiative.</span>
+                </p>
+            </div>
+        {% endwith %}
+
         <!-- Assignment Section -->
         <div class="bg-white rounded-xl p-6 border border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -880,6 +877,30 @@
 <div id="delete-modal-container" aria-live="polite" role="region" aria-label="Delete confirmation modal"></div>
 
 <script>
+function updateFormFields(workType) {
+    const budgetSection = document.getElementById('budget-tracking-section');
+    const scheduleSection = document.getElementById('schedule-timeline-section');
+    const progressSection = document.getElementById('status-priority-section');
+
+    if (workType === 'Project' || workType === 'Sub-Project') {
+        budgetSection.style.display = 'block';
+        scheduleSection.style.display = 'block';
+        progressSection.style.display = 'block';
+    } else if (workType === 'Activity' || workType === 'Sub-Activity') {
+        budgetSection.style.display = 'none';
+        scheduleSection.style.display = 'block';
+        progressSection.style.display = 'block';
+    } else if (workType === 'Task' || workType === 'Sub-Task') {
+        budgetSection.style.display = 'none';
+        scheduleSection.style.display = 'block';
+        progressSection.style.display = 'block';
+    } else {
+        budgetSection.style.display = 'none';
+        scheduleSection.style.display = 'none';
+        progressSection.style.display = 'none';
+    }
+}
+
 // Toggle child item form
 function toggleChildForm() {
     const form = document.getElementById('child-form');

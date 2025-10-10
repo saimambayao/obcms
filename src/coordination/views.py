@@ -10,21 +10,25 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.utils.dateparse import parse_date
+from django.http import Http404
 
 from common.utils.moa_permissions import moa_can_edit_organization
-
-from common.models import RecurringEventPattern
+from common.services.locations import build_location_data, get_object_centroid
+from common.models import Municipality, RecurringEventPattern
 from common.work_item_model import WorkItem
 from common.forms.work_items import WorkItemForm
 from monitoring.models import MonitoringEntry
 from monitoring.services import build_moa_budget_tracking
+from communities.models import OBCCommunity
 
 from .forms import (
+    CoordinationNoteForm,
     OrganizationContactFormSet,
     OrganizationForm,
     PartnershipDocumentFormSet,
@@ -36,6 +40,7 @@ from .forms import (
 )
 # Event model removed - use WorkItem with work_type='activity' instead
 from .models import Organization, Partnership, StakeholderEngagement
+from .utils.organizations import get_organization_or_404, get_organization
 
 
 logger = logging.getLogger(__name__)
@@ -93,6 +98,278 @@ def _split_list_items(text_value):
     return items
 
 
+def _normalise_float(value):
+    if value in {None, ""}:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _build_community_locations():
+    """Return community and municipality coordinate payload for coverage selectors."""
+
+    community_locations = []
+    community_queryset = (
+        OBCCommunity.objects.filter(is_active=True)
+        .select_related("barangay__municipality__province__region")
+        .order_by(
+            "barangay__municipality__province__region__code",
+            "barangay__municipality__name",
+            "barangay__name",
+        )
+    )
+
+    for community in community_queryset:
+        barangay = community.barangay
+        municipality = barangay.municipality if barangay else None
+        province = municipality.province if municipality else None
+        region = province.region if province else None
+
+        latitude = _normalise_float(community.latitude)
+        longitude = _normalise_float(community.longitude)
+
+        if latitude is None or longitude is None:
+            latitude, longitude = get_object_centroid(barangay)
+
+        if (latitude is None or longitude is None) and municipality is not None:
+            latitude, longitude = get_object_centroid(municipality)
+
+        if (latitude is None or longitude is None) and province is not None:
+            latitude, longitude = get_object_centroid(province)
+
+        if (latitude is None or longitude is None) and region is not None:
+            latitude, longitude = get_object_centroid(region)
+
+        has_location = latitude is not None and longitude is not None
+
+        community_locations.append(
+            {
+                "id": str(community.pk),
+                "type": "community",
+                "name": community.display_name
+                or (barangay.name if barangay else "OBC"),
+                "latitude": latitude,
+                "longitude": longitude,
+                "barangay_id": str(barangay.pk) if barangay else None,
+                "barangay_name": barangay.name if barangay else "",
+                "municipality_id": str(municipality.pk) if municipality else None,
+                "municipality_name": municipality.name if municipality else "",
+                "province_id": str(province.pk) if province else None,
+                "province_name": province.name if province else "",
+                "region_id": str(region.pk) if region else None,
+                "region_name": region.name if region else "",
+                "full_path": getattr(barangay, "full_path", ""),
+                "has_location": has_location,
+            }
+        )
+
+    municipalties = (
+        Municipality.objects.filter(is_active=True)
+        .select_related("province__region")
+        .order_by("province__region__name", "province__name", "name")
+    )
+
+    for municipality in municipalties:
+        province = municipality.province
+        region = province.region if province else None
+
+        latitude, longitude = get_object_centroid(municipality)
+        has_location = latitude is not None and longitude is not None
+
+        full_path_parts = [municipality.name]
+        if province:
+            full_path_parts.append(province.name)
+        community_locations.append(
+            {
+                "id": f"municipality-{municipality.pk}",
+                "type": "municipality",
+                "name": municipality.name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "barangay_id": None,
+                "barangay_name": "",
+                "municipality_id": str(municipality.pk),
+                "municipality_name": municipality.name,
+                "province_id": str(province.pk) if province else None,
+                "province_name": province.name if province else "",
+                "region_id": str(region.pk) if region else None,
+                "region_name": region.name if region else "",
+                "full_path": ", ".join(full_path_parts),
+                "has_location": has_location,
+            }
+        )
+
+    return community_locations
+
+
+@login_required
+def coordination_note_create(request):
+    """Create coordination notes linked to scheduled WorkItem activities."""
+
+    if not request.user.has_perm("coordination.add_coordinationnote"):
+        raise PermissionDenied
+
+    initial = {}
+    date_param = request.GET.get("date")
+    if date_param:
+        parsed_date = parse_date(date_param)
+        if parsed_date:
+            initial["note_date"] = parsed_date
+
+    work_item_id = request.GET.get("work_item")
+    if work_item_id:
+        try:
+            work_item = WorkItem.objects.get(
+                pk=work_item_id, work_type=WorkItem.WORK_TYPE_ACTIVITY
+            )
+            initial["work_item"] = work_item
+            if "note_date" not in initial and work_item.start_date:
+                initial["note_date"] = work_item.start_date
+        except WorkItem.DoesNotExist:
+            pass
+
+    if request.method == "POST":
+        form = CoordinationNoteForm(request.POST)
+        if form.is_valid():
+            note = form.save(commit=False)
+            note.recorded_by = request.user
+            note.save()
+            form.save_m2m()
+
+            messages.success(request, "Coordination notes saved successfully.")
+            return redirect("common:coordination_events")
+        messages.error(request, "Please correct the highlighted errors below.")
+    else:
+        form = CoordinationNoteForm(initial=initial)
+
+    activity_options_url = reverse("common:coordination_note_activity_options")
+    form.fields["work_item"].widget.attrs.setdefault("hx-get", activity_options_url)
+    form.fields["work_item"].widget.attrs.setdefault(
+        "hx-trigger", "change from:#id_note_date"
+    )
+    form.fields["work_item"].widget.attrs.setdefault("hx-target", "#id_work_item")
+    form.fields["work_item"].widget.attrs.setdefault("hx-swap", "innerHTML")
+    form.fields["work_item"].widget.attrs.setdefault(
+        "hx-include", "#id_note_date,#id_work_item"
+    )
+
+    context = {
+        "form": form,
+        "page_title": "Coordination Notes",
+        "page_heading": "Coordination Notes",
+        "return_url": reverse("common:coordination_events"),
+        "location_data": build_location_data(),
+        "community_locations": _build_community_locations(),
+    }
+    return render(request, "coordination/coordination_note_form.html", context)
+
+
+@login_required
+def coordination_note_activity_options(request):
+    """HTMX endpoint returning activity options filtered by selected date."""
+
+    date_param = request.GET.get("note_date")
+    selected_work_item_id = request.GET.get("work_item")
+
+    work_items = WorkItem.objects.filter(
+        work_type=WorkItem.WORK_TYPE_ACTIVITY
+    ).select_related("parent")
+
+    parsed_date = parse_date(date_param) if date_param else None
+    if parsed_date:
+        work_items = work_items.filter(
+            Q(start_date=parsed_date) | Q(due_date=parsed_date)
+        )
+    else:
+        work_items = work_items.none()
+
+    context = {
+        "work_items": work_items.order_by("start_date", "title"),
+        "selected_work_item_id": selected_work_item_id,
+        "note_date": parsed_date,
+    }
+    template_name = "coordination/partials/coordination_note_activity_options.html"
+    return render(request, template_name, context)
+
+
+def _build_moa_management_context(organization):
+    """Return MOA-specific context data for organization views."""
+
+    default_stats = {
+        "total": 0,
+        "in_progress": 0,
+        "completed": 0,
+        "avg_progress": 0,
+    }
+    context = {
+        "moa_ppas": [],
+        "moa_ppas_total_budget": Decimal("0.00"),
+        "moa_work_items": [],
+        "moa_work_items_stats": default_stats.copy(),
+        "moa_budget_stats": {
+            "total_budget": Decimal("0.00"),
+            "total_allocated": Decimal("0.00"),
+            "total_expenditure": Decimal("0.00"),
+            "utilization_rate": 0.0,
+            "total_variance": Decimal("0.00"),
+        },
+    }
+
+    if organization.organization_type != "bmoa":
+        return context
+
+    moa_ppas_queryset = (
+        MonitoringEntry.objects.filter(
+            category="moa_ppa",
+            implementing_moa=organization,
+        )
+        .select_related("implementing_moa")
+        .order_by("-updated_at")
+    )
+    moa_ppas = list(moa_ppas_queryset)
+    context["moa_ppas"] = moa_ppas
+    context["moa_ppas_total_budget"] = sum(
+        (ppa.budget_allocation or Decimal("0.00")) for ppa in moa_ppas
+    )
+
+    moa_item_filter = Q(ppa_category="moa_ppa") | Q(related_ppa__category="moa_ppa")
+    moa_item_filter &= Q(
+        Q(implementing_moa=organization) | Q(related_ppa__implementing_moa=organization)
+    )
+
+    work_items_queryset = (
+        WorkItem.objects.filter(moa_item_filter)
+        .select_related("related_ppa", "created_by")
+        .prefetch_related("assignees", "teams")
+        .order_by("-created_at")[:100]
+    )
+    work_items = list(work_items_queryset)
+    if work_items:
+        context["moa_work_items_stats"] = {
+            "total": len(work_items),
+            "in_progress": sum(
+                1 for work_item in work_items if work_item.status == "in_progress"
+            ),
+            "completed": sum(
+                1 for work_item in work_items if work_item.status == "completed"
+            ),
+            "avg_progress": sum(
+                work_item.progress for work_item in work_items
+            ) / len(work_items),
+        }
+    context["moa_work_items"] = work_items
+
+    if moa_ppas:
+        budget_context = build_moa_budget_tracking(organization, moa_ppas)
+        context["moa_ppas"] = budget_context["moa_ppas"]
+        context["moa_budget_stats"] = budget_context["moa_budget_stats"]
+        context["moa_ppas_total_budget"] = context["moa_budget_stats"]["total_budget"]
+
+    return context
+
+
 def _organization_form(request, organization_id=None):
     """Shared create/update handler for organization form flow."""
 
@@ -106,10 +383,10 @@ def _organization_form(request, organization_id=None):
 
     if is_edit:
         try:
-            organization = get_object_or_404(Organization, pk=organization_id)
+            organization = get_organization_or_404(organization_id)
             if not request.user.has_perm("coordination.change_organization"):
                 raise PermissionDenied
-        except (Organization.DoesNotExist, ValueError):
+        except (Http404, ValueError):
             # Invalid or non-existent organization ID - treat as create
             is_edit = False
             organization = None
@@ -190,13 +467,13 @@ def organization_edit(request, organization_id):
 def organization_detail(request, organization_id):
     """Display organization details in the frontend directory."""
 
-    organization = get_object_or_404(
-        Organization.objects.select_related("created_by").prefetch_related(
+    organization = get_organization_or_404(
+        organization_id,
+        queryset=Organization.objects.select_related("created_by").prefetch_related(
             "contacts",
             "led_partnerships__lead_organization",
             "partnerships__lead_organization",
         ),
-        pk=organization_id,
     )
 
     led_partnerships = list(organization.led_partnerships.all())
@@ -209,17 +486,12 @@ def organization_detail(request, organization_id):
     contacts = list(organization.contacts.all())
     total_partnerships = len(led_partnerships) + len(member_partnerships)
 
-    moa_ppas_queryset = (
-        MonitoringEntry.objects.filter(
-            category="moa_ppa", implementing_moa=organization
-        )
-        .select_related("implementing_moa")
-        .order_by("-updated_at")
-    )
-    moa_ppas = list(moa_ppas_queryset)
-    moa_ppas_total_budget = sum(
-        (ppa.budget_allocation or Decimal("0")) for ppa in moa_ppas
-    )
+    moa_context = _build_moa_management_context(organization)
+    moa_ppas = moa_context["moa_ppas"]
+    moa_ppas_total_budget = moa_context["moa_ppas_total_budget"]
+    moa_work_items = moa_context["moa_work_items"]
+    moa_work_items_stats = moa_context["moa_work_items_stats"]
+    moa_budget_stats = moa_context["moa_budget_stats"]
 
     auto_special_text = ""
     display_notes = organization.notes
@@ -241,56 +513,6 @@ def organization_detail(request, organization_id):
         })
 
     # Collect work items and budget data for MOA tabs
-    moa_work_items = []
-    moa_work_items_stats = {
-        "total": 0,
-        "in_progress": 0,
-        "completed": 0,
-        "avg_progress": 0,
-    }
-    moa_budget_stats = {
-        "total_budget": Decimal("0.00"),
-        "total_allocated": Decimal("0.00"),
-        "total_expenditure": Decimal("0.00"),
-        "utilization_rate": 0.0,
-        "total_variance": Decimal("0.00"),
-    }
-
-    if organization.organization_type == "bmoa" and moa_ppas:
-        # Get all work items for this MOA's PPAs
-        moa_work_items = WorkItem.objects.filter(
-            ppa_category="moa_ppa",
-            implementing_moa=organization,
-        ).select_related(
-            "related_ppa",
-            "created_by",
-        ).prefetch_related(
-            "assignees",
-            "teams",
-        ).order_by("-created_at")[
-            :100
-        ]  # Limit to 100 most recent
-
-        # Calculate work items stats
-        work_items_list = list(moa_work_items)
-        moa_work_items_stats = {
-            "total": len(work_items_list),
-            "in_progress": sum(
-                1 for wi in work_items_list if wi.status == "in_progress"
-            ),
-            "completed": sum(1 for wi in work_items_list if wi.status == "completed"),
-            "avg_progress": (
-                sum(wi.progress for wi in work_items_list) / len(work_items_list)
-                if work_items_list
-                else 0
-            ),
-        }
-
-        budget_context = build_moa_budget_tracking(organization, moa_ppas)
-        moa_ppas = budget_context["moa_ppas"]
-        moa_budget_stats = budget_context["moa_budget_stats"]
-        moa_ppas_total_budget = moa_budget_stats["total_budget"]
-
     mandate_paragraphs = _split_paragraphs(organization.mandate)
     powers_and_functions_items = _split_list_items(
         organization.powers_and_functions
@@ -319,12 +541,30 @@ def organization_detail(request, organization_id):
     return render(request, "coordination/organization_detail.html", context)
 
 
+@login_required
+def organization_work_items_partial(request, organization_id):
+    """Return refreshed MOA work items tab content for HTMX updates."""
+
+    organization = get_organization_or_404(organization_id)
+    moa_context = _build_moa_management_context(organization)
+
+    context = {
+        "organization": organization,
+        **moa_context,
+    }
+    return render(
+        request,
+        "coordination/partials/moa_work_items_tab.html",
+        context,
+    )
+
+
 @moa_can_edit_organization
 @login_required
 def organization_delete(request, organization_id):
     """Handle deletion of an organization from the frontend UI."""
 
-    organization = get_object_or_404(Organization, pk=organization_id)
+    organization = get_organization_or_404(organization_id)
 
     if not request.user.has_perm("coordination.delete_organization"):
         raise PermissionDenied
@@ -432,6 +672,8 @@ def partnership_create(request):
         "page_heading": "New Partnership Agreement",
         "submit_label": "Create partnership",
         "is_edit": False,
+        "location_data": build_location_data(include_barangays=True),
+        "community_locations": _build_community_locations(),
     }
     return render(request, "coordination/partnership_form.html", context)
 
@@ -545,6 +787,8 @@ def partnership_update(request, partnership_id):
         "page_heading": f"Edit {partnership.title}",
         "submit_label": "Save changes",
         "is_edit": True,
+        "location_data": build_location_data(include_barangays=True),
+        "community_locations": _build_community_locations(),
     }
     return render(request, "coordination/partnership_form.html", context)
 
@@ -1344,9 +1588,8 @@ def moa_calendar_feed(request, organization_id):
     from django.http import JsonResponse
     from datetime import datetime
 
-    try:
-        organization = Organization.objects.get(id=organization_id)
-    except Organization.DoesNotExist:
+    organization = get_organization(organization_id)
+    if organization is None:
         return JsonResponse({'error': 'Organization not found'}, status=404)
 
     # Get all work items for this MOA's PPAs

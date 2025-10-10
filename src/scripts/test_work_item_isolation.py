@@ -17,6 +17,7 @@ Usage:
 import os
 import sys
 import django
+import pytest
 
 # Setup Django environment
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -27,13 +28,15 @@ from common.work_item_model import WorkItem
 from monitoring.models import MonitoringEntry
 from coordination.models import Organization
 from django.contrib.auth import get_user_model
+from django.db import models
 
 User = get_user_model()
 
 
-def test_work_item_isolation():
-    """Test work item isolation between general OOBC and PPA-specific items."""
+pytestmark = pytest.mark.django_db
 
+def run_work_item_isolation() -> bool:
+    """Run the isolation analysis and return True when everything looks correct."""
     print("=" * 80)
     print("WORK ITEM ISOLATION TEST")
     print("=" * 80)
@@ -199,14 +202,17 @@ def test_work_item_isolation():
     list_fixed = after_fix_ppa_count == 0
     calendar_fixed = after_calendar_ppa_count == 0
 
-    print(f"Overall Status: {'✅ ALL TESTS PASSED' if (list_fixed and calendar_fixed) else '❌ TESTS FAILED'}")
+    success = list_fixed and calendar_fixed
+    print(f"Overall Status: {'✅ ALL TESTS PASSED' if success else '❌ TESTS FAILED'}")
     print()
 
-    # Return status code
-    return 0 if (list_fixed and calendar_fixed) else 1
+    return success
+
+
+def test_work_item_isolation():
+    """Test work item isolation between general OOBC and PPA-specific items."""
+    assert run_work_item_isolation(), "Work item isolation checks failed"
 
 
 if __name__ == '__main__':
-    from django.db import models
-    exit_code = test_work_item_isolation()
-    sys.exit(exit_code)
+    sys.exit(0 if run_work_item_isolation() else 1)

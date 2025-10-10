@@ -339,7 +339,7 @@ PROJECTS_COUNT_TEMPLATES = [
     QueryTemplate(
         id='count_overdue_projects',
         category='projects',
-        pattern=r'\b(how many|count|total)\s+(overdue|delayed|late)\s+(ppas?|projects?|programs?)\b',
+        pattern=r'\b(how many|count|total|number of)\s+(overdue|delayed|late)\s+(ppas?|projects?|programs?)\b',
         query_template='MonitoringEntry.objects.filter(end_date__lt=timezone.now().date(), status="ongoing").count()',
         required_entities=[],
         optional_entities=[],
@@ -357,7 +357,7 @@ PROJECTS_COUNT_TEMPLATES = [
     QueryTemplate(
         id='count_projects_by_year',
         category='projects',
-        pattern=r'\b(how many|count|total)\s+(ppas?|projects?|programs?)\s+(in|started in|from)\s+(?P<year>\d{4})',
+        pattern=r'\b(?:(how many|count|total|number of)\s+)?(ppas?|projects?|programs?)\s+(in|started in|from)\s+(?P<year>\d{4})',
         query_template='MonitoringEntry.objects.filter(start_date__year={year}).count()',
         required_entities=['year'],
         optional_entities=[],
@@ -375,7 +375,7 @@ PROJECTS_COUNT_TEMPLATES = [
     QueryTemplate(
         id='count_projects_ending_soon',
         category='projects',
-        pattern=r'\b(how many|count|total)\s+(ppas?|projects?|programs?)\s+ending\s+soon',
+        pattern=r'\b(?:(how many|count|total|number of)\s+)?(ppas?|projects?|programs?)\s+ending\s+(soon|this month|next month|within\s+\d+\s+days)\b',
         query_template='MonitoringEntry.objects.filter(end_date__gte=timezone.now().date(), end_date__lte=timezone.now().date() + timedelta(days=30), status="ongoing").count()',
         required_entities=[],
         optional_entities=[],
@@ -401,7 +401,7 @@ PROJECTS_BUDGET_TEMPLATES = [
     QueryTemplate(
         id='total_budget_allocation',
         category='projects',
-        pattern=r'\b(total|overall|combined)\s+(budget|allocation)\s+(for\s+)?(ppas?|projects?|programs?)?',
+        pattern=r'\b(total|overall|combined)\s+(?:ppas?|projects?|programs?)?\s*(budget|allocation)(?:\s+for\s+(ppas?|projects?|programs?))?',
         query_template='MonitoringEntry.objects.aggregate(total=Sum("budget_allocation"))["total"]',
         required_entities=[],
         optional_entities=[],
@@ -419,7 +419,7 @@ PROJECTS_BUDGET_TEMPLATES = [
     QueryTemplate(
         id='budget_by_sector',
         category='projects',
-        pattern=r'\bbudget\s+(by|per|for each)\s+sector',
+        pattern=r'(?:\bbudget\s+(?:by|per|for each)\s+sectors?\b|\bsectors?\s+budget\s+(?:breakdown|analysis)\b)',
         query_template='MonitoringEntry.objects.values("sector").annotate(total_budget=Sum("budget_allocation")).order_by("-total_budget")',
         required_entities=[],
         optional_entities=[],
@@ -437,7 +437,7 @@ PROJECTS_BUDGET_TEMPLATES = [
     QueryTemplate(
         id='budget_by_ministry',
         category='projects',
-        pattern=r'\bbudget\s+(by|per|for each)\s+(ministry|agency|moa)',
+        pattern=r'(?:\bbudget\s+(?:by|per|for each)\s+(?:ministries|ministry|agencies|agency|moas?|moa)\b|\b(?:ministries|ministry|agencies|agency|moas?|moa)\s+budget\s+(?:breakdown|analysis)\b)',
         query_template='MonitoringEntry.objects.values("implementing_agency").annotate(total_budget=Sum("budget_allocation")).order_by("-total_budget")',
         required_entities=[],
         optional_entities=[],
@@ -455,7 +455,7 @@ PROJECTS_BUDGET_TEMPLATES = [
     QueryTemplate(
         id='budget_utilization_rate',
         category='projects',
-        pattern=r'\bbudget\s+(utilization|usage|spending)\s+(rate|percentage)?',
+        pattern=r'\bbudget\s+(utilization|usage|spending)(?:\s+(rate|percentage))?\b',
         query_template='MonitoringEntry.objects.aggregate(total_allocated=Sum("budget_allocation"), total_utilized=Sum("budget_utilized"), total_balance=Sum("budget_balance"))',
         required_entities=[],
         optional_entities=[],
@@ -473,7 +473,7 @@ PROJECTS_BUDGET_TEMPLATES = [
     QueryTemplate(
         id='underutilized_budget_projects',
         category='projects',
-        pattern=r'\b(underutilized|low utilization|unused)\s+budget\s+(ppas?|projects?|programs?)',
+        pattern=r'(?:\b(underutilized|low utilization|unused)\s+(?:budget\s+)?(ppas?|projects?|programs?)\b|\bbudget\s+underutilization\b|\b(ppas?|projects?|programs?)\s+with\s+unused\s+budget\b)',
         query_template='MonitoringEntry.objects.filter(budget_utilized__lt=F("budget_allocation") * 0.5, status="ongoing").order_by("-budget_balance")[:20]',
         required_entities=[],
         optional_entities=[],
@@ -509,7 +509,7 @@ PROJECTS_BUDGET_TEMPLATES = [
     QueryTemplate(
         id='budget_range_projects',
         category='projects',
-        pattern=r'\b(ppas?|projects?|programs?)\s+with\s+budget\s+(from|between)\s+(?P<min_budget>[\d,]+)\s+(to|and)\s+(?P<max_budget>[\d,]+)',
+        pattern=r'\b(ppas?|projects?|programs?)\s+with\s+budget\s+(from|between)\s+(?P<min_budget>[\d,]+(?:\.\d+)?[mk]?)\s+(to|and)\s+(?P<max_budget>[\d,]+(?:\.\d+)?[mk]?)',
         query_template='MonitoringEntry.objects.filter(budget_allocation__gte={min_budget}, budget_allocation__lte={max_budget}).count()',
         required_entities=['min_budget', 'max_budget'],
         optional_entities=[],
@@ -544,7 +544,7 @@ PROJECTS_BUDGET_TEMPLATES = [
     QueryTemplate(
         id='budget_balance_analysis',
         category='projects',
-        pattern=r'\bbudget\s+(balance|remaining|left)',
+        pattern=r'\bbudget\s+(balance|remaining|left|is\s+left|are\s+left)\b',
         query_template='MonitoringEntry.objects.aggregate(total_balance=Sum("budget_balance"), total_allocated=Sum("budget_allocation"))',
         required_entities=[],
         optional_entities=[],
@@ -562,7 +562,7 @@ PROJECTS_BUDGET_TEMPLATES = [
     QueryTemplate(
         id='budget_overrun_projects',
         category='projects',
-        pattern=r'\b(budget\s+overrun|over budget|exceeded budget)\s+(ppas?|projects?|programs?)',
+        pattern=r'(?:\bbudget\s+overruns?\b|\b(budget\s+overrun|over budget|exceeded budget)\s+(ppas?|projects?|programs?)|\b(ppas?|projects?|programs?)\s+(that\s+)?exceeded\s+budget\b)',
         query_template='MonitoringEntry.objects.filter(budget_utilized__gt=F("budget_allocation")).order_by("-budget_utilized")[:20]',
         required_entities=[],
         optional_entities=[],
@@ -588,7 +588,7 @@ PROJECTS_IMPACT_TEMPLATES = [
     QueryTemplate(
         id='total_beneficiaries',
         category='projects',
-        pattern=r'\b(total|overall|combined)\s+(beneficiaries|people served|target population)',
+        pattern=r'(?:\b(total|overall|combined)\s+(beneficiaries|people served|target population)\b|\bhow many\s+beneficiaries\b)',
         query_template='MonitoringEntry.objects.aggregate(total=Sum("target_beneficiaries"))["total"]',
         required_entities=[],
         optional_entities=[],
@@ -606,7 +606,7 @@ PROJECTS_IMPACT_TEMPLATES = [
     QueryTemplate(
         id='beneficiaries_by_sector',
         category='projects',
-        pattern=r'\bbeneficiaries\s+(by|per|in)\s+sector',
+        pattern=r'(?:\bbeneficiaries\s+(?:by|per|in)\s+(?:each\s+)?sectors?\b|\bsectors?\s+beneficiary\s+(?:breakdown|analysis)\b)',
         query_template='MonitoringEntry.objects.values("sector").annotate(total_beneficiaries=Sum("target_beneficiaries")).order_by("-total_beneficiaries")',
         required_entities=[],
         optional_entities=[],
@@ -624,7 +624,7 @@ PROJECTS_IMPACT_TEMPLATES = [
     QueryTemplate(
         id='beneficiaries_by_location',
         category='projects',
-        pattern=r'\bbeneficiaries\s+(in|at|from)\s+(?P<location>[\w\s]+?)(\?|$)',
+        pattern=r'\b(beneficiaries|people served)\s+(in|at|from)\s+(?P<location>[\w\s]+?)(\?|$)',
         query_template='MonitoringEntry.objects.filter(Q(location__icontains="{location}")).aggregate(total=Sum("target_beneficiaries"))["total"]',
         required_entities=['location'],
         optional_entities=[],
@@ -660,7 +660,7 @@ PROJECTS_IMPACT_TEMPLATES = [
     QueryTemplate(
         id='highest_impact_projects',
         category='projects',
-        pattern=r'\b(highest|most|top)\s+impact\s+(ppas?|projects?|programs?)',
+        pattern=r'(?:\b(highest|most|top)\s+impact\s+(ppas?|projects?|programs?)\b|\b(ppas?|projects?|programs?)\s+(with\s+)?(highest|most|top)\s+impact\b)',
         query_template='MonitoringEntry.objects.filter(actual_beneficiaries__isnull=False).order_by("-actual_beneficiaries")[:10]',
         required_entities=[],
         optional_entities=[],
@@ -678,7 +678,7 @@ PROJECTS_IMPACT_TEMPLATES = [
     QueryTemplate(
         id='beneficiary_reach_rate',
         category='projects',
-        pattern=r'\bbeneficiary\s+(reach|achievement|attainment)\s+(rate|percentage)',
+        pattern=r'(?:\bbeneficiary\s+(reach|achievement|attainment)\s+(rate|percentage)\b|\bhow many\s+beneficiaries\s+reached\b|\bbeneficiaries\s+reached\b)',
         query_template='MonitoringEntry.objects.filter(target_beneficiaries__gt=0, actual_beneficiaries__isnull=False).annotate(reach_rate=ExpressionWrapper(F("actual_beneficiaries") / F("target_beneficiaries") * 100, output_field=FloatField())).values("id", "title", "target_beneficiaries", "actual_beneficiaries", "reach_rate")[:20]',
         required_entities=[],
         optional_entities=[],
@@ -714,7 +714,7 @@ PROJECTS_IMPACT_TEMPLATES = [
     QueryTemplate(
         id='sector_impact_comparison',
         category='projects',
-        pattern=r'\b(compare|comparison)\s+(impact|outcomes|results)\s+(by|across)\s+sectors?',
+        pattern=r'(?:\b(compare|comparison)(?:\s+of)?\s+(impact|outcomes|results)\s+(by|across)\s+sectors?\b|\bsectors?\s+(impact|outcomes|results)\s+comparison\b)',
         query_template='MonitoringEntry.objects.values("sector").annotate(total_beneficiaries=Sum("actual_beneficiaries"), total_projects=Count("id"), avg_completion=Avg("completion_percentage")).order_by("-total_beneficiaries")',
         required_entities=[],
         optional_entities=[],
@@ -740,7 +740,7 @@ PROJECTS_TIMELINE_TEMPLATES = [
     QueryTemplate(
         id='project_completion_rates',
         category='projects',
-        pattern=r'\b(project|ppa|program)\s+completion\s+(rates?|percentage|status)',
+        pattern=r'\b((project|ppa|program|overall|general)\s+)?completion\s+(rates?|percentages?|status)\b',
         query_template='MonitoringEntry.objects.aggregate(avg_completion=Avg("completion_percentage"), total=Count("id"), completed=Count("id", filter=Q(status="completed")))',
         required_entities=[],
         optional_entities=[],
@@ -758,7 +758,7 @@ PROJECTS_TIMELINE_TEMPLATES = [
     QueryTemplate(
         id='projects_ending_this_month',
         category='projects',
-        pattern=r'\b(ppas?|projects?|programs?)\s+ending\s+(this month|soon|this quarter)',
+        pattern=r'\b(ppas?|projects?|programs?)\s+ending\s+(this month|soon|this quarter|within\s+\d+\s+days)',
         query_template='MonitoringEntry.objects.filter(end_date__gte=timezone.now().date(), end_date__lte=timezone.now().date() + timedelta(days=30), status="ongoing").order_by("end_date")[:20]',
         required_entities=[],
         optional_entities=[],
@@ -812,7 +812,7 @@ PROJECTS_TIMELINE_TEMPLATES = [
     QueryTemplate(
         id='delayed_projects_analysis',
         category='projects',
-        pattern=r'\b(delayed|overdue|late|behind schedule)\s+(ppas?|projects?|programs?)\s+(analysis|report)',
+        pattern=r'(?:\b(delayed|overdue|late|behind schedule)\s+(ppas?|projects?|programs?)\b|\b(ppas?|projects?|programs?)\s+(?:that\s+are\s+)?(delayed|overdue|late|behind schedule)\b)(?:\s+(analysis|report))?',
         query_template='MonitoringEntry.objects.filter(end_date__lt=timezone.now().date(), status="ongoing").annotate(delay_days=ExpressionWrapper(timezone.now().date() - F("end_date"), output_field=DurationField())).order_by("-delay_days")[:20]',
         required_entities=[],
         optional_entities=[],
@@ -830,7 +830,7 @@ PROJECTS_TIMELINE_TEMPLATES = [
     QueryTemplate(
         id='completion_by_quarter',
         category='projects',
-        pattern=r'\b(ppas?|projects?|programs?)\s+completion\s+by\s+quarter',
+        pattern=r'(?:\b(ppas?|projects?|programs?)\s+completion\s+by\s+quarter\b|\bquarterly\s+completion\s+(report|summary|analysis)\b)',
         query_template='MonitoringEntry.objects.filter(status="completed").annotate(quarter=ExtractQuarter("end_date"), year=ExtractYear("end_date")).values("year", "quarter").annotate(count=Count("id")).order_by("-year", "-quarter")',
         required_entities=[],
         optional_entities=[],
@@ -848,7 +848,7 @@ PROJECTS_TIMELINE_TEMPLATES = [
     QueryTemplate(
         id='project_duration_analysis',
         category='projects',
-        pattern=r'\b(project|ppa|program)\s+duration\s+(analysis|average|statistics)',
+        pattern=r'(?:\b(project|ppa|program)\s+duration\s+(analysis|average|statistics)\b|\b(average|avg)\s+(project|ppa|program)\s+duration\b)',
         query_template='MonitoringEntry.objects.filter(start_date__isnull=False, end_date__isnull=False).annotate(duration=ExpressionWrapper(F("end_date") - F("start_date"), output_field=DurationField())).aggregate(avg_duration=Avg("duration"), min_duration=Min("duration"), max_duration=Max("duration"))',
         required_entities=[],
         optional_entities=[],

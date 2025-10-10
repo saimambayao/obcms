@@ -315,6 +315,18 @@ class TemplateRegistry:
         """
         return self._templates.get(template_id)
 
+    def get_template_by_id(self, template_id: str) -> Optional[QueryTemplate]:
+        """
+        Backwards-compatible alias for get_template.
+
+        Args:
+            template_id: Unique template identifier
+
+        Returns:
+            QueryTemplate if found, None otherwise
+        """
+        return self.get_template(template_id)
+
     def get_all_templates(self) -> List[QueryTemplate]:
         """
         Get all registered templates.

@@ -8,6 +8,7 @@ from datetime import datetime, time, timedelta
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from django.core.cache import cache
+from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -23,6 +24,7 @@ from communities.models import CommunityEvent, OBCCommunity
 from coordination.models import (
     Communication,
     # Event removed - migrated to WorkItem
+    Organization,
     Partnership,
     PartnershipMilestone,
     StakeholderEngagement,
@@ -95,6 +97,29 @@ def _increment(
         record.completed += 1
 
 
+def _oobc_workitem_scope() -> Q:
+    """
+    Return a Q clause limiting WorkItem queries to OOBC-owned items.
+
+    Excludes MOA work items implemented by external organizations while
+    preserving OOBC-led MOAs so they continue to surface in internal tools.
+    """
+    oobc_org = (
+        Organization.objects.filter(
+            name__iexact="Office for Other Bangsamoro Communities (OOBC)"
+        ).first()
+        or Organization.objects.filter(acronym__iexact="OOBC").first()
+    )
+
+    moa_filter = Q(ppa_category="moa_ppa") | Q(related_ppa__category="moa_ppa")
+    if oobc_org:
+        oobc_owned_moa = Q(implementing_moa=oobc_org) | Q(
+            related_ppa__implementing_moa=oobc_org
+        )
+        return ~(moa_filter & ~oobc_owned_moa)
+    return ~moa_filter
+
+
 def build_calendar_payload(
     *,
     filter_modules: Optional[Sequence[str]] = None,
@@ -114,6 +139,7 @@ def build_calendar_payload(
 
     now = timezone.now()
     due_soon_cutoff = now + timedelta(days=2)
+    oobc_scope = _oobc_workitem_scope()
 
     normalized_modules = ("__all__",)
     if allowed_modules_set is not None:
@@ -198,9 +224,13 @@ def build_calendar_payload(
     # TODO: Refactor to use WorkItem with work_type='activity'
     # See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
     if include_module("coordination"):
-        events = WorkItem.objects.filter(
-            work_type__in=['activity', 'sub_activity']
-        ).select_related("created_by")
+        events = (
+            WorkItem.objects.filter(
+                oobc_scope,
+                work_type__in=['activity', 'sub_activity'],
+            )
+            .select_related("created_by")
+        )
 
         for event in events:
             start_dt = _combine(event.start_date, event.start_time)
@@ -657,6 +687,8 @@ def build_calendar_payload(
                 )
 
                 due = aware_start
+                if start_dt and start_dt.time() == time.min:
+                    due = _ensure_aware(_combine(date_value, time.max))
                 if category == "partnership_signing" and partnership.status in {
                     "pending_approval",
                     "pending_signature",
@@ -915,11 +947,15 @@ def build_calendar_payload(
     # TODO: Refactor to use WorkItem instead of StaffTask
     # See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
     if include_module("staff"):
-        tasks = WorkItem.objects.filter(
-            work_type__in=['task', 'subtask']
-        ).prefetch_related(
-            "assignees",
-            "parent",
+        tasks = (
+            WorkItem.objects.filter(
+                oobc_scope,
+                work_type__in=['task', 'subtask'],
+            )
+            .prefetch_related(
+                "assignees",
+                "parent",
+            )
         )
 
         for task in tasks:

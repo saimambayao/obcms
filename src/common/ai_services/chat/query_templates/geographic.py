@@ -484,7 +484,7 @@ MUNICIPALITY_TEMPLATES = [
             'Count municipalities',
             'Number of municipalities'
         ],
-        priority=15,  # CRITICAL: Higher than all community templates
+        priority=8,
         description='Count municipalities only (excluding cities)',
         result_type='count',
         tags=['count', 'municipality', 'geographic']

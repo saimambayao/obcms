@@ -699,8 +699,8 @@
     /**
      * Refresh work items tree via HTMX
      */
-    function refreshWorkItemsTree() {
-        const ppaId = getCurrentPPAId();
+    function refreshWorkItemsTree(entryId) {
+        const ppaId = entryId || getCurrentPPAId();
         if (ppaId) {
             htmx.ajax('GET', `/monitoring/moa-ppas/${ppaId}/work-items-tab/`, {
                 target: '#work-items-tab-content',

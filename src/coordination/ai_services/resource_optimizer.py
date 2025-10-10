@@ -14,6 +14,7 @@ from django.utils import timezone
 
 from ai_assistant.services import GeminiService
 from coordination.models import Partnership, Organization
+from coordination.utils.organizations import get_organization
 from communities.models import OBCCommunity
 
 
@@ -340,9 +341,8 @@ class ResourceOptimizer:
                 'recommendations': [...]
             }
         """
-        try:
-            org = Organization.objects.get(id=organization_id)
-        except Organization.DoesNotExist:
+        org = get_organization(organization_id)
+        if org is None:
             return {'error': 'Organization not found'}
 
         # Get active partnerships

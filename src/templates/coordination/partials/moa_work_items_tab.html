@@ -72,12 +72,31 @@
 
     <!-- Work Items List -->
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                <i class="fas fa-list text-blue-600 mr-2"></i>
-                All Work Items
-            </h3>
-            <p class="text-sm text-gray-500 mt-1">Sorted by PPA and work item hierarchy</p>
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-list text-blue-600 mr-2"></i>
+                    All Work Items
+                </h3>
+                <p class="text-sm text-gray-500 mt-1">Sorted by PPA and work item hierarchy</p>
+            </div>
+            {% if moa_ppas %}
+            <button type="button"
+                    onclick="openSidebarAndLoad(this)"
+                    data-hx-get="{% url 'common:work_item_sidebar_create' %}?implementing_moa={{ organization.id }}"
+                    data-hx-target="#sidebar-content"
+                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-blue-600 to-emerald-600 text-white shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-emerald-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
+                <i class="fas fa-plus-circle"></i>
+                <span>Create Work Item</span>
+            </button>
+            {% else %}
+            <button type="button"
+                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-gray-200 text-gray-500 cursor-not-allowed"
+                    disabled>
+                <i class="fas fa-plus-circle"></i>
+                <span>Create Work Item</span>
+            </button>
+            {% endif %}
         </div>
 
         <div class="overflow-x-auto">
@@ -109,7 +128,8 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for work_item in moa_work_items %}
-                    <tr class="hover:bg-gray-50 transition-colors">
+                    <tr class="hover:bg-gray-50 transition-colors"
+                        data-work-item-id="{{ work_item.pk }}">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm font-medium text-gray-900">{{ work_item.title }}</div>
                             {% if work_item.description %}
@@ -149,9 +169,33 @@
                             {{ work_item.due_date|date:"M j, Y"|default:"—" }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a href="{% url 'common:work_item_detail' pk=work_item.id %}" class="text-blue-600 hover:text-blue-900">
-                                <i class="fas fa-eye mr-1"></i> View
-                            </a>
+                            <div class="flex justify-end gap-1.5">
+                                <button type="button"
+                                        data-hx-get="{% url 'common:work_item_sidebar_detail' pk=work_item.pk %}"
+                                        data-hx-target="#sidebar-content"
+                                        onclick="openSidebarAndLoad(this)"
+                                        class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1.5 rounded transition-colors duration-150"
+                                        title="View Details">
+                                    <i class="fas fa-eye text-sm"></i>
+                                </button>
+                                <button type="button"
+                                        data-hx-get="{% url 'common:work_item_sidebar_edit' pk=work_item.pk %}"
+                                        data-hx-target="#sidebar-content"
+                                        onclick="openSidebarAndLoad(this)"
+                                        class="text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 p-1.5 rounded transition-colors duration-150"
+                                        title="Edit">
+                                    <i class="fas fa-edit text-sm"></i>
+                                </button>
+                                <button type="button"
+                                        hx-get="{% url 'common:work_item_delete_modal' pk=work_item.pk %}"
+                                        hx-target="#delete-modal-container"
+                                        hx-swap="innerHTML"
+                                        class="text-red-600 hover:text-red-800 hover:bg-red-50 p-1.5 rounded transition-colors duration-150"
+                                        title="Delete"
+                                        aria-label="Delete work item">
+                                    <i class="fas fa-trash-alt text-sm"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
@@ -167,3 +211,25 @@
         </div>
     </div>
 </div>
+
+{# HTMX modal container #}
+<div id="delete-modal-container" aria-live="polite" role="region" aria-label="Delete confirmation modal"></div>
+
+{# Shared work item sidebar #}
+<aside id="work-item-sidebar"
+       class="fixed top-0 right-0 h-full w-96 bg-white border-l border-gray-200 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+    <div class="h-full flex flex-col">
+        <div id="sidebar-content" class="flex-1 overflow-y-auto p-6">
+            <div class="text-center text-gray-500 py-8">
+                <i class="fas fa-tasks text-4xl mb-3"></i>
+                <p>Click an action button to view details</p>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<div id="sidebar-backdrop"
+     class="fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none transition-opacity duration-300"
+     onclick="closeSidebar()"></div>
+
+{% include 'work_items/partials/sidebar_init_scripts.html' %}

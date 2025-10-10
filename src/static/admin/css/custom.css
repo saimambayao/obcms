@@ -1,0 +1,108 @@
+/* OBCMS admin theming --------------------------------------------------- */
+
+:root {
+    --oobc-emerald: #079669;
+    --oobc-emerald-soft: #e6f5f1;
+    --oobc-indigo: #2d3a8c;
+    --oobc-surface: #ffffff;
+    --oobc-border: #e5e7eb;
+    --oobc-muted: #6b7280;
+}
+
+html {
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
+body.dashboard #content {
+    background: linear-gradient(180deg, #f3faf7 0%, #ffffff 24%);
+}
+
+body.dashboard .module {
+    border: 1px solid var(--oobc-border);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(9, 45, 66, 0.08);
+}
+
+body.dashboard .module h2 {
+    font-weight: 600;
+    color: var(--oobc-indigo);
+    letter-spacing: 0.02em;
+}
+
+a {
+    color: var(--oobc-emerald);
+}
+
+a:hover {
+    color: #05654a;
+}
+
+.dashboard .quick-action-card {
+    border-radius: 18px;
+    border: 1px solid rgba(7, 150, 105, 0.08);
+    background: linear-gradient(180deg, var(--oobc-emerald-soft) 0%, #ffffff 100%);
+    box-shadow: 0 12px 25px rgba(7, 150, 105, 0.08);
+}
+
+.dashboard .quick-action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 32px rgba(7, 150, 105, 0.12);
+    transition: all 180ms ease;
+}
+
+.dashboard .app-list .app-label {
+    font-weight: 600;
+    color: var(--oobc-indigo);
+}
+
+.dashboard .app-list .model {
+    border-radius: 14px;
+    border: 1px solid rgba(45, 58, 140, 0.08);
+    background-color: var(--oobc-surface);
+}
+
+.breadcrumbs {
+    background: var(--oobc-surface);
+    border-bottom: 1px solid var(--oobc-border);
+}
+
+.breadcrumbs a {
+    color: var(--oobc-muted);
+}
+
+.breadcrumbs a:hover {
+    color: var(--oobc-emerald);
+}
+
+.module table {
+    border-radius: 12px;
+    border: 1px solid rgba(45, 58, 140, 0.05);
+    overflow: hidden;
+}
+
+.module table thead {
+    background-color: rgba(7, 150, 105, 0.08);
+}
+
+.module table tbody tr:hover {
+    background-color: rgba(7, 150, 105, 0.06);
+}
+
+.button,
+.submit-row input[type="submit"],
+.content > .module .addlink {
+    background: linear-gradient(135deg, #079669 0%, #0bbf84 100%);
+    border: none;
+    border-radius: 999px;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 12px 24px rgba(7, 150, 105, 0.28);
+}
+
+.button:hover,
+.submit-row input[type="submit"]:hover,
+.content > .module .addlink:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 32px rgba(7, 150, 105, 0.32);
+    transition: all 160ms ease;
+}

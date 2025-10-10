@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load static text_extras %}
+{% load static %}
 
-{% block title %}Coordination Management - Coordination{% endblock %}
+{% block title %}Coordination Management{% endblock %}
 
 {% block breadcrumb %}
 <li>
@@ -16,250 +16,205 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <!-- Header -->
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Coordination Management</h1>
-        <p class="mt-2 text-lg text-gray-600">Manage multi-stakeholder coordination activities and meetings</p>
-    </div>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+    <header class="rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-500 text-white shadow-2xl p-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div class="flex items-center gap-4">
+                <span class="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-3xl"><i class="fas fa-people-arrows"></i></span>
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tight">Coordination Management</h1>
+                    <p class="text-white/80 mt-1">
+                        Orchestrate multi-stakeholder coordination activities, document outcomes, and keep the OOBC calendar in sync.
+                    </p>
+                </div>
+            </div>
+            <div class="rounded-xl bg-white/10 px-5 py-3 text-sm font-medium shadow-lg backdrop-blur">
+                <span class="flex items-center gap-2"><i class="fas fa-lightbulb text-amber-300"></i>Use WorkItems for structured coordination workflows.</span>
+            </div>
+        </div>
+    </header>
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-gradient-to-r from-blue-400 to-blue-600 rounded-lg shadow-lg p-6 text-white transform hover:scale-105 transition-transform duration-200">
-            <div class="flex items-center">
-                <i class="fas fa-calendar-alt text-2xl mr-4"></i>
-                <div>
-                    <p class="text-blue-100">Total Coordination Activities</p>
-                    <p class="text-3xl font-bold">{{ total_coordination_count }}</p>
+    <!-- Stat Cards -->
+    <section>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for card in stat_cards %}
+            <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+                 style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+                <div class="relative p-6 flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <p class="text-sm font-semibold uppercase tracking-wide text-gray-600">{{ card.label }}</p>
+                            <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ card.value }}</p>
+                        </div>
+                        <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                             style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                            <i class="{{ card.icon }} text-2xl {{ card.icon_color }}"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow"></div>
                 </div>
             </div>
+            {% endfor %}
         </div>
-        
-        <div class="bg-gradient-to-r from-green-400 to-green-600 rounded-lg shadow-lg p-6 text-white transform hover:scale-105 transition-transform duration-200">
-            <div class="flex items-center">
-                <i class="fas fa-check-circle text-2xl mr-4"></i>
-                <div>
-                    <p class="text-green-100">Completed</p>
-                    <p class="text-3xl font-bold">{{ completed_coordination_count }}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-lg shadow-lg p-6 text-white transform hover:scale-105 transition-transform duration-200">
-            <div class="flex items-center">
-                <i class="fas fa-clock text-2xl mr-4"></i>
-                <div>
-                    <p class="text-yellow-100">Upcoming</p>
-                    <p class="text-3xl font-bold">{{ upcoming_coordination_count }}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bg-gradient-to-r from-purple-400 to-purple-600 rounded-lg shadow-lg p-6 text-white transform hover:scale-105 transition-transform duration-200">
-            <div class="flex items-center">
-                <i class="fas fa-users text-2xl mr-4"></i>
-                <div>
-                    <p class="text-purple-100">Total Participants</p>
-                    <p class="text-3xl font-bold">{{ total_participants_count }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    </section>
 
-    <!-- Informational Notice -->
-    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg mb-6">
-        <div class="flex">
-            <div class="flex-shrink-0">
-                <i class="fas fa-info-circle text-blue-500 text-lg"></i>
-            </div>
-            <div class="ml-3">
-                <p class="text-sm text-blue-700">
-                    <strong>Tip:</strong> Events are designed for coordination meetings with participant tracking and detailed management.
-                    For simple project activities, consider using <a href="{% url 'common:work_item_list' %}" class="underline font-semibold hover:text-blue-900">WorkItem Activities</a> instead.
+    <!-- Quick Actions -->
+    <section>
+        <h2 class="text-2xl font-bold text-neutral-900 mb-6">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            {% for action in quick_actions %}
+            <a href="{{ action.url }}" class="group bg-white border border-neutral-200 rounded-2xl shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col h-full">
+                <div class="p-6 flex flex-col flex-grow">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br {{ action.icon_gradient }} flex items-center justify-center text-white text-xl mb-4 shadow">
+                        <i class="{{ action.icon }}"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-neutral-900 group-hover:text-emerald-600 transition-colors">
+                        {{ action.title }}
+                    </h3>
+                    <p class="mt-2 text-sm text-neutral-600 flex-grow">{{ action.description }}</p>
+                    <div class="mt-4 inline-flex items-center text-emerald-600 text-sm font-semibold">
+                        <span>{{ action.cta }}</span>
+                        <i class="fas fa-arrow-right ml-2 transition-transform duration-200 group-hover:translate-x-1"></i>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Activities vs Notes -->
+    <section class="rounded-2xl border border-blue-100 bg-blue-50 p-6 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center gap-4">
+            <span class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl">
+                <i class="fas fa-exchange-alt"></i>
+            </span>
+            <div class="space-y-1 text-blue-800">
+                <p class="font-semibold text-base">Activities vs. Notes</p>
+                <p class="text-sm">
+                    Plan coordination activities through WorkItems so they appear in the unified calendar. Capture outcomes using Coordination Notes to keep minutes, attendance, and partnership follow-ups aligned.
                 </p>
             </div>
         </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <a href="{% url 'common:work_item_create' %}?work_type=activity" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 font-medium flex items-center justify-center">
-                <i class="fas fa-plus mr-2"></i>
-                New Coordination Activity
-            </a>
-            <a href="{% url 'common:coordination_activity_add' %}" class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3 rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 transform hover:scale-105 font-medium flex items-center justify-center">
-                <i class="fas fa-handshake mr-2"></i>
-                Log Activity
-            </a>
-            <button class="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 transform hover:scale-105 font-medium">
-                <i class="fas fa-file-export mr-2"></i>
-                Export Coordination Data
-            </button>
-            <a href="{% url 'common:oobc_calendar' %}" class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-3 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 font-medium flex items-center justify-center">
-                <i class="fas fa-calendar-week mr-2"></i>
-                Calendar Management
-            </a>
-        </div>
-    </div>
+    </section>
 
     <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Filter Coordination Activities</h2>
-        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-                <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
-                <input type="text" id="search" name="search" value="{{ search_query }}" 
-                       placeholder="Search coordination records..." 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+    <section class="bg-white rounded-xl border border-gray-200 shadow-md p-6">
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <i class="fas fa-filter text-blue-600"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Search &amp; Filter</h2>
+                    <p class="text-sm text-gray-600">Find coordination activities quickly</p>
+                </div>
             </div>
-            <div>
-                <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select id="status" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">All Status</option>
-                    {% for value, label in status_choices %}
-                    <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label for="event_type" class="block text-sm font-medium text-gray-700 mb-2">Activity Type</label>
-                <select id="event_type" name="event_type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">All Types</option>
-                    {% for event_type in event_type_options %}
-                    <option value="{{ event_type }}" {% if current_type == event_type %}selected{% endif %}>{{ event_type|capfirst }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="flex items-end">
-                <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200">
-                    <i class="fas fa-search mr-2"></i>
-                    Filter
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Coordination Table -->
-    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-900">Coordination Activities</h2>
-        </div>
-        
-        {% if activities %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coordination Event</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participants</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for activity in activities %}
-                    {% with data=activity.activity_data %}
-                    <tr class="hover:bg-gray-50 transition-colors duration-200">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div>
-                                <div class="text-sm font-medium text-gray-900">{{ activity.title }}</div>
-                                <div class="text-sm text-gray-500">{{ data.event_type|default:"Unspecified"|capfirst }}</div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">
-                                {% if activity.start_date %}
-                                    {{ activity.start_date|date:"M d, Y" }}
-                                {% else %}
-                                    TBD
-                                {% endif %}
-                            </div>
-                            <div class="text-sm text-gray-500">
-                                {% if activity.start_time %}
-                                    {{ activity.start_time|time:"g:i A" }}
-                                {% else %}
-                                    —
-                                {% endif %}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">
-                                {% with venue=data|get_item:'venue' address=data|get_item:'address' %}
-                                    {{ venue|default:address|default:"TBD" }}
-                                {% endwith %}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {% if activity.status == 'completed' %}
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Completed</span>
-                            {% elif activity.status == 'in_progress' %}
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">In Progress</span>
-                            {% elif activity.status == 'at_risk' %}
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">At Risk</span>
-                            {% elif activity.status == 'blocked' %}
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Blocked</span>
-                            {% elif activity.status == 'cancelled' %}
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-700">Cancelled</span>
-                            {% else %}
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
-                                    {{ activity.get_status_display }}
-                                </span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {% with actual=data.actual_participants expected=data.expected_participants %}
-                                {% if actual %}
-                                    {{ actual }}
-                                {% elif expected %}
-                                    {{ expected }}
-                                {% else %}
-                                    —
-                                {% endif %}
-                            {% endwith %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex space-x-2">
-                                <a href="{% url 'common:work_item_detail' pk=activity.pk %}"
-                                   class="text-blue-600 hover:text-blue-900 transition-colors duration-200"
-                                   title="View details">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{% url 'common:work_item_edit' pk=activity.pk %}"
-                                   class="text-green-600 hover:text-green-900 transition-colors duration-200"
-                                   title="Edit activity">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <button
-                                    hx-get="{% url 'common:work_item_delete_modal' pk=activity.pk %}"
-                                    hx-target="#modalTarget"
-                                    hx-trigger="click"
-                                    class="text-red-600 hover:text-red-900 transition-colors duration-200"
-                                    title="Delete activity">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endwith %}
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="px-6 py-12 text-center">
-            <i class="fas fa-calendar-alt text-4xl text-gray-400 mb-4"></i>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">No coordination records found</h3>
-            <p class="text-gray-500 mb-4">Get started by creating your first coordination event.</p>
-            <a href="{% url 'common:work_item_create' %}?work_type=activity" class="inline-flex items-center justify-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200">
-                <i class="fas fa-plus mr-2"></i>
-                Create Coordination Activity
+            <a href="{% url 'common:coordination_events' %}" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+                <i class="fas fa-redo"></i>
+                Reset Filters
             </a>
         </div>
-        {% endif %}
-    </div>
+        <form method="get">
+            <div class="flex flex-wrap lg:flex-nowrap gap-3 items-end">
+                <div class="flex-1 min-w-[200px]">
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-2">
+                        Search
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" id="search" name="search" value="{{ search_query }}"
+                               placeholder="Search title, description, or venue..."
+                               class="block w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
+                    </div>
+                </div>
+                <div class="min-w-[180px]">
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
+                        Status
+                    </label>
+                    <div class="relative">
+                        <select id="status" name="status"
+                                class="block w-full py-3 px-4 rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                            <option value="">All Status</option>
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400"><i class="fas fa-chevron-down"></i></span>
+                    </div>
+                </div>
+                <div class="min-w-[180px]">
+                    <label for="event_type" class="block text-sm font-medium text-gray-700 mb-2">
+                        Activity Type
+                    </label>
+                    <div class="relative">
+                        <select id="event_type" name="event_type"
+                                class="block w-full py-3 px-4 rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                            <option value="">All Types</option>
+                            {% for event_type in event_type_options %}
+                            <option value="{{ event_type }}" {% if current_type == event_type %}selected{% endif %}>{{ event_type|capfirst }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400"><i class="fas fa-chevron-down"></i></span>
+                    </div>
+                </div>
+                <div class="w-full lg:w-auto">
+                    <button type="submit"
+                            class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold shadow-lg hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 w-full lg:w-auto">
+                        <i class="fas fa-filter"></i>
+                        Apply Filters
+                    </button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <!-- Coordination Activities List -->
+    <section>
+        <div id="work-items-tree-wrapper">
+            {{ activities_tree_html|safe }}
+        </div>
+    </section>
+
+    <!-- Coordination Calendar (Bottom) -->
+    <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-semibold text-neutral-900">Coordination Activity Calendar</h2>
+                <p class="text-sm text-neutral-500">Live view of scheduled coordination activities pulled from WorkItems.</p>
+            </div>
+            <a href="{% url 'common:oobc_calendar' %}" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+                <i class="fas fa-calendar-alt"></i>
+                Open Full Calendar
+            </a>
+        </div>
+        <div class="mt-6">
+            {{ calendar_widget_html|safe }}
+        </div>
+    </section>
+
+    <!-- Sidebar and Modal Targets for Work Item Actions -->
+    <div id="delete-modal-container" aria-live="polite" role="region" aria-label="Delete confirmation modal"></div>
+
+    <aside id="work-item-sidebar"
+           class="fixed top-0 right-0 h-full w-96 bg-white border-l border-gray-200 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+        <div class="h-full flex flex-col">
+            <div id="sidebar-content" class="flex-1 overflow-y-auto p-6">
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-calendar-check text-4xl mb-3"></i>
+                    <p>Select an activity action to view details</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div id="sidebar-backdrop"
+         class="fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none transition-opacity duration-300"
+         onclick="closeSidebar()"></div>
+
+    {% include 'work_items/partials/sidebar_init_scripts.html' %}
+    {% include 'work_items/partials/tree_navigation_scripts.html' %}
 </div>
 {% endblock %}

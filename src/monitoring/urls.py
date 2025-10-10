@@ -33,6 +33,11 @@ urlpatterns = [
         views.oobc_unit_performance,
         name="oobc_unit_performance",
     ),
+    path(
+        "oobc-initiatives/calendar/feed/",
+        views.oobc_initiatives_calendar_feed,
+        name="oobc_initiatives_calendar_feed",
+    ),
     path("oobc-initiatives/export/", views.export_oobc_data, name="export_oobc_data"),
     path(
         "oobc-initiatives/budget/", views.oobc_budget_review, name="oobc_budget_review"
@@ -82,6 +87,11 @@ urlpatterns = [
         "entry/<uuid:pk>/work-items-summary/",
         views.work_items_summary_partial,
         name="work_items_summary",
+    ),
+    path(
+        "moa-ppas/<uuid:pk>/work-items-tab/",
+        views.work_items_tab_partial,
+        name="work_items_tab",
     ),
     path(
         "work-items/<uuid:work_item_id>/children/",

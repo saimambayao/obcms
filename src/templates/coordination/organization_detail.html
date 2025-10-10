@@ -673,7 +673,10 @@
                 </div>
 
                 <!-- Work Items Tab -->
-                <div id="moa-work-items-tab-content" class="moa-tab-content-panel hidden">
+                <div id="moa-work-items-tab-content"
+                     class="moa-tab-content-panel hidden"
+                     data-organization-id="{{ organization.id }}"
+                     data-refresh-url="{% url 'common:coordination_organization_work_items_partial' organization_id=organization.id %}">
                     {% include "coordination/partials/moa_work_items_tab.html" %}
                 </div>
 
@@ -775,6 +778,87 @@ function switchMOATab(tabName) {
 // Set default tab on page load
 document.addEventListener('DOMContentLoaded', function() {
     switchMOATab('ppa-database');
+});
+
+var lastMoaRefreshMeta = {
+    time: 0,
+    workItemId: null,
+    eventType: null,
+};
+
+function refreshMoaWorkItems(event) {
+    const payload = (event && event.detail) ? event.detail : {};
+    const eventType = (event && event.type) ? event.type : 'manual';
+    const now = Date.now();
+
+    if (
+        payload.workItemId
+        && lastMoaRefreshMeta.workItemId === payload.workItemId
+        && lastMoaRefreshMeta.eventType !== eventType
+        && now - lastMoaRefreshMeta.time < 250
+    ) {
+        return;
+    }
+
+    lastMoaRefreshMeta = {
+        time: now,
+        workItemId: payload.workItemId || null,
+        eventType,
+    };
+
+    const tabContent = document.getElementById('moa-work-items-tab-content');
+    if (!tabContent) {
+        return;
+    }
+
+    const organizationId = payload.organizationId || tabContent.dataset.organizationId;
+    const refreshUrl = tabContent.dataset.refreshUrl
+        || (organizationId ? `/coordination/organizations/${organizationId}/work-items/partial/` : null);
+
+    if (!window.htmx || !refreshUrl) {
+        window.location.reload();
+        return;
+    }
+
+    tabContent.setAttribute('aria-busy', 'true');
+    tabContent.classList.add('opacity-50', 'pointer-events-none');
+
+    htmx.ajax('GET', refreshUrl, {
+        target: '#moa-work-items-tab-content',
+        swap: 'innerHTML swap:300ms',
+    }).then(() => {
+        tabContent.classList.remove('opacity-50', 'pointer-events-none');
+        tabContent.removeAttribute('aria-busy');
+
+        const workItemId = payload.workItemId;
+        if (workItemId) {
+            const highlightRow = tabContent.querySelector(`[data-work-item-id="${workItemId}"]`);
+            if (highlightRow) {
+                highlightRow.classList.add('bg-emerald-50');
+                highlightRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => highlightRow.classList.remove('bg-emerald-50'), 2000);
+            }
+        }
+    }).catch(() => {
+        tabContent.classList.remove('opacity-50', 'pointer-events-none');
+        tabContent.removeAttribute('aria-busy');
+
+        document.body.dispatchEvent(new CustomEvent('showToast', {
+            detail: {
+                message: 'Failed to refresh work items. Please reload the page.',
+                level: 'error',
+            },
+        }));
+    });
+}
+
+document.body.addEventListener('refreshMoaWorkItems', refreshMoaWorkItems);
+document.body.addEventListener('workItemCreated', function(event) {
+    const detail = (event && event.detail) ? event.detail : {};
+    if (detail.context && detail.context !== 'moa') {
+        return;
+    }
+    refreshMoaWorkItems(event);
 });
 </script>
 {% endblock %}

@@ -1,0 +1,126 @@
+{% load static %}
+{% url 'common:work_item_sidebar_create' as default_create_url %}
+{% with create_url=work_item_create_url|default:default_create_url %}
+<!-- Work Items Tree -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    {# Tree Controls #}
+    <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="text-sm font-semibold text-gray-700">
+                <i class="fas fa-sitemap text-blue-600 mr-2"></i>
+                {{ tree_title|default:"Hierarchical Tree View" }}
+            </div>
+            <div class="text-xs text-gray-600">
+                <span data-role="items-displayed-count">{{ work_items|length }}</span> {{ items_display_label|default:"items displayed" }}
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            {% if show_expand_controls|default_if_none:True %}
+                <button id="expand-all-btn"
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-150">
+                    <i class="fas fa-expand-alt mr-1.5"></i>
+                    Expand All
+                </button>
+                <button id="collapse-all-btn"
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-150">
+                    <i class="fas fa-compress-alt mr-1.5"></i>
+                    Collapse All
+                </button>
+            {% endif %}
+            {% if show_add_button|default_if_none:True %}
+                <button onclick="openSidebarAndLoad(this)"
+                        data-hx-get="{{ create_url }}"
+                        data-hx-target="#sidebar-content"
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-blue-600 to-emerald-600 hover:shadow-lg rounded-lg transition-all duration-150">
+                    <i class="fas fa-plus mr-1.5"></i>
+                    {{ create_button_label|default:"Add Work Item" }}
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full divide-y divide-gray-200 border-collapse" style="table-layout: fixed; min-width: 1200px;">
+            <colgroup>
+                <col style="width: 40%;">  <!-- Title & Hierarchy -->
+                <col style="width: 10%;">  <!-- Type -->
+                <col style="width: 10%;">  <!-- Status -->
+                <col style="width: 8%;">   <!-- Priority -->
+                <col style="width: 12%;">  <!-- Progress -->
+                <col style="width: 12%;">  <!-- Dates -->
+                <col style="width: 8%;">   <!-- Actions -->
+            </colgroup>
+            <thead class="bg-gradient-to-r from-blue-600 to-teal-600">
+                <tr>
+                    <th scope="col" class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <div class="flex items-center">
+                            <i class="fas fa-stream mr-2"></i>
+                            Title & Hierarchy
+                        </div>
+                    </th>
+                    <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
+                        Type
+                    </th>
+                    <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
+                        Status
+                    </th>
+                    <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
+                        Priority
+                    </th>
+                    <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
+                        Progress
+                    </th>
+                    <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
+                        Dates
+                    </th>
+                    <th scope="col" class="px-3 py-4 text-right text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for work_item in work_items %}
+                    {% include 'work_items/_work_item_tree_row.html' with work_item=work_item %}
+                {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-16 text-center">
+                            <div class="flex flex-col items-center justify-center">
+                                <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                                    <i class="fas fa-inbox text-4xl text-gray-400"></i>
+                                </div>
+                                <p class="text-lg font-semibold text-gray-900 mb-2">{{ empty_state_title|default:"No work items found" }}</p>
+                                <p class="text-sm text-gray-600 mb-6">{{ empty_state_description|default:"Create your first work item to get started with project tracking" }}</p>
+                                {% if show_add_button|default_if_none:True %}
+                                    <button type="button"
+                                            onclick="openSidebarAndLoad(this)"
+                                            data-hx-get="{{ create_url }}"
+                                            data-hx-target="#sidebar-content"
+                                            class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all duration-200 shadow-sm">
+                                        <i class="fas fa-plus mr-2"></i>
+                                        {{ create_button_label|default:"Add Work Item" }}
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+
+            {% if work_items and show_add_button|default_if_none:True %}
+            <!-- Add Work Item Button Row - Always at bottom -->
+            <tr class="bg-gray-50/50 hover:bg-gray-100/50 transition-colors duration-150">
+                <td colspan="7" class="px-4 py-3">
+                    <button onclick="openSidebarAndLoad(this)"
+                            data-hx-get="{{ create_url }}"
+                            data-hx-target="#sidebar-content"
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-all duration-150 border border-emerald-200">
+                        <i class="fas fa-plus-circle mr-2"></i>
+                        {{ create_button_label|default:"Add Work Item" }}
+                    </button>
+                </td>
+            </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endwith %}

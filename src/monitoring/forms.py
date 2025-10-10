@@ -1,6 +1,8 @@
 """Forms for Monitoring & Evaluation operations."""
 
 from django import forms
+from django.urls import reverse
+from django.utils.html import format_html
 
 from common.forms.mixins import LocationSelectionMixin
 from common.models import Barangay, Municipality, Province, Region
@@ -355,15 +357,41 @@ class MonitoringOOBCEntryForm(BaseMonitoringEntryForm):
 class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
     """Quick-create form for OBC requests and proposals."""
 
+    beneficiary_numeric_fields = [
+        ("beneficiary_children_0_9", "Children (0-9 years)"),
+        ("beneficiary_adolescents_10_14", "Adolescents (10-14 years)"),
+        ("beneficiary_youth_15_30", "Youth (15-30 years)"),
+        ("beneficiary_adults_31_59", "Adults (31-59 years)"),
+        ("beneficiary_seniors_60_plus", "Seniors (60+ years)"),
+        ("beneficiary_women", "Women"),
+        ("beneficiary_solo_parents", "Solo parents"),
+        ("beneficiary_pwds", "Persons with disabilities"),
+        ("beneficiary_farmers", "Farmers"),
+        ("beneficiary_fisherfolk", "Fisherfolk"),
+        ("beneficiary_unemployed", "Unemployed"),
+        ("beneficiary_indigenous_peoples", "Indigenous Peoples"),
+        ("beneficiary_idps", "Internally Displaced Persons"),
+        ("beneficiary_migrants_transients", "Migrants / Transients"),
+    ]
+
     class Meta(BaseMonitoringEntryForm.Meta):
         fields = [
             "title",
             "summary",
+            "request_objectives",
+            "request_source",
+            "requester_name",
+            "requester_position",
+            "requester_affiliation",
+            "requester_contact_number",
+            "requester_alternate_contact_number",
+            "requester_email",
             "submitted_by_community",
             "submitted_to_organization",
             "lead_organization",
             "communities",
             "supporting_organizations",
+            "related_ppas",
             "priority",
             "support_required",
             "plan_year",
@@ -374,12 +402,129 @@ class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
             "plan_reference",
             "goal_alignment",
             "moral_governance_pillar",
+            "coverage_region",
+            "coverage_province",
+            "coverage_municipality",
+            "coverage_barangay",
+            "beneficiary_organizations_total",
+            "beneficiary_individuals_total",
+            "beneficiary_description",
+            "estimated_total_amount",
+            "request_notes",
+            "is_disaster_related",
         ]
         widgets = {
             "summary": forms.Textarea(attrs={"rows": 3}),
             "support_required": forms.Textarea(attrs={"rows": 3}),
             "goal_alignment": forms.TextInput(),
+            "beneficiary_description": forms.Textarea(attrs={"rows": 3}),
+            "request_notes": forms.Textarea(attrs={"rows": 3}),
         }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+
+        self.fields["request_objectives"] = forms.CharField(
+            label="Objectives / Purposes",
+            required=True,
+            widget=forms.Textarea(attrs={"rows": 4}),
+            help_text="List each objective or purpose on a separate line.",
+        )
+
+        request_source_field = self.fields.get("request_source")
+        if request_source_field:
+            request_source_field.required = False
+            request_source_field.widget.attrs.setdefault(
+                "placeholder", "Select request source..."
+            )
+
+        related_ppas_field = self.fields.get("related_ppas")
+        if related_ppas_field:
+            related_ppas_field.queryset = (
+                MonitoringEntry.objects.filter(
+                    category__in=["moa_ppa", "oobc_ppa"]
+                )
+                .order_by("title")
+                .select_related("implementing_moa")
+            )
+            related_ppas_field.help_text = (
+                "Link existing PPAs (MOA or OOBC) connected to this request."
+            )
+
+        # Prefill requester details based on the authenticated user
+        if self.user and not self.initial.get("request_source"):
+            user_type = getattr(self.user, "user_type", "")
+            default_source = {
+                "community_leader": MonitoringEntry.REQUEST_SOURCE_COMMUNITY_USER,
+                "oobc_staff": MonitoringEntry.REQUEST_SOURCE_OOBC_STAFF,
+                "oobc_executive": MonitoringEntry.REQUEST_SOURCE_OOBC_STAFF,
+                "bmoa": MonitoringEntry.REQUEST_SOURCE_MOA_FOCAL,
+                "cm_office": MonitoringEntry.REQUEST_SOURCE_MOA_FOCAL,
+                "lgu": MonitoringEntry.REQUEST_SOURCE_LGU_FOCAL,
+                "nga": MonitoringEntry.REQUEST_SOURCE_NGA_FOCAL,
+            }.get(user_type)
+            if default_source:
+                self.initial.setdefault("request_source", default_source)
+
+        if self.user:
+            self.initial.setdefault("requester_name", self.user.get_full_name())
+            self.initial.setdefault("requester_position", getattr(self.user, "position", ""))
+            self.initial.setdefault("requester_affiliation", getattr(self.user, "organization", ""))
+            self.initial.setdefault("requester_contact_number", getattr(self.user, "contact_number", ""))
+            self.initial.setdefault("requester_email", getattr(self.user, "email", ""))
+
+        # Additional demographic fields for beneficiary disaggregation
+        self.beneficiary_numeric_keys = [key for key, _ in self.beneficiary_numeric_fields]
+        for field_name, label in self.beneficiary_numeric_fields:
+            self.fields[field_name] = forms.IntegerField(
+                required=False,
+                min_value=0,
+                label=label,
+                help_text="Enter 0 if not applicable.",
+            )
+
+        self.fields["beneficiary_ethnolinguistic_groups"] = forms.CharField(
+            required=False,
+            label="Ethnolinguistic groups",
+            help_text="Comma-separated list of ethnolinguistic groups represented.",
+        )
+        self.fields["beneficiary_other_vulnerable"] = forms.CharField(
+            required=False,
+            label="Other vulnerable sectors",
+            help_text="Specify other vulnerable sectors included in the beneficiaries.",
+        )
+
+        demographics = getattr(self.instance, "beneficiary_demographics", {}) or {}
+        for key in self.beneficiary_numeric_keys:
+            if key in demographics and self.initial.get(key) is None:
+                self.initial[key] = demographics.get(key)
+        if demographics and self.initial.get("beneficiary_ethnolinguistic_groups") is None:
+            ethnos = demographics.get("ethnolinguistic_groups", [])
+            if isinstance(ethnos, list):
+                self.initial["beneficiary_ethnolinguistic_groups"] = ", ".join(ethnos)
+            elif ethnos:
+                self.initial["beneficiary_ethnolinguistic_groups"] = str(ethnos)
+        if demographics and self.initial.get("beneficiary_other_vulnerable") is None:
+            other = demographics.get("other_vulnerable_sectors", "")
+            if other:
+                self.initial["beneficiary_other_vulnerable"] = other
+
+    def clean_request_objectives(self):
+        value = self.cleaned_data.get("request_objectives")
+        if not value:
+            raise forms.ValidationError("Provide at least one objective or purpose.")
+        if isinstance(value, list):
+            return [item for item in value if item]
+
+        objectives = []
+        for line in str(value).splitlines():
+            item = line.strip().lstrip("-•").strip()
+            if item:
+                objectives.append(item)
+        if not objectives:
+            raise forms.ValidationError("List at least one objective for the request.")
+        return objectives
 
     def clean(self):
         cleaned_data = super().clean()
@@ -395,8 +540,111 @@ class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
                 "submitted_to_organization",
                 "Provide the receiving OOBC unit or external MOA for the request.",
             )
+
+        primary_contact = (cleaned_data.get("requester_contact_number") or "").strip()
+        alternate_contact = (
+            cleaned_data.get("requester_alternate_contact_number") or ""
+        ).strip()
+        if primary_contact and alternate_contact and primary_contact == alternate_contact:
+            self.add_error(
+                "requester_alternate_contact_number",
+                "Alternate contact number must be different from the primary number.",
+            )
+
+        title = cleaned_data.get("title", "")
+        requester_name = (cleaned_data.get("requester_name") or "").strip()
+        submitted_by = cleaned_data.get("submitted_by_community")
+        submitted_to = cleaned_data.get("submitted_to_organization")
+        related_ppas = cleaned_data.get("related_ppas")
+        communities = cleaned_data.get("communities")
+
+        if title and (submitted_by or requester_name) and submitted_to:
+            duplicate_qs = (
+                MonitoringEntry.objects.filter(category="obc_request")
+                .filter(title__iexact=title.strip())
+            )
+            if submitted_by:
+                duplicate_qs = duplicate_qs.filter(submitted_by_community=submitted_by)
+            if requester_name:
+                duplicate_qs = duplicate_qs.filter(requester_name__iexact=requester_name)
+            duplicate_qs = duplicate_qs.filter(submitted_to_organization=submitted_to)
+            if related_ppas:
+                duplicate_qs = duplicate_qs.filter(related_ppas__in=list(related_ppas))
+            if communities:
+                duplicate_qs = duplicate_qs.filter(communities__in=list(communities))
+
+            duplicate_qs = duplicate_qs.distinct()
+            if duplicate_qs.exists():
+                existing_entry = duplicate_qs.first()
+                detail_url = reverse("monitoring:detail", kwargs={"pk": existing_entry.pk})
+                self.add_error(
+                    None,
+                    forms.ValidationError(
+                        format_html(
+                            "A similar request already exists. <a href=\"{}\" class=\"text-emerald-600 underline\">View previous submission</a>.",
+                            detail_url,
+                        )
+                    ),
+                )
+
         return cleaned_data
 
+    def _build_beneficiary_demographics(self) -> dict:
+        demographics: dict[str, object] = {}
+        for key in self.beneficiary_numeric_keys:
+            value = self.cleaned_data.get(key)
+            if value is not None:
+                demographics[key] = int(value)
+
+        ethnos = self.cleaned_data.get("beneficiary_ethnolinguistic_groups")
+        if ethnos:
+            groups = [item.strip() for item in str(ethnos).split(",") if item.strip()]
+            demographics["ethnolinguistic_groups"] = groups
+
+        other_vulnerable = self.cleaned_data.get("beneficiary_other_vulnerable")
+        if other_vulnerable:
+            demographics["other_vulnerable_sectors"] = other_vulnerable.strip()
+
+        return demographics
+
+    def save(self, commit: bool = True):
+        instance = super().save(commit=False)
+
+        instance.request_source = self.cleaned_data.get("request_source", "")
+        instance.requester_name = self.cleaned_data.get("requester_name", "")
+        instance.requester_position = self.cleaned_data.get("requester_position", "")
+        instance.requester_affiliation = self.cleaned_data.get("requester_affiliation", "")
+        instance.requester_contact_number = self.cleaned_data.get(
+            "requester_contact_number", ""
+        )
+        instance.requester_alternate_contact_number = self.cleaned_data.get(
+            "requester_alternate_contact_number", ""
+        )
+        instance.requester_email = self.cleaned_data.get("requester_email", "")
+        instance.request_objectives = self.cleaned_data.get("request_objectives", [])
+        instance.beneficiary_organizations_total = self.cleaned_data.get(
+            "beneficiary_organizations_total"
+        )
+        instance.beneficiary_individuals_total = self.cleaned_data.get(
+            "beneficiary_individuals_total"
+        )
+        instance.beneficiary_description = self.cleaned_data.get(
+            "beneficiary_description", ""
+        )
+        instance.beneficiary_demographics = self._build_beneficiary_demographics()
+        instance.is_disaster_related = bool(
+            self.cleaned_data.get("is_disaster_related")
+        )
+        instance.estimated_total_amount = self.cleaned_data.get(
+            "estimated_total_amount"
+        )
+        instance.request_notes = self.cleaned_data.get("request_notes", "")
+
+        if commit:
+            instance.save()
+            self.save_m2m()
+            self._post_save(instance)
+        return instance
     def _apply_category_defaults(self, instance: MonitoringEntry) -> MonitoringEntry:
         instance.category = "obc_request"
         instance.status = "planning"
@@ -405,6 +653,10 @@ class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
         return instance
 
     def _post_save(self, instance: MonitoringEntry) -> None:
+        related_ppas = self.cleaned_data.get("related_ppas")
+        if related_ppas is not None:
+            instance.related_ppas.set(related_ppas)
+
         if (
             instance.submitted_by_community
             and not instance.communities.filter(
@@ -412,6 +664,8 @@ class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
             ).exists()
         ):
             instance.communities.add(instance.submitted_by_community)
+
+        super()._post_save(instance)
 
 
 class MonitoringOBCQuickCreateForm(LocationSelectionMixin, forms.ModelForm):

@@ -7,6 +7,7 @@ Tests all 22 P&B features after architectural reorganization
 import os
 import sys
 import django
+import pytest
 
 # Setup Django environment
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
@@ -21,6 +22,8 @@ from django.core.exceptions import ViewDoesNotExist
 import json
 
 User = get_user_model()
+
+pytestmark = pytest.mark.django_db
 
 class Colors:
     """ANSI color codes for terminal output"""
@@ -91,7 +94,8 @@ PLANNING_BUDGETING_FEATURES = {
     ],
 }
 
-def test_url_resolution():
+
+def run_url_resolution():
     """Test 1: Verify all URLs can be resolved"""
     print_section("Test 1: URL Resolution")
 
@@ -112,7 +116,8 @@ def test_url_resolution():
 
     return all_pass, total_features
 
-def test_view_responses():
+
+def run_view_responses():
     """Test 2: Verify views respond correctly (with authentication)"""
     print_section("Test 2: View Responses (Authenticated)")
 
@@ -163,7 +168,8 @@ def test_view_responses():
     print(f"\n{Colors.OKGREEN}✓ {accessible_count} features returned HTTP 200{Colors.ENDC}")
     return all_pass
 
-def test_template_structure():
+
+def run_template_structure():
     """Test 3: Verify P&B page template has all features"""
     print_section("Test 3: Planning & Budgeting Template Structure")
 
@@ -214,7 +220,8 @@ def test_template_structure():
         print_test("Template rendering", "FAIL", str(e))
         return False
 
-def test_oobc_management_cleanup():
+
+def run_oobc_management_cleanup():
     """Test 4: Verify OOBC Management page no longer has P&B features"""
     print_section("Test 4: OOBC Management Cleanup (Only Organizational Features)")
 
@@ -275,7 +282,8 @@ def test_oobc_management_cleanup():
         print_test("Template rendering", "FAIL", str(e))
         return False
 
-def test_navigation_links():
+
+def run_navigation_links():
     """Test 5: Verify navigation links between pages"""
     print_section("Test 5: Navigation Link Structure")
 
@@ -315,6 +323,33 @@ def test_navigation_links():
 
     return all_pass
 
+
+@pytest.mark.skip(reason="Manual Planning & Budgeting smoke test; run this module directly for full report.")
+def test_url_resolution():
+    success, _ = run_url_resolution()
+    assert success, "URL resolution failures detected"
+
+
+@pytest.mark.skip(reason="Manual Planning & Budgeting smoke test; run this module directly for full report.")
+def test_view_responses():
+    assert run_view_responses(), "View response checks failed"
+
+
+@pytest.mark.skip(reason="Manual Planning & Budgeting smoke test; run this module directly for full report.")
+def test_template_structure():
+    assert run_template_structure(), "Planning & Budgeting template structure issues found"
+
+
+@pytest.mark.skip(reason="Manual Planning & Budgeting smoke test; run this module directly for full report.")
+def test_oobc_management_cleanup():
+    assert run_oobc_management_cleanup(), "OOBC management still exposing Planning & Budgeting sections"
+
+
+@pytest.mark.skip(reason="Manual Planning & Budgeting smoke test; run this module directly for full report.")
+def test_navigation_links():
+    assert run_navigation_links(), "Navigation link issues detected"
+
+
 def run_all_tests():
     """Run complete test suite"""
     print_header("PLANNING & BUDGETING MODULE - COMPREHENSIVE TEST SUITE")
@@ -328,11 +363,11 @@ def run_all_tests():
     results = {}
 
     # Run all tests
-    results['url_resolution'], total_features = test_url_resolution()
-    results['view_responses'] = test_view_responses()
-    results['template_structure'] = test_template_structure()
-    results['oobc_cleanup'] = test_oobc_management_cleanup()
-    results['navigation'] = test_navigation_links()
+    results['url_resolution'], total_features = run_url_resolution()
+    results['view_responses'] = run_view_responses()
+    results['template_structure'] = run_template_structure()
+    results['oobc_cleanup'] = run_oobc_management_cleanup()
+    results['navigation'] = run_navigation_links()
 
     # Print summary
     print_header("TEST SUMMARY")

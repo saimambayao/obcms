@@ -7,6 +7,8 @@
 
 <div id="{{ use_modal_id }}"
      class="modal-backdrop fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 p-4"
+     data-modal-backdrop="true"
+     data-backdrop-dismiss="{% if backdrop_dismiss|default:True %}true{% else %}false{% endif %}"
      x-data="{ show: true }"
      x-show="show"
      x-transition:enter="transition ease-out duration-200"
@@ -15,8 +17,8 @@
      x-transition:leave="transition ease-in duration-150"
      x-transition:leave-start="opacity-100"
      x-transition:leave-end="opacity-0"
-     {% if backdrop_dismiss|default:True %}@click.self="show = false; setTimeout(() => $el.remove(), 200)"{% endif %}
-     @keydown.escape.window="show = false; setTimeout(() => $el.remove(), 200)"
+     {% if backdrop_dismiss|default:True %}@click.self="show = false; setTimeout(() => { const root = $el.closest('.modal-backdrop'); if (root) { root.remove(); } }, 200)"{% endif %}
+     @keydown.escape.window="show = false; setTimeout(() => { const root = $el.closest('.modal-backdrop'); if (root) { root.remove(); } }, 200)"
      role="dialog"
      aria-modal="true"
      aria-labelledby="{{ use_modal_id }}-title">
@@ -45,7 +47,8 @@
             </h2>
             {% if closeable|default:True %}
             <button type="button"
-                    @click="show = false; setTimeout(() => $el.closest('.modal-backdrop').remove(), 200)"
+                    data-modal-dismiss
+                    @click="show = false; setTimeout(() => { const root = $el.closest('.modal-backdrop'); if (root) { root.remove(); } }, 200)"
                     class="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-lg p-1"
                     aria-label="Close modal">
                 <i class="fas fa-times text-xl" aria-hidden="true"></i>
@@ -73,7 +76,8 @@
                 {{ footer_html|safe }}
             {% else %}
                 <button type="button"
-                        @click="show = false; setTimeout(() => $el.closest('.modal-backdrop').remove(), 200)"
+                        data-modal-dismiss
+                        @click="show = false; setTimeout(() => { const root = $el.closest('.modal-backdrop'); if (root) { root.remove(); } }, 200)"
                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
                     Close
                 </button>
@@ -83,39 +87,142 @@
     </div>
 </div>
 
-{# Alpine.js initialization check #}
+{# Modal behaviour fallback (vanilla JS) #}
 <script>
 (function() {
-    // Ensure Alpine.js is loaded
-    if (typeof Alpine === 'undefined') {
-        console.warn('Alpine.js is not loaded. Modal may not function correctly.');
-        console.warn('Include Alpine.js: <script src="//unpkg.com/alpinejs" defer></script>');
+    const modalBackdrop = document.getElementById('{{ use_modal_id }}');
+    if (!modalBackdrop) {
+        return;
     }
 
-    // Focus trap helper
-    document.addEventListener('alpine:init', () => {
-        if (!Alpine.directive('trap')) {
-            console.log('Registering focus trap directive for modals...');
-        }
-    });
+    const modalContent = modalBackdrop.querySelector('.modal-content');
+    const shouldDismissOnBackdrop = modalBackdrop.dataset.backdropDismiss !== 'false';
+    const dismissButtons = Array.from(modalBackdrop.querySelectorAll('[data-modal-dismiss]'));
+    const CLOSE_DELAY = 200;
+    let isCleanedUp = false;
+    let removalObserver;
+    let bodyObserver;
 
-    // Prevent body scroll when modal is open
-    const modals = document.querySelectorAll('.modal-backdrop');
-    if (modals.length > 0) {
-        document.body.style.overflow = 'hidden';
-    }
-
-    // Restore body scroll when all modals are closed
-    const observer = new MutationObserver((mutations) => {
-        const remainingModals = document.querySelectorAll('.modal-backdrop');
-        if (remainingModals.length === 0) {
+    const syncBodyScroll = () => {
+        const openModals = document.querySelectorAll('.modal-backdrop');
+        if (openModals.length > 0) {
+            document.body.style.overflow = 'hidden';
+        } else {
             document.body.style.overflow = '';
         }
+    };
+
+    const handleKeydown = (event) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeModal();
+        }
+    };
+
+    const handleBackdropClick = (event) => {
+        if (!shouldDismissOnBackdrop) {
+            return;
+        }
+        if (event.target === modalBackdrop) {
+            closeModal();
+        }
+    };
+
+    const handleDismissClick = (event) => {
+        event.preventDefault();
+        closeModal();
+    };
+
+    const cleanup = () => {
+        if (isCleanedUp) {
+            return;
+        }
+        isCleanedUp = true;
+
+        document.removeEventListener('keydown', handleKeydown);
+
+        if (shouldDismissOnBackdrop) {
+            modalBackdrop.removeEventListener('click', handleBackdropClick);
+        }
+
+        dismissButtons.forEach((btn) => {
+            btn.removeEventListener('click', handleDismissClick);
+        });
+
+        if (removalObserver) {
+            removalObserver.disconnect();
+        }
+
+        if (bodyObserver) {
+            bodyObserver.disconnect();
+        }
+
+        syncBodyScroll();
+    };
+
+    const closeModal = () => {
+        if (modalBackdrop.dataset.modalClosing === 'true') {
+            return;
+        }
+
+        modalBackdrop.dataset.modalClosing = 'true';
+        modalBackdrop.classList.add('modal-closing');
+
+        if (modalContent) {
+            modalContent.classList.add('modal-closing');
+        }
+
+        setTimeout(() => {
+            if (modalBackdrop.parentNode) {
+                modalBackdrop.parentNode.removeChild(modalBackdrop);
+            }
+            cleanup();
+        }, CLOSE_DELAY);
+    };
+
+    dismissButtons.forEach((btn) => {
+        btn.addEventListener('click', handleDismissClick);
     });
 
-    modals.forEach(modal => {
-        observer.observe(modal.parentNode, { childList: true });
+    if (shouldDismissOnBackdrop) {
+        modalBackdrop.addEventListener('click', handleBackdropClick);
+    }
+
+    document.addEventListener('keydown', handleKeydown);
+
+    removalObserver = new MutationObserver(() => {
+        if (!document.body.contains(modalBackdrop)) {
+            cleanup();
+        }
     });
+    removalObserver.observe(document.body, { childList: true, subtree: true });
+
+    bodyObserver = new MutationObserver(syncBodyScroll);
+    bodyObserver.observe(document.body, { childList: true, subtree: true });
+
+    syncBodyScroll();
+
+    const focusableSelectors = [
+        'a[href]',
+        'button:not([disabled])',
+        'textarea:not([disabled])',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        '[tabindex]:not([tabindex="-1"])'
+    ];
+    const focusableElements = modalBackdrop.querySelectorAll(focusableSelectors.join(','));
+    const activeElement = document.activeElement;
+
+    if (focusableElements.length && (!activeElement || !modalBackdrop.contains(activeElement))) {
+        const firstFocusable = focusableElements[0];
+        if (typeof firstFocusable.focus === 'function') {
+            firstFocusable.focus({ preventScroll: true });
+        }
+    }
+
+    if (typeof Alpine === 'undefined') {
+        console.debug(`Modal "{{ use_modal_id }}" running in vanilla mode (Alpine.js not detected).`);
+    }
 })();
 </script>
 
@@ -123,6 +230,11 @@
 /* Modal animations */
 .modal-backdrop {
     animation: fadeIn 200ms ease-out;
+    transition: opacity 200ms ease-in-out;
+}
+
+.modal-backdrop.modal-closing {
+    opacity: 0;
 }
 
 @keyframes fadeIn {
@@ -137,6 +249,15 @@
 /* Ensure modals appear above other content */
 .modal-backdrop {
     z-index: 9999;
+}
+
+.modal-content {
+    transition: opacity 200ms ease-in-out, transform 200ms ease-in-out;
+}
+
+.modal-content.modal-closing {
+    opacity: 0;
+    transform: scale(0.95);
 }
 
 /* Scrollbar styling for modal body */

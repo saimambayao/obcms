@@ -92,7 +92,8 @@
             Yes, Delete Permanently
         </button>
         <button type="button"
-                @click="show = false; setTimeout(() => $el.closest('.modal-backdrop').remove(), 200)"
+                data-modal-dismiss
+                @click="show = false; setTimeout(() => { const root = $el.closest('.modal-backdrop'); if (root) { root.remove(); } }, 200)"
                 class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
                 aria-label="Cancel deletion">
             <i class="fas fa-times mr-2"></i>
@@ -114,6 +115,55 @@
  */
 (function() {
     'use strict';
+
+    const SIDEBAR_EMPTY_STATE = `
+        <div class="text-center text-gray-500 py-8">
+            <i class="fas fa-tasks text-4xl mb-3"></i>
+            <p>Click an action button to view details</p>
+        </div>
+    `;
+
+    /**
+     * Synchronize headline counters after a deletion.
+     */
+    function refreshWorkItemMetrics() {
+        if (typeof window.updateWorkItemCounters === 'function') {
+            window.updateWorkItemCounters();
+            return;
+        }
+
+        const allRows = Array.from(document.querySelectorAll('tr[data-work-item-id]'));
+        const rootCount = allRows.filter(row => parseInt(row.dataset.level || '0', 10) === 0).length;
+
+        const totalProjectsEl = document.querySelector('[data-role="total-projects-count"]');
+        if (totalProjectsEl) {
+            totalProjectsEl.textContent = rootCount.toString();
+        }
+
+        const itemsDisplayedEl = document.querySelector('[data-role="items-displayed-count"]');
+        if (itemsDisplayedEl) {
+            itemsDisplayedEl.textContent = rootCount.toString();
+        }
+    }
+
+    /**
+     * Reset the sidebar if it is showing the removed work item.
+     * @param {string} workItemId
+     */
+    function resetSidebarIfStale(workItemId) {
+        const sidebarContent = document.getElementById('sidebar-content');
+        if (!sidebarContent) {
+            return;
+        }
+
+        const activeSidebarItem = sidebarContent.querySelector('[data-role="sidebar-work-item"]');
+        if (activeSidebarItem && activeSidebarItem.dataset.workItemId === workItemId) {
+            sidebarContent.innerHTML = SIDEBAR_EMPTY_STATE;
+            if (typeof closeSidebar === 'function') {
+                closeSidebar();
+            }
+        }
+    }
 
     // Listen for HTMX before delete request
     document.body.addEventListener('htmx:beforeRequest', function(event) {
@@ -173,6 +223,12 @@
             const placeholderRow = document.getElementById(`children-placeholder-${workItemId}`);
             if (skeletonRow) skeletonRow.remove();
             if (placeholderRow) placeholderRow.remove();
+
+            // Update metrics & sidebar after DOM removals
+            setTimeout(() => {
+                refreshWorkItemMetrics();
+                resetSidebarIfStale(workItemId);
+            }, 220);
 
             // Close modal after successful deletion
             const modal = document.querySelector('.modal-backdrop');

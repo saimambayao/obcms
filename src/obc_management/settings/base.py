@@ -301,12 +301,18 @@ SITE_DESCRIPTION = env(
 SITE_ID = 1
 SITE_URL = "/auth/dashboard/"
 
+# Canonical base URL for email templates and absolute links
+BASE_URL = env("BASE_URL", default="http://localhost:8000")
+
 # Crispy Forms
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # Email settings
 EMAIL_BACKEND = env(
     "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
+)
+DEFAULT_FROM_EMAIL = env(
+    "DEFAULT_FROM_EMAIL", default="OBCMS <noreply@example.com>"
 )
 if EMAIL_BACKEND != "django.core.mail.backends.console.EmailBackend":
     EMAIL_HOST = env("EMAIL_HOST", default="")

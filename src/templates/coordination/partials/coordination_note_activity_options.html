@@ -1,0 +1,30 @@
+{% if work_items %}
+    <option value="">Select coordination activity...</option>
+    {% for activity in work_items %}
+        {% with data=activity.activity_data %}
+        <option value="{{ activity.pk }}" {% if activity.pk|stringformat:"s" == selected_work_item_id|stringformat:"s" %}selected{% endif %}>
+            {% if activity.start_date %}
+                {{ activity.start_date|date:"M d, Y" }}
+            {% elif note_date %}
+                {{ note_date|date:"M d, Y" }}
+            {% else %}
+                No Date
+            {% endif %}
+            • {{ activity.title }}
+            {% if data.venue %}
+                ({{ data.venue }})
+            {% elif data.address %}
+                ({{ data.address }})
+            {% endif %}
+        </option>
+        {% endwith %}
+    {% endfor %}
+{% else %}
+    <option value="" disabled selected>
+        {% if note_date %}
+            No coordination activities found for {{ note_date|date:"M d, Y" }}.
+        {% else %}
+            Select a date to load coordination activities.
+        {% endif %}
+    </option>
+{% endif %}

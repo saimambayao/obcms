@@ -1,0 +1,288 @@
+<script>
+(function() {
+    'use strict';
+
+    const NodeState = {
+        UNLOADED: 'unloaded',
+        LOADING: 'loading',
+        EXPANDED: 'expanded',
+        COLLAPSED: 'collapsed'
+    };
+
+    const nodeStates = new Map();
+
+    function getNodeState(itemId) {
+        return nodeStates.get(itemId) || NodeState.UNLOADED;
+    }
+
+    function setNodeState(itemId, newState) {
+        const oldState = getNodeState(itemId);
+        nodeStates.set(itemId, newState);
+        console.log(`[Tree] Node ${itemId}: ${oldState} → ${newState}`);
+    }
+
+    function isNodeExpanded(itemId) {
+        return getNodeState(itemId) === NodeState.EXPANDED;
+    }
+
+    function updateChevron(itemId, expanded) {
+        const button = document.querySelector(`[data-item-id="${itemId}"]`);
+        if (!button) return;
+
+        const icon = button.querySelector('.toggle-icon');
+        if (!icon) return;
+
+        if (expanded) {
+            icon.classList.remove('fa-chevron-right');
+            icon.classList.add('fa-chevron-down');
+        } else {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-right');
+        }
+    }
+
+    function showSkeleton(itemId) {
+        const skeletonRow = document.getElementById(`skeleton-row-${itemId}`);
+        if (skeletonRow) {
+            skeletonRow.style.display = '';
+        }
+    }
+
+    function hideSkeleton(itemId) {
+        const skeletonRow = document.getElementById(`skeleton-row-${itemId}`);
+        if (skeletonRow) {
+            skeletonRow.style.display = 'none';
+        }
+    }
+
+    function getAllDescendantRows(itemId) {
+        const rows = [];
+        const parentRow = document.querySelector(`[data-work-item-id="${itemId}"]`);
+        if (!parentRow) return rows;
+
+        const parentLevel = parseInt(parentRow.dataset.level || '0', 10);
+        let currentRow = parentRow.nextElementSibling;
+
+        while (currentRow) {
+            if (!currentRow.dataset || !currentRow.dataset.workItemId) {
+                currentRow = currentRow.nextElementSibling;
+                continue;
+            }
+
+            const level = parseInt(currentRow.dataset.level || '0', 10);
+            if (level <= parentLevel) {
+                break;
+            }
+
+            rows.push(currentRow);
+            currentRow = currentRow.nextElementSibling;
+        }
+
+        return rows;
+    }
+
+    function showChildren(itemId) {
+        const rows = getAllDescendantRows(itemId);
+        rows.forEach(row => {
+            row.style.display = '';
+        });
+        updateChevron(itemId, true);
+        setNodeState(itemId, NodeState.EXPANDED);
+    }
+
+    function hideChildren(itemId) {
+        const rows = getAllDescendantRows(itemId);
+        rows.forEach(row => {
+            row.style.display = 'none';
+        });
+        updateChevron(itemId, false);
+        setNodeState(itemId, NodeState.COLLAPSED);
+    }
+
+    document.body.addEventListener('click', function(event) {
+        const toggleButton = event.target.closest('[data-toggle]');
+        if (!toggleButton) {
+            return;
+        }
+
+        const itemId = toggleButton.dataset.itemId;
+        const state = getNodeState(itemId);
+
+        switch (state) {
+            case NodeState.UNLOADED:
+                showSkeleton(itemId);
+                setNodeState(itemId, NodeState.LOADING);
+                updateChevron(itemId, true);
+                break;
+            case NodeState.LOADING:
+                updateChevron(itemId, true);
+                break;
+            case NodeState.EXPANDED:
+                hideChildren(itemId);
+                break;
+            case NodeState.COLLAPSED:
+                showChildren(itemId);
+                break;
+            default:
+                console.warn(`[Tree] Unknown state for ${itemId}: ${state}`);
+        }
+    });
+
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        const target = event.detail?.target;
+        if (!target) {
+            return;
+        }
+
+        if (target.classList.contains('work-item-children-placeholder')) {
+            const parentId = target.dataset.parentId;
+            hideSkeleton(parentId);
+            target.style.display = 'none';
+            showChildren(parentId);
+        }
+    });
+
+    document.body.addEventListener('htmx:responseError', function(event) {
+        const target = event.detail?.target;
+        if (!target) {
+            return;
+        }
+
+        if (target.classList.contains('work-item-children-placeholder')) {
+            const parentId = target.dataset.parentId;
+            hideSkeleton(parentId);
+            updateChevron(parentId, false);
+            setNodeState(parentId, NodeState.COLLAPSED);
+        }
+    });
+
+    document.body.addEventListener('click', function(event) {
+        const expandBtn = event.target.closest('#expand-all-btn');
+        if (expandBtn) {
+            console.log('[Tree] Expand All triggered');
+            const allButtons = document.querySelectorAll('[data-item-id]');
+            const unloadedButtons = [];
+
+            allButtons.forEach(button => {
+                const itemId = button.dataset.itemId;
+                const state = getNodeState(itemId);
+
+                if (state === NodeState.UNLOADED) {
+                    unloadedButtons.push(button);
+                } else if (state === NodeState.COLLAPSED) {
+                    showChildren(itemId);
+                }
+            });
+
+            if (unloadedButtons.length > 0) {
+                let index = 0;
+                const loadNext = () => {
+                    if (index < unloadedButtons.length) {
+                        unloadedButtons[index].click();
+                        index++;
+                        setTimeout(loadNext, 100);
+                    }
+                };
+                loadNext();
+            }
+
+            const icon = expandBtn.querySelector('i');
+            icon?.classList.add('fa-spin');
+            setTimeout(() => icon?.classList.remove('fa-spin'), 500);
+            return;
+        }
+
+        const collapseBtn = event.target.closest('#collapse-all-btn');
+        if (collapseBtn) {
+            console.log('[Tree] Collapse All triggered');
+            const allButtons = document.querySelectorAll('[data-item-id]');
+
+            allButtons.forEach(button => {
+                const itemId = button.dataset.itemId;
+                if (isNodeExpanded(itemId)) {
+                    hideChildren(itemId);
+                }
+            });
+
+            const icon = collapseBtn.querySelector('i');
+            icon?.classList.add('fa-spin');
+            setTimeout(() => icon?.classList.remove('fa-spin'), 500);
+        }
+    });
+
+    function updateWorkItemCounters() {
+        const rootRows = Array.from(document.querySelectorAll('tr[data-work-item-id]'))
+            .filter(row => parseInt(row.dataset.level || '0', 10) === 0);
+
+        const rootCount = rootRows.length;
+
+        const totalProjectsEl = document.querySelector('[data-role="total-projects-count"]');
+        if (totalProjectsEl) {
+            totalProjectsEl.textContent = rootCount.toString();
+        }
+
+        const itemsDisplayedEl = document.querySelector('[data-role="items-displayed-count"]');
+        if (itemsDisplayedEl) {
+            itemsDisplayedEl.textContent = rootCount.toString();
+        }
+    }
+
+    window.updateWorkItemCounters = updateWorkItemCounters;
+
+    function refreshWorkItemsTree(options = {}) {
+        const wrapper = document.getElementById('work-items-tree-wrapper');
+        if (!wrapper) {
+            return Promise.resolve();
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        params.set('partial', 'tree');
+        const queryString = params.toString();
+        const refreshUrl = `${window.location.pathname}${queryString ? `?${queryString}` : ''}`;
+
+        console.log('[Tree] Refreshing root tree', { refreshUrl });
+
+        return htmx.ajax('GET', refreshUrl, {
+            target: '#work-items-tree-wrapper',
+            swap: 'innerHTML'
+        }).then(() => {
+            nodeStates.clear();
+            updateWorkItemCounters();
+
+            if (options.focusId) {
+                const newRow = document.querySelector(`[data-work-item-id="${options.focusId}"]`);
+                if (newRow) {
+                    newRow.classList.add('ring-2', 'ring-offset-2', 'ring-emerald-400');
+                    setTimeout(() => {
+                        newRow.classList.remove('ring-2', 'ring-offset-2', 'ring-emerald-400');
+                    }, 1200);
+                }
+            }
+
+            console.log('[Tree] Root tree refreshed');
+        }).catch(error => {
+            console.error('[Tree] Failed to refresh tree', error);
+        });
+    }
+
+    document.body.addEventListener('workItemCreated', function(event) {
+        const workItemId = event.detail?.workItemId;
+        console.log('[Sidebar] Work item created', event.detail);
+        refreshWorkItemsTree({ focusId: workItemId });
+    });
+
+    document.body.addEventListener('htmx:oobAfterSwap', function(event) {
+        if (event.detail.target && event.detail.target.tagName === 'TR') {
+            const row = event.detail.target;
+            row.style.backgroundColor = '#d1fae5';
+            setTimeout(() => {
+                row.style.backgroundColor = '';
+            }, 1000);
+        }
+    });
+
+    updateWorkItemCounters();
+
+    console.log('✅ Work Items tree navigation initialized');
+})();
+</script>

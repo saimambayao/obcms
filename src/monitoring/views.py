@@ -7,12 +7,11 @@ import json
 import logging
 from datetime import datetime, timedelta
 import uuid
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import Avg, Count, Max, Q, Sum
 from django.forms import modelformset_factory
 from django.http import HttpResponse, JsonResponse
@@ -28,6 +27,7 @@ from communities.models import OBCCommunity
 from common.models import Municipality
 from common.work_item_model import WorkItem
 from coordination.models import Organization
+from coordination.utils.organizations import get_organization, get_oobc_organization
 from .forms import (
     MonitoringMOAEntryForm,
     MonitoringOOBCEntryForm,
@@ -35,7 +35,11 @@ from .forms import (
     MonitoringUpdateForm,
     MonitoringOBCQuickCreateForm,
 )
-from .models import MonitoringEntry, MonitoringUpdate
+from .models import (
+    MonitoringEntry,
+    MonitoringRequestAttachment,
+    MonitoringUpdate,
+)
 from .services import BudgetDistributionService, build_moa_budget_tracking
 
 
@@ -53,8 +57,151 @@ def _normalise_float(value):
 
 def _prefetch_entries():
     """Return a queryset with the relations needed across views."""
-    # Use custom manager's with_related() for optimal performance
-    return MonitoringEntry.objects.with_related()
+    queryset = MonitoringEntry.objects.with_related()
+
+    table_name = MonitoringEntry._meta.db_table
+    present_columns = set()
+    try:
+        with connection.cursor() as cursor:
+            description = connection.introspection.get_table_description(
+                cursor, table_name
+            )
+        present_columns = {col.name for col in description}
+    except Exception:  # pragma: no cover - safety for exotic backends
+        present_columns = set()
+
+    missing_field_names = []
+    if present_columns:
+        for field in MonitoringEntry._meta.concrete_fields:
+            column_name = field.column
+            if column_name and column_name not in present_columns:
+                missing_field_names.append(field.name)
+
+    if missing_field_names:
+        queryset = queryset.defer(*missing_field_names)
+
+    # Remove many-to-many relations whose tables are missing from legacy DBs.
+    existing_tables = set()
+    try:
+        existing_tables = set(connection.introspection.table_names())
+    except Exception:  # pragma: no cover - safety guard
+        existing_tables = set()
+
+    if existing_tables:
+        for rel in MonitoringEntry._meta.many_to_many:
+            through_table = rel.remote_field.through._meta.db_table
+            if through_table not in existing_tables:
+                queryset = queryset.prefetch_related(None)
+                break
+
+    return queryset
+
+
+def _build_community_location_payload():
+    """Return serialized community and municipality options for geographic tagging."""
+
+    community_locations: list[dict[str, object]] = []
+    community_queryset = (
+        OBCCommunity.objects.filter(is_active=True)
+        .select_related("barangay__municipality__province__region")
+        .order_by(
+            "barangay__municipality__province__region__code",
+            "barangay__municipality__name",
+            "barangay__name",
+        )
+    )
+
+    for community in community_queryset:
+        barangay = community.barangay
+        municipality = barangay.municipality if barangay else None
+        province = municipality.province if municipality else None
+        region = province.region if province else None
+
+        latitude = _normalise_float(community.latitude)
+        longitude = _normalise_float(community.longitude)
+
+        if latitude is None or longitude is None:
+            latitude, longitude = get_object_centroid(barangay)
+
+        if (latitude is None or longitude is None) and municipality is not None:
+            latitude, longitude = get_object_centroid(municipality)
+
+        if (latitude is None or longitude is None) and province is not None:
+            latitude, longitude = get_object_centroid(province)
+
+        if (latitude is None or longitude is None) and region is not None:
+            latitude, longitude = get_object_centroid(region)
+
+        has_location = latitude is not None and longitude is not None
+
+        community_locations.append(
+            {
+                "id": str(community.pk),
+                "type": "community",
+                "name": community.display_name
+                or (barangay.name if barangay else "OBC"),
+                "latitude": latitude,
+                "longitude": longitude,
+                "barangay_id": str(barangay.pk) if barangay else None,
+                "barangay_name": barangay.name if barangay else "",
+                "municipality_id": str(municipality.pk) if municipality else None,
+                "municipality_name": municipality.name if municipality else "",
+                "province_id": str(province.pk) if province else None,
+                "province_name": province.name if province else "",
+                "region_id": str(region.pk) if region else None,
+                "region_name": region.name if region else "",
+                "full_path": getattr(barangay, "full_path", ""),
+                "has_location": has_location,
+            }
+        )
+
+    municipalities = (
+        Municipality.objects.filter(is_active=True)
+        .select_related("province__region")
+        .order_by("province__region__name", "province__name", "name")
+    )
+
+    for municipality in municipalities:
+        province = municipality.province
+        region = province.region if province else None
+
+        latitude, longitude = get_object_centroid(municipality)
+        has_location = latitude is not None and longitude is not None
+
+        full_path_parts = [municipality.name]
+        if province:
+            full_path_parts.append(province.name)
+
+        community_locations.append(
+            {
+                "id": f"municipality-{municipality.pk}",
+                "type": "municipality",
+                "name": municipality.name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "barangay_id": None,
+                "barangay_name": "",
+                "municipality_id": str(municipality.pk),
+                "municipality_name": municipality.name,
+                "province_id": str(province.pk) if province else None,
+                "province_name": province.name if province else "",
+                "region_id": str(region.pk) if region else None,
+                "region_name": region.name if region else "",
+                "full_path": ", ".join(full_path_parts),
+                "has_location": has_location,
+            }
+        )
+
+    return community_locations
+
+
+def _build_geographic_context(include_barangays: bool = True) -> dict[str, object]:
+    """Return serialized geographic data for coverage widgets."""
+
+    return {
+        "location_data": build_location_data(include_barangays=include_barangays),
+        "community_locations": _build_community_location_payload(),
+    }
 
 
 def _build_workitem_context(entry):
@@ -117,8 +264,14 @@ def _build_workitem_context(entry):
             }
 
     # Get only root-level work items (immediate children of execution_project)
-    # The tree template will recursively load descendants via HTMX
-    root_work_items = execution_project.get_children().select_related("created_by")
+    # The tree template will recursively load descendants via HTMX.
+    root_work_items = (
+        execution_project.get_children()
+        .select_related("created_by", "related_ppa", "implementing_moa")
+        .prefetch_related("assignees", "teams")
+        .annotate(children_count=Count("children"))
+        .order_by("lft")
+    )
 
     context.update(
         {
@@ -143,6 +296,39 @@ def _build_workitem_context(entry):
 
 def _render_workitems_tab(request, entry, *, status=200, triggers=None):
     """Render the Work Items tab partial with refreshed context."""
+    hx_triggers = dict(triggers or {})
+
+    has_orphan_tracking = False
+    if entry.enable_workitem_tracking and not getattr(entry, "execution_project", None):
+        has_orphan_tracking = WorkItem.objects.filter(related_ppa=entry).exists()
+    if (
+        entry.enable_workitem_tracking
+        and not getattr(entry, "execution_project", None)
+        and has_orphan_tracking
+    ):
+        try:
+            entry.ensure_execution_project(
+                created_by=request.user,
+                updated_by=request.user,
+            )
+        except ValidationError as exc:
+            message = "; ".join(exc.messages) if hasattr(exc, "messages") else str(exc)
+            logger.warning(
+                "Unable to regenerate execution project for entry %s: %s",
+                entry.pk,
+                message,
+            )
+            hx_triggers.setdefault("show-toast", message)
+        except Exception:
+            logger.exception(
+                "Unexpected error ensuring execution project for entry %s",
+                entry.pk,
+            )
+            hx_triggers.setdefault(
+                "show-toast",
+                "Unable to refresh the work items hierarchy right now. Please try again.",
+            )
+
     context = {"entry": entry}
     context.update(_build_workitem_context(entry))
 
@@ -152,8 +338,8 @@ def _render_workitems_tab(request, entry, *, status=200, triggers=None):
         context,
         status=status,
     )
-    if triggers:
-        response["HX-Trigger"] = json.dumps(triggers)
+    if hx_triggers:
+        response["HX-Trigger"] = json.dumps(hx_triggers)
     return response
 
 
@@ -166,16 +352,63 @@ def work_items_summary_partial(request, pk):
     """
     entry = get_object_or_404(_prefetch_entries(), pk=pk)
 
+    hx_triggers = {}
+    detail_needs_rebuild = False
+    if entry.enable_workitem_tracking and not getattr(entry, "execution_project", None):
+        detail_needs_rebuild = WorkItem.objects.filter(related_ppa=entry).exists()
+    if (
+        entry.enable_workitem_tracking
+        and not getattr(entry, "execution_project", None)
+        and detail_needs_rebuild
+    ):
+        try:
+            entry.ensure_execution_project(
+                created_by=request.user,
+                updated_by=request.user,
+            )
+        except ValidationError as exc:
+            message = "; ".join(exc.messages) if hasattr(exc, "messages") else str(exc)
+            logger.warning(
+                "Unable to regenerate execution project for entry %s: %s",
+                entry.pk,
+                message,
+            )
+            hx_triggers.setdefault("show-toast", message)
+        except Exception:
+            logger.exception(
+                "Unexpected error ensuring execution project for entry %s",
+                entry.pk,
+            )
+            hx_triggers.setdefault(
+                "show-toast",
+                "Unable to refresh the work items summary right now. Please try again.",
+            )
+
     if not getattr(entry, "execution_project", None):
-        return HttpResponse(status=204)
+        response = HttpResponse(status=204)
+        if hx_triggers:
+            response["HX-Trigger"] = json.dumps(hx_triggers)
+        return response
 
     context = {"entry": entry}
     context.update(_build_workitem_context(entry))
-    return render(
+    response = render(
         request,
         "monitoring/partials/work_items_summary.html",
         context,
     )
+    if hx_triggers:
+        response["HX-Trigger"] = json.dumps(hx_triggers)
+    return response
+
+
+@login_required
+def work_items_tab_partial(request, pk):
+    """
+    HTMX endpoint: Return the full Work Items tab for the given PPA entry.
+    """
+    entry = get_object_or_404(MonitoringEntry, pk=pk)
+    return _render_workitems_tab(request, entry)
 
 
 @login_required
@@ -498,6 +731,40 @@ def monitoring_entry_detail(request, pk):
         special_provision_text = provision_block.strip()
         support_text_clean = additional_support.strip()
 
+    detail_needs_rebuild = False
+    if entry.enable_workitem_tracking and not getattr(entry, "execution_project", None):
+        detail_needs_rebuild = WorkItem.objects.filter(related_ppa=entry).exists()
+    if (
+        entry.enable_workitem_tracking
+        and not getattr(entry, "execution_project", None)
+        and detail_needs_rebuild
+    ):
+        try:
+            entry.ensure_execution_project(
+                created_by=request.user,
+                updated_by=request.user,
+            )
+        except ValidationError as exc:
+            message = "; ".join(exc.messages) if hasattr(exc, "messages") else str(exc)
+            logger.warning(
+                "Unable to regenerate execution project for entry %s on detail view: %s",
+                entry.pk,
+                message,
+            )
+            messages.warning(
+                request,
+                "Work item tracking is temporarily unavailable. Please try again or contact support.",
+            )
+        except Exception:
+            logger.exception(
+                "Unexpected error ensuring execution project for entry %s on detail view",
+                entry.pk,
+            )
+            messages.warning(
+                request,
+                "Work item tracking could not be refreshed automatically. Please try again shortly.",
+            )
+
     workitem_context = _build_workitem_context(entry)
 
     budget_context = {
@@ -552,104 +819,14 @@ def create_moa_entry(request):
         messages.success(request, "MOA PPA logged successfully.")
         return redirect("monitoring:detail", pk=entry.pk)
 
-    community_locations = []
-    community_queryset = (
-        OBCCommunity.objects.filter(is_active=True)
-        .select_related("barangay__municipality__province__region")
-        .order_by(
-            "barangay__municipality__province__region__code",
-            "barangay__municipality__name",
-            "barangay__name",
-        )
-    )
-
-    for community in community_queryset:
-        barangay = community.barangay
-        municipality = barangay.municipality if barangay else None
-        province = municipality.province if municipality else None
-        region = province.region if province else None
-
-        latitude = _normalise_float(community.latitude)
-        longitude = _normalise_float(community.longitude)
-
-        if latitude is None or longitude is None:
-            latitude, longitude = get_object_centroid(barangay)
-
-        if (latitude is None or longitude is None) and municipality is not None:
-            latitude, longitude = get_object_centroid(municipality)
-
-        if (latitude is None or longitude is None) and province is not None:
-            latitude, longitude = get_object_centroid(province)
-
-        if (latitude is None or longitude is None) and region is not None:
-            latitude, longitude = get_object_centroid(region)
-
-        has_location = latitude is not None and longitude is not None
-
-        community_locations.append(
-            {
-                "id": str(community.pk),
-                "type": "community",
-                "name": community.display_name
-                or (barangay.name if barangay else "OBC"),
-                "latitude": latitude,
-                "longitude": longitude,
-                "barangay_id": str(barangay.pk) if barangay else None,
-                "barangay_name": barangay.name if barangay else "",
-                "municipality_id": str(municipality.pk) if municipality else None,
-                "municipality_name": municipality.name if municipality else "",
-                "province_id": str(province.pk) if province else None,
-                "province_name": province.name if province else "",
-                "region_id": str(region.pk) if region else None,
-                "region_name": region.name if region else "",
-                "full_path": getattr(barangay, "full_path", ""),
-                "has_location": has_location,
-            }
-        )
-
-    municipalties = (
-        Municipality.objects.filter(is_active=True)
-        .select_related("province__region")
-        .order_by("province__region__name", "province__name", "name")
-    )
-
-    for municipality in municipalties:
-        province = municipality.province
-        region = province.region if province else None
-
-        latitude, longitude = get_object_centroid(municipality)
-        has_location = latitude is not None and longitude is not None
-
-        full_path_parts = [municipality.name]
-        if province:
-            full_path_parts.append(province.name)
-        community_locations.append(
-            {
-                "id": f"municipality-{municipality.pk}",
-                "type": "municipality",
-                "name": municipality.name,
-                "latitude": latitude,
-                "longitude": longitude,
-                "barangay_id": None,
-                "barangay_name": "",
-                "municipality_id": str(municipality.pk),
-                "municipality_name": municipality.name,
-                "province_id": str(province.pk) if province else None,
-                "province_name": province.name if province else "",
-                "region_id": str(region.pk) if region else None,
-                "region_name": region.name if region else "",
-                "full_path": ", ".join(full_path_parts),
-                "has_location": has_location,
-            }
-        )
+    geographic_context = _build_geographic_context()
 
     return render(
         request,
         "monitoring/create_moa.html",
         {
             "form": form,
-            "location_data": build_location_data(include_barangays=True),
-            "community_locations": community_locations,
+            **geographic_context,
         },
     )
 
@@ -717,23 +894,65 @@ def create_oobc_entry(request):
 def create_request_entry(request):
     """Create view for OBC requests and proposals."""
 
-    form = MonitoringRequestEntryForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        entry = form.save(commit=False)
-        entry.created_by = request.user
-        entry.updated_by = request.user
-        entry.save()
-        form.save_m2m()
-        form._post_save(entry)
-        messages.success(request, "OBC request submitted successfully.")
-        return redirect("monitoring:detail", pk=entry.pk)
+    form = MonitoringRequestEntryForm(
+        request.POST or None,
+        request.FILES or None,
+        user=request.user,
+    )
+
+    form_is_valid = False
+    if request.method == "POST":
+        form_is_valid = form.is_valid()
+        supporting_photos = request.FILES.getlist("supporting_photos")
+        if len(supporting_photos) > 5:
+            form.add_error(None, "You can upload up to 5 supporting photos only.")
+            form_is_valid = False
+
+        if form_is_valid:
+            entry = form.save(commit=False)
+            entry.created_by = request.user
+            entry.updated_by = request.user
+            entry.save()
+            form.save_m2m()
+            form._post_save(entry)
+
+            attachment_specs = [
+                ("requester_id_document", MonitoringRequestAttachment.DOCUMENT_TYPE_REQUESTER_ID),
+                ("letter_of_request", MonitoringRequestAttachment.DOCUMENT_TYPE_REQUEST_LETTER),
+                ("proposal_document", MonitoringRequestAttachment.DOCUMENT_TYPE_PROPOSAL),
+                ("supporting_photos", MonitoringRequestAttachment.DOCUMENT_TYPE_PHOTO),
+                ("other_documents", MonitoringRequestAttachment.DOCUMENT_TYPE_OTHER),
+            ]
+            attachment_labels = {
+                MonitoringRequestAttachment.DOCUMENT_TYPE_REQUESTER_ID: "Scanned ID",
+                MonitoringRequestAttachment.DOCUMENT_TYPE_REQUEST_LETTER: "Letter of Request",
+                MonitoringRequestAttachment.DOCUMENT_TYPE_PROPOSAL: "Written Proposal",
+                MonitoringRequestAttachment.DOCUMENT_TYPE_PHOTO: "Supporting Photo",
+                MonitoringRequestAttachment.DOCUMENT_TYPE_OTHER: "Other Document",
+            }
+
+            for field_name, document_type in attachment_specs:
+                for upload in request.FILES.getlist(field_name):
+                    if not upload:
+                        continue
+                    MonitoringRequestAttachment.objects.create(
+                        entry=entry,
+                        document_type=document_type,
+                        file=upload,
+                        description=attachment_labels.get(document_type, "Supporting Document"),
+                        uploaded_by=request.user,
+                    )
+
+            messages.success(request, "OBC request submitted successfully.")
+            return redirect("monitoring:detail", pk=entry.pk)
+
+    context = {"form": form, "photo_upload_limit": 5}
+    context.update(_build_geographic_context())
 
     return render(
         request,
         "monitoring/create_request.html",
-        {
-            "form": form,
-        },
+        context,
     )
 
 
@@ -990,7 +1209,7 @@ def moa_ppas_dashboard(request):
 
     selected_moa_details = None
     if moa_filter:
-        selected_moa_details = Organization.objects.filter(pk=moa_filter).first()
+        selected_moa_details = get_organization(moa_filter)
 
         if selected_moa_details:
             subtitle_source = next(
@@ -1485,221 +1704,263 @@ def schedule_moa_review(request):
 def oobc_initiatives_dashboard(request):
     """Dedicated dashboard for OOBC Initiatives."""
 
-    oobc_entries = _prefetch_entries().filter(category="oobc_ppa")
+    oobc_org = get_oobc_organization()
     current_year = timezone.now().year
+    today = timezone.now().date()
+    upcoming_window_end = today + timedelta(days=30)
 
-    # Filter for current year entries
-    oobc_year_qs = oobc_entries.filter(
-        Q(start_date__year=current_year)
-        | Q(start_date__isnull=True, created_at__year=current_year)
+    def format_currency(value):
+        amount = Decimal(value or 0)
+        sign = "-" if amount < 0 else ""
+        return f"{sign}₱{abs(amount):,.0f}"
+
+    base_filter = Q(category="oobc_ppa")
+    if oobc_org:
+        base_filter |= Q(category="moa_ppa", implementing_moa=oobc_org)
+
+    oobc_entries = _prefetch_entries().filter(base_filter)
+    oobc_moa_entries = list(oobc_entries.filter(category="moa_ppa"))
+    oobc_entry_ids = list(oobc_entries.values_list("id", flat=True))
+
+    workitem_clauses = []
+    if oobc_org:
+        workitem_clauses.append(Q(implementing_moa=oobc_org))
+    if oobc_entry_ids:
+        workitem_clauses.append(Q(related_ppa_id__in=oobc_entry_ids))
+
+    if workitem_clauses:
+        workitem_scope = workitem_clauses[0]
+        for clause in workitem_clauses[1:]:
+            workitem_scope |= clause
+        all_work_items = (
+            WorkItem.objects.filter(workitem_scope)
+            .select_related("parent", "related_ppa", "implementing_moa", "created_by")
+            .prefetch_related("assignees", "teams")
+            .distinct()
+        )
+    else:
+        all_work_items = WorkItem.objects.none()
+
+    root_work_items = (
+        all_work_items.filter(level=0)
+        .annotate(children_count=Count("children"))
+        .order_by("tree_id", "lft")
     )
 
-    # Statistics cards
     total_oobc_initiatives = oobc_entries.count()
-    total_budget = oobc_entries.aggregate(
-        total=Sum("budget_allocation"), obc_total=Sum("budget_obc_allocation")
+    completed_ppas = oobc_entries.filter(status="completed").count()
+    ongoing_ppas = oobc_entries.filter(status__in=["ongoing", "on_hold"]).count()
+    planning_ppas = oobc_entries.filter(status="planning").count()
+
+    total_budget_allocation = (
+        oobc_entries.aggregate(total=Sum("budget_allocation"))["total"]
+        or Decimal("0.00")
+    )
+    total_obc_budget = (
+        oobc_entries.aggregate(total=Sum("budget_obc_allocation"))["total"]
+        or Decimal("0.00")
     )
 
-    # Community impact
-    total_communities_served = (
-        oobc_entries.exclude(communities__isnull=True).distinct().count()
-    )
-    unique_communities = oobc_entries.values("communities__name").distinct().count()
+    total_work_items = all_work_items.count()
+    workitem_avg_progress = all_work_items.aggregate(avg=Avg("progress"))["avg"] or 0
+    workitem_avg_progress_percent = int(round(float(workitem_avg_progress)))
 
-    # OOBC units analysis
-    oobc_units = (
-        oobc_entries.exclude(oobc_unit="")
-        .values("oobc_unit")
-        .annotate(count=Count("id"))
-        .order_by("-count")[:10]
+    workitem_type_lookup = {
+        row["work_type"]: row["total"]
+        for row in all_work_items.values("work_type").annotate(total=Count("id"))
+    }
+    project_total = (
+        workitem_type_lookup.get(WorkItem.WORK_TYPE_PROJECT, 0)
+        + workitem_type_lookup.get(WorkItem.WORK_TYPE_SUB_PROJECT, 0)
     )
+    activity_total = (
+        workitem_type_lookup.get(WorkItem.WORK_TYPE_ACTIVITY, 0)
+        + workitem_type_lookup.get(WorkItem.WORK_TYPE_SUB_ACTIVITY, 0)
+    )
+    task_total = (
+        workitem_type_lookup.get(WorkItem.WORK_TYPE_TASK, 0)
+        + workitem_type_lookup.get(WorkItem.WORK_TYPE_SUBTASK, 0)
+    )
+
+    workitem_budget_totals = all_work_items.aggregate(
+        allocated=Sum("allocated_budget"), expenditure=Sum("actual_expenditure")
+    )
+    workitem_allocated_budget = (
+        workitem_budget_totals.get("allocated") or Decimal("0.00")
+    )
+    workitem_expenditure = (
+        workitem_budget_totals.get("expenditure") or Decimal("0.00")
+    )
+    budget_gap = total_budget_allocation - workitem_allocated_budget
+    variance_value = workitem_allocated_budget - workitem_expenditure
+    if variance_value < Decimal("0.00"):
+        variance_display = f"-₱{abs(variance_value):,.0f}"
+        variance_class = "text-red-600"
+    elif variance_value > Decimal("0.00"):
+        variance_display = f"+₱{variance_value:,.0f}"
+        variance_class = "text-emerald-600"
+    else:
+        variance_display = "₱0"
+        variance_class = "text-gray-700"
+
+    upcoming_due_items = all_work_items.filter(
+        due_date__isnull=False, due_date__gte=today, due_date__lte=upcoming_window_end
+    ).count()
+    overdue_items = (
+        all_work_items.filter(due_date__isnull=False, due_date__lt=today)
+        .exclude(status=WorkItem.STATUS_COMPLETED)
+        .count()
+    )
+    recently_completed_items = all_work_items.filter(
+        status=WorkItem.STATUS_COMPLETED,
+        completed_at__isnull=False,
+        completed_at__gte=timezone.now() - timedelta(days=30),
+    ).count()
 
     stats_cards = [
         {
-            "title": "Total OOBC Initiatives",
-            "subtitle": f"Office-Led Programs",
-            "icon": "fas fa-hand-holding-heart",            "icon_color": "text-amber-600",  # Total/General - Amber
+            "title": "OOBC PPAs Portfolio",
+            "subtitle": "Combined MOA & OOBC initiatives",
+            "icon": "fas fa-diagram-project",
+            "icon_color": "text-amber-600",
             "total": total_oobc_initiatives,
+            "metric_layout": "grid",
+            "metrics": [
+                {"label": "Completed", "value": completed_ppas},
+                {"label": "Ongoing", "value": ongoing_ppas},
+                {"label": "Planning", "value": planning_ppas},
+            ],
+        },
+        {
+            "title": "Work Item Network",
+            "subtitle": "Projects through subtasks",
+            "icon": "fas fa-layer-group",
+            "icon_color": "text-emerald-600",
+            "total": total_work_items,
+            "metric_layout": "grid",
+            "metrics": [
+                {"label": "Projects", "value": project_total},
+                {"label": "Activities", "value": activity_total},
+                {"label": "Tasks", "value": task_total},
+            ],
+        },
+        {
+            "title": "Budget Alignment",
+            "subtitle": "PPA vs execution budget (PHP)",
+            "icon": "fas fa-peso-sign",
+            "icon_color": "text-sky-600",
+            "total": format_currency(total_budget_allocation),
+            "metric_layout": "vertical",
             "metrics": [
                 {
-                    "label": "Completed",
-                    "value": oobc_entries.filter(status="completed").count(),
+                    "label": "Work Items",
+                    "value": format_currency(workitem_allocated_budget),
                 },
                 {
-                    "label": "Ongoing",
-                    "value": oobc_entries.filter(status="ongoing").count(),
+                    "label": "Expenditure",
+                    "value": format_currency(workitem_expenditure),
                 },
                 {
-                    "label": "Planning",
-                    "value": oobc_entries.filter(status="planning").count(),
+                    "label": "Gap",
+                    "value": format_currency(budget_gap),
                 },
             ],
         },
         {
-            "title": "Budget Investment",
-            "subtitle": f"Program Funding (PHP)",
-            "icon": "fas fa-hand-holding-usd",
-            "icon_color": "text-blue-600",  # Info - Blue
-            
-            "gradient": "from-blue-500 via-blue-600 to-blue-700",
-            "total": f"₱{total_budget['total'] or 0:,.0f}",
+            "title": "Calendar Outlook",
+            "subtitle": "Next 30 days pipeline",
+            "icon": "fas fa-calendar-alt",
+            "icon_color": "text-purple-600",
+            "total": upcoming_due_items,
+            "metric_layout": "grid",
             "metrics": [
+                {"label": "Overdue", "value": overdue_items},
+                {"label": "Completed", "value": recently_completed_items},
                 {
-                    "label": "OBC Budget",
-                    "value": f"₱{total_budget['obc_total'] or 0:,.0f}",
-                },
-                {
-                    "label": "With Budget",
-                    "value": oobc_entries.exclude(
-                        budget_allocation__isnull=True
-                    ).count(),
-                },
-                {
-                    "label": "Pending",
-                    "value": oobc_entries.filter(
-                        budget_allocation__isnull=True
-                    ).count(),
-                },
-            ],
-        },
-        {
-            "title": "Community Impact",
-            "subtitle": f"OBC Communities Served",
-            "icon": "fas fa-users",
-            "icon_color": "text-purple-600",  # Community/Proposed - Purple
-            
-            "gradient": "from-purple-500 via-purple-600 to-purple-700",
-            "total": unique_communities,
-            "metrics": [
-                {"label": "Direct", "value": total_communities_served},
-                {
-                    "label": "Partners",
-                    "value": oobc_entries.exclude(supporting_organizations__isnull=True)
-                    .distinct()
-                    .count(),
-                },
-                {
-                    "label": "Multi-Unit",
-                    "value": oobc_entries.filter(supporting_organizations__isnull=False)
-                    .distinct()
-                    .count(),
-                },
-            ],
-        },
-        {
-            "title": "Implementation Status",
-            "subtitle": f"Progress Overview",
-            "icon": "fas fa-chart-line",
-            "icon_color": "text-emerald-600",  # Success/Progress - Emerald
-            
-            "gradient": "from-orange-500 via-orange-600 to-orange-700",
-            "total": f"{oobc_entries.aggregate(avg=Avg('progress'))['avg'] or 0:.0f}%",
-            "metrics": [
-                {
-                    "label": "High (75%+)",
-                    "value": oobc_entries.filter(progress__gte=75).count(),
-                },
-                {
-                    "label": "Medium",
-                    "value": oobc_entries.filter(
-                        progress__gte=50, progress__lt=75
-                    ).count(),
-                },
-                {
-                    "label": "Low (<50%)",
-                    "value": oobc_entries.filter(progress__lt=50).count(),
+                    "label": "Avg Progress",
+                    "value": f"{workitem_avg_progress_percent}%",
                 },
             ],
         },
     ]
 
-    # Quick actions specific to OOBC Initiatives
+    moa_dashboard_url = reverse("monitoring:moa_ppas")
+    if oobc_org:
+        moa_dashboard_url = f"{moa_dashboard_url}?implementing_moa={oobc_org.id}"
     quick_actions = [
         {
-            "title": "Add New Initiative",
-            "description": "Register a new OOBC-led program or project.",
-            "icon": "fas fa-plus-circle",
+            "title": "Manage OOBC MOA PPAs",
+            "description": "Open the MOA dashboard filtered for OOBC-led PPAs.",
+            "icon": "fas fa-building-columns",
             "color": "bg-emerald-500",
-            "url": reverse("monitoring:create_oobc"),
+            "url": moa_dashboard_url,
         },
         {
-            "title": "Impact Assessment",
-            "description": "Analyze community impact and outcomes.",
-            "icon": "fas fa-chart-bar",
+            "title": "Work Item Directory",
+            "description": "Browse and update the full OOBC work item hierarchy.",
+            "icon": "fas fa-sitemap",
             "color": "bg-blue-500",
-            "url": reverse("monitoring:oobc_impact_report"),
+            "url": reverse("common:work_item_list"),
         },
         {
-            "title": "Unit Performance",
-            "description": "Compare OOBC unit effectiveness.",
-            "icon": "fas fa-trophy",
+            "title": "Create Work Item",
+            "description": "Log a new project, activity, or task under OOBC.",
+            "icon": "fas fa-plus-circle",
             "color": "bg-purple-500",
-            "url": reverse("monitoring:oobc_unit_performance"),
+            "url": reverse("common:work_item_create"),
         },
         {
-            "title": "Export Data",
-            "description": "Export OOBC initiatives to Excel or CSV.",
-            "icon": "fas fa-download",
+            "title": "OOBC Integrated Calendar",
+            "description": "Review upcoming milestones and deadlines across modules.",
+            "icon": "fas fa-calendar-week",
             "color": "bg-indigo-500",
-            "url": reverse("monitoring:export_oobc_data"),
-        },
-        {
-            "title": "Budget Review",
-            "description": "Review budget allocation and utilization.",
-            "icon": "fas fa-calculator",
-            "color": "bg-orange-500",
-            "url": reverse("monitoring:oobc_budget_review"),
-        },
-        {
-            "title": "Community Feedback",
-            "description": "Gather feedback from beneficiary communities.",
-            "icon": "fas fa-comments",
-            "color": "bg-teal-500",
-            "url": reverse("monitoring:oobc_community_feedback"),
+            "url": reverse("common:oobc_calendar"),
         },
     ]
 
-    # Status breakdown
-    status_breakdown = [
-        {
-            "key": item["status"],
-            "label": dict(MonitoringEntry.STATUS_CHOICES).get(
-                item["status"], item["status"]
-            ),
-            "total": item["total"],
-        }
-        for item in (
-            oobc_entries.order_by()
-            .values("status")
-            .annotate(total=Count("id"))
-            .order_by("status")
-        )
-    ]
+    work_items_summary = {
+        "total_work_items": total_work_items,
+        "projects_total": project_total,
+        "activities_total": activity_total,
+        "tasks_total": task_total,
+        "allocated_budget": workitem_allocated_budget,
+        "actual_expenditure": workitem_expenditure,
+        "budget_variance": variance_value,
+        "budget_variance_negative": workitem_allocated_budget < workitem_expenditure,
+        "budget_variance_positive": workitem_allocated_budget > workitem_expenditure,
+        "budget_variance_display": variance_display,
+        "budget_variance_class": variance_class,
+        "avg_progress": workitem_avg_progress_percent,
+        "upcoming_due": upcoming_due_items,
+        "overdue": overdue_items,
+        "recently_completed": recently_completed_items,
+    }
 
-    # Recent updates
-    recent_updates = (
-        MonitoringUpdate.objects.filter(entry__category="oobc_ppa")
-        .select_related("entry", "created_by")
-        .order_by("-created_at")[:10]
+    budget_context = build_moa_budget_tracking(oobc_org, moa_ppas=oobc_moa_entries)
+    work_item_create_url = (
+        f"{reverse('common:work_item_sidebar_create')}?oobc_dashboard=1"
     )
-
-    # Progress snapshot
-    progress_snapshot = oobc_entries.aggregate(
-        avg_progress=Avg("progress"),
-        latest_update=Max("updated_at"),
-    )
-
-    # OOBC units breakdown
-    oobc_units_breakdown = list(oobc_units)
 
     context = {
         "stats_cards": stats_cards,
         "quick_actions": quick_actions,
-        "oobc_entries": oobc_entries.order_by("-updated_at"),
-        "status_breakdown": status_breakdown,
-        "recent_updates": recent_updates,
-        "progress_snapshot": progress_snapshot,
-        "oobc_units_breakdown": oobc_units_breakdown,
+        "work_items_summary": work_items_summary,
+        "work_items": root_work_items,
+        "oobc_org": oobc_org,
+        "oobc_budget_stats": budget_context["moa_budget_stats"],
+        "oobc_budget_ppas": budget_context["moa_ppas"],
+        "work_item_create_url": work_item_create_url,
+        "work_type_choices": WorkItem.WORK_TYPE_CHOICES,
+        "status_choices": WorkItem.STATUS_CHOICES,
+        "priority_choices": WorkItem.PRIORITY_CHOICES,
+        "work_type_filter": "",
+        "status_filter": "",
+        "priority_filter": "",
+        "search_query": "",
+        "calendar_feed_url": reverse("monitoring:oobc_initiatives_calendar_feed"),
+        "total_budget_allocation": total_budget_allocation,
+        "total_obc_budget": total_obc_budget,
+        "avg_progress_percent": workitem_avg_progress_percent,
         "current_year": current_year,
     }
 
@@ -1707,55 +1968,193 @@ def oobc_initiatives_dashboard(request):
 
 
 @login_required
+def oobc_initiatives_calendar_feed(request):
+    """Return FullCalendar events for OOBC initiative work items."""
+
+    oobc_org = get_oobc_organization()
+    base_filter = Q(category="oobc_ppa")
+    if oobc_org:
+        base_filter |= Q(category="moa_ppa", implementing_moa=oobc_org)
+
+    related_ids = list(
+        MonitoringEntry.objects.filter(base_filter).values_list("id", flat=True)
+    )
+
+    workitem_clauses = []
+    if oobc_org:
+        workitem_clauses.append(Q(implementing_moa=oobc_org))
+    if related_ids:
+        workitem_clauses.append(Q(related_ppa_id__in=related_ids))
+
+    if not workitem_clauses:
+        return JsonResponse([], safe=False)
+
+    workitem_scope = workitem_clauses[0]
+    for clause in workitem_clauses[1:]:
+        workitem_scope |= clause
+
+    work_items = (
+        WorkItem.objects.filter(workitem_scope, is_calendar_visible=True)
+        .select_related("related_ppa")
+        .prefetch_related("assignees", "teams")
+        .distinct()
+    )
+
+    color_map = {
+        WorkItem.WORK_TYPE_PROJECT: "#2563eb",
+        WorkItem.WORK_TYPE_SUB_PROJECT: "#1d4ed8",
+        WorkItem.WORK_TYPE_ACTIVITY: "#10b981",
+        WorkItem.WORK_TYPE_SUB_ACTIVITY: "#047857",
+        WorkItem.WORK_TYPE_TASK: "#8b5cf6",
+        WorkItem.WORK_TYPE_SUBTASK: "#f59e0b",
+    }
+
+    events = []
+    for item in work_items:
+        if not item.start_date:
+            continue
+
+        if item.start_time:
+            start_iso = datetime.combine(item.start_date, item.start_time).isoformat()
+        else:
+            start_iso = item.start_date.isoformat()
+
+        if item.due_date:
+            if item.end_time:
+                end_iso = datetime.combine(item.due_date, item.end_time).isoformat()
+            else:
+                end_iso = item.due_date.isoformat()
+        else:
+            end_iso = item.start_date.isoformat()
+
+        events.append(
+            {
+                "id": str(item.id),
+                "title": item.title,
+                "start": start_iso,
+                "end": end_iso,
+                "allDay": not (item.start_time or item.end_time),
+                "backgroundColor": color_map.get(item.work_type, "#6b7280"),
+                "borderColor": color_map.get(item.work_type, "#6b7280"),
+                "textColor": "#ffffff",
+                "url": reverse("common:work_item_detail", kwargs={"pk": item.id}),
+                "extendedProps": {
+                    "work_item_id": str(item.id),
+                    "work_type": item.work_type,
+                    "status": item.status,
+                    "priority": item.priority,
+                    "progress": item.progress,
+                    "ppa_title": item.related_ppa.title if item.related_ppa else "",
+                },
+            }
+        )
+
+    return JsonResponse(events, safe=False)
+
+
+@login_required
 def obc_requests_dashboard(request):
-    """Dedicated dashboard for OBC Requests and Proposals."""
+    """Dedicated dashboard for OBC Requests and Proposals with rich analytics."""
 
-    obc_entries = _prefetch_entries().filter(category="obc_request")
+    base_queryset = _prefetch_entries().filter(category="obc_request")
     current_year = timezone.now().year
+    total_all_requests = base_queryset.count()
 
-    # Filter for current year entries
-    obc_year_qs = obc_entries.filter(Q(created_at__year=current_year))
+    status_filter = request.GET.get("status", "").strip()
+    priority_filter = request.GET.get("priority", "").strip()
+    source_filter = request.GET.get("source", "").strip()
+    organization_filter = request.GET.get("organization", "").strip()
+    disaster_filter = request.GET.get("disaster", "").strip().lower()
+    search_query = request.GET.get("q", "").strip()
 
-    # Statistics cards
-    total_obc_requests = obc_entries.count()
+    filtered_entries = base_queryset
 
-    # Request status analysis
+    if status_filter:
+        filtered_entries = filtered_entries.filter(request_status=status_filter)
+
+    if priority_filter:
+        filtered_entries = filtered_entries.filter(priority=priority_filter)
+
+    if source_filter:
+        filtered_entries = filtered_entries.filter(request_source=source_filter)
+
+    if organization_filter:
+        try:
+            organization_id = int(organization_filter)
+        except (TypeError, ValueError):
+            filtered_entries = filtered_entries.none()
+        else:
+            filtered_entries = filtered_entries.filter(
+                submitted_to_organization__id=organization_id
+            )
+
+    if disaster_filter in {"yes", "no"}:
+        filtered_entries = filtered_entries.filter(
+            is_disaster_related=(disaster_filter == "yes")
+        )
+
+    if search_query:
+        filtered_entries = filtered_entries.filter(
+            Q(title__icontains=search_query)
+            | Q(summary__icontains=search_query)
+            | Q(requester_name__icontains=search_query)
+        )
+
+    filtered_entries = filtered_entries.order_by("-updated_at")
+    filtered_count = filtered_entries.count()
+
+    obc_year_qs = filtered_entries.filter(Q(created_at__year=current_year))
+
     pending_statuses = ["submitted", "under_review", "clarification"]
     in_progress_statuses = ["endorsed", "approved", "in_progress"]
-    completed_requests = obc_entries.filter(request_status="completed").count()
-    pending_requests = obc_entries.filter(request_status__in=pending_statuses).count()
-    active_requests = obc_entries.filter(
-        request_status__in=in_progress_statuses
-    ).count()
 
-    # Priority analysis
-    high_priority = obc_entries.filter(priority="high").count()
-    urgent_priority = obc_entries.filter(priority="urgent").count()
+    completed_requests = filtered_entries.filter(request_status="completed").count()
+    pending_requests = filtered_entries.filter(request_status__in=pending_statuses).count()
+    active_requests = filtered_entries.filter(request_status__in=in_progress_statuses).count()
 
-    # Community analysis
+    high_priority = filtered_entries.filter(priority="high").count()
+    urgent_priority = filtered_entries.filter(priority="urgent").count()
+
     requesting_communities = (
-        obc_entries.exclude(submitted_by_community__isnull=True)
+        filtered_entries.exclude(submitted_by_community__isnull=True)
         .values("submitted_by_community__name")
         .distinct()
         .count()
     )
 
-    # Receiving organizations
     receiving_orgs = (
-        obc_entries.exclude(submitted_to_organization__isnull=True)
+        filtered_entries.exclude(submitted_to_organization__isnull=True)
         .values("submitted_to_organization__name")
         .annotate(count=Count("id"))
         .order_by("-count")[:10]
     )
 
+    estimated_budget_total = (
+        filtered_entries.aggregate(total=Sum("estimated_total_amount")).get("total")
+        or Decimal("0.00")
+    )
+    average_budget = (
+        filtered_entries.aggregate(avg=Avg("estimated_total_amount")).get("avg")
+        or Decimal("0.00")
+    )
+    disaster_related_count = filtered_entries.filter(is_disaster_related=True).count()
+
+    response_rate = 0
+    if filtered_count:
+        response_rate = int(
+            round(
+                float((completed_requests + active_requests) / filtered_count) * 100
+            )
+        )
+
     stats_cards = [
         {
             "title": "Total OBC Requests",
-            "subtitle": f"Community Proposals",
+            "subtitle": f"{filtered_count} shown out of {total_all_requests}",
             "icon": "fas fa-file-signature",
             "icon_color": "text-blue-600",
             "gradient": "from-cyan-500 via-sky-500 to-indigo-500",
-            "total": total_obc_requests,
+            "total": filtered_count,
             "metrics": [
                 {"label": "Completed", "value": completed_requests},
                 {"label": "Active", "value": active_requests},
@@ -1764,7 +2163,7 @@ def obc_requests_dashboard(request):
         },
         {
             "title": "Request Priority",
-            "subtitle": f"Urgency Classification",
+            "subtitle": "Urgency breakdown",
             "icon": "fas fa-exclamation-triangle",
             "icon_color": "text-orange-600",
             "gradient": "from-red-500 via-orange-500 to-yellow-500",
@@ -1774,13 +2173,26 @@ def obc_requests_dashboard(request):
                 {"label": "High", "value": high_priority},
                 {
                     "label": "Standard",
-                    "value": obc_entries.filter(priority__in=["medium", "low"]).count(),
+                    "value": filtered_entries.filter(priority__in=["medium", "low"]).count(),
                 },
             ],
         },
         {
+            "title": "Budget Snapshot",
+            "subtitle": "Estimated allocations",
+            "icon": "fas fa-coins",
+            "icon_color": "text-amber-600",
+            "gradient": "from-amber-500 via-orange-500 to-yellow-500",
+            "total": f"₱{estimated_budget_total:,.2f}",
+            "metrics": [
+                {"label": "Average", "value": f"₱{average_budget:,.0f}"},
+                {"label": "Disaster-related", "value": disaster_related_count},
+                {"label": "Response", "value": f"{response_rate}%"},
+            ],
+        },
+        {
             "title": "Community Participation",
-            "subtitle": f"Requesting Communities",
+            "subtitle": "Requesting communities",
             "icon": "fas fa-mosque",
             "icon_color": "text-emerald-600",
             "gradient": "from-green-500 via-emerald-500 to-teal-500",
@@ -1788,49 +2200,29 @@ def obc_requests_dashboard(request):
             "metrics": [
                 {
                     "label": "Active",
-                    "value": obc_entries.filter(request_status__in=in_progress_statuses)
+                    "value": filtered_entries.filter(request_status__in=in_progress_statuses)
                     .values("submitted_by_community")
                     .distinct()
                     .count(),
                 },
                 {
                     "label": "Pending",
-                    "value": obc_entries.filter(request_status__in=pending_statuses)
+                    "value": filtered_entries.filter(request_status__in=pending_statuses)
                     .values("submitted_by_community")
                     .distinct()
                     .count(),
                 },
                 {
                     "label": "Completed",
-                    "value": obc_entries.filter(request_status="completed")
+                    "value": filtered_entries.filter(request_status="completed")
                     .values("submitted_by_community")
                     .distinct()
                     .count(),
                 },
             ],
         },
-        {
-            "title": "Response Rate",
-            "subtitle": f"Processing Efficiency",
-            "icon": "fas fa-tachometer-alt",
-            "icon_color": "text-purple-600",
-            "gradient": "from-purple-500 via-pink-500 to-rose-500",
-            "total": f"{(completed_requests + active_requests) / max(total_obc_requests, 1) * 100:.0f}%",
-            "metrics": [
-                {"label": "Resolved", "value": completed_requests + active_requests},
-                {
-                    "label": "Under Review",
-                    "value": obc_entries.filter(request_status="under_review").count(),
-                },
-                {
-                    "label": "Awaiting",
-                    "value": obc_entries.filter(request_status="submitted").count(),
-                },
-            ],
-        },
     ]
 
-    # Quick actions specific to OBC Requests
     quick_actions = [
         {
             "title": "Submit New Request",
@@ -1876,7 +2268,6 @@ def obc_requests_dashboard(request):
         },
     ]
 
-    # Request status breakdown
     request_status_breakdown = [
         {
             "key": item["request_status"],
@@ -1886,36 +2277,88 @@ def obc_requests_dashboard(request):
             "total": item["total"],
         }
         for item in (
-            obc_entries.order_by()
+            filtered_entries.order_by()
             .values("request_status")
             .annotate(total=Count("id"))
             .order_by("request_status")
         )
     ]
 
-    # Recent updates
+    source_breakdown = [
+        {
+            "label": dict(MonitoringEntry.REQUEST_SOURCE_CHOICES).get(
+                item["request_source"], "Unspecified"
+            ),
+            "total": item["total"],
+        }
+        for item in (
+            filtered_entries.order_by()
+            .values("request_source")
+            .annotate(total=Count("id"))
+            .order_by("-total")
+        )
+    ]
+
+    priority_breakdown = [
+        {
+            "label": dict(MonitoringEntry.PRIORITY_CHOICES).get(
+                item["priority"], item["priority"]
+            ),
+            "total": item["total"],
+        }
+        for item in (
+            filtered_entries.order_by()
+            .values("priority")
+            .annotate(total=Count("id"))
+            .order_by("-total")
+        )
+    ]
+
     recent_updates = (
         MonitoringUpdate.objects.filter(entry__category="obc_request")
         .select_related("entry", "created_by")
         .order_by("-created_at")[:10]
     )
 
-    # Progress snapshot
     progress_snapshot = {
-        "latest_update": obc_entries.aggregate(latest=Max("updated_at"))["latest"],
+        "latest_update": filtered_entries.aggregate(latest=Max("updated_at"))["latest"],
         "pending_review": pending_requests,
-        "avg_response_days": 7,  # This would be calculated from actual data
+        "avg_response_days": 7,
+    }
+
+    filter_options = {
+        "statuses": MonitoringEntry.REQUEST_STATUS_CHOICES,
+        "priorities": MonitoringEntry.PRIORITY_CHOICES,
+        "sources": MonitoringEntry.REQUEST_SOURCE_CHOICES,
+        "organizations": Organization.objects.order_by("name"),
     }
 
     context = {
         "stats_cards": stats_cards,
         "quick_actions": quick_actions,
-        "obc_entries": obc_entries.order_by("-updated_at"),
+        "obc_entries": filtered_entries,
         "request_status_breakdown": request_status_breakdown,
         "recent_updates": recent_updates,
         "progress_snapshot": progress_snapshot,
         "receiving_orgs": receiving_orgs,
         "current_year": current_year,
+        "estimated_budget_total": estimated_budget_total,
+        "average_budget": average_budget,
+        "response_rate": response_rate,
+        "source_breakdown": source_breakdown,
+        "priority_breakdown": priority_breakdown,
+        "disaster_related_count": disaster_related_count,
+        "filter_options": filter_options,
+        "active_filters": {
+            "status": status_filter,
+            "priority": priority_filter,
+            "source": source_filter,
+            "organization": organization_filter,
+            "disaster": disaster_filter,
+            "query": search_query,
+        },
+        "total_all_requests": total_all_requests,
+        "filtered_count": filtered_count,
     }
 
     return render(request, "monitoring/obc_requests_dashboard.html", context)

@@ -121,11 +121,104 @@ def test_request_entry_form_requires_priority(staff_user, community, organizatio
         data={
             "title": "Community Proposal",
             "summary": "",
+            "request_objectives": "Provide training",
             "submitted_by_community": str(community.pk),
             "submitted_to_organization": str(organization.pk),
-            "status": "planning",
+            "requester_contact_number": "+639171234567",
         }
     )
 
     assert not form.is_valid()
     assert "priority" in form.errors
+
+
+@pytest.mark.django_db
+def test_request_entry_form_validates_alternate_contact(staff_user, community, organization):
+    form = MonitoringRequestEntryForm(
+        data={
+            "title": "Health Outreach",
+            "request_objectives": "Deploy medical team",
+            "submitted_by_community": str(community.pk),
+            "submitted_to_organization": str(organization.pk),
+            "priority": "high",
+            "requester_contact_number": "+639171234567",
+            "requester_alternate_contact_number": "+639171234567",
+        }
+    )
+
+    assert not form.is_valid()
+    assert "requester_alternate_contact_number" in form.errors
+
+
+@pytest.mark.django_db
+def test_request_entry_form_saves_demographics(staff_user, community, organization):
+    form = MonitoringRequestEntryForm(
+        data={
+            "title": "Livelihood Start-up",
+            "request_objectives": "Provide capital support\nLink to markets",
+            "submitted_by_community": str(community.pk),
+            "submitted_to_organization": str(organization.pk),
+            "priority": "urgent",
+            "beneficiary_children_0_9": 45,
+            "beneficiary_women": 30,
+            "beneficiary_organizations_total": 4,
+            "beneficiary_individuals_total": 180,
+            "is_disaster_related": True,
+        }
+    )
+
+    assert form.is_valid(), form.errors
+    entry = form.save(commit=False)
+    entry.created_by = staff_user
+    entry.updated_by = staff_user
+    entry.save()
+    form.save_m2m()
+    form._post_save(entry)
+    entry.refresh_from_db()
+
+    assert entry.request_objectives == ["Provide capital support", "Link to markets"]
+    assert entry.beneficiary_demographics["beneficiary_children_0_9"] == 45
+    assert entry.beneficiary_demographics["beneficiary_women"] == 30
+    assert entry.is_disaster_related is True
+
+
+@pytest.mark.django_db
+def test_request_entry_form_prevents_duplicate_requests(staff_user, community, organization):
+    ppa = MonitoringEntry.objects.create(
+        title="Agricultural Support",
+        category="moa_ppa",
+        implementing_moa=organization,
+        status="planning",
+        progress=0,
+        created_by=staff_user,
+        updated_by=staff_user,
+    )
+
+    existing_request = MonitoringEntry.objects.create(
+        title="Seed Distribution",
+        category="obc_request",
+        submitted_by_community=community,
+        submitted_to_organization=organization,
+        requester_name="Community Leader",
+        status="planning",
+        request_status="submitted",
+        progress=0,
+        created_by=staff_user,
+        updated_by=staff_user,
+    )
+    existing_request.related_ppas.add(ppa)
+
+    form = MonitoringRequestEntryForm(
+        data={
+            "title": "Seed Distribution",
+            "request_objectives": "Secure inputs",
+            "submitted_by_community": str(community.pk),
+            "submitted_to_organization": str(organization.pk),
+            "related_ppas": [str(ppa.pk)],
+            "priority": "high",
+            "requester_name": "Community Leader",
+        }
+    )
+
+    assert not form.is_valid()
+    assert form.non_field_errors()

@@ -1,15 +1,26 @@
 """Forms for coordination module frontend interactions."""
 
+import json
+
 from django import forms
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django.forms import BaseInlineFormSet, inlineformset_factory
 
 from communities.models import OBCCommunity
 from mana.models import Assessment
 
-from common.models import RecurringEventPattern
+from common.models import (
+    Barangay,
+    Municipality,
+    Province,
+    Region,
+    RecurringEventPattern,
+)
+from common.work_item_model import WorkItem
 
 from .models import (
+    CoordinationNote,
     Organization,
     OrganizationContact,
     Partnership,
@@ -23,14 +34,16 @@ from .models import (
 # See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
 
 INPUT_CLASS = (
-    "block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm "
-    "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    "block w-full px-4 py-3 text-base rounded-xl border border-gray-200 bg-white "
+    "shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 "
+    "focus:border-emerald-500 min-h-[48px] transition-all duration-200"
 )
 TEXTAREA_CLASS = (
-    "block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm "
-    "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    "block w-full px-4 py-3 text-base rounded-xl border border-gray-200 bg-white "
+    "shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 "
+    "focus:border-emerald-500 transition-all duration-200"
 )
-CHECKBOX_CLASS = "h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+CHECKBOX_CLASS = "h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
 
 DATE_WIDGET = forms.DateInput(attrs={"type": "date", "class": INPUT_CLASS})
 TIME_WIDGET = forms.TimeInput(attrs={"type": "time", "class": INPUT_CLASS})
@@ -39,12 +52,29 @@ DATETIME_WIDGET = forms.DateTimeInput(
 )
 
 MULTISELECT_CLASS = (
-    "block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm "
-    "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    "block w-full px-4 py-3 text-base rounded-xl border border-gray-200 bg-white "
+    "shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 "
+    "focus:border-emerald-500 min-h-[48px] transition-all duration-200"
 )
 
 User = get_user_model()
 
+COORDINATION_INPUT_CLASS = (
+    "block w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm "
+    "focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] bg-white transition-all duration-200"
+)
+COORDINATION_TEXTAREA_CLASS = (
+    "block w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm "
+    "focus:ring-emerald-500 focus:border-emerald-500 bg-white transition-all duration-200 min-h-[120px]"
+)
+COORDINATION_MULTISELECT_CLASS = (
+    "block w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm "
+    "focus:ring-emerald-500 focus:border-emerald-500 bg-white transition-all duration-200 min-h-[200px]"
+)
+COORDINATION_SELECT_CLASS = (
+    "block w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm "
+    "focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none bg-white transition-all duration-200"
+)
 
 def _apply_field_styles(fields):
     for field in fields.values():
@@ -148,6 +178,32 @@ class PartnershipForm(forms.ModelForm):
         widget=forms.SelectMultiple(attrs={"class": MULTISELECT_CLASS}),
         required=False,
     )
+    coverage_region = forms.ModelChoiceField(
+        queryset=Region.objects.filter(is_active=True).order_by("code", "name"),
+        required=False,
+        label="Region",
+    )
+    coverage_province = forms.ModelChoiceField(
+        queryset=Province.objects.filter(is_active=True)
+        .select_related("region")
+        .order_by("region__name", "name"),
+        required=False,
+        label="Province",
+    )
+    coverage_municipality = forms.ModelChoiceField(
+        queryset=Municipality.objects.filter(is_active=True)
+        .select_related("province__region")
+        .order_by("province__name", "name"),
+        required=False,
+        label="Municipality / City",
+    )
+    coverage_barangay = forms.ModelChoiceField(
+        queryset=Barangay.objects.filter(is_active=True)
+        .select_related("municipality__province__region")
+        .order_by("municipality__name", "name"),
+        required=False,
+        label="Barangay",
+    )
 
     class Meta:
         model = Partnership
@@ -166,19 +222,306 @@ class PartnershipForm(forms.ModelForm):
             "renewal_date": DATE_WIDGET,
         }
 
+
+class CoordinationNoteForm(forms.ModelForm):
+    """Minutes capture form linked to WorkItem coordination activities."""
+
+    work_item = forms.ModelChoiceField(
+        queryset=WorkItem.objects.none(),
+        label="Linked Coordination Activity",
+        widget=forms.Select(
+            attrs={
+                "class": COORDINATION_SELECT_CLASS,
+                "data-placeholder": "Select coordination activity...",
+            }
+        ),
+        help_text="Only activities scheduled on the selected date are shown.",
+    )
+    note_date = forms.DateField(
+        widget=forms.DateInput(
+            attrs={
+                "type": "date",
+                "class": COORDINATION_INPUT_CLASS,
+            }
+        ),
+        help_text="Choose the date of the coordination activity.",
+    )
+    note_time = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(
+            attrs={
+                "type": "time",
+                "class": COORDINATION_INPUT_CLASS,
+            }
+        ),
+        help_text="Optional start time for reference.",
+    )
+    staff_participants = forms.ModelMultipleChoiceField(
+        queryset=User.objects.filter(is_active=True).order_by("first_name", "last_name"),
+        required=False,
+        widget=forms.SelectMultiple(
+            attrs={
+                "class": COORDINATION_MULTISELECT_CLASS,
+            }
+        ),
+        help_text="OOBC staff present or contributing.",
+    )
+    partner_organizations = forms.ModelMultipleChoiceField(
+        queryset=Organization.objects.filter(is_active=True).order_by("name"),
+        required=False,
+        widget=forms.SelectMultiple(
+            attrs={
+                "class": COORDINATION_MULTISELECT_CLASS,
+            }
+        ),
+        help_text="Partner organizations present.",
+    )
+    partnership_agreements = forms.ModelMultipleChoiceField(
+        queryset=Partnership.objects.select_related("lead_organization").order_by(
+            "title"
+        ),
+        required=False,
+        widget=forms.SelectMultiple(
+            attrs={
+                "class": COORDINATION_MULTISELECT_CLASS,
+            }
+        ),
+        help_text="Link relevant partnership agreements discussed.",
+    )
+    coverage_region = forms.ModelChoiceField(
+        queryset=Region.objects.filter(is_active=True).order_by("code", "name"),
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": COORDINATION_SELECT_CLASS,
+                "data-placeholder": "Select region...",
+            }
+        ),
+    )
+    coverage_province = forms.ModelChoiceField(
+        queryset=Province.objects.filter(is_active=True)
+        .select_related("region")
+        .order_by("region__name", "name"),
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": COORDINATION_SELECT_CLASS,
+                "data-placeholder": "Select province...",
+            }
+        ),
+    )
+    coverage_municipality = forms.ModelChoiceField(
+        queryset=Municipality.objects.filter(is_active=True)
+        .select_related("province__region")
+        .order_by("province__name", "name"),
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": COORDINATION_SELECT_CLASS,
+                "data-placeholder": "Select municipality / city...",
+            }
+        ),
+    )
+    coverage_barangay = forms.ModelChoiceField(
+        queryset=Barangay.objects.filter(is_active=True)
+        .select_related("municipality__province__region")
+        .order_by("municipality__name", "name"),
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": COORDINATION_SELECT_CLASS,
+                "data-placeholder": "Select barangay...",
+            }
+        ),
+    )
+    coverage_map_data = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(attrs={"data-coverage-map-state": "true"}),
+    )
+
+    class Meta:
+        model = CoordinationNote
+        fields = [
+            "title",
+            "note_date",
+            "note_time",
+            "work_item",
+            "location_description",
+            "meeting_overview",
+            "key_agenda",
+            "discussion_highlights",
+            "decisions",
+            "action_items",
+            "follow_up_items",
+            "partnership_details",
+            "attachments_links",
+            "additional_notes",
+            "staff_participants",
+            "partner_organizations",
+            "partnership_agreements",
+            "coverage_region",
+            "coverage_province",
+            "coverage_municipality",
+            "coverage_barangay",
+            "coverage_map_data",
+        ]
+        widgets = {
+            "title": forms.TextInput(
+                attrs={
+                    "class": COORDINATION_INPUT_CLASS,
+                    "placeholder": "e.g., Minutes: Provincial Coordination Meeting",
+                }
+            ),
+            "location_description": forms.TextInput(
+                attrs={
+                    "class": COORDINATION_INPUT_CLASS,
+                    "placeholder": "Venue or platform (Zoom, Municipal Hall, etc.)",
+                }
+            ),
+            "meeting_overview": forms.Textarea(
+                attrs={
+                    "class": COORDINATION_TEXTAREA_CLASS,
+                    "rows": 3,
+                    "placeholder": "Summarize the activity objectives and context...",
+                }
+            ),
+            "key_agenda": forms.Textarea(
+                attrs={
+                    "class": COORDINATION_TEXTAREA_CLASS,
+                    "rows": 3,
+                    "placeholder": "List agenda items or talking points...",
+                }
+            ),
+            "discussion_highlights": forms.Textarea(
+                attrs={
+                    "class": COORDINATION_TEXTAREA_CLASS,
+                    "rows": 4,
+                    "placeholder": "Capture main discussion highlights...",
+                }
+            ),
+            "decisions": forms.Textarea(
+                attrs={
+                    "class": COORDINATION_TEXTAREA_CLASS,
+                    "rows": 3,
+                    "placeholder": "Document decisions and agreements...",
+                }
+            ),
+            "action_items": forms.Textarea(
+                attrs={
+                    "class": COORDINATION_TEXTAREA_CLASS,
+                    "rows": 4,
+                    "placeholder": "List action items, responsible leads, and due dates...",
+                }
+            ),
+            "follow_up_items": forms.Textarea(
+                attrs={
+                    "class": COORDINATION_TEXTAREA_CLASS,
+                    "rows": 3,
+                    "placeholder": "Capture follow-up needs, support requests, or upcoming deadlines...",
+                }
+            ),
+            "partnership_details": forms.Textarea(
+                attrs={
+                    "class": COORDINATION_TEXTAREA_CLASS,
+                    "rows": 3,
+                    "placeholder": "Log partnership coordination notes, commitments, or risk flags...",
+                }
+            ),
+            "attachments_links": forms.Textarea(
+                attrs={
+                    "class": COORDINATION_TEXTAREA_CLASS,
+                    "rows": 2,
+                    "placeholder": "Add shared folders, document links, or references...",
+                }
+            ),
+            "additional_notes": forms.Textarea(
+                attrs={
+                    "class": COORDINATION_TEXTAREA_CLASS,
+                    "rows": 3,
+                    "placeholder": "Other remarks or reminders...",
+                }
+            ),
+        }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        _apply_field_styles(self.fields)
-        self.fields["organizations"].queryset = Organization.objects.order_by("name")
-        self.fields["communities"].queryset = OBCCommunity.objects.order_by("name")
-        self.fields["focal_person"].queryset = User.objects.order_by(
-            "first_name", "last_name"
+
+        # Prefilter work items using selected date if provided
+        work_item_qs = WorkItem.objects.filter(
+            work_type=WorkItem.WORK_TYPE_ACTIVITY
+        ).order_by("start_date", "title")
+
+        date_source = self.data.get("note_date") or self.initial.get("note_date")
+        if date_source:
+            try:
+                parsed_date = forms.DateField().to_python(date_source)
+            except (TypeError, ValueError):
+                parsed_date = None
+            if parsed_date:
+                work_item_qs = work_item_qs.filter(
+                    Q(start_date=parsed_date) | Q(due_date=parsed_date)
+                )
+
+        self.fields["work_item"].queryset = work_item_qs
+        self.fields["staff_participants"].widget.attrs.setdefault(
+            "data-searchable", "true"
         )
-        self.fields["backup_focal_person"].queryset = User.objects.order_by(
-            "first_name", "last_name"
+        self.fields["partner_organizations"].widget.attrs.setdefault(
+            "data-searchable", "true"
         )
-        self.fields["focal_person"].required = False
-        self.fields["backup_focal_person"].required = False
+        self.fields["partnership_agreements"].widget.attrs.setdefault(
+            "data-searchable", "true"
+        )
+
+    def clean_work_item(self):
+        work_item = self.cleaned_data.get("work_item")
+        if work_item and work_item.work_type != WorkItem.WORK_TYPE_ACTIVITY:
+            raise forms.ValidationError(
+                "Coordination notes can only be linked to coordination activities."
+            )
+        return work_item
+
+    def clean_coverage_map_data(self):
+        raw = self.cleaned_data.get("coverage_map_data")
+        if not raw:
+            return {}
+        try:
+            payload = json.loads(raw)
+        except (TypeError, ValueError):
+            raise forms.ValidationError("Invalid map data payload.")
+        if not isinstance(payload, dict):
+            raise forms.ValidationError("Coverage map data must be a JSON object.")
+        return payload
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        work_item_qs = (
+            WorkItem.objects.filter(work_type=WorkItem.WORK_TYPE_ACTIVITY)
+            .order_by("start_date", "title")
+        )
+
+        date_source = self.data.get("note_date") or self.initial.get("note_date")
+        if date_source:
+            try:
+                parsed_date = forms.DateField().to_python(date_source)
+            except (TypeError, ValueError):
+                parsed_date = None
+            if parsed_date:
+                work_item_qs = work_item_qs.filter(
+                    Q(start_date=parsed_date) | Q(due_date=parsed_date)
+                )
+
+        self.fields["work_item"].queryset = work_item_qs
+        self.fields["staff_participants"].widget.attrs.setdefault(
+            "data-searchable", "true"
+        )
+        self.fields["partner_organizations"].widget.attrs.setdefault(
+            "data-searchable", "true"
+        )
+        self.fields["partnership_agreements"].widget.attrs.setdefault(
+            "data-searchable", "true"
+        )
 
 
 class PartnershipSignatoryForm(forms.ModelForm):

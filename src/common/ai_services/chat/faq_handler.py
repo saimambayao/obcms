@@ -57,6 +57,8 @@ class FAQHandler:
         self.base_faqs = self._get_base_faqs()
         self.enhanced_faqs = get_all_faqs()  # Load enhanced FAQs from faq_data
         self.pattern_map = PATTERN_TO_FAQ_MAP  # Pre-built pattern map
+        self._legacy_hits_local: Optional[Dict[str, int]] = None
+        self._enhanced_hits_local: Optional[Dict[str, int]] = None
 
     def _get_base_faqs(self) -> Dict[str, Dict]:
         """
@@ -520,16 +522,22 @@ class FAQHandler:
             pattern: The FAQ pattern that was matched
         """
         try:
-            # Get current hits
-            hits = cache.get(self.FAQ_HITS_KEY, {})
+            if self._legacy_hits_local is None:
+                self._legacy_hits_local = cache.get(self.FAQ_HITS_KEY, {}) or {}
 
-            # Increment hit count
+            hits = self._legacy_hits_local
             hits[pattern] = hits.get(pattern, 0) + 1
 
-            # Store back (24h TTL)
-            cache.set(self.FAQ_HITS_KEY, hits, 86400)
+            # Persist less frequently to reduce overhead
+            if hits[pattern] in {1, 3, 5} or hits[pattern] % 10 == 0:
+                cache.set(self.FAQ_HITS_KEY, hits, 86400)
 
-            logger.info(f"FAQ hit tracked: {pattern} (total: {hits[pattern]})")
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(
+                    "FAQ hit tracked: %s (total: %s)",
+                    pattern,
+                    hits[pattern],
+                )
         except Exception as e:
             logger.error(f"Error tracking FAQ hit: {e}")
 
@@ -716,6 +724,11 @@ class FAQHandler:
         """
         legacy_hits = cache.get(self.FAQ_HITS_KEY, {})
         enhanced_hits = cache.get(f"{self.FAQ_HITS_KEY}_enhanced", {})
+        if self._enhanced_hits_local:
+            merged_hits = enhanced_hits.copy()
+            for key, value in self._enhanced_hits_local.items():
+                merged_hits[key] = value
+            enhanced_hits = merged_hits
 
         popular_faqs = []
 
@@ -844,17 +857,23 @@ class FAQHandler:
             faq_id: The enhanced FAQ ID that was matched
         """
         try:
-            # Get current hits for enhanced FAQs
             enhanced_hits_key = f"{self.FAQ_HITS_KEY}_enhanced"
-            hits = cache.get(enhanced_hits_key, {})
+            if self._enhanced_hits_local is None:
+                self._enhanced_hits_local = cache.get(enhanced_hits_key, {}) or {}
 
-            # Increment hit count
+            hits = self._enhanced_hits_local
             hits[faq_id] = hits.get(faq_id, 0) + 1
 
-            # Store back (24h TTL)
-            cache.set(enhanced_hits_key, hits, 86400)
+            # Persist less frequently to reduce overhead
+            if hits[faq_id] in {1, 3, 5} or hits[faq_id] % 10 == 0:
+                cache.set(enhanced_hits_key, hits, 86400)
 
-            logger.info(f"Enhanced FAQ hit tracked: {faq_id} (total: {hits[faq_id]})")
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(
+                    "Enhanced FAQ hit tracked: %s (total: %s)",
+                    faq_id,
+                    hits[faq_id],
+                )
         except Exception as e:
             logger.error(f"Error tracking enhanced FAQ hit: {e}")
 
@@ -866,7 +885,13 @@ class FAQHandler:
             Dict with FAQ stats including enhanced FAQs
         """
         # Legacy FAQ stats
-        legacy_hits = cache.get(self.FAQ_HITS_KEY, {})
+        legacy_hits = cache.get(self.FAQ_HITS_KEY, {}) or {}
+        if self._legacy_hits_local:
+            merged_legacy_hits = legacy_hits.copy()
+            for key, value in self._legacy_hits_local.items():
+                merged_legacy_hits[key] = value
+            legacy_hits = merged_legacy_hits
+            cache.set(self.FAQ_HITS_KEY, legacy_hits, 86400)
         legacy_total_hits = sum(legacy_hits.values())
         legacy_total_faqs = len(self.base_faqs)
         legacy_faqs_with_hits = len([p for p in legacy_hits if legacy_hits[p] > 0])
@@ -874,6 +899,12 @@ class FAQHandler:
         # Enhanced FAQ stats
         enhanced_hits_key = f"{self.FAQ_HITS_KEY}_enhanced"
         enhanced_hits = cache.get(enhanced_hits_key, {})
+        if self._enhanced_hits_local:
+            merged_hits = enhanced_hits.copy()
+            for key, value in self._enhanced_hits_local.items():
+                merged_hits[key] = value
+            enhanced_hits = merged_hits
+            cache.set(enhanced_hits_key, enhanced_hits, 86400)
         enhanced_total_hits = sum(enhanced_hits.values())
         enhanced_total_faqs = len(self.enhanced_faqs)
         enhanced_faqs_with_hits = len([p for p in enhanced_hits if enhanced_hits[p] > 0])

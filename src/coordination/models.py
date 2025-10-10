@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from communities.models import OBCCommunity
 from mana.models import Assessment
-from common.models import Region
+from common.models import Region, Province, Municipality, Barangay
 
 
 def _invalidate_calendar_cache() -> None:
@@ -498,6 +498,152 @@ class ConsultationFeedback(models.Model):
 
     def __str__(self):
         return f"Feedback: {self.topic_area or 'General'} - {self.engagement.title}"
+
+
+class CoordinationNote(models.Model):
+    """Meeting minutes and notes linked to coordination activities (WorkItems)."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    note_date = models.DateField(
+        help_text="Date of the coordination activity or meeting."
+    )
+    note_time = models.TimeField(
+        null=True,
+        blank=True,
+        help_text="Optional start time reference for the meeting.",
+    )
+    work_item = models.ForeignKey(
+        "common.WorkItem",
+        on_delete=models.CASCADE,
+        related_name="coordination_notes",
+        help_text="Linked coordination activity (WorkItem with work_type='activity').",
+    )
+    title = models.CharField(
+        max_length=255,
+        help_text="Subject or title for this coordination note entry.",
+    )
+    location_description = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Venue or location details, if different from the linked activity.",
+    )
+
+    meeting_overview = models.TextField(
+        blank=True,
+        help_text="Objectives or high-level context for the coordination activity.",
+    )
+    key_agenda = models.TextField(
+        blank=True,
+        help_text="Agenda items covered during the meeting.",
+    )
+    discussion_highlights = models.TextField(
+        blank=True,
+        help_text="Key discussion points and insights captured during the session.",
+    )
+    decisions = models.TextField(
+        blank=True,
+        help_text="Decisions or agreements reached.",
+    )
+    action_items = models.TextField(
+        blank=True,
+        help_text="Action items with responsible persons or teams.",
+    )
+    follow_up_items = models.TextField(
+        blank=True,
+        help_text="Follow-up requirements, deadlines, or support needed.",
+    )
+    partnership_details = models.TextField(
+        blank=True,
+        help_text="Specific partnership updates, commitments, or concerns.",
+    )
+    attachments_links = models.TextField(
+        blank=True,
+        help_text="Reference links, shared folders, or document notes.",
+    )
+    additional_notes = models.TextField(
+        blank=True,
+        help_text="Other remarks, observations, or reminders.",
+    )
+
+    staff_participants = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="coordination_notes_participated",
+        help_text="OOBC staff who were present or contributed.",
+    )
+    partner_organizations = models.ManyToManyField(
+        "coordination.Organization",
+        blank=True,
+        related_name="coordination_notes",
+        help_text="Partner organizations present in the activity.",
+    )
+    partnership_agreements = models.ManyToManyField(
+        "coordination.Partnership",
+        blank=True,
+        related_name="coordination_notes",
+        help_text="Related partnership agreements discussed.",
+    )
+
+    coverage_region = models.ForeignKey(
+        Region,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="coordination_notes",
+        help_text="Region covered by this coordination effort.",
+    )
+    coverage_province = models.ForeignKey(
+        Province,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="coordination_notes",
+        help_text="Province covered by this coordination effort.",
+    )
+    coverage_municipality = models.ForeignKey(
+        Municipality,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="coordination_notes",
+        help_text="Municipality or city covered.",
+    )
+    coverage_barangay = models.ForeignKey(
+        Barangay,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="coordination_notes",
+        help_text="Barangay covered, if applicable.",
+    )
+    coverage_map_data = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Serialized map metadata for geographic coverage (pins, bounds).",
+    )
+
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="coordination_notes_recorded",
+        help_text="Staff member who recorded these notes.",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-note_date", "-created_at"]
+        verbose_name = "Coordination Note"
+        verbose_name_plural = "Coordination Notes"
+        indexes = [
+            models.Index(fields=["note_date"]),
+            models.Index(fields=["work_item"]),
+        ]
+
+    def __str__(self):
+        return f"{self.title} ({self.note_date:%b %d, %Y})"
 
 
 class EngagementTracking(models.Model):

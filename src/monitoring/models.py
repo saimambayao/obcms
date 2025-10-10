@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import F, Q, Sum
 
 ZERO_DECIMAL = Decimal("0.00")
@@ -36,12 +36,14 @@ class MonitoringEntryQuerySet(models.QuerySet):
         ).prefetch_related(
             "communities",
             "supporting_organizations",
+            "related_ppas",
             "needs_addressed",
             "implementing_policies",
             "standard_outcome_indicators",
             "funding_flows",
             "workflow_stages",
             "updates",
+            "request_attachments",
         )
 
     def with_funding_totals(self):
@@ -258,6 +260,19 @@ class MonitoringEntry(models.Model):
         ("urgent", "Urgent"),
     ]
 
+    REQUEST_SOURCE_COMMUNITY_USER = "community_user"
+    REQUEST_SOURCE_OOBC_STAFF = "oobc_staff"
+    REQUEST_SOURCE_MOA_FOCAL = "moa_focal"
+    REQUEST_SOURCE_LGU_FOCAL = "lgu_focal"
+    REQUEST_SOURCE_NGA_FOCAL = "nga_focal"
+    REQUEST_SOURCE_CHOICES = [
+        (REQUEST_SOURCE_COMMUNITY_USER, "Verified OBC User"),
+        (REQUEST_SOURCE_OOBC_STAFF, "OOBC Staff"),
+        (REQUEST_SOURCE_MOA_FOCAL, "MOA Focal Person"),
+        (REQUEST_SOURCE_LGU_FOCAL, "LGU Focal Person"),
+        (REQUEST_SOURCE_NGA_FOCAL, "NGA Focal Person"),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(
         max_length=255, help_text="Name of the project, activity, or request"
@@ -265,6 +280,11 @@ class MonitoringEntry(models.Model):
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     summary = models.TextField(
         blank=True, help_text="Overview of objectives, beneficiaries, and scope"
+    )
+    request_objectives = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of objectives or purposes for the request/proposal",
     )
     status = models.CharField(
         max_length=20,
@@ -289,6 +309,41 @@ class MonitoringEntry(models.Model):
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="Overall completion percentage",
     )
+    request_source = models.CharField(
+        max_length=32,
+        choices=REQUEST_SOURCE_CHOICES,
+        blank=True,
+        help_text="Channel that lodged this request (community portal, OOBC staff, MOA/LGU/NGA focal)",
+    )
+    requester_name = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Full name of the requester or proponent",
+    )
+    requester_position = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Designation or role of the requester",
+    )
+    requester_affiliation = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Affiliated organization or community of the requester",
+    )
+    requester_contact_number = models.CharField(
+        max_length=32,
+        blank=True,
+        help_text="Primary contact number for coordination",
+    )
+    requester_alternate_contact_number = models.CharField(
+        max_length=32,
+        blank=True,
+        help_text="Alternate contact number distinct from the primary number",
+    )
+    requester_email = models.EmailField(
+        blank=True,
+        help_text="Email address of the requester",
+    )
     lead_organization = models.ForeignKey(
         "coordination.Organization",
         null=True,
@@ -302,6 +357,14 @@ class MonitoringEntry(models.Model):
         blank=True,
         related_name="supporting_monitoring_entries",
         help_text="Supporting partner organizations",
+    )
+    related_ppas = models.ManyToManyField(
+        "self",
+        blank=True,
+        symmetrical=False,
+        related_name="linked_requests",
+        limit_choices_to={"category__in": ["moa_ppa", "oobc_ppa"]},
+        help_text="Existing PPAs linked to this community request",
     )
     implementing_moa = models.ForeignKey(
         "coordination.Organization",
@@ -587,9 +650,43 @@ class MonitoringEntry(models.Model):
     follow_up_actions = models.TextField(
         blank=True, help_text="Immediate next steps and focal assignments"
     )
+    beneficiary_organizations_total = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Total number of organizational beneficiaries",
+    )
+    beneficiary_individuals_total = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Total number of individual beneficiaries",
+    )
+    beneficiary_description = models.TextField(
+        blank=True,
+        help_text="Narrative description of the intended beneficiaries",
+    )
+    beneficiary_demographics = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Structured demographic disaggregation for beneficiaries",
+    )
     obcs_benefited = models.TextField(
         blank=True,
         help_text="Narrative describing OBC groups that have benefited",
+    )
+    is_disaster_related = models.BooleanField(
+        default=False,
+        help_text="Flag if the request is tied to a disaster or emergency",
+    )
+    estimated_total_amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Estimated total amount required for the request or proposal",
+    )
+    request_notes = models.TextField(
+        blank=True,
+        help_text="Additional notes or validation remarks for the request",
     )
     last_status_update = models.DateField(
         null=True,
@@ -965,6 +1062,10 @@ class MonitoringEntry(models.Model):
         # Validation: Ensure PPA has required data
         if not self.title:
             raise ValidationError("MonitoringEntry must have a title to create execution project.")
+        if self.category == "moa_ppa" and not self.implementing_moa:
+            raise ValidationError(
+                "Implementing MOA must be set before creating an execution project."
+            )
 
         # Get or create system user
         if created_by is None:
@@ -1015,6 +1116,88 @@ class MonitoringEntry(models.Model):
         # service.generate_structure(template=structure_template)
 
         return project
+
+    def ensure_execution_project(
+        self,
+        *,
+        created_by=None,
+        updated_by=None,
+        structure_template='activity',
+        reparent_orphans=True,
+    ):
+        """
+        Ensure an execution project exists for this entry.
+
+        When work item tracking is enabled but the execution project reference
+        was removed (for example, manual deletion or legacy data), this helper
+        recreates the root WorkItem and reattaches any orphaned descendants so
+        the hierarchy renders correctly.
+
+        Args:
+            created_by (User): User credited for the regenerated project.
+            updated_by (User): Optional user recorded on the entry update.
+            structure_template (str): Template passed to creation helper.
+            reparent_orphans (bool): When True, orphaned items are re-parented.
+
+        Returns:
+            WorkItem: The ensured execution project instance.
+        """
+        if self.execution_project:
+            return self.execution_project
+
+        from common.work_item_model import WorkItem
+
+        with transaction.atomic():
+            entry = (
+                self.__class__.objects.select_for_update()
+                .select_related('execution_project')
+                .get(pk=self.pk)
+            )
+
+            if entry.execution_project:
+                self.refresh_from_db(fields=['execution_project'])
+                return self.execution_project
+
+            project = (
+                WorkItem.objects.filter(
+                    related_ppa=entry,
+                    work_type=WorkItem.WORK_TYPE_PROJECT,
+                    parent__isnull=True,
+                )
+                .order_by('-created_at')
+                .first()
+            )
+
+            if not project:
+                project = entry.create_execution_project(
+                    structure_template=structure_template,
+                    created_by=created_by,
+                )
+
+            entry.execution_project = project
+
+            update_fields = ['execution_project', 'updated_at']
+            if not entry.enable_workitem_tracking:
+                entry.enable_workitem_tracking = True
+                update_fields.append('enable_workitem_tracking')
+
+            if updated_by:
+                entry.updated_by = updated_by
+                update_fields.append('updated_by')
+
+            entry.save(update_fields=update_fields)
+
+            if reparent_orphans:
+                orphan_qs = (
+                    WorkItem.objects.filter(related_ppa=entry, parent__isnull=True)
+                    .exclude(pk=project.pk)
+                )
+                for orphan in orphan_qs:
+                    orphan.parent = project
+                    orphan.save()
+
+        self.refresh_from_db(fields=['execution_project', 'enable_workitem_tracking'])
+        return self.execution_project
 
     def disable_workitem_tracking(self, *, delete_project=True, updated_by=None):
         """
@@ -1513,6 +1696,62 @@ class MonitoringEntryFunding(models.Model):
 
     def __str__(self):
         return f"{self.get_tranche_type_display()} - {self.amount}"
+
+
+class MonitoringRequestAttachment(models.Model):
+    """Supporting document uploaded for an OBC request."""
+
+    DOCUMENT_TYPE_REQUESTER_ID = "requester_id"
+    DOCUMENT_TYPE_REQUEST_LETTER = "request_letter"
+    DOCUMENT_TYPE_PROPOSAL = "proposal"
+    DOCUMENT_TYPE_PHOTO = "photo"
+    DOCUMENT_TYPE_OTHER = "other"
+    DOCUMENT_TYPE_CHOICES = [
+        (DOCUMENT_TYPE_REQUESTER_ID, "Requester Identification"),
+        (DOCUMENT_TYPE_REQUEST_LETTER, "Letter of Request"),
+        (DOCUMENT_TYPE_PROPOSAL, "Written Proposal"),
+        (DOCUMENT_TYPE_PHOTO, "Supporting Photo"),
+        (DOCUMENT_TYPE_OTHER, "Other Document"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    entry = models.ForeignKey(
+        MonitoringEntry,
+        on_delete=models.CASCADE,
+        related_name="request_attachments",
+        help_text="Parent OBC request entry",
+    )
+    document_type = models.CharField(
+        max_length=32,
+        choices=DOCUMENT_TYPE_CHOICES,
+        default=DOCUMENT_TYPE_OTHER,
+        help_text="Classification of the supporting document",
+    )
+    file = models.FileField(
+        upload_to="monitoring/request_documents/%Y/%m/",
+        help_text="Upload supporting document file",
+    )
+    description = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Additional notes for this file",
+    )
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="uploaded_request_documents",
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-uploaded_at"]
+        verbose_name = "Request Attachment"
+        verbose_name_plural = "Request Attachments"
+
+    def __str__(self):
+        return f"{self.get_document_type_display()} for {self.entry.title}"
 
 
 class MonitoringEntryWorkflowStage(models.Model):

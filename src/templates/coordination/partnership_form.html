@@ -1,4 +1,11 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+<link rel="stylesheet" href="{% static 'common/css/obc_location_map.css' %}">
+{% endblock %}
 
 {% block title %}{{ page_title|default:"Create Partnership" }} - Coordination System{% endblock %}
 
@@ -34,7 +41,7 @@
         </a>
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="space-y-8" novalidate>
+    <form method="post" enctype="multipart/form-data" class="space-y-8 obc-form" novalidate>
         {% csrf_token %}
 
         {% if form.non_field_errors %}
@@ -52,35 +59,14 @@
             </header>
             <div class="p-6 space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.title.label }}</label>
-                        {{ form.title }}
-                        {% if form.title.help_text %}<p class="mt-1 text-xs text-gray-500">{{ form.title.help_text }}</p>{% endif %}
-                        {% if form.title.errors %}<p class="mt-1 text-sm text-red-600">{{ form.title.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.partnership_type.label }}</label>
-                        {{ form.partnership_type }}
-                        {% if form.partnership_type.errors %}<p class="mt-1 text-sm text-red-600">{{ form.partnership_type.errors|join:' ' }}</p>{% endif %}
-                    </div>
+                    {% include "components/form_field.html" with field=form.title label=form.title.label %}
+                    {% include "components/form_field.html" with field=form.partnership_type label=form.partnership_type.label placeholder="Select partnership type..." %}
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.status.label }}</label>
-                        {{ form.status }}
-                        {% if form.status.errors %}<p class="mt-1 text-sm text-red-600">{{ form.status.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.priority.label }}</label>
-                        {{ form.priority }}
-                        {% if form.priority.errors %}<p class="mt-1 text-sm text-red-600">{{ form.priority.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.progress_percentage.label }}</label>
-                        {{ form.progress_percentage }}
-                        {% if form.progress_percentage.errors %}<p class="mt-1 text-sm text-red-600">{{ form.progress_percentage.errors|join:' ' }}</p>{% endif %}
-                    </div>
+                    {% include "components/form_field.html" with field=form.status label=form.status.label placeholder="Select status..." %}
+                    {% include "components/form_field.html" with field=form.priority label=form.priority.label placeholder="Select priority..." %}
+                    {% include "components/form_field.html" with field=form.progress_percentage label=form.progress_percentage.label %}
                 </div>
             </div>
         </section>
@@ -94,39 +80,102 @@
             </header>
             <div class="p-6 space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.lead_organization.label }}</label>
-                        {{ form.lead_organization }}
-                        {% if form.lead_organization.errors %}<p class="mt-1 text-sm text-red-600">{{ form.lead_organization.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.organizations.label }}</label>
-                        {{ form.organizations }}
-                        {% if form.organizations.help_text %}<p class="mt-1 text-xs text-gray-500">{{ form.organizations.help_text }}</p>{% endif %}
-                        {% if form.organizations.errors %}<p class="mt-1 text-sm text-red-600">{{ form.organizations.errors|join:' ' }}</p>{% endif %}
-                    </div>
+                    {% include "components/form_field.html" with field=form.lead_organization label=form.lead_organization.label placeholder="Select lead organization..." %}
+                    {% include "components/form_field.html" with field=form.organizations label=form.organizations.label placeholder="Select supporting organizations..." %}
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.communities.label }}</label>
-                        {{ form.communities }}
-                        {% if form.communities.help_text %}<p class="mt-1 text-xs text-gray-500">{{ form.communities.help_text }}</p>{% endif %}
-                        {% if form.communities.errors %}<p class="mt-1 text-sm text-red-600">{{ form.communities.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.focal_person.label }}</label>
-                            {{ form.focal_person }}
-                            {% if form.focal_person.errors %}<p class="mt-1 text-sm text-red-600">{{ form.focal_person.errors|join:' ' }}</p>{% endif %}
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.backup_focal_person.label }}</label>
-                            {{ form.backup_focal_person }}
-                            {% if form.backup_focal_person.errors %}<p class="mt-1 text-sm text-red-600">{{ form.backup_focal_person.errors|join:' ' }}</p>{% endif %}
-                        </div>
-                    </div>
+                    {% include "components/form_field.html" with field=form.focal_person label=form.focal_person.label placeholder="Select primary focal person..." %}
+                    {% include "components/form_field.html" with field=form.backup_focal_person label=form.backup_focal_person.label placeholder="Select alternate focal person..." %}
                 </div>
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-map-marker-alt mr-3"></i>
+                    Geographic Coverage
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="space-y-6" id="coverage-rows">
+                    <div class="space-y-4" data-coverage-row="primary">
+                        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                            {% include "components/form_field.html" with field=form.coverage_region label="Region" placeholder="Select region..." %}
+                            {% include "components/form_field.html" with field=form.coverage_province label="Province" placeholder="Select province..." %}
+                            {% include "components/form_field.html" with field=form.coverage_municipality label="Municipality / City" placeholder="Select municipality / city..." %}
+                            {% include "components/form_field.html" with field=form.coverage_barangay label="Barangay" placeholder="Select barangay..." %}
+                        </div>
+                        <div class="obc-map-container" data-coverage-map="primary" data-obc-map data-mode="coverage" data-region-field="id_coverage_region" data-province-field="id_coverage_province" data-municipality-field="id_coverage_municipality" data-barangay-field="id_coverage_barangay" data-location-script="location-data" data-centroid-url="{% url 'common:location_centroid' %}">
+                            <div class="obc-map-header">
+                                <h3 class="flex items-center gap-2 text-neutral-800"><i class="fas fa-map-marked-alt text-emerald-500"></i>Coverage Map</h3>
+                                <span class="obc-map-status"><i class="fas fa-crosshairs"></i>Select a location to drop a pin</span>
+                            </div>
+                            <div class="obc-map-canvas" data-obc-map-target></div>
+                            <div class="obc-map-footer">
+                                Pins update automatically when you choose a barangay or municipality.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-4" id="additional-coverage-rows" data-min-rows="1"></div>
+                </div>
+
+                <template id="coverage-row-template">
+                    <div class="space-y-4" data-coverage-row>
+                        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Region</label>
+                                <select data-field="region" data-placeholder="Select region..." class="block w-full px-4 py-3 text-base rounded-xl border border-gray-200 bg-white shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200"></select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Province</label>
+                                <select data-field="province" data-placeholder="Select province..." class="block w-full px-4 py-3 text-base rounded-xl border border-gray-200 bg-white shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200"></select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Municipality / City</label>
+                                <select data-field="municipality" data-placeholder="Select municipality / city..." class="block w-full px-4 py-3 text-base rounded-xl border border-gray-200 bg-white shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200"></select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Barangay</label>
+                                <select data-field="barangay" data-placeholder="Select barangay..." class="block w-full px-4 py-3 text-base rounded-xl border border-gray-200 bg-white shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200"></select>
+                            </div>
+                        </div>
+                        <div class="obc-map-container" data-coverage-map data-obc-map data-mode="coverage" data-location-script="location-data" data-centroid-url="{% url 'common:location_centroid' %}">
+                            <div class="obc-map-header">
+                                <h3 class="flex items-center gap-2 text-neutral-800"><i class="fas fa-map-marked-alt text-emerald-500"></i>Coverage Map</h3>
+                                <span class="obc-map-status"><i class="fas fa-crosshairs"></i>Select a location to drop a pin</span>
+                            </div>
+                            <div class="obc-map-canvas" data-obc-map-target></div>
+                            <div class="obc-map-footer">
+                                Pins update automatically when you choose a barangay or municipality.
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="button" class="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-red-500" data-action="remove-row">
+                                <i class="fas fa-times"></i>
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <button type="button" id="add-coverage-row" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
+                        <i class="fas fa-plus"></i>
+                        Add Coverage Area
+                    </button>
+                    <button type="button" id="save-obc-locations" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
+                        <i class="fas fa-save"></i>
+                        Save Coverage
+                    </button>
+                </div>
+
+                <div style="display:none" aria-hidden="true">
+                    {{ form.communities }}
+                </div>
+
+                <p class="text-sm text-gray-500">Select barangays or municipalities to maintain the list of OBC communities covered by this partnership.</p>
             </div>
         </section>
 
@@ -139,39 +188,15 @@
             </header>
             <div class="p-6 space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.concept_date.label }}</label>
-                        {{ form.concept_date }}
-                        {% if form.concept_date.errors %}<p class="mt-1 text-sm text-red-600">{{ form.concept_date.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.negotiation_start_date.label }}</label>
-                        {{ form.negotiation_start_date }}
-                        {% if form.negotiation_start_date.errors %}<p class="mt-1 text-sm text-red-600">{{ form.negotiation_start_date.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.signing_date.label }}</label>
-                        {{ form.signing_date }}
-                        {% if form.signing_date.errors %}<p class="mt-1 text-sm text-red-600">{{ form.signing_date.errors|join:' ' }}</p>{% endif %}
-                    </div>
+                    {% include "components/form_field.html" with field=form.concept_date label=form.concept_date.label %}
+                    {% include "components/form_field.html" with field=form.negotiation_start_date label=form.negotiation_start_date.label %}
+                    {% include "components/form_field.html" with field=form.signing_date label=form.signing_date.label %}
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.start_date.label }}</label>
-                        {{ form.start_date }}
-                        {% if form.start_date.errors %}<p class="mt-1 text-sm text-red-600">{{ form.start_date.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.end_date.label }}</label>
-                        {{ form.end_date }}
-                        {% if form.end_date.errors %}<p class="mt-1 text-sm text-red-600">{{ form.end_date.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.renewal_date.label }}</label>
-                        {{ form.renewal_date }}
-                        {% if form.renewal_date.errors %}<p class="mt-1 text-sm text-red-600">{{ form.renewal_date.errors|join:' ' }}</p>{% endif %}
-                    </div>
+                    {% include "components/form_field.html" with field=form.start_date label=form.start_date.label %}
+                    {% include "components/form_field.html" with field=form.end_date label=form.end_date.label %}
+                    {% include "components/form_field.html" with field=form.renewal_date label=form.renewal_date.label %}
                 </div>
             </div>
         </section>
@@ -184,21 +209,9 @@
                 </h2>
             </header>
             <div class="p-6 space-y-6">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.description.label }}</label>
-                    {{ form.description }}
-                    {% if form.description.errors %}<p class="mt-1 text-sm text-red-600">{{ form.description.errors|join:' ' }}</p>{% endif %}
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.objectives.label }}</label>
-                    {{ form.objectives }}
-                    {% if form.objectives.errors %}<p class="mt-1 text-sm text-red-600">{{ form.objectives.errors|join:' ' }}</p>{% endif %}
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.scope.label }}</label>
-                    {{ form.scope }}
-                    {% if form.scope.errors %}<p class="mt-1 text-sm text-red-600">{{ form.scope.errors|join:' ' }}</p>{% endif %}
-                </div>
+                {% include "components/form_field.html" with field=form.description label=form.description.label %}
+                {% include "components/form_field.html" with field=form.objectives label=form.objectives.label %}
+                {% include "components/form_field.html" with field=form.scope label=form.scope.label %}
             </div>
         </section>
 
@@ -211,34 +224,14 @@
             </header>
             <div class="p-6 space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.total_budget.label }}</label>
-                        {{ form.total_budget }}
-                        {% if form.total_budget.errors %}<p class="mt-1 text-sm text-red-600">{{ form.total_budget.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.oobc_contribution.label }}</label>
-                        {{ form.oobc_contribution }}
-                        {% if form.oobc_contribution.errors %}<p class="mt-1 text-sm text-red-600">{{ form.oobc_contribution.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.partner_contribution.label }}</label>
-                        {{ form.partner_contribution }}
-                        {% if form.partner_contribution.errors %}<p class="mt-1 text-sm text-red-600">{{ form.partner_contribution.errors|join:' ' }}</p>{% endif %}
-                    </div>
+                    {% include "components/form_field.html" with field=form.total_budget label=form.total_budget.label %}
+                    {% include "components/form_field.html" with field=form.oobc_contribution label=form.oobc_contribution.label %}
+                    {% include "components/form_field.html" with field=form.partner_contribution label=form.partner_contribution.label %}
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.document_number.label }}</label>
-                        {{ form.document_number }}
-                        {% if form.document_number.errors %}<p class="mt-1 text-sm text-red-600">{{ form.document_number.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.legal_reference.label }}</label>
-                        {{ form.legal_reference }}
-                        {% if form.legal_reference.errors %}<p class="mt-1 text-sm text-red-600">{{ form.legal_reference.errors|join:' ' }}</p>{% endif %}
-                    </div>
+                    {% include "components/form_field.html" with field=form.document_number label=form.document_number.label %}
+                    {% include "components/form_field.html" with field=form.legal_reference label=form.legal_reference.label %}
                 </div>
             </div>
         </section>
@@ -252,55 +245,23 @@
             </header>
             <div class="p-6 space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.key_performance_indicators.label }}</label>
-                        {{ form.key_performance_indicators }}
-                        {% if form.key_performance_indicators.errors %}<p class="mt-1 text-sm text-red-600">{{ form.key_performance_indicators.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.communication_plan.label }}</label>
-                        {{ form.communication_plan }}
-                        {% if form.communication_plan.errors %}<p class="mt-1 text-sm text-red-600">{{ form.communication_plan.errors|join:' ' }}</p>{% endif %}
-                    </div>
+                    {% include "components/form_field.html" with field=form.key_performance_indicators label=form.key_performance_indicators.label %}
+                    {% include "components/form_field.html" with field=form.communication_plan label=form.communication_plan.label %}
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.expected_outcomes.label }}</label>
-                        {{ form.expected_outcomes }}
-                        {% if form.expected_outcomes.errors %}<p class="mt-1 text-sm text-red-600">{{ form.expected_outcomes.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.actual_outcomes.label }}</label>
-                        {{ form.actual_outcomes }}
-                        {% if form.actual_outcomes.errors %}<p class="mt-1 text-sm text-red-600">{{ form.actual_outcomes.errors|join:' ' }}</p>{% endif %}
-                    </div>
+                    {% include "components/form_field.html" with field=form.expected_outcomes label=form.expected_outcomes.label %}
+                    {% include "components/form_field.html" with field=form.actual_outcomes label=form.actual_outcomes.label %}
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.lessons_learned.label }}</label>
-                        {{ form.lessons_learned }}
-                        {% if form.lessons_learned.errors %}<p class="mt-1 text-sm text-red-600">{{ form.lessons_learned.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.reporting_requirements.label }}</label>
-                        {{ form.reporting_requirements }}
-                        {% if form.reporting_requirements.errors %}<p class="mt-1 text-sm text-red-600">{{ form.reporting_requirements.errors|join:' ' }}</p>{% endif %}
-                    </div>
+                    {% include "components/form_field.html" with field=form.lessons_learned label=form.lessons_learned.label %}
+                    {% include "components/form_field.html" with field=form.reporting_requirements label=form.reporting_requirements.label %}
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.risks_identified.label }}</label>
-                        {{ form.risks_identified }}
-                        {% if form.risks_identified.errors %}<p class="mt-1 text-sm text-red-600">{{ form.risks_identified.errors|join:' ' }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.mitigation_strategies.label }}</label>
-                        {{ form.mitigation_strategies }}
-                        {% if form.mitigation_strategies.errors %}<p class="mt-1 text-sm text-red-600">{{ form.mitigation_strategies.errors|join:' ' }}</p>{% endif %}
-                    </div>
+                    {% include "components/form_field.html" with field=form.risks_identified label=form.risks_identified.label %}
+                    {% include "components/form_field.html" with field=form.mitigation_strategies label=form.mitigation_strategies.label %}
                 </div>
             </div>
         </section>
@@ -322,21 +283,9 @@
                     <p class="text-sm text-red-600">{{ form.is_renewable.errors|join:' ' }}</p>
                     {% endif %}
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.renewal_criteria.label }}</label>
-                    {{ form.renewal_criteria }}
-                    {% if form.renewal_criteria.errors %}<p class="mt-1 text-sm text-red-600">{{ form.renewal_criteria.errors|join:' ' }}</p>{% endif %}
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.termination_clause.label }}</label>
-                    {{ form.termination_clause }}
-                    {% if form.termination_clause.errors %}<p class="mt-1 text-sm text-red-600">{{ form.termination_clause.errors|join:' ' }}</p>{% endif %}
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.notes.label }}</label>
-                    {{ form.notes }}
-                    {% if form.notes.errors %}<p class="mt-1 text-sm text-red-600">{{ form.notes.errors|join:' ' }}</p>{% endif %}
-                </div>
+                {% include "components/form_field.html" with field=form.renewal_criteria label=form.renewal_criteria.label %}
+                {% include "components/form_field.html" with field=form.termination_clause label=form.termination_clause.label %}
+                {% include "components/form_field.html" with field=form.notes label=form.notes.label %}
             </div>
         </section>
 
@@ -501,4 +450,26 @@
         setupDynamicFormset('documents', 'Document');
     });
 </script>
+{% block extra_js %}
+{{ block.super }}
+{{ location_data|json_script:"location-data" }}
+{{ community_locations|json_script:"community-locations" }}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'common/js/obc_location_map.js' %}"></script>
+<script src="{% static 'common/js/obc_geographic_coverage.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    dateInputs.forEach(input => {
+        const showCalendar = () => {
+            if (typeof input.showPicker === 'function') {
+                input.showPicker();
+            }
+        };
+        input.addEventListener('focus', showCalendar);
+        input.addEventListener('click', showCalendar);
+    });
+});
+</script>
+{% endblock %}
 {% endblock %}

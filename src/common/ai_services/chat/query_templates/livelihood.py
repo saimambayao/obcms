@@ -150,7 +150,7 @@ LIVELIHOOD_TEMPLATES = [
     QueryTemplate(
         id='list_livelihood_challenges',
         category='livelihood',
-        pattern=r'\b(what|show|list|common)\s+(are\s*)?(the\s*)?(livelihood\s*)?(challenges|problems|issues|difficulties)',
+        pattern=r'\b(what|show|list|common)\s+(are\s*)?(the\s*)?(common\s*)?(livelihood\s*)?(challenges|problems|issues|difficulties)\b',
         query_template="CommunityLivelihood.objects.exclude(challenges='').values('livelihood_type', 'challenges', 'community__barangay__name').order_by('livelihood_type')",
         required_entities=[],
         optional_entities=[],

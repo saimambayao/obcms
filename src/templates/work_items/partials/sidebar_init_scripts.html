@@ -1,0 +1,291 @@
+<script>
+(function() {
+    'use strict';
+
+    // ============================================================================
+    // TOAST NOTIFICATION SYSTEM
+    // ============================================================================
+
+    function showToast(message, level = 'info') {
+        const existingToast = document.getElementById('work-item-toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
+
+        const toast = document.createElement('div');
+        toast.id = 'work-item-toast';
+        toast.className = 'fixed top-20 right-4 z-[9999] px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-300 ease-out';
+
+        const colors = {
+            success: 'bg-emerald-600 text-white',
+            error: 'bg-red-600 text-white',
+            warning: 'bg-amber-600 text-white',
+            info: 'bg-blue-600 text-white'
+        };
+
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-times-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
+
+        toast.className += ' ' + (colors[level] || colors.info);
+
+        toast.innerHTML = `
+            <div class="flex items-center gap-3">
+                <i class="fas ${icons[level] || icons.info} text-xl"></i>
+                <span class="font-medium">${message}</span>
+                <button onclick="this.closest('#work-item-toast').remove()" class="ml-4 text-white/80 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(toast);
+        setTimeout(() => toast.style.transform = 'translateY(0)', 10);
+
+        setTimeout(() => {
+            toast.style.transform = 'translateY(-100%)';
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
+    document.body.addEventListener('showToast', function(event) {
+        const { message, level } = event.detail || {};
+        if (!message) {
+            return;
+        }
+        showToast(message, level);
+    });
+
+    console.log('✅ Toast notification system initialized');
+
+    // ============================================================================
+    // SIDEBAR PANEL FUNCTIONALITY
+    // ============================================================================
+
+    window.openSidebar = function() {
+        const sidebar = document.getElementById('work-item-sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+
+        if (sidebar && backdrop) {
+            sidebar.classList.remove('translate-x-full');
+            backdrop.classList.remove('opacity-0', 'pointer-events-none');
+            backdrop.classList.add('opacity-100', 'pointer-events-auto');
+            console.log('[Sidebar] Opened');
+        }
+    };
+
+    window.openSidebarAndLoad = function(button) {
+        openSidebar();
+
+        const url = button.getAttribute('data-hx-get');
+        const target = button.getAttribute('data-hx-target');
+
+        if (!url || !target) {
+            console.error('[Sidebar] Missing data-hx-get or data-hx-target attribute');
+            return;
+        }
+
+        setTimeout(() => {
+            htmx.ajax('GET', url, {
+                target: target,
+                swap: 'innerHTML'
+            });
+        }, 50);
+    };
+
+    window.closeSidebar = function() {
+        const sidebar = document.getElementById('work-item-sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+
+        if (sidebar && backdrop) {
+            sidebar.classList.add('translate-x-full');
+            backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+            backdrop.classList.add('opacity-0', 'pointer-events-none');
+            console.log('[Sidebar] Closed');
+        }
+    };
+
+    window.handleWorkItemEditClick = function(button) {
+        const editUrl = button.dataset.editUrl;
+        const workItemId = button.dataset.workItemId;
+
+        if (!editUrl) {
+            console.error('[Work Item Edit] No edit URL found on button');
+            showToast('Missing edit URL', 'error');
+            return;
+        }
+
+        const ppaSidebar = document.getElementById('ppa-sidebar-content');
+        const workItemsSidebar = document.getElementById('sidebar-content');
+        const calendarPanel = document.getElementById('detailPanelBody');
+
+        let targetId = 'sidebar-content';
+        let targetElement = null;
+
+        if (ppaSidebar && ppaSidebar.contains(button)) {
+            targetId = 'ppa-sidebar-content';
+            targetElement = ppaSidebar;
+            console.log('[Work Item Edit] Detected PPA sidebar container');
+        } else if (workItemsSidebar && workItemsSidebar.contains(button)) {
+            targetId = 'sidebar-content';
+            targetElement = workItemsSidebar;
+            console.log('[Work Item Edit] Detected Work Items sidebar container');
+        } else if (calendarPanel && calendarPanel.contains(button)) {
+            targetId = 'detailPanelBody';
+            targetElement = calendarPanel;
+            console.log('[Work Item Edit] Detected Calendar panel container');
+        } else {
+            console.warn('[Work Item Edit] Could not detect sidebar container, using default');
+            targetElement = document.getElementById(targetId);
+        }
+
+        if (!targetElement) {
+            console.error('[Work Item Edit] Could not find target element for edit form');
+            showToast('Failed to locate edit container', 'error');
+            return;
+        }
+
+        targetElement.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-10 text-gray-500">
+                <i class="fas fa-spinner fa-spin text-2xl mb-3"></i>
+                <p class="text-sm font-medium">Loading edit form...</p>
+            </div>
+        `;
+
+        htmx.ajax('GET', editUrl, {
+            target: `#${targetId}`,
+            swap: 'innerHTML'
+        }).then(() => {
+            console.log('[Work Item Edit] Edit form loaded');
+        }).catch(error => {
+            console.error('[Work Item Edit] Failed to load edit form', error);
+            showToast('Failed to load edit form', 'error');
+        });
+    };
+
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        const target = event.detail.target;
+        if (!target) {
+            return;
+        }
+
+        if (target.id === 'sidebar-content') {
+            console.log('[Sidebar] Content loaded');
+            htmx.process(target);
+        }
+
+        const form = target.querySelector && target.querySelector('form[hx-post]');
+        if (!form || form.dataset.hxManualSubmit === 'true') {
+            return;
+        }
+
+        const requiresManualSubmit = !!form.querySelector('input[name=\"implementing_moa\"]');
+        if (!requiresManualSubmit) {
+            return;
+        }
+
+        form.dataset.hxManualSubmit = 'true';
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const url = form.getAttribute('hx-post');
+            const swapTarget = form.getAttribute('hx-target') || `#${target.id}`;
+            const swapStyle = form.getAttribute('hx-swap') || 'innerHTML';
+            const values = Object.fromEntries(new FormData(form).entries());
+
+            htmx.ajax('POST', url, {
+                target: swapTarget,
+                swap: swapStyle,
+                values: values
+            });
+        });
+    });
+
+    document.body.addEventListener('htmx:beforeSwap', function(event) {
+        const target = event.detail.target;
+        if (!target) {
+            return;
+        }
+
+        const targetId = target.id || '';
+        const isSidebarTarget =
+            targetId === 'sidebar-content' ||
+            targetId === 'ppa-sidebar-content' ||
+            targetId.endsWith('detailPanelBody');
+
+        if (!isSidebarTarget) {
+            return;
+        }
+
+        const status = event.detail.xhr.status;
+
+        if (status === 204) {
+            const formEl = target.querySelector('form[data-close-action]');
+            const closeAction = formEl ? formEl.dataset.closeAction : null;
+            if (!executeCloseAction(closeAction)) {
+                closeSidebar();
+            }
+            event.detail.shouldSwap = false;
+            return;
+        }
+
+        if (status >= 200 && status < 300) {
+            return;
+        }
+
+        console.error('[Sidebar] HTMX request failed', {
+            status,
+            response: event.detail.xhr.responseText
+        });
+
+        showToast('Failed to load content. Please try again.', 'error');
+        event.detail.shouldSwap = false;
+    });
+
+    function executeCloseAction(explicitAction) {
+        const actionName = explicitAction
+            || document.querySelector('form[data-close-action]')?.dataset.closeAction;
+
+        if (actionName && typeof window[actionName] === 'function') {
+            try {
+                window[actionName]();
+                return true;
+            } catch (error) {
+                console.error('[Sidebar] Failed to execute close action', actionName, error);
+            }
+        }
+        return false;
+    }
+
+    document.body.addEventListener('closeDetailPanel', function() {
+        if (!executeCloseAction('closeDetailPanel')) {
+            if (typeof window.closeDetailPanel === 'function') {
+                window.closeDetailPanel();
+            } else {
+                closeSidebar();
+            }
+        }
+    });
+
+    document.body.addEventListener('closePPASidebar', function() {
+        if (!executeCloseAction('closePPASidebar')) {
+            if (typeof window.closePPASidebar === 'function') {
+                window.closePPASidebar();
+            } else {
+                closeSidebar();
+            }
+        }
+    });
+
+    document.body.addEventListener('closeSidebar', function() {
+        if (!executeCloseAction('closeSidebar')) {
+            closeSidebar();
+        }
+    });
+
+    console.log('✅ Sidebar panel functionality initialized');
+})();
+</script>

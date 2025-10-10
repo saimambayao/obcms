@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+<link rel="stylesheet" href="{% static 'common/css/obc_location_map.css' %}">
+{% endblock %}
+
+{% block title %}Coordination Notes{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:coordination_home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Coordination Notes</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <header class="rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-500 text-white shadow-xl p-6">
+        <div class="flex items-center gap-4">
+            <span class="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center text-3xl"><i class="fas fa-clipboard-list"></i></span>
+            <div>
+                <h1 class="text-3xl font-semibold">Coordination Notes</h1>
+                <p class="text-white/80">Capture minutes, decisions, and partner attendance for coordination activities.</p>
+            </div>
+        </div>
+    </header>
+
+    <form method="post" id="coordination-note-form" class="space-y-8">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="rounded-xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3">
+            <p class="font-semibold">Please resolve the following:</p>
+            <ul class="list-disc list-inside text-sm mt-2 space-y-1">
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg"><i class="fas fa-calendar-alt"></i></span>
+                <div>
+                    <h2 class="text-xl font-semibold text-neutral-900">Meeting Details</h2>
+                    <p class="text-sm text-neutral-500">Select the activity date first to filter the coordination work items automatically.</p>
+                </div>
+            </div>
+            <div class="grid gap-6 md:grid-cols-2">
+                {% include "components/form_field.html" with field=form.note_date label="Coordination Date" %}
+                {% include "components/form_field.html" with field=form.note_time label="Start Time (optional)" %}
+            </div>
+            <div class="grid gap-6 md:grid-cols-2">
+                {% include "components/form_field_select.html" with field=form.work_item label="Linked Coordination Activity" placeholder="Select coordination activity..." help_text="Only WorkItem activities scheduled on the chosen date are listed." %}
+                {% include "components/form_field.html" with field=form.title label="Notes Title" %}
+            </div>
+            <div class="grid gap-6 md:grid-cols-2">
+                {% include "components/form_field.html" with field=form.location_description label="Venue / Platform" placeholder="e.g., Municipal Hall, Zoom, BARMM Conference Room" %}
+                {% include "components/form_field.html" with field=form.meeting_overview label="Meeting Overview" %}
+            </div>
+        </section>
+
+        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-lg"><i class="fas fa-users"></i></span>
+                <div>
+                    <h2 class="text-xl font-semibold text-neutral-900">Participants &amp; Partners</h2>
+                    <p class="text-sm text-neutral-500">Log OOBC staff and partner organizations represented during the coordination activity.</p>
+                </div>
+            </div>
+            <div class="grid gap-6 md:grid-cols-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2" for="{{ form.staff_participants.id_for_label }}">OOBC Staff Present</label>
+                    {{ form.staff_participants }}
+                    {% if form.staff_participants.help_text %}<p class="mt-2 text-xs text-neutral-500">{{ form.staff_participants.help_text }}</p>{% endif %}
+                    {% if form.staff_participants.errors %}
+                        {% for error in form.staff_participants.errors %}
+                        <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2" for="{{ form.partner_organizations.id_for_label }}">Partner Organizations</label>
+                    {{ form.partner_organizations }}
+                    {% if form.partner_organizations.help_text %}<p class="mt-2 text-xs text-neutral-500">{{ form.partner_organizations.help_text }}</p>{% endif %}
+                    {% if form.partner_organizations.errors %}
+                        {% for error in form.partner_organizations.errors %}
+                        <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-lg"><i class="fas fa-bulletin-board"></i></span>
+                <div>
+                    <h2 class="text-xl font-semibold text-neutral-900">Minutes &amp; Highlights</h2>
+                    <p class="text-sm text-neutral-500">Document agenda items, key discussion points, decisions, and action items.</p>
+                </div>
+            </div>
+            <div class="grid gap-6 md:grid-cols-2">
+                {% include "components/form_field.html" with field=form.key_agenda label="Agenda Items" %}
+                {% include "components/form_field.html" with field=form.discussion_highlights label="Discussion Highlights" %}
+            </div>
+            <div class="grid gap-6 md:grid-cols-2">
+                {% include "components/form_field.html" with field=form.decisions label="Decisions &amp; Agreements" %}
+                {% include "components/form_field.html" with field=form.action_items label="Action Items &amp; Leads" %}
+            </div>
+            <div class="grid gap-6 md:grid-cols-2">
+                {% include "components/form_field.html" with field=form.follow_up_items label="Follow-up Requirements" %}
+                {% include "components/form_field.html" with field=form.attachments_links label="Reference Links / Resources" %}
+            </div>
+            {% include "components/form_field.html" with field=form.additional_notes label="Additional Notes" %}
+        </section>
+
+        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-lg"><i class="fas fa-handshake"></i></span>
+                <div>
+                    <h2 class="text-xl font-semibold text-neutral-900">Partnership Alignment</h2>
+                    <p class="text-sm text-neutral-500">Link existing partnership agreements and capture coordination opportunities or issues.</p>
+                </div>
+            </div>
+            <div class="grid gap-6 md:grid-cols-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2" for="{{ form.partnership_agreements.id_for_label }}">Related Partnership Agreements</label>
+                    {{ form.partnership_agreements }}
+                    {% if form.partnership_agreements.help_text %}<p class="mt-2 text-xs text-neutral-500">{{ form.partnership_agreements.help_text }}</p>{% endif %}
+                    {% if form.partnership_agreements.errors %}
+                        {% for error in form.partnership_agreements.errors %}
+                        <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                {% include "components/form_field.html" with field=form.partnership_details label="Partnership Details" %}
+            </div>
+        </section>
+
+        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 rounded-t-2xl text-white flex items-center gap-3">
+                <span class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center text-lg"><i class="fas fa-map-marker-alt"></i></span>
+                <div>
+                    <h2 class="text-xl font-semibold">Geographic Coverage <span class="text-white/70 text-sm font-normal">(optional)</span></h2>
+                    <p class="text-xs text-white/80">Document the areas engaged during the coordination activity.</p>
+                </div>
+            </header>
+            <div class="p-6 space-y-6">
+                {{ form.coverage_map_data }}
+                <div class="space-y-6" id="coverage-rows">
+                    <div class="space-y-4" data-coverage-row="primary">
+                        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Region</label>
+                                {{ form.coverage_region }}
+                                {% if form.coverage_region.errors %}
+                                    {% for error in form.coverage_region.errors %}
+                                    <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Province</label>
+                                {{ form.coverage_province }}
+                                {% if form.coverage_province.errors %}
+                                    {% for error in form.coverage_province.errors %}
+                                    <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Municipality / City</label>
+                                {{ form.coverage_municipality }}
+                                {% if form.coverage_municipality.errors %}
+                                    {% for error in form.coverage_municipality.errors %}
+                                    <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Barangay</label>
+                                {{ form.coverage_barangay }}
+                                {% if form.coverage_barangay.errors %}
+                                    {% for error in form.coverage_barangay.errors %}
+                                    <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="obc-map-container" data-coverage-map="primary" data-obc-map data-mode="coverage" data-region-field="id_coverage_region" data-province-field="id_coverage_province" data-municipality-field="id_coverage_municipality" data-barangay-field="id_coverage_barangay" data-location-script="location-data" data-centroid-url="{% url 'common:location_centroid' %}">
+                            <div class="obc-map-header">
+                                <h3 class="flex items-center gap-2 text-neutral-800"><i class="fas fa-map-marked-alt text-emerald-500"></i>Coverage Map</h3>
+                                <span class="obc-map-status"><i class="fas fa-crosshairs"></i>Select a location to drop a pin</span>
+                            </div>
+                            <div class="obc-map-canvas" data-obc-map-target></div>
+                            <div class="obc-map-footer">
+                                Pins update automatically when you choose a barangay or municipality.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <a href="{{ return_url }}" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-all duration-200">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Coordination Management</span>
+            </a>
+            <button type="submit" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold shadow-lg hover:from-emerald-600 hover:to-teal-700 transition-all duration-200">
+                <i class="fas fa-save"></i>
+                <span>Save Coordination Notes</span>
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+{{ location_data|json_script:"location-data" }}
+{{ community_locations|json_script:"community-locations" }}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'common/js/obc_location_map.js' %}"></script>
+<script src="{% static 'common/js/obc_geographic_coverage.js' %}"></script>
+{% endblock %}

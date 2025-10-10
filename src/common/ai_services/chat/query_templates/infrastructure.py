@@ -46,16 +46,16 @@ INFRASTRUCTURE_TEMPLATES = [
     QueryTemplate(
         id='count_communities_by_water_access',
         category='infrastructure',
-        pattern=r'\b(how many|count|total)\s+(obc\s+)?communities\s+(have|with|having)?\s*(?P<rating>poor|limited|available|none|no)?\s*(water|water supply|water access)',
-        query_template="OBCCommunity.objects.filter(infrastructure__infrastructure_type='water', infrastructure__availability_status__icontains='{rating}').distinct().count()",
-        required_entities=['rating'],
-        optional_entities=[],
+        pattern=r'\b((how many|count|total)\s+)?(obc\s+)?communities\s+(have|with|having)?\s*(?P<rating>poor|limited|available|none|no)?\s*(water|water\s*supply|water\s*access)',
+        query_template="OBCCommunity.objects.filter(infrastructure__infrastructure_type='water'{rating_filter}).distinct().count()",
+        required_entities=[],
+        optional_entities=['rating'],
         examples=[
             'How many communities have poor water access?',
             'Communities with limited water supply',
             'Count communities with no water access',
             'Communities having available water',
-            'Total communities with poor water'
+            'Communities with water access'
         ],
         priority=9,
         description='Count communities by water access rating',
@@ -67,7 +67,7 @@ INFRASTRUCTURE_TEMPLATES = [
     QueryTemplate(
         id='count_communities_by_electricity',
         category='infrastructure',
-        pattern=r'\b(how many|count|total)\s+(obc\s+)?communities\s+(without|with no|lacking|have no|need|poor|limited)?\s*(electricity|power|electric)',
+        pattern=r'\b((how many|count|total)\s+)?(obc\s+)?communities\s+(without|with no|lacking|have no|need|poor|limited)?\s*(electricity|power|electric)',
         query_template="OBCCommunity.objects.filter(infrastructure__infrastructure_type='electricity', infrastructure__availability_status__in=['none', 'poor', 'limited']).distinct().count()",
         required_entities=[],
         optional_entities=[],
@@ -130,16 +130,16 @@ INFRASTRUCTURE_TEMPLATES = [
     QueryTemplate(
         id='count_communities_by_sanitation',
         category='infrastructure',
-        pattern=r'\b(how many|count|total)\s+(obc\s+)?communities\s+(with|having|by)?\s*(?P<rating>poor|limited|available|none|good)?\s*(sanitation|waste\s*management|drainage|sewage)',
-        query_template="OBCCommunity.objects.filter(Q(infrastructure__infrastructure_type='waste') | Q(infrastructure__infrastructure_type='drainage'), infrastructure__availability_status__icontains='{rating}').distinct().count()",
-        required_entities=['rating'],
-        optional_entities=[],
+        pattern=r'\b((how many|count|total)\s+)?(obc\s+)?communities\s+(with|having|by)?\s*(?P<rating>poor|limited|available|none|no|good)?\s*(sanitation|waste\s*management|drainage|sewage)',
+        query_template="OBCCommunity.objects.filter(Q(infrastructure__infrastructure_type='waste') | Q(infrastructure__infrastructure_type='drainage'){rating_filter}).distinct().count()",
+        required_entities=[],
+        optional_entities=['rating'],
         examples=[
             'How many communities have poor sanitation?',
             'Communities with limited waste management',
             'Count communities by drainage rating',
             'Communities with no sanitation',
-            'Total communities with available drainage'
+            'Communities with sanitation infrastructure'
         ],
         priority=8,
         description='Count communities by sanitation/waste management access',

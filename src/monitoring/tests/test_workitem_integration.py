@@ -4,6 +4,7 @@ from decimal import Decimal
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 
 from common.work_item_model import WorkItem
 from coordination.models import Organization
@@ -115,3 +116,22 @@ def test_get_budget_allocation_tree_returns_structure(staff_user, organization):
     assert tree["work_item_id"] == str(project.id)
     assert len(tree["children"]) == 2
     assert tree["children"][0]["allocated_budget"] == Decimal("450000.00")
+
+
+@pytest.mark.django_db
+def test_monitoring_detail_renders_without_execution_project(client, staff_user):
+    ppa = MonitoringEntry.objects.create(
+        title="Tracking Without Project",
+        category="moa_ppa",
+        enable_workitem_tracking=True,
+        created_by=staff_user,
+        updated_by=staff_user,
+    )
+
+    client.force_login(staff_user)
+    response = client.get(reverse("monitoring:detail", args=[ppa.id]))
+
+    assert response.status_code == 200
+    content = response.content
+    assert b"cursor-not-allowed" in content
+    assert b'aria-disabled="true"' in content

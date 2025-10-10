@@ -153,6 +153,283 @@
     {% endif %}
 
     <!-- Overview & Timeline -->
+    {% if entry.is_request %}
+    <section class="grid gap-6 lg:grid-cols-2">
+        <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+            <header class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fas fa-clipboard-check"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Request Snapshot</h2>
+                    <p class="text-sm text-gray-500">Key status indicators for this community request.</p>
+                </div>
+            </header>
+            <div class="grid gap-4 md:grid-cols-2 text-sm text-gray-700">
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Submission Channel</p>
+                    <p class="font-semibold">{{ entry.get_request_source_display|default:"Not specified" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Current Status</p>
+                    <p class="font-semibold">{{ entry.get_request_status_display|default:"Submitted" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Priority Level</p>
+                    <p class="font-semibold">{{ entry.get_priority_display }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Estimated Budget</p>
+                    <p class="font-semibold">{% if entry.estimated_total_amount %}₱{{ entry.estimated_total_amount|floatformat:2|intcomma }}{% else %}—{% endif %}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Disaster / Emergency</p>
+                    <p class="font-semibold">{{ entry.is_disaster_related|yesno:"Yes,No" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Receiving Organization</p>
+                    <p class="font-semibold">{{ entry.submitted_to_organization.name|default:"Not assigned" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Lead OOBC Unit</p>
+                    <p class="font-semibold">{% if entry.lead_organization %}{{ entry.lead_organization.name }}{% elif entry.oobc_unit %}{{ entry.oobc_unit }}{% else %}—{% endif %}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Linked PPAs</p>
+                    <p class="font-semibold">{{ entry.related_ppas.count }}</p>
+                </div>
+            </div>
+        </article>
+
+        <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+            <header class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fas fa-user"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Requester &amp; Coordination Contacts</h2>
+                    <p class="text-sm text-gray-500">Contact details to facilitate follow-ups and validation.</p>
+                </div>
+            </header>
+            <div class="grid gap-4 md:grid-cols-2 text-sm text-gray-700">
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Requester / Proponent</p>
+                    <p class="font-semibold">{{ entry.requester_name|default:"Not specified" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Position / Role</p>
+                    <p class="font-semibold">{{ entry.requester_position|default:"—" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Primary Contact</p>
+                    <p class="font-semibold">{{ entry.requester_contact_number|default:"—" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Alternate Contact</p>
+                    <p class="font-semibold">{{ entry.requester_alternate_contact_number|default:"—" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Email Address</p>
+                    <p class="font-semibold">{{ entry.requester_email|default:"—" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Affiliation</p>
+                    <p class="font-semibold">{{ entry.requester_affiliation|default:"—" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Requesting OBC</p>
+                    <p class="font-semibold">{{ entry.submitted_by_community.name|default:"—" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Lead Coordinator</p>
+                    <p class="font-semibold">{% if entry.created_by %}{{ entry.created_by.get_full_name|default:entry.created_by.username }}{% else %}—{% endif %}</p>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="grid gap-6 lg:grid-cols-2">
+        <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+            <header class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fas fa-map-marked-alt"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Coverage &amp; Beneficiaries</h2>
+                    <p class="text-sm text-gray-500">Areas and communities reached by this request.</p>
+                </div>
+            </header>
+            <div class="grid gap-4 md:grid-cols-2 text-sm text-gray-700">
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Region</p>
+                    <p class="font-semibold">{{ entry.coverage_region.name|default:"—" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Province</p>
+                    <p class="font-semibold">{{ entry.coverage_province.name|default:"—" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Municipality / City</p>
+                    <p class="font-semibold">{{ entry.coverage_municipality.name|default:"—" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Barangay</p>
+                    <p class="font-semibold">{{ entry.coverage_barangay.name|default:"—" }}</p>
+                </div>
+            </div>
+            <div>
+                <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Targeted Communities</p>
+                {% with entry.communities.all as communities %}
+                    {% if communities %}
+                        <ul class="space-y-1 text-sm text-gray-700">
+                            {% for community in communities %}
+                                <li class="flex items-center gap-2"><span class="inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>{{ community.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-sm text-gray-500">No specific communities tagged yet.</p>
+                    {% endif %}
+                {% endwith %}
+            </div>
+            <div class="space-y-2">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Beneficiary Narrative</p>
+                <p class="text-sm text-gray-700 whitespace-pre-line">{{ entry.beneficiary_description|default:"Provide the general description of intended beneficiaries." }}</p>
+            </div>
+            <div class="grid gap-4 md:grid-cols-2 text-sm text-gray-700">
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Organizations Benefited</p>
+                    <p class="font-semibold">{{ entry.beneficiary_organizations_total|default:"—" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Individuals Benefited</p>
+                    <p class="font-semibold">{{ entry.beneficiary_individuals_total|default:"—" }}</p>
+                </div>
+            </div>
+            {% with demo=entry.beneficiary_demographics %}
+                {% if demo %}
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Demographic Breakdown</p>
+                    <dl class="grid gap-2 md:grid-cols-2 text-xs text-gray-600">
+                        {% if demo.beneficiary_children_0_9 %}<div><dt class="font-semibold text-gray-700">Children (0-9)</dt><dd>{{ demo.beneficiary_children_0_9 }}</dd></div>{% endif %}
+                        {% if demo.beneficiary_adolescents_10_14 %}<div><dt class="font-semibold text-gray-700">Adolescents (10-14)</dt><dd>{{ demo.beneficiary_adolescents_10_14 }}</dd></div>{% endif %}
+                        {% if demo.beneficiary_youth_15_30 %}<div><dt class="font-semibold text-gray-700">Youth (15-30)</dt><dd>{{ demo.beneficiary_youth_15_30 }}</dd></div>{% endif %}
+                        {% if demo.beneficiary_adults_31_59 %}<div><dt class="font-semibold text-gray-700">Adults (31-59)</dt><dd>{{ demo.beneficiary_adults_31_59 }}</dd></div>{% endif %}
+                        {% if demo.beneficiary_seniors_60_plus %}<div><dt class="font-semibold text-gray-700">Seniors (60+)</dt><dd>{{ demo.beneficiary_seniors_60_plus }}</dd></div>{% endif %}
+                        {% if demo.beneficiary_women %}<div><dt class="font-semibold text-gray-700">Women</dt><dd>{{ demo.beneficiary_women }}</dd></div>{% endif %}
+                        {% if demo.beneficiary_solo_parents %}<div><dt class="font-semibold text-gray-700">Solo Parents</dt><dd>{{ demo.beneficiary_solo_parents }}</dd></div>{% endif %}
+                        {% if demo.beneficiary_pwds %}<div><dt class="font-semibold text-gray-700">PWDs</dt><dd>{{ demo.beneficiary_pwds }}</dd></div>{% endif %}
+                        {% if demo.beneficiary_farmers %}<div><dt class="font-semibold text-gray-700">Farmers</dt><dd>{{ demo.beneficiary_farmers }}</dd></div>{% endif %}
+                        {% if demo.beneficiary_fisherfolk %}<div><dt class="font-semibold text-gray-700">Fisherfolk</dt><dd>{{ demo.beneficiary_fisherfolk }}</dd></div>{% endif %}
+                        {% if demo.beneficiary_unemployed %}<div><dt class="font-semibold text-gray-700">Unemployed</dt><dd>{{ demo.beneficiary_unemployed }}</dd></div>{% endif %}
+                        {% if demo.beneficiary_indigenous_peoples %}<div><dt class="font-semibold text-gray-700">Indigenous Peoples</dt><dd>{{ demo.beneficiary_indigenous_peoples }}</dd></div>{% endif %}
+                        {% if demo.beneficiary_idps %}<div><dt class="font-semibold text-gray-700">IDPs</dt><dd>{{ demo.beneficiary_idps }}</dd></div>{% endif %}
+                        {% if demo.beneficiary_migrants_transients %}<div><dt class="font-semibold text-gray-700">Migrants / Transients</dt><dd>{{ demo.beneficiary_migrants_transients }}</dd></div>{% endif %}
+                    </dl>
+                    {% if demo.ethnolinguistic_groups %}
+                        <p class="mt-3 text-xs text-gray-600"><span class="font-semibold text-gray-700">Ethnolinguistic Groups:</span> {{ demo.ethnolinguistic_groups|join:", " }}</p>
+                    {% endif %}
+                    {% if demo.other_vulnerable_sectors %}
+                        <p class="mt-1 text-xs text-gray-600"><span class="font-semibold text-gray-700">Other Sectors:</span> {{ demo.other_vulnerable_sectors }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endwith %}
+        </article>
+
+        <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+            <header class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fas fa-list-check"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Objectives &amp; Alignment</h2>
+                    <p class="text-sm text-gray-500">Proposed actions and strategic alignment for this request.</p>
+                </div>
+            </header>
+            <div class="space-y-4 text-sm text-gray-700">
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Objectives</p>
+                    {% if entry.request_objectives %}
+                        <ul class="space-y-2">
+                            {% for objective in entry.request_objectives %}
+                                <li class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-2">{{ objective }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-gray-500">Objectives have not been listed yet.</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Related PPAs</p>
+                    {% with entry.related_ppas.all as ppas %}
+                        {% if ppas %}
+                            <ul class="space-y-1">
+                                {% for ppa in ppas %}
+                                    <li class="flex items-center gap-2 text-sm"><span class="inline-flex h-2 w-2 rounded-full bg-indigo-500"></span><a href="{% url 'monitoring:detail' ppa.pk %}" class="text-indigo-600 hover:text-indigo-700">{{ ppa.title }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-gray-500">No PPAs linked yet.</p>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Support Required</p>
+                    <p class="whitespace-pre-line">{{ entry.support_required|default:"No additional support requested." }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Plan Reference</p>
+                    <p class="font-semibold">{{ entry.plan_reference|default:"—" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Goal Alignment Tags</p>
+                    {% if entry.goal_alignment %}
+                        <div class="flex flex-wrap gap-2">
+                            {% for tag in entry.goal_alignment %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-semibold">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500">No goal alignment tags recorded.</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Moral Governance Pillar</p>
+                    <p class="font-semibold">{{ entry.moral_governance_pillar|default:"—" }}</p>
+                </div>
+                {% if entry.request_notes %}
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Validation Notes</p>
+                        <p class="whitespace-pre-line">{{ entry.request_notes }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </article>
+    </section>
+
+    {% with attachments=entry.request_attachments.all %}
+        {% if attachments %}
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+            <header class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center"><i class="fas fa-paperclip"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Supporting Documents</h2>
+                    <p class="text-sm text-gray-500">Files submitted with this request.</p>
+                </div>
+            </header>
+            <ul class="space-y-3 text-sm text-gray-700">
+                {% for attachment in attachments %}
+                    <li class="flex items-center justify-between border border-gray-200 rounded-xl px-4 py-3">
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-cyan-50 text-cyan-600 text-sm"><i class="fas fa-file"></i></span>
+                            <div>
+                                <p class="font-semibold">{{ attachment.description|default:attachment.get_document_type_display }}</p>
+                                <p class="text-xs text-gray-500">{{ attachment.uploaded_at|date:"M j, Y" }} · {{ attachment.file.name|default:"" }}</p>
+                            </div>
+                        </div>
+                        <a href="{{ attachment.file.url }}" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700" download>
+                            <i class="fas fa-download"></i>
+                            Download
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
+    {% endwith %}
+    {% else %}
     <section class="grid gap-6 lg:grid-cols-2" id="ppa-overview-section">
         <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
             <header class="flex items-center gap-3">
@@ -391,6 +668,7 @@
             </div>
         </article>
     </section>
+    {% endif %}
 
     <!-- Timeline & Updates -->
     <section class="grid gap-6 lg:grid-cols-3">

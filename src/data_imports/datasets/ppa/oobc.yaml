@@ -1,0 +1,37 @@
+moa: "Office for Other Bangsamoro Communities (OOBC)"
+acronym: "OOBC"
+ppas:
+  - title: "Other Bangsamoro Communities Mapping and Needs Assessment (OBC MANA)"
+    description: "Conduct comprehensive socio-economic profiling and needs assessments to inform responsive policies and services for Bangsamoro communities outside BARMM."
+    outcome_indicators:
+      - indicator: "Percentage of recommended policies, programs, and services submitted"
+        target: "100%"
+      - indicator: "Effectiveness of coordination with NGAs, LGUs, and other stakeholders on promoting the welfare of Bangsamoro communities outside the region"
+        target: "80%"
+    output_indicators:
+      - indicator: "Number of provinces mapped through socio-economic profiling and key information assessment review"
+        target: 10
+      - indicator: "Number of LGUs, NGAs, line agencies, and stakeholders outside BARMM profiled under program of mapping and needs assessment"
+        target: 20
+      - indicator: "Percentage of OBC MANA compilation and digitalization"
+        target: "100%"
+    approved_budget: 14547520.00
+  - title: "Other Bangsamoro Communities Coordination and Collaboration"
+    description: "Deepen partnerships and collective action with stakeholders to advance socio-economic and cultural development initiatives for Bangsamoro communities outside BARMM."
+    outcome_indicators:
+      - indicator: "Percentage of recommended policies, programs, and services submitted"
+        target: "100%"
+      - indicator: "Effectiveness of coordination with NGAs, LGUs, and other stakeholders on promoting the welfare of Bangsamoro communities outside the region"
+        target: "80%"
+    output_indicators:
+      - indicator: "Number of stakeholders forum conducted"
+        target: 1
+      - indicator: "Number of Ministries, Offices, Agencies, and development partners coordinated for the protection of OBCs rights, enhance socio-economic and cultural development"
+        target: 55
+      - indicator: "Number of NGAs and LGUs outside BARMM coordinated for the protection of OBCs rights, enhance socio-economic and cultural development"
+        target: 10
+      - indicator: "Percentage of request letters from different organizations, stakeholders, and communities outside the BARMM region endorsed to the Chief Minister"
+        target: "100%"
+      - indicator: "Percentage of policy, program, and services recommendation to the Chief Minister submitted"
+        target: "100%"
+    approved_budget: 2333560.00

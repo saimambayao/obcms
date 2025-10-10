@@ -14,7 +14,7 @@ Performance target: <10ms per match
 
 import logging
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from common.ai_services.chat.query_templates import QueryTemplate, get_template_registry
 
@@ -50,6 +50,10 @@ class TemplateMatcher:
         """Initialize template matcher with template registry."""
         self.registry = get_template_registry()
         logger.debug("TemplateMatcher initialized with template registry")
+        # Map regex capture group names to canonical entity keys we support injecting.
+        self._group_entity_map = {
+            'rating': 'rating',
+        }
 
     def match_and_generate(
         self,
@@ -101,8 +105,30 @@ class TemplateMatcher:
             ranked_matches = self.rank_templates(matches, query, entities)
             best_match = ranked_matches[0]
 
+            # Merge regex capture groups into the entity set so templates can use them
+            entities_for_template: Dict[str, Any] = dict(entities)
+            match_obj = best_match.get('match')
+            if match_obj:
+                for group_name, group_value in match_obj.groupdict().items():
+                    if not group_value:
+                        continue
+
+                    entity_key = self._group_entity_map.get(group_name)
+                    if not entity_key:
+                        continue
+
+                    normalized_value = group_value.strip().lower()
+                    if not normalized_value:
+                        continue
+
+                    existing_entity = entities_for_template.get(entity_key)
+                    if isinstance(existing_entity, dict) and existing_entity.get('value'):
+                        continue
+
+                    entities_for_template[entity_key] = {'value': normalized_value}
+
             # Step 3: Validate entities
-            validation = self.validate_template(best_match['template'], entities)
+            validation = self.validate_template(best_match['template'], entities_for_template)
             if not validation['is_valid']:
                 return {
                     'success': False,
@@ -114,7 +140,7 @@ class TemplateMatcher:
                 }
 
             # Step 4: Generate query
-            query_string = self.generate_query(best_match['template'], entities)
+            query_string = self.generate_query(best_match['template'], entities_for_template)
 
             return {
                 'success': True,
@@ -213,12 +239,16 @@ class TemplateMatcher:
         ranked = []
 
         for template in templates:
+            # Capture regex match for later entity extraction
+            match = template.matches(query)
+
             # Calculate match score
             score = template.score_match(query, entities)
 
             ranked.append({
                 'template': template,
                 'score': score,
+                'match': match,
             })
 
         # Sort by score (descending)
@@ -370,6 +400,24 @@ class TemplateMatcher:
                 f"primary_livelihood__icontains='{livelihood_value}'"
             )
 
+        # Rating/availability filter for infrastructure templates
+        rating_entity = entities.get('rating')
+        rating_value = ''
+        if rating_entity:
+            if isinstance(rating_entity, dict):
+                rating_value = rating_entity.get('value', '')
+            elif isinstance(rating_entity, str):
+                rating_value = rating_entity
+
+        normalized_rating = self._normalize_rating_value(rating_value)
+        if normalized_rating:
+            filters['rating_filter'] = (
+                f", infrastructure__availability_status__icontains='{normalized_rating}'"
+            )
+            filters['rating'] = normalized_rating
+        else:
+            filters['rating_filter'] = ''
+
         # Limit/count
         if 'numbers' in entities and entities['numbers']:
             limit_value = entities['numbers'][0].get('value', 20)
@@ -416,6 +464,32 @@ class TemplateMatcher:
         logger.debug(f"Generated query from template {template.id}: {query_string[:100]}...")
 
         return query_string
+
+    def _normalize_rating_value(self, value: str) -> Optional[str]:
+        """
+        Normalize infrastructure availability ratings captured from patterns.
+
+        Ensures consistent values even when queries use variations
+        like "no" instead of "none".
+        """
+        if not value:
+            return None
+
+        normalized = value.strip().lower()
+        if not normalized:
+            return None
+
+        rating_map = {
+            'no': 'none',
+            'none': 'none',
+            'without': 'none',
+            'poor': 'poor',
+            'limited': 'limited',
+            'available': 'available',
+            'good': 'good',
+        }
+
+        return rating_map.get(normalized, normalized)
 
     def get_template_suggestions(
         self,

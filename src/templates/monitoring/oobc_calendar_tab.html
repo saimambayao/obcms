@@ -1,0 +1,161 @@
+{% load static %}
+
+<div class="space-y-6">
+    <div class="bg-blue-50 border-l-4 border-blue-500 rounded-r-lg p-4">
+        <div class="flex items-start">
+            <i class="fas fa-info-circle text-blue-500 text-xl mt-0.5 mr-3"></i>
+            <div class="text-sm text-blue-800">
+                <p class="font-semibold mb-1">OOBC Integrated Calendar</p>
+                <p>
+                    This calendar aggregates work items connected to OOBC-led PPAs. Use it to track milestones,
+                    mobilizations, and implementation checkpoints across the entire portfolio.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="oobcCalendarContainer" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div id="oobcFullCalendar" style="padding: 1.5rem; min-height: 700px;"></div>
+    </div>
+</div>
+
+<link href="{% static 'common/vendor/fullcalendar/main.min.css' %}" rel="stylesheet">
+<script src="{% static 'common/vendor/fullcalendar/index.global.min.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarButton = document.getElementById('oobc-tab-calendar');
+    let initialized = false;
+
+    function initialiseOOBCCalendar() {
+        if (initialized) {
+            return;
+        }
+
+        const calendarEl = document.getElementById('oobcFullCalendar');
+        if (!calendarEl) {
+            console.warn('OOBC calendar element not found');
+            return;
+        }
+
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+            },
+            buttonText: {
+                today: 'Today',
+                month: 'Month',
+                week: 'Week',
+                day: 'Day',
+                list: 'List'
+            },
+            height: 'auto',
+            contentHeight: 650,
+            expandRows: true,
+            nowIndicator: true,
+            navLinks: true,
+            editable: false,
+            selectable: true,
+            dayMaxEvents: true,
+            weekends: true,
+            themeSystem: 'standard',
+            events: {
+                url: '{{ calendar_feed_url }}',
+                failure: function(error) {
+                    console.error('Failed to load OOBC calendar events', error);
+                }
+            },
+            eventContent: function(arg) {
+                const iconMap = {
+                    project: 'fa-folder',
+                    sub_project: 'fa-folder-tree',
+                    activity: 'fa-list-check',
+                    sub_activity: 'fa-list',
+                    task: 'fa-check-square',
+                    subtask: 'fa-check'
+                };
+                const icon = iconMap[arg.event.extendedProps.work_type] || 'fa-tasks';
+                return {
+                    html: `
+                        <div class="fc-event-main-frame p-1">
+                            <div class="fc-event-title-container">
+                                <div class="fc-event-title fc-sticky text-xs font-medium">
+                                    <i class="fas ${icon} mr-1"></i>
+                                    ${arg.event.title}
+                                </div>
+                            </div>
+                        </div>
+                    `
+                };
+            },
+            eventClick: function(info) {
+                if (info.event.url) {
+                    window.location.href = info.event.url;
+                }
+            }
+        });
+
+        calendar.render();
+        initialized = true;
+    }
+
+    if (calendarButton) {
+        calendarButton.addEventListener('click', function() {
+            setTimeout(initialiseOOBCCalendar, 50);
+        });
+    }
+});
+</script>
+
+<style>
+#oobcFullCalendar {
+    padding: 1rem;
+}
+
+#oobcFullCalendar .fc-toolbar {
+    margin-bottom: 1.5rem;
+}
+
+#oobcFullCalendar .fc-button {
+    background: linear-gradient(to right, #2563eb, #10b981);
+    border: none;
+    text-transform: capitalize;
+    font-weight: 500;
+}
+
+#oobcFullCalendar .fc-button:hover {
+    background: linear-gradient(to right, #1d4ed8, #059669);
+}
+
+#oobcFullCalendar .fc-button-active {
+    background: linear-gradient(to right, #1e40af, #047857);
+}
+
+#oobcFullCalendar .fc-event {
+    cursor: pointer;
+    border-radius: 4px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#oobcFullCalendar .fc-event:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+#oobcFullCalendar .fc-daygrid-day-number {
+    font-weight: 600;
+    color: #374151;
+}
+
+#oobcFullCalendar .fc-col-header-cell {
+    background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: #4b5563;
+}
+</style>

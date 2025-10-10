@@ -1,11 +1,12 @@
 {% load math_extras %}
-<!-- Work Item Sidebar Edit Form -->
 {% with target_id=sidebar_target_id|default:'sidebar-content' %}
+{% with close_fn=close_action|default:'closeSidebar' %}
 <form hx-post="{% url 'common:work_item_sidebar_edit' pk=work_item.pk %}"
       hx-target="#{{ target_id }}"
       hx-swap="innerHTML"
       hx-indicator="#formSubmitIndicator"
       hx-disabled-elt="#{{ target_id }} button[type='submit']"
+      data-close-action="{{ close_fn }}"
       hx-on::after-request="
           if(!event.detail.successful) {
               console.error('[Sidebar] Save failed');
@@ -15,38 +16,45 @@
                       level: 'error'
                   }
               }));
-          } else {
-              console.log('[Sidebar] Save successful');
           }
       "
-      class="space-y-4">
+      class="space-y-5">
     {% csrf_token %}
-
-    <!-- Hidden work_type field (required but not editable in quick edit) -->
     {{ form.work_type.as_hidden }}
 
-    <!-- Header with View Details toggle -->
     <div class="flex items-center justify-between pb-3 border-b border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-900">
-            <i class="fas fa-edit text-blue-500 mr-2"></i>
-            Edit Work Item
-        </h3>
-        <button type="button"
-                hx-get="{% url 'common:work_item_sidebar_detail' pk=work_item.pk %}"
-                hx-target="#{{ target_id }}"
-                hx-swap="innerHTML"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all">
-            <i class="fas fa-eye text-xs"></i>
-            View Details
-        </button>
+        <div class="flex items-start gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                <i class="fas fa-pen-to-square"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">Edit Work Item</h3>
+                <p class="text-sm text-gray-500">Updates save instantly and refresh the work tree.</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button type="button"
+                    hx-get="{% url 'common:work_item_sidebar_detail' pk=work_item.pk %}"
+                    hx-target="#{{ target_id }}"
+                    hx-swap="innerHTML"
+                    class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-all">
+                <i class="fas fa-eye text-xs"></i>
+                View Details
+            </button>
+            <button type="button"
+                    onclick="{{ close_fn }}()"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:bg-gray-100 hover:text-gray-600"
+                    aria-label="Close sidebar panel">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
     </div>
 
-    <!-- Form Errors (if any) -->
     {% if form.non_field_errors %}
-    <div class="rounded-lg bg-red-50 border border-red-200 p-3">
+    <div class="rounded-lg border border-red-200 bg-red-50 p-3">
         <div class="flex items-start gap-2">
             <i class="fas fa-exclamation-circle text-red-600 mt-0.5"></i>
-            <div class="text-sm text-red-800">
+            <div class="text-sm text-red-700 space-y-1">
                 {% for error in form.non_field_errors %}
                 <p>{{ error }}</p>
                 {% endfor %}
@@ -55,162 +63,242 @@
     </div>
     {% endif %}
 
-    <!-- Title -->
-    <div>
-        <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            Title <span class="text-red-500">*</span>
-        </label>
-        {{ form.title }}
-        {% if form.title.errors %}
-        <p class="mt-1 text-xs text-red-600">{{ form.title.errors.0 }}</p>
-        {% endif %}
-    </div>
-
-    <!-- Status & Priority (side by side) -->
-    <div class="grid grid-cols-2 gap-3">
-        <div>
-            <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                Status
-            </label>
-            {{ form.status }}
-            {% if form.status.errors %}
-            <p class="mt-1 text-xs text-red-600">{{ form.status.errors.0 }}</p>
-            {% endif %}
-        </div>
-        <div>
-            <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                Priority
-            </label>
-            {{ form.priority }}
-            {% if form.priority.errors %}
-            <p class="mt-1 text-xs text-red-600">{{ form.priority.errors.0 }}</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Date Range -->
-    <div class="grid grid-cols-2 gap-3">
-        <div>
-            <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                Start Date
-            </label>
-            {{ form.start_date }}
-            {% if form.start_date.errors %}
-            <p class="mt-1 text-xs text-red-600">{{ form.start_date.errors.0 }}</p>
-            {% endif %}
-        </div>
-        <div>
-            <label for="{{ form.due_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                Due Date
-            </label>
-            {{ form.due_date }}
-            {% if form.due_date.errors %}
-            <p class="mt-1 text-xs text-red-600">{{ form.due_date.errors.0 }}</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Progress -->
-    <div>
-        <label for="{{ form.progress.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            Progress (%)
-        </label>
-        <div class="flex items-center gap-3">
-            {{ form.progress }}
-            <span class="text-sm text-gray-600">%</span>
-        </div>
-        {% if form.progress.errors %}
-        <p class="mt-1 text-xs text-red-600">{{ form.progress.errors.0 }}</p>
-        {% endif %}
-    </div>
-
-    <!-- Budget Tracking Section -->
-    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 space-y-3">
-        <h4 class="text-sm font-semibold text-emerald-900 flex items-center gap-2">
-            <i class="fas fa-wallet text-emerald-600"></i>
-            Budget Tracking
-        </h4>
-
-        <!-- PPA Total Budget (if applicable) -->
-        {% if work_item.related_ppa.budget_allocation %}
-        <div class="bg-white border border-emerald-200 rounded-lg p-3">
-            <label class="block text-xs font-medium text-gray-600 mb-1">
-                Total PPA Budget
-            </label>
-            <div class="text-base font-semibold text-gray-900" id="ppa-total-budget-edit" data-value="{{ work_item.related_ppa.budget_allocation }}">
-                {{ work_item.related_ppa.budget_allocation|currency_php }}
-            </div>
-            <p class="mt-1 text-xs text-gray-500">Available budget from the related PPA</p>
-        </div>
-        {% endif %}
-
-        <!-- Allocated Budget -->
-        <div>
-            <label for="{{ form.allocated_budget.id_for_label }}" class="block text-xs font-medium text-gray-700 mb-1">
-                Allocated Budget
-            </label>
-            <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">₱</span>
-                {{ form.allocated_budget }}
-            </div>
-            <div class="mt-1 flex justify-between text-xs text-gray-500">
-                <span>Formatted</span>
-                <span id="allocated-budget-formatted-edit" class="font-semibold text-gray-700">
-                    {% if work_item and work_item.allocated_budget %}
-                        {{ work_item.allocated_budget|currency_php }}
-                    {% elif form.initial.allocated_budget %}
-                        {{ form.initial.allocated_budget|currency_php }}
+    <div class="space-y-4">
+        {% if work_item.implementing_moa or work_item.related_ppa %}
+        {{ form.implementing_moa.as_hidden }}
+        {{ form.related_ppa.as_hidden }}
+        <div class="rounded-2xl border border-blue-200 bg-blue-50 p-4 space-y-3">
+            <div>
+                <label class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
+                    <i class="fas fa-building"></i>
+                    Implementing MOA
+                </label>
+                <div class="mt-1 rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-medium text-gray-900">
+                    {% if work_item.implementing_moa %}
+                        {{ work_item.implementing_moa.name }}
+                        {% if work_item.implementing_moa.acronym %}
+                        <span class="text-gray-500">({{ work_item.implementing_moa.acronym }})</span>
+                        {% endif %}
                     {% else %}
-                        ₱ 0.00
+                        <span class="italic text-blue-600">Not linked to an MOA</span>
                     {% endif %}
-                </span>
+                </div>
+                <p class="mt-1 text-xs text-blue-600">
+                    Work items created from this MOA remain grouped together for reporting.
+                </p>
             </div>
-            <div id="budget-error-message-edit" class="hidden mt-1 text-xs text-red-600 flex items-center gap-1">
-                <i class="fas fa-exclamation-circle"></i>
-                <span></span>
-            </div>
-            {% if form.allocated_budget.errors %}
-            <p class="mt-1 text-xs text-red-600">{{ form.allocated_budget.errors.0 }}</p>
-            {% endif %}
-        </div>
-    </div>
 
-    <!-- Description -->
-    <div>
-        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            Description
-        </label>
-        {{ form.description }}
-        {% if form.description.errors %}
-        <p class="mt-1 text-xs text-red-600">{{ form.description.errors.0 }}</p>
+            <div>
+                <label class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
+                    <i class="fas fa-folder-open"></i>
+                    Related PPA
+                </label>
+                <div class="mt-1 rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-medium text-gray-900">
+                    {% if work_item.related_ppa %}
+                        {{ work_item.related_ppa.title }}
+                    {% else %}
+                        <span class="italic text-blue-600">No PPA associated</span>
+                    {% endif %}
+                </div>
+                <p class="mt-1 text-xs text-blue-600">
+                    Manage PPA associations from the full work item view when alignment changes.
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if work_item.parent %}
+        <div class="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 p-3">
+            <i class="fas fa-sitemap text-blue-500 mt-1"></i>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-blue-700">Parent Work Item</p>
+                <p class="text-sm font-medium text-blue-900">{{ work_item.parent.title }}</p>
+                <p class="text-xs text-blue-600 mt-0.5">Hierarchy is locked for quick edits; use the full view to re-parent.</p>
+            </div>
+        </div>
         {% endif %}
     </div>
 
-    <!-- Form Actions -->
-    <div class="pt-4 border-t border-gray-200 flex gap-3">
-        <button type="submit"
-                class="flex-1 inline-flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-emerald-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-emerald-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
-            <i class="fas fa-save mr-2"></i>
-            Save Changes
-        </button>
-        <button type="button"
-                hx-get="{% url 'common:work_item_sidebar_detail' pk=work_item.pk %}"
-                hx-target="#{{ target_id }}"
-                hx-swap="innerHTML"
-                class="inline-flex items-center justify-center px-4 py-2.5 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-all shadow-sm">
-            <i class="fas fa-times mr-2"></i>
-            Cancel
-        </button>
+    <div class="space-y-4">
+        <div class="space-y-4 rounded-2xl border border-gray-200 bg-gray-50 p-5">
+        <div class="flex items-center gap-2 text-sm font-semibold text-gray-900">
+            <i class="fas fa-info-circle text-blue-500"></i>
+            Basic Information
+        </div>
+        <div class="space-y-3">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Type</p>
+                <p class="mt-1 inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-800">
+                    <i class="fas fa-layer-group text-emerald-500"></i>
+                    {{ work_item.get_work_type_display }}
+                </p>
+            </div>
+            <div>
+                <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Title <span class="text-red-500">*</span>
+                </label>
+                {{ form.title }}
+                    {% if form.title.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.title.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Status
+                        </label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.status.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Priority
+                        </label>
+                        {{ form.priority }}
+                        {% if form.priority.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.priority.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-4 rounded-2xl border border-gray-200 bg-gray-50 p-5">
+            <div class="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                <i class="fas fa-calendar-alt text-purple-500"></i>
+                Schedule & Progress
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Start Date
+                    </label>
+                    {{ form.start_date }}
+                    {% if form.start_date.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.start_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.due_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Due Date
+                    </label>
+                    {{ form.due_date }}
+                    {% if form.due_date.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.due_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                <label for="{{ form.progress.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Progress (%)
+                </label>
+                <div class="flex items-center gap-3">
+                    {{ form.progress }}
+                    <span class="text-sm text-gray-600">%</span>
+                </div>
+                {% if form.progress.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ form.progress.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 space-y-4">
+            <div class="flex items-center gap-2 text-sm font-semibold text-emerald-900">
+                <i class="fas fa-wallet text-emerald-600"></i>
+                Budget Tracking
+            </div>
+
+            {% if work_item.related_ppa.budget_allocation %}
+            <div class="rounded-xl border border-emerald-200 bg-white p-3">
+                <label class="block text-xs font-medium text-gray-600 mb-1">
+                    Total PPA Budget
+                </label>
+                <div id="ppa-total-budget-edit"
+                     data-value="{{ work_item.related_ppa.budget_allocation }}"
+                     class="text-base font-semibold text-gray-900">
+                    {{ work_item.related_ppa.budget_allocation|currency_php }}
+                </div>
+                <p class="mt-1 text-xs text-gray-500">
+                    Budget available from the associated PPA.
+                </p>
+            </div>
+            {% endif %}
+
+            <div>
+                <label for="{{ form.allocated_budget.id_for_label }}" class="block text-xs font-medium text-gray-700 mb-1">
+                    Allocated Budget
+                </label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">₱</span>
+                    {{ form.allocated_budget }}
+                </div>
+                <div class="mt-1 flex justify-between text-xs text-gray-500">
+                    <span>Formatted</span>
+                    <span id="allocated-budget-formatted-edit" class="font-semibold text-gray-700">
+                        {% if work_item and work_item.allocated_budget %}
+                            {{ work_item.allocated_budget|currency_php }}
+                        {% elif form.initial.allocated_budget %}
+                            {{ form.initial.allocated_budget|currency_php }}
+                        {% else %}
+                            ₱ 0.00
+                        {% endif %}
+                    </span>
+                </div>
+                <div id="budget-error-message-edit" class="hidden mt-1 flex items-center gap-1 text-xs text-red-600">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span></span>
+                </div>
+                {% if form.allocated_budget.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ form.allocated_budget.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+            <label for="{{ form.description.id_for_label }}" class="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                <i class="fas fa-align-left text-purple-500"></i>
+                Description
+            </label>
+            <div class="mt-3">
+                {{ form.description }}
+                {% if form.description.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
-    <!-- Loading Indicator -->
-    <div id="formSubmitIndicator" class="htmx-indicator text-center py-2">
+    <div class="space-y-2 border-t border-gray-200 pt-4">
+        <div class="flex gap-3">
+            <button type="submit"
+                    class="flex-1 inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:from-blue-700 hover:to-emerald-700 disabled:pointer-events-none disabled:opacity-50">
+                <i class="fas fa-save mr-2"></i>
+                Save Changes
+            </button>
+            <button type="button"
+                    hx-get="{% url 'common:work_item_sidebar_detail' pk=work_item.pk %}"
+                    hx-target="#{{ target_id }}"
+                    hx-swap="innerHTML"
+                    class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50">
+                <i class="fas fa-rotate-left mr-2"></i>
+                Cancel
+            </button>
+        </div>
+        <a href="{% url 'common:work_item_detail' pk=work_item.pk %}"
+           class="inline-flex w-full items-center justify-center rounded-lg border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-600 shadow-sm transition-all hover:bg-emerald-50">
+            <i class="fas fa-external-link-alt mr-2"></i>
+            Open Work Item
+        </a>
+    </div>
+
+    <div id="formSubmitIndicator" class="htmx-indicator py-2 text-center text-sm text-gray-600">
         <i class="fas fa-spinner fa-spin text-blue-500"></i>
-        <span class="ml-2 text-sm text-gray-600">Saving...</span>
+        <span class="ml-2">Saving…</span>
     </div>
 </form>
 
-<!-- JavaScript for better UX -->
 <script>
 (function() {
     'use strict';
@@ -241,22 +329,21 @@
     const formatCurrency = (value) => currencyFormatter.format(toNumeric(value));
     const formatNumberWithGrouping = (value) => numberFormatter.format(toNumeric(value));
 
-    // Focus on first input when form loads
     setTimeout(() => {
-        const targetId = '{{ target_id }}';
-        const firstInput = document.querySelector(`#${targetId} input, #${targetId} select, #${targetId} textarea`);
-        if (firstInput) {
-            firstInput.focus();
+        const container = document.getElementById('{{ target_id }}');
+        if (!container) return;
+        const focusable = container.querySelector('input, select, textarea');
+        if (focusable) {
+            focusable.focus();
         }
-    }, 100);
+    }, 120);
 
-    // Budget validation for sidebar edit form
     function validateSidebarEditBudget() {
         const allocatedInput = document.getElementById('{{ form.allocated_budget.id_for_label }}');
         const ppaTotalBudgetEl = document.getElementById('ppa-total-budget-edit');
-        const submitBtn = document.querySelector('button[type="submit"]');
+        const submitBtn = document.querySelector('#{{ target_id }} button[type="submit"]');
         const errorMessageDiv = document.getElementById('budget-error-message-edit');
-        const errorMessageSpan = errorMessageDiv?.querySelector('span');
+        const errorMessageSpan = errorMessageDiv ? errorMessageDiv.querySelector('span') : null;
         const formattedDisplay = document.getElementById('allocated-budget-formatted-edit');
 
         if (!allocatedInput) return;
@@ -271,57 +358,51 @@
             formattedDisplay.textContent = formatCurrency(allocated);
         }
 
-        // Validate against PPA budget
-        if (ppaTotalBudget > 0 && allocated > ppaTotalBudget) {
-            allocatedInput.classList.add('ring-2', 'ring-red-500', 'border-red-500');
-            if (errorMessageDiv && errorMessageSpan) {
+        const overBudget = ppaTotalBudget > 0 && allocated > ppaTotalBudget;
+
+        allocatedInput.classList.toggle('ring-2', overBudget);
+        allocatedInput.classList.toggle('ring-red-500', overBudget);
+        allocatedInput.classList.toggle('border-red-500', overBudget);
+
+        if (errorMessageDiv && errorMessageSpan) {
+            if (overBudget) {
                 errorMessageSpan.textContent = `Allocated budget cannot exceed PPA total budget (${formatCurrency(ppaTotalBudget)})`;
                 errorMessageDiv.classList.remove('hidden');
-            }
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-        } else {
-            allocatedInput.classList.remove('ring-2', 'ring-red-500', 'border-red-500');
-            if (errorMessageDiv) {
+            } else {
                 errorMessageDiv.classList.add('hidden');
             }
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = overBudget;
+            submitBtn.classList.toggle('opacity-50', overBudget);
+            submitBtn.classList.toggle('cursor-not-allowed', overBudget);
         }
     }
 
-    // Initialize and attach event listeners
     setTimeout(() => {
         const allocatedInput = document.getElementById('{{ form.allocated_budget.id_for_label }}');
+        if (!allocatedInput) return;
 
-        if (allocatedInput) {
-            if (allocatedInput.value.trim() !== '') {
-                allocatedInput.value = formatNumberWithGrouping(allocatedInput.value);
-            }
-
-            allocatedInput.addEventListener('focus', () => {
-                allocatedInput.value = allocatedInput.value.replace(/,/g, '');
-            });
-            allocatedInput.addEventListener('blur', () => {
-                if (allocatedInput.value.trim() === '') {
-                    allocatedInput.value = '';
-                } else {
-                    allocatedInput.value = formatNumberWithGrouping(allocatedInput.value);
-                }
-                validateSidebarEditBudget();
-            });
-
-            allocatedInput.addEventListener('input', validateSidebarEditBudget);
-            allocatedInput.addEventListener('change', validateSidebarEditBudget);
+        if (allocatedInput.value.trim() !== '') {
+            allocatedInput.value = formatNumberWithGrouping(allocatedInput.value);
         }
 
-        // Validate on initial load
+        allocatedInput.addEventListener('focus', () => {
+            allocatedInput.value = allocatedInput.value.replace(/,/g, '');
+        });
+        allocatedInput.addEventListener('blur', () => {
+            allocatedInput.value = allocatedInput.value.trim() === ''
+                ? ''
+                : formatNumberWithGrouping(allocatedInput.value);
+            validateSidebarEditBudget();
+        });
+        allocatedInput.addEventListener('input', validateSidebarEditBudget);
+        allocatedInput.addEventListener('change', validateSidebarEditBudget);
+
         validateSidebarEditBudget();
-    }, 100);
+    }, 140);
 })();
 </script>
+{% endwith %}
 {% endwith %}

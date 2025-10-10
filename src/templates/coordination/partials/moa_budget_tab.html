@@ -47,10 +47,17 @@
         <!-- Total PPA Work Item Budget -->
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
             <div class="flex items-center justify-between">
+                {% if moa_budget_stats.has_work_item_budget %}
                 <div>
                     <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Total PPA Work Item Budget</p>
                     <p class="mt-2 text-2xl font-bold text-orange-600">₱{{ moa_budget_stats.total_work_item_budget|floatformat:2|intcomma|default:"0.00" }}</p>
                 </div>
+                {% else %}
+                <div>
+                    <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Total PPA Work Item Budget</p>
+                    <p class="mt-2 text-base font-semibold text-gray-500">No work item budgets recorded yet</p>
+                </div>
+                {% endif %}
                 <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
                     <i class="fas fa-tasks text-orange-600 text-xl"></i>
                 </div>
@@ -143,7 +150,11 @@
                             ₱{{ ppa.budget_allocation|floatformat:2|intcomma|default:"0.00" }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-700">
-                            ₱{{ ppa.work_item_budget|floatformat:2|intcomma|default:"0.00" }}
+                            {% if ppa.has_work_item_budget %}
+                            ₱{{ ppa.work_item_budget|floatformat:2|intcomma }}
+                            {% else %}
+                            —
+                            {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-purple-600">
                             ₱{{ ppa.total_expenditure|floatformat:2|intcomma|default:"0.00" }}
@@ -190,7 +201,11 @@
                             ₱{{ moa_budget_stats.total_budget|floatformat:2|intcomma|default:"0.00" }}
                         </td>
                         <td class="px-6 py-4 text-right text-sm text-gray-900">
+                            {% if moa_budget_stats.has_work_item_budget %}
                             ₱{{ moa_budget_stats.total_work_item_budget|floatformat:2|intcomma|default:"0.00" }}
+                            {% else %}
+                            —
+                            {% endif %}
                         </td>
                         <td class="px-6 py-4 text-right text-sm text-purple-600">
                             ₱{{ moa_budget_stats.total_expenditure|floatformat:2|intcomma|default:"0.00" }}

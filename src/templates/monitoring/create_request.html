@@ -1,4 +1,11 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+<link rel="stylesheet" href="{% static 'common/css/obc_location_map.css' %}">
+{% endblock %}
 
 {% block title %}Submit OBC Request{% endblock %}
 
@@ -15,75 +22,294 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-    <header class="rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-500 text-white shadow-lg p-6">
-        <div class="flex items-center gap-4">
-            <span class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl"><i class="fas fa-file-signature"></i></span>
-            <div>
-                <h1 class="text-2xl font-semibold">Submit OBC Request / Proposal</h1>
-                <p class="text-white/80">Track requests endorsed by community partners for OOBC or MOA action.</p>
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <header class="rounded-3xl bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-500 text-white shadow-lg p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div class="flex items-center gap-4">
+                <span class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl"><i class="fas fa-file-signature"></i></span>
+                <div>
+                    <h1 class="text-2xl font-semibold">Submit OBC Request / Proposal</h1>
+                    <p class="text-white/80">Capture community requests for coordination with OOBC, MOAs, LGUs, and NGAs.</p>
+                </div>
+            </div>
+            <div class="inline-flex items-center gap-3 bg-white/10 border border-white/20 rounded-2xl px-4 py-2 text-sm">
+                <i class="fas fa-shield-heart text-white/90"></i>
+                <span>Validated against duplicate submissions</span>
             </div>
         </div>
     </header>
 
-    <form method="post" class="obc-form space-y-8">
+    <form method="post" enctype="multipart/form-data" class="obc-form space-y-8">
         {% csrf_token %}
 
+        {% if form.non_field_errors %}
+        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4">
+            <h2 class="text-sm font-semibold text-rose-700 mb-2">Please review the following:</h2>
+            <ul class="list-disc pl-5 text-sm text-rose-600 space-y-1">
+                {% for error in form.non_field_errors %}
+                <li>{{ error|safe }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
         <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
             <div class="flex items-center gap-3">
-                <span class="w-9 h-9 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center"><i class="fas fa-info"></i></span>
+                <span class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fas fa-id-card"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-neutral-800">Requester Information</h2>
+                    <p class="text-sm text-neutral-500">Pre-filled using the requester's account. Update if you are submitting on behalf of someone else.</p>
+                </div>
+            </div>
+            <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                {% include "components/form_field.html" with field=form.request_source label="Submission Channel" placeholder="Select submission channel" %}
+                {% include "components/form_field.html" with field=form.requester_name label="Requester / Proponent" placeholder="Full name" %}
+                {% include "components/form_field.html" with field=form.requester_position label="Position / Role" placeholder="Designation or role" %}
+                {% include "components/form_field.html" with field=form.requester_affiliation label="Affiliated Organization" placeholder="Community or agency" %}
+                {% include "components/form_field.html" with field=form.requester_contact_number label="Primary Contact Number" placeholder="e.g., +63" %}
+                {% include "components/form_field.html" with field=form.requester_alternate_contact_number label="Alternate Contact Number" placeholder="Provide a different number" %}
+                {% include "components/form_field.html" with field=form.requester_email label="Email Address" placeholder="example@domain.com" %}
+            </div>
+        </section>
+
+        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center"><i class="fas fa-lightbulb"></i></span>
                 <div>
                     <h2 class="text-lg font-semibold text-neutral-800">Request Overview</h2>
-                    <p class="text-sm text-neutral-500">Provide context and objectives for the request.</p>
-                </div>
-            </div>
-            <div class="grid gap-5 md:grid-cols-2">
-                <div class="md:col-span-2">
-                    {% include "monitoring/includes/form_field.html" with field=form.title %}
-                </div>
-                <div class="md:col-span-2">
-                    {% include "monitoring/includes/form_field.html" with field=form.summary %}
-                </div>
-                {% include "monitoring/includes/form_field.html" with field=form.priority %}
-            </div>
-        </section>
-
-        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
-            <div class="flex items-center gap-3">
-                <span class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fas fa-users"></i></span>
-                <div>
-                    <h2 class="text-lg font-semibold text-neutral-800">Stakeholders</h2>
-                    <p class="text-sm text-neutral-500">Identify the submitting community and receiving organizations.</p>
-                </div>
-            </div>
-            <div class="grid gap-5 md:grid-cols-2">
-                {% include "monitoring/includes/form_field.html" with field=form.submitted_by_community %}
-                {% include "monitoring/includes/form_field.html" with field=form.submitted_to_organization %}
-                {% include "monitoring/includes/form_field.html" with field=form.lead_organization %}
-                {% include "monitoring/includes/form_field.html" with field=form.supporting_organizations %}
-                <div class="md:col-span-2">
-                    {% include "monitoring/includes/form_field.html" with field=form.communities %}
-                </div>
-            </div>
-        </section>
-
-        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
-            <div class="flex items-center gap-3">
-                <span class="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fas fa-tasks"></i></span>
-                <div>
-                    <h2 class="text-lg font-semibold text-neutral-800">Support Requested</h2>
-                    <p class="text-sm text-neutral-500">Detail follow-up actions and assistance needed.</p>
+                    <p class="text-sm text-neutral-500">Summarize what the community needs and why it is urgent.</p>
                 </div>
             </div>
             <div class="grid gap-5">
-                {% include "monitoring/includes/form_field.html" with field=form.support_required %}
+                {% include "components/form_field.html" with field=form.title label="Title of Request / Proposal" placeholder="Provide a clear and concise title" %}
+                {% include "components/form_field.html" with field=form.summary label="Context and Rationale" placeholder="Describe why the request is important" %}
+                {% include "components/form_field.html" with field=form.request_objectives label="Objectives / Purposes" placeholder="List each objective on a new line" %}
+            </div>
+        </section>
+
+        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center"><i class="fas fa-people-group"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-neutral-800">Stakeholder Coordination</h2>
+                    <p class="text-sm text-neutral-500">Identify the organizations receiving and supporting this request.</p>
+                </div>
+            </div>
+            <div class="grid gap-5 md:grid-cols-2">
+                {% include "components/form_field.html" with field=form.submitted_by_community label="Requesting OBC" placeholder="Select requesting community" %}
+                {% include "components/form_field.html" with field=form.submitted_to_organization label="Receiving Organization" placeholder="Select MOA / LGU / NGA" %}
+                {% include "components/form_field.html" with field=form.lead_organization label="OOBC / Lead Unit" placeholder="Select lead organization" %}
+                {% include "components/form_field.html" with field=form.supporting_organizations label="Supporting Organizations" placeholder="Select supporting partners" %}
+                <div class="md:col-span-2">
+                    {% include "components/form_field.html" with field=form.communities label="Targeted Communities" help_text="Communities expected to benefit from this request" %}
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fas fa-map-location-dot"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-neutral-800">Geographic Coverage</h2>
+                    <p class="text-sm text-neutral-500">Tag the areas covered by the request. You can map multiple locations.</p>
+                </div>
+            </div>
+            <div class="space-y-5" id="coverage-rows">
+                <div class="space-y-3" data-coverage-row="primary">
+                    <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+                        {% include "components/form_field.html" with field=form.coverage_region label="Region" %}
+                        {% include "components/form_field.html" with field=form.coverage_province label="Province" %}
+                        {% include "components/form_field.html" with field=form.coverage_municipality label="Municipality / City" %}
+                        {% include "components/form_field.html" with field=form.coverage_barangay label="Barangay" %}
+                    </div>
+                    <div class="obc-map-container" data-coverage-map="primary" data-obc-map data-mode="coverage" data-region-field="id_coverage_region" data-province-field="id_coverage_province" data-municipality-field="id_coverage_municipality" data-barangay-field="id_coverage_barangay" data-location-script="location-data" data-centroid-url="{% url 'common:location_centroid' %}">
+                        <div class="obc-map-header">
+                            <h3 class="flex items-center gap-2 text-neutral-800"><i class="fas fa-map-marker-alt text-blue-500"></i>Coverage Map</h3>
+                            <span class="obc-map-status"><i class="fas fa-crosshairs"></i>Select a location to drop a pin</span>
+                        </div>
+                        <div class="obc-map-canvas" data-obc-map-target></div>
+                        <div class="obc-map-footer">Pins update automatically when you select a location.</div>
+                    </div>
+                </div>
+                <div class="space-y-3" id="additional-coverage-rows"></div>
+            </div>
+            <template id="coverage-row-template">
+                <div class="space-y-3" data-coverage-row>
+                    <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 mb-1">Region</label>
+                            <select data-field="region" data-placeholder="Select region..." class="block w-full px-4 py-3 rounded-xl border border-neutral-200 bg-white shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm transition"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 mb-1">Province</label>
+                            <select data-field="province" data-placeholder="Select province..." class="block w-full px-4 py-3 rounded-xl border border-neutral-200 bg-white shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm transition"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 mb-1">Municipality / City</label>
+                            <select data-field="municipality" data-placeholder="Select municipality / city..." class="block w-full px-4 py-3 rounded-xl border border-neutral-200 bg-white shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm transition"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 mb-1">Barangay</label>
+                            <select data-field="barangay" data-placeholder="Select barangay..." class="block w-full px-4 py-3 rounded-xl border border-neutral-200 bg-white shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm transition"></select>
+                        </div>
+                    </div>
+                    <div class="obc-map-container" data-coverage-map data-obc-map data-mode="coverage" data-location-script="location-data" data-centroid-url="{% url 'common:location_centroid' %}">
+                        <div class="obc-map-header">
+                            <h3 class="flex items-center gap-2 text-neutral-800"><i class="fas fa-map-marker-alt text-blue-500"></i>Coverage Map</h3>
+                            <span class="obc-map-status"><i class="fas fa-crosshairs"></i>Select a location to drop a pin</span>
+                        </div>
+                        <div class="obc-map-canvas" data-obc-map-target></div>
+                        <div class="obc-map-footer">Pins update automatically when you select a location.</div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="button" class="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-rose-500" data-action="remove-row">
+                            <i class="fas fa-times"></i>
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            </template>
+            <div class="flex items-center justify-between">
+                <p class="text-sm text-neutral-500">Use the map to ensure geographic tagging is accurate.</p>
+                <button type="button" id="add-coverage-row" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    <i class="fas fa-plus"></i>
+                    Add Another Location
+                </button>
+            </div>
+            <div style="display:none" aria-hidden="true">
+                {{ form.communities }}
+            </div>
+        </section>
+
+        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center"><i class="fas fa-link"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-neutral-800">Strategic Alignment</h2>
+                    <p class="text-sm text-neutral-500">Link related PPAs and indicate support requirements.</p>
+                </div>
+            </div>
+            <div class="grid gap-5 md:grid-cols-2">
+                {% include "components/form_field.html" with field=form.related_ppas label="Related PPAs" %}
+                {% include "components/form_field.html" with field=form.priority label="Priority Level" %}
+                {% include "components/form_field.html" with field=form.support_required label="Immediate Support Needed" placeholder="Detail follow-up actions or resources required" %}
+                {% include "components/form_field.html" with field=form.estimated_total_amount label="Estimated Total Amount" placeholder="Enter estimated total budget" %}
+                {% include "components/form_field.html" with field=form.plan_year label="Plan Year" placeholder="e.g., 2025" %}
+                {% include "components/form_field.html" with field=form.fiscal_year label="Fiscal Year" placeholder="e.g., 2025" %}
+                {% include "components/form_field.html" with field=form.sector label="Sector" placeholder="Select sector" %}
+                {% include "components/form_field.html" with field=form.funding_source label="Funding Source" placeholder="Select funding source" %}
+                {% include "components/form_field.html" with field=form.funding_source_other label="Other Funding Source" placeholder="Specify funding source" %}
+                {% include "components/form_field.html" with field=form.plan_reference label="Plan Reference" placeholder="e.g., AIP 2025, PDP" %}
+                {% include "components/form_field.html" with field=form.goal_alignment label="Goal Alignment Tags" placeholder="Comma-separated tags" %}
+                {% include "components/form_field.html" with field=form.moral_governance_pillar label="Moral Governance Pillar" placeholder="Specify pillar" %}
+            </div>
+        </section>
+
+        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center"><i class="fas fa-users"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-neutral-800">Beneficiary Profile</h2>
+                    <p class="text-sm text-neutral-500">Capture who will benefit, including demographic and sectoral breakdowns.</p>
+                </div>
+            </div>
+            <div class="grid gap-5 md:grid-cols-2">
+                {% include "components/form_field.html" with field=form.beneficiary_organizations_total label="Organizational Beneficiaries" placeholder="Total number of organizations" %}
+                {% include "components/form_field.html" with field=form.beneficiary_individuals_total label="Individual Beneficiaries" placeholder="Total number of individuals" %}
+            </div>
+            <div class="grid gap-5 lg:grid-cols-2">
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold text-neutral-600 uppercase tracking-wide">Age Distribution</h3>
+                    <div class="grid gap-4 md:grid-cols-2">
+                        {% include "components/form_field.html" with field=form.beneficiary_children_0_9 label="Children (0-9)" %}
+                        {% include "components/form_field.html" with field=form.beneficiary_adolescents_10_14 label="Adolescents (10-14)" %}
+                        {% include "components/form_field.html" with field=form.beneficiary_youth_15_30 label="Youth (15-30)" %}
+                        {% include "components/form_field.html" with field=form.beneficiary_adults_31_59 label="Adults (31-59)" %}
+                        {% include "components/form_field.html" with field=form.beneficiary_seniors_60_plus label="Seniors (60+)" %}
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold text-neutral-600 uppercase tracking-wide">Vulnerable Sectors</h3>
+                    <div class="grid gap-4 md:grid-cols-2">
+                        {% include "components/form_field.html" with field=form.beneficiary_women label="Women" %}
+                        {% include "components/form_field.html" with field=form.beneficiary_solo_parents label="Solo Parents" %}
+                        {% include "components/form_field.html" with field=form.beneficiary_pwds label="PWDs" %}
+                        {% include "components/form_field.html" with field=form.beneficiary_farmers label="Farmers" %}
+                        {% include "components/form_field.html" with field=form.beneficiary_fisherfolk label="Fisherfolk" %}
+                        {% include "components/form_field.html" with field=form.beneficiary_unemployed label="Unemployed" %}
+                        {% include "components/form_field.html" with field=form.beneficiary_indigenous_peoples label="Indigenous Peoples" %}
+                        {% include "components/form_field.html" with field=form.beneficiary_idps label="IDPs" %}
+                        {% include "components/form_field.html" with field=form.beneficiary_migrants_transients label="Migrants / Transients" %}
+                    </div>
+                </div>
+            </div>
+            <div class="grid gap-5 md:grid-cols-2">
+                {% include "components/form_field.html" with field=form.beneficiary_ethnolinguistic_groups label="Ethnolinguistic Groups" placeholder="Comma-separated list" %}
+                {% include "components/form_field.html" with field=form.beneficiary_other_vulnerable label="Other Vulnerable Sectors" placeholder="Specify other vulnerable sectors" %}
+            </div>
+            <div class="grid gap-5">
+                {% include "components/form_field.html" with field=form.beneficiary_description label="Narrative Description" placeholder="Describe the beneficiaries and their situation" %}
+                {% include "components/form_field.html" with field=form.request_notes label="Validation Notes" placeholder="Add validation remarks or additional notes" %}
+            </div>
+            <div class="flex items-center gap-3">
+                <label class="inline-flex items-center gap-2 text-sm font-medium text-neutral-700">
+                    {{ form.is_disaster_related }}
+                    <span>Request is related to a disaster or emergency</span>
+                </label>
+                {% if form.is_disaster_related.errors %}
+                    <p class="text-xs text-rose-600">{{ form.is_disaster_related.errors|join:', ' }}</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center"><i class="fas fa-paperclip"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-neutral-800">Supporting Documents</h2>
+                    <p class="text-sm text-neutral-500">Upload scanned documents that substantiate the request.</p>
+                </div>
+            </div>
+            <div class="grid gap-5 md:grid-cols-2">
+                <label class="block">
+                    <span class="block text-sm font-medium text-neutral-700 mb-2">Scanned ID of Requester</span>
+                    <input type="file" name="requester_id_document" accept="image/*,application/pdf" class="block w-full text-sm text-neutral-600 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                </label>
+                <label class="block">
+                    <span class="block text-sm font-medium text-neutral-700 mb-2">Letter of Request</span>
+                    <input type="file" name="letter_of_request" accept="application/pdf,.doc,.docx" class="block w-full text-sm text-neutral-600 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                </label>
+                <label class="block">
+                    <span class="block text-sm font-medium text-neutral-700 mb-2">Written Proposal</span>
+                    <input type="file" name="proposal_document" accept="application/pdf,.doc,.docx" class="block w-full text-sm text-neutral-600 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                </label>
+                <label class="block">
+                    <span class="block text-sm font-medium text-neutral-700 mb-2">Supporting Photos (max {{ photo_upload_limit }})</span>
+                    <input type="file" name="supporting_photos" accept="image/*" multiple class="block w-full text-sm text-neutral-600 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                </label>
+                <label class="block md:col-span-2">
+                    <span class="block text-sm font-medium text-neutral-700 mb-2">Other Documents</span>
+                    <input type="file" name="other_documents" multiple class="block w-full text-sm text-neutral-600 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                    <p class="mt-1 text-xs text-neutral-500">You can upload PDFs, images, or office documents.</p>
+                </label>
             </div>
         </section>
 
         <div class="flex justify-end gap-3">
-            <a href="{% url 'monitoring:home' %}" class="px-4 py-2 rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100">Cancel</a>
-            <button type="submit" class="px-4 py-2 rounded-lg btn-primary font-semibold">Submit Request</button>
+            <a href="{% url 'monitoring:obc_requests' %}" class="px-4 py-2 rounded-xl border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition">Cancel</a>
+            <button type="submit" class="px-5 py-2 rounded-xl btn-primary font-semibold inline-flex items-center gap-2">
+                <i class="fas fa-paper-plane"></i>
+                Submit Request
+            </button>
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ location_data|json_script:"location-data" }}
+{{ community_locations|json_script:"community-locations" }}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'common/js/obc_location_map.js' %}"></script>
+<script src="{% static 'common/js/obc_geographic_coverage.js' %}"></script>
 {% endblock %}

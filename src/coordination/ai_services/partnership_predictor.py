@@ -20,6 +20,7 @@ from coordination.models import (
     PartnershipMilestone
 )
 from communities.models import OBCCommunity
+from coordination.utils.organizations import get_organization
 
 
 class PartnershipPredictor:
@@ -86,12 +87,15 @@ class PartnershipPredictor:
         budget: Optional[Decimal]
     ) -> Dict:
         """Extract features for prediction"""
+        stakeholder = get_organization(stakeholder_id)
+        if stakeholder is None:
+            return {}
+
         try:
-            stakeholder = Organization.objects.get(id=stakeholder_id)
             community = OBCCommunity.objects.select_related(
                 'municipality__province__region'
             ).get(id=community_id)
-        except (Organization.DoesNotExist, OBCCommunity.DoesNotExist):
+        except OBCCommunity.DoesNotExist:
             return {}
 
         # Historical partnerships
@@ -292,9 +296,8 @@ Return as JSON with keys: success_probability, confidence_level, risk_factors, s
 
         Returns insights on partnership patterns, success rates, and recommendations
         """
-        try:
-            org = Organization.objects.get(id=organization_id)
-        except Organization.DoesNotExist:
+        org = get_organization(organization_id)
+        if org is None:
             return {'error': 'Organization not found'}
 
         # Get all partnerships

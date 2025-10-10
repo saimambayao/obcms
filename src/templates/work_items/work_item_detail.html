@@ -436,6 +436,50 @@
 
         <!-- Right Column -->
         <div class="space-y-6">
+            <!-- MOA & PPA Context -->
+            <section class="bg-white rounded-xl p-6 border border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-project-diagram text-emerald-500 mr-2"></i>
+                    Implementing MOA & Related PPA
+                </h2>
+                <div class="space-y-4">
+                    <div class="flex items-start gap-3">
+                        <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                            <i class="fas fa-building text-lg"></i>
+                        </span>
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Implementing MOA</p>
+                            <p class="text-base text-gray-900 mt-1">
+                                {% if work_item.related_ppa and work_item.related_ppa.implementing_moa %}
+                                    {{ work_item.related_ppa.implementing_moa.name }}
+                                {% elif work_item.implementing_moa %}
+                                    {{ work_item.implementing_moa.name }}
+                                {% elif work_item.ppa_category == 'moa_ppa' %}
+                                    <span class="italic text-gray-500">Not specified</span>
+                                {% else %}
+                                    Office for Other Bangsamoro Communities (OOBC)
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 border-t border-gray-100 pt-4">
+                        <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                            <i class="fas fa-tasks text-lg"></i>
+                        </span>
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Related PPA</p>
+                            <p class="text-base text-gray-900 mt-1">
+                                {% if work_item.related_ppa %}
+                                    {{ work_item.related_ppa.title }}
+                                {% else %}
+                                    <span class="italic text-gray-500">Not specified</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Assignment -->
             <section class="bg-white rounded-xl p-6 border border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">

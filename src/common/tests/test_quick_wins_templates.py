@@ -20,6 +20,7 @@ from common.ai_services.chat.query_templates.infrastructure import INFRASTRUCTUR
 from common.ai_services.chat.query_templates.livelihood import LIVELIHOOD_TEMPLATES
 from common.ai_services.chat.query_templates.stakeholders import STAKEHOLDER_TEMPLATES
 from common.ai_services.chat.query_templates.budget import BUDGET_TEMPLATES
+from common.ai_services.chat.template_matcher import TemplateMatcher
 
 
 class TestQuickWinsTemplatesRegistration:
@@ -147,7 +148,8 @@ class TestInfrastructureTemplatePatterns:
             'How many communities have poor water access?',
             'Communities with limited water supply',
             'Count communities with no water access',
-            'Communities having available water'
+            'Communities having available water',
+            'Communities with water access'
         ]
 
         for query in test_queries:
@@ -170,6 +172,58 @@ class TestInfrastructureTemplatePatterns:
         for query in test_queries:
             match = template.matches(query.lower())
             assert match is not None, f"Should match: {query}"
+
+
+class TestInfrastructureTemplateMatcher:
+    """Ensure TemplateMatcher executes infrastructure templates with flexible rating handling."""
+
+    @pytest.fixture
+    def matcher(self):
+        return TemplateMatcher()
+
+    def test_water_template_generates_filter_from_statement(self, matcher):
+        """Statement queries with rating should produce the correct filter."""
+        result = matcher.match_and_generate(
+            "Communities with limited water supply",
+            {},
+            category='infrastructure'
+        )
+
+        assert result['success'], result['error']
+        assert "infrastructure__availability_status__icontains='limited'" in result['query']
+
+    def test_water_template_handles_missing_rating(self, matcher):
+        """Queries without rating should still execute and omit availability filters."""
+        result = matcher.match_and_generate(
+            "Communities with water access",
+            {},
+            category='infrastructure'
+        )
+
+        assert result['success'], result['error']
+        assert "infrastructure__availability_status__icontains" not in result['query']
+
+    def test_water_template_normalizes_no_rating(self, matcher):
+        """Queries using 'no' should normalize to the 'none' rating."""
+        result = matcher.match_and_generate(
+            "Count communities with no water access",
+            {},
+            category='infrastructure'
+        )
+
+        assert result['success'], result['error']
+        assert "infrastructure__availability_status__icontains='none'" in result['query']
+
+    def test_sanitation_template_with_no_rating(self, matcher):
+        """Sanitation template should also respect missing ratings."""
+        result = matcher.match_and_generate(
+            "Communities with no sanitation",
+            {},
+            category='infrastructure'
+        )
+
+        assert result['success'], result['error']
+        assert "infrastructure__availability_status__icontains='none'" in result['query']
 
 
 class TestLivelihoodTemplatePatterns:

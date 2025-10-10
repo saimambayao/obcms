@@ -6,7 +6,8 @@ WORKDIR /app
 
 # Copy package files and install Node.js dependencies
 COPY package.json package-lock.json ./
-RUN npm ci --only=production
+# Install full dependency set (dev deps required for Tailwind/PostCSS build)
+RUN npm ci
 
 # Copy Tailwind configuration and source CSS
 COPY tailwind.config.js postcss.config.js ./
@@ -67,11 +68,7 @@ COPY --chown=app:app . /app/
 # Copy compiled CSS from node-builder stage
 COPY --from=node-builder --chown=app:app /app/src/static/css/output.css /app/src/static/css/output.css
 
-# Collect static files using production settings
-# This will create hashed filenames via ManifestStaticFilesStorage
-RUN python src/manage.py collectstatic --noinput --settings=obc_management.settings.production
-
 USER app
 
 # Use gunicorn with production configuration file
-CMD ["gunicorn", "--chdir", "src", "--config", "../gunicorn.conf.py", "obc_management.wsgi:application"]
+CMD ["gunicorn", "--chdir", "src", "--config", "/app/gunicorn.conf.py", "obc_management.wsgi:application"]

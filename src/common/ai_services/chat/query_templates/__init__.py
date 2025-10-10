@@ -35,33 +35,38 @@ import logging
 from common.ai_services.chat.query_templates.base import (
     QueryTemplate,
     TemplateRegistry,
-    get_template_registry,
+    get_template_registry as _get_template_registry_base,
 )
 
 logger = logging.getLogger(__name__)
-
-# Import get_template_matcher from template_matcher module for backward compatibility
-try:
-    from common.ai_services.chat.template_matcher import get_template_matcher
-except ImportError:
-    # If template_matcher doesn't exist, provide a stub
-    def get_template_matcher():
-        """Stub function for template matcher"""
-        return None
-
 
 # =============================================================================
 # AUTO-REGISTER ALL TEMPLATES ON MODULE IMPORT
 # =============================================================================
 
-def _register_all_templates():
+def get_template_registry():
+    """Return the global registry, re-registering templates if cleared."""
+    registry = _get_template_registry_base()
+    if not registry.get_all_templates():
+        _register_all_templates(registry=registry)
+    return registry
+
+
+def get_template_matcher():
+    """Lazy import to avoid circular dependency at module import time."""
+    from common.ai_services.chat.template_matcher import get_template_matcher as _get_template_matcher
+
+    return _get_template_matcher()
+
+
+def _register_all_templates(registry=None):
     """
     Auto-register all query templates from all modules.
 
     This function is called automatically when the module is imported,
     ensuring all templates are available in the global registry.
     """
-    registry = get_template_registry()
+    registry = registry or _get_template_registry_base()
 
     # Import all template collections
     try:

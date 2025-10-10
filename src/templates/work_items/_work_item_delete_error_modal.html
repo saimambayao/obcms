@@ -18,7 +18,8 @@
     {# Close Button #}
     <div class="flex justify-center">
         <button type="button"
-                @click="show = false; setTimeout(() => $el.closest('.modal-backdrop').remove(), 200)"
+                data-modal-dismiss
+                @click="show = false; setTimeout(() => { const root = $el.closest('.modal-backdrop'); if (root) { root.remove(); } }, 200)"
                 class="px-6 py-3 bg-gray-600 text-white rounded-xl font-medium hover:bg-gray-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
                 aria-label="Close modal">
             <i class="fas fa-times mr-2"></i>

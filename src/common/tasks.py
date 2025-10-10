@@ -41,10 +41,10 @@ def send_event_notification(event_id, participant_ids=None):
         activity = WorkItem.objects.get(pk=event_id, work_type='activity')
 
         # Get assigned users (participants)
+        assignees_qs = activity.assignees
         if participant_ids:
-            assigned_users = activity.assigned_users.filter(id__in=participant_ids)
-        else:
-            assigned_users = activity.assigned_users.all()
+            assignees_qs = assignees_qs.filter(id__in=participant_ids)
+        assigned_users = assignees_qs.all()
 
         # Send email to each assigned user
         sent_count = 0
@@ -138,7 +138,7 @@ def send_event_reminder(event_id, minutes_before=60):
             return "Activity already started"
 
         # Get assigned users
-        assigned_users = activity.assigned_users.all()
+        assigned_users = activity.assignees.all()
 
         sent_count = 0
         for user in assigned_users:
@@ -225,14 +225,14 @@ def send_daily_digest():
             # Get today's activities for user
             today_activities = WorkItem.objects.filter(
                 work_type='activity',
-                assigned_users=user,
+                assignees=user,
                 start_date=today
             ).order_by('start_time')
 
             # Get upcoming activities (next 7 days)
             upcoming_activities = WorkItem.objects.filter(
                 work_type='activity',
-                assigned_users=user,
+                assignees=user,
                 start_date__range=[tomorrow, week_from_now]
             ).order_by('start_date', 'start_time')[:10]
 
