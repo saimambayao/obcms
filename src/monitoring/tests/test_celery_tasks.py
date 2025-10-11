@@ -13,6 +13,8 @@ from monitoring.tasks import auto_sync_ppa_progress, detect_budget_variances
 
 User = get_user_model()
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def staff_user(db):

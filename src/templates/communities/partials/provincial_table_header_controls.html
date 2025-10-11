@@ -1,0 +1,32 @@
+{% load humanize %}
+<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between text-sm text-gray-600">
+    <form method="get" class="flex items-center gap-2">
+        {% for key, value in request.GET.items %}
+            {% if key != 'province_page_size' and key != 'province_page' %}
+                <input type="hidden" name="{{ key }}" value="{{ value }}">
+            {% endif %}
+        {% endfor %}
+        <label for="province-page-size" class="font-medium text-gray-700">Show</label>
+        <div class="relative">
+            <select id="province-page-size"
+                    name="province_page_size"
+                    class="appearance-none pr-9 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium focus:border-emerald-500 focus:ring-emerald-500 transition"
+                    onchange="this.form.submit()">
+                {% for option in province_page_size_options %}
+                    <option value="{{ option }}" {% if province_page_size == option %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+            </select>
+            <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
+                <i class="fas fa-chevron-down text-xs"></i>
+            </span>
+        </div>
+        <span>entries</span>
+    </form>
+    <div>
+        {% if coverages.paginator.count %}
+            Showing {{ coverages.start_index }} – {{ coverages.end_index }} of {{ coverages.paginator.count|intcomma }} entries
+        {% else %}
+            Showing 0 entries
+        {% endif %}
+    </div>
+</div>

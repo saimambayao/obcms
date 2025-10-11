@@ -22,6 +22,8 @@ from monitoring.api_views import MonitoringEntryViewSet
 
 User = get_user_model()
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture
 def api_user(db):

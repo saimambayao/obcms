@@ -1574,9 +1574,42 @@
     // Calendar refresh event listener (triggered after work item save)
     document.body.addEventListener('calendarRefresh', function(event) {
         console.log('🔄 Calendar refresh event triggered:', event.detail);
-        if (calendar) {
-            calendar.refetchEvents();
+        if (!calendar) {
+            return;
         }
+
+        const detail = event.detail || {};
+        const immediateEvent = detail.event;
+
+        if (immediateEvent) {
+            try {
+                const workType = immediateEvent?.extendedProps?.workType;
+                if (!workType || activeFilters[workType]) {
+                    const existing = calendar.getEventById(immediateEvent.id);
+                    if (existing) {
+                        existing.remove();
+                    }
+                    calendar.addEvent(immediateEvent);
+                    allEvents = allEvents
+                        .filter(eventObj => eventObj.id !== immediateEvent.id)
+                        .concat(immediateEvent);
+                } else {
+                    console.log('Skipping immediate render due to inactive filter:', workType);
+                }
+            } catch (error) {
+                console.error('Failed to inject calendar event immediately:', error);
+            }
+        }
+
+        // Always refetch to stay consistent with server-side state
+        setTimeout(() => {
+            try {
+                calendar.refetchEvents();
+                calendar.rerenderEvents();
+            } catch (error) {
+                console.error('Calendar refetch failed:', error);
+            }
+        }, 250);
     });
 
     // Debug mode: Expose calendar state for troubleshooting
@@ -1592,6 +1625,7 @@
             allEventsCount: allEvents.length
         });
     };
+    window.debugOpenCreateForm = handleDateDoubleClick;
     console.log('✅ Calendar debug mode enabled. Use window.debugCalendar() to inspect state.');
 
     // Toast notification event listener

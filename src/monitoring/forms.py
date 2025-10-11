@@ -11,8 +11,58 @@ from communities.models import OBCCommunity
 from .models import MonitoringEntry, MonitoringUpdate
 
 
-class BaseMonitoringEntryForm(forms.ModelForm):
+class OBCRequestFilterForm(forms.Form):
+    """Filter controls for the OBC requests dashboard."""
+
+    status = forms.ChoiceField(required=False)
+    priority = forms.ChoiceField(required=False)
+    source = forms.ChoiceField(required=False)
+    organization = forms.ChoiceField(required=False)
+    disaster = forms.ChoiceField(required=False)
+    query = forms.CharField(required=False, label="Search")
+
+    def __init__(
+        self,
+        *args,
+        status_choices=(),
+        priority_choices=(),
+        source_choices=(),
+        organization_choices=(),
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+
+        self.fields["status"].choices = [("", "All statuses"), *status_choices]
+        self.fields["priority"].choices = [("", "All priorities"), *priority_choices]
+        self.fields["source"].choices = [("", "All channels"), *source_choices]
+        self.fields["organization"].choices = [
+            ("", "All organizations"),
+            *organization_choices,
+        ]
+        self.fields["disaster"].choices = [
+            ("", "All requests"),
+            ("yes", "Disaster-related"),
+            ("no", "Non-disaster"),
+        ]
+
+        self.fields["query"].widget = forms.TextInput(
+            attrs={
+                "type": "search",
+                "placeholder": "Search by title, summary, or requester…",
+                "class": "pl-10",
+            }
+        )
+
+
+class BaseMonitoringEntryForm(LocationSelectionMixin, forms.ModelForm):
     """Base form helpers shared across entry quick-create forms."""
+
+    location_field_names = {
+        "region": "coverage_region",
+        "province": "coverage_province",
+        "municipality": "coverage_municipality",
+        "barangay": "coverage_barangay",
+    }
 
     class Meta:
         model = MonitoringEntry
@@ -34,11 +84,30 @@ class BaseMonitoringEntryForm(forms.ModelForm):
             "coverage_barangay",
         }
 
+        if self.is_bound and hasattr(self, "data") and "progress" in self.data:
+            # Normalise blank progress submissions to zero before validation
+            bound_progress = self.data.get("progress")
+            if isinstance(bound_progress, (list, tuple)):
+                bound_progress = bound_progress[0] if bound_progress else ""
+            if bound_progress is not None and str(bound_progress).strip() == "":
+                mutable_data = self.data.copy()
+                mutable_data["progress"] = "0"
+                self.data = mutable_data
+
         goal_alignment_field = self.fields.get("goal_alignment")
         if goal_alignment_field:
             self.fields["goal_alignment"] = forms.CharField(
                 required=False,
                 help_text=goal_alignment_field.help_text,
+            )
+
+        progress_field = self.fields.get("progress")
+        if progress_field:
+            progress_field.required = False
+            progress_field.initial = (
+                progress_field.initial
+                if progress_field.initial not in (None, "")
+                else 0
             )
 
         for field_name in queryset_fields.intersection(self.fields.keys()):
@@ -66,9 +135,7 @@ class BaseMonitoringEntryForm(forms.ModelForm):
                 widget.attrs["class"] = existing_classes
                 widget.attrs.setdefault("data-component", "checkbox")
             else:
-                widget.attrs["class"] = (
-                    f"{existing_classes} {tailwind_input}".strip()
-                )
+                widget.attrs["class"] = f"{existing_classes} {tailwind_input}".strip()
                 placeholder_source = field.help_text or field.label
                 if placeholder_source and not isinstance(
                     widget, (forms.Select, forms.SelectMultiple)
@@ -253,10 +320,6 @@ class MonitoringMOAEntryForm(BaseMonitoringEntryForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        coverage_region = cleaned_data.get("coverage_region")
-        coverage_province = cleaned_data.get("coverage_province")
-        coverage_municipality = cleaned_data.get("coverage_municipality")
-        coverage_barangay = cleaned_data.get("coverage_barangay")
 
         if not cleaned_data.get("implementing_moa"):
             self.add_error(
@@ -265,28 +328,6 @@ class MonitoringMOAEntryForm(BaseMonitoringEntryForm):
             )
         if cleaned_data.get("progress") is None:
             cleaned_data["progress"] = 0
-
-        if coverage_province and coverage_province.region_id != getattr(
-            coverage_region, "id", None
-        ):
-            self.add_error(
-                "coverage_province",
-                "Selected province does not belong to the chosen region.",
-            )
-        if coverage_municipality and coverage_municipality.province_id != getattr(
-            coverage_province, "id", None
-        ):
-            self.add_error(
-                "coverage_municipality",
-                "Municipality must belong to the selected province.",
-            )
-        if coverage_barangay and coverage_barangay.municipality_id != getattr(
-            coverage_municipality, "id", None
-        ):
-            self.add_error(
-                "coverage_barangay",
-                "Barangay must belong to the selected municipality.",
-            )
         return cleaned_data
 
     def _apply_category_defaults(self, instance: MonitoringEntry) -> MonitoringEntry:
@@ -442,9 +483,7 @@ class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
         related_ppas_field = self.fields.get("related_ppas")
         if related_ppas_field:
             related_ppas_field.queryset = (
-                MonitoringEntry.objects.filter(
-                    category__in=["moa_ppa", "oobc_ppa"]
-                )
+                MonitoringEntry.objects.filter(category__in=["moa_ppa", "oobc_ppa"])
                 .order_by("title")
                 .select_related("implementing_moa")
             )
@@ -469,13 +508,21 @@ class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
 
         if self.user:
             self.initial.setdefault("requester_name", self.user.get_full_name())
-            self.initial.setdefault("requester_position", getattr(self.user, "position", ""))
-            self.initial.setdefault("requester_affiliation", getattr(self.user, "organization", ""))
-            self.initial.setdefault("requester_contact_number", getattr(self.user, "contact_number", ""))
+            self.initial.setdefault(
+                "requester_position", getattr(self.user, "position", "")
+            )
+            self.initial.setdefault(
+                "requester_affiliation", getattr(self.user, "organization", "")
+            )
+            self.initial.setdefault(
+                "requester_contact_number", getattr(self.user, "contact_number", "")
+            )
             self.initial.setdefault("requester_email", getattr(self.user, "email", ""))
 
         # Additional demographic fields for beneficiary disaggregation
-        self.beneficiary_numeric_keys = [key for key, _ in self.beneficiary_numeric_fields]
+        self.beneficiary_numeric_keys = [
+            key for key, _ in self.beneficiary_numeric_fields
+        ]
         for field_name, label in self.beneficiary_numeric_fields:
             self.fields[field_name] = forms.IntegerField(
                 required=False,
@@ -499,7 +546,10 @@ class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
         for key in self.beneficiary_numeric_keys:
             if key in demographics and self.initial.get(key) is None:
                 self.initial[key] = demographics.get(key)
-        if demographics and self.initial.get("beneficiary_ethnolinguistic_groups") is None:
+        if (
+            demographics
+            and self.initial.get("beneficiary_ethnolinguistic_groups") is None
+        ):
             ethnos = demographics.get("ethnolinguistic_groups", [])
             if isinstance(ethnos, list):
                 self.initial["beneficiary_ethnolinguistic_groups"] = ", ".join(ethnos)
@@ -545,7 +595,11 @@ class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
         alternate_contact = (
             cleaned_data.get("requester_alternate_contact_number") or ""
         ).strip()
-        if primary_contact and alternate_contact and primary_contact == alternate_contact:
+        if (
+            primary_contact
+            and alternate_contact
+            and primary_contact == alternate_contact
+        ):
             self.add_error(
                 "requester_alternate_contact_number",
                 "Alternate contact number must be different from the primary number.",
@@ -559,14 +613,15 @@ class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
         communities = cleaned_data.get("communities")
 
         if title and (submitted_by or requester_name) and submitted_to:
-            duplicate_qs = (
-                MonitoringEntry.objects.filter(category="obc_request")
-                .filter(title__iexact=title.strip())
-            )
+            duplicate_qs = MonitoringEntry.objects.filter(
+                category="obc_request"
+            ).filter(title__iexact=title.strip())
             if submitted_by:
                 duplicate_qs = duplicate_qs.filter(submitted_by_community=submitted_by)
             if requester_name:
-                duplicate_qs = duplicate_qs.filter(requester_name__iexact=requester_name)
+                duplicate_qs = duplicate_qs.filter(
+                    requester_name__iexact=requester_name
+                )
             duplicate_qs = duplicate_qs.filter(submitted_to_organization=submitted_to)
             if related_ppas:
                 duplicate_qs = duplicate_qs.filter(related_ppas__in=list(related_ppas))
@@ -576,12 +631,14 @@ class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
             duplicate_qs = duplicate_qs.distinct()
             if duplicate_qs.exists():
                 existing_entry = duplicate_qs.first()
-                detail_url = reverse("monitoring:detail", kwargs={"pk": existing_entry.pk})
+                detail_url = reverse(
+                    "monitoring:detail", kwargs={"pk": existing_entry.pk}
+                )
                 self.add_error(
                     None,
                     forms.ValidationError(
                         format_html(
-                            "A similar request already exists. <a href=\"{}\" class=\"text-emerald-600 underline\">View previous submission</a>.",
+                            'A similar request already exists. <a href="{}" class="text-emerald-600 underline">View previous submission</a>.',
                             detail_url,
                         )
                     ),
@@ -613,7 +670,9 @@ class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
         instance.request_source = self.cleaned_data.get("request_source", "")
         instance.requester_name = self.cleaned_data.get("requester_name", "")
         instance.requester_position = self.cleaned_data.get("requester_position", "")
-        instance.requester_affiliation = self.cleaned_data.get("requester_affiliation", "")
+        instance.requester_affiliation = self.cleaned_data.get(
+            "requester_affiliation", ""
+        )
         instance.requester_contact_number = self.cleaned_data.get(
             "requester_contact_number", ""
         )
@@ -645,6 +704,7 @@ class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
             self.save_m2m()
             self._post_save(instance)
         return instance
+
     def _apply_category_defaults(self, instance: MonitoringEntry) -> MonitoringEntry:
         instance.category = "obc_request"
         instance.status = "planning"
@@ -832,6 +892,7 @@ class MonitoringUpdateForm(forms.ModelForm):
             "bg-white shadow-sm transition-all duration-200 focus:ring-emerald-500 "
             "focus:border-emerald-500 min-h-[48px]"
         )
+
         def _set_empty_choice_label(django_field: forms.Field, label: str) -> None:
             if not getattr(django_field, "choices", None):
                 return

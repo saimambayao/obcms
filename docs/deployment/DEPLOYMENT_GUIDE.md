@@ -581,6 +581,12 @@ sudo -u postgres psql obcms_db -c "VACUUM ANALYZE;"
 sudo -u postgres psql -c "SELECT pg_size_pretty(pg_database_size('obcms_db'));"
 ```
 
+#### Coordination Partner Organization Location Upgrade
+
+- Run `./manage.py migrate` inside `src/` to apply the new geographic columns on `coordination.Organization`.
+- Execute `./manage.py backfill_organization_locations --dry-run` to preview inferred headquarters matches, then re-run without `--dry-run` when you are ready to persist updates.
+- To reprocess a specific record after manual corrections, call `./manage.py backfill_organization_locations --organization <uuid>`.
+
 ---
 
 ## Production Checklist

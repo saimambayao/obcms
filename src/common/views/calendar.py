@@ -8,12 +8,15 @@ See: docs/refactor/CALENDAR_INTEGRATION_PLAN.md
 """
 
 import json
-from django.http import JsonResponse, HttpResponse
+from datetime import timedelta
+
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404
-from django.views.decorators.cache import never_cache
 from django.core.cache import cache
 from django.db import models
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import get_object_or_404, render
+from django.views.decorators.cache import never_cache
+
 from common.models import WorkItem
 
 
@@ -66,13 +69,14 @@ def work_items_calendar_feed(request):
     """
     # Optional filters
     work_type = request.GET.get('type')  # project, activity, task
+    activity_category = request.GET.get('activity_category')
     status = request.GET.get('status')
     assignee_id = request.GET.get('assignee')  # Filter by assignee user ID
     start_date_str = request.GET.get('start')
     end_date_str = request.GET.get('end')
 
     # Parse ISO 8601 datetime strings to dates (FullCalendar sends timezone-aware strings)
-    from datetime import datetime, timedelta
+    from datetime import datetime
     start_date = None
     end_date = None
 
@@ -102,13 +106,16 @@ def work_items_calendar_feed(request):
     # Version invalidates ALL caches when any work item changes
     user_id = request.user.id
     cache_version = cache.get(f'calendar_version:{user_id}') or 0
-    cache_key = f"calendar_feed:{user_id}:v{cache_version}:{work_type}:{status}:{assignee_id}:{start_date}:{end_date}"
+    cache_key = (
+        f"calendar_feed:{user_id}:v{cache_version}:{work_type}:{activity_category}:"
+        f"{status}:{assignee_id}:{start_date}:{end_date}"
+    )
     cached = cache.get(cache_key)
     if cached:
         return JsonResponse(cached, safe=False)
 
     # Base query with MPTT optimization
-    queryset = WorkItem.objects.select_related('parent').prefetch_related('assignees')
+    queryset = WorkItem.objects.select_related('parent').prefetch_related('assignees', 'teams')
 
     # Only show calendar-visible items
     queryset = queryset.filter(is_calendar_visible=True)
@@ -131,6 +138,10 @@ def work_items_calendar_feed(request):
         if work_type.lower() in type_mapping:
             queryset = queryset.filter(work_type__in=type_mapping[work_type.lower()])
 
+    # Activity category filter (for activities/sub-activities)
+    if activity_category:
+        queryset = queryset.filter(activity_category=activity_category)
+
     # Status filter
     if status:
         queryset = queryset.filter(status=status)
@@ -143,53 +154,7 @@ def work_items_calendar_feed(request):
         logger.info(f"Filtering calendar by assignee ID: {assignee_id}, found {queryset.count()} work items")
 
     # Serialize to calendar format
-    work_items = []
-    for item in queryset:
-        # Build breadcrumb path
-        breadcrumb = _build_breadcrumb(item)
-
-        # Check if has children
-        has_children = item.get_children().exists()
-        child_count = item.get_children().count()
-
-        # Generate action URLs
-        from django.urls import reverse
-        edit_url = reverse('common:work_item_edit', kwargs={'pk': item.pk})
-        delete_url = reverse('common:work_item_delete', kwargs={'pk': item.pk})
-
-        # FullCalendar's 'end' is EXCLUSIVE - add 1 day to due_date for correct multi-day display
-        # E.g., event Oct 7-8 needs start="2025-10-07", end="2025-10-09"
-        end_date = None
-        if item.due_date:
-            end_date = (item.due_date + timedelta(days=1)).isoformat()
-
-        work_items.append({
-            'id': f'work-item-{item.pk}',
-            'title': item.title,
-            'start': item.start_date.isoformat() if item.start_date else None,
-            'end': end_date,
-            'color': item.calendar_color,
-            'extendedProps': {
-                # Core work item properties
-                'workType': item.work_type,  # Raw value for filtering (project, activity, task)
-                'type': item.get_work_type_display(),  # Display name ("Project", "Activity", "Task")
-                'level': item.level,  # MPTT tree level
-                'parentId': f'work-item-{item.parent.pk}' if item.parent else None,
-                'breadcrumb': breadcrumb,
-                'url': f'/oobc-management/work-items/{item.pk}/modal/',
-                'editUrl': edit_url,
-                'deleteUrl': delete_url,
-                'hasChildren': has_children,
-                'childCount': child_count,
-                'status': item.status,
-                'statusDisplay': item.get_status_display(),
-                'priority': item.priority,
-                'priorityDisplay': item.get_priority_display(),
-                'progress': item.progress,
-                'assignees': [u.get_full_name() for u in item.assignees.all()],
-                'teams': [t.name for t in item.teams.all()],
-            }
-        })
+    work_items = [serialize_work_item_for_calendar(item) for item in queryset]
 
     # Build hierarchy metadata
     hierarchy = {
@@ -219,6 +184,47 @@ def _build_breadcrumb(work_item):
     ancestors = work_item.get_ancestors(include_self=True)
     breadcrumb_parts = [ancestor.title for ancestor in ancestors]
     return ' > '.join(breadcrumb_parts)
+
+
+def serialize_work_item_for_calendar(work_item: WorkItem) -> dict:
+    """Return a JSON-serialisable representation of a WorkItem for FullCalendar."""
+    from django.urls import reverse
+
+    # FullCalendar requires exclusive end dates for multi-day spans.
+    end_date = None
+    if work_item.due_date:
+        end_date = (work_item.due_date + timedelta(days=1)).isoformat()
+
+    breadcrumb = _build_breadcrumb(work_item)
+    child_count = work_item.get_children().count()
+
+    return {
+        'id': f'work-item-{work_item.pk}',
+        'title': work_item.title,
+        'start': work_item.start_date.isoformat() if work_item.start_date else None,
+        'end': end_date,
+        'color': work_item.calendar_color,
+        'extendedProps': {
+            'workType': work_item.work_type,
+            'type': work_item.get_work_type_display(),
+            'level': work_item.level,
+            'parentId': f'work-item-{work_item.parent.pk}' if work_item.parent else None,
+            'breadcrumb': breadcrumb,
+            'url': f'/oobc-management/work-items/{work_item.pk}/modal/',
+            'editUrl': reverse('common:work_item_edit', kwargs={'pk': work_item.pk}),
+            'deleteUrl': reverse('common:work_item_delete', kwargs={'pk': work_item.pk}),
+            'hasChildren': child_count > 0,
+            'childCount': child_count,
+            'status': work_item.status,
+            'statusDisplay': work_item.get_status_display(),
+            'priority': work_item.priority,
+            'priorityDisplay': work_item.get_priority_display(),
+            'progress': work_item.progress,
+            'assignees': [u.get_full_name() for u in work_item.assignees.all()],
+            'teams': [team.name for team in work_item.teams.all()],
+            'activityCategory': work_item.activity_category,
+        },
+    }
 
 
 @login_required

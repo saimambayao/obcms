@@ -826,6 +826,42 @@ class Organization(models.Model):
         blank=True, help_text="Mailing address (if different from physical address)"
     )
 
+    region = models.ForeignKey(
+        Region,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="organizations",
+        help_text="Region where the organization's primary office is located",
+    )
+
+    province = models.ForeignKey(
+        Province,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="organizations",
+        help_text="Province where the organization's primary office is located",
+    )
+
+    municipality = models.ForeignKey(
+        Municipality,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="organizations",
+        help_text="Municipality or city where the primary office is located",
+    )
+
+    barangay = models.ForeignKey(
+        Barangay,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="organizations",
+        help_text="Barangay where the primary office is located",
+    )
+
     phone = models.CharField(
         max_length=50, blank=True, help_text="Primary phone number"
     )
@@ -988,6 +1024,7 @@ class Organization(models.Model):
             models.Index(fields=["organization_type", "partnership_status"]),
             models.Index(fields=["is_active", "is_priority"]),
             models.Index(fields=["partnership_level", "partnership_status"]),
+            models.Index(fields=["region", "province", "municipality"]),
         ]
 
     def __str__(self):
@@ -1001,6 +1038,57 @@ class Organization(models.Model):
         if self.acronym:
             return f"{self.acronym} - {self.name}"
         return self.name
+
+    @property
+    def location_display(self):
+        """Return a formatted representation of the headquarters location."""
+        location_parts = []
+        if self.barangay:
+            location_parts.append(self.barangay.name)
+        if self.municipality:
+            location_parts.append(self.municipality.name)
+        if self.province:
+            location_parts.append(self.province.name)
+        if self.region:
+            location_parts.append(self.region.name)
+        if location_parts:
+            return ", ".join(location_parts)
+        return None
+
+    def clean(self):
+        """Ensure geographic hierarchy remains consistent."""
+        super().clean()
+        errors = {}
+
+        if self.barangay:
+            barangay_municipality = self.barangay.municipality
+            if self.municipality and self.municipality != barangay_municipality:
+                errors["barangay"] = (
+                    "Selected barangay does not belong to the chosen municipality."
+                )
+            else:
+                self.municipality = self.municipality or barangay_municipality
+
+        if self.municipality:
+            municipality_province = self.municipality.province
+            if self.province and self.province != municipality_province:
+                errors["municipality"] = (
+                    "Selected municipality does not belong to the chosen province."
+                )
+            else:
+                self.province = self.province or municipality_province
+
+        if self.province:
+            province_region = self.province.region
+            if self.region and self.region != province_region:
+                errors["province"] = (
+                    "Selected province does not belong to the chosen region."
+                )
+            else:
+                self.region = self.region or province_region
+
+        if errors:
+            raise ValidationError(errors)
 
 
 class MAOFocalPerson(models.Model):
@@ -2408,7 +2496,6 @@ class PartnershipDocument(models.Model):
         if self.file:
             self.file_size = self.file.size
         super().save(*args, **kwargs)
-
 
 
 # ========== BACKWARD COMPATIBILITY PROXIES ==========

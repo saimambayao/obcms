@@ -69,6 +69,17 @@ class WorkItem(MPTTModel):
         (WORK_TYPE_SUBTASK, "Subtask"),
     ]
 
+    # ========== ACTIVITY CATEGORY CHOICES ==========
+    ACTIVITY_CATEGORY_COORDINATION = "coordination"
+    ACTIVITY_CATEGORY_PPA = "ppa"
+    ACTIVITY_CATEGORY_OFFICE = "office"
+
+    ACTIVITY_CATEGORY_CHOICES = [
+        (ACTIVITY_CATEGORY_COORDINATION, "Coordination Activity"),
+        (ACTIVITY_CATEGORY_PPA, "PPA Activity"),
+        (ACTIVITY_CATEGORY_OFFICE, "Office Activity"),
+    ]
+
     # ========== IDENTITY ==========
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     work_type = models.CharField(
@@ -141,6 +152,15 @@ class WorkItem(MPTTModel):
         choices=PRIORITY_CHOICES,
         default=PRIORITY_MEDIUM,
         db_index=True,
+    )
+
+    activity_category = models.CharField(
+        max_length=20,
+        choices=ACTIVITY_CATEGORY_CHOICES,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Category for activity work items (coordination, PPA, office).",
     )
 
     # ========== DATES & SCHEDULING ==========
@@ -318,6 +338,7 @@ class WorkItem(MPTTModel):
             models.Index(fields=["work_type", "status"]),
             models.Index(fields=["start_date", "due_date"]),
             models.Index(fields=["status", "priority"]),
+            models.Index(fields=["activity_category"], name="wi_activity_category_idx"),
             # Relationship indexes
             models.Index(fields=["related_ppa"], name="wi_rel_ppa_idx"),
             models.Index(fields=["related_assessment"], name="wi_rel_assessment_idx"),

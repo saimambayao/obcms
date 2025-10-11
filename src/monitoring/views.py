@@ -18,6 +18,8 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import format_html, format_html_join
+from django.template.defaultfilters import truncatechars
 from django.views.decorators.http import require_POST
 
 from common.utils.moa_permissions import moa_can_edit_ppa
@@ -34,6 +36,7 @@ from .forms import (
     MonitoringRequestEntryForm,
     MonitoringUpdateForm,
     MonitoringOBCQuickCreateForm,
+    OBCRequestFilterForm,
 )
 from .models import (
     MonitoringEntry,
@@ -2078,6 +2081,9 @@ def obc_requests_dashboard(request):
     disaster_filter = request.GET.get("disaster", "").strip().lower()
     search_query = request.GET.get("q", "").strip()
 
+    organizations = list(Organization.objects.order_by("name"))
+    organization_lookup = {str(org.id): org for org in organizations}
+
     filtered_entries = base_queryset
 
     if status_filter:
@@ -2111,7 +2117,14 @@ def obc_requests_dashboard(request):
             | Q(requester_name__icontains=search_query)
         )
 
-    filtered_entries = filtered_entries.order_by("-updated_at")
+    filtered_entries = (
+        filtered_entries.select_related(
+            "submitted_by_community__barangay__municipality__province",
+            "submitted_to_organization",
+        )
+        .prefetch_related("related_ppas")
+        .order_by("-updated_at")
+    )
     filtered_count = filtered_entries.count()
 
     obc_year_qs = filtered_entries.filter(Q(created_at__year=current_year))
@@ -2125,10 +2138,29 @@ def obc_requests_dashboard(request):
 
     high_priority = filtered_entries.filter(priority="high").count()
     urgent_priority = filtered_entries.filter(priority="urgent").count()
+    standard_priority = filtered_entries.exclude(priority__in=["urgent", "high"]).count()
 
     requesting_communities = (
         filtered_entries.exclude(submitted_by_community__isnull=True)
         .values("submitted_by_community__name")
+        .distinct()
+        .count()
+    )
+    active_requesting_communities = (
+        filtered_entries.filter(request_status__in=in_progress_statuses)
+        .values("submitted_by_community")
+        .distinct()
+        .count()
+    )
+    pending_requesting_communities = (
+        filtered_entries.filter(request_status__in=pending_statuses)
+        .values("submitted_by_community")
+        .distinct()
+        .count()
+    )
+    completed_requesting_communities = (
+        filtered_entries.filter(request_status="completed")
+        .values("submitted_by_community")
         .distinct()
         .count()
     )
@@ -2158,13 +2190,16 @@ def obc_requests_dashboard(request):
             )
         )
 
+    estimated_budget_display = f"₱{format(estimated_budget_total, ',.2f')}"
+    average_budget_display = f"₱{format(average_budget, ',.2f')}"
+
     stats_cards = [
         {
             "title": "Total OBC Requests",
             "subtitle": f"{filtered_count} shown out of {total_all_requests}",
             "icon": "fas fa-file-signature",
             "icon_color": "text-blue-600",
-            "gradient": "from-cyan-500 via-sky-500 to-indigo-500",
+            "accent_gradient": "from-sky-500 via-cyan-500 to-indigo-500",
             "total": filtered_count,
             "metrics": [
                 {"label": "Completed", "value": completed_requests},
@@ -2177,15 +2212,12 @@ def obc_requests_dashboard(request):
             "subtitle": "Urgency breakdown",
             "icon": "fas fa-exclamation-triangle",
             "icon_color": "text-orange-600",
-            "gradient": "from-red-500 via-orange-500 to-yellow-500",
+            "accent_gradient": "from-rose-500 via-orange-500 to-amber-500",
             "total": urgent_priority + high_priority,
             "metrics": [
                 {"label": "Urgent", "value": urgent_priority},
                 {"label": "High", "value": high_priority},
-                {
-                    "label": "Standard",
-                    "value": filtered_entries.filter(priority__in=["medium", "low"]).count(),
-                },
+                {"label": "Standard", "value": standard_priority},
             ],
         },
         {
@@ -2193,10 +2225,10 @@ def obc_requests_dashboard(request):
             "subtitle": "Estimated allocations",
             "icon": "fas fa-coins",
             "icon_color": "text-amber-600",
-            "gradient": "from-amber-500 via-orange-500 to-yellow-500",
-            "total": f"₱{estimated_budget_total:,.2f}",
+            "accent_gradient": "from-amber-500 via-orange-500 to-yellow-500",
+            "total": estimated_budget_display,
             "metrics": [
-                {"label": "Average", "value": f"₱{average_budget:,.0f}"},
+                {"label": "Average", "value": average_budget_display},
                 {"label": "Disaster-related", "value": disaster_related_count},
                 {"label": "Response", "value": f"{response_rate}%"},
             ],
@@ -2204,32 +2236,14 @@ def obc_requests_dashboard(request):
         {
             "title": "Community Participation",
             "subtitle": "Requesting communities",
-            "icon": "fas fa-mosque",
+            "icon": "fas fa-people-roof",
             "icon_color": "text-emerald-600",
-            "gradient": "from-green-500 via-emerald-500 to-teal-500",
+            "accent_gradient": "from-emerald-500 via-teal-500 to-green-500",
             "total": requesting_communities,
             "metrics": [
-                {
-                    "label": "Active",
-                    "value": filtered_entries.filter(request_status__in=in_progress_statuses)
-                    .values("submitted_by_community")
-                    .distinct()
-                    .count(),
-                },
-                {
-                    "label": "Pending",
-                    "value": filtered_entries.filter(request_status__in=pending_statuses)
-                    .values("submitted_by_community")
-                    .distinct()
-                    .count(),
-                },
-                {
-                    "label": "Completed",
-                    "value": filtered_entries.filter(request_status="completed")
-                    .values("submitted_by_community")
-                    .distinct()
-                    .count(),
-                },
+                {"label": "Active", "value": active_requesting_communities},
+                {"label": "Pending", "value": pending_requesting_communities},
+                {"label": "Completed", "value": completed_requesting_communities},
             ],
         },
     ]
@@ -2238,46 +2252,415 @@ def obc_requests_dashboard(request):
         {
             "title": "Submit New Request",
             "description": "Register a new community request or proposal.",
-            "icon": "fas fa-plus-circle",
-            "color": "bg-blue-500",
+            "icon": "fas fa-plus",
+            "icon_gradient": "from-emerald-500 via-emerald-600 to-teal-500",
+            "accent_text_class": "text-emerald-600",
+            "accent_hover_class": "group-hover:text-emerald-600",
             "url": reverse("monitoring:create_request"),
         },
         {
             "title": "Priority Queue",
             "description": "Review high-priority and urgent requests.",
             "icon": "fas fa-flag",
-            "color": "bg-red-500",
+            "icon_gradient": "from-rose-500 via-rose-600 to-orange-500",
+            "accent_text_class": "text-rose-600",
+            "accent_hover_class": "group-hover:text-rose-600",
             "url": reverse("monitoring:obc_priority_queue"),
         },
         {
             "title": "Community Dashboard",
             "description": "View requests by community and region.",
-            "icon": "fas fa-map-marked-alt",
-            "color": "bg-green-500",
+            "icon": "fas fa-map-location-dot",
+            "icon_gradient": "from-teal-500 via-emerald-500 to-green-500",
+            "accent_text_class": "text-emerald-600",
+            "accent_hover_class": "group-hover:text-emerald-600",
             "url": reverse("monitoring:obc_community_dashboard"),
         },
         {
             "title": "Generate Reports",
             "description": "Create comprehensive OBC requests analysis.",
             "icon": "fas fa-chart-line",
-            "color": "bg-purple-500",
+            "icon_gradient": "from-indigo-500 via-violet-500 to-purple-500",
+            "accent_text_class": "text-indigo-600",
+            "accent_hover_class": "group-hover:text-indigo-600",
             "url": reverse("monitoring:generate_obc_report"),
         },
         {
             "title": "Bulk Status Update",
             "description": "Update multiple request statuses at once.",
-            "icon": "fas fa-edit",
-            "color": "bg-orange-500",
+            "icon": "fas fa-pen-to-square",
+            "icon_gradient": "from-amber-500 via-orange-500 to-yellow-500",
+            "accent_text_class": "text-amber-600",
+            "accent_hover_class": "group-hover:text-amber-600",
             "url": reverse("monitoring:bulk_update_obc_status"),
         },
         {
             "title": "Export Requests",
             "description": "Export OBC requests data to Excel or CSV.",
             "icon": "fas fa-download",
-            "color": "bg-indigo-500",
+            "icon_gradient": "from-sky-500 via-blue-500 to-indigo-500",
+            "accent_text_class": "text-sky-600",
+            "accent_hover_class": "group-hover:text-sky-600",
             "url": reverse("monitoring:export_obc_data"),
         },
     ]
+
+    status_labels = dict(MonitoringEntry.REQUEST_STATUS_CHOICES)
+    priority_labels = dict(MonitoringEntry.PRIORITY_CHOICES)
+    source_labels = dict(MonitoringEntry.REQUEST_SOURCE_CHOICES)
+
+    filter_form = OBCRequestFilterForm(
+        data=request.GET or None,
+        status_choices=MonitoringEntry.REQUEST_STATUS_CHOICES,
+        priority_choices=MonitoringEntry.PRIORITY_CHOICES,
+        source_choices=MonitoringEntry.REQUEST_SOURCE_CHOICES,
+        organization_choices=[(str(org.id), org.name) for org in organizations],
+    )
+
+    active_filter_badges: list[dict[str, str]] = []
+    if status_filter:
+        active_filter_badges.append(
+            {"label": "Status", "value": status_labels.get(status_filter, status_filter)}
+        )
+    if priority_filter:
+        active_filter_badges.append(
+            {
+                "label": "Priority",
+                "value": priority_labels.get(priority_filter, priority_filter),
+            }
+        )
+    if source_filter:
+        active_filter_badges.append(
+            {"label": "Source", "value": source_labels.get(source_filter, source_filter)}
+        )
+    if organization_filter:
+        organization = organization_lookup.get(organization_filter)
+        if organization:
+            active_filter_badges.append(
+                {"label": "Organization", "value": organization.name}
+            )
+    if disaster_filter == "yes":
+        active_filter_badges.append(
+            {"label": "Disaster Tag", "value": "Disaster-related"}
+        )
+    elif disaster_filter == "no":
+        active_filter_badges.append({"label": "Disaster Tag", "value": "Non-disaster"})
+    if search_query:
+        active_filter_badges.append({"label": "Search", "value": search_query})
+
+    filters_applied = bool(active_filter_badges)
+
+    table_limit = 10
+    table_headers = [
+        {"label": "Request"},
+        {"label": "Community / Requester"},
+        {"label": "Receiving Organization"},
+        {"label": "Linked PPAs"},
+        {"label": "Estimated Budget", "class": "justify-end text-right"},
+    ]
+    table_rows: list[dict[str, object]] = []
+
+    table_entries = list(filtered_entries[:table_limit])
+
+    badge_base_class = (
+        "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs "
+        "font-semibold shadow-sm transition-all duration-200"
+    )
+    chip_base_class = (
+        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs "
+        "font-medium shadow-sm transition-all duration-200"
+    )
+
+    status_style_map = {
+        "submitted": {
+            "class": "border-slate-200 bg-slate-50 text-slate-700",
+            "icon": "fas fa-file-lines",
+        },
+        "under_review": {
+            "class": "border-amber-200 bg-amber-50 text-amber-700",
+            "icon": "fas fa-search",
+        },
+        "clarification": {
+            "class": "border-amber-200 bg-amber-50 text-amber-700",
+            "icon": "fas fa-question-circle",
+        },
+        "endorsed": {
+            "class": "border-indigo-200 bg-indigo-50 text-indigo-700",
+            "icon": "fas fa-thumbs-up",
+        },
+        "approved": {
+            "class": "border-emerald-200 bg-emerald-50 text-emerald-700",
+            "icon": "fas fa-check",
+        },
+        "in_progress": {
+            "class": "border-blue-200 bg-blue-50 text-blue-700",
+            "icon": "fas fa-spinner",
+        },
+        "completed": {
+            "class": "border-emerald-200 bg-emerald-50 text-emerald-700",
+            "icon": "fas fa-check-circle",
+        },
+    }
+
+    priority_style_map = {
+        "urgent": {
+            "class": "border-rose-200 bg-rose-50 text-rose-600",
+            "icon": "fas fa-bolt",
+        },
+        "high": {
+            "class": "border-amber-200 bg-amber-50 text-amber-700",
+            "icon": "fas fa-flag",
+        },
+        "medium": {
+            "class": "border-sky-200 bg-sky-50 text-sky-600",
+            "icon": "fas fa-circle-half-stroke",
+        },
+        "low": {
+            "class": "border-emerald-200 bg-emerald-50 text-emerald-700",
+            "icon": "fas fa-leaf",
+        },
+    }
+
+    for entry in table_entries:
+        status_label = status_labels.get(entry.request_status, "Submitted")
+        status_style = status_style_map.get(
+            entry.request_status,
+            {"class": "border-slate-200 bg-slate-50 text-slate-600", "icon": "fas fa-file-lines"},
+        )
+        status_badge_html = format_html(
+            '<span class="{} {}"><i class="{} text-[10px]"></i><span>{}</span></span>',
+            badge_base_class,
+            status_style["class"],
+            status_style.get("icon", "fas fa-file-lines"),
+            status_label,
+        )
+
+        priority_badge_html = ""
+        if entry.priority:
+            priority_label = priority_labels.get(entry.priority, entry.priority)
+            priority_style = priority_style_map.get(
+                entry.priority,
+                {"class": "border-slate-200 bg-slate-50 text-slate-600"},
+            )
+            icon = priority_style.get("icon")
+            if icon:
+                priority_badge_html = format_html(
+                    '<span class="{} {}"><i class="{} text-[10px]"></i><span>{}</span></span>',
+                    badge_base_class,
+                    priority_style["class"],
+                    icon,
+                    priority_label,
+                )
+            else:
+                priority_badge_html = format_html(
+                    '<span class="{} {}">{}</span>',
+                    badge_base_class,
+                    priority_style["class"],
+                    priority_label,
+                )
+
+        badges_html = format_html_join(
+            "",
+            "{}",
+            ((badge,) for badge in [status_badge_html, priority_badge_html] if badge),
+        )
+
+        summary_html = ""
+        if entry.summary:
+            summary_html = format_html(
+                '<p class="text-xs text-gray-600 leading-relaxed">{}</p>',
+                truncatechars(entry.summary, 140),
+            )
+
+        meta_bits = []
+        if entry.request_source:
+            meta_bits.append(
+                format_html(
+                    '<span class="{} border-purple-200 bg-purple-50 text-purple-600"><i class="fas fa-share-from-square text-[10px]"></i><span>{}</span></span>',
+                    chip_base_class,
+                    source_labels.get(entry.request_source, entry.request_source),
+                )
+            )
+        if entry.updated_at:
+            updated_display = timezone.localtime(entry.updated_at).strftime(
+                "%b %d, %Y • %H:%M"
+            )
+            meta_bits.append(
+                format_html(
+                    '<span class="{} border-slate-200 bg-slate-50 text-slate-600"><i class="fas fa-clock text-[10px]"></i><span>Updated {}</span></span>',
+                    chip_base_class,
+                    updated_display,
+                )
+            )
+        meta_html = ""
+        if meta_bits:
+            meta_html = format_html(
+                '<div class="flex flex-wrap gap-2">{}</div>',
+                format_html_join("", "{}", ((bit,) for bit in meta_bits)),
+            )
+
+        request_cell = format_html(
+            '<div class="space-y-3">'
+            '<div class="space-y-2">'
+            '<a href="{}" class="text-sm font-semibold text-gray-900 hover:text-emerald-600 leading-snug break-words">{}</a>'
+            '<div class="flex flex-wrap gap-2">{}</div>'
+            "</div>"
+            "{}"
+            "{}"
+            "</div>",
+            reverse("monitoring:detail", args=[entry.pk]),
+            entry.title or "Untitled request",
+            badges_html,
+            summary_html,
+            meta_html,
+        )
+
+        community = getattr(entry, "submitted_by_community", None)
+        if community:
+            community_name = getattr(community, "display_name", None) or getattr(
+                community, "name", "Community"
+            )
+            barangay = getattr(community, "barangay", None)
+            municipality = getattr(barangay, "municipality", None) if barangay else None
+            province = getattr(municipality, "province", None) if municipality else None
+            location_parts = [
+                part
+                for part in [
+                    getattr(barangay, "name", None),
+                    getattr(municipality, "name", None),
+                    getattr(province, "name", None),
+                ]
+                if part
+            ]
+            location_html = ""
+            if location_parts:
+                location_html = format_html(
+                    '<p class="text-xs text-gray-500">{}</p>',
+                    ", ".join(location_parts),
+                )
+
+            requester_bits = []
+            if entry.requester_name:
+                requester_bits.append(
+                    format_html(
+                        '<span class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700"><i class="fas fa-user text-[10px]"></i><span>{}</span></span>',
+                        entry.requester_name,
+                    )
+                )
+            if entry.requester_position:
+                requester_bits.append(
+                    format_html(
+                        '<span class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600"><span>{}</span></span>',
+                        entry.requester_position,
+                    )
+                )
+            requester_html = ""
+            if requester_bits:
+                requester_html = format_html(
+                    '<div class="flex flex-wrap gap-2 mt-2">{}</div>',
+                    format_html_join("", "{}", ((bit,) for bit in requester_bits)),
+                )
+
+            community_cell = format_html(
+                '<div class="space-y-1">'
+                '<p class="text-sm font-semibold text-gray-900 leading-snug">{}</p>'
+                "{}"
+                "{}"
+                "</div>",
+                community_name,
+                location_html,
+                requester_html,
+            )
+        else:
+            community_cell = format_html(
+                '<span class="text-xs text-gray-400">No community specified</span>'
+            )
+
+        organization = getattr(entry, "submitted_to_organization", None)
+        if organization:
+            organization_type = getattr(organization, "organization_type", "")
+            organization_cell = format_html(
+                '<div class="space-y-1">'
+                '<p class="text-sm font-semibold text-gray-900 leading-snug">{}</p>'
+                "{}"
+                "</div>",
+                organization.name,
+                format_html(
+                    '<p class="text-xs uppercase tracking-wide text-gray-500">{}</p>',
+                    organization_type,
+                )
+                if organization_type
+                else "",
+            )
+        else:
+            organization_cell = format_html(
+                '<span class="text-xs text-gray-400">Not yet assigned</span>'
+            )
+
+        related_ppas = list(entry.related_ppas.all())
+        if related_ppas:
+            ppa_items = [
+                format_html(
+                    '<li class="truncate"><a href="{}" class="text-sm text-indigo-600 hover:text-indigo-700">{}</a></li>',
+                    reverse("monitoring:detail", args=[ppa.pk]),
+                    ppa.title,
+                )
+                for ppa in related_ppas[:3]
+            ]
+            if len(related_ppas) > 3:
+                ppa_items.append(
+                    format_html(
+                        '<li class="text-xs text-gray-400">+{} more</li>',
+                        len(related_ppas) - 3,
+                    )
+                )
+            linked_ppas_cell = format_html(
+                '<ul class="space-y-1 text-sm text-gray-700">{}</ul>',
+                format_html_join("", "{}", ((item,) for item in ppa_items)),
+            )
+        else:
+            linked_ppas_cell = format_html(
+                '<span class="text-xs text-gray-400">No PPAs linked</span>'
+            )
+
+        budget_value = "—"
+        if entry.estimated_total_amount:
+            budget_value = f"₱{format(entry.estimated_total_amount, ',.2f')}"
+        disaster_badge_html = ""
+        if entry.is_disaster_related:
+            disaster_badge_html = format_html(
+                '<span class="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-600"><i class="fas fa-bolt text-[10px]"></i><span>Disaster</span></span>'
+            )
+        budget_cell = format_html(
+            '<div class="text-right space-y-2">'
+            '<p class="text-sm font-semibold text-gray-900">{}</p>'
+            "{}"
+            "</div>",
+            budget_value,
+            disaster_badge_html,
+        )
+
+        table_rows.append(
+            {
+                "cells": [
+                    {"content": request_cell},
+                    {"content": community_cell},
+                    {"content": organization_cell},
+                    {"content": linked_ppas_cell},
+                    {"content": budget_cell, "class": "text-right"},
+                ],
+                "view_url": reverse("monitoring:detail", args=[entry.pk]),
+            }
+        )
+
+    table_empty_message = "No OBC requests match the current filters."
+    table_footer_slot = None
+    if filtered_count > table_limit:
+        table_footer_slot = format_html(
+            '<p class="text-sm text-gray-600">Showing the first {} of {} filtered requests. Use filters or export to review the full list.</p>',
+            table_limit,
+            filtered_count,
+        )
 
     request_status_breakdown = [
         {
@@ -2337,24 +2720,95 @@ def obc_requests_dashboard(request):
         "avg_response_days": 7,
     }
 
+    hero_year_count = obc_year_qs.count()
+    hero_actions = [
+        {
+            "href": reverse("monitoring:create_request"),
+            "label": "Submit OBC Request",
+            "icon": "fas fa-plus-circle",
+            "variant": "primary",
+        },
+        {
+            "href": reverse("monitoring:obc_priority_queue"),
+            "label": "View Priority Queue",
+            "icon": "fas fa-flag",
+            "variant": "secondary",
+        },
+        {
+            "href": reverse("monitoring:generate_obc_report"),
+            "label": "Generate Report",
+            "icon": "fas fa-chart-line",
+            "variant": "ghost",
+        },
+    ]
+    hero_metrics = [
+        {
+            "icon": "fas fa-list-check",
+            "label": "Requests in view",
+            "value": filtered_count,
+            "meta": f"of {total_all_requests} total",
+        },
+        {
+            "icon": "fas fa-fire",
+            "label": "Urgent & high",
+            "value": urgent_priority + high_priority,
+            "meta": "Requires rapid attention",
+        },
+        {
+            "icon": "fas fa-peso-sign",
+            "label": "Est. budget",
+            "value": estimated_budget_display,
+            "meta": f"Avg. {average_budget_display}",
+        },
+    ]
+    hero_highlights = [
+        f"{hero_year_count} new requests logged in {current_year}",
+        f"{disaster_related_count} tagged as disaster-related",
+    ]
+    hero_config = {
+        "badge_icon": "fas fa-life-ring",
+        "badge_text": "Community Support Requests",
+        "title": "OBC Requests Mission Control",
+        "subtitle": "Coordinate barangay assistance proposals from submission through endorsement and completion.",
+        "latest_update": progress_snapshot["latest_update"],
+    }
+    hero_summary = (
+        f"{filtered_count} of {total_all_requests} requests currently match the applied filters."
+    )
+
     filter_options = {
         "statuses": MonitoringEntry.REQUEST_STATUS_CHOICES,
         "priorities": MonitoringEntry.PRIORITY_CHOICES,
         "sources": MonitoringEntry.REQUEST_SOURCE_CHOICES,
-        "organizations": Organization.objects.order_by("name"),
+        "organizations": organizations,
     }
 
     context = {
+        "hero_config": hero_config,
+        "hero_actions": hero_actions,
+        "hero_metrics": hero_metrics,
+        "hero_highlights": hero_highlights,
+        "hero_summary": hero_summary,
         "stats_cards": stats_cards,
         "quick_actions": quick_actions,
-        "obc_entries": filtered_entries,
+        "filter_form": filter_form,
+        "filters_applied": filters_applied,
+        "active_filter_badges": active_filter_badges,
+        "table_headers": table_headers,
+        "table_rows": table_rows,
+        "table_empty_message": table_empty_message,
+        "table_footer_slot": table_footer_slot,
+        "table_limit": table_limit,
         "request_status_breakdown": request_status_breakdown,
         "recent_updates": recent_updates,
         "progress_snapshot": progress_snapshot,
         "receiving_orgs": receiving_orgs,
+        "hero_year_count": hero_year_count,
         "current_year": current_year,
         "estimated_budget_total": estimated_budget_total,
         "average_budget": average_budget,
+        "estimated_budget_display": estimated_budget_display,
+        "average_budget_display": average_budget_display,
         "response_rate": response_rate,
         "source_breakdown": source_breakdown,
         "priority_breakdown": priority_breakdown,

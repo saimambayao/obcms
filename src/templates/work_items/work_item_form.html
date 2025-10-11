@@ -74,6 +74,21 @@
                         <p class="mt-1 text-sm text-red-600">{{ form.work_type.errors.0 }}</p>
                     {% endif %}
                 </div>
+                <div class="md:col-span-2 hidden" data-activity-category-wrapper>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Activity Category
+                    </label>
+                    <div class="relative">
+                        {{ form.activity_category }}
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                        </span>
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">Choose how this activity should appear across coordination tools.</p>
+                    {% if form.activity_category.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.activity_category.errors.0 }}</p>
+                    {% endif %}
+                </div>
 
                 <!-- Parent -->
                 <div class="md:col-span-2">

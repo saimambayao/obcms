@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.humanize.templatetags.humanize import intcomma, naturaltime
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.core.serializers.json import DjangoJSONEncoder
@@ -22,6 +23,9 @@ from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_GET, require_POST
 
 from ..forms import (
@@ -210,6 +214,169 @@ def _build_querystring(
     return urlencode(filtered)
 
 
+def _format_stat_value(value, default: str = "N/A") -> str:
+    """Present human-friendly counts with comma separators."""
+
+    if value in ("", None):
+        return default
+    try:
+        return intcomma(int(value))
+    except (TypeError, ValueError):
+        return default
+
+
+def _build_barangay_table(communities_page, *, can_manage: bool) -> dict:
+    """Assemble data-table friendly rows for the barangay registry."""
+
+    headers = [
+        {"label": "Community"},
+        {"label": "Location"},
+        {"label": "Coverage Snapshot"},
+        {"label": "Ethnolinguistic & Languages"},
+    ]
+
+    rows: list[dict] = []
+
+    for community in communities_page:
+        barangay = community.barangay
+        municipality = getattr(barangay, "municipality", None)
+        province = getattr(municipality, "province", None)
+        region = getattr(province, "region", None)
+
+        community_html = format_html(
+            "<div class='flex items-center gap-3'>"
+            "<span class='inline-flex h-10 w-10 items-center justify-center rounded-xl "
+            "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm'>"
+            "<i class='fas fa-map-marker-alt'></i>"
+            "</span>"
+            "<div>"
+            "<div class='text-sm font-semibold text-gray-900'>{}</div>"
+            "{}"
+            "</div>"
+            "</div>",
+            barangay.name,
+            (
+                format_html(
+                    "<div class='text-xs text-gray-500'>ID: {}</div>", community.obc_id
+                )
+                if community.obc_id
+                else ""
+            ),
+        )
+
+        location_lines = [
+            format_html(
+                "<div class='text-sm font-medium text-gray-900'>{}</div>",
+                municipality.name if municipality else "—",
+            ),
+            format_html(
+                "<div class='text-xs text-gray-500'>{}</div>",
+                province.name if province else "—",
+            ),
+        ]
+        if region:
+            location_lines.append(
+                format_html(
+                    "<div class='text-xs text-gray-400'>Region {} &middot; {}</div>",
+                    region.code or "—",
+                    region.name,
+                )
+            )
+        location_html = mark_safe("".join(line for line in location_lines))
+
+        snapshot_html = format_html(
+            "<div class='space-y-1 text-sm text-gray-700'>"
+            "<div><span class='font-semibold text-gray-900'>Est. OBC Population:</span> {}</div>"
+            "<div><span class='font-semibold text-gray-900'>Barangay Population:</span> {}</div>"
+            "<div><span class='font-semibold text-gray-900'>Households:</span> {}</div>"
+            "<div><span class='font-semibold text-gray-900'>Stakeholders tracked:</span> {}</div>"
+            "</div>",
+            _format_stat_value(community.estimated_obc_population),
+            _format_stat_value(community.total_barangay_population),
+            _format_stat_value(community.households),
+            _format_stat_value(getattr(community, "stakeholder_count", 0), default="0"),
+        )
+
+        chips: list = []
+        if community.primary_ethnolinguistic_group:
+            chips.append(
+                format_html(
+                    "<span class='inline-flex items-center px-2.5 py-0.5 rounded-full "
+                    "text-xs font-semibold bg-purple-100 text-purple-700'>"
+                    "{}"
+                    "</span>",
+                    community.get_primary_ethnolinguistic_group_display(),
+                )
+            )
+        else:
+            chips.append(
+                format_html(
+                    "<span class='inline-flex items-center px-2.5 py-0.5 rounded-full "
+                    "text-xs font-semibold bg-gray-100 text-gray-600'>Not specified</span>"
+                )
+            )
+
+        ethno_rows = [mark_safe("".join(chips))]
+
+        if community.other_ethnolinguistic_groups:
+            ethno_rows.append(
+                format_html(
+                    "<div class='text-xs text-gray-500'>"
+                    "<span class='font-semibold'>Other groups:</span> {}"
+                    "</div>",
+                    community.other_ethnolinguistic_groups,
+                )
+            )
+
+        if getattr(community, "primary_language", None):
+            ethno_rows.append(
+                format_html(
+                    "<div class='text-xs text-gray-500'>"
+                    "<span class='font-semibold'>Primary language:</span> {}"
+                    "</div>",
+                    community.primary_language,
+                )
+            )
+
+        if community.languages_spoken:
+            ethno_rows.append(
+                format_html(
+                    "<div class='text-xs text-gray-500'>"
+                    "<span class='font-semibold'>Languages:</span> {}"
+                    "</div>",
+                    community.languages_spoken,
+                )
+            )
+
+        ethno_html = mark_safe("".join(str(row) for row in ethno_rows))
+
+        rows.append(
+            {
+                "cells": [
+                    {"content": community_html},
+                    {"content": location_html},
+                    {"content": snapshot_html},
+                    {"content": ethno_html},
+                ],
+                "view_url": reverse("common:communities_view", args=[community.id]),
+                "edit_url": reverse("common:communities_edit", args=[community.id]),
+                "delete_preview_url": reverse(
+                    "common:communities_delete", args=[community.id]
+                ),
+                "delete_message": (
+                    "Delete this barangay OBC record? You will be able to review "
+                    "details before confirming."
+                ),
+            }
+        )
+
+    return {
+        "headers": headers,
+        "rows": rows,
+        "show_actions": can_manage,
+    }
+
+
 @login_required
 def communities_home(request):
     """OBC Communities module home page."""
@@ -231,9 +398,7 @@ def communities_home(request):
         "municipality__province__region"
     )
 
-    province_coverages = ProvinceCoverage.objects.select_related(
-        "province__region"
-    )
+    province_coverages = ProvinceCoverage.objects.select_related("province__region")
 
     vulnerable_sectors = communities.aggregate(
         total_women=Sum("women_count"),
@@ -308,9 +473,7 @@ def communities_home(request):
     province_ids.update(
         municipality_coverages.values_list("municipality__province_id", flat=True)
     )
-    province_ids.update(
-        province_coverages.values_list("province_id", flat=True)
-    )
+    province_ids.update(province_coverages.values_list("province_id", flat=True))
     province_ids.discard(None)
     total_provincial_obcs = Province.objects.filter(pk__in=province_ids).count()
 
@@ -361,7 +524,9 @@ def communities_home(request):
             )
             .annotate(count=Count("id"))
             .order_by("-count"),
-            "recent": municipality_coverages.order_by("-updated_at", "-created_at")[:10],
+            "recent": municipality_coverages.order_by("-updated_at", "-created_at")[
+                :10
+            ],
             "top_performers": province_performance,
         },
         "provinces": {
@@ -624,9 +789,7 @@ def communities_manage(request):
         for municipality in base_municipalities_qs
     ]
 
-    municipality_options_json = json.dumps(
-        municipality_options, cls=DjangoJSONEncoder
-    )
+    municipality_options_json = json.dumps(municipality_options, cls=DjangoJSONEncoder)
 
     total_barangay_obcs = communities.count()
     total_barangay_population = (
@@ -662,6 +825,11 @@ def communities_manage(request):
     municipality_base_querystring = _build_querystring(
         request_params,
         exclude=("municipality_page",),
+    )
+
+    barangay_table = _build_barangay_table(
+        communities_page,
+        can_manage=can_manage_communities,
     )
 
     stat_cards = [
@@ -769,6 +937,7 @@ def communities_manage(request):
         "current_municipality": municipality_filter,
         "municipality_options_json": municipality_options_json,
         "can_manage_communities": can_manage_communities,
+        "barangay_table": barangay_table,
     }
     template_name = "communities/communities_manage.html"
     if request.headers.get("HX-Request"):
@@ -858,9 +1027,7 @@ def communities_manage_municipal(request):
 
     total_coverages = coverages.count()
     barangay_population_subquery = (
-        OBCCommunity.objects.filter(
-            barangay__municipality=OuterRef("municipality")
-        )
+        OBCCommunity.objects.filter(barangay__municipality=OuterRef("municipality"))
         .values("barangay__municipality")
         .annotate(total=Sum("estimated_obc_population"))
         .values("total")
@@ -948,7 +1115,9 @@ def communities_manage_municipal(request):
 
     if show_archived:
         page_title = "Archived Municipal OBCs"
-        page_description = "Review archived municipality-level Bangsamoro coverage data."
+        page_description = (
+            "Review archived municipality-level Bangsamoro coverage data."
+        )
     else:
         page_title = "Manage Municipal OBC"
         if can_manage_communities:
@@ -959,9 +1128,7 @@ def communities_manage_municipal(request):
             page_description = "Review municipality-level Bangsamoro coverage data."
 
     badge_text = (
-        "OBC Data - Municipal (Archived)"
-        if show_archived
-        else "OBC Data - Municipal"
+        "OBC Data - Municipal (Archived)" if show_archived else "OBC Data - Municipal"
     )
 
     hero_actions = [
@@ -972,9 +1139,7 @@ def communities_manage_municipal(request):
                 else f"{reverse('common:communities_manage_municipal')}?archived=1"
             ),
             "label": (
-                "Back to active records"
-                if show_archived
-                else "View archived records"
+                "Back to active records" if show_archived else "View archived records"
             ),
             "icon": "fas fa-list" if show_archived else "fas fa-archive",
             "variant": "secondary",
@@ -1019,6 +1184,170 @@ def communities_manage_municipal(request):
     paginator = Paginator(coverages, page_size)
     coverages_page = paginator.get_page(page_number)
 
+    def _format_municipal_date(value):
+        if not value:
+            return "—"
+        try:
+            localized = timezone.localtime(value)
+        except Exception:  # pragma: no cover - fallback when timezone conversion fails
+            localized = value
+        return localized.strftime("%b %d, %Y")
+
+    municipality_table_headers = [
+        {"label": "Municipality / City"},
+        {"label": "Province & Region"},
+        {"label": "Coverage Snapshot"},
+        {"label": "Sync Mode"},
+        {"label": "Last Updated"},
+    ]
+
+    municipality_table_rows: list[dict] = []
+    for coverage in coverages_page:
+        municipality = getattr(coverage, "municipality", None)
+        province = getattr(municipality, "province", None)
+        region = getattr(province, "region", None)
+
+        municipality_type = (
+            municipality.get_municipality_type_display()
+            if municipality and hasattr(municipality, "get_municipality_type_display")
+            else "—"
+        )
+        municipality_html = format_html(
+            "<div class='flex items-center gap-3'>"
+            "<span class='inline-flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600'>"
+            "<i class='fas fa-city'></i>"
+            "</span>"
+            "<div>"
+            "<div class='text-sm font-semibold text-gray-900'>{}</div>"
+            "<div class='text-xs text-gray-500'>{}</div>"
+            "</div>"
+            "</div>",
+            municipality.name if municipality else "—",
+            municipality_type,
+        )
+
+        province_name = province.name if province else "—"
+        region_code = region.code if region else "—"
+        region_name = region.name if region else "—"
+        province_html = format_html(
+            "<div class='space-y-1'>"
+            "<div class='font-medium text-gray-900'>{}</div>"
+            "<div class='text-xs text-gray-500'>Region {} · {}</div>"
+            "</div>",
+            province_name,
+            region_code,
+            region_name,
+        )
+
+        total_obc = coverage.total_obc_communities or 0
+        estimated_population = coverage.estimated_obc_population
+        total_population = coverage.total_barangay_population or 0
+        households = coverage.households or 0
+        snapshot_parts = [
+            format_html(
+                "<div class='text-sm font-semibold text-gray-900'>{} barangay OBCs tracked</div>",
+                intcomma(total_obc),
+            ),
+            format_html(
+                "<div class='text-xs text-gray-500'>Est. OBC Population: {}</div>",
+                (
+                    intcomma(estimated_population)
+                    if estimated_population is not None
+                    else "—"
+                ),
+            ),
+            format_html(
+                "<div class='text-xs text-gray-500'>Total Population: {}</div>",
+                intcomma(total_population),
+            ),
+            format_html(
+                "<div class='text-xs text-gray-500'>Households: {}</div>",
+                intcomma(households),
+            ),
+        ]
+        if getattr(coverage, "key_barangays", ""):
+            snapshot_parts.append(
+                format_html(
+                    "<div class='text-xs text-gray-500'>"
+                    "<span class='font-semibold text-gray-700'>Key Barangays:</span> {}"
+                    "</div>",
+                    coverage.key_barangays,
+                )
+            )
+        snapshot_html = format_html(
+            "<div class='space-y-1'>{}</div>",
+            format_html_join("", "{}", ((part,) for part in snapshot_parts)),
+        )
+
+        if coverage.auto_sync:
+            sync_html = format_html(
+                "<span class='inline-flex items-center gap-1 rounded-full border border-emerald-200 "
+                "bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700'>"
+                "<i class='fas fa-sync'></i>"
+                "<span>Auto-sync</span>"
+                "</span>"
+            )
+        else:
+            sync_html = format_html(
+                "<span class='inline-flex items-center gap-1 rounded-full border border-amber-200 "
+                "bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700'>"
+                "<i class='fas fa-hand-paper'></i>"
+                "<span>Manual</span>"
+                "</span>"
+            )
+
+        history_html = format_html(
+            "<div class='space-y-1 text-xs text-gray-500'>"
+            "<div>Updated {}</div>"
+            "<div>Created {}</div>"
+            "</div>",
+            _format_municipal_date(getattr(coverage, "updated_at", None)),
+            _format_municipal_date(getattr(coverage, "created_at", None)),
+        )
+
+        view_url_base = reverse("common:communities_view_municipal", args=[coverage.pk])
+        view_url = f"{view_url_base}?archived=1" if show_archived else view_url_base
+
+        edit_url = None
+        delete_preview_url = None
+        delete_message = None
+        restore_url = None
+        if can_manage_communities:
+            if show_archived:
+                restore_url = reverse(
+                    "common:communities_restore_municipal", args=[coverage.pk]
+                )
+            else:
+                edit_url = reverse(
+                    "common:communities_edit_municipal", args=[coverage.pk]
+                )
+                delete_preview_url = f"{view_url_base}?review_delete=1"
+                delete_message = (
+                    "Are you sure you want to delete this municipal OBC coverage? "
+                    "You will review the details before final confirmation."
+                )
+
+        row = {
+            "cells": [
+                {"content": municipality_html},
+                {"content": province_html},
+                {"content": snapshot_html},
+                {"content": sync_html},
+                {"content": history_html},
+            ],
+            "view_url": view_url,
+        }
+        if edit_url:
+            row["edit_url"] = edit_url
+        if delete_preview_url:
+            row["delete_preview_url"] = delete_preview_url
+        if delete_message:
+            row["delete_message"] = delete_message
+        if restore_url:
+            row["restore_url"] = restore_url
+
+        municipality_table_rows.append(row)
+
     request_params = request.GET.dict()
     coverage_base_querystring = _build_querystring(
         request_params,
@@ -1045,6 +1374,10 @@ def communities_manage_municipal(request):
         "municipality_base_querystring": coverage_base_querystring,
         "municipality_total_pages": max(coverages_page.paginator.num_pages, 1),
         "can_manage_communities": can_manage_communities,
+        "municipality_table": {
+            "headers": municipality_table_headers,
+            "rows": municipality_table_rows,
+        },
     }
     template_name = "communities/municipal_manage.html"
     if request.headers.get("HX-Request"):
@@ -1241,9 +1574,7 @@ def communities_manage_provincial(request):
             page_description = "Review province-level Bangsamoro coverage data."
 
     badge_text = (
-        "OBC Data - Provincial (Archived)"
-        if show_archived
-        else "OBC Data - Provincial"
+        "OBC Data - Provincial (Archived)" if show_archived else "OBC Data - Provincial"
     )
 
     hero_actions = [
@@ -1254,9 +1585,7 @@ def communities_manage_provincial(request):
                 else f"{reverse('common:communities_manage_provincial')}?archived=1"
             ),
             "label": (
-                "Back to active records"
-                if show_archived
-                else "View archived records"
+                "Back to active records" if show_archived else "View archived records"
             ),
             "icon": "fas fa-list" if show_archived else "fas fa-archive",
             "variant": "secondary",
@@ -1301,6 +1630,227 @@ def communities_manage_provincial(request):
     paginator = Paginator(coverages, page_size)
     coverages_page = paginator.get_page(page_number)
 
+    def _format_timestamp_metadata(timestamp, user):
+        """Return formatted HTML describing when a record was touched."""
+
+        if not timestamp:
+            return format_html(
+                "<span class='text-xs text-gray-400'>Not yet recorded</span>"
+            )
+
+        try:
+            localized = timezone.localtime(timestamp)
+        except Exception:  # pragma: no cover - timezone conversion fallback
+            localized = timestamp
+
+        user_display = ""
+        if user:
+            name = user.get_full_name() or user.get_username()
+            user_display = format_html(
+                " · by <span class='font-medium text-gray-700'>{}</span>", name
+            )
+
+        return format_html(
+            "<span class='text-xs text-gray-500'>"
+            "<span class='font-semibold text-gray-700'>{}</span>"
+            "<span class='ml-2 text-gray-400'>{}</span>"
+            "{}"
+            "</span>",
+            localized.strftime("%b %d, %Y"),
+            naturaltime(timestamp),
+            mark_safe(user_display),
+        )
+
+    province_table_headers = [
+        {"label": "Province"},
+        {"label": "Region"},
+        {"label": "Coverage Snapshot"},
+        {"label": "Sync Status"},
+        {"label": "Timeline"},
+    ]
+
+    province_table_rows: list[dict] = []
+    for coverage in coverages_page:
+        province = getattr(coverage, "province", None)
+        region = getattr(province, "region", None)
+
+        province_html = format_html(
+            "<div class='flex items-center gap-3'>"
+            "<span class='inline-flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600'>"
+            "<i class='fas fa-flag'></i>"
+            "</span>"
+            "<div>"
+            "<div class='text-sm font-semibold text-gray-900'>{}</div>"
+            "<div class='text-xs text-gray-500'>{}</div>"
+            "</div>"
+            "</div>",
+            province.name if province else "—",
+            getattr(coverage, "display_name", "—") or "—",
+        )
+
+        region_html = format_html(
+            "<div class='space-y-1'>"
+            "<div class='text-sm font-medium text-gray-900'>Region {}</div>"
+            "<div class='text-xs text-gray-500'>{}</div>"
+            "</div>",
+            region.code if region else "—",
+            region.name if region else "—",
+        )
+
+        estimated_population_html = (
+            format_html(
+                "<span class='font-semibold text-gray-700'>{}</span>",
+                intcomma(coverage.estimated_obc_population),
+            )
+            if coverage.estimated_obc_population is not None
+            else mark_safe("&mdash;")
+        )
+        households_html = (
+            format_html(
+                "<span class='font-semibold text-gray-700'>{}</span>",
+                intcomma(coverage.households),
+            )
+            if getattr(coverage, "households", None) not in (None, "")
+            else mark_safe("&mdash;")
+        )
+
+        snapshot_parts = [
+            format_html(
+                "<div class='text-sm font-semibold text-gray-900'>{} municipalities tracked</div>",
+                intcomma(coverage.total_municipalities or 0),
+            ),
+            format_html(
+                "<div class='text-xs text-gray-500'>Barangay OBCs: {}</div>",
+                intcomma(coverage.total_obc_communities or 0),
+            ),
+            format_html(
+                "<div class='text-xs text-gray-500'>Est. OBC Population: {}</div>",
+                estimated_population_html,
+            ),
+            format_html(
+                "<div class='text-xs text-gray-500'>Households: {}</div>",
+                households_html,
+            ),
+        ]
+
+        if getattr(coverage, "key_municipalities", ""):
+            snapshot_parts.append(
+                format_html(
+                    "<div class='pt-3 text-xs text-gray-500 border-t border-gray-100'>"
+                    "<span class='font-semibold text-gray-700'>Key municipalities:</span> {}"
+                    "</div>",
+                    coverage.key_municipalities,
+                )
+            )
+
+        snapshot_html = format_html(
+            "<div class='space-y-1'>{}</div>",
+            format_html_join("", "{}", ((part,) for part in snapshot_parts)),
+        )
+
+        status_badges = []
+        if getattr(coverage, "is_submitted", False):
+            status_badges.append(
+                "<span class='inline-flex items-center gap-1 rounded-full border border-emerald-200 "
+                "bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700'>"
+                "<i class='fas fa-check-circle'></i>"
+                "<span>Submitted</span>"
+                "</span>"
+            )
+        if coverage.auto_sync:
+            status_badges.append(
+                "<span class='inline-flex items-center gap-1 rounded-full border border-blue-200 "
+                "bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700'>"
+                "<i class='fas fa-sync'></i>"
+                "<span>Auto-sync</span>"
+                "</span>"
+            )
+        else:
+            status_badges.append(
+                "<span class='inline-flex items-center gap-1 rounded-full border border-amber-200 "
+                "bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700'>"
+                "<i class='fas fa-hand-paper'></i>"
+                "<span>Manual updates</span>"
+                "</span>"
+            )
+        status_html = format_html(
+            "<div class='flex flex-col gap-1'>{}</div>",
+            mark_safe("".join(status_badges)),
+        )
+
+        timeline_segments = [
+            _format_timestamp_metadata(
+                getattr(coverage, "updated_at", None),
+                getattr(coverage, "updated_by", None),
+            ),
+            _format_timestamp_metadata(
+                getattr(coverage, "created_at", None),
+                getattr(coverage, "created_by", None),
+            ),
+        ]
+        timeline_html = format_html(
+            "<div class='space-y-1'>{}</div>",
+            format_html_join("", "{}", ((segment,) for segment in timeline_segments)),
+        )
+
+        view_url_base = reverse(
+            "common:communities_view_provincial", args=[coverage.pk]
+        )
+        view_url = f"{view_url_base}?archived=1" if show_archived else view_url_base
+
+        edit_url = None
+        delete_preview_url = None
+        delete_message = None
+        restore_url = None
+
+        if can_manage_communities:
+            if show_archived:
+                restore_url = reverse(
+                    "common:communities_restore_provincial", args=[coverage.pk]
+                )
+            else:
+                edit_url = reverse(
+                    "common:communities_edit_provincial", args=[coverage.pk]
+                )
+                delete_preview_url = f"{view_url_base}?review_delete=1"
+                delete_message = (
+                    "Are you sure you want to delete this provincial OBC coverage? "
+                    "You will review the details before final confirmation."
+                )
+
+        row = {
+            "cells": [
+                {"content": province_html},
+                {"content": region_html},
+                {"content": snapshot_html},
+                {"content": status_html},
+                {"content": timeline_html},
+            ],
+            "view_url": view_url,
+        }
+
+        if edit_url:
+            row["edit_url"] = edit_url
+        if delete_preview_url:
+            row["delete_preview_url"] = delete_preview_url
+        if delete_message:
+            row["delete_message"] = delete_message
+        if restore_url:
+            row["restore_url"] = restore_url
+
+        province_table_rows.append(row)
+
+    empty_state_message = "No provincial OBC records found."
+    if can_manage_communities:
+        empty_state_message = format_html(
+            "No provincial OBC records found. "
+            '<a href="{}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">'
+            "<i class='fas fa-plus-circle'></i>"
+            "<span>Add provincial OBC</span>"
+            "</a>",
+            reverse("common:communities_add_province"),
+        )
+
     request_params = request.GET.dict()
     coverage_base_querystring = _build_querystring(
         request_params,
@@ -1327,6 +1877,9 @@ def communities_manage_provincial(request):
         "province_base_querystring": coverage_base_querystring,
         "province_total_pages": max(coverages_page.paginator.num_pages, 1),
         "can_manage_communities": can_manage_communities,
+        "province_table_headers": province_table_headers,
+        "province_table_rows": province_table_rows,
+        "province_table_empty_message": empty_state_message,
     }
     template_name = "communities/provincial_manage.html"
     if request.headers.get("HX-Request"):
@@ -1391,13 +1944,17 @@ def communities_view(request, community_id):
         if municipality:
             location_filters |= Q(target_municipality=municipality)
             location_filters |= Q(target_barangay__municipality=municipality)
-            location_filters |= Q(target_communities__barangay__municipality=municipality)
+            location_filters |= Q(
+                target_communities__barangay__municipality=municipality
+            )
 
         if province:
             location_filters |= Q(target_province=province)
             location_filters |= Q(target_municipality__province=province)
             location_filters |= Q(target_barangay__municipality__province=province)
-            location_filters |= Q(target_communities__barangay__municipality__province=province)
+            location_filters |= Q(
+                target_communities__barangay__municipality__province=province
+            )
 
         if region:
             location_filters |= Q(target_region=region)
@@ -1490,7 +2047,9 @@ def communities_view_municipal(request, coverage_id):
         location_filters |= Q(target_province=province)
         location_filters |= Q(target_municipality__province=province)
         location_filters |= Q(target_barangay__municipality__province=province)
-        location_filters |= Q(target_communities__barangay__municipality__province=province)
+        location_filters |= Q(
+            target_communities__barangay__municipality__province=province
+        )
 
     if region:
         location_filters |= Q(target_region=region)

@@ -43,7 +43,9 @@ TEXTAREA_CLASS = (
     "shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 "
     "focus:border-emerald-500 transition-all duration-200"
 )
-CHECKBOX_CLASS = "h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+CHECKBOX_CLASS = (
+    "h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+)
 
 DATE_WIDGET = forms.DateInput(attrs={"type": "date", "class": INPUT_CLASS})
 TIME_WIDGET = forms.TimeInput(attrs={"type": "time", "class": INPUT_CLASS})
@@ -76,6 +78,7 @@ COORDINATION_SELECT_CLASS = (
     "focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none bg-white transition-all duration-200"
 )
 
+
 def _apply_field_styles(fields):
     for field in fields.values():
         widget = field.widget
@@ -92,8 +95,47 @@ def _apply_field_styles(fields):
 class OrganizationForm(forms.ModelForm):
     """Collect organization metadata outside the admin interface."""
 
-    social_media = forms.JSONField(
-        required=False, widget=forms.Textarea(attrs={"rows": 3})
+    region = forms.ModelChoiceField(
+        queryset=Region.objects.filter(is_active=True).order_by("code", "name"),
+        required=False,
+        widget=forms.Select(attrs={"class": COORDINATION_SELECT_CLASS}),
+        empty_label="Select region",
+        label="Region",
+    )
+    province = forms.ModelChoiceField(
+        queryset=Province.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={"class": COORDINATION_SELECT_CLASS}),
+        empty_label="Select province",
+        label="Province",
+    )
+    municipality = forms.ModelChoiceField(
+        queryset=Municipality.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={"class": COORDINATION_SELECT_CLASS}),
+        empty_label="Select municipality / city",
+        label="Municipality / City",
+    )
+    barangay = forms.ModelChoiceField(
+        queryset=Barangay.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={"class": COORDINATION_SELECT_CLASS}),
+        empty_label="Select barangay",
+        label="Barangay",
+    )
+
+    social_media = forms.CharField(
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                "rows": 3,
+                "placeholder": "facebook: https://facebook.com/OOBC\nx: https://x.com/OOBC",
+            }
+        ),
+        help_text=(
+            "Enter one platform per line using 'platform: url' (e.g., "
+            "facebook: https://facebook.com/OOBC). JSON dictionaries are also accepted."
+        ),
     )
 
     class Meta:
@@ -109,19 +151,176 @@ class OrganizationForm(forms.ModelForm):
             "last_engagement_date": DATE_WIDGET,
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _apply_field_styles(self.fields)
+        self._initialise_location_querysets()
+        self._initialise_social_media()
+
+    def _initialise_location_querysets(self):
+        """Limit location dropdowns based on current selections."""
+        region_field = self.fields["region"]
+        region_field.queryset = Region.objects.filter(is_active=True).order_by(
+            "code", "name"
+        )
+
+        selected_region_id = self._extract_id_from_data(
+            "region", getattr(self.instance, "region_id", None)
+        )
+        province_qs = (
+            Province.objects.filter(is_active=True)
+            .select_related("region")
+            .order_by("region__name", "name")
+        )
+        if selected_region_id:
+            province_qs = province_qs.filter(region_id=selected_region_id)
+        self.fields["province"].queryset = province_qs
+
+        selected_province_id = self._extract_id_from_data(
+            "province",
+            getattr(self.instance, "province_id", None),
+        )
+        municipality_qs = (
+            Municipality.objects.filter(is_active=True)
+            .select_related("province__region")
+            .order_by("province__name", "name")
+        )
+        if selected_province_id:
+            municipality_qs = municipality_qs.filter(province_id=selected_province_id)
+        elif selected_region_id:
+            municipality_qs = municipality_qs.filter(
+                province__region_id=selected_region_id
+            )
+        self.fields["municipality"].queryset = municipality_qs
+
+        selected_municipality_id = self._extract_id_from_data(
+            "municipality",
+            getattr(self.instance, "municipality_id", None),
+        )
+        barangay_qs = (
+            Barangay.objects.filter(is_active=True)
+            .select_related("municipality__province__region")
+            .order_by("municipality__name", "name")
+        )
+        if selected_municipality_id:
+            barangay_qs = barangay_qs.filter(municipality_id=selected_municipality_id)
+        elif selected_province_id:
+            barangay_qs = barangay_qs.filter(
+                municipality__province_id=selected_province_id
+            )
+        self.fields["barangay"].queryset = barangay_qs
+
+    def _initialise_social_media(self):
+        """Prepare social media field for editing."""
+        if not self.instance or not self.instance.social_media:
+            return
+        existing = self.instance.social_media
+        if isinstance(existing, dict):
+            formatted_entries = [
+                f"{platform}: {url}" for platform, url in existing.items() if url
+            ]
+            if formatted_entries:
+                self.initial.setdefault("social_media", "\n".join(formatted_entries))
+        else:
+            self.initial.setdefault("social_media", json.dumps(existing, indent=2))
+
+    def _extract_id_from_data(self, field_name, fallback):
+        """Return an identifier from POST data or fallback instance value."""
+        if self.data and field_name in self.data:
+            value = self.data.get(field_name)
+            if value in (None, "", "None"):
+                return None
+            return value
+        return fallback
+
     def clean_social_media(self):
         social_media = self.cleaned_data.get("social_media")
         if not social_media:
             return None
-        return social_media
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        _apply_field_styles(self.fields)
-        if isinstance(self.fields.get("social_media").widget, forms.Textarea):
-            self.fields["social_media"].widget.attrs.setdefault(
-                "placeholder", '{"facebook": "https://facebook.com/..."}'
+        if isinstance(social_media, str):
+            stripped = social_media.strip()
+            if not stripped:
+                return None
+
+            try:
+                parsed = json.loads(stripped)
+            except json.JSONDecodeError:
+                parsed = {}
+                for line in stripped.splitlines():
+                    if not line.strip():
+                        continue
+                    if ":" in line:
+                        platform, url = line.split(":", 1)
+                    elif "|" in line:
+                        platform, url = line.split("|", 1)
+                    else:
+                        raise forms.ValidationError(
+                            "Use 'platform: url' format for each social media entry."
+                        )
+                    platform = platform.strip().lower().replace(" ", "_")
+                    url = url.strip()
+                    if not platform or not url:
+                        raise forms.ValidationError(
+                            "Each social media entry must include both platform and URL."
+                        )
+                    parsed[platform] = url
+            if isinstance(parsed, dict):
+                return {key: value for key, value in parsed.items() if value}
+            raise forms.ValidationError(
+                "Enter a JSON object or use 'platform: url' per line."
             )
+
+        if isinstance(social_media, dict):
+            return {key: value for key, value in social_media.items() if value}
+
+        raise forms.ValidationError(
+            "Unsupported format for social media entries. Provide a JSON object or plain text list."
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        region = cleaned_data.get("region")
+        province = cleaned_data.get("province")
+        municipality = cleaned_data.get("municipality")
+        barangay = cleaned_data.get("barangay")
+
+        if barangay:
+            barangay_municipality = barangay.municipality
+            if municipality and municipality != barangay_municipality:
+                self.add_error(
+                    "barangay",
+                    "Selected barangay does not belong to the chosen municipality.",
+                )
+            else:
+                cleaned_data["municipality"] = barangay_municipality
+                cleaned_data["province"] = barangay_municipality.province
+                cleaned_data["region"] = barangay_municipality.province.region
+
+        municipality = cleaned_data.get("municipality")
+        if municipality:
+            municipality_province = municipality.province
+            if province and province != municipality_province:
+                self.add_error(
+                    "municipality",
+                    "Selected municipality does not belong to the chosen province.",
+                )
+            else:
+                cleaned_data["province"] = municipality_province
+                cleaned_data["region"] = municipality_province.region
+
+        province = cleaned_data.get("province")
+        if province:
+            province_region = province.region
+            if region and region != province_region:
+                self.add_error(
+                    "province",
+                    "Selected province does not belong to the chosen region.",
+                )
+            else:
+                cleaned_data["region"] = province_region
+
+        return cleaned_data
 
 
 class OrganizationContactForm(forms.ModelForm):
@@ -257,7 +456,9 @@ class CoordinationNoteForm(forms.ModelForm):
         help_text="Optional start time for reference.",
     )
     staff_participants = forms.ModelMultipleChoiceField(
-        queryset=User.objects.filter(is_active=True).order_by("first_name", "last_name"),
+        queryset=User.objects.filter(is_active=True).order_by(
+            "first_name", "last_name"
+        ),
         required=False,
         widget=forms.SelectMultiple(
             attrs={
@@ -496,10 +697,9 @@ class CoordinationNoteForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        work_item_qs = (
-            WorkItem.objects.filter(work_type=WorkItem.WORK_TYPE_ACTIVITY)
-            .order_by("start_date", "title")
-        )
+        work_item_qs = WorkItem.objects.filter(
+            work_type=WorkItem.WORK_TYPE_ACTIVITY
+        ).order_by("start_date", "title")
 
         date_source = self.data.get("note_date") or self.initial.get("note_date")
         if date_source:
@@ -611,9 +811,9 @@ class EventForm(forms.Form):
             "See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md"
         )
 
-    # Legacy Meta class preserved for reference only
-    # class Meta:
-    #     model = Event
+        # Legacy Meta class preserved for reference only
+        # class Meta:
+        #     model = Event
         fields = [
             "title",
             "event_type",

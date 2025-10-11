@@ -21,6 +21,7 @@ from django.utils import timezone
 
 from common.work_item_model import WorkItem
 from common.forms.work_items import WorkItemForm
+from common.views.calendar import serialize_work_item_for_calendar
 from coordination.models import Organization
 from coordination.utils.organizations import get_oobc_organization
 
@@ -1522,8 +1523,12 @@ def work_item_sidebar_create(request):
                 })
             else:
                 # Calendar: trigger calendar refresh and close panel
+                event_payload = serialize_work_item_for_calendar(work_item)
                 response['HX-Trigger'] = json.dumps({
-                    'calendarRefresh': {'eventId': str(work_item.pk)},
+                    'calendarRefresh': {
+                        'eventId': str(work_item.pk),
+                        'event': event_payload,
+                    },
                     'showToast': {
                         'message': f'{work_item.get_work_type_display()} created successfully',
                         'level': 'success'
@@ -1618,6 +1623,10 @@ def work_item_sidebar_create(request):
             initial['progress'] = 0
         if 'work_type' not in initial:
             initial['work_type'] = 'task'  # Default to task
+        if initial.get('work_type') in (WorkItem.WORK_TYPE_ACTIVITY, WorkItem.WORK_TYPE_SUB_ACTIVITY):
+            initial['activity_category'] = WorkItem.ACTIVITY_CATEGORY_COORDINATION
+        else:
+            initial['activity_category'] = None
 
         form = WorkItemQuickEditForm(initial=initial, user=request.user)
         if auto_assign_oobc:

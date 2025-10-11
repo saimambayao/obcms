@@ -784,11 +784,11 @@ class MonitoringEntry(models.Model):
 
     # ========== WORKITEM INTEGRATION FIELDS ==========
     execution_project = models.OneToOneField(
-        'common.WorkItem',
+        "common.WorkItem",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='ppa_source',
+        related_name="ppa_source",
         help_text="Root WorkItem project for execution tracking",
     )
 
@@ -799,11 +799,7 @@ class MonitoringEntry(models.Model):
 
     budget_distribution_policy = models.CharField(
         max_length=20,
-        choices=[
-            ('equal', 'Equal'),
-            ('weighted', 'Weighted'),
-            ('manual', 'Manual')
-        ],
+        choices=[("equal", "Equal"), ("weighted", "Weighted"), ("manual", "Manual")],
         blank=True,
         help_text="Policy for distributing budget across child work items",
     )
@@ -828,11 +824,31 @@ class MonitoringEntry(models.Model):
         constraints = [
             models.CheckConstraint(
                 condition=Q(progress__gte=0) & Q(progress__lte=100),
-                name='monitoring_entry_valid_progress'
+                name="monitoring_entry_valid_progress",
             ),
             models.CheckConstraint(
-                condition=Q(target_end_date__gte=F('start_date')) | Q(start_date__isnull=True) | Q(target_end_date__isnull=True),
-                name='monitoring_entry_valid_date_range'
+                condition=Q(target_end_date__gte=F("start_date"))
+                | Q(start_date__isnull=True)
+                | Q(target_end_date__isnull=True),
+                name="monitoring_entry_valid_date_range",
+            ),
+            models.CheckConstraint(
+                condition=Q(budget_ceiling__isnull=True)
+                | Q(budget_allocation__isnull=True)
+                | Q(budget_allocation__lte=F("budget_ceiling")),
+                name="monitoring_entry_budget_allocation_within_ceiling",
+            ),
+            models.CheckConstraint(
+                condition=Q(budget_allocation__isnull=True)
+                | Q(budget_obc_allocation__isnull=True)
+                | Q(budget_obc_allocation__lte=F("budget_allocation")),
+                name="monitoring_entry_obc_allocation_within_total",
+            ),
+            models.CheckConstraint(
+                condition=Q(total_slots__isnull=True)
+                | Q(obc_slots__isnull=True)
+                | Q(obc_slots__lte=F("total_slots")),
+                name="monitoring_entry_obc_slots_within_total",
             ),
         ]
 
@@ -845,44 +861,59 @@ class MonitoringEntry(models.Model):
         errors = {}
 
         # Validate funding_source_other required when funding_source=others
-        if self.funding_source == self.FUNDING_SOURCE_OTHERS and not self.funding_source_other:
-            errors['funding_source_other'] = 'Please specify the funding source when selecting "Other Funding Sources".'
+        if (
+            self.funding_source == self.FUNDING_SOURCE_OTHERS
+            and not self.funding_source_other
+        ):
+            errors["funding_source_other"] = (
+                'Please specify the funding source when selecting "Other Funding Sources".'
+            )
 
         # Validate date ranges
         if self.start_date and self.target_end_date:
             if self.target_end_date < self.start_date:
-                errors['target_end_date'] = 'Target end date must be after start date.'
+                errors["target_end_date"] = "Target end date must be after start date."
 
         if self.start_date and self.actual_end_date:
             if self.actual_end_date < self.start_date:
-                errors['actual_end_date'] = 'Actual end date cannot be before start date.'
+                errors["actual_end_date"] = (
+                    "Actual end date cannot be before start date."
+                )
 
         # Validate budget allocation <= budget ceiling (if ceiling is set)
         if self.budget_ceiling and self.budget_allocation:
             if self.budget_allocation > self.budget_ceiling:
-                errors['budget_allocation'] = (
-                    f'Budget allocation (₱{self.budget_allocation:,.2f}) '
-                    f'cannot exceed ceiling (₱{self.budget_ceiling:,.2f}).'
+                errors["budget_allocation"] = (
+                    f"Budget allocation (₱{self.budget_allocation:,.2f}) "
+                    f"cannot exceed ceiling (₱{self.budget_ceiling:,.2f})."
                 )
 
         # Validate OBC-specific allocations
         if self.budget_obc_allocation and self.budget_allocation:
             if self.budget_obc_allocation > self.budget_allocation:
-                errors['budget_obc_allocation'] = 'OBC allocation cannot exceed total budget allocation.'
+                errors["budget_obc_allocation"] = (
+                    "OBC allocation cannot exceed total budget allocation."
+                )
 
         if self.obc_slots and self.total_slots:
             if self.obc_slots > self.total_slots:
-                errors['obc_slots'] = 'OBC slots cannot exceed total slots.'
+                errors["obc_slots"] = "OBC slots cannot exceed total slots."
 
         # Validate category-specific required fields
-        if self.category == 'moa_ppa' and not self.implementing_moa:
-            errors['implementing_moa'] = 'Implementing MOA is required for MOA PPA entries.'
+        if self.category == "moa_ppa" and not self.implementing_moa:
+            errors["implementing_moa"] = (
+                "Implementing MOA is required for MOA PPA entries."
+            )
 
-        if self.category == 'obc_request':
+        if self.category == "obc_request":
             if not self.submitted_by_community:
-                errors['submitted_by_community'] = 'Submitting community is required for OBC requests.'
+                errors["submitted_by_community"] = (
+                    "Submitting community is required for OBC requests."
+                )
             if not self.submitted_to_organization:
-                errors['submitted_to_organization'] = 'Recipient organization is required for OBC requests.'
+                errors["submitted_to_organization"] = (
+                    "Recipient organization is required for OBC requests."
+                )
 
         if errors:
             raise ValidationError(errors)
@@ -1009,7 +1040,7 @@ class MonitoringEntry(models.Model):
 
     # ========== WORKITEM INTEGRATION METHODS ==========
 
-    def create_execution_project(self, structure_template='activity', created_by=None):
+    def create_execution_project(self, structure_template="activity", created_by=None):
         """
         Create root WorkItem project for execution tracking.
 
@@ -1050,7 +1081,7 @@ class MonitoringEntry(models.Model):
             content_type=ct,
             object_id=self.id,
             work_type=WorkItem.WORK_TYPE_PROJECT,
-            parent__isnull=True
+            parent__isnull=True,
         )
 
         if existing_projects.exists():
@@ -1061,7 +1092,9 @@ class MonitoringEntry(models.Model):
 
         # Validation: Ensure PPA has required data
         if not self.title:
-            raise ValidationError("MonitoringEntry must have a title to create execution project.")
+            raise ValidationError(
+                "MonitoringEntry must have a title to create execution project."
+            )
         if self.category == "moa_ppa" and not self.implementing_moa:
             raise ValidationError(
                 "Implementing MOA must be set before creating an execution project."
@@ -1071,12 +1104,12 @@ class MonitoringEntry(models.Model):
         if created_by is None:
             User = get_user_model()
             system_user, _ = User.objects.get_or_create(
-                username='system',
+                username="system",
                 defaults={
-                    'first_name': 'System',
-                    'last_name': 'User',
-                    'is_active': False
-                }
+                    "first_name": "System",
+                    "last_name": "User",
+                    "is_active": False,
+                },
             )
             created_by = system_user
 
@@ -1095,13 +1128,15 @@ class MonitoringEntry(models.Model):
             is_calendar_visible=True,
             related_ppa=self,
             allocated_budget=self.budget_allocation,
-            actual_expenditure=Decimal('0.00'),
+            actual_expenditure=Decimal("0.00"),
             project_data={
-                'monitoring_entry_id': str(self.id),
-                'structure_template': structure_template,
-                'budget_allocation': str(self.budget_allocation) if self.budget_allocation else None,
-                'fiscal_year': self.fiscal_year,
-            }
+                "monitoring_entry_id": str(self.id),
+                "structure_template": structure_template,
+                "budget_allocation": (
+                    str(self.budget_allocation) if self.budget_allocation else None
+                ),
+                "fiscal_year": self.fiscal_year,
+            },
         )
 
         # Link to MonitoringEntry via Generic Foreign Key
@@ -1122,7 +1157,7 @@ class MonitoringEntry(models.Model):
         *,
         created_by=None,
         updated_by=None,
-        structure_template='activity',
+        structure_template="activity",
         reparent_orphans=True,
     ):
         """
@@ -1150,12 +1185,12 @@ class MonitoringEntry(models.Model):
         with transaction.atomic():
             entry = (
                 self.__class__.objects.select_for_update()
-                .select_related('execution_project')
+                .select_related("execution_project")
                 .get(pk=self.pk)
             )
 
             if entry.execution_project:
-                self.refresh_from_db(fields=['execution_project'])
+                self.refresh_from_db(fields=["execution_project"])
                 return self.execution_project
 
             project = (
@@ -1164,7 +1199,7 @@ class MonitoringEntry(models.Model):
                     work_type=WorkItem.WORK_TYPE_PROJECT,
                     parent__isnull=True,
                 )
-                .order_by('-created_at')
+                .order_by("-created_at")
                 .first()
             )
 
@@ -1176,27 +1211,26 @@ class MonitoringEntry(models.Model):
 
             entry.execution_project = project
 
-            update_fields = ['execution_project', 'updated_at']
+            update_fields = ["execution_project", "updated_at"]
             if not entry.enable_workitem_tracking:
                 entry.enable_workitem_tracking = True
-                update_fields.append('enable_workitem_tracking')
+                update_fields.append("enable_workitem_tracking")
 
             if updated_by:
                 entry.updated_by = updated_by
-                update_fields.append('updated_by')
+                update_fields.append("updated_by")
 
             entry.save(update_fields=update_fields)
 
             if reparent_orphans:
-                orphan_qs = (
-                    WorkItem.objects.filter(related_ppa=entry, parent__isnull=True)
-                    .exclude(pk=project.pk)
-                )
+                orphan_qs = WorkItem.objects.filter(
+                    related_ppa=entry, parent__isnull=True
+                ).exclude(pk=project.pk)
                 for orphan in orphan_qs:
                     orphan.parent = project
                     orphan.save()
 
-        self.refresh_from_db(fields=['execution_project', 'enable_workitem_tracking'])
+        self.refresh_from_db(fields=["execution_project", "enable_workitem_tracking"])
         return self.execution_project
 
     def disable_workitem_tracking(self, *, delete_project=True, updated_by=None):
@@ -1236,11 +1270,11 @@ class MonitoringEntry(models.Model):
         from common.work_item_model import WorkItem
 
         status_mapping = {
-            'planning': WorkItem.STATUS_NOT_STARTED,
-            'ongoing': WorkItem.STATUS_IN_PROGRESS,
-            'completed': WorkItem.STATUS_COMPLETED,
-            'on_hold': WorkItem.STATUS_BLOCKED,
-            'cancelled': WorkItem.STATUS_CANCELLED,
+            "planning": WorkItem.STATUS_NOT_STARTED,
+            "ongoing": WorkItem.STATUS_IN_PROGRESS,
+            "completed": WorkItem.STATUS_COMPLETED,
+            "on_hold": WorkItem.STATUS_BLOCKED,
+            "cancelled": WorkItem.STATUS_CANCELLED,
         }
         return status_mapping.get(self.status, WorkItem.STATUS_NOT_STARTED)
 
@@ -1249,10 +1283,10 @@ class MonitoringEntry(models.Model):
         from common.work_item_model import WorkItem
 
         priority_mapping = {
-            'low': WorkItem.PRIORITY_LOW,
-            'medium': WorkItem.PRIORITY_MEDIUM,
-            'high': WorkItem.PRIORITY_HIGH,
-            'urgent': WorkItem.PRIORITY_URGENT,
+            "low": WorkItem.PRIORITY_LOW,
+            "medium": WorkItem.PRIORITY_MEDIUM,
+            "high": WorkItem.PRIORITY_HIGH,
+            "urgent": WorkItem.PRIORITY_URGENT,
         }
         return priority_mapping.get(self.priority, WorkItem.PRIORITY_MEDIUM)
 
@@ -1284,7 +1318,7 @@ class MonitoringEntry(models.Model):
                 content_type=ct,
                 object_id=self.id,
                 work_type=WorkItem.WORK_TYPE_PROJECT,
-                parent__isnull=True  # Root project only
+                parent__isnull=True,  # Root project only
             )
         except WorkItem.DoesNotExist:
             # No execution project exists, return current progress
@@ -1296,8 +1330,8 @@ class MonitoringEntry(models.Model):
                 content_type=ct,
                 object_id=self.id,
                 work_type=WorkItem.WORK_TYPE_PROJECT,
-                parent__isnull=True
-            ).latest('created_at')
+                parent__isnull=True,
+            ).latest("created_at")
 
         # Calculate progress from descendants
         descendants = execution_project.get_descendants()
@@ -1312,14 +1346,16 @@ class MonitoringEntry(models.Model):
             ).count()
 
             if total_descendants > 0:
-                calculated_progress = int((completed_descendants / total_descendants) * 100)
+                calculated_progress = int(
+                    (completed_descendants / total_descendants) * 100
+                )
             else:
                 calculated_progress = 0
 
         # Update MonitoringEntry progress
         if self.progress != calculated_progress:
             self.progress = calculated_progress
-            self.save(update_fields=['progress', 'updated_at'])
+            self.save(update_fields=["progress", "updated_at"])
 
         return calculated_progress
 
@@ -1350,7 +1386,7 @@ class MonitoringEntry(models.Model):
                 content_type=ct,
                 object_id=self.id,
                 work_type=WorkItem.WORK_TYPE_PROJECT,
-                parent__isnull=True
+                parent__isnull=True,
             )
         except WorkItem.DoesNotExist:
             # No execution project exists, return current status
@@ -1362,18 +1398,18 @@ class MonitoringEntry(models.Model):
                 content_type=ct,
                 object_id=self.id,
                 work_type=WorkItem.WORK_TYPE_PROJECT,
-                parent__isnull=True
-            ).latest('created_at')
+                parent__isnull=True,
+            ).latest("created_at")
 
         # Map WorkItem status to MonitoringEntry status
         workitem_status = execution_project.status
         status_mapping = {
-            WorkItem.STATUS_NOT_STARTED: 'planning',
-            WorkItem.STATUS_IN_PROGRESS: 'ongoing',
-            WorkItem.STATUS_AT_RISK: 'ongoing',  # Keep as ongoing but flag risk
-            WorkItem.STATUS_BLOCKED: 'on_hold',
-            WorkItem.STATUS_COMPLETED: 'completed',
-            WorkItem.STATUS_CANCELLED: 'cancelled',
+            WorkItem.STATUS_NOT_STARTED: "planning",
+            WorkItem.STATUS_IN_PROGRESS: "ongoing",
+            WorkItem.STATUS_AT_RISK: "ongoing",  # Keep as ongoing but flag risk
+            WorkItem.STATUS_BLOCKED: "on_hold",
+            WorkItem.STATUS_COMPLETED: "completed",
+            WorkItem.STATUS_CANCELLED: "cancelled",
         }
 
         mapped_status = status_mapping.get(workitem_status, self.status)
@@ -1381,7 +1417,7 @@ class MonitoringEntry(models.Model):
         # Update MonitoringEntry status
         if self.status != mapped_status:
             self.status = mapped_status
-            self.save(update_fields=['status', 'updated_at'])
+            self.save(update_fields=["status", "updated_at"])
 
         return mapped_status
 
@@ -1423,22 +1459,24 @@ class MonitoringEntry(models.Model):
                 content_type=ct,
                 object_id=self.id,
                 work_type=WorkItem.WORK_TYPE_PROJECT,
-                parent__isnull=True
+                parent__isnull=True,
             )
         except WorkItem.DoesNotExist:
             # No execution project exists, return basic structure
             return {
-                'work_item_id': None,
-                'title': self.title,
-                'work_type': 'monitoring_entry',
-                'allocated_budget': self.budget_allocation or Decimal('0.00'),
-                'actual_expenditure': self.total_disbursements,
-                'variance': (self.total_disbursements - (self.budget_allocation or Decimal('0.00'))),
-                'variance_pct': self._calculate_variance_pct(
-                    self.budget_allocation or Decimal('0.00'),
+                "work_item_id": None,
+                "title": self.title,
+                "work_type": "monitoring_entry",
+                "allocated_budget": self.budget_allocation or Decimal("0.00"),
+                "actual_expenditure": self.total_disbursements,
+                "variance": (
                     self.total_disbursements
+                    - (self.budget_allocation or Decimal("0.00"))
                 ),
-                'children': []
+                "variance_pct": self._calculate_variance_pct(
+                    self.budget_allocation or Decimal("0.00"), self.total_disbursements
+                ),
+                "children": [],
             }
         except WorkItem.MultipleObjectsReturned:
             ct = ContentType.objects.get_for_model(self.__class__)
@@ -1446,35 +1484,35 @@ class MonitoringEntry(models.Model):
                 content_type=ct,
                 object_id=self.id,
                 work_type=WorkItem.WORK_TYPE_PROJECT,
-                parent__isnull=True
-            ).latest('created_at')
+                parent__isnull=True,
+            ).latest("created_at")
 
         # Build hierarchical tree recursively
         def build_tree(work_item):
             """Recursively build budget tree for a work item."""
-            allocated = work_item.allocated_budget or Decimal('0.00')
-            actual = work_item.actual_expenditure or Decimal('0.00')
+            allocated = work_item.allocated_budget or Decimal("0.00")
+            actual = work_item.actual_expenditure or Decimal("0.00")
             variance = actual - allocated
             variance_pct = self._calculate_variance_pct(allocated, actual)
 
             node = {
-                'work_item_id': str(work_item.id),
-                'title': work_item.title,
-                'work_type': work_item.work_type,
-                'work_type_display': work_item.get_work_type_display(),
-                'allocated_budget': allocated,
-                'actual_expenditure': actual,
-                'variance': variance,
-                'variance_pct': variance_pct,
-                'status': work_item.status,
-                'progress': work_item.progress,
-                'children': []
+                "work_item_id": str(work_item.id),
+                "title": work_item.title,
+                "work_type": work_item.work_type,
+                "work_type_display": work_item.get_work_type_display(),
+                "allocated_budget": allocated,
+                "actual_expenditure": actual,
+                "variance": variance,
+                "variance_pct": variance_pct,
+                "status": work_item.status,
+                "progress": work_item.progress,
+                "children": [],
             }
 
             # Recursively add children
             children = work_item.get_children()
             for child in children:
-                node['children'].append(build_tree(child))
+                node["children"].append(build_tree(child))
 
             return node
 
@@ -1519,7 +1557,7 @@ class MonitoringEntry(models.Model):
                 content_type=ct,
                 object_id=self.id,
                 work_type=WorkItem.WORK_TYPE_PROJECT,
-                parent__isnull=True
+                parent__isnull=True,
             )
         except WorkItem.DoesNotExist:
             # No execution project exists, validation passes
@@ -1530,11 +1568,11 @@ class MonitoringEntry(models.Model):
                 content_type=ct,
                 object_id=self.id,
                 work_type=WorkItem.WORK_TYPE_PROJECT,
-                parent__isnull=True
-            ).latest('created_at')
+                parent__isnull=True,
+            ).latest("created_at")
 
         # Get PPA budget allocation
-        ppa_budget = self.budget_allocation or Decimal('0.00')
+        ppa_budget = self.budget_allocation or Decimal("0.00")
 
         # Calculate sum of child budgets (immediate children only)
         children = execution_project.get_children()
@@ -1543,13 +1581,13 @@ class MonitoringEntry(models.Model):
             return True
 
         # Sum allocated budgets from children
-        child_budget_sum = Decimal('0.00')
+        child_budget_sum = Decimal("0.00")
         for child in children:
-            allocated = child.allocated_budget or Decimal('0.00')
+            allocated = child.allocated_budget or Decimal("0.00")
             child_budget_sum += allocated
 
         # Tolerance for decimal comparison (0.01 = 1 cent)
-        tolerance = Decimal('0.01')
+        tolerance = Decimal("0.01")
         difference = abs(ppa_budget - child_budget_sum)
 
         if difference > tolerance:

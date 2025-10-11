@@ -1,0 +1,56 @@
+<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between text-sm text-gray-600">
+    <div>
+        {% if coverages.paginator.count %}
+            Page {{ coverages.number }} of {{ province_total_pages }}
+        {% else %}
+            Page 0 of 0
+        {% endif %}
+    </div>
+    <div class="flex items-center gap-2">
+        {% if coverages.has_previous %}
+            {% if province_base_querystring %}
+                {% with query=province_base_querystring|add:'&province_page='|add:coverages.previous_page_number %}
+                    <a href="?{{ query }}"
+                       class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-700 hover:bg-gray-100 transition">
+                        <i class="fas fa-chevron-left text-xs"></i>
+                        Previous
+                    </a>
+                {% endwith %}
+            {% else %}
+                <a href="?province_page={{ coverages.previous_page_number }}"
+                   class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-700 hover:bg-gray-100 transition">
+                    <i class="fas fa-chevron-left text-xs"></i>
+                    Previous
+                </a>
+            {% endif %}
+        {% else %}
+            <span class="inline-flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-3 py-1.5 font-medium text-gray-300 cursor-not-allowed">
+                <i class="fas fa-chevron-left text-xs"></i>
+                Previous
+            </span>
+        {% endif %}
+
+        {% if coverages.has_next %}
+            {% if province_base_querystring %}
+                {% with query=province_base_querystring|add:'&province_page='|add:coverages.next_page_number %}
+                    <a href="?{{ query }}"
+                       class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-700 hover:bg-gray-100 transition">
+                        Next
+                        <i class="fas fa-chevron-right text-xs"></i>
+                    </a>
+                {% endwith %}
+            {% else %}
+                <a href="?province_page={{ coverages.next_page_number }}"
+                   class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-700 hover:bg-gray-100 transition">
+                    Next
+                    <i class="fas fa-chevron-right text-xs"></i>
+                </a>
+            {% endif %}
+        {% else %}
+            <span class="inline-flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-3 py-1.5 font-medium text-gray-300 cursor-not-allowed">
+                Next
+                <i class="fas fa-chevron-right text-xs"></i>
+            </span>
+        {% endif %}
+    </div>
+</div>

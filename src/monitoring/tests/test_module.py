@@ -13,6 +13,8 @@ from monitoring.models import MonitoringEntry, MonitoringEntryWorkflowStage, Mon
 
 User = get_user_model()
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def staff_user(db):

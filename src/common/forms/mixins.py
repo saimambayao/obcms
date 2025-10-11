@@ -74,8 +74,20 @@ class LocationSelectionMixin:
         "barangay": {"required": False, "level": "barangay", "zoom": 15},
     }
 
+    # Mapping of logical location levels to form field names
+    location_field_names = {
+        "region": "region",
+        "province": "province",
+        "municipality": "municipality",
+        "barangay": "barangay",
+    }
+
     # Default CSS classes for location fields
-    location_field_css_classes = "block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+    location_field_css_classes = (
+        "block w-full appearance-none pr-12 rounded-xl border border-gray-200 bg-white "
+        "px-4 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500 "
+        "min-h-[48px] transition-all duration-200"
+    )
 
     # Default zoom levels by administrative hierarchy used by map widgets
     default_location_zoom_by_level = {
@@ -85,16 +97,35 @@ class LocationSelectionMixin:
         "region": 7,
     }
 
-    def _apply_location_widget_metadata(self, field_name: str) -> None:
+    def get_location_field_name(self, level: str) -> Optional[str]:
+        """Return the actual form field name for a given location level."""
+        mapped = self.location_field_names.get(level)
+        if mapped:
+            return mapped
+        if hasattr(self, "fields") and level in self.fields:
+            return level
+        return None
+
+    def get_location_config(self, level: str) -> Dict[str, Any]:
+        """Return configuration for a given location level."""
+        field_name = self.get_location_field_name(level)
+        if field_name and field_name in self.location_fields_config:
+            return self.location_fields_config[field_name]
+        return self.location_fields_config.get(level, {})
+
+    def _apply_location_widget_metadata(self, level: str) -> None:
         """Annotate location widgets with metadata for JS auto-pin handlers."""
 
+        field_name = self.get_location_field_name(level)
+        if not field_name:
+            return
         field = self.fields.get(field_name)
         if not field:
             return
 
-        config = self.location_fields_config.get(field_name, {})
-        level_value = config.get("level", field_name)
-        level_key = str(level_value).lower() if level_value else str(field_name).lower()
+        config = self.get_location_config(level)
+        level_value = config.get("level", level)
+        level_key = str(level_value).lower() if level_value else str(level).lower()
         zoom = config.get("zoom", self.default_location_zoom_by_level.get(level_key))
 
         if level_value:
@@ -114,8 +145,12 @@ class LocationSelectionMixin:
         except model.DoesNotExist:
             return None
 
-    def _get_location_instance(self, field_name: str):
+    def _get_location_instance(self, level: str):
         """Get the current instance for a location field from various sources."""
+        field_name = self.get_location_field_name(level)
+        if not field_name:
+            return None
+
         # Try to get from instance first (for editing existing records)
         if (
             hasattr(self, "instance")
@@ -126,27 +161,22 @@ class LocationSelectionMixin:
             if value:
                 return value
 
+        model_map = {
+            "region": Region,
+            "province": Province,
+            "municipality": Municipality,
+            "barangay": Barangay,
+        }
+
         # Try to get from initial data
         if hasattr(self, "initial") and self.initial.get(field_name):
-            model_map = {
-                "region": Region,
-                "province": Province,
-                "municipality": Municipality,
-                "barangay": Barangay,
-            }
-            model = model_map.get(field_name)
+            model = model_map.get(level)
             if model:
                 return self._resolve_model_instance(model, self.initial.get(field_name))
 
         # Try to get from bound data
         if hasattr(self, "is_bound") and self.is_bound and hasattr(self, "data"):
-            model_map = {
-                "region": Region,
-                "province": Province,
-                "municipality": Municipality,
-                "barangay": Barangay,
-            }
-            model = model_map.get(field_name)
+            model = model_map.get(level)
             if model:
                 return self._resolve_model_instance(model, self.data.get(field_name))
 
@@ -154,6 +184,11 @@ class LocationSelectionMixin:
 
     def _setup_location_fields(self):
         """Setup location fields with proper querysets and styling."""
+
+        region_field_name = self.get_location_field_name("region")
+        province_field_name = self.get_location_field_name("province")
+        municipality_field_name = self.get_location_field_name("municipality")
+        barangay_field_name = self.get_location_field_name("barangay")
 
         # Get current selections for all location levels
         selected_region = self._get_location_instance("region")
@@ -176,19 +211,25 @@ class LocationSelectionMixin:
                 selected_region = selected_province.region
 
         # Setup region field
-        if "region" in self.fields and "region" in self.location_fields_config:
-            region_field = self.fields["region"]
+        if region_field_name and region_field_name in self.fields:
+            region_field = self.fields[region_field_name]
             region_field.queryset = Region.objects.filter(is_active=True).order_by(
                 "code", "name"
             )
-            region_field.empty_label = "Select region..."
+            region_config = self.get_location_config("region")
+            region_field.empty_label = region_config.get(
+                "empty_label", "Select region..."
+            )
             region_field.widget.attrs.update({"class": self.location_field_css_classes})
             self._apply_location_widget_metadata("region")
 
         # Setup province field
-        if "province" in self.fields and "province" in self.location_fields_config:
-            province_field = self.fields["province"]
-            province_field.empty_label = "Select province..."
+        if province_field_name and province_field_name in self.fields:
+            province_field = self.fields[province_field_name]
+            province_config = self.get_location_config("province")
+            province_field.empty_label = province_config.get(
+                "empty_label", "Select province..."
+            )
             province_field.widget.attrs.update(
                 {"class": self.location_field_css_classes}
             )
@@ -203,12 +244,12 @@ class LocationSelectionMixin:
             self._apply_location_widget_metadata("province")
 
         # Setup municipality field
-        if (
-            "municipality" in self.fields
-            and "municipality" in self.location_fields_config
-        ):
-            municipality_field = self.fields["municipality"]
-            municipality_field.empty_label = "Select municipality/city..."
+        if municipality_field_name and municipality_field_name in self.fields:
+            municipality_field = self.fields[municipality_field_name]
+            municipality_config = self.get_location_config("municipality")
+            municipality_field.empty_label = municipality_config.get(
+                "empty_label", "Select municipality/city..."
+            )
             municipality_field.widget.attrs.update(
                 {"class": self.location_field_css_classes}
             )
@@ -234,9 +275,12 @@ class LocationSelectionMixin:
             self._apply_location_widget_metadata("municipality")
 
         # Setup barangay field
-        if "barangay" in self.fields and "barangay" in self.location_fields_config:
-            barangay_field = self.fields["barangay"]
-            barangay_field.empty_label = "Select barangay..."
+        if barangay_field_name and barangay_field_name in self.fields:
+            barangay_field = self.fields[barangay_field_name]
+            barangay_config = self.get_location_config("barangay")
+            barangay_field.empty_label = barangay_config.get(
+                "empty_label", "Select barangay..."
+            )
             barangay_field.widget.attrs.update(
                 {"class": self.location_field_css_classes}
             )
@@ -267,14 +311,30 @@ class LocationSelectionMixin:
 
         # Set initial values if not bound
         if not getattr(self, "is_bound", False):
-            if "region" in self.fields and selected_region:
-                self.fields["region"].initial = selected_region
-            if "province" in self.fields and selected_province:
-                self.fields["province"].initial = selected_province
-            if "municipality" in self.fields and selected_municipality:
-                self.fields["municipality"].initial = selected_municipality
-            if "barangay" in self.fields and selected_barangay:
-                self.fields["barangay"].initial = selected_barangay
+            if (
+                region_field_name
+                and region_field_name in self.fields
+                and selected_region
+            ):
+                self.fields[region_field_name].initial = selected_region
+            if (
+                province_field_name
+                and province_field_name in self.fields
+                and selected_province
+            ):
+                self.fields[province_field_name].initial = selected_province
+            if (
+                municipality_field_name
+                and municipality_field_name in self.fields
+                and selected_municipality
+            ):
+                self.fields[municipality_field_name].initial = selected_municipality
+            if (
+                barangay_field_name
+                and barangay_field_name in self.fields
+                and selected_barangay
+            ):
+                self.fields[barangay_field_name].initial = selected_barangay
 
     def __init__(self, *args, **kwargs):
         """Initialize the form with location selection setup."""
@@ -286,30 +346,47 @@ class LocationSelectionMixin:
         cleaned_data = super().clean()
 
         # Validate location hierarchy consistency
-        region = cleaned_data.get("region")
-        province = cleaned_data.get("province")
-        municipality = cleaned_data.get("municipality")
-        barangay = cleaned_data.get("barangay")
+        region_field_name = self.get_location_field_name("region")
+        province_field_name = self.get_location_field_name("province")
+        municipality_field_name = self.get_location_field_name("municipality")
+        barangay_field_name = self.get_location_field_name("barangay")
+
+        region = cleaned_data.get(region_field_name) if region_field_name else None
+        province = (
+            cleaned_data.get(province_field_name) if province_field_name else None
+        )
+        municipality = (
+            cleaned_data.get(municipality_field_name)
+            if municipality_field_name
+            else None
+        )
+        barangay = (
+            cleaned_data.get(barangay_field_name) if barangay_field_name else None
+        )
 
         # Check region-province consistency
         if province and region and province.region_id != region.id:
-            self.add_error(
-                "province", "Selected province does not belong to the chosen region."
-            )
+            if province_field_name and province_field_name in self.fields:
+                self.add_error(
+                    province_field_name,
+                    "Selected province does not belong to the chosen region.",
+                )
 
         # Check province-municipality consistency
         if municipality and province and municipality.province_id != province.id:
-            self.add_error(
-                "municipality",
-                "Selected municipality/city does not belong to the chosen province.",
-            )
+            if municipality_field_name and municipality_field_name in self.fields:
+                self.add_error(
+                    municipality_field_name,
+                    "Selected municipality/city does not belong to the chosen province.",
+                )
 
         # Check municipality-barangay consistency
         if barangay and municipality and barangay.municipality_id != municipality.id:
-            self.add_error(
-                "barangay",
-                "Selected barangay does not belong to the chosen municipality/city.",
-            )
+            if barangay_field_name and barangay_field_name in self.fields:
+                self.add_error(
+                    barangay_field_name,
+                    "Selected barangay does not belong to the chosen municipality/city.",
+                )
 
         # Auto-resolve coordinates if latitude/longitude fields exist and are empty
         if "latitude" in cleaned_data and "longitude" in cleaned_data:

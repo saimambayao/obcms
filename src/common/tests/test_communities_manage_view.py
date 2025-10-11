@@ -89,6 +89,19 @@ class ManageBarangayStatCardsTests(TestCase):
         )
         self.assertIn("lg:grid-cols-3", response.context["stat_cards_grid_class"])
 
+        barangay_table = response.context["barangay_table"]
+        self.assertEqual(len(barangay_table["rows"]), 4)
+        self.assertTrue(barangay_table["show_actions"])
+        self.assertEqual(
+            barangay_table["headers"],
+            [
+                {"label": "Community"},
+                {"label": "Location"},
+                {"label": "Coverage Snapshot"},
+                {"label": "Ethnolinguistic & Languages"},
+            ],
+        )
+
     def test_stat_cards_respect_region_filter(self):
         response = self.client.get(
             reverse("common:communities_manage"),
@@ -103,6 +116,7 @@ class ManageBarangayStatCardsTests(TestCase):
         self.assertEqual(values, [3, 200, 2])
         self.assertEqual(response.context["total_communities"], 3)
         self.assertEqual(response.context["total_population"], 200)
+        self.assertEqual(len(response.context["barangay_table"]["rows"]), 3)
 
     def test_stat_cards_respect_province_filter(self):
         response = self.client.get(
@@ -118,3 +132,4 @@ class ManageBarangayStatCardsTests(TestCase):
         self.assertEqual(values, [1, 200, 1])
         self.assertEqual(response.context["total_communities"], 1)
         self.assertEqual(response.context["total_population"], 200)
+        self.assertEqual(len(response.context["barangay_table"]["rows"]), 1)

@@ -245,40 +245,6 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script>
-        const initializeMunicipalDeleteButtons = () => {
-            document.querySelectorAll('[data-delete-view]:not([data-delete-bound])').forEach((button) => {
-                button.dataset.deleteBound = '1';
-                button.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    const viewUrl = button.getAttribute('data-delete-view');
-                    if (!viewUrl) {
-                        return;
-                    }
-                    const confirmationMessage =
-                        button.getAttribute('data-confirm') ||
-                        'Are you sure you want to delete this record?';
-                    if (window.confirm(confirmationMessage)) {
-                        const separator = viewUrl.includes('?') ? '&' : '?';
-                        window.location.href = `${viewUrl}${separator}review_delete=1`;
-                    }
-                });
-            });
-        };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeMunicipalDeleteButtons();
-        });
-
-        document.body.addEventListener('htmx:afterSwap', (event) => {
-            if (!(event.target instanceof Element)) {
-                return;
-            }
-            if (event.target.closest('#municipal-results-container')) {
-                initializeMunicipalDeleteButtons();
-            }
-        });
-    </script>
     <script id="municipal-province-options" type="application/json">{{ province_options_json|default:"[]"|safe }}</script>
     <script>
         (function() {

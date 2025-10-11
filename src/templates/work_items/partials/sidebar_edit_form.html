@@ -133,6 +133,21 @@
                     {{ work_item.get_work_type_display }}
                 </p>
             </div>
+            <div data-activity-category-wrapper class="hidden">
+                <label for="{{ form.activity_category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Activity Category
+                </label>
+                <div class="relative">
+                    {{ form.activity_category }}
+                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </span>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Used to filter calendars by coordination focus.</p>
+                {% if form.activity_category.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ form.activity_category.errors.0 }}</p>
+                {% endif %}
+            </div>
             <div>
                 <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
                     Title <span class="text-red-500">*</span>
@@ -303,6 +318,12 @@
 (function() {
     'use strict';
 
+    const scriptEl = document.currentScript;
+    const formEl = scriptEl?.previousElementSibling;
+    if (!(formEl instanceof HTMLFormElement)) {
+        return;
+    }
+
     const currencyFormatter = new Intl.NumberFormat('en-PH', {
         style: 'currency',
         currency: 'PHP',
@@ -330,18 +351,32 @@
     const formatNumberWithGrouping = (value) => numberFormatter.format(toNumeric(value));
 
     setTimeout(() => {
-        const container = document.getElementById('{{ target_id }}');
-        if (!container) return;
-        const focusable = container.querySelector('input, select, textarea');
+        const focusable = formEl.querySelector('input, select, textarea');
         if (focusable) {
             focusable.focus();
         }
     }, 120);
 
+    const workTypeInput = formEl.querySelector('input[name="work_type"]');
+    const activityWrapper = formEl.querySelector('[data-activity-category-wrapper]');
+    const activitySelect = formEl.querySelector('select[name="activity_category"]');
+
+    function syncActivityCategoryVisibility() {
+        if (!activityWrapper) return;
+        const value = workTypeInput ? workTypeInput.value : '';
+        const isActivity = value === 'activity' || value === 'sub_activity';
+        activityWrapper.classList.toggle('hidden', !isActivity);
+        if (isActivity && activitySelect && !activitySelect.value) {
+            activitySelect.value = 'coordination';
+        }
+    }
+
+    syncActivityCategoryVisibility();
+
     function validateSidebarEditBudget() {
-        const allocatedInput = document.getElementById('{{ form.allocated_budget.id_for_label }}');
+        const allocatedInput = formEl.querySelector('#{{ form.allocated_budget.id_for_label }}');
         const ppaTotalBudgetEl = document.getElementById('ppa-total-budget-edit');
-        const submitBtn = document.querySelector('#{{ target_id }} button[type="submit"]');
+        const submitBtn = formEl.querySelector('button[type="submit"]');
         const errorMessageDiv = document.getElementById('budget-error-message-edit');
         const errorMessageSpan = errorMessageDiv ? errorMessageDiv.querySelector('span') : null;
         const formattedDisplay = document.getElementById('allocated-budget-formatted-edit');
@@ -381,7 +416,7 @@
     }
 
     setTimeout(() => {
-        const allocatedInput = document.getElementById('{{ form.allocated_budget.id_for_label }}');
+        const allocatedInput = formEl.querySelector('#{{ form.allocated_budget.id_for_label }}');
         if (!allocatedInput) return;
 
         if (allocatedInput.value.trim() !== '') {

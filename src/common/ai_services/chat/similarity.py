@@ -115,6 +115,31 @@ class SimilarityCalculator:
         if len(s1) > len(s2):
             s1, s2 = s2, s1
 
+        # Trim common prefix to reduce problem size
+        start = 0
+        len_s1 = len(s1)
+        len_s2 = len(s2)
+        while start < len_s1 and start < len_s2 and s1[start] == s2[start]:
+            start += 1
+        if start:
+            s1 = s1[start:]
+            s2 = s2[start:]
+            len_s1 -= start
+            len_s2 -= start
+
+        # Trim common suffix
+        while len_s1 and len_s2 and s1[len_s1 - 1] == s2[len_s2 - 1]:
+            len_s1 -= 1
+            len_s2 -= 1
+
+        if len_s1 == 0:
+            return len_s2
+        if len_s2 == 0:
+            return len_s1
+
+        s1 = s1[:len_s1]
+        s2 = s2[:len_s2]
+
         # Initialize distance matrix (only need current and previous row)
         previous_row = list(range(len(s2) + 1))
         current_row = [0] * (len(s2) + 1)

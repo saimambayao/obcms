@@ -15,6 +15,8 @@ from monitoring.services.budget_distribution import BudgetDistributionService
 
 User = get_user_model()
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def staff_user(db):

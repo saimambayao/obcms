@@ -1,49 +1,41 @@
 {% load static %}
 
 <div class="space-y-6">
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Total</p>
-                    <p class="text-3xl font-bold text-gray-800 mt-1" id="stat-total">0</p>
-                </div>
-                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-                    <i class="fas fa-layer-group text-emerald-600"></i>
-                </div>
+    <div class="coordination-stat-grid">
+        <div class="coordination-stat-card">
+            <div class="coordination-stat-card__icon coordination-stat-card__icon--total">
+                <i class="fas fa-layer-group"></i>
+            </div>
+            <div class="coordination-stat-card__content">
+                <p class="coordination-stat-card__label">Total</p>
+                <p class="coordination-stat-card__value" id="stat-total">0</p>
             </div>
         </div>
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Upcoming</p>
-                    <p class="text-3xl font-bold text-gray-800 mt-1" id="stat-upcoming">0</p>
-                </div>
-                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                    <i class="fas fa-calendar-day text-blue-600"></i>
-                </div>
+        <div class="coordination-stat-card">
+            <div class="coordination-stat-card__icon coordination-stat-card__icon--upcoming">
+                <i class="fas fa-calendar-day"></i>
+            </div>
+            <div class="coordination-stat-card__content">
+                <p class="coordination-stat-card__label">Upcoming</p>
+                <p class="coordination-stat-card__value" id="stat-upcoming">0</p>
             </div>
         </div>
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">In Progress</p>
-                    <p class="text-3xl font-bold text-gray-800 mt-1" id="stat-progress">0</p>
-                </div>
-                <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                    <i class="fas fa-spinner text-purple-600"></i>
-                </div>
+        <div class="coordination-stat-card">
+            <div class="coordination-stat-card__icon coordination-stat-card__icon--progress">
+                <i class="fas fa-spinner"></i>
+            </div>
+            <div class="coordination-stat-card__content">
+                <p class="coordination-stat-card__label">In Progress</p>
+                <p class="coordination-stat-card__value" id="stat-progress">0</p>
             </div>
         </div>
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Completed</p>
-                    <p class="text-3xl font-bold text-gray-800 mt-1" id="stat-completed">0</p>
-                </div>
-                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-                    <i class="fas fa-check-circle text-emerald-600"></i>
-                </div>
+        <div class="coordination-stat-card">
+            <div class="coordination-stat-card__icon coordination-stat-card__icon--completed">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="coordination-stat-card__content">
+                <p class="coordination-stat-card__label">Completed</p>
+                <p class="coordination-stat-card__value" id="stat-completed">0</p>
             </div>
         </div>
     </div>
@@ -77,30 +69,17 @@
                 <div class="mini-calendar-grid" id="miniCalendarGrid"></div>
             </div>
 
-            <!-- Event Type Filters -->
-            <div>
-                <h3 class="text-sm font-semibold text-gray-700 mb-3 px-2">Event Types</h3>
-                <div class="space-y-1">
-                    <label class="event-legend-item" for="filterProjects">
-                        <i class="fas fa-folder event-type-icon" style="color: #3b82f6;"></i>
-                        <span class="text-sm text-gray-700 flex-1">Projects</span>
-                        <input type="checkbox" id="filterProjects" class="event-legend-checkbox" checked data-work-type="project">
-                    </label>
-                    <label class="event-legend-item" for="filterActivities">
-                        <i class="fas fa-calendar-check event-type-icon" style="color: #10b981;"></i>
-                        <span class="text-sm text-gray-700 flex-1">Activities</span>
-                        <input type="checkbox" id="filterActivities" class="event-legend-checkbox" checked data-work-type="activity">
-                    </label>
-                    <label class="event-legend-item" for="filterTasks">
-                        <i class="fas fa-tasks event-type-icon" style="color: #d97706;"></i>
-                        <span class="text-sm text-gray-700 flex-1">Tasks</span>
-                        <input type="checkbox" id="filterTasks" class="event-legend-checkbox" checked data-work-type="task">
-                    </label>
-                    <label class="event-legend-item" for="filterCoordination">
-                        <i class="fas fa-handshake event-type-icon" style="color: #14b8a6;"></i>
-                        <span class="text-sm text-gray-700 flex-1">Coordination</span>
-                        <input type="checkbox" id="filterCoordination" class="event-legend-checkbox" checked data-work-type="coordination">
-                    </label>
+            <!-- Legend -->
+            <div class="space-y-2">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3 px-2">Legend</h3>
+                <div class="coordination-legend-card">
+                    <div class="coordination-legend-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-800">Coordination Activity</p>
+                        <p class="text-xs text-gray-500">Displayed in this calendar view</p>
+                    </div>
                 </div>
             </div>
 
@@ -228,28 +207,17 @@
     let calendar;
     let allEvents = [];
     let activeFilters = {
-        project: true,
-        activity: true,
-        task: true,
-        coordination: true,
-        completed: false
+        completed: false,
     };
     let selectedDate = new Date();
     let miniCalendarDate = new Date();
     let sidebarCollapsed = mobileMediaQuery.matches;
 
-    const workTypeColors = {
-        'project': '#3b82f6',
-        'activity': '#10b981',
-        'task': '#d97706',
-        'coordination': '#14b8a6'
-    };
-
-    const workTypeIcons = {
-        'project': 'fa-folder',
-        'activity': 'fa-calendar-check',
-        'task': 'fa-tasks',
-        'coordination': 'fa-handshake'
+    const categoryStyles = {
+        coordination: {
+            color: '#14b8a6',
+            icon: 'fa-handshake',
+        },
     };
 
     function scheduleCalendarResize() {
@@ -318,7 +286,8 @@
 
         const savedView = localStorage.getItem('coordinationCalendarView') || 'dayGridMonth';
 
-        calendar = new FullCalendar.Calendar(calendarEl, {
+        try {
+            calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: savedView,
             headerToolbar: false,
             height: '100%',
@@ -333,29 +302,31 @@
                 }
             },
             eventDidMount(info) {
-                const workType = info.event.extendedProps.workType || info.event.extendedProps?.work_type;
-                if (workType && workTypeColors[workType]) {
-                    info.el.style.backgroundColor = workTypeColors[workType];
-                    info.el.style.borderColor = workTypeColors[workType];
+                const category = info.event.extendedProps.activityCategory || 'coordination';
+                const style = categoryStyles[category];
+                if (style) {
+                    info.el.style.backgroundColor = style.color;
+                    info.el.style.borderColor = style.color;
                 }
 
-                if (workType && workTypeIcons[workType]) {
+                const iconName = style?.icon;
+                if (iconName) {
                     const existingIcon = info.el.querySelector('.event-type-icon');
-                    if (existingIcon) return;
+                    if (!existingIcon) {
+                        const icon = document.createElement('i');
+                        icon.className = `fas ${iconName} event-type-icon`;
+                        icon.style.marginRight = '4px';
+                        icon.style.display = 'inline';
 
-                    const icon = document.createElement('i');
-                    icon.className = `fas ${workTypeIcons[workType]} event-type-icon`;
-                    icon.style.marginRight = '4px';
-                    icon.style.display = 'inline';
-
-                    const titleEl = info.el.querySelector('.fc-event-title');
-                    const contentEl = info.el.querySelector('.fc-event-main');
-                    if (titleEl) {
-                        titleEl.insertBefore(icon, titleEl.firstChild);
-                    } else if (contentEl) {
-                        contentEl.insertBefore(icon, contentEl.firstChild);
-                    } else {
-                        info.el.insertBefore(icon, info.el.firstChild);
+                        const titleEl = info.el.querySelector('.fc-event-title');
+                        const contentEl = info.el.querySelector('.fc-event-main');
+                        if (titleEl) {
+                            titleEl.insertBefore(icon, titleEl.firstChild);
+                        } else if (contentEl) {
+                            contentEl.insertBefore(icon, contentEl.firstChild);
+                        } else {
+                            info.el.insertBefore(icon, info.el.firstChild);
+                        }
                     }
                 }
             },
@@ -372,8 +343,11 @@
             }
         });
 
-        calendar.render();
-        window.calendar = calendar;
+            calendar.render();
+            window.calendar = calendar;
+        } catch (error) {
+            console.error('[CoordinationCalendar] failed to initialise', error);
+        }
     }
 
     function buildFetchUrl(cacheBuster) {
@@ -425,10 +399,6 @@
 
     function applyFilters(events) {
         return events.filter(event => {
-            const workType = event.workType || event.extendedProps?.work_type;
-            if (workType && !activeFilters[workType]) {
-                return false;
-            }
             const isCompleted = event.status === 'completed' || event.extendedProps?.status === 'completed';
             if (isCompleted && !activeFilters.completed) {
                 return false;
@@ -660,14 +630,6 @@
         }
     });
 
-    document.querySelectorAll('.event-legend-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', event => {
-            const workType = event.target.dataset.workType;
-            activeFilters[workType] = event.target.checked;
-            calendar?.refetchEvents();
-        });
-    });
-
     document.querySelector('[data-filter-type="completed"]').addEventListener('change', event => {
         activeFilters.completed = event.target.checked;
         calendar?.refetchEvents();
@@ -753,21 +715,6 @@
             && a.getDate() === b.getDate();
     }
 
-    // Initial load
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            requestAnimationFrame(() => {
-                initCalendar();
-                updateMiniCalendar();
-            });
-        });
-    } else {
-        requestAnimationFrame(() => {
-            initCalendar();
-            updateMiniCalendar();
-        });
-    }
-
     document.body.addEventListener('htmx:afterSwap', event => {
         if (event.detail.target.id === 'detailPanelBody') {
             htmx.process(event.detail.target);
@@ -838,5 +785,15 @@
             filters: activeFilters
         });
     };
+
+    window.__coordinationInit = () => {
+        if (calendar) {
+            return;
+        }
+        initCalendar();
+        updateMiniCalendar();
+    };
+
+    window.__coordinationInit();
 })();
 </script>

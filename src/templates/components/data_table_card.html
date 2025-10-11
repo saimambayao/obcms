@@ -6,6 +6,15 @@
             <h2 class="text-lg font-semibold">{{ title }}</h2>
         </div>
     </div>
+    {% if header_template or header_slot %}
+    <div class="px-6 py-4 border-b border-gray-200">
+        {% if header_template %}
+            {% include header_template %}
+        {% else %}
+            {{ header_slot|safe }}
+        {% endif %}
+    </div>
+    {% endif %}
     <div class="divide-y divide-gray-200">
         {% with show_actions=show_actions|default_if_none:True %}
         <div class="hidden md:grid gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500" style="grid-template-columns: repeat({{ headers|length|add:show_actions|yesno:'1,0' }}, minmax(0, 1fr));">
@@ -22,14 +31,19 @@
                 {% endfor %}
                 {% if show_actions %}
                 <div class="flex items-center justify-end gap-2">
+                    {% if row.view_url %}
                     <a href="{{ row.view_url }}" class="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-100">
                         <i class="fas fa-eye"></i>
                         <span>View</span>
                     </a>
+                    {% endif %}
+                    {% if row.edit_url %}
                     <a href="{{ row.edit_url }}" class="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-100">
                         <i class="fas fa-pen"></i>
                         <span>Edit</span>
                     </a>
+                    {% endif %}
+                    {% if row.delete_preview_url %}
                     <button type="button"
                             class="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-100"
                             data-delete-preview="{{ row.delete_preview_url }}"
@@ -37,6 +51,24 @@
                         <i class="fas fa-trash"></i>
                         <span class="sr-only">Delete</span>
                     </button>
+                    {% endif %}
+                    {% if row.restore_url %}
+                    <form method="post" action="{{ row.restore_url }}" class="inline-flex">
+                        {% csrf_token %}
+                        <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">
+                            <i class="fas fa-undo"></i>
+                            <span>Restore</span>
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% if row.extra_actions %}
+                        {% for action in row.extra_actions %}
+                            {{ action|safe }}
+                        {% endfor %}
+                    {% endif %}
+                    {% if not row.view_url and not row.edit_url and not row.delete_preview_url and not row.restore_url and not row.extra_actions %}
+                    <span class="text-xs text-gray-400">—</span>
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>
@@ -48,6 +80,15 @@
         {% endif %}
         {% endwith %}
     </div>
+    {% if footer_template or footer_slot %}
+    <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+        {% if footer_template %}
+            {% include footer_template %}
+        {% else %}
+            {{ footer_slot|safe }}
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 
 <script>

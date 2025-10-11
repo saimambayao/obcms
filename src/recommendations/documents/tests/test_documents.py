@@ -3,6 +3,7 @@ import tempfile
 from io import BytesIO
 from unittest.mock import MagicMock, patch
 
+import pytest
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, TransactionTestCase
@@ -13,6 +14,8 @@ from rest_framework.test import APIClient, APITestCase
 from ..models import Document, DocumentAccess, DocumentCategory, DocumentComment
 
 User = get_user_model()
+
+pytestmark = pytest.mark.integration
 
 
 class DocumentModelTest(TestCase):

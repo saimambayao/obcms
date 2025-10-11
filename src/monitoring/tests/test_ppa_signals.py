@@ -10,6 +10,8 @@ from common.work_item_model import WorkItem
 
 User = get_user_model()
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def staff_user(db):

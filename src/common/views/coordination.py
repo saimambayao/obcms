@@ -431,6 +431,7 @@ def coordination_events(request):
 
     base_queryset = (
         WorkItem.objects.filter(work_type=WorkItem.WORK_TYPE_ACTIVITY)
+        .filter(activity_category=WorkItem.ACTIVITY_CATEGORY_COORDINATION)
         .select_related("created_by")
         .prefetch_related("assignees", "teams")
     )
@@ -558,7 +559,10 @@ def coordination_events(request):
         },
     ]
 
-    calendar_feed_url = f"{reverse('common:work_items_calendar_feed')}?type=activity"
+    calendar_feed_url = (
+        f"{reverse('common:work_items_calendar_feed')}?type=activity"
+        f"&activity_category={WorkItem.ACTIVITY_CATEGORY_COORDINATION}"
+    )
 
     root_queryset = (
         activities_qs.annotate(children_count=Count("children")).order_by("tree_id", "lft")

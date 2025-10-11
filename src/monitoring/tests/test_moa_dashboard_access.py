@@ -1,5 +1,6 @@
 """Access control tests for the MOA PPAs dashboard."""
 
+import pytest
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -9,6 +10,8 @@ from monitoring.models import MonitoringEntry
 
 
 User = get_user_model()
+
+pytestmark = pytest.mark.integration
 
 
 class MOAStaffDashboardAccessTests(TestCase):

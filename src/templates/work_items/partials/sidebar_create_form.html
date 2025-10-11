@@ -209,6 +209,21 @@
                 <p class="mt-1 text-xs text-red-600">{{ form.work_type.errors.0 }}</p>
                 {% endif %}
             </div>
+            <div data-activity-category-wrapper class="hidden">
+                <label for="{{ form.activity_category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Activity Category
+                </label>
+                <div class="relative">
+                    {{ form.activity_category }}
+                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </span>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Classify the activity to keep calendars focused.</p>
+                {% if form.activity_category.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ form.activity_category.errors.0 }}</p>
+                {% endif %}
+            </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
@@ -351,6 +366,25 @@
             }
         }
     }, 120);
+
+    const workTypeSelect = formEl.querySelector('select[name="work_type"]');
+    const activityWrapper = formEl.querySelector('[data-activity-category-wrapper]');
+    const activitySelect = formEl.querySelector('select[name="activity_category"]');
+
+    function syncActivityCategoryVisibility() {
+        if (!activityWrapper) return;
+        const value = workTypeSelect ? workTypeSelect.value : null;
+        const isActivity = value === 'activity' || value === 'sub_activity';
+        activityWrapper.classList.toggle('hidden', !isActivity);
+        if (isActivity && activitySelect && !activitySelect.value) {
+            activitySelect.value = 'coordination';
+        }
+    }
+
+    if (workTypeSelect && activityWrapper) {
+        workTypeSelect.addEventListener('change', syncActivityCategoryVisibility);
+        syncActivityCategoryVisibility();
+    }
 
     function formatCurrency(value) {
         return new Intl.NumberFormat('en-PH', {

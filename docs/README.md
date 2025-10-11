@@ -556,6 +556,12 @@ The OBC Management System is built using modern web technologies:
 2. Set up test environment: [Testing Environment](env/testing.md)
 3. Run tests: See [Testing README](testing/README.md) for quick commands
 4. Review test reports: [Full Suite Test Report](testing/FULL_SUITE_TEST_REPORT.md)
+5. Review [Component Testing Plan](plans/tests/ocbms_component_testing_plan.md) for module-level coverage expectations
+6. Review [k6 Load Testing Plan](plans/tests/obcms_k6_load_testing_plan.md) for performance testing strategy
+7. Review [Performance Testing Overview](plans/tests/obcms_performance_testing_overview.md) for broader non-functional coverage
+8. Review [Unit Testing Plan](plans/tests/obcms_unit_testing_plan.md) for isolated logic coverage standards
+9. Review [Integration Testing Plan](plans/tests/obcms_integration_testing_plan.md) for cross-component validation guidance
+10. Review [E2E Testing Plan](plans/tests/obcms_e2e_testing_plan.md) for full user journey automation
 
 ---
 
@@ -576,6 +582,8 @@ docs/
 ├── reference/                    # Technical reference documentation
 ├── reports/                      # Research reports & analysis
 ├── research/                     # Technical research & best practices
+├── plans/                        # Implementation and testing plans
+│   └── tests/                    # Unit, component, integration, performance, and E2E plans
 ├── testing/                      # Testing guides & verification
 └── ui/                          # UI/UX design documentation
 ```

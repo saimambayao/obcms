@@ -79,6 +79,10 @@ class OrganizationAdmin(admin.ModelAdmin):
                 "fields": (
                     "address",
                     "mailing_address",
+                    "region",
+                    "province",
+                    "municipality",
+                    "barangay",
                     "phone",
                     "mobile",
                     "email",
@@ -144,7 +148,7 @@ class OrganizationAdmin(admin.ModelAdmin):
         """Display primary contact information."""
         primary = obj.contacts.filter(is_primary=True, is_active=True).first()
         if primary:
-            return f"{primary.contact_person} ({primary.email})"
+            return f"{primary.display_name} ({primary.email or 'No email'})"
         return "No primary contact"
 
     primary_contact_display.short_description = "Primary Contact"

@@ -76,10 +76,12 @@
                     {% endfor %}
                 </div>
             </div>
-            {% endif %}
-        </div>
+    {% endif %}
+</div>
     </header>
     {% endif %}
+
+    {% include "communities/partials/communities_list_quick_actions.html" with can_manage_communities=can_manage_communities show_archived=show_archived page_title=page_title page_description=page_description %}
 
     {% if stat_cards %}
     <section class="{{ stat_cards_grid_class|default:'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' }}">
@@ -204,68 +206,6 @@
     <div id="barangay-results-container">
         {% include "communities/partials/barangay_manage_results.html" %}
     </div>
-
-    <!-- Quick Actions -->
-    <div class="mt-8">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {% if can_manage_communities %}
-            <a href="{% url 'common:communities_add' %}" class="group bg-white rounded-xl shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4">
-                        <i class="fas fa-plus text-white text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
-                        Add Barangay OBC
-                    </h3>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Register a new barangay-level OBC community.
-                    </p>
-                    <div class="mt-4 flex items-center text-emerald-600 text-sm font-medium">
-                        <span>Add Barangay</span>
-                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
-                    </div>
-                </div>
-            </a>
-            {% endif %}
-
-            <a href="{% url 'common:communities_stakeholders' %}" class="group bg-white rounded-xl shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4">
-                        <i class="fas fa-users text-white text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
-                        Manage Stakeholders
-                    </h3>
-                    <p class="mt-2 text-sm text-gray-600">
-                        View and manage stakeholders.
-                    </p>
-                    <div class="mt-4 flex items-center text-emerald-600 text-sm font-medium">
-                        <span>Manage Stakeholders</span>
-                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
-                    </div>
-                </div>
-            </a>
-
-            <a href="{% url 'common:communities_home' %}" class="group bg-white rounded-xl shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4">
-                        <i class="fas fa-chart-bar text-white text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
-                        View Dashboard
-                    </h3>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Return to communities overview.
-                    </p>
-                    <div class="mt-4 flex items-center text-emerald-600 text-sm font-medium">
-                        <span>View Dashboard</span>
-                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
-                    </div>
-                </div>
-            </a>
-        </div>
-    </div>
 </div>
 {% endblock %}
 
@@ -304,176 +244,123 @@
             }
         });
     </script>
-    <script id="barangay-province-options" type="application/json">{{ province_options_json|default:"[]"|safe }}</script>
+        <script id="barangay-province-options" type="application/json">{{ province_options_json|default:"[]"|safe }}</script>
     <script id="barangay-municipality-options" type="application/json">{{ municipality_options_json|default:"[]"|safe }}</script>
     <script>
-        (function() {
-            console.log('[Barangay OBC] Script loaded');
-
-            function initializeFilters() {
-                console.log('[Barangay OBC] Initializing filters...');
-
-                const provinceDataElement = document.getElementById('barangay-province-options');
-                const municipalityDataElement = document.getElementById('barangay-municipality-options');
-
-                let provinceOptions = [];
-                if (provinceDataElement) {
-                    try {
-                        provinceOptions = JSON.parse(provinceDataElement.textContent);
-                        console.log('[Barangay OBC] ✅ Loaded province options:', provinceOptions.length);
-                        console.log('[Barangay OBC] First province:', provinceOptions[0]);
-                    } catch (error) {
-                        console.error('[Barangay OBC] ❌ Failed to parse province options:', error);
-                    }
-                } else {
-                    console.warn('[Barangay OBC] ⚠️ Province data element not found');
-                }
-
-                let municipalityOptions = [];
-                if (municipalityDataElement) {
-                    try {
-                        municipalityOptions = JSON.parse(municipalityDataElement.textContent);
-                        console.log('[Barangay OBC] ✅ Loaded municipality options:', municipalityOptions.length);
-                    } catch (error) {
-                        console.error('[Barangay OBC] ❌ Failed to parse municipality options:', error);
-                    }
-                } else {
-                    console.warn('[Barangay OBC] ⚠️ Municipality data element not found');
-                }
-
-                const filterForm = document.getElementById('barangay-filter-form');
-                if (!filterForm) {
-                    console.warn('[Barangay OBC] ⚠️ Filter form not found');
-                    return;
-                }
-
-                const regionSelect = filterForm.querySelector('select[name="region"]');
-                const provinceSelect = filterForm.querySelector('select[name="province"]');
-                const municipalitySelect = filterForm.querySelector('select[name="municipality"]');
-
-                if (!regionSelect || !provinceSelect || !municipalitySelect) {
-                    console.warn('[Barangay OBC] ⚠️ One or more select elements not found');
-                    console.log('Region:', regionSelect, 'Province:', provinceSelect, 'Municipality:', municipalitySelect);
-                    return;
-                }
-
-                const populateProvinces = (regionId, preserveValue) => {
-                    console.log('[Barangay OBC] 🔧 populateProvinces called:', { regionId, type: typeof regionId, preserveValue });
-
-                    const normalizedId = regionId ? String(regionId) : '';
-                    const previousValue = preserveValue ? String(preserveValue) : '';
-
-                    console.log('[Barangay OBC] 🔧 Normalized:', { normalizedId, willFilter: !!normalizedId, totalOptions: provinceOptions.length });
-
-                    // Debug filter logic
-                    if (normalizedId && provinceOptions.length > 0) {
-                        console.log('[Barangay OBC] 🔍 Sample filter test:');
-                        provinceOptions.slice(0, 3).forEach(opt => {
-                            const match = String(opt.region_id) === normalizedId;
-                            console.log(`  ${opt.name}: region_id="${opt.region_id}" ${match ? '✅ MATCH' : '❌ no match'}`);
-                        });
-                    }
-
-                    const filtered = normalizedId
-                        ? provinceOptions.filter((option) => String(option.region_id) === normalizedId)
-                        : provinceOptions;
-
-                    console.log(`[Barangay OBC] 🔄 Filter result: ${filtered.length}/${provinceOptions.length} provinces`);
-                    if (filtered.length > 0 && filtered.length <= 10) {
-                        console.log('[Barangay OBC] ✅ ALL filtered provinces:', filtered.map(p => `${p.name} (${p.region_id})`));
-                    }
-
-                    provinceSelect.innerHTML = '';
-                    const defaultOption = document.createElement('option');
-                    defaultOption.value = '';
-                    defaultOption.textContent = 'All Provinces';
-                    provinceSelect.appendChild(defaultOption);
-
-                    filtered.forEach((option) => {
-                        const opt = document.createElement('option');
-                        opt.value = option.id;
-                        opt.textContent = option.name;
-                        provinceSelect.appendChild(opt);
-                    });
-
-                    if (previousValue && filtered.some((option) => String(option.id) === previousValue)) {
-                        provinceSelect.value = previousValue;
-                        console.log('[Barangay OBC] ✅ Restored selection:', previousValue);
-                    }
-
-                    console.log('[Barangay OBC] ✅ Dropdown updated:', provinceSelect.options.length, 'total options');
-                };
-
-                const populateMunicipalities = (regionId, provinceId, preserveValue) => {
-                    const normalizedRegion = regionId ? String(regionId) : '';
-                    const normalizedProvince = provinceId ? String(provinceId) : '';
-                    const previousValue = preserveValue ? String(preserveValue) : '';
-
-                    const filtered = municipalityOptions.filter((option) => {
-                        if (normalizedRegion && String(option.region_id) !== normalizedRegion) {
-                            return false;
-                        }
-                        if (normalizedProvince && String(option.province_id) !== normalizedProvince) {
-                            return false;
-                        }
-                        return true;
-                    });
-
-                    console.log(`[Barangay OBC] 🔄 Populating municipalities for region "${normalizedRegion}", province "${normalizedProvince}":`, filtered.length, 'municipalities found');
-
-                    municipalitySelect.innerHTML = '';
-                    const defaultOption = document.createElement('option');
-                    defaultOption.value = '';
-                    defaultOption.textContent = 'All Municipalities';
-                    municipalitySelect.appendChild(defaultOption);
-
-                    filtered.forEach((option) => {
-                        const opt = document.createElement('option');
-                        opt.value = option.id;
-                        opt.textContent = option.name;
-                        municipalitySelect.appendChild(opt);
-                    });
-
-                    if (previousValue && filtered.some((option) => String(option.id) === previousValue)) {
-                        municipalitySelect.value = previousValue;
-                        console.log('[Barangay OBC] ✅ Restored municipality selection:', previousValue);
-                    }
-                };
-
-                // Get initial values
-                const initialRegion = regionSelect.dataset.initial || regionSelect.value || '';
-                const initialProvince = provinceSelect.dataset.initial || provinceSelect.value || '';
-                const initialMunicipality = municipalitySelect.dataset.initial || municipalitySelect.value || '';
-
-                console.log('[Barangay OBC] 📊 Initial state:');
-                console.log('  Region:', initialRegion, '(from', regionSelect.dataset.initial ? 'data-initial' : 'value', ')');
-                console.log('  Province:', initialProvince, '(from', provinceSelect.dataset.initial ? 'data-initial' : 'value', ')');
-                console.log('  Municipality:', initialMunicipality, '(from', municipalitySelect.dataset.initial ? 'data-initial' : 'value', ')');
-
-                // Initial population
-                populateProvinces(initialRegion, initialProvince);
-                populateMunicipalities(initialRegion, initialProvince, initialMunicipality);
-
-                // Event listeners
-                regionSelect.addEventListener('change', () => {
-                    console.log('[Barangay OBC] 👉 Region changed to:', regionSelect.value);
-                    populateProvinces(regionSelect.value, '');
-                    populateMunicipalities(regionSelect.value, '', '');
-                });
-
-                provinceSelect.addEventListener('change', () => {
-                    console.log('[Barangay OBC] 👉 Province changed to:', provinceSelect.value);
-                    populateMunicipalities(regionSelect.value, provinceSelect.value, '');
-                });
-
-                console.log('[Barangay OBC] ✅ Initialization complete');
+        (function () {
+            const form = document.getElementById('barangay-filter-form');
+            if (!form) {
+                return;
             }
 
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initializeFilters);
-            } else {
-                initializeFilters();
+            const regionSelect = form.querySelector('select[name="region"]');
+            const provinceSelect = form.querySelector('select[name="province"]');
+            const municipalitySelect = form.querySelector('select[name="municipality"]');
+
+            if (!regionSelect || !provinceSelect || !municipalitySelect) {
+                return;
             }
+
+            const parseOptions = (elementId) => {
+                try {
+                    const element = document.getElementById(elementId);
+                    return element ? JSON.parse(element.textContent || '[]') : [];
+                } catch (error) {
+                    console.warn(`Unable to parse ${elementId}`, error);
+                    return [];
+                }
+            };
+
+            const provinceOptions = parseOptions('barangay-province-options');
+            const municipalityOptions = parseOptions('barangay-municipality-options');
+
+            const rebuildSelect = (selectEl, options, placeholder) => {
+                const currentValue = selectEl.value;
+                selectEl.innerHTML = '';
+
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = placeholder;
+                selectEl.appendChild(defaultOption);
+
+                options.forEach((option) => {
+                    const node = document.createElement('option');
+                    node.value = option.id;
+                    node.textContent = option.name;
+                    selectEl.appendChild(node);
+                });
+
+                if (
+                    currentValue &&
+                    options.some((option) => String(option.id) === String(currentValue))
+                ) {
+                    selectEl.value = currentValue;
+                } else {
+                    selectEl.value = '';
+                }
+            };
+
+            const syncProvinces = (preserveValue) => {
+                const regionId = regionSelect.value;
+                const filtered = regionId
+                    ? provinceOptions.filter(
+                          (option) => String(option.region_id) === String(regionId)
+                      )
+                    : provinceOptions;
+
+                rebuildSelect(provinceSelect, filtered, 'All Provinces');
+
+                if (
+                    preserveValue &&
+                    filtered.some((option) => String(option.id) === String(preserveValue))
+                ) {
+                    provinceSelect.value = preserveValue;
+                }
+            };
+
+            const syncMunicipalities = (preserveValue) => {
+                const regionId = regionSelect.value;
+                const provinceId = provinceSelect.value;
+                const filtered = municipalityOptions.filter((option) => {
+                    if (regionId && String(option.region_id) !== String(regionId)) {
+                        return false;
+                    }
+                    if (provinceId && String(option.province_id) !== String(provinceId)) {
+                        return false;
+                    }
+                    return true;
+                });
+
+                rebuildSelect(municipalitySelect, filtered, 'All Municipalities');
+
+                if (
+                    preserveValue &&
+                    filtered.some((option) => String(option.id) === String(preserveValue))
+                ) {
+                    municipalitySelect.value = preserveValue;
+                }
+            };
+
+            const initialRegion = regionSelect.dataset.initial || regionSelect.value || '';
+            const initialProvince = provinceSelect.dataset.initial || provinceSelect.value || '';
+            const initialMunicipality =
+                municipalitySelect.dataset.initial || municipalitySelect.value || '';
+
+            if (initialRegion) {
+                regionSelect.value = initialRegion;
+            }
+
+            syncProvinces(initialProvince);
+            syncMunicipalities(initialMunicipality);
+
+            regionSelect.addEventListener('change', () => {
+                syncProvinces(null);
+                syncMunicipalities(null);
+            });
+
+            provinceSelect.addEventListener('change', () => {
+                syncMunicipalities(null);
+            });
         })();
     </script>
 {% endblock %}

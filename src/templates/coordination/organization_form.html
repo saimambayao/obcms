@@ -142,6 +142,24 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        {% include "components/form_field_select.html" with field=form.region label=form.region.label placeholder="Select region" %}
+                    </div>
+                    <div>
+                        {% include "components/form_field_select.html" with field=form.province label=form.province.label placeholder="Select province" %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        {% include "components/form_field_select.html" with field=form.municipality label=form.municipality.label placeholder="Select municipality / city" %}
+                    </div>
+                    <div>
+                        {% include "components/form_field_select.html" with field=form.barangay label=form.barangay.label placeholder="Select barangay" %}
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.phone.label }}</label>

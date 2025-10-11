@@ -104,6 +104,7 @@ class WorkItemForm(forms.ModelForm):
         model = WorkItem
         fields = [
             'work_type',
+            'activity_category',
             'parent',
             'title',
             'description',
@@ -127,6 +128,9 @@ class WorkItemForm(forms.ModelForm):
             'work_type': forms.Select(attrs={
                 'class': 'block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200',
                 'onchange': 'updateFormFields(this.value)',
+            }),
+            'activity_category': forms.Select(attrs={
+                'class': 'block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200',
             }),
             'parent': forms.Select(attrs={
                 'class': 'block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200',
@@ -182,6 +186,14 @@ class WorkItemForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initialize form with dynamic parent queryset."""
         super().__init__(*args, **kwargs)
+
+        activity_field = self.fields.get('activity_category')
+        if activity_field:
+            choices = list(activity_field.choices)
+            if choices and choices[0][0] != '':
+                activity_field.choices = [('', 'Select activity category')] + choices
+            activity_field.widget.attrs.setdefault('data-field', 'activity-category')
+            activity_field.widget.attrs.setdefault('class', activity_field.widget.attrs.get('class', '') + ' workitem-activity-field')
 
         # Determine MOA vs OOBC context for filtering
         is_moa_ppa = False
@@ -327,6 +339,16 @@ class WorkItemForm(forms.ModelForm):
                              f"{dict(WorkItem.WORK_TYPE_CHOICES)[work_type]} as child"
                 })
 
+        activity_category = cleaned_data.get('activity_category')
+        if work_type in (
+            WorkItem.WORK_TYPE_ACTIVITY,
+            WorkItem.WORK_TYPE_SUB_ACTIVITY,
+        ):
+            if not activity_category:
+                cleaned_data['activity_category'] = WorkItem.ACTIVITY_CATEGORY_COORDINATION
+        else:
+            cleaned_data['activity_category'] = None
+
         # Validate dates
         start_date = cleaned_data.get('start_date')
         due_date = cleaned_data.get('due_date')
@@ -334,6 +356,17 @@ class WorkItemForm(forms.ModelForm):
             raise ValidationError({
                 'due_date': 'Due date must be after start date'
             })
+
+        work_type = cleaned_data.get('work_type')
+        activity_category = cleaned_data.get('activity_category')
+        if work_type in (
+            WorkItem.WORK_TYPE_ACTIVITY,
+            WorkItem.WORK_TYPE_SUB_ACTIVITY,
+        ):
+            if not activity_category:
+                cleaned_data['activity_category'] = WorkItem.ACTIVITY_CATEGORY_COORDINATION
+        else:
+            cleaned_data['activity_category'] = None
 
         return cleaned_data
 
@@ -431,11 +464,18 @@ class WorkItemQuickEditForm(forms.ModelForm):
             MonitoringEntry.objects.filter(category__in=['moa_ppa', 'oobc_ppa'])
             .order_by('title')
         )
+        activity_field = self.fields.get('activity_category')
+        if activity_field:
+            choices = list(activity_field.choices)
+            if choices and choices[0][0] != '':
+                activity_field.choices = [('', 'Select activity category')] + choices
+            activity_field.widget.attrs['data-field'] = 'activity-category'
 
     class Meta:
         model = WorkItem
         fields = [
             'work_type',  # Added for calendar creation
+            'activity_category',
             'title',
             'status',
             'priority',
@@ -449,6 +489,9 @@ class WorkItemQuickEditForm(forms.ModelForm):
         ]
         widgets = {
             'work_type': forms.Select(attrs={
+                'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none'
+            }),
+            'activity_category': forms.Select(attrs={
                 'class': 'block w-full py-2 px-3 text-sm rounded-lg border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none'
             }),
             'title': forms.TextInput(attrs={

@@ -1,10 +1,13 @@
 """Tests for the load_oobc_policy_recommendations management command."""
 
+import pytest
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase
 
 from recommendations.policy_tracking.models import PolicyRecommendation
+
+pytestmark = pytest.mark.integration
 
 
 class LoadPolicyRecommendationsCommandTests(TestCase):

@@ -19,6 +19,86 @@ enhanced_ensure_location_coordinates = (
 )
 
 
+BASE_INPUT_CLASS = (
+    "block w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm "
+    "focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-white"
+)
+SELECT_INPUT_CLASS = BASE_INPUT_CLASS + " appearance-none pr-12"
+TEXTAREA_CLASS = (
+    "block w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm "
+    "focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+)
+CHECKBOX_CLASS = (
+    "h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+)
+
+
+def _apply_community_form_field_styles(form: forms.BaseForm) -> None:
+    """Apply unified Tailwind classes across community data entry forms."""
+
+    for field in form.fields.values():
+        widget = field.widget
+
+        if isinstance(widget, forms.CheckboxInput):
+            widget.attrs["class"] = CHECKBOX_CLASS
+            continue
+
+        if isinstance(widget, forms.Textarea):
+            widget.attrs["class"] = TEXTAREA_CLASS
+            widget.attrs.setdefault("rows", widget.attrs.get("rows", 3) or 3)
+            continue
+
+        if isinstance(widget, (forms.Select, forms.SelectMultiple)):
+            widget.attrs["class"] = SELECT_INPUT_CLASS
+            continue
+
+        if isinstance(
+            widget,
+            (
+                forms.DateInput,
+                forms.DateTimeInput,
+                forms.EmailInput,
+                forms.NumberInput,
+                forms.TimeInput,
+                forms.TextInput,
+                forms.URLInput,
+            ),
+        ):
+            widget.attrs["class"] = BASE_INPUT_CLASS
+            if isinstance(widget, forms.DateInput):
+                widget.attrs.setdefault("type", "date")
+            continue
+
+        widget.attrs["class"] = widget.attrs.get("class", BASE_INPUT_CLASS)
+
+INPUT_CONTROL_CLASSES = (
+    "block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base "
+    "shadow-sm focus:border-emerald-500 focus:ring-emerald-500 transition-all duration-200"
+)
+SELECT_CONTROL_CLASSES = (
+    "block w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 "
+    "text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500 min-h-[48px] "
+    "pr-12 transition-all duration-200"
+)
+TEXTAREA_CONTROL_CLASSES = INPUT_CONTROL_CLASSES
+CHECKBOX_CONTROL_CLASSES = (
+    "h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0"
+)
+
+
+def _merge_control_class(widget: forms.Widget, base_class: str) -> None:
+    """Ensure widgets share the OBCMS control styling while keeping extra classes."""
+
+    existing = widget.attrs.get("class", "")
+    filtered_existing = " ".join(
+        cls for cls in existing.split() if cls and cls != "form-control"
+    )
+    if filtered_existing:
+        widget.attrs["class"] = f"{base_class} {filtered_existing}"
+    else:
+        widget.attrs["class"] = base_class
+
+
 COMMUNITY_PROFILE_FIELDS = [
     field.name
     for field in CommunityProfileBase._meta.get_fields()
@@ -191,6 +271,16 @@ COMMUNITY_PROFILE_WIDGETS = {
     "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
 }
 
+for widget in COMMUNITY_PROFILE_WIDGETS.values():
+    if isinstance(widget, forms.Textarea):
+        _merge_control_class(widget, TEXTAREA_CONTROL_CLASSES)
+    elif isinstance(widget, forms.CheckboxInput):
+        _merge_control_class(widget, CHECKBOX_CONTROL_CLASSES)
+    elif isinstance(widget, forms.Select):
+        _merge_control_class(widget, SELECT_CONTROL_CLASSES)
+    else:
+        _merge_control_class(widget, INPUT_CONTROL_CLASSES)
+
 COMMUNITY_PROFILE_LABELS = {
     "obc_id": "OBC ID",
     "source_document_reference": "Source Document Reference",
@@ -320,19 +410,19 @@ class MunicipalityCoverageForm(LocationSelectionMixin, forms.ModelForm):
         widgets = {
             "total_obc_communities": forms.NumberInput(
                 attrs={
-                    "class": "block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
+                    "class": INPUT_CONTROL_CLASSES,
                     "min": "0",
                 }
             ),
             "existing_support_programs": forms.Textarea(
                 attrs={
-                    "class": "block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
+                    "class": TEXTAREA_CONTROL_CLASSES,
                     "rows": 3,
                 }
             ),
             "auto_sync": forms.CheckboxInput(
                 attrs={
-                    "class": "form-check-input h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    "class": CHECKBOX_CONTROL_CLASSES,
                 }
             ),
             **COMMUNITY_PROFILE_WIDGETS,
@@ -349,6 +439,7 @@ class MunicipalityCoverageForm(LocationSelectionMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        _apply_community_form_field_styles(self)
 
         # Mark optional fields as not required (they have defaults at model level)
         optional_fields = [
@@ -411,25 +502,25 @@ class ProvinceCoverageForm(LocationSelectionMixin, forms.ModelForm):
         widgets = {
             "total_municipalities": forms.NumberInput(
                 attrs={
-                    "class": "block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
+                    "class": INPUT_CONTROL_CLASSES,
                     "min": "0",
                 }
             ),
             "total_obc_communities": forms.NumberInput(
                 attrs={
-                    "class": "block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
+                    "class": INPUT_CONTROL_CLASSES,
                     "min": "0",
                 }
             ),
             "existing_support_programs": forms.Textarea(
                 attrs={
-                    "class": "block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
+                    "class": TEXTAREA_CONTROL_CLASSES,
                     "rows": 3,
                 }
             ),
             "auto_sync": forms.CheckboxInput(
                 attrs={
-                    "class": "form-check-input h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    "class": CHECKBOX_CONTROL_CLASSES,
                 }
             ),
             **COMMUNITY_PROFILE_WIDGETS,
@@ -446,6 +537,7 @@ class ProvinceCoverageForm(LocationSelectionMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        _apply_community_form_field_styles(self)
 
         # Mark optional fields as not required (they have defaults at model level)
         optional_fields = [
@@ -525,6 +617,7 @@ class OBCCommunityForm(LocationSelectionMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        _apply_community_form_field_styles(self)
 
         # Mark optional fields as not required (they have defaults at model level)
         optional_fields = [

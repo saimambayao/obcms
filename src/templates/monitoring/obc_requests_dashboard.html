@@ -17,222 +17,257 @@
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
-    <!-- Header Section -->
-    <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-bold text-neutral-800">OBC Requests Management</h1>
-            <p class="text-neutral-600 mt-2">Community Proposals and Assistance Requests from Other Bangsamoro Communities</p>
-            <div class="flex items-center space-x-4 mt-3">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                    <i class="fas fa-file-signature mr-2"></i>
-                    {{ current_year }} Focus Year
-                </span>
-                <span class="text-sm text-neutral-500">Last updated: {{ progress_snapshot.latest_update|date:"M j, Y H:i" }}</span>
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden rounded-3xl bg-bangsamoro-gradient text-white shadow-2xl">
+        <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 15% 15%, rgba(255,255,255,0.35), transparent 55%), radial-gradient(circle at 85% 0%, rgba(255,255,255,0.25), transparent 60%);"></div>
+        <div class="relative flex flex-col lg:flex-row">
+            <div class="flex-1 p-8 space-y-6">
+                <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-3 py-1 rounded-full text-sm font-semibold uppercase tracking-wide border border-white/25">
+                    {% if hero_config.badge_icon %}<i class="{{ hero_config.badge_icon }}"></i>{% endif %}
+                    <span>{{ hero_config.badge_text }}</span>
+                </div>
+                <div class="space-y-3">
+                    <h1 class="text-3xl sm:text-4xl font-bold leading-tight">{{ hero_config.title }}</h1>
+                    <p class="text-white/85 text-base sm:text-lg max-w-2xl leading-relaxed">{{ hero_config.subtitle }}</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {% for metric in hero_metrics %}
+                    <div class="rounded-2xl bg-white/15 border border-white/20 backdrop-blur-sm px-4 py-3">
+                        <p class="text-xs uppercase tracking-wide text-white/70 flex items-center gap-2">
+                            {% if metric.icon %}<i class="{{ metric.icon }}"></i>{% endif %}
+                            {{ metric.label }}
+                        </p>
+                        <p class="mt-2 text-2xl font-semibold text-white">{{ metric.value }}</p>
+                        {% if metric.meta %}
+                        <p class="text-xs text-white/70 mt-1">{{ metric.meta }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if hero_highlights %}
+                <div class="flex flex-wrap gap-2 text-xs sm:text-sm text-white/80">
+                    {% for highlight in hero_highlights %}
+                    <span class="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-3 py-1">
+                        <i class="fas fa-circle text-[6px]"></i>
+                        {{ highlight }}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="w-full lg:w-80 xl:w-96 bg-white/12 border-t border-white/15 lg:border-t-0 lg:border-l p-6 flex flex-col gap-5 justify-center backdrop-blur">
+                <div class="space-y-2 text-sm text-white/85">
+                    <p class="text-xs uppercase tracking-wide text-white/70">Status overview</p>
+                    <p>{{ hero_summary }}</p>
+                    <p class="text-xs text-white/60">
+                        {% if hero_config.latest_update %}
+                            Last updated {{ hero_config.latest_update|date:"M j, Y • h:i A" }}
+                        {% else %}
+                            No updates yet
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="flex flex-col gap-3">
+                    {% for action in hero_actions %}
+                    <a href="{{ action.href }}"
+                       class="{% if action.variant == 'primary' %}inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-emerald-600 font-semibold px-5 py-3 shadow-lg shadow-emerald-900/20 hover:bg-emerald-50 transition-all duration-200{% elif action.variant == 'secondary' %}inline-flex items-center justify-center gap-2 rounded-2xl border border-white/30 bg-white/10 px-5 py-3 font-semibold text-white hover:bg-white/20 transition-all duration-200{% else %}inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 px-5 py-3 font-semibold text-white/85 hover:bg-white/15 transition-all duration-200{% endif %}">
+                        <i class="{{ action.icon }}"></i>
+                        <span>{{ action.label }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
             </div>
         </div>
-        <div class="flex items-center space-x-3">
-            <a href="{% url 'monitoring:create_request' %}" class="btn-primary inline-flex items-center px-4 py-2 rounded-lg text-white font-medium hover-lift">
-                <i class="fas fa-plus-circle mr-2"></i>
-                Submit OBC Request
-            </a>
-        </div>
-    </header>
-
-    <!-- Filter Controls -->
-    <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-4">
-        <form method="get" class="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-            <div class="space-y-1">
-                <label for="status-filter" class="text-sm font-medium text-neutral-700">Status</label>
-                <select id="status-filter" name="status" class="block w-full py-2.5 px-3 text-sm rounded-xl border border-neutral-200 focus:ring-emerald-500 focus:border-emerald-500">
-                    <option value="">All statuses</option>
-                    {% for value, label in filter_options.statuses %}
-                        <option value="{{ value }}" {% if active_filters.status == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="space-y-1">
-                <label for="priority-filter" class="text-sm font-medium text-neutral-700">Priority</label>
-                <select id="priority-filter" name="priority" class="block w-full py-2.5 px-3 text-sm rounded-xl border border-neutral-200 focus:ring-emerald-500 focus:border-emerald-500">
-                    <option value="">All priorities</option>
-                    {% for value, label in filter_options.priorities %}
-                        <option value="{{ value }}" {% if active_filters.priority == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="space-y-1">
-                <label for="source-filter" class="text-sm font-medium text-neutral-700">Submission Channel</label>
-                <select id="source-filter" name="source" class="block w-full py-2.5 px-3 text-sm rounded-xl border border-neutral-200 focus:ring-emerald-500 focus:border-emerald-500">
-                    <option value="">All channels</option>
-                    {% for value, label in filter_options.sources %}
-                        <option value="{{ value }}" {% if active_filters.source == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="space-y-1">
-                <label for="organization-filter" class="text-sm font-medium text-neutral-700">Receiving Organization</label>
-                <select id="organization-filter" name="organization" class="block w-full py-2.5 px-3 text-sm rounded-xl border border-neutral-200 focus:ring-emerald-500 focus:border-emerald-500">
-                    <option value="">All organizations</option>
-                    {% for org in filter_options.organizations %}
-                        <option value="{{ org.id }}" {% if active_filters.organization == org.id|stringformat:"s" %}selected{% endif %}>{{ org.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="space-y-1">
-                <label for="disaster-filter" class="text-sm font-medium text-neutral-700">Disaster Tag</label>
-                <select id="disaster-filter" name="disaster" class="block w-full py-2.5 px-3 text-sm rounded-xl border border-neutral-200 focus:ring-emerald-500 focus:border-emerald-500">
-                    <option value="">All requests</option>
-                    <option value="yes" {% if active_filters.disaster == 'yes' %}selected{% endif %}>Disaster-related</option>
-                    <option value="no" {% if active_filters.disaster == 'no' %}selected{% endif %}>Not disaster-related</option>
-                </select>
-            </div>
-            <div class="space-y-1">
-                <label for="search-query" class="text-sm font-medium text-neutral-700">Search</label>
-                <input id="search-query" type="search" name="q" value="{{ active_filters.query }}" placeholder="Search title, requester, summary" class="block w-full py-2.5 px-3 text-sm rounded-xl border border-neutral-200 focus:ring-emerald-500 focus:border-emerald-500">
-            </div>
-            <div class="lg:col-span-6 flex flex-wrap items-center gap-3 pt-2">
-                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700">
-                    <i class="fas fa-filter"></i>
-                    Apply Filters
-                </button>
-                <a href="{% url 'monitoring:obc_requests' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-neutral-300 text-neutral-600 text-sm hover:bg-neutral-100">
-                    <i class="fas fa-undo"></i>
-                    Reset
-                </a>
-                <span class="text-sm text-neutral-500">Showing {{ filtered_count }} matching requests.</span>
-            </div>
-        </form>
     </section>
 
-    <!-- Analytics Snapshot -->
-    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <article class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-3">
-            <header class="flex items-center gap-3">
-                <span class="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center"><i class="fas fa-coins"></i></span>
+    <!-- Stat Cards -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% for card in stats_cards %}
+        <article class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#FEFDFB] to-[#F8F5EE] shadow-lg transition-transform duration-300 hover:-translate-y-1">
+            <div class="absolute inset-0 bg-white/40 mix-blend-overlay"></div>
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ card.subtitle }}</p>
+                        <h3 class="mt-2 text-lg font-bold text-gray-900">{{ card.title }}</h3>
+                    </div>
+                    <span class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br {{ card.accent_gradient|default:'from-emerald-500 to-emerald-600' }} text-white shadow-inner">
+                        <i class="{{ card.icon }} text-xl {{ card.icon_color }}"></i>
+                    </span>
+                </div>
+                <p class="mt-6 text-3xl font-extrabold text-gray-900">{{ card.total }}</p>
+                <div class="mt-auto pt-4 grid grid-cols-3 gap-3 border-t border-gray-200/70">
+                    {% for metric in card.metrics %}
+                    <div class="text-center">
+                        <p class="text-lg font-bold text-gray-800">{{ metric.value }}</p>
+                        <p class="text-xs font-medium text-gray-500">{{ metric.label }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <!-- Filters -->
+    <section class="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+        <header class="bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-4">
+            <h2 class="text-lg font-semibold text-white flex items-center gap-3">
+                <i class="fas fa-filter text-base"></i>
+                Filters &amp; Search
+            </h2>
+        </header>
+        <div class="p-6 space-y-6">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4">
+                <div class="xl:col-span-2">
+                    {% include "components/form_field_select.html" with field=filter_form.status label="Status" %}
+                </div>
+                <div class="xl:col-span-2">
+                    {% include "components/form_field_select.html" with field=filter_form.priority label="Priority" %}
+                </div>
+                <div class="xl:col-span-2">
+                    {% include "components/form_field_select.html" with field=filter_form.source label="Submission Channel" %}
+                </div>
+                <div class="xl:col-span-3">
+                    {% include "components/form_field_select.html" with field=filter_form.organization label="Receiving Organization" %}
+                </div>
+                <div class="xl:col-span-2">
+                    {% include "components/form_field_select.html" with field=filter_form.disaster label="Disaster Tag" %}
+                </div>
+                <div class="xl:col-span-3">
+                    {% include "components/form_field_input.html" with field=filter_form.query label="Search" prefix_icon="fas fa-search" %}
+                </div>
+                <div class="xl:col-span-3 flex items-end gap-3">
+                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm transition-all duration-200 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <i class="fas fa-filter mr-2"></i>
+                        Apply filters
+                    </button>
+                    <a href="{% url 'monitoring:obc_requests' %}" class="inline-flex w-full items-center justify-center rounded-xl border border-emerald-200 bg-white px-6 py-3 font-semibold text-emerald-600 transition-all duration-200 hover:bg-emerald-50">
+                        Reset
+                    </a>
+                </div>
+            </form>
+            {% if filters_applied %}
+            <div class="flex flex-wrap items-center gap-2">
+                {% for chip in active_filter_badges %}
+                <span class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
+                    <span class="uppercase tracking-wide text-[10px] text-emerald-500">{{ chip.label }}</span>
+                    <span>{{ chip.value }}</span>
+                </span>
+                {% endfor %}
+                <a href="{% url 'monitoring:obc_requests' %}" class="inline-flex items-center gap-2 rounded-full border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+                    <i class="fas fa-times"></i>
+                    Clear all
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Insights -->
+    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 flex flex-col">
+            <header class="flex items-center gap-3 mb-4">
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                    <i class="fas fa-chart-line"></i>
+                </span>
                 <div>
-                    <h3 class="text-lg font-semibold text-neutral-800">Budget Overview</h3>
-                    <p class="text-sm text-neutral-500">Aggregate of estimated amounts for filtered requests.</p>
+                    <h3 class="text-lg font-semibold text-gray-900">Progress Snapshot</h3>
+                    <p class="text-sm text-gray-500">Pulse on current workload</p>
                 </div>
             </header>
-            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-neutral-600">
-                <div class="p-4 bg-neutral-50 border border-neutral-200 rounded-xl">
-                    <dt class="text-xs uppercase tracking-wide text-neutral-500">Total Estimated Budget</dt>
-                    <dd class="text-xl font-semibold text-neutral-900">₱{{ estimated_budget_total|floatformat:2|intcomma }}</dd>
+            <dl class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-emerald-600">Response rate</dt>
+                    <dd class="text-xl font-bold text-emerald-700">{{ response_rate }}%</dd>
                 </div>
-                <div class="p-4 bg-neutral-50 border border-neutral-200 rounded-xl">
-                    <dt class="text-xs uppercase tracking-wide text-neutral-500">Average Per Request</dt>
-                    <dd class="text-xl font-semibold text-neutral-900">₱{{ average_budget|floatformat:0|intcomma }}</dd>
+                <div class="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-amber-600">Pending review</dt>
+                    <dd class="text-xl font-bold text-amber-700">{{ progress_snapshot.pending_review }}</dd>
                 </div>
-                <div class="p-4 bg-neutral-50 border border-neutral-200 rounded-xl">
-                    <dt class="text-xs uppercase tracking-wide text-neutral-500">Disaster / Emergency Tagged</dt>
-                    <dd class="text-xl font-semibold text-neutral-900">{{ disaster_related_count }}</dd>
-                </div>
-                <div class="p-4 bg-neutral-50 border border-neutral-200 rounded-xl">
-                    <dt class="text-xs uppercase tracking-wide text-neutral-500">Response Rate</dt>
-                    <dd class="text-xl font-semibold text-neutral-900">{{ response_rate }}%</dd>
+                <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-slate-600">Avg response days</dt>
+                    <dd class="text-xl font-bold text-slate-700">{{ progress_snapshot.avg_response_days }}</dd>
                 </div>
             </dl>
+            <p class="mt-4 text-xs text-gray-500">
+                {% if progress_snapshot.latest_update %}
+                    Latest update recorded {{ progress_snapshot.latest_update|naturaltime }}.
+                {% else %}
+                    No updates captured yet.
+                {% endif %}
+            </p>
         </article>
-
-        <article class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6">
+        <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
             <header class="flex items-center gap-3 mb-4">
-                <span class="w-9 h-9 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center"><i class="fas fa-signal"></i></span>
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
+                    <i class="fas fa-signal"></i>
+                </span>
                 <div>
-                    <h3 class="text-lg font-semibold text-neutral-800">Submission Channels</h3>
-                    <p class="text-sm text-neutral-500">Breakdown by request origin.</p>
+                    <h3 class="text-lg font-semibold text-gray-900">Submission Channels</h3>
+                    <p class="text-sm text-gray-500">Where requests originate</p>
                 </div>
             </header>
             <ul class="space-y-3">
                 {% for source in source_breakdown %}
-                <li class="flex items-center justify-between text-sm text-neutral-600">
-                    <span>{{ source.label }}</span>
-                    <span class="font-semibold text-neutral-900">{{ source.total }}</span>
+                <li class="flex items-center justify-between text-sm text-gray-600">
+                    <span class="flex-1 truncate">{{ source.label }}</span>
+                    <span class="font-semibold text-gray-900">{{ source.total }}</span>
                 </li>
                 {% empty %}
-                <li class="text-sm text-neutral-500">No submission data available.</li>
+                <li class="text-sm text-gray-500">No submission data available.</li>
                 {% endfor %}
             </ul>
         </article>
-
-        <article class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6">
+        <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
             <header class="flex items-center gap-3 mb-4">
-                <span class="w-9 h-9 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center"><i class="fas fa-layer-group"></i></span>
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+                    <i class="fas fa-layer-group"></i>
+                </span>
                 <div>
-                    <h3 class="text-lg font-semibold text-neutral-800">Priority Distribution</h3>
-                    <p class="text-sm text-neutral-500">Monitor urgency mix across filtered records.</p>
+                    <h3 class="text-lg font-semibold text-gray-900">Priority Distribution</h3>
+                    <p class="text-sm text-gray-500">Monitor urgency mix</p>
                 </div>
             </header>
             <ul class="space-y-3">
                 {% for item in priority_breakdown %}
-                <li class="flex items-center justify-between text-sm text-neutral-600">
-                    <span>{{ item.label }}</span>
-                    <span class="font-semibold text-neutral-900">{{ item.total }}</span>
+                <li class="flex items-center justify-between text-sm text-gray-600">
+                    <span class="flex-1 truncate">{{ item.label }}</span>
+                    <span class="font-semibold text-gray-900">{{ item.total }}</span>
                 </li>
                 {% empty %}
-                <li class="text-sm text-neutral-500">No priority data available.</li>
+                <li class="text-sm text-gray-500">No priority data available.</li>
                 {% endfor %}
             </ul>
         </article>
     </section>
 
-    <!-- Statistics Cards - 3D Milk White Design -->
-    <section class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {% for card in stats_cards %}
-        <!-- Single Stat Card -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
-             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
-            <!-- Gradient overlay for depth -->
-            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
-
-            <!-- Content - Use flex column to push breakdown to bottom -->
-            <div class="relative p-6 flex flex-col h-full">
-                <!-- Header: Label + Number + Icon -->
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">{{ card.subtitle }}</p>
-                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ card.total }}</p>
-                    </div>
-                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
-                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
-                        <i class="{{ card.icon }} text-2xl {{ card.icon_color }}"></i>
-                    </div>
-                </div>
-
-                <!-- Spacer to push breakdown to bottom -->
-                <div class="flex-grow"></div>
-
-                <!-- Breakdown (3 columns) - Always at bottom -->
-                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
-                    {% for metric in card.metrics %}
-                    <div class="text-center">
-                        <p class="text-xl font-bold text-gray-700">{{ metric.value }}</p>
-                        <p class="text-xs text-gray-500 font-medium">{{ metric.label }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
+    <!-- Quick Actions -->
+    <section class="space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Quick Actions</h2>
+                <p class="mt-1 text-sm text-gray-600">Jump into the most-used OBC workflows.</p>
             </div>
         </div>
-        {% endfor %}
-    </section>
-
-    <!-- Quick Actions Section -->
-    <section id="quick-actions">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for action in quick_actions %}
-            <a href="{{ action.url }}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
-                <div class="p-6 flex flex-col flex-grow">
-                    <div class="w-12 h-12 {{ action.color }} rounded-lg flex items-center justify-center mb-4">
-                        <i class="{{ action.icon }} text-white text-xl"></i>
+            <a href="{{ action.url }}"
+               class="group block rounded-2xl border border-gray-200 bg-gradient-to-br from-white via-gray-50 to-gray-100 p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 h-12 w-12 rounded-xl bg-gradient-to-br {{ action.icon_gradient }} text-white shadow-md flex items-center justify-center">
+                        <i class="{{ action.icon }} text-lg"></i>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-violet-600 transition-colors">
-                        {{ action.title }}
-                    </h3>
-                    <p class="mt-2 text-sm text-gray-600 flex-grow">
-                        {{ action.description }}
-                    </p>
-                    <div class="mt-4 flex items-center text-violet-600 text-sm font-medium">
-                        <span>Open</span>
-                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    <div class="flex-1">
+                        <div class="flex items-start justify-between gap-3">
+                            <h3 class="text-lg font-semibold text-gray-900 transition-colors duration-200 {{ action.accent_hover_class }}">{{ action.title }}</h3>
+                            <i class="fas fa-arrow-right text-gray-400 transition-all duration-200 group-hover:translate-x-1 {{ action.accent_hover_class }}"></i>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-600 leading-relaxed">{{ action.description }}</p>
+                        <span class="mt-4 inline-flex items-center gap-2 text-sm font-semibold transition-all duration-200 {{ action.accent_text_class }} {{ action.accent_hover_class|default:'' }}">
+                            <span>Open</span>
+                            <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
+                        </span>
                     </div>
                 </div>
             </a>
@@ -240,215 +275,71 @@
         </div>
     </section>
 
-    <!-- Main Content Section -->
-    <section class="grid gap-6 lg:grid-cols-4">
-        <!-- OBC Requests Table -->
-        <div class="lg:col-span-3 bg-white border border-neutral-200 rounded-xl shadow">
-            <header class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-neutral-800 flex items-center">
-                    <i class="fas fa-list mr-2 text-blue-500"></i>
-                    OBC Requests Overview
-                </h2>
-                <div class="flex items-center space-x-2">
-                    <select class="text-sm border border-neutral-300 rounded-lg px-3 py-1">
-                        <option>All Status</option>
-                        <option>Pending</option>
-                        <option>Under Review</option>
-                        <option>Approved</option>
-                        <option>Completed</option>
-                    </select>
-                    <button class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                        <i class="fas fa-filter mr-1"></i>Filters
-                    </button>
-                </div>
-            </header>
-            <div class="px-6 py-6">
-                {% if obc_entries %}
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                        <thead class="bg-neutral-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-700">Request</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-700">Requesting Community</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-700">Receiving Organization</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-700">Linked PPAs</th>
-                                <th class="px-4 py-3 text-right font-medium text-neutral-700">Estimated Budget</th>
-                                <th class="px-4 py-3 text-right font-medium text-neutral-700">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-neutral-100">
-                            {% for entry in obc_entries|slice:":10" %}
-                            <tr class="hover:bg-neutral-50">
-                                <td class="px-4 py-3 align-top">
-                                    <div class="space-y-2">
-                                        <p class="font-semibold text-neutral-900 truncate max-w-xs">
-                                            {{ entry.title }}
-                                        </p>
-                                        <div class="flex flex-wrap items-center gap-2 text-xs">
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full font-medium {% if entry.request_status == 'completed' %}bg-green-100 text-green-800{% elif entry.request_status == 'approved' or entry.request_status == 'in_progress' %}bg-blue-100 text-blue-800{% elif entry.request_status == 'under_review' or entry.request_status == 'endorsed' %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-700{% endif %}">
-                                                {{ entry.get_request_status_display|default:"Submitted" }}
-                                            </span>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full font-medium {% if entry.priority == 'urgent' %}bg-red-100 text-red-800{% elif entry.priority == 'high' %}bg-orange-100 text-orange-800{% elif entry.priority == 'medium' %}bg-yellow-100 text-yellow-800{% else %}bg-emerald-100 text-emerald-700{% endif %}">
-                                                {% if entry.priority == 'urgent' %}<i class="fas fa-exclamation-triangle mr-1"></i>{% elif entry.priority == 'high' %}<i class="fas fa-flag mr-1"></i>{% endif %}
-                                                {{ entry.get_priority_display }}
-                                            </span>
-                                            {% if entry.request_source %}
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full bg-purple-50 text-purple-600 font-medium">
-                                                <i class="fas fa-share-from-square mr-1"></i>{{ entry.get_request_source_display }}
-                                            </span>
-                                            {% endif %}
-                                        </div>
-                                        <p class="text-xs text-neutral-400">Updated {{ entry.updated_at|date:"M j, Y" }}</p>
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3 align-top">
-                                    {% if entry.submitted_by_community %}
-                                    <div>
-                                        <p class="font-medium text-neutral-900 truncate">{{ entry.submitted_by_community.name }}</p>
-                                        <p class="text-xs text-neutral-500">{{ entry.submitted_by_community.municipality.name }}</p>
-                                    </div>
-                                    {% else %}
-                                    <p class="text-xs text-neutral-400">No community specified</p>
-                                    {% endif %}
-                                </td>
-                                <td class="px-4 py-3 align-top">
-                                    {% if entry.submitted_to_organization %}
-                                    <div>
-                                        <p class="font-medium text-neutral-900 text-xs truncate">{{ entry.submitted_to_organization.name }}</p>
-                                        <p class="text-xs text-neutral-500 uppercase tracking-wide">{{ entry.submitted_to_organization.organization_type|default:"" }}</p>
-                                    </div>
-                                    {% else %}
-                                    <p class="text-xs text-neutral-400">No organization specified</p>
-                                    {% endif %}
-                                </td>
-                                <td class="px-4 py-3 align-top text-xs text-neutral-600">
-                                    {% with ppas=entry.related_ppas.all %}
-                                        {% if ppas %}
-                                            <ul class="space-y-1">
-                                                {% for ppa in ppas|slice:":3" %}
-                                                    <li class="truncate">
-                                                        <a href="{% url 'monitoring:detail' ppa.pk %}" class="text-indigo-600 hover:text-indigo-700">
-                                                            {{ ppa.title }}
-                                                        </a>
-                                                    </li>
-                                                {% endfor %}
-                                                {% if ppas|length > 3 %}
-                                                    <li class="text-neutral-400">+{{ ppas|length|add:"-3" }} more</li>
-                                                {% endif %}
-                                            </ul>
-                                        {% else %}
-                                            <span class="text-neutral-400">No PPA linked</span>
-                                        {% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td class="px-4 py-3 align-top text-right text-sm">
-                                    <div class="font-semibold text-neutral-900">
-                                        {% if entry.estimated_total_amount %}
-                                            ₱{{ entry.estimated_total_amount|floatformat:2|intcomma }}
-                                        {% else %}
-                                            —
-                                        {% endif %}
-                                    </div>
-                                    {% if entry.is_disaster_related %}
-                                    <span class="inline-flex items-center justify-end gap-1 px-2 py-1 mt-2 rounded-full bg-rose-100 text-rose-600 text-xs font-medium">
-                                        <i class="fas fa-bolt"></i>
-                                        Disaster
-                                    </span>
-                                    {% endif %}
-                                </td>
-                                <td class="px-4 py-3 align-top text-right">
-                                    <a href="{% url 'monitoring:detail' entry.pk %}" class="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700">
-                                        <i class="fas fa-eye"></i>
-                                        View
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% if filtered_count > 10 %}
-                <div class="mt-4 text-center">
-                    <p class="text-sm text-neutral-500">Showing first 10 of {{ filtered_count }} filtered requests. Use Export or filters for full list.</p>
-                </div>
-                {% endif %}
-                {% else %}
-                <div class="text-center py-8">
-                    <i class="fas fa-inbox text-neutral-300 text-4xl mb-4"></i>
-                    <h3 class="text-lg font-medium text-neutral-900 mb-2">No OBC Requests Found</h3>
-                    <p class="text-neutral-500 mb-4">Start by submitting your first community request.</p>
-                    <a href="{% url 'monitoring:create_request' %}" class="btn-primary inline-flex items-center px-4 py-2 rounded-lg text-white font-medium">
-                        <i class="fas fa-plus-circle mr-2"></i>
-                        Submit First Request
-                    </a>
-                </div>
-                {% endif %}
-            </div>
+    <!-- Main Content -->
+    <section class="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,1.2fr)]">
+        <div class="space-y-6">
+            {% include "components/data_table_card.html" with
+                title="OBC Requests Overview"
+                icon_class="fas fa-list-check"
+                accent_class="bg-gradient-to-r from-sky-600 via-indigo-600 to-purple-600"
+                header_template="monitoring/partials/obc_requests_table_header.html"
+                headers=table_headers
+                rows=table_rows
+                empty_message=table_empty_message
+                footer_slot=table_footer_slot
+            %}
         </div>
-
-        <!-- Sidebar Information -->
         <aside class="space-y-6">
-            <!-- Request Status Breakdown -->
-            <div class="bg-white border border-neutral-200 rounded-xl shadow p-6">
-                <h3 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide mb-4 flex items-center">
-                    <i class="fas fa-chart-pie text-blue-500 mr-2"></i>
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <i class="fas fa-chart-pie text-blue-500"></i>
                     Request Status
                 </h3>
                 <ul class="space-y-3">
                     {% for item in request_status_breakdown %}
-                    <li class="flex items-center justify-between">
-                        <span class="text-neutral-600">{{ item.label|default:"Submitted" }}</span>
-                        <span class="text-neutral-900 font-semibold">{{ item.total }}</span>
+                    <li class="flex items-center justify-between text-sm text-gray-600">
+                        <span class="flex-1 truncate">{{ item.label|default:"Submitted" }}</span>
+                        <span class="font-semibold text-gray-900">{{ item.total }}</span>
                     </li>
                     {% empty %}
-                    <li class="text-neutral-500 text-sm">No requests submitted yet.</li>
+                    <li class="text-sm text-gray-500">No requests submitted yet.</li>
                     {% endfor %}
                 </ul>
-                {% if progress_snapshot.pending_review %}
-                <div class="mt-4 border-t border-neutral-200 pt-4">
-                    <p class="text-sm text-neutral-600">
-                        <span class="font-semibold">Pending Review:</span>
-                        <span class="text-orange-600 font-semibold">{{ progress_snapshot.pending_review }}</span>
-                    </p>
-                </div>
-                {% endif %}
             </div>
 
-            <!-- Top Receiving Organizations -->
-            <div class="bg-white border border-neutral-200 rounded-xl shadow p-6">
-                <h3 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide mb-4 flex items-center">
-                    <i class="fas fa-building text-purple-500 mr-2"></i>
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <i class="fas fa-building text-purple-500"></i>
                     Top Receiving Organizations
                 </h3>
                 <ul class="space-y-3">
                     {% for org in receiving_orgs|slice:":5" %}
-                    <li class="flex items-center justify-between">
-                        <span class="text-neutral-600 text-sm truncate">{{ org.submitted_to_organization__name }}</span>
-                        <span class="text-neutral-900 font-semibold text-sm">{{ org.count }}</span>
+                    <li class="flex items-center justify-between text-sm text-gray-600">
+                        <span class="flex-1 truncate">{{ org.submitted_to_organization__name }}</span>
+                        <span class="font-semibold text-gray-900">{{ org.count }}</span>
                     </li>
                     {% empty %}
-                    <li class="text-neutral-500 text-sm">No receiving organizations recorded yet.</li>
+                    <li class="text-sm text-gray-500">No receiving organizations recorded yet.</li>
                     {% endfor %}
                 </ul>
             </div>
 
-            <!-- Recent Updates -->
-            <div class="bg-white border border-neutral-200 rounded-xl shadow p-6">
-                <h3 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide mb-4 flex items-center">
-                    <i class="fas fa-clock text-green-500 mr-2"></i>
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <i class="fas fa-clock text-emerald-500"></i>
                     Recent Updates
                 </h3>
                 <ul class="space-y-3">
                     {% for update in recent_updates|slice:":5" %}
-                    <li class="border-l-2 border-blue-200 pl-3 py-1">
-                        <p class="text-sm font-medium text-neutral-800 truncate">{{ update.entry.title }}</p>
-                        <p class="text-xs text-neutral-500">{{ update.get_update_type_display }} • {{ update.created_at|date:"M j, H:i" }}</p>
+                    <li class="relative border-l-2 border-emerald-200 pl-3">
+                        <p class="text-sm font-semibold text-gray-900 truncate">{{ update.entry.title }}</p>
+                        <p class="text-xs text-gray-500">{{ update.get_update_type_display }} • {{ update.created_at|naturaltime }}</p>
                         {% if update.notes %}
-                        <p class="text-xs text-neutral-600 mt-1 line-clamp-2">{{ update.notes|truncatechars:50 }}</p>
+                        <p class="text-xs text-gray-600 mt-1 line-clamp-2">{{ update.notes|truncatechars:70 }}</p>
                         {% endif %}
                     </li>
                     {% empty %}
-                    <li class="text-neutral-500 text-sm">No recent updates.</li>
+                    <li class="text-sm text-gray-500">No recent updates.</li>
                     {% endfor %}
                 </ul>
             </div>
