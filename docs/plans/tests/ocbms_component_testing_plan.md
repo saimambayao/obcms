@@ -1,10 +1,22 @@
 # OBCMS Component Testing Plan
 
-## Scope
-- Align component-level testing across OBCMS modules with platform architecture (Django apps, HTMX-driven UI, service adapters).
-- Provide ready-to-implement guidelines that QA and engineering teams can execute without introducing timeline estimates.
+## Purpose
+- Define how component-level testing reinforces OBCMS reliability across Django apps, HTMX-powered UI, and supporting services.
+- Supply engineering and QA teams with executable guidance centered on priority, complexity, dependencies, and prerequisites instead of calendar-based estimates.
+- Align component testing with adjacent documentation: unit, integration, performance, and end-to-end plans in `docs/plans/tests/`.
 
-## Test Categories
+## Scope & Component Definition
+- Treat a "component" as a cohesive unit that couples presentation, business logic, and integration seams while remaining independently testable.
+- Include reusable UI fragments, DRF viewsets, data access helpers, background tasks, messaging adapters, and administrative utilities.
+- Exclude cross-module orchestration (handled in integration testing) and fully user-driven workflows (covered by e2e tests).
+
+## Readiness & Completion Criteria
+- **Priority:** CRITICAL — Components must have deterministic tests before integration or staging promotion.
+- **Complexity:** Moderate — Expect tailored fixtures, mocks, and HTMX coverage; automation is mandatory before feature sign-off.
+- **Dependencies:** Respective module factories, shared fixtures in `tests/conftest.py`, and environment toggles defined in settings.
+- **Prerequisites:** Migrations applied to `src/db.sqlite3`, feature flags documented, and linked documentation updated when scope expands.
+
+## Component Coverage Categories
 
 ### Frontend UI Components
 - **Priority:** HIGH
@@ -72,6 +84,7 @@
 - **Coverage Goals:** Token generation, policy enforcement, and audit trail visibility.
 - **Implementation Notes:**
   - Test positive and negative paths for each role (OOBC admin, provincial officer, municipal coordinator).
+  - Exercise decorator utilities such as `common.utils.moa_permissions` with `RequestFactory` requests to ensure MOA RBAC rules raise `PermissionDenied` for unauthorized organizations, PPAs, and work items.
   - Verify permission denial responses include HTMX-safe error banners where applicable.
   - Confirm expired or tampered tokens trigger secure logouts and incident logging.
 
@@ -106,7 +119,30 @@
   - Invoke commands via `call_command` inside tests; capture stdout/stderr for assertions.
   - Mock destructive operations (e.g., bulk deletes) and confirm dry-run safeguards.
 
-## Execution Notes
-- Use `pytest --ds=obc_management.settings` with granular markers (`@pytest.mark.component`) to segment component suites.
-- Maintain factories in `src/<app>/tests/factories.py` to keep fixtures DRY and reuse across categories.
-- Update this plan alongside new modules; ensure each addition lists priority, complexity, dependencies, and prerequisites before implementation begins.
+## Tooling & Environment
+- **Primary Command:** `pytest --ds=obc_management.settings -m component` (extend `pytest.ini` markers if missing).
+- **Component Harness:** Prefer pytest fixtures that render templates, execute DRF views, or exercise services without full page reloads.
+- **HTMX Simulation:** Attach `HX-Request: true` headers and verify `HX-Trigger`, `HX-Redirect`, and swap behavior; leverage `hx-swap="outerHTML swap:300ms"` conventions.
+- **Snapshot Management:** Store HTML or JSON snapshots under `tests/snapshots/component/`; review diffs alongside Tailwind class updates to avoid regressions.
+
+## Test Data & Fixture Strategy
+- Maintain factories in `src/<app>/tests/factories.py` (or `tests/factories/`) to generate minimal, component-focused data.
+- Use `pytest.mark.django_db(transaction=True)` only when the component performs complex transactional logic; keep default function-level transactions otherwise.
+- Keep HTMX state fixtures (e.g., `data-task-id` attributes, swap targets) reusable across UI component tests.
+- When stubbing external services, record the expected payload shape in `tests/fixtures/` and document assumptions inline.
+
+## CI Integration & Reporting
+- Add a CI job that runs `pytest -m component --ds=obc_management.settings` after unit tests and before integration tests.
+- Fail fast when component coverage dips: enforce mandatory assertion counts for each component category and track them in coverage reports.
+- Emit `JUnitXML` artifacts for component suites so dashboards can break down pass/fail ratios by module and priority.
+
+## Documentation Guardrails
+- Mirror this plan in automated checks under `tests/documentation/` to ensure headings, priority callouts, and dependency notes stay intact.
+- Update related plans (unit, integration, e2e, performance) whenever new component categories appear; cross-link using relative paths.
+- Treat documentation updates as part of component definition of done; no feature closes without verifying plan alignment.
+
+## Continuous Improvement Actions
+- **Priority:** HIGH — Audit existing component tests for coverage gaps in HTMX-driven templates and DRF responses; tag them with `@pytest.mark.component`.
+- **Priority:** MEDIUM — Introduce golden snapshot reviews for stat cards, quick action tiles, and executive dashboards.
+- **Priority:** MEDIUM — Extend Celery and messaging component suites with failure-mode tests to verify retry logic and audit logging consistency.
+- **Priority:** LOW — Capture CLI component outputs in structured fixtures to speed up drift detection.

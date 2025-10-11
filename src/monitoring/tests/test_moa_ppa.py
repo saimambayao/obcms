@@ -6,9 +6,16 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+
+try:
+    from django.contrib.auth import get_user_model
+    from django.core.exceptions import ValidationError
+    from django.db import IntegrityError
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for MOA PPA tests",
+        allow_module_level=True,
+    )
 
 from common.models import Barangay, Municipality, Province, Region
 from coordination.models import Organization

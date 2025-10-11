@@ -3,8 +3,15 @@
 from decimal import Decimal
 
 import pytest
-from django.contrib.auth import get_user_model
-from django.urls import reverse
+
+try:
+    from django.contrib.auth import get_user_model
+    from django.urls import reverse
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for MANA assessment management tests",
+        allow_module_level=True,
+    )
 
 from common.models import Province, Region, StaffProfile
 from mana.models import Assessment

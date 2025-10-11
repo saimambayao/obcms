@@ -3,7 +3,15 @@
 
 import os
 
-import django
+import pytest
+
+try:
+    import django
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for FAQ update script",
+        allow_module_level=True,
+    )
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "obc_management.settings")
 django.setup()

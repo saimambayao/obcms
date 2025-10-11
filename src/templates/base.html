@@ -791,13 +791,34 @@
         document.body.addEventListener('showToast', function (event) {
             const payload = event?.detail ?? event?.value;
             showToast(payload);
-            event.stopImmediatePropagation();
+            if (event) {
+                if (typeof event.preventDefault === 'function') {
+                    event.preventDefault();
+                }
+                if (typeof event.stopImmediatePropagation === 'function') {
+                    event.stopImmediatePropagation();
+                }
+                if (typeof event.stopPropagation === 'function') {
+                    event.stopPropagation();
+                }
+            }
         }, true);
 
         document.body.addEventListener('show-toast', function (event) {
             const payload = event?.detail ?? event?.value;
             showToast(payload);
-        });
+            if (event) {
+                if (typeof event.preventDefault === 'function') {
+                    event.preventDefault();
+                }
+                if (typeof event.stopImmediatePropagation === 'function') {
+                    event.stopImmediatePropagation();
+                }
+                if (typeof event.stopPropagation === 'function') {
+                    event.stopPropagation();
+                }
+            }
+        }, true);
 
         // Global HTMX error handler for better user feedback
         document.body.addEventListener('htmx:responseError', function(event) {

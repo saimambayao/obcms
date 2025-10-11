@@ -152,6 +152,33 @@
     </section>
     {% endif %}
 
+    {% if entry.category != "moa_ppa" %}
+    <section class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex flex-wrap items-center justify-between gap-4">
+            <div class="space-y-1">
+                <h2 class="text-lg font-semibold text-gray-900">Work Item Tracking</h2>
+                <p class="text-sm text-gray-500">
+                    Access execution hierarchy tools without switching modules.
+                </p>
+            </div>
+            {% if entry.enable_workitem_tracking %}
+                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold uppercase tracking-wide">
+                    <i class="fas fa-bolt"></i>
+                    Tracking Enabled
+                </span>
+            {% else %}
+                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold uppercase tracking-wide">
+                    <i class="fas fa-hourglass-half"></i>
+                    Tracking Pending
+                </span>
+            {% endif %}
+        </div>
+        <div class="p-6 space-y-6">
+            {% include "monitoring/partials/work_items_tab.html" %}
+        </div>
+    </section>
+    {% endif %}
+
     <!-- Overview & Timeline -->
     {% if entry.is_request %}
     <section class="grid gap-6 lg:grid-cols-2">

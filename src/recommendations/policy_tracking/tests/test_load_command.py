@@ -1,9 +1,16 @@
 """Tests for the load_oobc_policy_recommendations management command."""
 
 import pytest
-from django.contrib.auth import get_user_model
-from django.core.management import call_command
-from django.test import TestCase
+
+try:
+    from django.contrib.auth import get_user_model
+    from django.core.management import call_command
+    from django.test import TestCase
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for policy tracking command tests",
+        allow_module_level=True,
+    )
 
 from recommendations.policy_tracking.models import PolicyRecommendation
 

@@ -117,6 +117,11 @@
 - Reset database via management command (`./manage.py e2e_reset`) or fixture load prior to each suite run.
 - For destructive flows (deletions), operate on test-specific records to avoid cross-test contamination.
 
+## HTMX Contract Validation
+- Record expected `HX-Trigger`, `HX-Redirect`, and `HX-Refresh` headers for each interaction; assert against them in Playwright to guarantee client/server contract stability.
+- Leverage Playwright event listeners to capture `htmx:beforeSwap`, `htmx:afterSwap`, and `htmx:responseError` occurrences, surfacing mismatches between optimistic UI updates and server acknowledgements.
+- Maintain a shared catalog of HTMX target IDs and `data-task-id` attributes to keep selectors aligned with the UI Components & Standards guide and prevent regressions during refactors.
+
 ## Observability & Artifacts
 - Enable Playwright tracing (`npx playwright test --trace on`) for all CI runs; store trace zips and videos under `reports/e2e/`.
 - Capture screenshots on failure (`--reporter=line,list,json`) and publish JSON reports for downstream analytics.
@@ -135,6 +140,23 @@
 - Review failing traces regularly; update fixtures when domain models evolve.
 - Pair new features with matching E2E scenarios; ensure test plans stay updated in `docs/plans/tests/`.
 - Decommission brittle flows by migrating them to targeted integration tests when UI coverage is redundant.
+- Maintain parity between Playwright helpers and Django HTMX behaviours; update custom assertions when headers or
+  response contracts change to avoid false negatives.
+- Add smoke assertions that verify essential middleware (CSRF, session, locale) is wired correctly before longer
+  journeys execute to surface configuration regressions early.
+
+## Risk Mitigation & Quality Gates
+- **Priority:** HIGH | **Complexity:** Moderate | **Dependencies:** Stable staging data snapshots and reliable login
+  fixtures.
+- **Failure Budget:** Limit flaky test retries to two consecutive reruns; auto-open an issue when exceeded to trigger
+  investigation.
+- **Regression Containment:** Require green Playwright smoke suite before merging to `main`; block deployments when
+  smoke suite or data reset command fails.
+- **Data Integrity:** Validate that destructive actions (delete/archive) run against disposable fixtures by checking
+  data identifiers before performing cleanup. Abort scenarios if guard rails detect production-like IDs.
+- **Accessibility Checks:** Integrate axe-core scans on the top 5 user journeys (login, community directory, task
+  board, PPA dashboard, analytics home) and treat violations as blockers until resolved or triaged with mitigation
+  notes.
 
 ## Next Actions
 - **Priority:** HIGH — Scaffold Playwright project (`npm init playwright@latest`) with configuration stored under `tests/e2e/playwright.config.ts`.

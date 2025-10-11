@@ -3,7 +3,7 @@
 ## Purpose
 - Establish consistent unit testing practices tailored to OBCMS' Django-based architecture.
 - Align with recommendations from Django’s official testing overview and pytest tooling guides reviewed (Django 5.0 testing docs; pytest usage docs).
-- Provide engineering teams with actionable direction that emphasizes priority, complexity, dependencies, and prerequisites instead of timelines.
+- Provide engineering teams with actionable direction that emphasizes priority, complexity, dependencies, and prerequisites instead of calendar-based schedules.
 
 ## Testing Principles
 - Keep unit tests isolated: mock external services (email, messaging, storage) and avoid hitting the database unless the code under test is an ORM abstraction.
@@ -14,17 +14,41 @@
 ## App Coverage Expectations
 - Every Django app in `src/` must own a unit test suite that covers its domain logic before component or integration tests run.
 - **communities** (Priority: HIGH, Complexity: Moderate) — focus on directory filters, community status transitions, and form validators.
+  Dependencies: shared location fixtures and permission matrix updates.
+  Prerequisites: region and province seed data plus baseline municipality records in place.
 - **coordination** (Priority: HIGH, Complexity: Moderate) — cover task assignment services, HTMX helpers, and notification policies.
+  Dependencies: HTMX component templates and notification channel mocks.
+  Prerequisites: user role fixtures for coordinators, facilitators, and LGU reviewers.
 - **mana** (Priority: HIGH, Complexity: Moderate) — validate facilitator workflows, scoring utilities, and eligibility rules.
+  Dependencies: scoring configuration constants and attendance calculators.
+  Prerequisites: workshop factory fixtures and facilitator account seeds.
 - **policies** (Priority: HIGH, Complexity: Moderate) — assert policy creation serializers, permission checks, and audit logging hooks.
+  Dependencies: DRF serializer base classes and audit signal dispatchers.
+  Prerequisites: fixture policy categories and role-to-permission maps.
 - **documents** (Priority: HIGH, Complexity: Moderate) — test upload validators, metadata extraction services, and storage adapters with mocks.
-- **policy_tracking** (Priority: HIGH, Complexity: Moderate) — cover status aggregation queries, timeline calculators, and alert thresholds.
+  Dependencies: storage adapter interfaces and antivirus stubs.
+  Prerequisites: representative file fixtures (PDF, DOCX, image) and metadata mapping tables.
+- **policy_tracking** (Priority: HIGH, Complexity: Moderate) — cover status aggregation queries, progression calculators, and alert thresholds.
+  Dependencies: reporting QuerySets and data warehouse adapters.
+  Prerequisites: monitoring entry fixtures spanning draft, review, and completed states.
 - **ai_assistant** (Priority: MEDIUM, Complexity: Complex) — unit test intent classification utilities, prompt builders, and guardrails with stubbed AI clients.
+  Dependencies: prompt templates and tokenizer utilities.
+  Prerequisites: stubbed embedding providers or deterministic mock clients.
 - **common** (Priority: CRITICAL, Complexity: Moderate) — ensure shared utilities (auth, caching, forms) have exhaustive unit coverage.
+  Dependencies: authentication middlewares and caching layer wrappers.
+  Prerequisites: staff account fixtures, cache backend settings, and shared form partials available.
 - **monitoring** (Priority: CRITICAL, Complexity: Complex) — validate WorkItem integration services, calendar sync utilities, escalation calculators, and analytics helpers.
+  Dependencies: WorkItem factories, calendar sync adapters, and escalation policy constants.
+  Prerequisites: seeded monitoring entries and Celery task stubs.
 - **recommendations** (Priority: HIGH, Complexity: Moderate) — test recommendation scoring, categorization utilities, stakeholder assignment logic, and serializer validation.
+  Dependencies: tagging utilities and recommendation weighting matrices.
+  Prerequisites: recommendation fixture data across documents, policies, and coordination tasks.
 - **planning & analytics dashboards (common)** (Priority: HIGH, Complexity: Moderate) — cover budget feedback computations, trend analysis helpers, attendance processing, and KPI aggregators.
+  Dependencies: analytics calculators in `src/common/analytics` and HTMX dashboard fragments.
+  Prerequisites: synthetic timeseries fixtures and attendance CSV samples.
 - **data_imports** (Priority: HIGH, Complexity: Complex) — exercise parsers, mapping utilities, and validation rules using synthetic fixtures.
+  Dependencies: import schema definitions and error logging helpers.
+  Prerequisites: fixture spreadsheets for population, budget, and policy data plus mapping config JSON.
 - Add new apps with matching coverage expectations during scaffolding; update this section to reflect their responsibilities and dependencies.
 
 ## Coverage Targets
@@ -112,6 +136,11 @@
 - Ensure `pytest -k unit` (or equivalent marker) runs on every pull request in CI before integration tests.
 - Cache `.pytest_cache` and `pip` directories in CI to keep feedback fast.
 - Publish coverage reports as CI artifacts; surface deltas in merge requests.
+
+## Documentation Quality Assurance
+- Guard this plan with automated tests in `tests/documentation/test_unit_testing_plan_doc.py` so required sections and language conventions stay intact.
+- Keep assertions focused on priority, complexity, dependencies, and prerequisites to align with OBCMS delivery guidelines.
+- Extend the checks whenever new sections are introduced so reviewers immediately see missing coverage or outdated phrasing.
 
 ## Next Actions
 - **Priority:** HIGH — Audit existing tests to confirm unit coverage aligns with this plan; tag tests with `@pytest.mark.unit`.

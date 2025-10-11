@@ -12,7 +12,19 @@ Usage:
 
 import os
 import sys
-import django
+
+import pytest
+
+try:
+    import django
+except ImportError:  # pragma: no cover - handled via skip
+    django = None
+
+if django is None:  # pragma: no cover - executed only when dependency missing
+    pytest.skip(
+        "Django is required for sidebar template rendering checks",
+        allow_module_level=True,
+    )
 
 # Setup Django environment
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))

@@ -1,24 +1,26 @@
-"""
-Updated test suite for MonitoringEntry API endpoints.
-
-These tests align with the refactored MonitoringEntry schema and the
-current DRF viewset implementation exposed under `monitoring_api`.
-"""
+"""Updated test suite for MonitoringEntry API endpoints."""
 
 from decimal import Decimal
 from uuid import uuid4
 
 import pytest
-from django.contrib.auth import get_user_model
-from django.urls import reverse
-from django.utils import timezone
-from rest_framework import status
-from rest_framework.test import APIClient
+
+try:
+    from django.contrib.auth import get_user_model
+    from django.urls import reverse
+    from django.utils import timezone
+    from rest_framework import status
+    from rest_framework.test import APIClient
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django and DRF are required for monitoring API tests",
+        allow_module_level=True,
+    )
 
 from common.work_item_model import WorkItem
 from coordination.models import Organization
-from monitoring.models import MonitoringEntry
 from monitoring.api_views import MonitoringEntryViewSet
+from monitoring.models import MonitoringEntry
 
 User = get_user_model()
 

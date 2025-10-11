@@ -1,6 +1,14 @@
 """Tests for coordination module forms."""
 
-from django.test import TestCase
+import pytest
+
+try:
+    from django.test import TestCase
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for coordination form tests",
+        allow_module_level=True,
+    )
 
 from common.models import Barangay, Municipality, Province, Region
 from coordination.forms import OrganizationForm

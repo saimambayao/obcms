@@ -1,16 +1,21 @@
-"""
-Test command to verify coordinate auto-generation functionality.
+"""Test command to verify coordinate auto-generation functionality."""
 
-This command tests the coordinate system across different administrative levels
-to ensure accurate coordinate generation and map pinning.
-"""
-
-from django.conf import settings
-from django.core.management.base import BaseCommand
-from django.test.client import Client
-from django.contrib.auth import get_user_model
-from common.models import Region, Province, Municipality, Barangay
 import json
+
+import pytest
+
+try:
+    from django.conf import settings
+    from django.contrib.auth import get_user_model
+    from django.core.management.base import BaseCommand
+    from django.test.client import Client
+
+    from common.models import Barangay, Municipality, Province, Region
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for coordinate management command tests",
+        allow_module_level=True,
+    )
 
 
 User = get_user_model()

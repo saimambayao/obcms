@@ -1,137 +1,145 @@
 # OBCMS Integration Testing Plan
 
 ## Purpose
-- Verify end-to-end behavior of OBCMS features across Django views, serializers, models, Celery tasks, and HTMX interactions without requiring full browser automation.
-- Build on best practices from Django’s testing tools (official documentation on the Django test client) and pytest’s integration guidance (“Good Integration Practices” in pytest docs).
-- Provide teams with actionable guidance—using priorities, complexity, dependencies, and prerequisites—so integration suites stay reliable and maintainable.
+- Validate cross-layer behaviour inside OBCMS without the overhead of full browser automation, covering Django views, DRF endpoints, Celery tasks, HTMX partials, and persistence touchpoints.
+- Apply practices recommended by the Django Test Client, pytest-django, and pytest “Good Integration Practices” so suites stay deterministic and debuggable.
+- Provide engineering and QA teams with actionable priorities, complexities, dependencies, and prerequisites—no timelines—so integration coverage evolves methodically alongside features.
 
-## Guiding Principles
-- Treat integration tests as feature slices: exercise real database interactions, templates, and signals while stubbing only external systems (email gateways, third-party APIs).
-- Reuse pytest fixtures for authenticated users, seeded data, and HTMX headers to keep tests succinct.
-- Tag integration tests with `@pytest.mark.integration` to separate them from fast unit suites.
-- Maintain deterministic data: reset DB between tests (`pytest-django` transactional fixtures) and seed via Factory Boy.
+## Scope & Objectives
+- Exercise business-critical workflows end-to-end within the Django stack (request → model → signal → serializer/template).
+- Guarantee instant UI expectations (HTMX `hx-swap` behaviour, toast triggers, stat card refreshes) align with `docs/ui/OBCMS_UI_COMPONENTS_STANDARDS.md`.
+- Confirm asynchronous boundaries (Celery, notifications, analytics jobs) produce observable side effects and user feedback.
+- Keep data deterministic by seeding through factories and transactional fixtures, supporting nightly runs against staging snapshots.
 
-## Test Categories
+## Tooling & Infrastructure
+- **Priority:** CRITICAL | **Complexity:** Moderate
+- **Dependencies:** `pytest`, `pytest-django`, Factory Boy, DRF test clients, shared fixtures (`tests/conftest.py`, `src/<app>/tests/conftest.py`), and `pytest.ini` markers.
+- **Prerequisites:** Marker registration, environment bootstrapped via `./scripts/bootstrap_venv.sh`, dependencies installed from `requirements/development.txt`, and migrations applied to the preserved `src/db.sqlite3`.
+- **Practices:**
+  - Tag every multi-component case with `@pytest.mark.integration`.
+  - Load HTMX headers using the `hx_client` fixture so responses can assert `HX-Trigger` payloads.
+  - Force Celery jobs to execute synchronously during tests through the `celery_eager` fixture.
+  - Capture logs with `caplog` / `capfd` to verify asynchronous telemetry.
+  - Example `pytest.ini` stanza:
+    ```ini
+    [pytest]
+    markers =
+        integration: integration tests spanning multiple components
+    ```
+
+## Environment Configuration
+- **Priority:** CRITICAL | **Complexity:** Moderate
+- **Dependencies:** Django settings module (`obc_management.settings`), Celery configuration, Redis broker (patched when not present), email/SMS adapters (mocked), and cached dashboards.
+- **Prerequisites:**
+  - `.env` populated from `.env.example` with optional Gemini / SMS credentials when enabling related tests.
+  - Deterministic seed data provided via Factory Boy.
+  - Database state reset per test using pytest-django transactional fixtures (`db`, `transactional_db`).
+  - External APIs mocked at the service layer; keep connectors behind injectable helpers for easy patching.
+
+## Coverage Pillars
 
 ### API Endpoint Flows
-- **Priority:** CRITICAL
-- **Complexity:** Moderate
-- **Dependencies:** DRF viewsets, serializers, permissions, audit logging.
-- **Prerequisites:** Database fixtures, APIClient fixture, role-based auth tokens.
+- **Priority:** CRITICAL | **Complexity:** Moderate
+- **Dependencies:** DRF viewsets, serializers, permissions, throttling, audit logging.
+- **Prerequisites:** Authenticated `APIClient` instances, role-aware factories, permission fixtures.
 - **Focus Areas:**
-  - Full CRUD journeys (create -> read -> update -> delete) for high-traffic modules.
-  - Permission matrix validation using real middleware.
-  - Assertion of `HX-Trigger` headers, pagination, filtering, and serialized payload structure.
-  - Include monitoring WorkItem endpoints, recommendations APIs, planning/budget scenarios, and executive metric feeds alongside core modules.
+  - CRUD journeys for high-traffic apps (monitoring, coordination, recommendations, policy tracking, communities).
+  - Permission matrices with middleware engaged (RBAC, MOA scoping, HTMX-aware guards).
+  - Response contract validation (pagination, filtering, serializer payloads, optional `HX-Trigger` headers).
+  - Regression coverage for WorkItem APIs, planning/budget scenarios, and executive metric feeds.
 
 ### HTMX View Interactions
-- **Priority:** HIGH
-- **Complexity:** Moderate
-- **Dependencies:** Template partials, HTMX endpoints, context processors.
-- **Prerequisites:** Django test client with `HX-Request` header fixture; sample template data.
+- **Priority:** HIGH | **Complexity:** Moderate
+- **Dependencies:** Template partials, HTMX endpoints, context processors, instant UI helpers.
+- **Prerequisites:** `hx_client` fixture, deterministic template data, reusable form/table components from `src/templates/components/`.
 - **Focus Areas:**
-  - Rendering partials with expected HTML structure and CSS classes (per OBCMS UI standards).
-  - Confirming swap behaviors (`hx-swap`), redirect flows, and toast triggers.
-  - Validating session state changes (notifications, flash messages).
+  - Rendering partials with canonical DOM structure (rounded-xl cards, emerald focus states, chevron icons).
+  - Verifying `HX-Trigger` payloads that drive toast messaging, counter refreshes, and optimistic updates.
+  - Confirming `hx-swap` directives, redirect flows, and session state (messages framework) updates.
+  - Ensuring UI contracts remain WCAG 2.1 AA compliant across mobile/desktop breakpoints.
 
 ### Multi-Step Workflows
-- **Priority:** HIGH
-- **Complexity:** Complex
-- **Dependencies:** Workflow services, Celery task triggers, database transactions.
-- **Prerequisites:** Celery task inspection mocks (e.g., `celery_app.task_always_eager = True`), seeded data to traverse the workflow.
+- **Priority:** HIGH | **Complexity:** Complex
+- **Dependencies:** Workflow services, Celery task triggers, signal listeners, transactional boundaries.
+- **Prerequisites:** `celery_eager` fixture, factories for intermediate records, mocks for third-party connectors.
 - **Focus Areas:**
-  - Verify that creating/updating records triggers downstream tasks (emails, analytics) with correct payloads.
-  - Ensure database state transitions are atomic across steps.
-  - Validate HTMX updates or API responses returned after asynchronous triggers.
-  - Cover monitoring WorkItem escalations, automated recommendation routing, and budget approval pipelines managed through Celery jobs.
+  - Chain-of-events verification (record creation → Celery execution → downstream models/messages).
+  - Atomic operations and idempotent retries when workflows partially succeed.
+  - Monitoring escalations, automated recommendation routing, budget approvals, AI chat follow-ups.
 
 ### Monitoring & Calendar Synchronization
-- **Priority:** HIGH
-- **Complexity:** Complex
-- **Dependencies:** Monitoring services, WorkItem sync utilities, calendar serialization helpers.
-- **Prerequisites:** Seeded WorkItems linked to PPAs, calendar resources, staff roles.
+- **Priority:** HIGH | **Complexity:** Complex
+- **Dependencies:** Monitoring services, WorkItem builders, calendar serializers, WorkItem tree regeneration logic.
+- **Prerequisites:** `monitoring_entry_factory`, `execution_project_builder`, seeded WorkItems, patched calendar exports.
 - **Focus Areas:**
-  - Validate that WorkItem changes propagate to monitoring dashboards and calendar feeds.
-  - Assert that status/progress sync methods update linked PPAs and trigger alerts.
-  - Ensure calendar filters, share settings, and leave requests integrate correctly with monitoring data.
+  - Propagating WorkItem progress/status into MonitoringEntry stat cards and dashboards.
+  - Confirming calendar feeds reflect WorkItem updates (filters, share settings, leave requests).
+  - Validating HTMX partials (`work_items_summary`, `work_items_tab`) including toast triggers when regeneration fails.
 
 ### Cross-App Data Sync
-- **Priority:** MEDIUM
-- **Complexity:** Complex
-- **Dependencies:** Signals, cross-app services (`common`, `data_imports`).
-- **Prerequisites:** Factories for linked models; ability to mock external integrations (e.g., data imports from CSV/JSON).
+- **Priority:** MEDIUM | **Complexity:** Complex
+- **Dependencies:** Django signals, shared services (`src/common`, `src/data_imports`), audit logging, idempotency safeguards.
+- **Prerequisites:** Linked model factories, patchable import/export pipelines, audit-log capture helpers.
 - **Focus Areas:**
-  - Ensure changes in one app (e.g., communities) propagate correctly to dependent apps (coordination tasks, policy tracking).
-  - Test idempotent retries and duplicate prevention.
-  - Capture audit log entries to confirm traceability.
-  - Include flows linking WorkItems to PPAs in Project Central, recommendations to policy tracking, and budget adjustments feeding analytics dashboards.
+  - Communities → coordination/policy tracking propagation.
+  - WorkItems ↔ Project Central (execution project mirroring, progress syncing).
+  - Duplicate prevention and retry logic with traceable audit entries.
 
 ### Reporting & Aggregation Endpoints
-- **Priority:** MEDIUM
-- **Complexity:** Moderate
-- **Dependencies:** ORM aggregation queries, cached dashboards, export views.
-- **Prerequisites:** Seeded metrics data, cache backend configured for tests.
+- **Priority:** MEDIUM | **Complexity:** Moderate
+- **Dependencies:** ORM aggregations, cached dashboards, export responders (CSV/XLS), query optimizers.
+- **Prerequisites:** Seeded metrics datasets, configured cache backend, `assertNumQueries` helpers.
 - **Focus Areas:**
-  - Validate aggregated counts, charts, and exported files through HTTP responses.
-  - Confirm cache invalidation after data mutations.
-  - Assert query efficiency with `assertNumQueries` where applicable.
-  - Cover executive dashboards (trend analysis, budget feedback, staff performance) and monitoring analytics endpoints.
+  - Validating aggregate counts, charts, and export payloads.
+  - Ensuring cache invalidation occurs after data mutations.
+  - Confirming executive dashboards (trend analysis, staff performance, budget feedback) stay in sync with source models.
 
 ### Recommendations Lifecycle
-- **Priority:** HIGH
-- **Complexity:** Moderate
-- **Dependencies:** Recommendations serializers, approval services, notification hooks.
-- **Prerequisites:** Stakeholder fixtures, recommendation type catalogs, mocked notification channels.
+- **Priority:** HIGH | **Complexity:** Moderate
+- **Dependencies:** Recommendation serializers, approval services, notification hooks, policy tracking connectors.
+- **Prerequisites:** Stakeholder fixtures, recommendation catalogs, mocked messaging channels.
 - **Focus Areas:**
-  - Create, edit, categorize, and approve recommendations while checking stakeholder assignments.
-  - Verify that approvals trigger policy tracking updates and appear in management dashboards.
-  - Ensure audit logs capture each lifecycle event.
+  - Draft → categorize → approve flows with stakeholder assignment assertions.
+  - Downstream updates in policy tracking dashboards and analytics.
+  - Audit log coverage for every lifecycle event.
 
 ### Planning, Budgeting, and Attendance Flows
-- **Priority:** MEDIUM
-- **Complexity:** Complex
-- **Dependencies:** Planning/budget services (`common`), attendance QR utilities, staff training modules.
-- **Prerequisites:** Scenario templates, budget lines, attendance rosters, staff profiles.
+- **Priority:** MEDIUM | **Complexity:** Complex
+- **Dependencies:** Budget services (`src/common`), QR attendance utilities, staff training modules.
+- **Prerequisites:** Scenario templates, budget lines, attendance rosters, staff profiles, patched QR scanners.
 - **Focus Areas:**
-  - Exercise budget scenario creation, adjustment, and approval flows with downstream analytics updates.
-  - Test attendance check-in/out integration with staff performance metrics.
-  - Confirm training assignments update staff profiles and associated dashboards.
+  - Scenario creation, adjustment, approval, and analytic updates.
+  - Attendance check-in/out integration with staff performance metrics.
+  - Training assignment syncing to profiles and dashboards.
 
-## Fixtures & Utilities
-- Shared fixtures live in `tests/conftest.py` or app-level `tests/conftest.py`:
-  - `client` / `api_client`: Authenticated users with role-specific logins.
-  - `hx_client`: Wrapper injecting `HX-Request` headers.
-  - `celery_eager`: Context manager forcing synchronous task execution (`CELERY_TASK_ALWAYS_EAGER=True`).
-  - `mock_external_services`: Pytest fixture to patch SMS/email/Messaging adapters.
-- Use Factory Boy for deterministic data creation; store heavy sample payloads under `tests/fixtures/`.
+## Fixtures & Data Utilities
+- Shared fixtures:
+  - `client` / `api_client`: role-aware authenticated clients.
+  - `hx_client`: Django client with `HX-Request` header for HTMX assertions.
+  - `celery_eager`: context manager that sets `CELERY_TASK_ALWAYS_EAGER=True` and `CELERY_TASK_EAGER_PROPAGATES=True`.
+  - `mock_external_services`: patches email/SMS/broadcast adapters.
+  - Monitoring helpers (`monitoring_entry_factory`, `execution_project_builder`, `monitoring/tests/hx_client`) reused across API and view tests.
+- Prefer Factory Boy for deterministic objects; keep heavy payloads under `tests/fixtures/`.
+- Assert HTML with DOM-id checks or lightweight parsers (e.g., `BeautifulSoup` when available) to avoid brittle whitespace coupling.
 
-## Tooling & Configuration
-- Run with `pytest --ds=obc_management.settings -m integration` to execute only integration suites.
-- Leverage Django’s `Client` and REST framework `APIClient` per docs to simulate browser/API interactions.
-- Capture HTTP responses using pytest’s `caplog` and `capfd` to assert logs or console output.
-- Configure `pytest.ini` markers:
-  ```ini
-  [pytest]
-  markers =
-      integration: integration tests spanning multiple components
-  ```
+## Execution Strategy
+- Primary command: `pytest --ds=obc_management.settings -m integration`.
+- Optional subsets: `pytest -m "integration and not slow"` for PR gating; run the full matrix nightly or before release branches.
+- Provide shell wrappers (e.g., `scripts/test_integration.sh`) that activate the virtualenv and pass through arguments.
+- Limit flaky test retries to two attempts; auto-create a ticket when limits are exceeded.
 
-## Data Management
-- Prefer transactional test cases; rely on `pytest-django`’s `db` fixture to ensure rollbacks.
-- For long-running workflows, use `@pytest.mark.django_db(transaction=True)` to allow multi-threading.
-- Snapshot baseline data states for high-risk flows (e.g., policy tracking) to detect regressions quickly.
-
-## CI Integration
-- Add a dedicated CI job `pytest -m integration` triggered on pull requests touching backend code.
-- Run integration suite nightly against staging database snapshots to detect data-related regressions early.
-- Publish HTML test reports (pytest `--html` plugin) and database query stats for review.
+## Reporting & Observability
+- Export HTML/JUnit artifacts (`pytest --html=reports/integration.html --self-contained-html`) for CI review.
+- Capture query counts via `pytest-django` `assertNumQueries` contexts, logging spikes for monitoring dashboards.
+- Assert structured log output (`HX-Trigger` payloads, Celery event breadcrumbs) using `caplog`.
 
 ## Maintenance
-- When introducing a new feature, add integration coverage once unit tests pass; keep tests focused on user-observable outcomes.
-- Review integration tests quarterly to retire redundant cases or refocus on high-risk areas.
-- Document known limitations or required mocks in `tests/README.md` for future contributors.
+- Pair new feature work with integration coverage once unit tests stabilise; focus on user-visible outcomes.
+- Review suites quarterly to retire redundant cases, expand to new modules, and refresh fixtures when domain models evolve.
+- Document skips and external dependencies in `tests/README.md` alongside remediation plans.
 
 ## Next Actions
-- **Priority:** HIGH — Tag existing integration-style tests with `@pytest.mark.integration` and align fixtures with this plan.
-- **Priority:** HIGH — Establish `hx_client` and `celery_eager` fixtures to standardize HTMX and async verification.
-- **Priority:** MEDIUM — Create CI pipeline entry for integration suite and publish resulting artifacts.
+- **Priority:** HIGH — Tag remaining cross-component tests with `@pytest.mark.integration` and align fixtures with this plan.
+- **Priority:** HIGH — Expand monitoring HTMX tests to cover summary/tab partials (verifying `HX-Trigger` contracts and stat-card data).
+- **Priority:** MEDIUM — Add a CI workflow stage that runs `pytest -m integration` and publishes HTML + JUnit reports.
+- **Priority:** MEDIUM — Introduce smoke subsets (authentication + monitoring + coordination) for PR gating while preserving full nightly coverage.

@@ -1,8 +1,16 @@
 import os
 import re
 import time
+
 import pytest
-from playwright.sync_api import Page, expect
+
+try:
+    from playwright.sync_api import Page, expect
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Playwright is required for calendar E2E tests",
+        allow_module_level=True,
+    )
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("RUN_PLAYWRIGHT_E2E") != "1",

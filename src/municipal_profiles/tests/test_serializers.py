@@ -2,7 +2,14 @@ from types import SimpleNamespace
 from unittest import mock
 
 import pytest
-from django.contrib.auth import get_user_model
+
+try:
+    from django.contrib.auth import get_user_model
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for municipal profile serializer tests",
+        allow_module_level=True,
+    )
 
 from common.models import Municipality, Province, Region
 from municipal_profiles.models import MunicipalOBCProfile

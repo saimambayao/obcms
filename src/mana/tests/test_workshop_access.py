@@ -1,9 +1,17 @@
 """Comprehensive tests for workshop access control and sequential progression."""
 
-import pytest
 from datetime import date, time
-from django.contrib.auth import get_user_model
-from django.utils import timezone
+
+import pytest
+
+try:
+    from django.contrib.auth import get_user_model
+    from django.utils import timezone
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for MANA workshop access tests",
+        allow_module_level=True,
+    )
 
 from common.models import Province, Region
 from mana.models import (

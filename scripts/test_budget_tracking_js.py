@@ -13,13 +13,25 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+
+try:
+    import django
+except ImportError:  # pragma: no cover - handled via skip
+    django = None
+
+if django is None:  # pragma: no cover - executed only when dependency missing
+    pytest.skip(
+        "Django is required for budget tracking template checks",
+        allow_module_level=True,
+    )
+
 # Add src directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 # Set Django settings
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'obc_management.settings.development')
 
-import django
 django.setup()
 
 from django.template.loader import render_to_string

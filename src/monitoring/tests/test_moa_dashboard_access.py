@@ -1,9 +1,16 @@
 """Access control tests for the MOA PPAs dashboard."""
 
 import pytest
-from django.contrib.auth import get_user_model
-from django.test import TestCase
-from django.urls import reverse
+
+try:
+    from django.contrib.auth import get_user_model
+    from django.test import TestCase
+    from django.urls import reverse
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for MOA dashboard access tests",
+        allow_module_level=True,
+    )
 
 from coordination.models import Organization
 from monitoring.models import MonitoringEntry

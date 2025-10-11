@@ -1,69 +1,30 @@
-"""Unit tests for MonitoringEntry ↔ WorkItem helpers."""
+"""Integration tests for MonitoringEntry ↔ WorkItem helpers."""
 
+import json
 from decimal import Decimal
 
 import pytest
-from django.contrib.auth import get_user_model
-from django.urls import reverse
+
+try:
+    from django.core.exceptions import ValidationError
+    from django.urls import reverse
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for monitoring WorkItem integration tests",
+        allow_module_level=True,
+    )
 
 from common.work_item_model import WorkItem
-from coordination.models import Organization
-from monitoring.models import MonitoringEntry
 
-User = get_user_model()
-
-pytestmark = pytest.mark.unit
-
-
-@pytest.fixture
-def staff_user(db):
-    return User.objects.create_user(
-        username="integration_staff",
-        password="testpass123",
-        user_type="oobc_staff",
-        is_staff=True,
-        is_approved=True,
-    )
-
-
-@pytest.fixture
-def organization(staff_user):
-    return Organization.objects.create(
-        name="Integration Org",
-        acronym="INT",
-        organization_type="bmoa",
-        created_by=staff_user,
-    )
-
-
-def build_execution_project(ppa, *, created_by, completed=1, total=3):
-    project = ppa.create_execution_project(created_by=created_by)
-    ppa.execution_project = project
-    ppa.enable_workitem_tracking = True
-    ppa.save(update_fields=["execution_project", "enable_workitem_tracking", "updated_at"])
-
-    for idx in range(total):
-        WorkItem.objects.create(
-            work_type=WorkItem.WORK_TYPE_TASK,
-            title=f"Task {idx + 1}",
-            parent=project,
-            related_ppa=ppa,
-            status=WorkItem.STATUS_COMPLETED if idx < completed else WorkItem.STATUS_IN_PROGRESS,
-        )
-    return project
+pytestmark = pytest.mark.integration
 
 
 @pytest.mark.django_db
-def test_create_execution_project_populates_metadata(staff_user, organization):
-    ppa = MonitoringEntry.objects.create(
+def test_create_execution_project_populates_metadata(staff_user, monitoring_entry_factory):
+    ppa = monitoring_entry_factory(
         title="Execution Pipeline",
-        category="moa_ppa",
-        implementing_moa=organization,
         status="planning",
-        progress=0,
         budget_allocation=Decimal("500000.00"),
-        created_by=staff_user,
-        updated_by=staff_user,
     )
 
     project = ppa.create_execution_project(created_by=staff_user)
@@ -75,18 +36,15 @@ def test_create_execution_project_populates_metadata(staff_user, organization):
 
 
 @pytest.mark.django_db
-def test_sync_progress_from_workitem_updates_monitoring_entry(staff_user, organization):
-    ppa = MonitoringEntry.objects.create(
+def test_sync_progress_from_workitem_updates_monitoring_entry(
+    staff_user, monitoring_entry_factory, execution_project_builder
+):
+    ppa = monitoring_entry_factory(
         title="Progress Sync PPA",
-        category="moa_ppa",
-        implementing_moa=organization,
         status="ongoing",
-        progress=0,
-        created_by=staff_user,
-        updated_by=staff_user,
     )
 
-    build_execution_project(ppa, created_by=staff_user, completed=2, total=4)
+    execution_project_builder(ppa, created_by=staff_user, completed=2, total=4)
 
     new_progress = ppa.sync_progress_from_workitem()
     assert new_progress == 50
@@ -96,19 +54,18 @@ def test_sync_progress_from_workitem_updates_monitoring_entry(staff_user, organi
 
 
 @pytest.mark.django_db
-def test_get_budget_allocation_tree_returns_structure(staff_user, organization):
-    ppa = MonitoringEntry.objects.create(
+def test_get_budget_allocation_tree_returns_structure(
+    staff_user, monitoring_entry_factory, execution_project_builder
+):
+    ppa = monitoring_entry_factory(
         title="Budget Tree PPA",
-        category="moa_ppa",
-        implementing_moa=organization,
         status="planning",
-        progress=0,
         budget_allocation=Decimal("900000.00"),
-        created_by=staff_user,
-        updated_by=staff_user,
     )
 
-    project = build_execution_project(ppa, created_by=staff_user, completed=0, total=2)
+    project = execution_project_builder(
+        ppa, created_by=staff_user, completed=0, total=2
+    )
     for child in project.get_children():
         child.allocated_budget = Decimal("450000.00")
         child.save(update_fields=["allocated_budget", "updated_at"])
@@ -121,13 +78,12 @@ def test_get_budget_allocation_tree_returns_structure(staff_user, organization):
 
 
 @pytest.mark.django_db
-def test_monitoring_detail_renders_without_execution_project(client, staff_user):
-    ppa = MonitoringEntry.objects.create(
+def test_monitoring_detail_renders_without_execution_project(
+    client, staff_user, monitoring_entry_factory
+):
+    ppa = monitoring_entry_factory(
         title="Tracking Without Project",
-        category="moa_ppa",
         enable_workitem_tracking=True,
-        created_by=staff_user,
-        updated_by=staff_user,
     )
 
     client.force_login(staff_user)
@@ -137,3 +93,120 @@ def test_monitoring_detail_renders_without_execution_project(client, staff_user)
     content = response.content
     assert b"cursor-not-allowed" in content
     assert b'aria-disabled="true"' in content
+
+
+@pytest.mark.django_db
+def test_create_execution_project_requires_implementing_moa(
+    staff_user, monitoring_entry_factory
+):
+    ppa = monitoring_entry_factory(
+        title="MOA Validation",
+        category="moa_ppa",
+        implementing_moa=None,
+    )
+
+    with pytest.raises(ValidationError):
+        ppa.create_execution_project(created_by=staff_user)
+
+
+@pytest.mark.django_db
+def test_sync_status_from_workitem_updates_monitoring_entry(
+    staff_user, monitoring_entry_factory, execution_project_builder
+):
+    ppa = monitoring_entry_factory(status="planning")
+
+    project = execution_project_builder(
+        ppa,
+        created_by=staff_user,
+        statuses=[WorkItem.STATUS_IN_PROGRESS],
+        total=1,
+    )
+    project.status = WorkItem.STATUS_COMPLETED
+    project.save(update_fields=["status", "updated_at"])
+
+    updated_status = ppa.sync_status_from_workitem()
+
+    assert updated_status == "completed"
+    ppa.refresh_from_db()
+    assert ppa.status == "completed"
+
+
+@pytest.mark.django_db
+def test_work_items_summary_partial_returns_stats_for_execution_project(
+    hx_client,
+    staff_user,
+    monitoring_entry_factory,
+    execution_project_builder,
+):
+    ppa = monitoring_entry_factory(
+        enable_workitem_tracking=True,
+        budget_allocation=Decimal("200000.00"),
+    )
+
+    project = execution_project_builder(
+        ppa,
+        created_by=staff_user,
+        completed=1,
+        total=2,
+    )
+    project.progress = 60
+    project.allocated_budget = Decimal("0.00")
+    project.save(update_fields=["progress", "allocated_budget", "updated_at"])
+
+    child_items = list(project.get_children())
+    for index, child in enumerate(child_items):
+        child.progress = 40 + (index * 20)
+        child.allocated_budget = Decimal("100000.00")
+        child.save(update_fields=["progress", "allocated_budget", "updated_at"])
+
+    progress_values = [project.progress] + [child.progress for child in child_items]
+    expected_average = int(round(sum(progress_values) / len(progress_values)))
+
+    response = hx_client.get(reverse("monitoring:work_items_summary", args=[ppa.id]))
+
+    assert response.status_code == 200
+    stats = response.context["workitem_stats"]
+    budget_summary = response.context["budget_summary"]
+
+    assert stats["total_work_items"] == 3  # project + 2 child tasks
+    assert stats["avg_progress"] == expected_average
+    assert stats["total_budget_allocated"] == Decimal("200000.00")
+    assert stats["unallocated_budget"] == Decimal("0.00")
+    assert budget_summary["remaining"] == Decimal("0.00")
+    assert "HX-Trigger" not in response.headers
+
+
+@pytest.mark.django_db
+def test_work_items_summary_partial_sets_toast_when_regeneration_fails(
+    hx_client,
+    monitoring_entry_factory,
+    monkeypatch,
+):
+    ppa = monitoring_entry_factory(
+        enable_workitem_tracking=True,
+        implementing_moa=None,
+    )
+
+    WorkItem.objects.create(
+        work_type=WorkItem.WORK_TYPE_TASK,
+        title="Orphan integration item",
+        related_ppa=ppa,
+    )
+
+    def failing_regeneration(self, *, created_by=None, updated_by=None):
+        raise ValidationError("Execution project requires implementing MOA.")
+
+    monkeypatch.setattr(
+        ppa.__class__,
+        "ensure_execution_project",
+        failing_regeneration,
+    )
+
+    response = hx_client.get(reverse("monitoring:work_items_summary", args=[ppa.id]))
+
+    assert response.status_code == 204
+    trigger_header = response.headers.get("HX-Trigger")
+    assert trigger_header is not None
+
+    payload = json.loads(trigger_header)
+    assert payload["show-toast"] == "Execution project requires implementing MOA."

@@ -4,9 +4,16 @@ from decimal import Decimal
 from uuid import UUID, uuid4
 
 import pytest
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
-from django.db.models import Sum
+
+try:
+    from django.contrib.auth import get_user_model
+    from django.core.exceptions import ValidationError
+    from django.db.models import Sum
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for monitoring budget distribution tests",
+        allow_module_level=True,
+    )
 
 from common.work_item_model import WorkItem
 from coordination.models import Organization

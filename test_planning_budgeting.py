@@ -6,8 +6,16 @@ Tests all 22 P&B features after architectural reorganization
 
 import os
 import sys
-import django
+
 import pytest
+
+try:
+    import django
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for planning & budgeting regression suite",
+        allow_module_level=True,
+    )
 
 # Setup Django environment
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))

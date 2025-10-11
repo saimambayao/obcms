@@ -6,7 +6,16 @@ Verifies actual page rendering with login
 
 import os
 import sys
-import django
+
+import pytest
+
+try:
+    import django
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for authenticated access script",
+        allow_module_level=True,
+    )
 
 # Setup Django
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))

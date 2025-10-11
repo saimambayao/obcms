@@ -16,8 +16,16 @@ Usage:
 
 import os
 import sys
-import django
+
 import pytest
+
+try:
+    import django
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for work item isolation checks",
+        allow_module_level=True,
+    )
 
 # Setup Django environment
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

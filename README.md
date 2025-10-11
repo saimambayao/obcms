@@ -2,219 +2,202 @@
 
 **Other Bangsamoro Communities Management System**
 
-A comprehensive web-based application designed to support the Office for Other Bangsamoro Communities (OOBC) in serving Other Bangsamoro Communities (OBCs) residing outside the Bangsamoro Autonomous Region in Muslim Mindanao (BARMM).
+A comprehensive web-based platform that supports the Office for Other Bangsamoro Communities (OOBC) in serving Other Bangsamoro Communities (OBCs) outside the Bangsamoro Autonomous Region in Muslim Mindanao (BARMM). OBCMS unifies program management, community engagement, evidence tracking, and AI-assisted insights in one cohesive ecosystem.
 
 ## Recent Updates
 
-**WorkItem Unified Model (October 2025):**
-The OBCMS now uses a unified WorkItem model for all work management (projects, activities, tasks). Legacy models (StaffTask, Event, ProjectWorkflow) have been deprecated and removed.
-
-- **Migration Guide:** [WORKITEM_MIGRATION_COMPLETE.md](WORKITEM_MIGRATION_COMPLETE.md)
-- **Documentation:** [docs/refactor/](docs/refactor/)
-- **Feature Flags:** See `.env.example` for configuration
-
-All new development should use WorkItem. See [Work Item Examples](docs/refactor/WORK_ITEM_IMPLEMENTATION_EXAMPLES.md) if available.
+- **Unified WorkItem Model | PRIORITY: CRITICAL | Complexity: Complex** - All work tracking now runs on the consolidated `WorkItem` hierarchy. Legacy `StaffTask`, `Event`, and `ProjectWorkflow` models have been fully retired. Migration details live in [src/STAFFTASK_TO_WORKITEM_MIGRATION_COMPLETE.md](src/STAFFTASK_TO_WORKITEM_MIGRATION_COMPLETE.md) with implementation examples in [docs/refactor/WORK_ITEM_IMPLEMENTATION_EXAMPLES.md](docs/refactor/WORK_ITEM_IMPLEMENTATION_EXAMPLES.md).
+- **AI Query Intelligence Expansion | PRIORITY: HIGH | Complexity: Complex** - The AI Assistant now ships with comprehensive geographic, temporal, and cross-domain query packs powering 300+ natural language insights. See [WORKSTREAM6_NEW_QUERY_CATEGORIES_COMPLETE.md](WORKSTREAM6_NEW_QUERY_CATEGORIES_COMPLETE.md), [WORKSTREAM_4_GEOGRAPHIC_TEMPLATES_COMPLETE.md](WORKSTREAM_4_GEOGRAPHIC_TEMPLATES_COMPLETE.md), and [WORKSTREAM_3_QUICK_WINS_COMPLETE.md](WORKSTREAM_3_QUICK_WINS_COMPLETE.md).
+- **Instant UI & HTMX Rollout | PRIORITY: HIGH | Complexity: Moderate** - Live updates, optimistic interactions, and animation standards are active across kanban boards, tables, and modals. Guidance: [docs/improvements/instant_ui_improvements_plan.md](docs/improvements/instant_ui_improvements_plan.md).
+- **UI Component System Stabilized | PRIORITY: HIGH | Complexity: Moderate** - Forms, stat cards, and data tables follow the 3D Milk White design language with reusable templates. Reference [docs/ui/OBCMS_UI_COMPONENTS_STANDARDS.md](docs/ui/OBCMS_UI_COMPONENTS_STANDARDS.md) and associated component guides.
+- **PostgreSQL + S3 Production Path | PRIORITY: HIGH | Complexity: Moderate** - Production deployments now include hardened PostgreSQL migration playbooks, AI Ops dashboards, and S3 storage pathways. Start with [docs/deployment/POSTGRESQL_MIGRATION_REVIEW.md](docs/deployment/POSTGRESQL_MIGRATION_REVIEW.md) and [docs/deployment/AI_DEPLOYMENT_GUIDE.md](docs/deployment/AI_DEPLOYMENT_GUIDE.md).
 
 ## Project Overview
 
-This system digitalizes the OOBC's core functions including:
-- Gathering information and assessing needs of OBCs
-- Recommending policies and systematic programs
-- Coordinating with stakeholders (BMOAs, LGUs, NGAs)
-- Supporting MANA (Mapping and Needs Assessment) activities
-- Facilitating evidence-based policy recommendations
+OBCMS digitalizes OOBC's core mandates:
+- Gathering comprehensive intelligence on OBC communities
+- Assessing needs and translating them into programs, policies, and services
+- Coordinating interventions with partner agencies and stakeholders
+- Monitoring implementation progress and outcomes
+- Delivering instant, AI-assisted decision support for staff and leadership
+
+## Key Capabilities
+
+### Work Management & Delivery
+- Unified `WorkItem` hierarchy with task, activity, project, and initiative tracking
+- Planning & Budgeting dashboards in `project_central` for program pipelines and prioritization
+- Audit trails, document attachments, and progress analytics integrated with WorkItems
+
+### Communities & MANA Intelligence
+- Comprehensive community profiles, demographics, and geo-tagged information
+- Needs assessments, prioritization matrices, and baseline studies via the `mana` module
+- Geographic intelligence (region -> province -> municipality -> barangay) powered by curated AI query templates
+
+### Stakeholder Coordination & Policy Intelligence
+- Stakeholder directories, meeting logs, and MOA tracking within `coordination`
+- Policy pipelines, evidence linkages, and monitoring of recommendations through `recommendations` and `policy_tracking`
+
+### Monitoring & Evaluation
+- Performance dashboards, scenario planning, and compliance checks under `monitoring`
+- Exports, analytics utilities, and Celery-backed background tasks (`src/monitoring/services`)
+
+### Conversational AI Assistant
+- Embedded AI Assistant with cultural context safeguards (`src/ai_assistant`)
+- 300+ curated query templates across temporal, geographic, and cross-domain domains in `src/common/ai_services/chat/query_templates/`
+- User-facing guidance: [docs/USER_GUIDE_AI_CHAT.md](docs/USER_GUIDE_AI_CHAT.md) and implementation notes in [docs/ai/AI_CHAT_IMPLEMENTATION_SUMMARY.md](docs/ai/AI_CHAT_IMPLEMENTATION_SUMMARY.md)
 
 ## Technology Stack
 
-- **Backend**: Django 4.2+ (Python web framework)
-- **Database**: SQLite (upgradeable to PostgreSQL)
-- **API**: Django REST Framework
-- **Frontend**: Django templates with Tailwind CSS framework
-- **Authentication**: Django built-in auth with JWT support
-- **File Storage**: Local filesystem with cloud storage capability
+- **Backend**: Django 4.2+, Django REST Framework, Celery
+- **Database**: SQLite for development, PostgreSQL for production (via `DATABASE_URL`)
+- **Frontend**: Django templates, Tailwind CSS, Alpine.js, HTMX for instant UI interactions
+- **Background & Realtime**: Redis-backed Celery workers, task queues integrated with WorkItems
+- **AI & Search**: Vectorized document embeddings and query templates optimized for the OBCMS AI Assistant
+- **Authentication**: Django auth + JWT support for API access
+- **Storage**: Local filesystem by default with S3-compatible support (production)
 
 ## Project Structure
 
 ```
-OBC-system/
-├── src/                    # Django source code
-│   ├── obc_management/     # Project settings and URLs
-│   ├── common/             # Shared models, forms, and services
-│   ├── communities/        # OBC community management
-│   ├── coordination/       # Stakeholder coordination
-│   ├── mana/               # Mapping and Needs Assessment
-│   ├── monitoring/         # Monitoring & evaluation workflows
-│   ├── recommendations/    # Recommendations namespace (policies, tracking, docs)
-│   ├── templates/          # Project-level templates grouped by app
-│   └── static/             # Static assets grouped by app
-├── var/                    # Runtime artefacts (SQLite, logs, media)
-├── requirements/           # Python dependency locks
-├── scripts/                # Project scripts
-├── docs/                   # Documentation
-└── venv/                   # Local virtual environment
+obcms/
+|- src/
+|  |- obc_management/     # Django settings, URLs, ASGI/WSGI
+|  |- common/             # Shared utilities, enums, AI helpers, form styles
+|  |- communities/        # Community profiles, demographics, documents
+|  |- coordination/       # Stakeholder coordination workflows
+|  |- mana/               # Mapping and Needs Assessment tooling
+|  |- monitoring/         # Monitoring and evaluation analytics
+|  |- project_central/    # Planning, budgeting, dashboards, WorkItem views
+|  |- recommendations/    # Policy, program, and document tracking
+|  |- policy_tracking/    # Supplemental policy intelligence services
+|  |- ai_assistant/       # Conversational AI assistant modules
+|  |- api/                # API routers, serializers, integration points
+|  |- templates/          # Shared and app-specific templates
+|  |- static/             # Compiled Tailwind assets
+|  |- services/           # Cross-cutting domain services and schedulers
+|- docs/                   # Standards, deployment guides, plans, and reports
+|- deployment/             # Infrastructure manifests and ops tooling
+|- scripts/                # Bootstrap, migration, and maintenance scripts
+|- requirements/           # Dependency lock files
+|- var/                    # Runtime artifacts (SQLite, logs, media uploads)
 ```
 
 ## Quick Start
 
-### Prerequisites
-
-- Python 3.12 (see `.python-version`)
-- pip (Python package manager)
-- Git
-
-### Installation
-
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd OBC-system
+   cd obcms
    ```
-
-2. **Create and activate virtual environment**
+2. **Create and activate the virtual environment**
    ```bash
-   ./scripts/bootstrap_venv.sh       # idempotent helper (macOS/Linux)
-   source venv/bin/activate          # On Windows: venv\Scripts\activate
+   ./scripts/bootstrap_venv.sh
+   source venv/bin/activate  # Windows: venv\Scripts\activate
    ```
-   > Prefer to do it manually? Use `python3.12 -m venv venv` to ensure the interpreter matches the pinned version.
-
 3. **Install dependencies**
    ```bash
    pip install -r requirements/development.txt
    ```
-
-4. **Set up environment variables**
+4. **Configure environment variables**
    ```bash
    cp .env.example .env
-   # Edit .env file with your configuration
+   # Fill in database, Redis, email, and AI credentials
    ```
-
 5. **Run database migrations**
    ```bash
    cd src
    ./manage.py migrate
    ```
-
 6. **Create a superuser (optional)**
    ```bash
    ./manage.py createsuperuser
    ```
-
 7. **Start the development server**
    ```bash
    ./manage.py runserver
    ```
+The app runs at `http://localhost:8000`. Runtime data (SQLite, uploads, logs) lives under `var/`.
 
-The application will be available at `http://localhost:8000`
+## Development Workflow
 
-Runtime data (SQLite database, uploads, and logs) is stored under `var/` so the Django project tree stays focused on code.
-
-## Core Modules
-
-### 1. Communities Module
-- **Purpose**: Comprehensive OBC information management
-- **Features**: Community profiles, demographic data, stakeholder management, document management
-
-### 2. MANA Module
-- **Purpose**: Mapping and Needs Assessment capabilities
-- **Features**: Assessment management, needs categorization, priority ranking, baseline studies
-
-### 3. Coordination Module
-- **Purpose**: Multi-stakeholder coordination
-- **Features**: Stakeholder directory, meeting management, MOA tracking, communication hub
-
-### 4. Recommendations Module
-- **Purpose**: Evidence-based policy, program, and service recommendations
-- **Features**: Recommendation tracking, approval workflows, knowledge/document repository, impact assessment
-
-### 5. Monitoring & Evaluation Module
-- **Purpose**: Track implementation and outcomes of OOBC initiatives
-- **Features**: Monitoring entries, update workflows, performance dashboards, evidence attachments
-
-## Development
-
-Templates live in `src/templates/<app>/` and static assets in `src/static/<app>/`, keeping UI files alongside their Django apps.
-
-### Code Style
-
-The project uses:
-- **Black** for code formatting
-- **isort** for import sorting
-- **flake8** for linting
-
-Run formatting and linting:
-```bash
-black .
-isort .
-flake8
-```
+### Code Style & Tooling
+- Formatters and linters: `black src`, `isort src`, `flake8 src`
+- Tailwind build pipeline configured via `postcss.config.js` and `tailwind.config.js`
+- Commit messages use imperative, capitalized subjects without trailing periods
 
 ### Testing
+- Full suite: `pytest --ds=obc_management.settings`
+- Focused runs: `pytest --ds=obc_management.settings -k "<pattern>"`
+- Coverage: `coverage run -m pytest --ds=obc_management.settings && coverage report`
+- Place tests alongside apps (`src/<app>/tests/`)
 
-Run tests:
-```bash
-pytest
-```
+### Local Data Protection
+- Do **not** delete `src/db.sqlite3` or backups under `var/`
+- Use migrations to evolve the schema (`./manage.py migrate`)
+- For data resets, coordinate through migration scripts rather than removing databases
 
-Run tests with coverage:
-```bash
-coverage run -m pytest
-coverage report
-```
+## Documentation & Standards
 
-Each Django app stores its test suite inside `src/<app>/tests/` to keep scenarios close to the code they cover.
+- All documentation resides under `docs/` and is indexed in [docs/README.md](docs/README.md)
+- UI patterns follow [docs/ui/OBCMS_UI_COMPONENTS_STANDARDS.md](docs/ui/OBCMS_UI_COMPONENTS_STANDARDS.md)
+- Instant UI guidance and HTMX targets: [docs/improvements/instant_ui_improvements_plan.md](docs/improvements/instant_ui_improvements_plan.md)
+- AI usage, prompts, and testing: [docs/USER_GUIDE_AI_CHAT.md](docs/USER_GUIDE_AI_CHAT.md) and [docs/ai/AI_CHAT_IMPLEMENTATION_SUMMARY.md](docs/ai/AI_CHAT_IMPLEMENTATION_SUMMARY.md)
 
-### API Documentation
+## AI Assistant & Query Intelligence
 
-When the server is running, API documentation is available at:
-- Browsable API: `http://localhost:8000/api/`
-- Admin interface: `http://localhost:8000/admin/`
+- Query templates are organized in `src/common/ai_services/chat/query_templates/` covering geographic, temporal, budget, workload, and cross-domain scenarios
+- Expansion milestones: [QUERY_EXPANSION_IMPLEMENTATION_COMPLETE.md](QUERY_EXPANSION_IMPLEMENTATION_COMPLETE.md) and [QUERY_TEMPLATE_EXPANSION_PHASE_4-6_COMPLETE.md](QUERY_TEMPLATE_EXPANSION_PHASE_4-6_COMPLETE.md)
+- User workflow guides, accessibility requirements, and regression suites live in `docs/testing/AI_*` and `docs/ui/AI_*`
+- AI operations dashboards and deployment guardrails: [docs/deployment/AI_DEPLOYMENT_GUIDE.md](docs/deployment/AI_DEPLOYMENT_GUIDE.md)
+
+## Instant UI & UX Standards
+
+- Use HTMX with `hx-swap="outerHTML swap:300ms"` patterns for smooth transitions
+- Shared form components: `src/templates/components/form_field_*.html`
+- Tailwind styling helpers applied via `_apply_form_field_styles` utilities in `src/common/forms/`
+- Reference implementations: `src/templates/communities/provincial_manage.html` and the stat card templates documented in [docs/improvements/UI/STATCARD_TEMPLATE.md](docs/improvements/UI/STATCARD_TEMPLATE.md)
 
 ## Deployment
 
 ### Docker Production Deployment
 
-The system is production-ready with Docker and supports deployment to:
-- **Coolify** (recommended for single-server deployments)
-- **Docker Compose** (generic deployment)
-- **Kubernetes** (requires S3 storage - see scaling guide)
+The repository includes `docker-compose.prod.yml`, Gunicorn/NGINX configs, and environment templates for containerized deployments.
 
-**Quick Deploy with Docker:**
 ```bash
-# Copy and configure environment
+# Copy configuration
 cp .env.example .env.prod
-nano .env.prod  # Edit with production values
+# Edit .env.prod with production credentials
 
-# Deploy with Docker Compose
+# Launch services
 docker-compose -f docker-compose.prod.yml up -d
 
-# Verify health
+# Health checks
 curl http://localhost:8000/health/
 ```
 
-For detailed deployment instructions, see:
-- **[Production Deployment Guide](docs/deployment/production-deployment-issues-resolution.md)**
-- **[Deployment Status](docs/deployment/DEPLOYMENT_IMPLEMENTATION_STATUS.md)**
+Detailed runbooks:
+- [docs/deployment/production-deployment-issues-resolution.md](docs/deployment/production-deployment-issues-resolution.md)
+- [docs/deployment/DEPLOYMENT_IMPLEMENTATION_STATUS.md](docs/deployment/DEPLOYMENT_IMPLEMENTATION_STATUS.md)
+- [docs/deployment/POSTGRESQL_MIGRATION_REVIEW.md](docs/deployment/POSTGRESQL_MIGRATION_REVIEW.md)
 
 ### Environment Variables
 
-Key environment variables for production:
-
 ```env
-# Django Core (REQUIRED)
+# Django core
 DJANGO_SETTINGS_MODULE=obc_management.settings.production
 SECRET_KEY=your-production-secret-key-minimum-50-characters
 DEBUG=0
 ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
 CSRF_TRUSTED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 
-# Database (REQUIRED)
+# Database
 DATABASE_URL=postgres://user:password@host:port/database
 
-# Redis/Celery (REQUIRED)
+# Redis / Celery
 REDIS_URL=redis://host:port/0
 CELERY_BROKER_URL=redis://host:port/0
 
-# Email (REQUIRED for production)
+# Email
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
@@ -222,100 +205,62 @@ EMAIL_USE_TLS=1
 EMAIL_HOST_USER=noreply@yourdomain.com
 EMAIL_HOST_PASSWORD=your-email-app-password
 
-# Gunicorn Tuning (Optional)
-GUNICORN_WORKERS=4  # Formula: (2 × CPU cores) + 1
+# Gunicorn tuning (optional)
+GUNICORN_WORKERS=4  # Formula: (2 * CPU cores) + 1
 GUNICORN_THREADS=2
 GUNICORN_LOG_LEVEL=info
 ```
 
 ### Production Checklist
 
-Before deploying to production, ensure:
+**Security**
+- [ ] `DEBUG=0`
+- [ ] Strong `SECRET_KEY` (50+ characters)
+- [ ] `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` populated
+- [ ] `python manage.py check --deploy` passes
 
-**Security:**
-- [ ] Set `DEBUG=0` (False)
-- [ ] Generate strong `SECRET_KEY` (50+ characters)
-- [ ] Configure `ALLOWED_HOSTS` with actual domain(s)
-- [ ] Set `CSRF_TRUSTED_ORIGINS` with `https://` scheme
-- [ ] Run `python manage.py check --deploy` with zero errors
+**Infrastructure**
+- [ ] PostgreSQL database configured and reachable
+- [ ] Redis available for Celery queues
+- [ ] Outbound email provider configured
+- [ ] SSL/TLS certificates installed
+- [ ] `/health/` and `/ready/` endpoints monitored
 
-**Infrastructure:**
-- [ ] Configure production database (PostgreSQL 15+ required)
-- [ ] Set up Redis for Celery background tasks
-- [ ] Configure email backend (not console)
-- [ ] Set up SSL/TLS certificates
-- [ ] Configure health check endpoints (`/health/`, `/ready/`)
+**Operations**
+- [ ] Structured logging routed to stdout/stderr for containers
+- [ ] Automated database backups scheduled
+- [ ] Media storage backup strategy in place (S3 or volume snapshots)
+- [ ] Monitoring and alerting connected to ops channels
 
-**Operations:**
-- [ ] Configure logging (stdout/stderr for Docker)
-- [ ] Set up database backup strategy
-- [ ] Set up media file backup strategy (Docker volumes)
-- [ ] Configure monitoring/alerting
+**Testing**
+- [ ] Static files collected (`./manage.py collectstatic`)
+- [ ] File uploads verified
+- [ ] CSRF-protected forms exercised
+- [ ] Celery task execution validated
+- [ ] Critical workflows smoke-tested (communities, assessments, policy approvals)
 
-**Testing:**
-- [ ] Verify static files load (`/static/admin/css/base.css`)
-- [ ] Test file uploads work
-- [ ] Verify CSRF protection on forms
-- [ ] Test Celery tasks execute
-- [ ] Run smoke tests on critical workflows
+## Scaling Strategy
 
-## 📈 Scaling Considerations
-
-### Current Architecture: Single-Server Deployment
-
-**Media Storage:** Docker volumes (filesystem storage)
-
-This setup is production-ready for:
-- ✅ Government agencies with regional deployment
-- ✅ Up to 10,000 concurrent users
-- ✅ Up to 100GB media files
-- ✅ Single Coolify/Docker host deployments
-
-**Advantages:**
-- Simple architecture with no external dependencies
-- Zero cloud storage costs
-- Fast local file access
-- Easy to backup and restore
-
-**Limitations:**
-- Cannot horizontally scale web service (max 1 replica)
-- Limited to single-server disk capacity
-- No built-in CDN for global distribution
-
-### Future Scaling: Multi-Server Deployment
-
-**When you need to scale** (multiple web replicas, Kubernetes, high availability):
-
-📚 **See:** [Migrating to S3 Storage](docs/deployment/s3-migration-guide.md)
-
-You should implement S3 storage when:
-- Traffic requires multiple web server replicas (>1000 concurrent users)
-- Deploying to Kubernetes or container orchestration platforms
-- Media storage exceeds 100GB or server disk capacity
-- Need CDN for global file distribution
-- Require zero-maintenance cloud backups
-
-**Migration Path:** Filesystem → S3 can be done with zero downtime. All implementation details, code changes, and step-by-step migration instructions are documented in the scaling guide.
-
-**Estimated Migration Effort:** 4-6 hours (includes testing)
+- **Current Deployment | PRIORITY: HIGH | Complexity: Moderate** - Single-server Docker/Coolify stack using local volumes for media storage. Fits regional deployments with up to five WorkItem-heavy teams per site.
+- **Scale-Out Path | PRIORITY: HIGH | Complexity: Complex** - Migrate media to S3-compatible storage, enable multiple web replicas, and integrate CDN coverage following [docs/deployment/s3-migration-guide.md](docs/deployment/s3-migration-guide.md). Ensure PostgreSQL high availability and Redis clustering before enabling horizontal scaling.
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Commit with an imperative, capitalized message (`git commit -m "Add Amazing Feature"`)
+4. Push the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request referencing relevant docs/tests and attach UI screenshots when templates change
 
 ## License
 
-This project is developed for the Office for Other Bangsamoro Communities (OOBC) under the Bangsamoro Autonomous Region in Muslim Mindanao (BARMM).
+Developed for the Office for Other Bangsamoro Communities (OOBC) under the Bangsamoro Autonomous Region in Muslim Mindanao (BARMM). Internal use only unless otherwise agreed.
 
 ## Support
 
-For support and questions, please contact the OOBC development team.
+For assistance, reach out to the OOBC development team or consult the documentation index in `docs/README.md`.
 
 ---
 
-**BANGSAMORO KA, SAAN KA MAN!** 
+**BANGSAMORO KA, SAAN KA MAN!**  
 *(You are Bangsamoro, wherever you are!)*

@@ -109,6 +109,39 @@
         {% endfor %}
     </section>
 
+    <!-- Quick Actions -->
+    <section class="space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Quick Actions</h2>
+                <p class="mt-1 text-sm text-gray-600">Jump into the most-used OBC workflows.</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for action in quick_actions %}
+            <a href="{{ action.url }}"
+               class="group block rounded-2xl border border-gray-200 bg-gradient-to-br from-white via-gray-50 to-gray-100 p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 h-12 w-12 rounded-xl bg-gradient-to-br {{ action.icon_gradient }} text-white shadow-md flex items-center justify-center">
+                        <i class="{{ action.icon }} text-lg"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-start justify-between gap-3">
+                            <h3 class="text-lg font-semibold text-gray-900 transition-colors duration-200 {{ action.accent_hover_class }}">{{ action.title }}</h3>
+                            <i class="fas fa-arrow-right text-gray-400 transition-all duration-200 group-hover:translate-x-1 {{ action.accent_hover_class }}"></i>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-600 leading-relaxed">{{ action.description }}</p>
+                        <span class="mt-4 inline-flex items-center gap-2 text-sm font-semibold transition-all duration-200 {{ action.accent_text_class }} {{ action.accent_hover_class|default:'' }}">
+                            <span>Open</span>
+                            <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
+                        </span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
     <!-- Filters -->
     <section class="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
         <header class="bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-4">
@@ -164,132 +197,74 @@
         </div>
     </section>
 
-    <!-- Insights -->
-    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 flex flex-col">
-            <header class="flex items-center gap-3 mb-4">
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
-                    <i class="fas fa-chart-line"></i>
-                </span>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900">Progress Snapshot</h3>
-                    <p class="text-sm text-gray-500">Pulse on current workload</p>
-                </div>
-            </header>
-            <dl class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
-                    <dt class="text-xs font-semibold uppercase tracking-wide text-emerald-600">Response rate</dt>
-                    <dd class="text-xl font-bold text-emerald-700">{{ response_rate }}%</dd>
-                </div>
-                <div class="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
-                    <dt class="text-xs font-semibold uppercase tracking-wide text-amber-600">Pending review</dt>
-                    <dd class="text-xl font-bold text-amber-700">{{ progress_snapshot.pending_review }}</dd>
-                </div>
-                <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                    <dt class="text-xs font-semibold uppercase tracking-wide text-slate-600">Avg response days</dt>
-                    <dd class="text-xl font-bold text-slate-700">{{ progress_snapshot.avg_response_days }}</dd>
-                </div>
-            </dl>
-            <p class="mt-4 text-xs text-gray-500">
-                {% if progress_snapshot.latest_update %}
-                    Latest update recorded {{ progress_snapshot.latest_update|naturaltime }}.
-                {% else %}
-                    No updates captured yet.
-                {% endif %}
-            </p>
-        </article>
-        <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-            <header class="flex items-center gap-3 mb-4">
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
-                    <i class="fas fa-signal"></i>
-                </span>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900">Submission Channels</h3>
-                    <p class="text-sm text-gray-500">Where requests originate</p>
-                </div>
-            </header>
-            <ul class="space-y-3">
-                {% for source in source_breakdown %}
-                <li class="flex items-center justify-between text-sm text-gray-600">
-                    <span class="flex-1 truncate">{{ source.label }}</span>
-                    <span class="font-semibold text-gray-900">{{ source.total }}</span>
-                </li>
-                {% empty %}
-                <li class="text-sm text-gray-500">No submission data available.</li>
-                {% endfor %}
-            </ul>
-        </article>
-        <article class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-            <header class="flex items-center gap-3 mb-4">
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
-                    <i class="fas fa-layer-group"></i>
-                </span>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900">Priority Distribution</h3>
-                    <p class="text-sm text-gray-500">Monitor urgency mix</p>
-                </div>
-            </header>
-            <ul class="space-y-3">
-                {% for item in priority_breakdown %}
-                <li class="flex items-center justify-between text-sm text-gray-600">
-                    <span class="flex-1 truncate">{{ item.label }}</span>
-                    <span class="font-semibold text-gray-900">{{ item.total }}</span>
-                </li>
-                {% empty %}
-                <li class="text-sm text-gray-500">No priority data available.</li>
-                {% endfor %}
-            </ul>
-        </article>
-    </section>
-
-    <!-- Quick Actions -->
-    <section class="space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900">Quick Actions</h2>
-                <p class="mt-1 text-sm text-gray-600">Jump into the most-used OBC workflows.</p>
-            </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for action in quick_actions %}
-            <a href="{{ action.url }}"
-               class="group block rounded-2xl border border-gray-200 bg-gradient-to-br from-white via-gray-50 to-gray-100 p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-                <div class="flex items-start gap-4">
-                    <div class="flex-shrink-0 h-12 w-12 rounded-xl bg-gradient-to-br {{ action.icon_gradient }} text-white shadow-md flex items-center justify-center">
-                        <i class="{{ action.icon }} text-lg"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex items-start justify-between gap-3">
-                            <h3 class="text-lg font-semibold text-gray-900 transition-colors duration-200 {{ action.accent_hover_class }}">{{ action.title }}</h3>
-                            <i class="fas fa-arrow-right text-gray-400 transition-all duration-200 group-hover:translate-x-1 {{ action.accent_hover_class }}"></i>
-                        </div>
-                        <p class="mt-2 text-sm text-gray-600 leading-relaxed">{{ action.description }}</p>
-                        <span class="mt-4 inline-flex items-center gap-2 text-sm font-semibold transition-all duration-200 {{ action.accent_text_class }} {{ action.accent_hover_class|default:'' }}">
-                            <span>Open</span>
-                            <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
-                        </span>
-                    </div>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
-    </section>
-
     <!-- Main Content -->
     <section class="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,1.2fr)]">
         <div class="space-y-6">
-            {% include "components/data_table_card.html" with
-                title="OBC Requests Overview"
-                icon_class="fas fa-list-check"
-                accent_class="bg-gradient-to-r from-sky-600 via-indigo-600 to-purple-600"
-                header_template="monitoring/partials/obc_requests_table_header.html"
-                headers=table_headers
-                rows=table_rows
-                empty_message=table_empty_message
-                footer_slot=table_footer_slot
-            %}
+            {% include "components/data_table_card.html" with title="OBC Requests Overview" icon_class="fas fa-list-check" accent_class="bg-gradient-to-r from-sky-600 via-indigo-600 to-purple-600" header_template="monitoring/partials/obc_requests_table_header.html" headers=table_headers rows=table_rows empty_message=table_empty_message footer_slot=table_footer_slot %}
         </div>
         <aside class="space-y-6">
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <i class="fas fa-chart-line text-emerald-500"></i>
+                    Progress Snapshot
+                </h3>
+                <dl class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+                        <dt class="text-xs font-semibold uppercase tracking-wide text-emerald-600">Response rate</dt>
+                        <dd class="text-xl font-bold text-emerald-700">{{ response_rate }}%</dd>
+                    </div>
+                    <div class="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
+                        <dt class="text-xs font-semibold uppercase tracking-wide text-amber-600">Pending review</dt>
+                        <dd class="text-xl font-bold text-amber-700">{{ progress_snapshot.pending_review }}</dd>
+                    </div>
+                    <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
+                        <dt class="text-xs font-semibold uppercase tracking-wide text-slate-600">Avg response days</dt>
+                        <dd class="text-xl font-bold text-slate-700">{{ progress_snapshot.avg_response_days }}</dd>
+                    </div>
+                </dl>
+                <p class="mt-4 text-xs text-gray-500">
+                    {% if progress_snapshot.latest_update %}
+                        Latest update recorded {{ progress_snapshot.latest_update|naturaltime }}.
+                    {% else %}
+                        No updates captured yet.
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <i class="fas fa-signal text-sky-500"></i>
+                    Submission Channels
+                </h3>
+                <ul class="space-y-3">
+                    {% for source in source_breakdown %}
+                    <li class="flex items-center justify-between text-sm text-gray-600">
+                        <span class="flex-1 truncate">{{ source.label }}</span>
+                        <span class="font-semibold text-gray-900">{{ source.total }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No submission data available.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <i class="fas fa-layer-group text-violet-500"></i>
+                    Priority Distribution
+                </h3>
+                <ul class="space-y-3">
+                    {% for item in priority_breakdown %}
+                    <li class="flex items-center justify-between text-sm text-gray-600">
+                        <span class="flex-1 truncate">{{ item.label }}</span>
+                        <span class="font-semibold text-gray-900">{{ item.total }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">No priority data available.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
             <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
                 <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
                     <i class="fas fa-chart-pie text-blue-500"></i>

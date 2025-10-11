@@ -2,8 +2,15 @@ import json
 from pathlib import Path
 
 import pytest
-from django.contrib.auth.models import Group
-from django.core import management
+
+try:
+    from django.contrib.auth.models import Group
+    from django.core import management
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for MANA management command tests",
+        allow_module_level=True,
+    )
 
 from mana.models import WorkshopQuestionDefinition
 from mana.schema import get_questions_for_workshop

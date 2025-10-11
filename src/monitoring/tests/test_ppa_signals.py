@@ -1,12 +1,19 @@
 """Signal behaviour tests for MonitoringEntry approval workflow."""
 
 import pytest
-from django.contrib.auth import get_user_model
 
+try:
+    from django.contrib.auth import get_user_model
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for monitoring signal tests",
+        allow_module_level=True,
+    )
+
+from common.work_item_model import WorkItem
 from coordination.models import Organization
 from monitoring.models import MonitoringEntry
 from monitoring.signals import track_approval_status_change
-from common.work_item_model import WorkItem
 
 User = get_user_model()
 

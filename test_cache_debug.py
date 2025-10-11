@@ -1,18 +1,17 @@
-"""
-Debug script to test cache invalidation for WorkItem calendar feed.
-
-This script simulates the exact cache key generation used in both:
-1. Calendar feed endpoint (calendar.py line 98)
-2. WorkItem deletion (work_items.py line 347)
-
-Usage:
-    cd src
-    python manage.py shell < ../test_cache_debug.py
-"""
+"""Debug script to test cache invalidation for WorkItem calendar feed."""
 
 from datetime import date, timedelta
-from django.core.cache import cache
-from django.conf import settings
+
+import pytest
+
+try:
+    from django.conf import settings
+    from django.core.cache import cache
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for cache debugging script",
+        allow_module_level=True,
+    )
 
 print("=" * 80)
 print("CACHE CONFIGURATION DEBUG")

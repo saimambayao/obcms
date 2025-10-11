@@ -1,16 +1,20 @@
-"""
-Pytest Configuration and Shared Fixtures for WorkItem Tests
+"""Shared pytest fixtures for WorkItem-related tests."""
 
-Provides common fixtures and test utilities for all WorkItem tests.
-"""
+from datetime import date, timedelta
 
 import pytest
-from datetime import date, timedelta
-from django.contrib.auth import get_user_model
-from django.test import Client
 
-from common.work_item_model import WorkItem
+try:
+    from django.contrib.auth import get_user_model
+    from django.test import Client
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django is required for WorkItem fixture setup",
+        allow_module_level=True,
+    )
+
 from common.models import StaffTeam
+from common.work_item_model import WorkItem
 
 User = get_user_model()
 

@@ -1,11 +1,19 @@
-from django.contrib.auth import get_user_model
-from django.urls import reverse
-from rest_framework import status
-from rest_framework.test import APITestCase
+import pytest
 
-from common.models import Barangay, Municipality, Province, Region
-from communities.models import OBCCommunity
-from municipal_profiles.models import MunicipalOBCProfile
+try:
+    from django.contrib.auth import get_user_model
+    from django.urls import reverse
+    from rest_framework import status
+    from rest_framework.test import APITestCase
+
+    from common.models import Barangay, Municipality, Province, Region
+    from communities.models import OBCCommunity
+    from municipal_profiles.models import MunicipalOBCProfile
+except ImportError:  # pragma: no cover - handled via skip
+    pytest.skip(
+        "Django and DRF are required for municipal profile API tests",
+        allow_module_level=True,
+    )
 
 User = get_user_model()
 

@@ -134,11 +134,16 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
     - Implementation guides with code examples
     - CI/CD pipeline integration
     - Tools and frameworks reference
+  - [OBCMS Component Testing Plan](plans/tests/ocbms_component_testing_plan.md) ⭐ **NEW - Component-level coverage playbook**
+  - [OBCMS End-to-End Testing Plan](plans/tests/obcms_e2e_testing_plan.md) ⭐ **UPDATED - Playwright-first execution roadmap**
+  - [OBCMS Performance Testing Overview](plans/tests/obcms_performance_testing_overview.md) ⭐ **NEW - Unified performance taxonomy & guardrails**
+  - [OBCMS k6 Load Testing Plan](plans/tests/obcms_k6_load_testing_plan.md) ⭐ **NEW - Concurrency & resilience scenarios**
   - [Staging Rehearsal Checklist](testing/staging_rehearsal_checklist.md) ⭐ **NEW - Pre-release Dry Run Guide**
   - [Calendar Performance Test Plan](testing/calendar_performance_plan.md) ⭐ **NEW - Scope & Metrics**
 - **Test Reports:**
   - [Full Suite Test Report](testing/FULL_SUITE_TEST_REPORT.md) - Comprehensive system test results
   - [Performance Test Results](testing/PERFORMANCE_TEST_RESULTS.md) ⭐ **NEW - 83% Passing**
+  - [Frontend UI Component Test Results](testing/FRONTEND_UI_COMPONENT_TEST_RESULTS.md) 🆕
   - [MANA Test Verification](testing/MANA_TEST_VERIFICATION.md)
   - [Production Test Results](testing/PRODUCTION_TEST_RESULTS.md)
 - **Test Environments:**
@@ -559,7 +564,7 @@ The OBC Management System is built using modern web technologies:
 5. Review [Component Testing Plan](plans/tests/ocbms_component_testing_plan.md) for module-level coverage expectations
 6. Review [k6 Load Testing Plan](plans/tests/obcms_k6_load_testing_plan.md) for performance testing strategy
 7. Review [Performance Testing Overview](plans/tests/obcms_performance_testing_overview.md) for broader non-functional coverage
-8. Review [Unit Testing Plan](plans/tests/obcms_unit_testing_plan.md) for isolated logic coverage standards
+8. Review [Unit Testing Plan](plans/tests/obcms_unit_testing_plan.md) for isolated logic coverage standards and guardrail tests (`tests/documentation/test_unit_testing_plan_doc.py`)
 9. Review [Integration Testing Plan](plans/tests/obcms_integration_testing_plan.md) for cross-component validation guidance
 10. Review [E2E Testing Plan](plans/tests/obcms_e2e_testing_plan.md) for full user journey automation
 
