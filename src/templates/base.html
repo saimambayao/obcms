@@ -735,10 +735,31 @@
         const root = document.getElementById('toast-root');
         if (!root) return;
 
-        function showToast(detail) {
-            const payload = detail || {};
-            const message = typeof payload === 'string' ? payload : (payload.message || 'Action completed');
-            const level = (payload.level || 'success').toLowerCase();
+        function showToast(detail, levelOverride) {
+            let payload;
+
+            if (typeof detail === 'string' && levelOverride) {
+                payload = { message: detail, level: levelOverride };
+            } else if (detail && typeof detail === 'object') {
+                payload = Object.assign({}, detail);
+                if (levelOverride && !payload.level) {
+                    payload.level = levelOverride;
+                }
+            } else if (typeof detail === 'string') {
+                payload = detail;
+            } else {
+                payload = {};
+            }
+
+            const message = typeof payload === 'string'
+                ? payload
+                : (payload.message || 'Action completed');
+
+            const level = (
+                typeof payload === 'string'
+                    ? (levelOverride || 'success')
+                    : (payload.level || levelOverride || 'success')
+            ).toLowerCase();
             const palette = {
                 success: 'from-emerald-500 to-emerald-600',
                 info: 'from-sky-500 to-blue-600',
@@ -767,8 +788,15 @@
             }, 4500);
         }
 
+        document.body.addEventListener('showToast', function (event) {
+            const payload = event?.detail ?? event?.value;
+            showToast(payload);
+            event.stopImmediatePropagation();
+        }, true);
+
         document.body.addEventListener('show-toast', function (event) {
-            showToast(event.detail);
+            const payload = event?.detail ?? event?.value;
+            showToast(payload);
         });
 
         // Global HTMX error handler for better user feedback
