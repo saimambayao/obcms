@@ -211,19 +211,19 @@
     });
 
     function updateWorkItemCounters() {
-        const rootRows = Array.from(document.querySelectorAll('tr[data-work-item-id]'))
-            .filter(row => parseInt(row.dataset.level || '0', 10) === 0);
+        const allRows = Array.from(document.querySelectorAll('tr[data-work-item-id]'));
+        const rootRows = allRows.filter(row => parseInt(row.dataset.level || '0', 10) === 0);
 
-        const rootCount = rootRows.length;
+        const displayedCount = rootRows.length || allRows.length;
 
         const totalProjectsEl = document.querySelector('[data-role="total-projects-count"]');
         if (totalProjectsEl) {
-            totalProjectsEl.textContent = rootCount.toString();
+            totalProjectsEl.textContent = rootRows.length.toString();
         }
 
         const itemsDisplayedEl = document.querySelector('[data-role="items-displayed-count"]');
         if (itemsDisplayedEl) {
-            itemsDisplayedEl.textContent = rootCount.toString();
+            itemsDisplayedEl.textContent = displayedCount.toString();
         }
     }
 

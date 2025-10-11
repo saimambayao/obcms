@@ -1,0 +1,842 @@
+{% load static %}
+
+<div class="space-y-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Total</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1" id="stat-total">0</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                    <i class="fas fa-layer-group text-emerald-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Upcoming</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1" id="stat-upcoming">0</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                    <i class="fas fa-calendar-day text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">In Progress</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1" id="stat-progress">0</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                    <i class="fas fa-spinner text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Completed</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1" id="stat-completed">0</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                    <i class="fas fa-check-circle text-emerald-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="calendar-container" id="calendarContainer">
+        <!-- Sidebar -->
+        <!-- Sidebar -->
+        <aside class="calendar-sidebar" id="calendarSidebar">
+            <div class="p-4 space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-gray-800">
+                    <i class="fas fa-handshake text-teal-500 mr-2"></i>
+                    Coordination Calendar
+                </h2>
+                <button class="lg:hidden p-2 rounded-lg hover:bg-white/50 transition-colors" id="closeSidebarBtn" aria-label="Close sidebar">
+                    <i class="fas fa-times text-gray-600"></i>
+                </button>
+            </div>
+
+            <!-- Mini Calendar -->
+            <div class="mini-calendar">
+                <div class="mini-calendar-header">
+                    <button class="p-1 rounded hover:bg-gray-100" id="miniPrevMonth" aria-label="Previous month">
+                        <i class="fas fa-chevron-left text-gray-600 text-sm"></i>
+                    </button>
+                    <h3 class="text-sm font-semibold text-gray-800" id="miniCalendarTitle">January 2025</h3>
+                    <button class="p-1 rounded hover:bg-gray-100" id="miniNextMonth" aria-label="Next month">
+                        <i class="fas fa-chevron-right text-gray-600 text-sm"></i>
+                    </button>
+                </div>
+                <div class="mini-calendar-grid" id="miniCalendarGrid"></div>
+            </div>
+
+            <!-- Event Type Filters -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-700 mb-3 px-2">Event Types</h3>
+                <div class="space-y-1">
+                    <label class="event-legend-item" for="filterProjects">
+                        <i class="fas fa-folder event-type-icon" style="color: #3b82f6;"></i>
+                        <span class="text-sm text-gray-700 flex-1">Projects</span>
+                        <input type="checkbox" id="filterProjects" class="event-legend-checkbox" checked data-work-type="project">
+                    </label>
+                    <label class="event-legend-item" for="filterActivities">
+                        <i class="fas fa-calendar-check event-type-icon" style="color: #10b981;"></i>
+                        <span class="text-sm text-gray-700 flex-1">Activities</span>
+                        <input type="checkbox" id="filterActivities" class="event-legend-checkbox" checked data-work-type="activity">
+                    </label>
+                    <label class="event-legend-item" for="filterTasks">
+                        <i class="fas fa-tasks event-type-icon" style="color: #d97706;"></i>
+                        <span class="text-sm text-gray-700 flex-1">Tasks</span>
+                        <input type="checkbox" id="filterTasks" class="event-legend-checkbox" checked data-work-type="task">
+                    </label>
+                    <label class="event-legend-item" for="filterCoordination">
+                        <i class="fas fa-handshake event-type-icon" style="color: #14b8a6;"></i>
+                        <span class="text-sm text-gray-700 flex-1">Coordination</span>
+                        <input type="checkbox" id="filterCoordination" class="event-legend-checkbox" checked data-work-type="coordination">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Options -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-700 mb-3 px-2">Options</h3>
+                <div class="space-y-1">
+                    <label class="filter-checkbox">
+                        <i class="fas fa-check-circle text-emerald-500 text-sm"></i>
+                        <span class="text-sm text-gray-700 flex-1">Show Completed Items</span>
+                        <input type="checkbox" id="filterCompleted" data-filter-type="completed">
+                    </label>
+                </div>
+            </div>
+
+            <a href="{% url 'common:oobc_calendar' %}"
+               class="block text-center py-2 px-4 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Full OOBC Calendar
+            </a>
+        </div>
+    </aside>
+
+    <!-- Header -->
+    <header class="calendar-header">
+        <div class="flex items-center gap-4">
+            <button class="sidebar-toggle-btn" id="toggleSidebarBtn" aria-label="Toggle sidebar">
+                <i class="fas fa-bars text-gray-600" id="sidebarToggleIcon"></i>
+            </button>
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">Coordination Advanced Calendar</h1>
+                <p class="text-sm text-gray-500">Live view of coordination activities synced from WorkItems</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap">
+            <div class="view-mode-buttons">
+                <button class="view-mode-btn active" data-view="dayGridMonth" aria-label="Month view">
+                    <i class="fas fa-calendar-alt mr-1"></i>
+                    Month
+                </button>
+                <button class="view-mode-btn" data-view="timeGridWeek" aria-label="Week view">
+                    <i class="fas fa-calendar-week mr-1"></i>
+                    Week
+                </button>
+                <button class="view-mode-btn" data-view="timeGridDay" aria-label="Day view">
+                    <i class="fas fa-calendar-day mr-1"></i>
+                    Day
+                </button>
+                <button class="view-mode-btn" data-view="multiMonthYear" aria-label="Year view">
+                    <i class="fas fa-calendar mr-1"></i>
+                    Year
+                </button>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="nav-btn" id="prevBtn" aria-label="Previous">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="nav-btn today" id="todayBtn">Today</button>
+                <button class="nav-btn" id="nextBtn" aria-label="Next">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center">
+                <a href="{% url 'common:work_item_create' %}"
+                   class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-emerald-600 transition-all shadow-sm">
+                    <i class="fas fa-plus mr-2"></i>
+                    Create Work Item
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Calendar -->
+    <main class="calendar-main">
+        <div class="calendar-loading" id="calendarLoading" style="position: absolute; inset: 0; z-index: 50;">
+            <div class="spinner"></div>
+        </div>
+        <div id="calendar"></div>
+    </main>
+
+    <!-- Detail Panel -->
+    <aside class="calendar-detail-panel" id="detailPanel">
+        <div class="detail-panel-content">
+            <div class="detail-panel-body" id="detailPanelBody">
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-calendar-check text-4xl mb-3"></i>
+                    <p>Select an event to view details</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+    </div>
+</div>
+
+<div class="detail-panel-backdrop" id="detailBackdrop"></div>
+<div class="detail-panel-backdrop" id="sidebarBackdrop"></div>
+<div id="modal-container"></div>
+
+<script src="{% static 'common/vendor/fullcalendar/index.global.min.js' %}"></script>
+
+<script>
+(function() {
+    'use strict';
+
+    const BASE_FETCH_URL = "{{ calendar_fetch_url|escapejs }}";
+    const UPDATE_ENDPOINT = "{% url 'common:calendar_event_update' %}";
+
+    // DOM Elements
+    const calendarEl = document.getElementById('calendar');
+    const calendarContainer = document.getElementById('calendarContainer');
+    const detailPanel = document.getElementById('detailPanel');
+    const detailPanelBody = document.getElementById('detailPanelBody');
+    const detailBackdrop = document.getElementById('detailBackdrop');
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+    const calendarSidebar = document.getElementById('calendarSidebar');
+    const loadingEl = document.getElementById('calendarLoading');
+    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    const mobileMediaQuery = window.matchMedia('(max-width: 1023px)');
+
+    // State
+    let calendar;
+    let allEvents = [];
+    let activeFilters = {
+        project: true,
+        activity: true,
+        task: true,
+        coordination: true,
+        completed: false
+    };
+    let selectedDate = new Date();
+    let miniCalendarDate = new Date();
+    let sidebarCollapsed = mobileMediaQuery.matches;
+
+    const workTypeColors = {
+        'project': '#3b82f6',
+        'activity': '#10b981',
+        'task': '#d97706',
+        'coordination': '#14b8a6'
+    };
+
+    const workTypeIcons = {
+        'project': 'fa-folder',
+        'activity': 'fa-calendar-check',
+        'task': 'fa-tasks',
+        'coordination': 'fa-handshake'
+    };
+
+    function scheduleCalendarResize() {
+        requestAnimationFrame(() => {
+            calendar?.updateSize();
+        });
+        setTimeout(() => {
+            calendar?.updateSize();
+        }, 350);
+    }
+
+    function isMobileLayout() {
+        return mobileMediaQuery.matches;
+    }
+
+    function applySidebarState(triggerResize = true) {
+        if (!calendarContainer || !calendarSidebar) {
+            return;
+        }
+
+        const onMobile = isMobileLayout();
+        calendarContainer.classList.toggle('sidebar-collapsed', sidebarCollapsed);
+
+        if (onMobile) {
+            calendarSidebar.classList.toggle('open', !sidebarCollapsed);
+        } else {
+            calendarSidebar.classList.add('open');
+        }
+
+        if (sidebarBackdrop) {
+            if (onMobile && !sidebarCollapsed) {
+                sidebarBackdrop.classList.add('open');
+            } else {
+                sidebarBackdrop.classList.remove('open');
+            }
+        }
+
+        if (triggerResize) {
+            scheduleCalendarResize();
+        }
+    }
+
+    function handleBreakpointChange() {
+        sidebarCollapsed = isMobileLayout();
+        applySidebarState();
+    }
+
+    if (mobileMediaQuery.addEventListener) {
+        mobileMediaQuery.addEventListener('change', handleBreakpointChange);
+    } else if (mobileMediaQuery.addListener) {
+        mobileMediaQuery.addListener(handleBreakpointChange);
+    }
+
+    applySidebarState(false);
+
+    function initCalendar() {
+        if (!calendarEl) {
+            console.error('Calendar element not found');
+            return;
+        }
+
+        if (calendarEl.offsetHeight === 0) {
+            setTimeout(initCalendar, 100);
+            return;
+        }
+
+        const savedView = localStorage.getItem('coordinationCalendarView') || 'dayGridMonth';
+
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: savedView,
+            headerToolbar: false,
+            height: '100%',
+            editable: true,
+            events: fetchEvents,
+            eventClick: handleEventClick,
+            eventDrop: handleEventDrop,
+            eventResize: handleEventResize,
+            dateClick(info) {
+                if (info.jsEvent.detail === 2) {
+                    handleDateDoubleClick(info);
+                }
+            },
+            eventDidMount(info) {
+                const workType = info.event.extendedProps.workType || info.event.extendedProps?.work_type;
+                if (workType && workTypeColors[workType]) {
+                    info.el.style.backgroundColor = workTypeColors[workType];
+                    info.el.style.borderColor = workTypeColors[workType];
+                }
+
+                if (workType && workTypeIcons[workType]) {
+                    const existingIcon = info.el.querySelector('.event-type-icon');
+                    if (existingIcon) return;
+
+                    const icon = document.createElement('i');
+                    icon.className = `fas ${workTypeIcons[workType]} event-type-icon`;
+                    icon.style.marginRight = '4px';
+                    icon.style.display = 'inline';
+
+                    const titleEl = info.el.querySelector('.fc-event-title');
+                    const contentEl = info.el.querySelector('.fc-event-main');
+                    if (titleEl) {
+                        titleEl.insertBefore(icon, titleEl.firstChild);
+                    } else if (contentEl) {
+                        contentEl.insertBefore(icon, contentEl.firstChild);
+                    } else {
+                        info.el.insertBefore(icon, info.el.firstChild);
+                    }
+                }
+            },
+            loading(isLoading) {
+                if (loadingEl) {
+                    loadingEl.style.display = isLoading ? 'flex' : 'none';
+                }
+            },
+            datesSet() {
+                updateMiniCalendar();
+            },
+            eventsSet(events) {
+                updateStats(events);
+            }
+        });
+
+        calendar.render();
+        window.calendar = calendar;
+    }
+
+    function buildFetchUrl(cacheBuster) {
+        const separator = BASE_FETCH_URL.includes('?') ? '&' : '?';
+        return `${BASE_FETCH_URL}${separator}_=${cacheBuster}`;
+    }
+
+    function fetchEvents(fetchInfo, successCallback, failureCallback) {
+        const cacheBuster = Date.now();
+        const url = buildFetchUrl(cacheBuster);
+
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            cache: 'no-store'
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                allEvents = data;
+                const filtered = applyFilters(data);
+                successCallback(filtered);
+            })
+            .catch(error => {
+                console.error('Error fetching events:', error);
+                if (calendarEl) {
+                    calendarEl.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-12 px-4 text-center">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-5xl mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Failed to Load Calendar</h3>
+                            <p class="text-gray-600 mb-6 max-w-md">
+                                Unable to fetch calendar events. Please check your connection and try again.
+                            </p>
+                            <button onclick="location.reload()"
+                                    class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-emerald-600 transition-all shadow-lg">
+                                <i class="fas fa-sync-alt mr-2"></i>
+                                Retry
+                            </button>
+                        </div>
+                    `;
+                }
+                failureCallback(error);
+            });
+    }
+
+    function applyFilters(events) {
+        return events.filter(event => {
+            const workType = event.workType || event.extendedProps?.work_type;
+            if (workType && !activeFilters[workType]) {
+                return false;
+            }
+            const isCompleted = event.status === 'completed' || event.extendedProps?.status === 'completed';
+            if (isCompleted && !activeFilters.completed) {
+                return false;
+            }
+            return true;
+        });
+    }
+
+    function handleEventClick(info) {
+        info.jsEvent.preventDefault();
+        const event = info.event;
+        const workItemId = event.id.replace('work-item-', '');
+        const editUrl = `/oobc-management/work-items/${workItemId}/sidebar/edit/`;
+        detailPanelBody.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-blue-500 text-2xl mb-3"></i>
+                <p class="text-sm text-gray-600">Loading...</p>
+            </div>
+        `;
+
+        htmx.ajax('GET', editUrl, {
+            target: '#detailPanelBody',
+            swap: 'innerHTML'
+        }).then(() => {
+            openDetailPanel();
+        }).catch(() => {
+            const detailUrl = `/oobc-management/work-items/${workItemId}/sidebar/detail/`;
+            htmx.ajax('GET', detailUrl, {
+                target: '#detailPanelBody',
+                swap: 'innerHTML'
+            }).then(() => {
+                openDetailPanel();
+            }).catch(() => {
+                detailPanelBody.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-exclamation-circle text-red-500 text-2xl mb-3"></i>
+                        <p class="text-sm text-red-600">Failed to load details</p>
+                        <button onclick="closeDetailPanel()" class="mt-3 text-sm text-blue-600 hover:underline">Close</button>
+                    </div>
+                `;
+            });
+        });
+    }
+
+    function handleEventDrop(info) {
+        info.el.style.opacity = '0.6';
+        info.el.style.cursor = 'wait';
+        updateEventDates(info.event, info.revert, info.el);
+    }
+
+    function handleEventResize(info) {
+        info.el.style.opacity = '0.6';
+        info.el.style.cursor = 'wait';
+        updateEventDates(info.event, info.revert, info.el);
+    }
+
+    function updateEventDates(event, revertFunc, eventEl) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value
+            || document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+
+        const payload = {
+            id: event.id,
+            type: 'work_item',
+            start: event.start ? event.start.toISOString() : null,
+            end: event.end ? event.end.toISOString() : null,
+            allDay: event.allDay
+        };
+
+        fetch(UPDATE_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (eventEl) {
+                    eventEl.style.opacity = '1';
+                    eventEl.style.cursor = 'grab';
+                }
+                showToast(result.message || 'Event updated successfully', 'success');
+            })
+            .catch(error => {
+                if (eventEl) {
+                    eventEl.style.opacity = '1';
+                    eventEl.style.cursor = 'grab';
+                }
+                showToast(error.error || 'Failed to update event', 'error');
+                if (revertFunc) {
+                    revertFunc();
+                }
+            });
+    }
+
+    function handleDateDoubleClick(info) {
+        const createUrl = `/oobc-management/work-items/sidebar/create/?start_date=${info.dateStr}&due_date=${info.dateStr}`;
+        detailPanelBody.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-emerald-500 text-2xl mb-3"></i>
+                <p class="text-sm text-gray-600">Loading create form...</p>
+            </div>
+        `;
+
+        htmx.ajax('GET', createUrl, {
+            target: '#detailPanelBody',
+            swap: 'innerHTML'
+        }).then(() => {
+            openDetailPanel();
+        }).catch(() => {
+            detailPanelBody.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-circle text-red-500 text-2xl mb-3"></i>
+                    <p class="text-sm text-red-600">Failed to load create form</p>
+                    <button onclick="closeDetailPanel()" class="mt-3 text-sm text-blue-600 hover:underline">Close</button>
+                </div>
+            `;
+        });
+    }
+
+    function openDetailPanel() {
+        detailPanel.classList.add('open');
+        calendarContainer.classList.add('detail-open');
+        if (detailBackdrop) {
+            if (isMobileLayout()) {
+                detailBackdrop.classList.add('open');
+            } else {
+                detailBackdrop.classList.remove('open');
+            }
+        }
+        scheduleCalendarResize();
+    }
+
+    function closeDetailPanel() {
+        detailPanel.classList.remove('open');
+        if (detailBackdrop) {
+            detailBackdrop.classList.remove('open');
+        }
+        calendarContainer.classList.remove('detail-open');
+        scheduleCalendarResize();
+    }
+
+    function updateStats(events) {
+        const totalEl = document.getElementById('stat-total');
+        const upcomingEl = document.getElementById('stat-upcoming');
+        const progressEl = document.getElementById('stat-progress');
+        const completedEl = document.getElementById('stat-completed');
+
+        if (!totalEl || !upcomingEl || !progressEl || !completedEl) {
+            return;
+        }
+
+        const now = new Date();
+        const upcoming = events.filter(event => event.start && new Date(event.start) >= now).length;
+        const completed = events.filter(event => (event.status || event.extendedProps?.status) === 'completed').length;
+        const inProgress = events.filter(event => (event.status || event.extendedProps?.status) === 'in_progress').length;
+
+        totalEl.textContent = events.length;
+        upcomingEl.textContent = upcoming;
+        progressEl.textContent = inProgress;
+        completedEl.textContent = completed;
+    }
+
+    // Mini calendar & filters helpers (copy from advanced template)
+    const viewButtons = document.querySelectorAll('.view-mode-btn');
+    viewButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const view = button.dataset.view;
+            viewButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            if (calendar) {
+                calendar.changeView(view);
+                localStorage.setItem('coordinationCalendarView', view);
+            }
+        });
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+        calendar?.prev();
+        scheduleCalendarResize();
+    });
+    document.getElementById('nextBtn').addEventListener('click', () => {
+        calendar?.next();
+        scheduleCalendarResize();
+    });
+    document.getElementById('todayBtn').addEventListener('click', () => {
+        calendar?.today();
+        scheduleCalendarResize();
+    });
+
+    if (toggleSidebarBtn) {
+        toggleSidebarBtn.addEventListener('click', () => {
+            sidebarCollapsed = !sidebarCollapsed;
+            applySidebarState();
+        });
+    }
+
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', () => {
+            sidebarCollapsed = true;
+            applySidebarState();
+        });
+    }
+
+    if (sidebarBackdrop) {
+        sidebarBackdrop.addEventListener('click', () => {
+            if (!isMobileLayout()) {
+                return;
+            }
+            sidebarCollapsed = true;
+            applySidebarState();
+        });
+    }
+
+    if (detailBackdrop) {
+        detailBackdrop.addEventListener('click', closeDetailPanel);
+    }
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            closeDetailPanel();
+        }
+    });
+
+    document.querySelectorAll('.event-legend-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', event => {
+            const workType = event.target.dataset.workType;
+            activeFilters[workType] = event.target.checked;
+            calendar?.refetchEvents();
+        });
+    });
+
+    document.querySelector('[data-filter-type="completed"]').addEventListener('change', event => {
+        activeFilters.completed = event.target.checked;
+        calendar?.refetchEvents();
+    });
+
+    function updateMiniCalendar() {
+        const currentView = calendar?.view;
+        if (!currentView) return;
+
+        const currentDate = calendar?.getDate();
+        if (currentDate) {
+            miniCalendarDate = new Date(currentDate);
+        }
+
+        const titleEl = document.getElementById('miniCalendarTitle');
+        if (titleEl) {
+            titleEl.textContent = miniCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        }
+
+        const gridEl = document.getElementById('miniCalendarGrid');
+        if (!gridEl) return;
+        gridEl.innerHTML = '';
+
+        const startOfMonth = new Date(miniCalendarDate.getFullYear(), miniCalendarDate.getMonth(), 1);
+        const startDay = startOfMonth.getDay();
+        const firstDate = new Date(startOfMonth);
+        firstDate.setDate(firstDate.getDate() - startDay);
+
+        const fragment = document.createDocumentFragment();
+
+        ['S','M','T','W','T','F','S'].forEach(day => {
+            const header = document.createElement('div');
+            header.textContent = day;
+            header.className = 'mini-calendar-day header';
+            fragment.appendChild(header);
+        });
+
+        for (let i = 0; i < 42; i++) {
+            const date = new Date(firstDate);
+            date.setDate(firstDate.getDate() + i);
+
+            const cell = document.createElement('div');
+            cell.textContent = date.getDate();
+            cell.className = 'mini-calendar-day';
+
+            if (date.getMonth() !== miniCalendarDate.getMonth()) {
+                cell.classList.add('other-month');
+            }
+
+            if (isSameDate(date, new Date())) {
+                cell.classList.add('today');
+            }
+
+            if (isSameDate(date, selectedDate)) {
+                cell.classList.add('selected');
+            }
+
+            cell.addEventListener('click', () => {
+                selectedDate = new Date(date);
+                calendar?.gotoDate(selectedDate);
+                updateMiniCalendar();
+            });
+
+            fragment.appendChild(cell);
+        }
+
+        gridEl.appendChild(fragment);
+    }
+
+    document.getElementById('miniPrevMonth').addEventListener('click', () => {
+        miniCalendarDate.setMonth(miniCalendarDate.getMonth() - 1);
+        updateMiniCalendar();
+    });
+
+    document.getElementById('miniNextMonth').addEventListener('click', () => {
+        miniCalendarDate.setMonth(miniCalendarDate.getMonth() + 1);
+        updateMiniCalendar();
+    });
+
+    function isSameDate(a, b) {
+        return a.getFullYear() === b.getFullYear()
+            && a.getMonth() === b.getMonth()
+            && a.getDate() === b.getDate();
+    }
+
+    // Initial load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            requestAnimationFrame(() => {
+                initCalendar();
+                updateMiniCalendar();
+            });
+        });
+    } else {
+        requestAnimationFrame(() => {
+            initCalendar();
+            updateMiniCalendar();
+        });
+    }
+
+    document.body.addEventListener('htmx:afterSwap', event => {
+        if (event.detail.target.id === 'detailPanelBody') {
+            htmx.process(event.detail.target);
+        }
+    });
+
+    document.body.addEventListener('calendarRefresh', () => {
+        calendar?.refetchEvents();
+    });
+
+    document.body.addEventListener('showToast', event => {
+        const detail = event.detail || event.value || {};
+        showToast(detail.message || 'Action completed', detail.level || 'info');
+    });
+
+    function showToast(message, level = 'info') {
+        if (window.showToast && window.showToast !== showToast) {
+            window.showToast(message, level);
+            return;
+        }
+
+        const container = document.getElementById('coordination-toast-container') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `
+            flex items-start gap-3 p-4 rounded-lg shadow-lg mb-3 transform transition-all duration-300
+            ${level === 'success' ? 'bg-emerald-50 border border-emerald-200' : ''}
+            ${level === 'error' ? 'bg-red-50 border border-red-200' : ''}
+            ${level === 'warning' ? 'bg-amber-50 border border-amber-200' : ''}
+            ${level === 'info' ? 'bg-blue-50 border border-blue-200' : ''}
+        `;
+
+        const icon = {
+            success: 'fa-check-circle text-emerald-600',
+            error: 'fa-exclamation-circle text-red-600',
+            warning: 'fa-exclamation-triangle text-amber-600',
+            info: 'fa-info-circle text-blue-600'
+        }[level] || 'fa-info-circle text-blue-600';
+
+        toast.innerHTML = `
+            <i class="fas ${icon} mt-0.5"></i>
+            <p class="flex-1 text-sm font-medium text-gray-800">${message}</p>
+            <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.id = 'coordination-toast-container';
+        container.className = 'fixed top-24 right-4 z-50 max-w-md space-y-2';
+        document.body.appendChild(container);
+        return container;
+    }
+
+    window.debugCoordinationCalendar = function() {
+        console.log('Coordination calendar state:', {
+            view: window.calendar?.view?.type,
+            events: window.calendar?.getEvents()?.length,
+            filters: activeFilters
+        });
+    };
+})();
+</script>

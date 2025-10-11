@@ -1964,6 +1964,17 @@ def oobc_initiatives_dashboard(request):
         "current_year": current_year,
     }
 
+    if request.GET.get("partial") == "tree":
+        partial_context = {
+            "work_items": root_work_items,
+            "work_item_create_url": work_item_create_url,
+        }
+        return render(
+            request,
+            "work_items/partials/tree_wrapper.html",
+            partial_context,
+        )
+
     return render(request, "monitoring/oobc_initiatives_dashboard.html", context)
 
 

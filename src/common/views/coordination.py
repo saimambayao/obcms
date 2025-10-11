@@ -4,7 +4,6 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.urls import reverse
 from django.template.loader import render_to_string
-import json
 
 from coordination.views import (
     coordination_note_activity_options as _coordination_note_activity_options,
@@ -562,9 +561,7 @@ def coordination_events(request):
     calendar_feed_url = f"{reverse('common:work_items_calendar_feed')}?type=activity"
 
     root_queryset = (
-        activities_qs.filter(level=0)
-        .annotate(children_count=Count("children"))
-        .order_by("tree_id", "lft")
+        activities_qs.annotate(children_count=Count("children")).order_by("tree_id", "lft")
     )
 
     activities_tree_html = render_to_string(
@@ -582,34 +579,7 @@ def coordination_events(request):
         request=request,
     )
 
-    calendar_widget_html = render_to_string(
-        "components/calendar_widget.html",
-        {
-            "calendar_id": "coordinationActivitiesCalendar",
-            "events_endpoint": calendar_feed_url,
-            "show_sidebar": True,
-            "calendar_height": "560px",
-            "enable_event_creation": False,
-            "enable_drag_drop": False,
-            "default_view": "dayGridMonth",
-            "show_completed_filter": True,
-            "event_types": json.dumps([
-                {
-                    "value": "activity",
-                    "label": "Coordination Activities",
-                    "icon": "fa-handshake",
-                    "color": "#10b981",
-                },
-                {
-                    "value": "sub_activity",
-                    "label": "Sub-Activities",
-                    "icon": "fa-calendar-day",
-                    "color": "#0ea5e9",
-                },
-            ]),
-        },
-        request=request,
-    )
+    calendar_fetch_url = calendar_feed_url
 
     context = {
         "activities": activities,
@@ -627,8 +597,8 @@ def coordination_events(request):
         "total_coordination_count": stats["total_coordination"],
         "total_participants_count": stats["total_participants"],
         "quick_actions": quick_actions,
-        "calendar_widget_html": calendar_widget_html,
         "activities_tree_html": activities_tree_html,
+        "calendar_fetch_url": calendar_fetch_url,
     }
     return render(request, "coordination/coordination_events.html", context)
 

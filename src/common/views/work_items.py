@@ -1237,6 +1237,7 @@ def work_item_sidebar_create(request):
         '/monitoring/oobc-initiatives/' in path_context
         or request.GET.get('oobc_dashboard') == '1'
     )
+    is_oobc_advanced_calendar = '/oobc-management/calendar/advanced-modern/' in path_context
     is_staff_profile = '/staff/profiles/' in path_context or '/profile/' in path_context
     is_ppa_page = (
         '/monitoring/entry/' in path_context
@@ -1271,7 +1272,7 @@ def work_item_sidebar_create(request):
         or Organization.objects.filter(acronym__iexact="OOBC").first()
     )
     auto_assign_oobc = bool(
-        (is_work_items_tree or is_oobc_dashboard)
+        (is_work_items_tree or is_oobc_dashboard or is_oobc_advanced_calendar)
         and not is_moa_page
         and not is_ppa_page
         and oobc_org
@@ -1301,8 +1302,7 @@ def work_item_sidebar_create(request):
     oobc_ppa_queryset = MonitoringEntry.objects.none()
     if auto_assign_oobc:
         oobc_ppa_queryset = MonitoringEntry.objects.filter(
-            category="moa_ppa",
-            implementing_moa=oobc_org,
+            Q(category="oobc_ppa") | Q(category="moa_ppa", implementing_moa=oobc_org),
         ).order_by("title")
 
     # Surface PPA options for auto-assigned OOBC context or when MOA was resolved indirectly
