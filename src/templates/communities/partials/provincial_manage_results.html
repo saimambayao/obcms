@@ -1,12 +1,3 @@
 {% load humanize %}
 
-{% include "components/data_table_card.html" with
-    title="Provincial OBC Registry"
-    icon_class="fas fa-layer-group"
-    accent_class="bg-gradient-to-r from-blue-600 via-indigo-500 to-emerald-500"
-    headers=province_table_headers
-    rows=province_table_rows
-    show_actions=True
-    header_template="communities/partials/provincial_table_header_controls.html"
-    footer_template="communities/partials/provincial_table_pagination.html"
-    empty_message=province_table_empty_message %}
+{% include "components/data_table_card.html" with title="Provincial OBC Registry" icon_class="fas fa-layer-group" accent_class="bg-gradient-to-r from-blue-600 via-indigo-500 to-emerald-500" headers=province_table_headers rows=province_table_rows show_actions=can_manage_communities header_template="communities/partials/provincial_table_header_controls.html" footer_template="communities/partials/provincial_table_pagination.html" empty_message=province_table_empty_message %}

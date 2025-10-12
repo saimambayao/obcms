@@ -1,4 +1,4 @@
-# OBC Management System
+# OBC Management System (OBCMS)
 
 **Other Bangsamoro Communities Management System**
 
@@ -48,7 +48,7 @@ OBCMS digitalizes OOBC's core mandates:
 
 ## Technology Stack
 
-- **Backend**: Django 4.2+, Django REST Framework, Celery
+- **Backend**: Django 5.2+, Django REST Framework, Celery
 - **Database**: SQLite for development, PostgreSQL for production (via `DATABASE_URL`)
 - **Frontend**: Django templates, Tailwind CSS, Alpine.js, HTMX for instant UI interactions
 - **Background & Realtime**: Redis-backed Celery workers, task queues integrated with WorkItems

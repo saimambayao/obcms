@@ -34,14 +34,7 @@
         </div>
     </div>
 
-    {% include "components/data_table_card.html" with
-        title="Barangay OBC Registry"
-        icon_class="fas fa-list"
-        accent_class="bg-gradient-to-r from-emerald-500 to-emerald-600"
-        headers=barangay_table.headers
-        rows=barangay_table.rows
-        show_actions=barangay_table.show_actions
-        empty_message="No barangay OBC records match the current filters." %}
+    {% include "components/data_table_card.html" with title="Barangay OBC Registry" icon_class="fas fa-list" accent_class="bg-gradient-to-r from-emerald-500 to-emerald-600" headers=barangay_table.headers rows=barangay_table.rows show_actions=barangay_table.show_actions empty_message="No barangay OBC records match the current filters." %}
 
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div class="inline-flex items-center gap-2">

@@ -29,13 +29,7 @@
         </div>
     </div>
 
-    {% include "components/data_table_card.html" with
-        title="Municipal OBC Directory"
-        icon_class="fas fa-city"
-        accent_class="bg-gradient-to-r from-indigo-500 to-indigo-600"
-        headers=table.headers
-        rows=table.rows
-        empty_message="No municipal OBC records match the current filters." %}
+    {% include "components/data_table_card.html" with title="Municipal OBC Directory" icon_class="fas fa-city" accent_class="bg-gradient-to-r from-indigo-500 to-indigo-600" headers=table.headers rows=table.rows show_actions=table.show_actions empty_message="No municipal OBC records match the current filters." %}
 
     <div class="bg-white border border-gray-200 rounded-2xl shadow-sm px-6 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div class="text-sm text-gray-600">

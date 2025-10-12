@@ -363,6 +363,19 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [Stat Card Implementation Tracker](improvements/ui/STATCARD_IMPLEMENTATION_TRACKER.md) 🚧 **In Progress (3/15 Complete)**
   - [Stat Card Implementation Progress](improvements/ui/STATCARD_IMPLEMENTATION_PROGRESS.md) 📊 **20% Complete**
 
+- **Database Tables Presentation:** 🗂️ **NEW - OBC Database Table Documentation**
+  - [OBC Database Tables Presentation](ui/databases/OBC_DATABASE_TABLES_PRESENTATION.md) ⭐ **Complete Reference Guide**
+    - Barangay, Municipal, and Provincial OBC table structures
+    - Column width analysis and distribution recommendations
+    - Responsive design patterns and mobile layout strategies
+    - Recent improvements (dead code removal, typography enhancements)
+    - Action buttons implementation and consistency standards
+    - Step-by-step implementation guide for column width improvements
+    - Recommended width distributions with min-width constraints
+    - Text truncation strategies for list columns
+    - Icon standardization and styling consistency
+    - Technical reference (backend views, templates, models, URL patterns)
+
 - **Calendar Architecture & Fixes:** 🆕 **NEW - Clean Architecture for FullCalendar v6**
   - [Calendar Architecture Clean](improvements/UI/CALENDAR_ARCHITECTURE_CLEAN.md) ⭐ **START HERE - Complete Architecture Guide**
   - [Calendar Architecture Diagrams](improvements/UI/CALENDAR_ARCHITECTURE_DIAGRAMS.md) 📊 **Visual Layout Diagrams**
@@ -591,6 +604,7 @@ docs/
 │   └── tests/                    # Unit, component, integration, performance, and E2E plans
 ├── testing/                      # Testing guides & verification
 └── ui/                          # UI/UX design documentation
+    └── databases/                # Database table presentation documentation
 ```
 
 ---

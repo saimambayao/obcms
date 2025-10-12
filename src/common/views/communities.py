@@ -232,7 +232,6 @@ def _build_barangay_table(communities_page, *, can_manage: bool) -> dict:
         {"label": "Community"},
         {"label": "Location"},
         {"label": "Coverage Snapshot"},
-        {"label": "Ethnolinguistic & Languages"},
     ]
 
     rows: list[dict] = []
@@ -270,14 +269,14 @@ def _build_barangay_table(communities_page, *, can_manage: bool) -> dict:
                 municipality.name if municipality else "—",
             ),
             format_html(
-                "<div class='text-xs text-gray-500'>{}</div>",
+                "<div class='text-base font-medium text-gray-700'>{}</div>",
                 province.name if province else "—",
             ),
         ]
         if region:
             location_lines.append(
                 format_html(
-                    "<div class='text-xs text-gray-400'>Region {} &middot; {}</div>",
+                    "<div class='text-base text-gray-600'>Region {} &middot; {}</div>",
                     region.code or "—",
                     region.name,
                 )
@@ -297,66 +296,12 @@ def _build_barangay_table(communities_page, *, can_manage: bool) -> dict:
             _format_stat_value(getattr(community, "stakeholder_count", 0), default="0"),
         )
 
-        chips: list = []
-        if community.primary_ethnolinguistic_group:
-            chips.append(
-                format_html(
-                    "<span class='inline-flex items-center px-2.5 py-0.5 rounded-full "
-                    "text-xs font-semibold bg-purple-100 text-purple-700'>"
-                    "{}"
-                    "</span>",
-                    community.get_primary_ethnolinguistic_group_display(),
-                )
-            )
-        else:
-            chips.append(
-                format_html(
-                    "<span class='inline-flex items-center px-2.5 py-0.5 rounded-full "
-                    "text-xs font-semibold bg-gray-100 text-gray-600'>Not specified</span>"
-                )
-            )
-
-        ethno_rows = [mark_safe("".join(chips))]
-
-        if community.other_ethnolinguistic_groups:
-            ethno_rows.append(
-                format_html(
-                    "<div class='text-xs text-gray-500'>"
-                    "<span class='font-semibold'>Other groups:</span> {}"
-                    "</div>",
-                    community.other_ethnolinguistic_groups,
-                )
-            )
-
-        if getattr(community, "primary_language", None):
-            ethno_rows.append(
-                format_html(
-                    "<div class='text-xs text-gray-500'>"
-                    "<span class='font-semibold'>Primary language:</span> {}"
-                    "</div>",
-                    community.primary_language,
-                )
-            )
-
-        if community.languages_spoken:
-            ethno_rows.append(
-                format_html(
-                    "<div class='text-xs text-gray-500'>"
-                    "<span class='font-semibold'>Languages:</span> {}"
-                    "</div>",
-                    community.languages_spoken,
-                )
-            )
-
-        ethno_html = mark_safe("".join(str(row) for row in ethno_rows))
-
         rows.append(
             {
                 "cells": [
                     {"content": community_html},
                     {"content": location_html},
                     {"content": snapshot_html},
-                    {"content": ethno_html},
                 ],
                 "view_url": reverse("common:communities_view", args=[community.id]),
                 "edit_url": reverse("common:communities_edit", args=[community.id]),
@@ -1184,21 +1129,27 @@ def communities_manage_municipal(request):
     paginator = Paginator(coverages, page_size)
     coverages_page = paginator.get_page(page_number)
 
-    def _format_municipal_date(value):
-        if not value:
-            return "—"
-        try:
-            localized = timezone.localtime(value)
-        except Exception:  # pragma: no cover - fallback when timezone conversion fails
-            localized = value
-        return localized.strftime("%b %d, %Y")
-
     municipality_table_headers = [
-        {"label": "Municipality / City"},
-        {"label": "Province & Region"},
-        {"label": "Coverage Snapshot"},
-        {"label": "Sync Mode"},
-        {"label": "Last Updated"},
+        {
+            "label": "Municipality / City",
+            "width": "w-[18%] min-w-[180px]",
+        },
+        {
+            "label": "Province & Region",
+            "width": "w-[15%] min-w-[150px] hidden md:table-cell",
+        },
+        {
+            "label": "Coverage Snapshot",
+            "width": "w-[22%] min-w-[200px] hidden lg:table-cell",
+        },
+        {
+            "label": "Top 5 Barangays",
+            "width": "w-1/4 min-w-[220px] hidden xl:table-cell",
+        },
+        {
+            "label": "Sync Mode",
+            "width": "w-[12%] min-w-[120px] hidden md:table-cell",
+        },
     ]
 
     municipality_table_rows: list[dict] = []
@@ -1265,19 +1216,21 @@ def communities_manage_municipal(request):
                 intcomma(households),
             ),
         ]
-        if getattr(coverage, "key_barangays", ""):
-            snapshot_parts.append(
-                format_html(
-                    "<div class='text-xs text-gray-500'>"
-                    "<span class='font-semibold text-gray-700'>Key Barangays:</span> {}"
-                    "</div>",
-                    coverage.key_barangays,
-                )
-            )
         snapshot_html = format_html(
             "<div class='space-y-1'>{}</div>",
             format_html_join("", "{}", ((part,) for part in snapshot_parts)),
         )
+
+        # Top 5 Barangays column
+        if getattr(coverage, "key_barangays", ""):
+            key_barangays_html = format_html(
+                "<div class='text-sm text-gray-700'>{}</div>",
+                coverage.key_barangays,
+            )
+        else:
+            key_barangays_html = format_html(
+                "<div class='text-sm text-gray-400'>—</div>"
+            )
 
         if coverage.auto_sync:
             sync_html = format_html(
@@ -1295,15 +1248,6 @@ def communities_manage_municipal(request):
                 "<span>Manual</span>"
                 "</span>"
             )
-
-        history_html = format_html(
-            "<div class='space-y-1 text-xs text-gray-500'>"
-            "<div>Updated {}</div>"
-            "<div>Created {}</div>"
-            "</div>",
-            _format_municipal_date(getattr(coverage, "updated_at", None)),
-            _format_municipal_date(getattr(coverage, "created_at", None)),
-        )
 
         view_url_base = reverse("common:communities_view_municipal", args=[coverage.pk])
         view_url = f"{view_url_base}?archived=1" if show_archived else view_url_base
@@ -1329,11 +1273,11 @@ def communities_manage_municipal(request):
 
         row = {
             "cells": [
-                {"content": municipality_html},
-                {"content": province_html},
-                {"content": snapshot_html},
-                {"content": sync_html},
-                {"content": history_html},
+                {"content": municipality_html, "class": "w-[18%] min-w-[180px]"},
+                {"content": province_html, "class": "w-[15%] min-w-[150px] hidden md:block"},
+                {"content": snapshot_html, "class": "w-[22%] min-w-[200px] hidden lg:block"},
+                {"content": key_barangays_html, "class": "w-1/4 min-w-[220px] hidden xl:block"},
+                {"content": sync_html, "class": "w-[12%] min-w-[120px] hidden md:block"},
             ],
             "view_url": view_url,
         }
@@ -1377,6 +1321,7 @@ def communities_manage_municipal(request):
         "municipality_table": {
             "headers": municipality_table_headers,
             "rows": municipality_table_rows,
+            "show_actions": can_manage_communities,
         },
     }
     template_name = "communities/municipal_manage.html"
@@ -1662,11 +1607,11 @@ def communities_manage_provincial(request):
         )
 
     province_table_headers = [
-        {"label": "Province"},
-        {"label": "Region"},
-        {"label": "Coverage Snapshot"},
-        {"label": "Sync Status"},
-        {"label": "Timeline"},
+        {"label": "Province", "width": "w-[18%] min-w-[180px]"},
+        {"label": "Region", "width": "w-[12%] min-w-[120px] hidden md:table-cell"},
+        {"label": "Coverage Snapshot", "width": "w-[22%] min-w-[200px] hidden md:table-cell"},
+        {"label": "Top 5 Municipalities/Cities", "width": "w-[28%] min-w-[240px] hidden md:table-cell"},
+        {"label": "Sync Mode", "width": "w-[12%] min-w-[120px] hidden md:table-cell"},
     ]
 
     province_table_rows: list[dict] = []
@@ -1733,65 +1678,40 @@ def communities_manage_provincial(request):
             ),
         ]
 
-        if getattr(coverage, "key_municipalities", ""):
-            snapshot_parts.append(
-                format_html(
-                    "<div class='pt-3 text-xs text-gray-500 border-t border-gray-100'>"
-                    "<span class='font-semibold text-gray-700'>Key municipalities:</span> {}"
-                    "</div>",
-                    coverage.key_municipalities,
-                )
-            )
-
         snapshot_html = format_html(
             "<div class='space-y-1'>{}</div>",
             format_html_join("", "{}", ((part,) for part in snapshot_parts)),
         )
 
-        status_badges = []
-        if getattr(coverage, "is_submitted", False):
-            status_badges.append(
+        # Top 5 Municipalities/Cities column
+        if getattr(coverage, "key_municipalities", ""):
+            key_municipalities_html = format_html(
+                "<div class='text-sm text-gray-700 truncate' title='{}'>{}</div>",
+                coverage.key_municipalities,  # Full text in tooltip
+                coverage.key_municipalities,
+            )
+        else:
+            key_municipalities_html = format_html(
+                "<div class='text-sm text-gray-400'>—</div>"
+            )
+
+        # Sync Mode column (consistent with Municipal table)
+        if coverage.auto_sync:
+            sync_mode_html = format_html(
                 "<span class='inline-flex items-center gap-1 rounded-full border border-emerald-200 "
                 "bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700'>"
-                "<i class='fas fa-check-circle'></i>"
-                "<span>Submitted</span>"
-                "</span>"
-            )
-        if coverage.auto_sync:
-            status_badges.append(
-                "<span class='inline-flex items-center gap-1 rounded-full border border-blue-200 "
-                "bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700'>"
                 "<i class='fas fa-sync'></i>"
                 "<span>Auto-sync</span>"
                 "</span>"
             )
         else:
-            status_badges.append(
+            sync_mode_html = format_html(
                 "<span class='inline-flex items-center gap-1 rounded-full border border-amber-200 "
                 "bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700'>"
                 "<i class='fas fa-hand-paper'></i>"
-                "<span>Manual updates</span>"
+                "<span>Manual</span>"
                 "</span>"
             )
-        status_html = format_html(
-            "<div class='flex flex-col gap-1'>{}</div>",
-            mark_safe("".join(status_badges)),
-        )
-
-        timeline_segments = [
-            _format_timestamp_metadata(
-                getattr(coverage, "updated_at", None),
-                getattr(coverage, "updated_by", None),
-            ),
-            _format_timestamp_metadata(
-                getattr(coverage, "created_at", None),
-                getattr(coverage, "created_by", None),
-            ),
-        ]
-        timeline_html = format_html(
-            "<div class='space-y-1'>{}</div>",
-            format_html_join("", "{}", ((segment,) for segment in timeline_segments)),
-        )
 
         view_url_base = reverse(
             "common:communities_view_provincial", args=[coverage.pk]
@@ -1820,11 +1740,11 @@ def communities_manage_provincial(request):
 
         row = {
             "cells": [
-                {"content": province_html},
-                {"content": region_html},
-                {"content": snapshot_html},
-                {"content": status_html},
-                {"content": timeline_html},
+                {"content": province_html, "class": "w-[18%] min-w-[180px]"},
+                {"content": region_html, "class": "w-[12%] min-w-[120px] hidden md:table-cell"},
+                {"content": snapshot_html, "class": "w-[22%] min-w-[200px] hidden md:table-cell"},
+                {"content": key_municipalities_html, "class": "w-[28%] min-w-[240px] hidden md:table-cell"},
+                {"content": sync_mode_html, "class": "w-[12%] min-w-[120px] hidden md:table-cell"},
             ],
             "view_url": view_url,
         }
