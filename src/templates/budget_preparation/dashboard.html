@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Budget Preparation Dashboard - OBCMS{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a></li>
+<li class="text-neutral-800 font-semibold">Budget Preparation</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Page Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Budget Preparation</h1>
+                <p class="mt-2 text-lg text-gray-600">
+                    Manage budget proposals for FY {{ current_year }}
+                </p>
+            </div>
+            <a href="{% url 'budget_preparation:proposal_create' %}"
+               class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <i class="fas fa-plus mr-2"></i>
+                New Proposal
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Proposals Card -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+             style="background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);">
+            <div class="flex items-center justify-between mb-4">
+                <div class="bg-blue-100 p-3 rounded-xl">
+                    <i class="fas fa-file-invoice text-blue-600 text-xl"></i>
+                </div>
+                <span class="text-3xl font-bold text-gray-900">{{ total_proposals }}</span>
+            </div>
+            <h3 class="text-sm font-medium text-gray-600 mb-1">Total Proposals</h3>
+            <div class="flex items-center text-xs text-gray-500">
+                <i class="fas fa-chart-line mr-1"></i>
+                All time
+            </div>
+        </div>
+
+        <!-- Draft Proposals Card -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+             style="background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);">
+            <div class="flex items-center justify-between mb-4">
+                <div class="bg-yellow-100 p-3 rounded-xl">
+                    <i class="fas fa-edit text-yellow-600 text-xl"></i>
+                </div>
+                <span class="text-3xl font-bold text-gray-900">{{ draft_proposals }}</span>
+            </div>
+            <h3 class="text-sm font-medium text-gray-600 mb-1">Draft Proposals</h3>
+            <div class="flex items-center text-xs text-gray-500">
+                <i class="fas fa-pencil-alt mr-1"></i>
+                In progress
+            </div>
+        </div>
+
+        <!-- Submitted Proposals Card -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+             style="background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);">
+            <div class="flex items-center justify-between mb-4">
+                <div class="bg-orange-100 p-3 rounded-xl">
+                    <i class="fas fa-paper-plane text-orange-600 text-xl"></i>
+                </div>
+                <span class="text-3xl font-bold text-gray-900">{{ submitted_proposals }}</span>
+            </div>
+            <h3 class="text-sm font-medium text-gray-600 mb-1">Submitted</h3>
+            <div class="flex items-center text-xs text-gray-500">
+                <i class="fas fa-clock mr-1"></i>
+                Under review
+            </div>
+        </div>
+
+        <!-- Approved Proposals Card -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+             style="background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);">
+            <div class="flex items-center justify-between mb-4">
+                <div class="bg-emerald-100 p-3 rounded-xl">
+                    <i class="fas fa-check-circle text-emerald-600 text-xl"></i>
+                </div>
+                <span class="text-3xl font-bold text-gray-900">{{ approved_proposals }}</span>
+            </div>
+            <h3 class="text-sm font-medium text-gray-600 mb-1">Approved</h3>
+            <div class="flex items-center text-xs text-gray-500">
+                <i class="fas fa-thumbs-up mr-1"></i>
+                Completed
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Recent Proposals (2/3 width) -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-clock text-blue-500 mr-2"></i>
+                        Recent Proposals
+                    </h2>
+                    <a href="{% url 'budget_preparation:proposal_list' %}"
+                       class="text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                        View All
+                        <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+
+                {% if recent_proposals %}
+                <div class="space-y-3">
+                    {% for proposal in recent_proposals %}
+                    <a href="{% url 'budget_preparation:proposal_detail' proposal.pk %}"
+                       class="block p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="text-sm font-semibold text-gray-900">FY {{ proposal.fiscal_year }}</span>
+                                    {% if proposal.status == 'draft' %}
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">Draft</span>
+                                    {% elif proposal.status == 'submitted' %}
+                                    <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-medium rounded-full">Submitted</span>
+                                    {% elif proposal.status == 'under_review' %}
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">Under Review</span>
+                                    {% elif proposal.status == 'approved' %}
+                                    <span class="px-2 py-1 bg-emerald-100 text-emerald-800 text-xs font-medium rounded-full">Approved</span>
+                                    {% elif proposal.status == 'rejected' %}
+                                    <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">Rejected</span>
+                                    {% endif %}
+                                </div>
+                                <h3 class="text-base font-semibold text-gray-900 mb-1">{{ proposal.title }}</h3>
+                                <p class="text-sm text-gray-600 mb-2">{{ proposal.description|truncatewords:20 }}</p>
+                                <div class="flex items-center text-xs text-gray-500">
+                                    <i class="fas fa-user mr-1"></i>
+                                    {{ proposal.submitted_by.get_full_name|default:proposal.submitted_by.username }}
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-calendar mr-1"></i>
+                                    {{ proposal.updated_at|date:"M d, Y" }}
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-lg font-bold text-emerald-600">
+                                    ₱{{ proposal.total_proposed_budget|floatformat:2 }}
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    {{ proposal.program_budgets.count }} program{{ proposal.program_budgets.count|pluralize }}
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12 text-gray-500">
+                    <i class="fas fa-inbox text-6xl mb-4 text-gray-300"></i>
+                    <p class="text-lg font-medium mb-2">No proposals yet</p>
+                    <p class="text-sm mb-4">Get started by creating your first budget proposal</p>
+                    <a href="{% url 'budget_preparation:proposal_create' %}"
+                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200">
+                        <i class="fas fa-plus mr-2"></i>
+                        Create Proposal
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Budget by Year (1/3 width) -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-chart-bar text-emerald-500 mr-2"></i>
+                    Approved Budgets
+                </h2>
+
+                {% if budget_by_year %}
+                <div class="space-y-4">
+                    {% for item in budget_by_year %}
+                    <div class="border-l-4 border-emerald-500 pl-4 py-2">
+                        <div class="text-sm font-medium text-gray-600 mb-1">FY {{ item.fiscal_year }}</div>
+                        <div class="text-xl font-bold text-gray-900">
+                            ₱{{ item.total|floatformat:2 }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-chart-line text-4xl mb-3 text-gray-300"></i>
+                    <p class="text-sm">No approved budgets yet</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm mt-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h2>
+                <div class="space-y-2">
+                    <a href="{% url 'budget_preparation:proposal_list' %}"
+                       class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                        <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                            <i class="fas fa-list text-blue-600"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">View All Proposals</span>
+                    </a>
+                    <a href="{% url 'budget_preparation:proposal_create' %}"
+                       class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                        <div class="bg-emerald-100 p-2 rounded-lg mr-3">
+                            <i class="fas fa-plus text-emerald-600"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">New Proposal</span>
+                    </a>
+                    <a href="{% url 'planning:dashboard' %}"
+                       class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                        <div class="bg-purple-100 p-2 rounded-lg mr-3">
+                            <i class="fas fa-map-marked-alt text-purple-600"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">Planning Module</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

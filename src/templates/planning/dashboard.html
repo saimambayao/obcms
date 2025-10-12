@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Planning Dashboard - OOBC Management{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:oobc_home' %}" class="text-blue-600 hover:text-blue-800">
+        <i class="fas fa-home"></i>
+    </a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <span class="text-gray-700">Planning Dashboard</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    {# Page Header #}
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            <i class="fas fa-bullseye text-blue-600 mr-3"></i>
+            Planning Dashboard
+        </h1>
+        <p class="text-gray-600">
+            Strategic and annual planning for OOBC operations
+        </p>
+    </div>
+
+    {# Statistics Cards - 3D Milk White Style #}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+        {# Total Plans #}
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <div class="relative p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total Plans</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.total_plans|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-bullseye text-2xl text-amber-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Active Plans #}
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <div class="relative p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Active Plans</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.active_plans|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-check-circle text-2xl text-emerald-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Strategic Goals with Breakdown #}
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Strategic Goals</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.total_goals|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-flag text-2xl text-blue-600"></i>
+                    </div>
+                </div>
+
+                <div class="flex-grow"></div>
+
+                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ stats.completed_goals|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">Completed</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ stats.in_progress_goals|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">In Progress</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Annual Plans #}
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <div class="relative p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Annual Plans</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.annual_plans|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-calendar-alt text-2xl text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {# Quick Action Cards #}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <a href="{% url 'planning:strategic_create' %}"
+           class="block bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+            <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center">
+                    <i class="fas fa-plus text-white text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
+                        Create Strategic Plan
+                    </h3>
+                    <p class="text-sm text-gray-600">
+                        Start a new multi-year strategic plan for OOBC
+                    </p>
+                </div>
+                <div class="flex-shrink-0">
+                    <i class="fas fa-arrow-right text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"></i>
+                </div>
+            </div>
+        </a>
+
+        <a href="{% url 'planning:annual_list' %}"
+           class="block bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+            <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                    <i class="fas fa-calendar-alt text-white text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1 group-hover:text-purple-600 transition-colors">
+                        View Annual Work Plans
+                    </h3>
+                    <p class="text-sm text-gray-600">
+                        Manage yearly operational plans and objectives
+                    </p>
+                </div>
+                <div class="flex-shrink-0">
+                    <i class="fas fa-arrow-right text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all"></i>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {# Recent Activity Section #}
+    <div class="bg-white rounded-xl p-6 border border-gray-200">
+        <h2 class="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
+            <i class="fas fa-clock text-blue-600 mr-3"></i>
+            Recent Activity
+        </h2>
+
+        {% if recent_activity %}
+            <div class="space-y-4">
+                {% for activity in recent_activity %}
+                    <div class="flex items-start space-x-4 pb-4 border-b border-gray-200 last:border-b-0">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                            <i class="fas fa-{{ activity.icon }} text-blue-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-900 font-medium">{{ activity.description }}</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ activity.timestamp|timesince }} ago</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-inbox text-4xl text-gray-300 mb-3"></i>
+                <p>No recent activity</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

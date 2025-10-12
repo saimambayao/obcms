@@ -67,19 +67,19 @@
                             <i class="fas fa-tachometer-alt"></i>
                             <span>OBCMS Dashboard</span>
                         </a>
-                        <a href="{% url 'common:mana_new_assessment' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                        <a href="{% url 'mana:mana_new_assessment' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-plus-circle"></i>
                             <span>New Assessment</span>
                         </a>
-                        <a href="{% url 'common:mana_activity_planner' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                        <a href="{% url 'mana:mana_activity_planner' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-calendar-day"></i>
                             <span>Plan Activity</span>
                         </a>
-                        <a href="{% url 'common:mana_regional_overview' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                        <a href="{% url 'mana:mana_regional_overview' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-map"></i>
                             <span>Regional Map</span>
                         </a>
-                        <a href="{% url 'common:mana_playbook' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 backdrop-blur-sm text-white font-medium border border-white/20 hover:bg-white/20 transition-all duration-200">
+                        <a href="{% url 'mana:mana_playbook' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 backdrop-blur-sm text-white font-medium border border-white/20 hover:bg-white/20 transition-all duration-200">
                             <i class="fas fa-book"></i>
                             <span>View Playbook</span>
                         </a>
@@ -99,7 +99,7 @@
             </span>
         </div>
 
-        <div hx-get="{% url 'common:mana_stats_cards' %}"
+        <div hx-get="{% url 'mana:mana_stats_cards' %}"
              hx-trigger="load, every 60s"
              hx-swap="innerHTML swap:300ms"
              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -193,15 +193,15 @@
                 <p class="mt-1 text-sm text-gray-600">Latest assessment activities, priority needs, and baseline study progress.</p>
             </div>
             <div class="flex flex-wrap gap-3 text-sm font-medium">
-                <a href="{% url 'common:mana_manage_assessments' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                <a href="{% url 'mana:mana_manage_assessments' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
                     <i class="fas fa-list-alt"></i>
                     Manage Assessments
                 </a>
-                <a href="{% url 'common:mana_activity_planner' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                <a href="{% url 'mana:mana_activity_planner' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
                     <i class="fas fa-calendar-check"></i>
                     Activity Planner
                 </a>
-                <a href="{% url 'common:mana_playbook' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                <a href="{% url 'mana:mana_playbook' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
                     <i class="fas fa-book"></i>
                     View Playbook
                 </a>
@@ -453,7 +453,7 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {% if user.is_staff %}
-            <a href="{% url 'common:mana_new_assessment' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+            <a href="{% url 'mana:mana_new_assessment' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
                 <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-plus text-white text-xl"></i>
@@ -471,7 +471,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:mana_manage_assessments' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+            <a href="{% url 'mana:mana_manage_assessments' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
                 <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-list-alt text-white text-xl"></i>

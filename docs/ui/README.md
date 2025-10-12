@@ -2,6 +2,38 @@
 
 Comprehensive documentation for the OBCMS user interface, including reusable components, patterns, and best practices.
 
+---
+
+## 🎯 Official UI Standards
+
+**PRIMARY REFERENCE:** [OBCMS UI Standards Master Guide](OBCMS_UI_STANDARDS_MASTER.md) ⭐ **OFFICIAL**
+
+**Version:** 3.1 | **Status:** ✅ Official Standard | **Last Updated:** 2025-10-12
+
+This master guide consolidates 69+ UI documentation files into a single source of truth for all OBCMS UI/UX development.
+
+**Key Features:**
+- ✅ Complete component library with copy-paste examples
+- ✅ Blue-to-Teal gradient color system (#1e40af to #059669)
+- ✅ HTMX patterns for instant UI updates
+- ✅ WCAG 2.1 AA accessibility compliance
+- ✅ Mobile-first responsive design patterns
+- ✅ Comprehensive documentation index (69+ docs)
+
+**⚡ For AI Agents:** This is your PRIMARY reference - read BEFORE creating any UI component!
+
+**📋 [Color System Correction Summary](COLOR_SYSTEM_CORRECTION_SUMMARY.md)** - **Updated Oct 2025**
+- Documents the correction of primary colors from Ocean Blue to confirmed Blue-800
+- Verified from navbar screenshot, updated to official Bangsamoro brand colors
+
+**🔧 [Provincial Table Alignment Issues](../improvements/UI/ALIGNMENT_ISSUE_SUMMARY.md)** - **Oct 12, 2025**
+- Analysis of vertical alignment issues in provincial OBC table
+- Root cause: conflicting flexbox implementations between backend and template
+- Solution: Align with working municipal table pattern (separate icon column)
+- [Full Technical Analysis](../improvements/UI/PROVINCIAL_TABLE_VERTICAL_ALIGNMENT_ANALYSIS.md) | [Visual Guide](../improvements/UI/PROVINCIAL_TABLE_ALIGNMENT_VISUAL_GUIDE.md)
+
+---
+
 ## Overview
 
 The OBCMS UI is built with:

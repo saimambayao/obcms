@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Program Budget - OBCMS{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a></li>
+<li><a href="{% url 'budget_preparation:dashboard' %}" class="text-blue-600 hover:text-blue-800">Budget Preparation</a></li>
+<li><a href="{% url 'budget_preparation:proposal_detail' proposal.pk %}" class="text-blue-600 hover:text-blue-800">FY {{ proposal.fiscal_year }}</a></li>
+<li class="text-neutral-800 font-semibold">Delete Program</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <div class="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+
+        <!-- Warning Icon -->
+        <div class="flex justify-center mb-6">
+            <div class="bg-red-100 p-4 rounded-full">
+                <i class="fas fa-exclamation-triangle text-red-600 text-4xl"></i>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">Delete Program Budget?</h1>
+            <p class="text-gray-600">
+                This action cannot be undone
+            </p>
+        </div>
+
+        <!-- Program Info -->
+        <div class="mb-8 p-6 bg-gray-50 rounded-xl">
+            <h2 class="text-lg font-bold text-gray-900 mb-2">{{ program_budget.program.title }}</h2>
+            <p class="text-sm text-gray-600 mb-4">{{ program_budget.program.description|truncatewords:30 }}</p>
+
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <span class="text-gray-600">Allocated Amount:</span>
+                    <span class="font-semibold text-emerald-600 ml-2">₱{{ program_budget.allocated_amount|floatformat:2 }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-600">Priority:</span>
+                    <span class="font-semibold text-gray-900 ml-2">{{ program_budget.get_priority_level_display }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-600">Line Items:</span>
+                    <span class="font-semibold text-gray-900 ml-2">{{ program_budget.line_items.count }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-600">Work Plan:</span>
+                    <span class="font-semibold text-gray-900 ml-2">{{ program_budget.program.annual_work_plan.year }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warning Message -->
+        <div class="mb-8 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+            <div class="flex items-start">
+                <i class="fas fa-info-circle text-red-600 text-lg mr-3 mt-0.5"></i>
+                <div class="text-sm text-red-700">
+                    <p class="font-semibold mb-1">Warning</p>
+                    <p>Deleting this program budget will also remove:</p>
+                    <ul class="list-disc list-inside mt-2 space-y-1">
+                        <li>All budget line items ({{ program_budget.line_items.count }})</li>
+                        <li>Any associated justifications</li>
+                    </ul>
+                    <p class="mt-2">The proposal's total budget will be automatically recalculated.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Form -->
+        <form method="post" action="{% url 'budget_preparation:program_delete' program_budget.pk %}">
+            {% csrf_token %}
+
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-4">
+                <button type="submit"
+                        class="flex-1 bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors duration-200">
+                    <i class="fas fa-trash mr-2"></i>
+                    Delete Program
+                </button>
+                <a href="{% url 'budget_preparation:proposal_edit' proposal.pk %}"
+                   class="flex-1 border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-semibold text-center hover:bg-gray-50 transition-colors duration-200">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancel
+                </a>
+            </div>
+        </form>
+
+    </div>
+
+</div>
+{% endblock %}

@@ -9,7 +9,7 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:recommendations_home' %}" class="text-neutral-500 hover:text-neutral-700">Recommendations</a>
+    <a href="{% url 'policies:home' %}" class="text-neutral-500 hover:text-neutral-700">Recommendations</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">New Recommendation</li>
@@ -116,7 +116,7 @@
     </div>
 
     <!-- Main Form -->
-    <form id="recommendation-form" method="post" action="{% url 'common:recommendations_create' %}" enctype="multipart/form-data" class="max-w-5xl mx-auto">
+    <form id="recommendation-form" method="post" action="{% url 'policies:create' %}" enctype="multipart/form-data" class="max-w-5xl mx-auto">
         {% csrf_token %}
 
         <!-- STEP 1: RECOMMENDATION TYPE SELECTION -->
@@ -1454,7 +1454,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let autoSaveInterval = setInterval(function() {
         const formData = new FormData(form);
 
-        fetch('{% url "common:recommendations_autosave" %}', {
+        fetch('{% url "policies:autosave" %}', {
             method: 'POST',
             body: formData,
             headers: {
@@ -1489,7 +1489,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 alert('Draft saved successfully!');
-                window.location.href = '{% url "common:recommendations_home" %}';
+                window.location.href = '{% url "policies:home" %}';
             }
         })
         .catch(error => {

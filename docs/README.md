@@ -176,6 +176,61 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 - [OBCMS Summary](product/obcMS-summary.md)
 - [MANA Two Systems Architecture](product/mana_two_systems_architecture.md)
 
+### 🏛️ BMMS (Bangsamoro Management & Monitoring System) ⭐ **NEW - Strategic Multi-MOA Planning**
+
+**BMMS Vision:** Transform OBCMS into a comprehensive management platform serving all 29 BARMM Ministries, Offices, and Agencies (MOAs), enabling centralized oversight by the Chief Minister's Office (CMO) while maintaining strict data isolation.
+
+- **Pre-BMMS Implementation (Phase 0):** 🆕 **CRITICAL FOUNDATION**
+  - [Pre-BMMS Feature Analysis](plans/bmms/PRE_BMMS_FEATURE_ANALYSIS.md) ⭐ **Strategic Analysis - What to Build NOW**
+    - 60% of BMMS features can be implemented NOW without multi-tenancy
+    - Planning & Budgeting modules ready for OOBC (immediate value)
+    - Organization-agnostic design patterns for seamless BMMS transition
+    - URL refactoring required BEFORE new module development
+  - [Phase 0: URL Refactoring Execution Plan](plans/bmms/prebmms/PHASE_0_URL_REFACTORING.md) ⭐ **MUST COMPLETE FIRST**
+    - Fix "Monolithic Router Anti-Pattern" (847-line common/urls.py)
+    - Create clean module boundaries (communities, mana, coordination, recommendations)
+    - Move 898 template references to correct namespaces
+    - Foundation for Planning/Budgeting modules and BMMS multi-tenant routing
+    - **Priority:** CRITICAL - Required before Phase 1
+    - **Complexity:** Moderate
+
+- **Phase Reordering Analysis:** 🆕 **DECISION REQUIRED**
+  - [Phase Reordering Executive Summary](plans/bmms/PHASE_REORDERING_EXECUTIVE_SUMMARY.md) ⭐ **START HERE - Quick Decision Guide**
+    - 30-second proposal overview
+    - Impact metrics comparison (25% faster compliance, 33% faster pilot)
+    - Stakeholder impact analysis (OOBC, CMO, pilot MOAs, Parliament)
+    - Risk comparison (original vs. proposed order)
+    - Approval workflow and next steps
+  - [Phase Comparison Visual](plans/bmms/PHASE_COMPARISON_VISUAL.md) 📊 **Visual Side-by-Side Comparison**
+    - Old vs. new phase order table
+    - Timeline visualization (week-by-week)
+    - Value delivery analysis (what each phase delivers)
+    - Dependency flow diagrams
+    - Pilot MOA perspective (what they actually need)
+  - [Phase Reordering Analysis](plans/bmms/PHASE_REORDERING_ANALYSIS.md) 📖 **Comprehensive Technical Analysis**
+    - Detailed dependency analysis (all 8 phases)
+    - Technical feasibility verification (Planning/Budgeting/Coordination/CMO)
+    - Risk analysis (original vs. proposed order)
+    - Updated Section 24.2 content (ready to replace in TRANSITION_PLAN.md)
+
+- **Implementation Plans:**
+  - [BMMS Transition Plan](plans/bmms/TRANSITION_PLAN.md) 📋 **Complete 8-Phase Roadmap** (313KB)
+    - Current phase order: Foundation → Module Migration → Planning → Budgeting → Coordination → CMO → Pilot → Rollout
+    - **⚠️ Under Review:** Phase reordering proposal pending (see above)
+
+**Key Benefits:**
+- ✅ **60% of BMMS features implementable NOW** - Immediate OOBC value before BMMS
+- ✅ **Planning & Budgeting ready for OOBC** - Parliament Bill No. 325 compliance
+- ✅ **Clean architecture foundation** - Phase 0 URL refactoring required
+- ✅ **25% faster Parliament compliance** (2 weeks earlier - if phase reorder approved)
+- ✅ **33% faster pilot MOA readiness** (5 weeks earlier - if phase reorder approved)
+
+**Implementation Sequence:**
+- **Phase 0:** URL Refactoring (CRITICAL - Clean module boundaries)
+- **Phase 1:** Planning Module (OOBC strategic planning)
+- **Phase 2:** Budgeting Module (Parliament Bill No. 325)
+- **Phase 3+:** BMMS Transition (Multi-tenant architecture)
+
 ### 🔧 Improvements & Implementation
 - **System-Wide:**
   - [Directory Structure Reorganization - COMPLETE](improvements/DIRECTORY_REORGANIZATION_COMPLETE.md) 🆕 **Oct 2025 - Django Best Practices**
@@ -265,6 +320,20 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [Integration Test Scenarios](improvements/mana/integration_test_scenarios.md)
 
 ### 📊 Reports & Research
+- **BMMS Alignment Analysis:** ⭐ **NEW - PreBMMS to BMMS Strategic Assessment**
+  - [BMMS Readiness Executive Summary](reports/alignment/BMMS_READINESS_EXECUTIVE_SUMMARY.md) 🚀 **START HERE - 90% Ready**
+    - Strategic recommendation: START PHASE 1 NOW
+    - PreBMMS modules 90-95% BMMS-ready (Planning, Budget)
+    - Only 130 lines need changes (< 1% of codebase)
+    - Migration effort analysis by module
+    - Risk assessment: LOW (minimal code changes)
+  - [PreBMMS BMMS Alignment Analysis](reports/alignment/PREBMMS_BMMS_ALIGNMENT_ANALYSIS.md) 📖 **Complete Technical Analysis**
+    - Detailed BMMS-readiness assessment (all modules)
+    - Code change calculations and migration paths
+    - Strategic transition roadmap
+    - Module-by-module scorecards
+    - Phase-by-phase implementation guidance
+
 - [OBC Upgrade Proposal](reports/OBC-upgrade.md)
 - [OBC Briefing Deck](reports/OBC_briefer.md)
 - [OBC Data Overview](reports/OBCdata.md)
@@ -339,6 +408,24 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 
 ### 🎨 UI & Experience
 
+**🌟 START HERE:** [OBCMS UI Components & Standards Guide](ui/OBCMS_UI_COMPONENTS_STANDARDS.md) ⭐ **SINGLE SOURCE OF TRUTH**
+
+**This is your PRIMARY reference for ALL UI/UX development in OBCMS.**
+
+This comprehensive guide consolidates all UI standards covering:
+- Complete color system (ocean-emerald-teal-gold palette)
+- Full component library (stat cards, quick actions, forms, modals)
+- HTMX instant UI patterns and optimistic updates
+- Delete confirmation best practices
+- Calendar components (Google Calendar style)
+- Accessibility guidelines (WCAG 2.1 AA)
+- Mobile-first responsive design
+- Agent instructions for AI coding assistants
+
+**⚡ For AI Agents:** Read the master guide BEFORE creating any UI component!
+
+---
+
 - **AI Chat Widget Debugging:** 🐛 **NEW - Complete Debug Suite**
   - [AI Chat Debug Summary](ui/AI_CHAT_DEBUG_SUMMARY.md) ⭐ **START HERE - Complete Overview**
   - [AI Chat Positioning Debug Guide](ui/AI_CHAT_POSITIONING_DEBUG_GUIDE.md) 📖 **Comprehensive Troubleshooting**
@@ -375,6 +462,14 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
     - Text truncation strategies for list columns
     - Icon standardization and styling consistency
     - Technical reference (backend views, templates, models, URL patterns)
+  - **Provincial Table Vertical Alignment Fix:** 🔧 **Oct 12, 2025 - Analysis Complete**
+    - [Alignment Issue Summary](improvements/UI/ALIGNMENT_ISSUE_SUMMARY.md) ⭐ **Executive Summary**
+    - [Technical Analysis](improvements/UI/PROVINCIAL_TABLE_VERTICAL_ALIGNMENT_ANALYSIS.md) 📖 **Complete Root Cause Analysis**
+    - [Visual Diagnosis Guide](improvements/UI/PROVINCIAL_TABLE_ALIGNMENT_VISUAL_GUIDE.md) 🎨 **Before/After Diagrams**
+    - **Issue:** Short cells (1-line) float to top instead of centering vertically
+    - **Root Cause:** Conflicting flexbox between backend cell classes and template row wrapper
+    - **Solution:** Align with municipal table pattern (separate icon column, no alignment classes)
+    - **Status:** Ready for implementation
 
 - **Calendar Architecture & Fixes:** 🆕 **NEW - Clean Architecture for FullCalendar v6**
   - [Calendar Architecture Clean](improvements/UI/CALENDAR_ARCHITECTURE_CLEAN.md) ⭐ **START HERE - Complete Architecture Guide**

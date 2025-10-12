@@ -139,7 +139,7 @@
         </div>
         {% endif %}
 
-        <form hx-post="{% url 'common:coordination_event_modal' event.id %}" hx-target="#calendarModalContent" hx-swap="innerHTML" class="space-y-4">
+        <form hx-post="{% url 'coordination:event_modal' event.id %}" hx-target="#calendarModalContent" hx-swap="innerHTML" class="space-y-4">
             {% csrf_token %}
             {% if form.non_field_errors %}
             <div class="border border-rose-200 bg-rose-50 text-rose-700 text-sm rounded-xl px-4 py-2">
@@ -250,7 +250,7 @@
                 </div>
 
                 <div class="flex flex-wrap gap-3">
-                    <a href="{% url 'common:coordination_event_edit_instance' event.id %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800">
+                    <a href="{% url 'coordination:event_edit_instance' event.id %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800">
                         <i class="fas fa-external-link-alt"></i>
                         Open full editor
                     </a>
@@ -267,7 +267,7 @@
             <p class="text-xs mb-3">This action cannot be undone.</p>
             <div class="flex justify-end gap-2">
                 <button type="button" class="px-3 py-1.5 text-sm font-semibold text-gray-600 hover:text-gray-800" data-delete-cancel>Cancel</button>
-                <form hx-post="{% url 'common:coordination_event_delete' event.id %}"
+                <form hx-post="{% url 'coordination:event_delete' event.id %}"
                       hx-target="#taskModalContent"
                       hx-swap="innerHTML"
                       class="inline-block"

@@ -2,7 +2,7 @@
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <form
             method="get"
-            hx-get="{% url 'common:communities_manage' %}"
+            hx-get="{% url 'communities:communities_manage' %}"
             hx-target="#barangay-results-container"
             hx-swap="innerHTML transition:true"
             class="flex flex-wrap items-center gap-3 text-sm text-gray-600"
@@ -34,7 +34,102 @@
         </div>
     </div>
 
-    {% include "components/data_table_card.html" with title="Barangay OBC Registry" icon_class="fas fa-list" accent_class="bg-gradient-to-r from-emerald-500 to-emerald-600" headers=barangay_table.headers rows=barangay_table.rows show_actions=barangay_table.show_actions empty_message="No barangay OBC records match the current filters." %}
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+        <header class="bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4 flex items-center gap-3 text-white">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 text-2xl">
+                <i class="fas fa-map-marker-alt"></i>
+            </span>
+            <div>
+                <h2 class="text-lg font-semibold">Barangay OBC Registry</h2>
+            </div>
+        </header>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Barangay</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Location</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Coverage Snapshot</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {% for row in barangay_table.rows %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4">
+                            <div class="flex gap-3">
+                                <div class="hidden sm:flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                                {{ row.cells.0.content|safe }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">{{ row.cells.1.content|safe }}</td>
+                        <td class="px-6 py-4">{{ row.cells.2.content|safe }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center justify-end gap-2">
+                                {% if row.view_url %}
+                                <a href="{{ row.view_url }}" class="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-100">
+                                    <i class="fas fa-eye"></i>
+                                    <span>View</span>
+                                </a>
+                                {% endif %}
+                                {% if row.edit_url %}
+                                <a href="{{ row.edit_url }}" class="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-100">
+                                    <i class="fas fa-pen"></i>
+                                    <span>Edit</span>
+                                </a>
+                                {% endif %}
+                                {% if row.delete_preview_url %}
+                                <button type="button" class="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-100"
+                                    data-delete-preview="{{ row.delete_preview_url }}"
+                                    data-delete-message="{{ row.delete_message|default:'Review before deletion.' }}">
+                                    <i class="fas fa-trash"></i>
+                                    <span class="sr-only">Delete</span>
+                                </button>
+                                {% endif %}
+                                {% if row.restore_url %}
+                                <form method="post" action="{{ row.restore_url }}" class="inline-flex">
+                                    {% csrf_token %}
+                                    <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">
+                                        <i class="fas fa-undo"></i>
+                                        <span>Restore</span>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-500">
+                            No barangay OBC records match the current filters.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        if (window.__barangayDeletePreview) return;
+        window.__barangayDeletePreview = true;
+        document.addEventListener('click', function (event) {
+            const trigger = event.target.closest('[data-delete-preview]');
+            if (!trigger) return;
+            event.preventDefault();
+            const previewUrl = trigger.getAttribute('data-delete-preview');
+            if (!previewUrl) return;
+            const message = trigger.getAttribute('data-delete-message') || 'Are you sure?';
+            if (window.confirm(message)) {
+                window.location.href = previewUrl;
+            }
+        });
+    })();
+    </script>
 
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div class="inline-flex items-center gap-2">
@@ -45,7 +140,7 @@
                         {% with query=barangay_base_querystring|add:'&barangay_page='|add:communities.previous_page_number %}
                             <a
                                 href="?{{ query }}"
-                                hx-get="{% url 'common:communities_manage' %}?{{ query }}"
+                                hx-get="{% url 'communities:communities_manage' %}?{{ query }}"
                                 hx-target="#barangay-results-container"
                                 hx-swap="innerHTML transition:true"
                                 class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
@@ -58,7 +153,7 @@
                         {% with query='barangay_page='|add:communities.previous_page_number %}
                             <a
                                 href="?{{ query }}"
-                                hx-get="{% url 'common:communities_manage' %}?{{ query }}"
+                                hx-get="{% url 'communities:communities_manage' %}?{{ query }}"
                                 hx-target="#barangay-results-container"
                                 hx-swap="innerHTML transition:true"
                                 class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
@@ -84,7 +179,7 @@
                         {% with query=barangay_base_querystring|add:'&barangay_page='|add:communities.next_page_number %}
                             <a
                                 href="?{{ query }}"
-                                hx-get="{% url 'common:communities_manage' %}?{{ query }}"
+                                hx-get="{% url 'communities:communities_manage' %}?{{ query }}"
                                 hx-target="#barangay-results-container"
                                 hx-swap="innerHTML transition:true"
                                 class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
@@ -97,7 +192,7 @@
                         {% with query='barangay_page='|add:communities.next_page_number %}
                             <a
                                 href="?{{ query }}"
-                                hx-get="{% url 'common:communities_manage' %}?{{ query }}"
+                                hx-get="{% url 'communities:communities_manage' %}?{{ query }}"
                                 hx-target="#barangay-results-container"
                                 hx-swap="innerHTML transition:true"
                                 class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"

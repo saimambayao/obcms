@@ -1030,6 +1030,39 @@ Located in `scripts/` directory:
 - **db_restore.sh** - Restore database from backup (with confirmation)
 - **bootstrap_venv.sh** - Set up Python virtual environment
 
+## Security & Permissions
+
+### Django Permissions & RBAC
+
+**Comprehensive Guide:** [Django Permissions & RBAC Best Practices](DJANGO_PERMISSIONS_RBAC_BEST_PRACTICES.md)
+
+**Key Topics Covered:**
+- Current OBCMS permission infrastructure (MOA RBAC, Budget Execution, MANA)
+- Django's built-in permission features (Permission model, Groups, decorators)
+- Best practices for custom permissions (3-layer architecture)
+- RBAC implementation recommendations for BMMS
+- Complete code examples and testing strategies
+
+**Existing Permission Systems:**
+1. **MOA RBAC** - Organization-scoped permissions (✅ Complete)
+   - Custom decorators: `@moa_can_edit_ppa`, `@moa_view_only`
+   - Mixins: `MOAFilteredQuerySetMixin`, `MOAPPAAccessMixin`
+   - Template tags: `{% can_manage_ppa user ppa %}`
+
+2. **Budget Execution** - Group-based roles (✅ Complete)
+   - Groups: Budget Officers, Finance Directors, Finance Staff
+   - Decorators: `@budget_officer_required`, `@finance_director_required`
+   - DRF permissions: `CanReleaseAllotment`, `CanApproveAllotment`
+
+3. **MANA Access Control** - Middleware-based restrictions (✅ Active)
+   - Restricts participants/facilitators to specific URLs
+   - Uses Django permissions: `user.has_perm("mana.can_access_regional_mana")`
+
+**Quick Links:**
+- [MOA RBAC Quick Reference](../improvements/MOA_RBAC_QUICK_REFERENCE.md)
+- [MOA RBAC Usage Guide](MOA_RBAC_USAGE.md)
+- [Budget Execution Permissions](/Users/saidamenmambayao/Library/Mobile Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/budget_execution/permissions.py)
+
 ## Related Documentation
 - [Development Environment Setup](../env/development.md)
 - [Improvement Plan Template](../improvements/improvement_plan_template.md)

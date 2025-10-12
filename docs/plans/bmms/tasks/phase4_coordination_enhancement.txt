@@ -1,0 +1,651 @@
+================================================================================
+BMMS PHASE 4: COORDINATION ENHANCEMENT - TASK BREAKDOWN
+================================================================================
+
+Priority: MEDIUM
+Complexity: Simple
+Dependencies: Phase 1 (Organizations App MUST be complete)
+
+Overview:
+---------
+This phase enhances the Coordination module to support cross-MOA partnerships
+and proper organization scoping. The coordination.Organization model will be
+renamed to PartnerOrganization to avoid conflicts with organizations.Organization.
+
+Target: Enable inter-MOA collaboration while maintaining data isolation for
+intra-MOA partnerships.
+
+================================================================================
+SECTION 1: PRE-IMPLEMENTATION CHECKLIST
+================================================================================
+
+Prerequisites (MUST be complete before starting):
+-------------------------------------------------
+[ ] Phase 1 organizations app is fully implemented
+[ ] organizations.Organization model exists with OOBC, OCM (Office of the Chief Minister), and MOAs
+[ ] OrganizationScopedModel base class is available
+[ ] OrganizationMiddleware is active (sets request.organization)
+[ ] OrganizationScopedManager is implemented for automatic filtering
+
+Verify prerequisites:
+[ ] Run: python manage.py shell
+[ ] Execute: from organizations.models import Organization; print(Organization.objects.count())
+[ ] Expected: Should show OOBC + OCM + 44 MOAs = 46 organizations minimum
+[ ] Verify: Organization.objects.get(code='OOBC') exists
+
+Environment Setup:
+[ ] Working directory: src/
+[ ] Virtual environment activated (venv/bin/activate)
+[ ] Database backup created: cp db.sqlite3 db.sqlite3.backup.phase4
+[ ] Git branch: feature/bmms-coordination-enhancement
+[ ] Create branch: git checkout -b feature/bmms-coordination-enhancement
+
+================================================================================
+SECTION 2: STEP 1 - RENAME ORGANIZATION MODEL TO PARTNERORGANIZATION
+================================================================================
+
+Objective: Avoid naming conflict between coordination.Organization and
+          organizations.Organization. The coordination model represents
+          external partners (NGOs, LGUs, private sector), not BARMM MOAs.
+
+Complexity: Moderate
+Priority: CRITICAL
+
+Task 2.1: Create Model Rename Migration
+----------------------------------------
+[ ] Navigate to: cd src/coordination/migrations/
+[ ] Create migration file: python ../manage.py makemigrations coordination --empty --name rename_organization_to_partner_organization
+[ ] Edit migration file to include RenameModel operation
+[ ] Migration should rename: Organization → PartnerOrganization
+[ ] Migration should preserve database table name: coordination_organization
+
+Migration Code Template:
+```python
+class Migration(migrations.Migration):
+    dependencies = [
+        ('coordination', '00XX_previous_migration'),
+    ]
+
+    operations = [
+        migrations.RenameModel(
+            old_name='Organization',
+            new_name='PartnerOrganization',
+        ),
+    ]
+```
+
+Testing:
+[ ] Dry run: python manage.py migrate coordination --plan
+[ ] Verify: No table drops or data loss operations
+[ ] Apply: python manage.py migrate coordination
+[ ] Verify: python manage.py shell → from coordination.models import PartnerOrganization
+[ ] Verify: PartnerOrganization.objects.count() shows existing external partners
+
+Task 2.2: Update Model Definition
+----------------------------------
+[ ] Open: src/coordination/models.py
+[ ] Rename class Organization to PartnerOrganization
+[ ] Update docstring: "External partner organizations (NGOs, LGUs, private sector)"
+[ ] Add Meta class with db_table = 'coordination_organization' (preserve table)
+[ ] Update related_name references in ManyToMany fields
+[ ] Add organization_type field choices (if not exists):
+    - 'lgu': Local Government Unit
+    - 'nga': National Government Agency
+    - 'ingo': International NGO
+    - 'lngo': Local NGO
+    - 'cso': Civil Society Organization
+    - 'academic': Academic Institution
+    - 'private': Private Sector
+    - 'coop': Cooperative
+
+Task 2.3: Update All Model References
+--------------------------------------
+[ ] Search for imports: grep -r "from coordination.models import Organization" src/
+[ ] Update to: from coordination.models import PartnerOrganization
+[ ] Check files to update:
+    [ ] src/coordination/views.py
+    [ ] src/coordination/admin.py
+    [ ] src/coordination/serializers.py (if exists)
+    [ ] src/coordination/forms.py (if exists)
+
+Task 2.4: Update Admin Interface
+---------------------------------
+[ ] Open: src/coordination/admin.py
+[ ] Update admin registration: @admin.register(PartnerOrganization)
+[ ] Update list_display, search_fields, list_filter to use PartnerOrganization
+[ ] Test admin interface: http://localhost:8000/admin/coordination/partnerorganization/
+[ ] Verify: All existing external partner records are visible
+
+Task 2.5: Update Templates
+---------------------------
+[ ] Search for template references: grep -r "Organization" src/templates/coordination/
+[ ] Update variable names where referring to external partners
+[ ] Update display text: "Partner Organizations" instead of "Organizations"
+
+Verification Checklist:
+-----------------------
+[ ] Migration applies cleanly without errors
+[ ] PartnerOrganization model accessible in shell
+[ ] Existing external partner data preserved
+[ ] Admin interface shows all external partners
+[ ] No import errors when starting server: python manage.py runserver
+[ ] Database table still named coordination_organization
+
+================================================================================
+SECTION 3: STEP 2 - ADD ORGANIZATION SCOPING TO PARTNERSHIP MODEL
+================================================================================
+
+Objective: Add lead_organization FK to Partnership model and implement
+          cross-MOA partnership support with proper visibility rules.
+
+Complexity: Moderate
+Priority: HIGH
+
+Task 3.1: Create Add Organization Field Migration
+--------------------------------------------------
+[ ] Navigate to: cd src/coordination/migrations/
+[ ] Create migration: python ../manage.py makemigrations coordination --empty --name add_organization_scoping_to_partnership
+[ ] Edit migration to include:
+    [ ] AddField: lead_organization (FK to organizations.Organization, nullable)
+    [ ] RunPython: populate_partnerships_with_oobc (data migration)
+    [ ] AlterField: lead_organization (make NOT NULL after population)
+    [ ] AddField: participating_moas (M2M to organizations.Organization)
+    [ ] AddIndex: (lead_organization, status) for query performance
+
+Data Migration Function Template:
+```python
+def populate_partnerships_with_oobc(apps, schema_editor):
+    """Assign all existing partnerships to OOBC organization"""
+    Partnership = apps.get_model('coordination', 'Partnership')
+    Organization = apps.get_model('organizations', 'Organization')
+
+    try:
+        oobc_org = Organization.objects.get(code='OOBC')
+    except Organization.DoesNotExist:
+        raise Exception("OOBC organization not found. Run Phase 1 migrations first.")
+
+    # Assign all partnerships without lead_organization to OOBC
+    updated_count = Partnership.objects.filter(
+        lead_organization__isnull=True
+    ).update(
+        lead_organization=oobc_org
+    )
+
+    print(f"✅ Assigned {updated_count} partnerships to OOBC")
+```
+
+Testing:
+[ ] Dry run: python manage.py migrate coordination --plan
+[ ] Verify dependency: Migration depends on organizations.0002_seed_initial_orgs
+[ ] Apply migration: python manage.py migrate coordination
+[ ] Verify: All existing partnerships have lead_organization=OOBC
+
+Task 3.2: Update Partnership Model
+-----------------------------------
+[ ] Open: src/coordination/models.py
+[ ] Import: from organizations.models import OrganizationScopedModel
+[ ] Change: class Partnership(models.Model) → class Partnership(OrganizationScopedModel)
+[ ] Note: OrganizationScopedModel provides organization FK automatically
+[ ] Update partner_organizations field:
+    [ ] Rename: organizations → partner_organizations
+    [ ] FK to: PartnerOrganization (not Organization)
+    [ ] Help text: "External partner organizations (NGOs, LGUs, etc.)"
+
+[ ] Add participating_moas field:
+    [ ] Type: ManyToManyField('organizations.Organization')
+    [ ] blank=True (optional)
+    [ ] related_name='joint_partnerships'
+    [ ] Help text: "Other BARMM MOAs participating in this partnership"
+
+[ ] Add Meta class indexes:
+    [ ] Index on: ['organization', 'status']
+    [ ] Ensures fast queries for org-specific partnership lists
+
+Task 3.3: Implement Visibility Rules
+-------------------------------------
+[ ] Add can_view() method to Partnership model:
+
+```python
+def can_view(self, user):
+    """Check if user can view this partnership"""
+    if user.is_superuser:
+        return True
+
+    # Lead organization members can view
+    if hasattr(user, 'organization') and user.organization == self.organization:
+        return True
+
+    # Participating MOA members can view
+    if hasattr(user, 'organization') and self.participating_moas.filter(
+        id=user.organization.id
+    ).exists():
+        return True
+
+    # OCM staff can view all partnerships
+    if hasattr(user, 'is_cmo_staff') and user.is_cmo_staff:
+        return True
+
+    return False
+
+def can_edit(self, user):
+    """Only lead organization members can edit"""
+    if user.is_superuser:
+        return True
+
+    # Only lead org can edit
+    return hasattr(user, 'organization') and user.organization == self.organization
+
+@property
+def all_participating_orgs(self):
+    """Get lead + participating organizations"""
+    orgs = list(self.participating_moas.all())
+    orgs.insert(0, self.organization)  # Lead org first
+    return orgs
+```
+
+Task 3.4: Update Partnership Queryset Manager
+----------------------------------------------
+[ ] Add custom manager to Partnership model (if not using OrganizationScopedManager):
+[ ] Manager should automatically filter by request.organization
+[ ] Include partnerships where user's org is participating_moa
+[ ] Example:
+
+```python
+class PartnershipManager(models.Manager):
+    def for_organization(self, organization):
+        """Get partnerships for organization (lead or participating)"""
+        return self.filter(
+            models.Q(organization=organization) |
+            models.Q(participating_moas=organization)
+        ).distinct()
+```
+
+Task 3.5: Update Views to Respect Organization Scoping
+-------------------------------------------------------
+[ ] Open: src/coordination/views.py
+[ ] Update partnership_list view:
+    [ ] Use: Partnership.objects.for_organization(request.organization)
+    [ ] Show both lead and participating partnerships
+    [ ] Add visual indicator for "Lead" vs "Participant" role
+
+[ ] Update partnership_create view:
+    [ ] Set: partnership.organization = request.organization (automatic via middleware)
+    [ ] Add form field for participating_moas (multi-select MOAs)
+    [ ] Restrict: Can only select active MOAs (exclude OOBC, OCM)
+
+[ ] Update partnership_edit view:
+    [ ] Check: partnership.can_edit(request.user)
+    [ ] Raise PermissionDenied if False
+
+[ ] Update partnership_detail view:
+    [ ] Check: partnership.can_view(request.user)
+    [ ] Raise PermissionDenied if False
+    [ ] Show: All participating organizations
+    [ ] Indicate: Lead organization clearly
+
+Task 3.6: Update Forms
+-----------------------
+[ ] Open: src/coordination/forms.py (or create if not exists)
+[ ] PartnershipForm should include:
+    [ ] partner_organizations: Select external partners (PartnerOrganization)
+    [ ] participating_moas: Multi-select other MOAs (exclude own org)
+    [ ] Exclude organization field (set automatically by view)
+
+[ ] Add validation:
+    [ ] participating_moas cannot include lead organization
+    [ ] At least 1 partner required (external OR internal)
+
+Task 3.7: Update Templates
+---------------------------
+[ ] Open: src/templates/coordination/partnership_list.html
+[ ] Add column: "Role" (Lead / Participant)
+[ ] Add badge: Visual indicator for role
+[ ] Show participating organizations in list view
+
+[ ] Open: src/templates/coordination/partnership_detail.html
+[ ] Add section: "Participating Organizations"
+[ ] List: All participating MOAs with role indicators
+[ ] Show: External partners (PartnerOrganization) separately
+
+[ ] Open: src/templates/coordination/partnership_form.html
+[ ] Add field: participating_moas (multi-select checkbox or Select2)
+[ ] Label: "Participating BARMM MOAs" (optional)
+[ ] Help text: "Select other MOAs participating in this partnership"
+
+Verification Checklist:
+-----------------------
+[ ] Migration applies successfully
+[ ] Existing partnerships assigned to OOBC
+[ ] Partnership model inherits from OrganizationScopedModel
+[ ] can_view() and can_edit() methods work correctly
+[ ] Views filter by organization properly
+[ ] Forms include participating_moas field
+[ ] Templates show role indicators (Lead/Participant)
+[ ] No permission errors when accessing partnerships
+
+================================================================================
+SECTION 4: STEP 3 - IMPLEMENT CROSS-MOA PARTNERSHIP WORKFLOWS
+================================================================================
+
+Objective: Enable inter-MOA partnerships with proper notifications and
+          contribution tracking.
+
+Complexity: Moderate
+Priority: MEDIUM
+
+Task 4.1: Add Partnership Invitation System
+--------------------------------------------
+[ ] Create model: PartnershipInvitation
+[ ] Fields:
+    [ ] partnership (FK to Partnership)
+    [ ] invited_organization (FK to organizations.Organization)
+    [ ] invited_by (FK to User)
+    [ ] status (pending/accepted/declined)
+    [ ] invited_at (DateTimeField, auto_now_add)
+    [ ] responded_at (DateTimeField, null=True)
+
+[ ] Add method: partnership.invite_organization(organization, invited_by)
+[ ] Send notification to invited org's admins
+[ ] Add view: partnership_accept_invitation(request, invitation_id)
+[ ] Add view: partnership_decline_invitation(request, invitation_id)
+
+Task 4.2: Update Partnership Detail Page
+-----------------------------------------
+[ ] Add section: "Invite Organizations"
+[ ] Show: List of MOAs that can be invited (exclude current participants)
+[ ] Add button: "Invite MOA" (only for lead org admins)
+[ ] Add section: "Pending Invitations"
+[ ] Show: Invitations awaiting response (with Accept/Decline buttons)
+
+Task 4.3: Add Activity Tracking
+--------------------------------
+[ ] Create model: PartnershipActivity (optional)
+[ ] Track: When participating orgs join/leave
+[ ] Track: When partnership status changes
+[ ] Display: Activity timeline in partnership detail page
+
+Task 4.4: Update Dashboard Widgets
+-----------------------------------
+[ ] Add widget: "My Partnerships" (lead partnerships)
+[ ] Add widget: "Collaborative Partnerships" (participant partnerships)
+[ ] Show counts: Active, Pending, Completed partnerships
+[ ] Add link: Quick access to partnership list
+
+Verification Checklist:
+-----------------------
+[ ] Can invite other MOAs to partnerships
+[ ] Invited orgs receive notifications
+[ ] Invited orgs can accept/decline invitations
+[ ] Activity tracking works properly
+[ ] Dashboard shows partnership statistics
+
+================================================================================
+SECTION 5: BACKFILL EXISTING PARTNERSHIPS WITH OOBC ORGANIZATION
+================================================================================
+
+Objective: Ensure all existing OBCMS partnerships are assigned to OOBC and
+          maintain backward compatibility.
+
+Complexity: Simple
+Priority: CRITICAL
+
+Task 5.1: Verify Data Migration
+--------------------------------
+[ ] Open Django shell: python manage.py shell
+[ ] Run:
+    from coordination.models import Partnership
+    from organizations.models import Organization
+    oobc = Organization.objects.get(code='OOBC')
+    oobc_partnerships = Partnership.objects.filter(organization=oobc)
+    print(f"OOBC partnerships: {oobc_partnerships.count()}")
+    unassigned = Partnership.objects.filter(organization__isnull=True)
+    print(f"Unassigned partnerships: {unassigned.count()}")
+
+[ ] Expected: All partnerships assigned to OOBC, unassigned = 0
+
+Task 5.2: Manual Backfill (if needed)
+--------------------------------------
+[ ] If unassigned partnerships exist:
+    from coordination.models import Partnership
+    from organizations.models import Organization
+    oobc = Organization.objects.get(code='OOBC')
+    Partnership.objects.filter(organization__isnull=True).update(organization=oobc)
+
+[ ] Verify: Partnership.objects.filter(organization__isnull=True).count() == 0
+
+Task 5.3: Update Existing OOBC Users
+-------------------------------------
+[ ] Ensure OOBC users have default_organization = OOBC
+[ ] Run:
+    from django.contrib.auth import get_user_model
+    from organizations.models import Organization
+    User = get_user_model()
+    oobc = Organization.objects.get(code='OOBC')
+    oobc_users = User.objects.filter(default_organization=oobc)
+    print(f"OOBC users: {oobc_users.count()}")
+
+Task 5.4: Test OOBC Access
+---------------------------
+[ ] Login as OOBC user
+[ ] Navigate to: /moa/OOBC/coordination/partnerships/
+[ ] Verify: All existing partnerships visible
+[ ] Verify: Can create new partnerships
+[ ] Verify: Can edit existing partnerships
+[ ] Verify: Can invite other MOAs to partnerships
+
+Verification Checklist:
+-----------------------
+[ ] All existing partnerships have organization=OOBC
+[ ] OOBC users can access all legacy partnerships
+[ ] No data loss during migration
+[ ] OOBC users can perform all partnership operations
+
+================================================================================
+SECTION 6: TESTING CHECKLIST
+================================================================================
+
+Unit Tests (src/coordination/tests/test_models.py):
+----------------------------------------------------
+[ ] Test: PartnerOrganization model (formerly Organization)
+[ ] Test: Partnership.can_view() with different user roles
+[ ] Test: Partnership.can_edit() permission logic
+[ ] Test: Partnership.all_participating_orgs property
+[ ] Test: Automatic organization assignment via middleware
+
+Integration Tests (src/coordination/tests/test_views.py):
+----------------------------------------------------------
+[ ] Test: Partnership list filtered by organization
+[ ] Test: Lead org can create partnership
+[ ] Test: Lead org can edit partnership
+[ ] Test: Participant org can view but not edit
+[ ] Test: Non-member org cannot view partnership
+[ ] Test: OCM staff can view all partnerships
+[ ] Test: Partnership invitation workflow (invite/accept/decline)
+
+Functional Tests (Manual):
+---------------------------
+[ ] Test Scenario 1: Single-MOA Partnership
+    [ ] Login as MOH user
+    [ ] Create partnership with external NGO
+    [ ] Verify: Only visible to MOH staff
+    [ ] Verify: OCM can view (oversight)
+
+[ ] Test Scenario 2: Cross-MOA Partnership
+    [ ] Login as OOBC user
+    [ ] Create partnership and invite MOH, MOLE
+    [ ] Login as MOH user
+    [ ] Accept invitation
+    [ ] Verify: Partnership visible to MOH staff
+    [ ] Verify: MOH can view but not edit
+    [ ] Verify: OOBC can edit (lead org)
+
+[ ] Test Scenario 3: OCM Oversight
+    [ ] Login as OCM user
+    [ ] Navigate to: /ocm/partnerships/ (OCM dashboard)
+    [ ] Verify: All partnerships across all MOAs visible
+    [ ] Verify: OCM has read-only access
+
+[ ] Test Scenario 4: Permission Denied
+    [ ] Login as MAFAR user
+    [ ] Try to access MOH-only partnership
+    [ ] Verify: 403 Forbidden error
+
+Performance Tests:
+------------------
+[ ] Test: Partnership list query count (should be ≤ 5 queries)
+[ ] Test: Partnership detail query count (should be ≤ 8 queries)
+[ ] Test: No N+1 problems with participating_moas
+[ ] Use: select_related('organization') and prefetch_related('participating_moas')
+
+Data Integrity Tests:
+---------------------
+[ ] Test: Cannot create partnership without organization
+[ ] Test: Cannot assign partnership to non-existent organization
+[ ] Test: Deleting organization sets partnerships to PROTECT (error)
+[ ] Test: participating_moas contains only MOA-type organizations
+
+Accessibility Tests:
+--------------------
+[ ] Test: Partnership forms are keyboard accessible
+[ ] Test: Partnership list has proper ARIA labels
+[ ] Test: Role indicators (Lead/Participant) have clear text
+[ ] Test: Color contrast meets WCAG 2.1 AA standards
+
+================================================================================
+SECTION 7: DEPLOYMENT CHECKLIST
+================================================================================
+
+Pre-Deployment:
+---------------
+[ ] All unit tests pass: pytest src/coordination/tests/
+[ ] All integration tests pass
+[ ] Manual functional tests completed
+[ ] Code review completed (if applicable)
+[ ] Migration files committed to git
+
+Deployment Steps:
+-----------------
+[ ] Stop application server (if production)
+[ ] Backup database: pg_dump obcms_prod > backup_pre_phase4.sql
+[ ] Pull latest code: git pull origin feature/bmms-coordination-enhancement
+[ ] Activate virtual environment: source venv/bin/activate
+[ ] Install dependencies: pip install -r requirements/base.txt
+[ ] Run migrations: python manage.py migrate coordination
+[ ] Verify migration success: Check migration output for errors
+[ ] Collect static files: python manage.py collectstatic --noinput
+[ ] Restart application server
+[ ] Monitor logs for errors: tail -f logs/django.log
+
+Post-Deployment Verification:
+------------------------------
+[ ] Health check: curl http://localhost:8000/health/
+[ ] Verify: Partnership list loads without errors
+[ ] Verify: Existing partnerships visible
+[ ] Verify: Can create new partnership
+[ ] Verify: Cross-MOA partnerships work
+[ ] Verify: OCM dashboard shows all partnerships
+[ ] Check error logs: grep ERROR logs/django.log
+
+Rollback Plan (if needed):
+--------------------------
+[ ] Stop application server
+[ ] Restore database: psql obcms_prod < backup_pre_phase4.sql
+[ ] Revert code: git checkout main
+[ ] Restart application server
+[ ] Verify: Application functional with old code
+
+================================================================================
+SECTION 8: DOCUMENTATION UPDATES
+================================================================================
+
+Code Documentation:
+-------------------
+[ ] Update docstrings in coordination/models.py
+[ ] Update docstrings in coordination/views.py
+[ ] Add inline comments for complex permission logic
+[ ] Update coordination/README.md (if exists)
+
+User Documentation:
+-------------------
+[ ] Create: docs/user-guides/coordination-module.md
+[ ] Document: How to create single-MOA partnerships
+[ ] Document: How to create cross-MOA partnerships
+[ ] Document: How to invite other MOAs
+[ ] Document: How to accept partnership invitations
+[ ] Document: OCM oversight capabilities
+
+Technical Documentation:
+------------------------
+[ ] Update: docs/plans/bmms/TRANSITION_PLAN.md (Phase 4 completion)
+[ ] Create: docs/improvements/PHASE4_COORDINATION_COMPLETE.md
+[ ] Document: Partnership visibility rules
+[ ] Document: Organization scoping implementation
+[ ] Document: Migration procedure and results
+
+API Documentation (if applicable):
+----------------------------------
+[ ] Update: API endpoint documentation for partnerships
+[ ] Document: New organization filtering parameters
+[ ] Document: participating_moas field in API responses
+
+================================================================================
+SECTION 9: COMPLETION CHECKLIST
+================================================================================
+
+Code Changes:
+-------------
+[ ] PartnerOrganization model (renamed from Organization)
+[ ] Partnership model with organization FK
+[ ] Partnership model with participating_moas M2M
+[ ] Visibility rules: can_view() and can_edit() methods
+[ ] Updated views with organization filtering
+[ ] Updated forms with participating_moas field
+[ ] Updated templates with role indicators
+
+Database Changes:
+-----------------
+[ ] Migration: Rename Organization → PartnerOrganization
+[ ] Migration: Add lead_organization FK to Partnership
+[ ] Migration: Backfill partnerships with OOBC
+[ ] Migration: Add participating_moas M2M to Partnership
+[ ] Index: (lead_organization, status) on Partnership table
+
+Testing:
+--------
+[ ] Unit tests pass (100% coverage for new code)
+[ ] Integration tests pass
+[ ] Manual functional tests completed
+[ ] Performance tests show no regressions
+[ ] Accessibility tests pass
+
+Documentation:
+--------------
+[ ] Code documentation updated
+[ ] User guide created/updated
+[ ] Technical documentation complete
+[ ] API documentation updated (if applicable)
+
+Deployment:
+-----------
+[ ] Migrations applied successfully
+[ ] No errors in production logs
+[ ] All existing partnerships accessible
+[ ] Cross-MOA partnerships functional
+[ ] OCM oversight working
+
+Sign-Off:
+---------
+[ ] Development complete: __________ (Date)
+[ ] Testing complete: __________ (Date)
+[ ] Code review complete: __________ (Date)
+[ ] Documentation complete: __________ (Date)
+[ ] Deployment complete: __________ (Date)
+[ ] Phase 4 COMPLETE: __________ (Date)
+
+================================================================================
+END OF PHASE 4: COORDINATION ENHANCEMENT
+================================================================================
+
+Next Phase: Phase 5 - Module Migration (MANA/M&E/Policies)
+Dependencies: Phase 1 (Organizations App) MUST be complete before Phase 5
+Priority: MEDIUM (OOBC-specific, can be deferred until after pilot MOA onboarding)

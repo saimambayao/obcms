@@ -15,7 +15,7 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:coordination_home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
+    <a href="{% url 'coordination:home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">Coordination Notes</li>
@@ -197,7 +197,7 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="obc-map-container" data-coverage-map="primary" data-obc-map data-mode="coverage" data-region-field="id_coverage_region" data-province-field="id_coverage_province" data-municipality-field="id_coverage_municipality" data-barangay-field="id_coverage_barangay" data-location-script="location-data" data-centroid-url="{% url 'common:location_centroid' %}">
+                        <div class="obc-map-container" data-coverage-map="primary" data-obc-map data-mode="coverage" data-region-field="id_coverage_region" data-province-field="id_coverage_province" data-municipality-field="id_coverage_municipality" data-barangay-field="id_coverage_barangay" data-location-script="location-data" data-centroid-url="{% url 'communities:location_centroid' %}">
                             <div class="obc-map-header">
                                 <h3 class="flex items-center gap-2 text-neutral-800"><i class="fas fa-map-marked-alt text-emerald-500"></i>Coverage Map</h3>
                                 <span class="obc-map-status"><i class="fas fa-crosshairs"></i>Select a location to drop a pin</span>

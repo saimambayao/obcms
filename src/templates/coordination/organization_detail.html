@@ -21,11 +21,11 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:coordination_home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
+    <a href="{% url 'coordination:home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:coordination_organizations' %}" class="text-neutral-500 hover:text-neutral-700">Organizations</a>
+    <a href="{% url 'coordination:organizations' %}" class="text-neutral-500 hover:text-neutral-700">Organizations</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">{{ organization.name }}{% if organization.acronym %} ({{ organization.acronym }}){% endif %}</li>
@@ -172,13 +172,13 @@
                     {% else %}
                         {% can_manage_moa user organization as can_edit %}
                         {% if can_edit and perms.coordination.change_organization %}
-                        <a href="{% url 'common:coordination_organization_edit' organization.id %}" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-emerald-600 font-semibold px-5 py-3 shadow-md hover:bg-emerald-50 transition-all duration-200">
+                        <a href="{% url 'coordination:organization_edit' organization.id %}" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-emerald-600 font-semibold px-5 py-3 shadow-md hover:bg-emerald-50 transition-all duration-200">
                             <i class="fas fa-edit"></i>
                             Edit details
                         </a>
                         {% endif %}
                         {% if can_edit and perms.coordination.delete_organization %}
-                        <a href="{% url 'common:coordination_organization_delete' organization.id %}" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/15 border border-white/20 px-5 py-3 text-sm font-semibold text-white hover:bg-white/20 transition-all duration-200">
+                        <a href="{% url 'coordination:organization_delete' organization.id %}" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/15 border border-white/20 px-5 py-3 text-sm font-semibold text-white hover:bg-white/20 transition-all duration-200">
                             <i class="fas fa-trash"></i>
                             Delete organization
                         </a>
@@ -490,7 +490,7 @@
                     <p class="text-sm text-gray-500">Primary and secondary contacts managing coordination touchpoints.</p>
                 </div>
             </div>
-            <a href="{% url 'common:coordination_organization_edit' organization.id %}#contacts-container" class="text-sm font-medium text-blue-600 hover:text-blue-700">Manage contacts</a>
+            <a href="{% url 'coordination:organization_edit' organization.id %}#contacts-container" class="text-sm font-medium text-blue-600 hover:text-blue-700">Manage contacts</a>
         </header>
         <div class="px-6 py-6 space-y-6">
             {% if contacts %}
@@ -575,7 +575,7 @@
                                 <p class="text-base font-semibold text-gray-900">{{ partnership.title }}</p>
                                 <p class="text-sm text-gray-500">Status: {{ partnership.get_status_display|default:partnership.status|title }}</p>
                             </div>
-                            <a href="{% url 'common:coordination_partnerships' %}?search={{ partnership.title|urlencode }}" class="text-sm font-medium text-blue-600 hover:text-blue-700">View partnership</a>
+                            <a href="{% url 'coordination:partnerships' %}?search={{ partnership.title|urlencode }}" class="text-sm font-medium text-blue-600 hover:text-blue-700">View partnership</a>
                         </div>
                     </li>
                     {% endfor %}
@@ -599,7 +599,7 @@
                                 <p class="text-base font-semibold text-gray-900">{{ partnership.title }}</p>
                                 <p class="text-sm text-gray-500">Lead: {{ partnership.lead_organization.display_name|default:partnership.lead_organization.name }}</p>
                             </div>
-                            <a href="{% url 'common:coordination_partnerships' %}?search={{ partnership.title|urlencode }}" class="text-sm font-medium text-blue-600 hover:text-blue-700">View partnership</a>
+                            <a href="{% url 'coordination:partnerships' %}?search={{ partnership.title|urlencode }}" class="text-sm font-medium text-blue-600 hover:text-blue-700">View partnership</a>
                         </div>
                     </li>
                     {% endfor %}
@@ -680,7 +680,7 @@
                 <div id="moa-work-items-tab-content"
                      class="moa-tab-content-panel hidden"
                      data-organization-id="{{ organization.id }}"
-                     data-refresh-url="{% url 'common:coordination_organization_work_items_partial' organization_id=organization.id %}">
+                     data-refresh-url="{% url 'coordination:organization_work_items_partial' organization_id=organization.id %}">
                     {% include "coordination/partials/moa_work_items_tab.html" %}
                 </div>
 

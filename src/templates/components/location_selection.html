@@ -120,7 +120,7 @@ Parameters:
             {% if show_municipality and form.municipality %}data-municipality-field="{{ form.municipality.id_for_label }}"{% endif %}
             {% if show_barangay and form.barangay %}data-barangay-field="{{ form.barangay.id_for_label }}"{% endif %}
             data-location-script="location-data"
-            data-centroid-url="{% url 'common:location_centroid' %}">
+            data-centroid-url="{% url 'communities:location_centroid' %}">
 
             <div class="obc-map-header">
                 <h3 class="flex items-center gap-2 text-neutral-800">

@@ -9,7 +9,7 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:recommendations_home' %}" class="text-neutral-500 hover:text-neutral-700">Recommendations</a>
+    <a href="{% url 'policies:home' %}" class="text-neutral-500 hover:text-neutral-700">Recommendations</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">Manage Policies</li>
@@ -71,7 +71,7 @@
     <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <a href="{% url 'common:recommendations_new' %}" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 font-medium text-center">
+            <a href="{% url 'policies:new' %}" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 font-medium text-center">
                 <i class="fas fa-plus mr-2"></i>
                 New Policy
             </a>
@@ -213,14 +213,14 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex space-x-2">
-                                <a href="{% url 'common:recommendations_view' recommendation.id %}" class="text-blue-600 hover:text-blue-900 transition-colors duration-200" title="View Details">
+                                <a href="{% url 'policies:view' recommendation.id %}" class="text-blue-600 hover:text-blue-900 transition-colors duration-200" title="View Details">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 {% if can_manage_recommendations %}
-                                <a href="{% url 'common:recommendations_edit' recommendation.id %}" class="text-emerald-600 hover:text-emerald-900 transition-colors duration-200" title="Edit">
+                                <a href="{% url 'policies:edit' recommendation.id %}" class="text-emerald-600 hover:text-emerald-900 transition-colors duration-200" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <a href="{% url 'common:recommendations_delete' recommendation.id %}" class="text-red-600 hover:text-red-900 transition-colors duration-200" title="Delete">
+                                <a href="{% url 'policies:delete' recommendation.id %}" class="text-red-600 hover:text-red-900 transition-colors duration-200" title="Delete">
                                     <i class="fas fa-trash"></i>
                                 </a>
                                 {% endif %}
@@ -237,7 +237,7 @@
             <h3 class="text-lg font-medium text-gray-900 mb-2">No policies found</h3>
             <p class="text-gray-500 mb-4">Get started by creating your first policy recommendation.</p>
             {% if can_manage_recommendations %}
-            <a href="{% url 'common:recommendations_new' %}" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200">
+            <a href="{% url 'policies:new' %}" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200">
                 <i class="fas fa-plus mr-2"></i>
                 Create Policy
             </a>

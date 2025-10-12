@@ -1,0 +1,520 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Budget Analytics - OBCMS{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a></li>
+<li><a href="{% url 'budget_execution:dashboard' %}" class="text-blue-600 hover:text-blue-800">Budget Execution</a></li>
+<li class="text-neutral-800 font-semibold">Analytics</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Page Header -->
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Budget Analytics Dashboard</h1>
+            <p class="mt-2 text-lg text-gray-600">
+                FY {{ fiscal_year|default:"2025" }} - Comprehensive Financial Analysis
+            </p>
+        </div>
+        <div class="mt-4 sm:mt-0 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <button onclick="exportAllCharts()"
+                    class="px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200">
+                <i class="fas fa-download mr-2"></i>
+                Export Charts
+            </button>
+            <button onclick="refreshAnalytics()"
+                    class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-4 py-2 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <i class="fas fa-sync mr-2"></i>
+                Refresh Data
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- VARIANCE ANALYSIS SECTION                -->
+    <!-- ========================================= -->
+    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-chart-line text-purple-600 mr-2"></i>
+                Budget vs Actual Variance
+            </h2>
+            <div class="flex items-center space-x-2 text-sm">
+                <span class="text-gray-600">View:</span>
+                <select id="variance-period"
+                        class="py-1 px-3 text-sm rounded-lg border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500"
+                        onchange="updateVarianceChart(this.value)">
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly" selected>Quarterly</option>
+                    <option value="annual">Annual</option>
+                </select>
+            </div>
+        </div>
+        <div class="relative h-80">
+            <canvas id="varianceChart"></canvas>
+        </div>
+        <div class="mt-4 flex justify-center space-x-6 text-sm">
+            <div class="flex items-center">
+                <span class="w-4 h-4 bg-blue-600 rounded mr-2"></span>
+                <span class="text-gray-600">Planned Budget</span>
+            </div>
+            <div class="flex items-center">
+                <span class="w-4 h-4 bg-emerald-600 rounded mr-2"></span>
+                <span class="text-gray-600">Actual Spending</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- PROGRAM DISTRIBUTION & BURN RATE         -->
+    <!-- ========================================= -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+
+        <!-- Program Distribution (Doughnut) -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-chart-pie text-amber-600 mr-2"></i>
+                Program Budget Distribution
+            </h2>
+            <div class="relative h-80">
+                <canvas id="programDistributionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Burn Rate Tracking -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-fire text-orange-600 mr-2"></i>
+                Budget Burn Rate
+            </h2>
+            <div class="relative h-80">
+                <canvas id="burnRateChart"></canvas>
+            </div>
+            <div class="mt-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-amber-400 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-amber-800">
+                            <strong>Current Burn Rate:</strong> {{ burn_rate_percentage|floatformat:1|default:"0.0" }}% per month
+                        </p>
+                        <p class="text-xs text-amber-700 mt-1">
+                            At this rate, budget will be depleted by {{ depletion_date|default:"December 2025" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- SPENDING TRENDS & FORECASTING            -->
+    <!-- ========================================= -->
+    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-crystal-ball text-purple-600 mr-2"></i>
+                Spending Trends & Forecasting
+            </h2>
+            <div class="flex items-center space-x-2">
+                <button onclick="toggleForecast()"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-eye mr-1"></i>
+                    <span id="forecast-toggle-text">Show Forecast</span>
+                </button>
+            </div>
+        </div>
+        <div class="relative h-80">
+            <canvas id="spendingTrendChart"></canvas>
+        </div>
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Forecast Summary Cards -->
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-blue-600 font-semibold uppercase">Projected Q4</p>
+                        <p class="text-2xl font-bold text-blue-900 mt-1">₱{{ projected_q4|floatformat:0|default:"18.5" }}M</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-chart-line text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-emerald-600 font-semibold uppercase">Efficiency Score</p>
+                        <p class="text-2xl font-bold text-emerald-900 mt-1">{{ efficiency_score|floatformat:0|default:"87" }}%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-check-circle text-emerald-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-purple-600 font-semibold uppercase">Variance</p>
+                        <p class="text-2xl font-bold text-purple-900 mt-1">{{ variance_percentage|floatformat:1|default:"+2.3" }}%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-balance-scale text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- TOP PERFORMING & UNDERPERFORMING PROGRAMS -->
+    <!-- ========================================= -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+
+        <!-- Top Performers -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-trophy text-amber-600 mr-2"></i>
+                Top Performing Programs
+            </h2>
+            <div class="space-y-3">
+                {% for program in top_performers|default:sample_top_performers %}
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900">{{ program.name }}</h3>
+                            <p class="text-sm text-gray-600 mt-1">{{ program.code }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-bold text-emerald-600">{{ program.utilization }}%</p>
+                            <p class="text-xs text-gray-500">Utilization</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="w-full bg-emerald-200 rounded-full h-2">
+                            <div class="bg-emerald-600 h-2 rounded-full transition-all duration-300"
+                                 style="width: {{ program.utilization }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-inbox text-4xl mb-2"></i>
+                    <p>No performance data available</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Underperformers -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-exclamation-triangle text-orange-600 mr-2"></i>
+                Programs Needing Attention
+            </h2>
+            <div class="space-y-3">
+                {% for program in underperformers|default:sample_underperformers %}
+                <div class="bg-orange-50 border border-orange-200 rounded-xl p-4">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900">{{ program.name }}</h3>
+                            <p class="text-sm text-gray-600 mt-1">{{ program.code }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-bold text-orange-600">{{ program.utilization }}%</p>
+                            <p class="text-xs text-gray-500">Utilization</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="w-full bg-orange-200 rounded-full h-2">
+                            <div class="bg-orange-600 h-2 rounded-full transition-all duration-300"
+                                 style="width: {{ program.utilization }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mt-2 flex items-start">
+                        <i class="fas fa-lightbulb text-orange-600 text-sm mr-2 mt-0.5"></i>
+                        <p class="text-xs text-gray-600">{{ program.recommendation|default:"Consider reviewing allocation or timelines" }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-inbox text-4xl mb-2"></i>
+                    <p>No underperforming programs</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- DETAILED METRICS TABLE                   -->
+    <!-- ========================================= -->
+    <div class="bg-white shadow-md rounded-xl overflow-hidden border border-gray-200">
+        <div class="px-6 py-4 bg-gradient-to-r from-blue-600 to-emerald-600">
+            <h2 class="text-xl font-semibold text-white flex items-center">
+                <i class="fas fa-table mr-2"></i>
+                Detailed Program Metrics
+            </h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Program
+                        </th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Budget
+                        </th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Spent
+                        </th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Remaining
+                        </th>
+                        <th class="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Utilization
+                        </th>
+                        <th class="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Status
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for program in detailed_metrics|default:sample_metrics %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-200">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">{{ program.name }}</div>
+                            <div class="text-sm text-gray-500">{{ program.code }}</div>
+                        </td>
+                        <td class="px-6 py-4 text-right text-sm text-gray-900">
+                            ₱{{ program.budget|floatformat:2 }}
+                        </td>
+                        <td class="px-6 py-4 text-right text-sm text-gray-900">
+                            ₱{{ program.spent|floatformat:2 }}
+                        </td>
+                        <td class="px-6 py-4 text-right text-sm text-gray-900">
+                            ₱{{ program.remaining|floatformat:2 }}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="text-sm font-medium text-gray-700">{{ program.utilization }}%</span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            {% if program.utilization >= 80 %}
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                                    On Track
+                                </span>
+                            {% elif program.utilization >= 50 %}
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    In Progress
+                                </span>
+                            {% else %}
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                                    Needs Attention
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-2"></i>
+                            <p>No metrics data available</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'budget/js/budget_charts.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Variance Chart
+        const varianceData = {
+            labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+            datasets: [
+                {
+                    label: 'Planned Budget',
+                    data: {{ planned_budget|safe|default:"[20, 25, 20, 25]" }},
+                    borderColor: 'rgba(37, 99, 235, 1)',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Actual Spending',
+                    data: {{ actual_spending|safe|default:"[18, 23, 22, 0]" }},
+                    borderColor: 'rgba(5, 150, 105, 1)',
+                    backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        };
+        initVarianceChart('varianceChart', varianceData);
+
+        // Initialize Program Distribution Chart
+        const programData = {
+            labels: {{ program_labels|safe|default:"['Infrastructure', 'Education', 'Healthcare', 'Social Services']" }},
+            datasets: [{
+                data: {{ program_values|safe|default:"[35, 25, 20, 20]" }},
+                backgroundColor: [
+                    'rgba(37, 99, 235, 0.8)',
+                    'rgba(5, 150, 105, 0.8)',
+                    'rgba(124, 58, 237, 0.8)',
+                    'rgba(249, 115, 22, 0.8)'
+                ],
+                borderColor: '#ffffff',
+                borderWidth: 2
+            }]
+        };
+        initProgramUtilizationChart('programDistributionChart',
+            {{ program_data|safe|default:"[{name: 'Infrastructure', utilization: 35}, {name: 'Education', utilization: 25}]" }}
+        );
+
+        // Initialize Burn Rate Chart
+        const burnRateData = {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+            datasets: [{
+                label: 'Cumulative Spending',
+                data: {{ burn_rate_data|safe|default:"[8, 16, 25, 33, 42, 50, 58, 66, 73]" }},
+                borderColor: 'rgba(249, 115, 22, 1)',
+                backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true
+            }]
+        };
+        const ctx = document.getElementById('burnRateChart');
+        new Chart(ctx, {
+            type: 'line',
+            data: burnRateData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: '#1f2937',
+                        bodyColor: '#4b5563',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return 'Spent: ₱' + context.parsed.y + 'M';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Initialize Spending Trend Chart
+        const trendData = {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+                label: 'Actual Spending',
+                data: {{ trend_actual|safe|default:"[5, 8, 7, 9, 8, 10, 11, 9, null, null, null, null]" }},
+                borderColor: 'rgba(5, 150, 105, 1)',
+                backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true
+            }]
+        };
+        window.trendChart = new Chart(document.getElementById('spendingTrendChart'), {
+            type: 'line',
+            data: trendData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'bottom' }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₱' + value + 'M';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+
+    // Helper functions
+    function updateVarianceChart(period) {
+        console.log('Updating variance chart for period:', period);
+        // TODO: Implement HTMX call to fetch new data
+    }
+
+    function toggleForecast() {
+        const btn = document.getElementById('forecast-toggle-text');
+        if (btn.textContent === 'Show Forecast') {
+            // Add forecast dataset
+            const forecastData = {
+                label: 'Forecasted',
+                data: [null, null, null, null, null, null, null, null, 10, 11, 12, 13],
+                borderColor: 'rgba(124, 58, 237, 1)',
+                backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                tension: 0.4,
+                fill: false
+            };
+            window.trendChart.data.datasets.push(forecastData);
+            window.trendChart.update();
+            btn.textContent = 'Hide Forecast';
+        } else {
+            window.trendChart.data.datasets.pop();
+            window.trendChart.update();
+            btn.textContent = 'Show Forecast';
+        }
+    }
+
+    function refreshAnalytics() {
+        // TODO: Implement HTMX refresh
+        console.log('Refreshing analytics data...');
+    }
+
+    function exportAllCharts() {
+        // TODO: Implement chart export functionality
+        console.log('Exporting all charts...');
+    }
+</script>
+{% endblock %}

@@ -775,7 +775,7 @@ def communities_add(request):
                 request,
                 f'Community "{community.barangay.name}" has been successfully added.',
             )
-            return redirect("common:communities_manage")
+            return redirect("communities:communities_manage")
     else:
         form = OBCCommunityForm()
 

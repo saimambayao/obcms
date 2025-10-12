@@ -93,6 +93,9 @@ LOCAL_APPS = [
     "services",  # Phase 3: Service catalog and applications
     "project_central",  # Integrated project management system
     "ai_assistant",  # AI assistant with vector search and semantic similarity
+    "planning",  # Phase 1: Strategic planning module (BMMS)
+    "budget_preparation",  # Phase 2A: Budget Preparation (Parliament Bill No. 325)
+    "budget_execution",  # Phase 2B: Budget Execution (Parliament Bill No. 325 Section 78)
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -117,6 +120,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files in production
+    "common.middleware.DeprecatedURLRedirectMiddleware",  # Phase 0: URL refactoring backward compatibility (TEMPORARY - remove after 30 days)
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -124,6 +128,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "axes.middleware.AxesMiddleware",  # Failed login tracking (after AuthenticationMiddleware)
     "auditlog.middleware.AuditlogMiddleware",  # Audit logging (after AuthenticationMiddleware)
+    "common.middleware.organization_context.OrganizationContextMiddleware",  # Phase 5: BMMS multi-tenant organization context (after AuthenticationMiddleware)
+    "common.middleware.AuditMiddleware",  # Budget system audit logging (Parliament Bill No. 325 Section 78)
     "common.middleware.APILoggingMiddleware",  # API request/response logging for security audit
     "common.middleware.DeprecationLoggingMiddleware",  # Track deprecated URL usage for migration planning
     "common.middleware.MANAAccessControlMiddleware",  # Restrict MANA user access to authorized pages only
@@ -596,3 +602,25 @@ WORKITEM_MIGRATION_AUTO_FIX = env.bool("WORKITEM_MIGRATION_AUTO_FIX", default=Fa
 WORKITEM_MIGRATION_STRICT_MODE = env.bool(
     "WORKITEM_MIGRATION_STRICT_MODE", default=False
 )
+
+# ========== BMMS MULTI-TENANT RBAC CONFIGURATION ==========
+# Phase 5: Organization Context and Multi-Tenant Support
+# See: docs/plans/bmms/TRANSITION_PLAN.md
+
+RBAC_SETTINGS = {
+    # Enable multi-tenant organization context
+    'ENABLE_MULTI_TENANT': env.bool('ENABLE_MULTI_TENANT', default=True),
+
+    # Office of Chief Minister (OCM) organization code
+    # OCM has special aggregation access (read-only across all MOAs)
+    'OCM_ORGANIZATION_CODE': 'ocm',
+
+    # Permission cache timeout (seconds)
+    'CACHE_TIMEOUT': 300,  # 5 minutes
+
+    # Organization switching
+    'ALLOW_ORGANIZATION_SWITCHING': True,  # OOBC staff and OCM can switch
+
+    # Session key for current organization
+    'SESSION_ORG_KEY': 'current_organization',
+}

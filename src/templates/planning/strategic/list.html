@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Strategic Plans - OOBC Management{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:oobc_home' %}" class="text-blue-600 hover:text-blue-800">
+        <i class="fas fa-home"></i>
+    </a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'planning:dashboard' %}" class="text-blue-600 hover:text-blue-800">Planning</a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <span class="text-gray-700">Strategic Plans</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    {# Page Header #}
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            <i class="fas fa-bullseye text-blue-600 mr-3"></i>
+            Strategic Plans
+        </h1>
+        <p class="text-gray-600">
+            Multi-year strategic plans for OOBC operations and development
+        </p>
+    </div>
+
+    {# Statistics Cards - 3D Milk White Style #}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+        {# Total Plans #}
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <div class="relative p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total Plans</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.total_plans|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-bullseye text-2xl text-amber-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Active Plans #}
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <div class="relative p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Active Plans</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.active_plans|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-check-circle text-2xl text-emerald-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Strategic Goals with Breakdown #}
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Strategic Goals</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.total_goals|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-flag text-2xl text-blue-600"></i>
+                    </div>
+                </div>
+
+                <div class="flex-grow"></div>
+
+                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ stats.completed_goals|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">Completed</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ stats.in_progress_goals|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">In Progress</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Draft Plans #}
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <div class="relative p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Draft Plans</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ stats.draft_plans|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-pencil-alt text-2xl text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {# Filter Buttons #}
+    <div class="flex flex-wrap gap-2 mb-6">
+        <a href="?status=all"
+           class="px-4 py-2 rounded-xl transition-all duration-200 {% if status_filter == 'all' %}bg-gradient-to-r from-blue-600 to-emerald-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            All Plans
+        </a>
+        <a href="?status=active"
+           class="px-4 py-2 rounded-xl transition-all duration-200 {% if status_filter == 'active' %}bg-gradient-to-r from-blue-600 to-emerald-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            Active
+        </a>
+        <a href="?status=draft"
+           class="px-4 py-2 rounded-xl transition-all duration-200 {% if status_filter == 'draft' %}bg-gradient-to-r from-blue-600 to-emerald-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            Draft
+        </a>
+        <a href="?status=archived"
+           class="px-4 py-2 rounded-xl transition-all duration-200 {% if status_filter == 'archived' %}bg-gradient-to-r from-blue-600 to-emerald-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            Archived
+        </a>
+    </div>
+
+    {# Plans List #}
+    <div class="bg-white shadow-md rounded-xl overflow-hidden border border-gray-200">
+        <div class="px-6 py-4 bg-gradient-to-r from-blue-600 to-emerald-600 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-white">
+                <i class="fas fa-list mr-2"></i>
+                Strategic Plans
+            </h2>
+            <a href="{% url 'planning:strategic_create' %}"
+               class="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                <i class="fas fa-plus mr-2"></i>
+                Create Plan
+            </a>
+        </div>
+
+        <div class="p-6">
+            {% if plans %}
+                <div class="space-y-4">
+                    {% for plan in plans %}
+                        {% include 'planning/partials/plan_card.html' with plan=plan %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-bullseye text-6xl text-gray-300 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">No Strategic Plans Yet</h3>
+                    <p class="text-gray-500 mb-6">Create your first strategic plan to get started</p>
+                    <a href="{% url 'planning:strategic_create' %}"
+                       class="inline-block bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                        <i class="fas fa-plus mr-2"></i>
+                        Create Strategic Plan
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

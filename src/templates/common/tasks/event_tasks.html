@@ -6,11 +6,11 @@
 {% block breadcrumb %}
 <li class="flex items-center space-x-2">
     <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-    <a href="{% url 'common:coordination_home' %}" class="text-gray-600 hover:text-gray-900">Coordination</a>
+    <a href="{% url 'coordination:home' %}" class="text-gray-600 hover:text-gray-900">Coordination</a>
 </li>
 <li class="flex items-center space-x-2">
     <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-    <a href="{% url 'common:coordination_events' %}" class="text-gray-600 hover:text-gray-900">Events</a>
+    <a href="{% url 'coordination:events' %}" class="text-gray-600 hover:text-gray-900">Events</a>
 </li>
 <li class="flex items-center space-x-2">
     <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
@@ -39,7 +39,7 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <a href="{% url 'common:coordination_events' %}"
+            <a href="{% url 'coordination:events' %}"
                class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold transition-colors">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Back to Events

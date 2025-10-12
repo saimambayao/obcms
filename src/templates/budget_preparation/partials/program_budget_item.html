@@ -1,0 +1,90 @@
+<!-- Program Budget Item (Dynamic Form Row) -->
+<div class="program-budget-item bg-gray-50 rounded-lg p-4 border border-gray-200 relative">
+    <button type="button"
+            onclick="removeProgramBudget(this)"
+            class="absolute top-2 right-2 w-8 h-8 rounded-lg bg-red-100 hover:bg-red-200 flex items-center justify-center text-red-600 transition-colors duration-200">
+        <i class="fas fa-times text-sm"></i>
+    </button>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pr-10">
+        <!-- Program Selection -->
+        <div class="space-y-1">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Program<span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+                <select name="program_{{ forloop.counter|default:'' }}"
+                        class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200"
+                        required>
+                    <option value="">Select program...</option>
+                    {% for program in programs %}
+                    <option value="{{ program.id }}" {% if program_budget.program_id == program.id %}selected{% endif %}>
+                        {{ program.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                </span>
+            </div>
+        </div>
+
+        <!-- Strategic Goal -->
+        <div class="space-y-1">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Strategic Goal
+            </label>
+            <div class="relative">
+                <select name="strategic_goal_{{ forloop.counter|default:'' }}"
+                        class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                    <option value="">Select goal...</option>
+                    {% for goal in strategic_goals %}
+                    <option value="{{ goal.id }}" {% if program_budget.strategic_goal_id == goal.id %}selected{% endif %}>
+                        {{ goal.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                </span>
+            </div>
+        </div>
+
+        <!-- Requested Amount -->
+        <div class="space-y-1">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Requested Amount<span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">₱</span>
+                <input type="number"
+                       name="requested_amount_{{ forloop.counter|default:'' }}"
+                       value="{{ program_budget.requested_amount|default:'' }}"
+                       step="0.01"
+                       min="0.01"
+                       class="w-full pl-8 pr-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px]"
+                       placeholder="0.00"
+                       required>
+            </div>
+        </div>
+
+        <!-- Approved Amount (if editing) -->
+        {% if program_budget.approved_amount %}
+        <div class="space-y-1">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Approved Amount
+            </label>
+            <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">₱</span>
+                <input type="number"
+                       name="approved_amount_{{ forloop.counter|default:'' }}"
+                       value="{{ program_budget.approved_amount }}"
+                       step="0.01"
+                       min="0.01"
+                       class="w-full pl-8 pr-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px]"
+                       placeholder="0.00">
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>

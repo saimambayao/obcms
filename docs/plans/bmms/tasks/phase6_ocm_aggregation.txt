@@ -1,0 +1,724 @@
+BMMS PHASE 6: OCM AGGREGATION - TASK BREAKDOWN
+
+================================================================================
+PHASE METADATA
+================================================================================
+
+Phase: 6
+Title: OCM (Office of the Chief Minister) Aggregation Layer
+Priority: HIGH
+Complexity: Moderate
+Status: Not Started
+
+Dependencies:
+  - Phase 1: Foundation (Organizations app, middleware)
+  - Phase 2: Planning Module (strategic plans data)
+  - Phase 3: Budgeting Module (budget data)
+  - Phase 4: Coordination Enhancement (inter-MOA partnerships)
+  - Can start after Phase 4 (Phase 5 optional)
+
+Description:
+  Build OCM aggregation layer providing read-only
+  consolidated views across all 44 MOAs. Enables government-wide oversight,
+  budget monitoring, and inter-ministerial coordination tracking.
+
+Target Users:
+  - Office of the Chief Minister staff
+  - OCM analysts
+  - Government executives
+
+Key Deliverables:
+  - OCM dashboard with cross-MOA statistics
+  - Consolidated budget view
+  - Inter-ministerial coordination reports
+  - Government-wide performance metrics
+  - Read-only access enforcement
+
+================================================================================
+TASK 1: OCM APP FOUNDATION
+================================================================================
+
+Priority: CRITICAL
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Create dedicated OCM Django app for aggregation views with proper permission
+  isolation and read-only access patterns.
+
+Subtasks:
+
+[ ] 1.1 Create OCM App Structure
+    - Create src/ocm/ directory
+    - Create __init__.py, models.py, views.py, urls.py
+    - Create apps.py with OcmConfig
+    - Add 'ocm' to INSTALLED_APPS in settings
+    - Create src/ocm/templates/ocm/ directory
+
+[ ] 1.2 Define OCM Permissions Model
+    - Create OCM user group in database
+    - Define permission: 'can_view_all_organizations'
+    - Define permission: 'can_access_ocm_dashboard'
+    - Create OCM role in OrganizationMembership
+    - Document permission requirements
+
+[ ] 1.3 Create OCM Middleware
+    File: src/ocm/middleware.py
+    - Create OcmAccessMiddleware class
+    - Check user has OCM permissions
+    - Set request.is_ocm_user flag
+    - Block write operations (POST, PUT, DELETE)
+    - Log OCM access attempts
+
+[ ] 1.4 Configure OCM URLs
+    File: src/ocm/urls.py
+    - Namespace: 'ocm'
+    - Pattern: /ocm/dashboard/
+    - Pattern: /ocm/budget-aggregation/
+    - Pattern: /ocm/coordination-matrix/
+    - Pattern: /ocm/reports/
+    - Include in main urls.py
+
+[ ] 1.5 Create Base OCM Template
+    File: src/templates/ocm/base.html
+    - Extend base.html
+    - Add OCM navigation menu
+    - Include "Read-Only Mode" indicator
+    - Add organization filter sidebar
+    - Responsive layout
+
+Testing Checklist:
+[ ] OCM app loads without errors
+[ ] OCM permissions created successfully
+[ ] OCM middleware blocks unauthorized access
+[ ] OCM URLs resolve correctly
+[ ] Base template renders properly
+
+================================================================================
+TASK 2: OCM DASHBOARD (CROSS-MOA OVERVIEW)
+================================================================================
+
+Priority: CRITICAL
+Complexity: Moderate
+Estimated Complexity: Moderate
+
+Description:
+  Create main OCM dashboard showing aggregated statistics across all 44 MOAs
+  with drill-down capabilities and filtering options.
+
+Subtasks:
+
+[ ] 2.1 Create Dashboard View
+    File: src/ocm/views.py (DashboardView)
+    - Aggregate data from all organizations
+    - Calculate total budgets across MOAs
+    - Count assessments by MOA
+    - Count active projects/programs by MOA
+    - Count partnerships (intra + inter-MOA)
+    - Load performance metrics
+
+[ ] 2.2 Design Dashboard Template
+    File: src/templates/ocm/dashboard.html
+    - Hero section: Government-wide stats
+    - Stat card: Total organizations (44)
+    - Stat card: Total budget (all MOAs)
+    - Stat card: Active projects (all MOAs)
+    - Stat card: Inter-MOA partnerships
+    - MOA performance table (sortable)
+    - Recent activity feed (all MOAs)
+
+[ ] 2.3 Implement Organization Filter
+    - Dropdown: Filter by MOA
+    - Dropdown: Filter by ministry/office/agency type
+    - Dropdown: Filter by region
+    - Date range picker
+    - "Clear Filters" button
+    - Persist filter state in session
+
+[ ] 2.4 Create Performance Metrics Cards
+    - Budget utilization rate (government-wide)
+    - Assessment completion rate
+    - Project on-time completion rate
+    - Inter-MOA collaboration index
+    - Color-coded performance indicators
+
+[ ] 2.5 Add Drill-Down Links
+    - Click MOA name → MOA detail view
+    - Click budget → Budget aggregation page
+    - Click assessments → MANA aggregation page
+    - Click projects → M&E aggregation page
+    - Click partnerships → Coordination matrix
+
+Testing Checklist:
+[ ] Dashboard loads within 3 seconds
+[ ] All statistics calculate correctly
+[ ] Filters work without page reload (HTMX)
+[ ] Drill-down links navigate properly
+[ ] Read-only status enforced
+
+================================================================================
+TASK 3: CONSOLIDATED BUDGET VIEW
+================================================================================
+
+Priority: HIGH
+Complexity: Moderate
+Estimated Complexity: Moderate
+
+Description:
+  Build government-wide budget aggregation view showing total budgets,
+  allocations, utilization rates, and breakdown by MOA.
+
+Subtasks:
+
+[ ] 3.1 Create Budget Aggregation View
+    File: src/ocm/views.py (BudgetAggregationView)
+    - Query all MOABudgetProposal records
+    - Calculate total proposed amount (all MOAs)
+    - Calculate total allocated amount
+    - Calculate total utilized amount
+    - Group by MOA, fiscal year
+    - Calculate utilization rates
+
+[ ] 3.2 Design Budget Aggregation Template
+    File: src/templates/ocm/budget_aggregation.html
+    - Summary cards: Total budget, allocated, utilized
+    - Utilization rate gauge (percentage)
+    - MOA budget breakdown table
+    - Fiscal year selector
+    - Budget category breakdown chart
+    - Export to Excel button
+
+[ ] 3.3 Implement Budget Breakdown Table
+    Columns:
+    - MOA name
+    - Proposed amount
+    - Allocated amount
+    - Disbursed amount
+    - Utilization rate (%)
+    - Status indicator
+    - View details link
+    - Sortable columns
+
+[ ] 3.4 Create Budget Detail Modal
+    - Show MOA-specific budget breakdown
+    - List all budget proposals (fiscal year)
+    - Show work items and allocations
+    - Display disbursement history
+    - Read-only view
+
+[ ] 3.5 Add Budget Visualization
+    - Pie chart: Budget by MOA
+    - Bar chart: Top 10 MOAs by budget
+    - Line chart: Budget trend over years
+    - Stacked bar: Proposed vs Allocated vs Utilized
+    - Use Chart.js library
+
+Testing Checklist:
+[ ] Budget totals match sum of MOA budgets
+[ ] Utilization rates calculate correctly
+[ ] Table sorting works
+[ ] Modal loads budget details
+[ ] Charts render correctly
+[ ] Export to Excel works
+
+================================================================================
+TASK 4: INTER-MINISTERIAL COORDINATION VIEW
+================================================================================
+
+Priority: HIGH
+Complexity: Moderate
+Estimated Complexity: Moderate
+
+Description:
+  Create coordination matrix showing all inter-MOA partnerships, joint
+  projects, and collaboration activities across government.
+
+Subtasks:
+
+[ ] 4.1 Create Coordination Matrix View
+    File: src/ocm/views.py (CoordinationMatrixView)
+    - Query all Partnership records
+    - Filter is_inter_moa=True partnerships
+    - Group by lead_organization
+    - Count participating organizations
+    - Calculate collaboration score per MOA
+    - Load recent communications
+
+[ ] 4.2 Design Coordination Matrix Template
+    File: src/templates/ocm/coordination_matrix.html
+    - Summary: Total inter-MOA partnerships
+    - Summary: Most collaborative MOAs (top 5)
+    - Partnership table (filterable)
+    - Collaboration network graph
+    - Communication timeline
+
+[ ] 4.3 Implement Partnership Table
+    Columns:
+    - Partnership name
+    - Lead organization
+    - Participating MOAs (badges)
+    - Status
+    - Start date
+    - End date
+    - View details link
+    - Sortable, filterable
+
+[ ] 4.4 Create Collaboration Network Graph
+    - Nodes: MOAs
+    - Edges: Partnerships between MOAs
+    - Node size: Number of partnerships
+    - Edge thickness: Partnership strength
+    - Interactive hover (show partnership names)
+    - Use D3.js or Vis.js
+
+[ ] 4.5 Add Communication Timeline
+    - Show inter-MOA communications (last 30 days)
+    - Group by date
+    - From/To organization indicators
+    - Subject preview
+    - Click to view communication details
+
+Testing Checklist:
+[ ] Matrix shows only inter-MOA partnerships
+[ ] Collaboration scores calculate correctly
+[ ] Network graph renders properly
+[ ] Timeline loads recent communications
+[ ] Filters work without page reload
+
+================================================================================
+TASK 5: GOVERNMENT-WIDE PERFORMANCE REPORTS
+================================================================================
+
+Priority: HIGH
+Complexity: Moderate
+Estimated Complexity: Moderate
+
+Description:
+  Build comprehensive performance reporting system with government-wide
+  metrics, trends, and MOA comparisons.
+
+Subtasks:
+
+[ ] 5.1 Create Performance Reports View
+    File: src/ocm/views.py (PerformanceReportsView)
+    - Aggregate project completion rates (all MOAs)
+    - Calculate average assessment completion time
+    - Measure budget execution efficiency
+    - Track policy implementation progress
+    - Generate performance rankings
+
+[ ] 5.2 Design Performance Reports Template
+    File: src/templates/ocm/reports/performance.html
+    - Report selector dropdown
+    - Date range picker
+    - MOA comparison toggle
+    - Performance metrics grid
+    - Trend charts
+    - Export options (PDF, Excel)
+
+[ ] 5.3 Implement Performance Metrics
+    Metrics:
+    - Projects on-time completion rate
+    - Budget utilization efficiency
+    - Assessment completion rate
+    - Policy recommendation adoption rate
+    - Inter-MOA collaboration index
+    - Stakeholder engagement score
+
+[ ] 5.4 Create MOA Performance Comparison
+    - Side-by-side MOA comparison (select 2-5 MOAs)
+    - Radar chart: Multi-metric comparison
+    - Bar chart: Key indicator comparison
+    - Performance gap analysis
+    - Improvement recommendations
+
+[ ] 5.5 Add Report Export Functionality
+    - PDF export: Formatted report with charts
+    - Excel export: Raw data tables
+    - CSV export: Time-series data
+    - Email report: Schedule and send
+    - Report templates library
+
+Testing Checklist:
+[ ] Performance metrics calculate correctly
+[ ] Comparison charts render properly
+[ ] Reports export without errors
+[ ] Email scheduling works
+[ ] Data accuracy verified
+
+================================================================================
+TASK 6: OCM DATA MODELS
+================================================================================
+
+Priority: MEDIUM
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Create OCM-specific data models for saving report preferences, dashboards,
+  and aggregation queries.
+
+Subtasks:
+
+[ ] 6.1 Create OCMDashboardConfig Model
+    File: src/ocm/models.py
+    Fields:
+    - user (ForeignKey to User)
+    - dashboard_layout (JSONField)
+    - default_filters (JSONField)
+    - refresh_interval (IntegerField)
+    - created_at, updated_at
+
+[ ] 6.2 Create SavedReport Model
+    Fields:
+    - name (CharField)
+    - report_type (CharField)
+    - parameters (JSONField)
+    - schedule (CharField - daily/weekly/monthly)
+    - recipients (ArrayField of emails)
+    - created_by (ForeignKey to User)
+
+[ ] 6.3 Create AggregationQuery Model
+    Fields:
+    - query_name (CharField)
+    - sql_template (TextField)
+    - parameters (JSONField)
+    - result_cache (JSONField)
+    - cached_at (DateTimeField)
+    - cache_ttl (IntegerField - seconds)
+
+[ ] 6.4 Create OCM Admin Interface
+    File: src/ocm/admin.py
+    - Register OCMDashboardConfig
+    - Register SavedReport
+    - Register AggregationQuery
+    - Customized list displays
+    - Search and filters
+
+[ ] 6.5 Run Migrations
+    - python manage.py makemigrations ocm
+    - python manage.py migrate ocm
+    - Test rollback: python manage.py migrate ocm zero
+    - Verify all models created
+
+Testing Checklist:
+[ ] Models created successfully
+[ ] Admin interface accessible
+[ ] CRUD operations work
+[ ] Migrations reversible
+[ ] Foreign keys enforce correctly
+
+================================================================================
+TASK 7: READ-ONLY ACCESS ENFORCEMENT
+================================================================================
+
+Priority: CRITICAL
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Implement strict read-only access for OCM users - no create, update, or
+  delete operations allowed on MOA data.
+
+Subtasks:
+
+[ ] 7.1 Create Read-Only Decorators
+    File: src/ocm/decorators.py
+    - @enforce_readonly decorator
+    - Check HTTP method (GET, HEAD only)
+    - Return 403 for POST, PUT, PATCH, DELETE
+    - Log unauthorized write attempts
+    - Custom error message
+
+[ ] 7.2 Apply Decorators to OCM Views
+    - Apply to all OCM view functions
+    - Apply to all OCM class-based views
+    - Test with @method_decorator for CBVs
+    - Verify all views protected
+
+[ ] 7.3 Disable Edit Buttons in Templates
+    - Hide "Edit" buttons for OCM users
+    - Hide "Delete" buttons for OCM users
+    - Hide "Create New" buttons
+    - Show "View Details" only
+    - Add "Read-Only Mode" badge
+
+[ ] 7.4 Implement API Read-Only
+    File: src/ocm/permissions.py
+    - Create IsReadOnly permission class
+    - Override has_permission method
+    - Allow GET, HEAD, OPTIONS
+    - Deny POST, PUT, PATCH, DELETE
+    - Apply to OCM API viewsets
+
+[ ] 7.5 Add Audit Logging
+    - Log all OCM user actions
+    - Log unauthorized write attempts
+    - Track data access patterns
+    - Alert on suspicious activity
+    - Store logs in database
+
+Testing Checklist:
+[ ] POST requests return 403
+[ ] PUT requests return 403
+[ ] DELETE requests return 403
+[ ] GET requests work normally
+[ ] Audit logs capture all actions
+
+================================================================================
+TASK 8: OCM NAVIGATION & UI
+================================================================================
+
+Priority: MEDIUM
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Create OCM-specific navigation menu, sidebar, and UI components for
+  intuitive government-wide data exploration.
+
+Subtasks:
+
+[ ] 8.1 Create OCM Navigation Menu
+    - Dashboard link
+    - Budget Aggregation link
+    - Coordination Matrix link
+    - Performance Reports link
+    - Settings link
+    - Logout link
+
+[ ] 8.2 Design Organization Sidebar Filter
+    - List all 44 MOAs (collapsible tree)
+    - Group by ministry/office/agency type
+    - Multi-select checkboxes
+    - "Select All" / "Clear All" buttons
+    - Search organizations input
+    - Apply filters button
+
+[ ] 8.3 Create "Read-Only Mode" Indicator
+    - Persistent banner at top
+    - Amber color scheme
+    - Icon: Eye symbol
+    - Text: "OCM Read-Only View"
+    - Tooltip: Explain read-only access
+
+[ ] 8.4 Implement Breadcrumbs
+    - OCM Home > Current Page
+    - OCM Home > Reports > Performance
+    - OCM Home > Budget > MOA Detail
+    - Clickable breadcrumb links
+    - Current page highlighted
+
+[ ] 8.5 Add Quick Stats Widget
+    - Collapsible sidebar widget
+    - Government-wide quick stats
+    - Total MOAs: 44
+    - Total users: ~800
+    - Total budget: ₱X billion
+    - Active projects: X
+
+Testing Checklist:
+[ ] Navigation menu renders
+[ ] Organization filter works
+[ ] Read-only banner visible
+[ ] Breadcrumbs navigate correctly
+[ ] Quick stats calculate correctly
+
+================================================================================
+TASK 9: TESTING & VALIDATION
+================================================================================
+
+Priority: CRITICAL
+Complexity: Moderate
+Estimated Complexity: Moderate
+
+Description:
+  Comprehensive testing of OCM aggregation layer including data accuracy,
+  security, performance, and usability.
+
+Subtasks:
+
+[ ] 9.1 Create OCM Integration Tests
+    File: src/tests/integration/test_ocm_aggregation.py
+    Tests:
+    - test_ocm_dashboard_loads
+    - test_budget_aggregation_totals
+    - test_coordination_matrix_filters
+    - test_performance_reports_accuracy
+    - test_cross_moa_data_visibility
+
+[ ] 9.2 Create Read-Only Security Tests
+    File: src/tests/security/test_ocm_readonly.py
+    Tests:
+    - test_ocm_cannot_create_data
+    - test_ocm_cannot_update_data
+    - test_ocm_cannot_delete_data
+    - test_ocm_sees_all_organizations
+    - test_non_ocm_blocked_from_ocm_views
+
+[ ] 9.3 Performance Testing
+    File: src/tests/performance/test_ocm_performance.py
+    Tests:
+    - test_dashboard_load_time (<3 seconds)
+    - test_budget_aggregation_query_time (<5 seconds)
+    - test_coordination_matrix_load (<4 seconds)
+    - test_44_moa_data_aggregation (<10 seconds)
+
+[ ] 9.4 Data Accuracy Validation
+    - Verify budget totals match MOA sum
+    - Verify assessment counts match
+    - Verify project counts match
+    - Verify partnership counts match
+    - Cross-check with MOA views
+
+[ ] 9.5 Usability Testing
+    - OCM staff test dashboard
+    - Navigation clarity
+    - Filter intuitiveness
+    - Report export functionality
+    - Gather feedback and iterate
+
+Testing Checklist:
+[ ] All integration tests pass
+[ ] All security tests pass
+[ ] All performance tests pass
+[ ] Data accuracy verified
+[ ] Usability feedback collected
+
+================================================================================
+TASK 10: DOCUMENTATION & TRAINING
+================================================================================
+
+Priority: MEDIUM
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Create comprehensive documentation and training materials for OCM users.
+
+Subtasks:
+
+[ ] 10.1 Create OCM User Guide
+    File: docs/user-guides/OCM_USER_GUIDE.md
+    Sections:
+    - Logging into OCM portal
+    - Understanding the dashboard
+    - Using organization filters
+    - Viewing consolidated budgets
+    - Exploring coordination matrix
+    - Generating performance reports
+    - Exporting reports
+
+[ ] 10.2 Create Video Tutorials
+    - Screen recording: Dashboard walkthrough (5 min)
+    - Screen recording: Budget aggregation (3 min)
+    - Screen recording: Performance reports (4 min)
+    - Upload to internal training portal
+    - Create tutorial index page
+
+[ ] 10.3 Document OCM API
+    File: docs/api/OCM_API.md
+    - List all OCM endpoints
+    - Document authentication
+    - Document read-only restrictions
+    - Provide code examples (Python, JavaScript)
+    - List error codes
+
+[ ] 10.4 Create FAQ Document
+    File: docs/user-guides/OCM_FAQ.md
+    Questions:
+    - Why is OCM view read-only?
+    - How to request access?
+    - How to interpret performance metrics?
+    - How to export reports?
+    - Who to contact for issues?
+
+[ ] 10.5 Conduct Training Session
+    - Schedule training with OCM staff
+    - Live walkthrough of all features
+    - Q&A session
+    - Collect feedback
+    - Update documentation based on feedback
+
+Testing Checklist:
+[ ] User guide complete
+[ ] Video tutorials recorded
+[ ] API documentation complete
+[ ] FAQ document created
+[ ] Training session conducted
+
+================================================================================
+DEPLOYMENT CHECKLIST
+================================================================================
+
+Pre-Deployment:
+[ ] All unit tests pass
+[ ] All integration tests pass
+[ ] Security tests pass (read-only enforcement)
+[ ] Performance tests pass (dashboard <3s)
+[ ] Data accuracy validated
+[ ] OCM user accounts created
+[ ] OCM permissions assigned
+[ ] Training materials ready
+
+Deployment Steps:
+[ ] Merge feature/bmms-ocm to feature/bmms
+[ ] Run migrations on staging
+[ ] Deploy OCM app to staging
+[ ] Smoke test all OCM views
+[ ] Conduct UAT with OCM staff
+[ ] Fix any issues identified
+[ ] Deploy to production
+[ ] Monitor logs for errors
+
+Post-Deployment:
+[ ] Verify OCM dashboard loads
+[ ] Verify budget aggregation accurate
+[ ] Verify read-only access enforced
+[ ] Check performance metrics
+[ ] Gather user feedback
+[ ] Create support tickets if needed
+
+================================================================================
+SUCCESS CRITERIA
+================================================================================
+
+Phase 6 is complete when:
+
+✅ OCM dashboard shows accurate government-wide statistics
+✅ Consolidated budget view totals all 44 MOA budgets
+✅ Inter-ministerial coordination matrix displays all partnerships
+✅ Performance reports generate without errors
+✅ Read-only access enforced (no write operations)
+✅ Dashboard loads within 3 seconds
+✅ All 44 MOAs visible and filterable
+✅ OCM users can export reports
+✅ No cross-organization data leakage
+✅ OCM staff trained and using system
+
+================================================================================
+NOTES
+================================================================================
+
+Important Considerations:
+- OCM aggregation must be READ-ONLY (critical security requirement)
+- Performance optimization crucial (aggregating 44 MOAs)
+- Data accuracy must match MOA-level views
+- UI must be intuitive for non-technical executives
+- Export functionality must support Excel, PDF, CSV
+
+Future Enhancements:
+- Real-time dashboard updates (WebSocket)
+- AI-powered insights and recommendations
+- Predictive analytics for budget trends
+- Automated alert system for performance issues
+- Mobile app for OCM executives
+
+Dependencies for Next Phase:
+- Phase 7: Pilot MOA Onboarding requires completed OCM aggregation
+- Pilot MOAs will generate data visible in OCM dashboard
+- OCM oversight validates pilot MOA operations
+
+================================================================================
+END OF PHASE 6 TASK BREAKDOWN
+================================================================================

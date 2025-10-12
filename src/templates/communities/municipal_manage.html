@@ -115,7 +115,7 @@
         <div class="p-6">
             <form id="municipal-filter-form"
                   method="get"
-                  hx-get="{% url 'common:communities_manage_municipal' %}"
+                  hx-get="{% url 'communities:communities_manage_municipal' %}"
                   hx-target="#municipal-results-container"
                   hx-swap="innerHTML transition:true"
                   hx-trigger="change from:select, submit"
@@ -168,7 +168,7 @@
                         </span>
                         <span class="htmx-indicator-shown">Apply</span>
                     </button>
-                    <a href="{% url 'common:communities_manage_municipal' %}"
+                    <a href="{% url 'communities:communities_manage_municipal' %}"
                        class="w-full sm:flex-1 inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-white px-6 py-3 font-semibold text-emerald-600 transition-all duration-200 hover:bg-emerald-50">
                         Clear
                     </a>
@@ -185,7 +185,7 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             {% if can_manage_communities %}
-            <a href="{% url 'common:communities_add_municipality' %}" class="group bg-white rounded-xl shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'communities:communities_add_municipality' %}" class="group bg-white rounded-xl shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-plus text-white text-xl"></i>
@@ -204,7 +204,7 @@
             </a>
             {% endif %}
 
-            <a href="{% url 'common:communities_stakeholders' %}" class="group bg-white rounded-xl shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'communities:communities_stakeholders' %}" class="group bg-white rounded-xl shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-users text-white text-xl"></i>
@@ -222,7 +222,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:communities_home' %}" class="group bg-white rounded-xl shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'communities:communities_home' %}" class="group bg-white rounded-xl shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-chart-line text-white text-xl"></i>

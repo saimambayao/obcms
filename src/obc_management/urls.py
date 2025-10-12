@@ -50,6 +50,12 @@ urlpatterns = [
     path("coordination/", include("coordination.urls")),
     path("policies/", include("recommendations.policies.urls")),
     path("monitoring/", include("monitoring.urls")),
+    # Planning Module (Phase 1: Strategic Planning - BMMS)
+    path("planning/", include("planning.urls")),
+    # Budget Preparation Module (Phase 2A: Budget Preparation - Parliament Bill No. 325)
+    path("budget/preparation/", include("budget_preparation.urls")),
+    # Budget Execution Module (Phase 2B: Budget Execution - Parliament Bill No. 325)
+    path("budget/execution/", include("budget_execution.urls")),
     # =========================================================================
     # PROJECT MANAGEMENT PORTAL URL MIGRATION
     # =========================================================================
@@ -79,7 +85,7 @@ urlpatterns = [
         "documents/",
         include(("recommendations.documents.urls", "documents"), namespace="documents"),
     ),
-    path("mana/workshops/", include(("mana.urls", "mana"), namespace="mana")),
+    path("mana/", include(("mana.urls", "mana"), namespace="mana")),
     # =========================================================================
     # API ENDPOINTS (Versioned)
     # =========================================================================

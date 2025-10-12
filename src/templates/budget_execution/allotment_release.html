@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Allotment Release - OBCMS{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a></li>
+<li><a href="{% url 'budget_execution:dashboard' %}" class="text-blue-600 hover:text-blue-800">Budget Execution</a></li>
+<li class="text-neutral-800 font-semibold">Allotment Release</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Release Quarterly Allotment</h1>
+        <p class="mt-2 text-lg text-gray-600">
+            Authorize quarterly budget allotment for program execution
+        </p>
+    </div>
+
+    <!-- Form Container -->
+    <form method="post" action="" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Program Budget Selection -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-list-alt text-blue-500 mr-2"></i>
+                Program Budget
+            </h3>
+
+            <div class="space-y-1 mb-4">
+                <label for="program_budget" class="block text-sm font-medium text-gray-700 mb-2">
+                    Select Program Budget<span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                    <select id="program_budget"
+                            name="program_budget"
+                            hx-get="{% url 'budget_execution:get_budget_details' %}"
+                            hx-target="#budget-details"
+                            hx-trigger="change"
+                            class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200"
+                            required>
+                        <option value="">Select program budget...</option>
+                        {% for pb in program_budgets %}
+                        <option value="{{ pb.id }}">
+                            {{ pb.program.name }} - FY {{ pb.budget_proposal.fiscal_year }} (₱{{ pb.approved_amount|floatformat:2 }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                        <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Budget Details (Loaded via HTMX) -->
+            <div id="budget-details" class="mt-4">
+                <!-- HTMX will load budget details here -->
+            </div>
+        </div>
+
+        <!-- Allotment Details -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-coins text-emerald-500 mr-2"></i>
+                Allotment Details
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Quarter -->
+                <div class="space-y-1">
+                    <label for="quarter" class="block text-sm font-medium text-gray-700 mb-2">
+                        Quarter<span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <select id="quarter"
+                                name="quarter"
+                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200"
+                                required>
+                            <option value="">Select quarter...</option>
+                            <option value="1">Q1 (January - March)</option>
+                            <option value="2">Q2 (April - June)</option>
+                            <option value="3">Q3 (July - September)</option>
+                            <option value="4">Q4 (October - December)</option>
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Allotment Amount -->
+                <div class="space-y-1">
+                    <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
+                        Allotment Amount<span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">₱</span>
+                        <input type="number"
+                               id="amount"
+                               name="amount"
+                               step="0.01"
+                               min="0.01"
+                               class="w-full pl-8 pr-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px]"
+                               placeholder="0.00"
+                               required>
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">Amount to release for this quarter</p>
+                </div>
+
+                <!-- Release Date -->
+                <div class="space-y-1">
+                    <label for="release_date" class="block text-sm font-medium text-gray-700 mb-2">
+                        Release Date<span class="text-red-500">*</span>
+                    </label>
+                    <input type="date"
+                           id="release_date"
+                           name="release_date"
+                           value="{{ today|date:'Y-m-d' }}"
+                           class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px]"
+                           required>
+                </div>
+
+                <!-- Status -->
+                <div class="space-y-1">
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
+                        Status<span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <select id="status"
+                                name="status"
+                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200"
+                                required>
+                            <option value="pending">Pending</option>
+                            <option value="released" selected>Released</option>
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Remarks -->
+            <div class="mt-6 space-y-1">
+                <label for="remarks" class="block text-sm font-medium text-gray-700 mb-2">
+                    Remarks
+                </label>
+                <textarea id="remarks"
+                          name="remarks"
+                          rows="3"
+                          class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                          placeholder="Optional notes or special instructions..."></textarea>
+            </div>
+        </div>
+
+        <!-- Validation Alert -->
+        <div id="validation-alert" class="hidden bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-amber-400 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-amber-800">Validation Warning</h3>
+                    <div class="mt-2 text-sm text-amber-700">
+                        <p id="validation-message"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-200">
+            <a href="{% url 'budget_execution:dashboard' %}"
+               class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200 text-center">
+                <i class="fas fa-times mr-2"></i>
+                Cancel
+            </a>
+            <button type="submit"
+                    class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <i class="fas fa-check mr-2"></i>
+                Release Allotment
+            </button>
+        </div>
+
+    </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<script>
+    // Amount validation against remaining budget
+    document.addEventListener('DOMContentLoaded', function() {
+        const amountInput = document.getElementById('amount');
+        const validationAlert = document.getElementById('validation-alert');
+        const validationMessage = document.getElementById('validation-message');
+
+        amountInput.addEventListener('blur', function() {
+            // This would normally fetch remaining balance via API
+            // For now, just basic validation
+            const amount = parseFloat(this.value);
+            if (amount <= 0) {
+                validationAlert.classList.remove('hidden');
+                validationMessage.textContent = 'Allotment amount must be greater than zero.';
+            } else {
+                validationAlert.classList.add('hidden');
+            }
+        });
+    });
+</script>
+{% endblock %}

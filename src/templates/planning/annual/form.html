@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ action }} Annual Work Plan - OOBC Management{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:oobc_home' %}" class="text-blue-600 hover:text-blue-800">
+        <i class="fas fa-home"></i>
+    </a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'planning:dashboard' %}" class="text-blue-600 hover:text-blue-800">Planning</a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'planning:annual_list' %}" class="text-blue-600 hover:text-blue-800">Annual Work Plans</a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <span class="text-gray-700">{{ action }} Plan</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    {# Page Header #}
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            <i class="fas fa-{% if action == 'Create' %}plus{% else %}edit{% endif %} text-purple-600 mr-3"></i>
+            {{ action }} Annual Work Plan
+        </h1>
+        <p class="text-gray-600">
+            {% if action == 'Create' %}
+                Create a new annual work plan for the selected strategic plan
+            {% else %}
+                Update annual work plan details
+            {% endif %}
+        </p>
+    </div>
+
+    {# Form #}
+    <form method="post" class="bg-white rounded-xl p-6 border border-gray-200">
+        {% csrf_token %}
+
+        {# Form Errors #}
+        {% if form.non_field_errors %}
+            <div class="bg-red-50 border-l-4 border-red-500 rounded-r-lg p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">
+                            Please correct the following errors:
+                        </h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            {{ form.non_field_errors }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {# Basic Information Section #}
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-info-circle text-purple-500 mr-2"></i>
+                Basic Information
+            </h2>
+
+            {# Strategic Plan Field #}
+            <div class="mb-4">
+                <label for="{{ form.strategic_plan.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Strategic Plan <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                    {{ form.strategic_plan }}
+                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                        <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                    </span>
+                </div>
+                {% if form.strategic_plan.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.strategic_plan.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            {# Title Field #}
+            <div class="mb-4">
+                <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Plan Title <span class="text-red-500">*</span>
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-sm text-gray-500">Example: "OOBC Annual Work Plan 2025"</p>
+            </div>
+
+            {# Year Field #}
+            <div class="mb-4">
+                <label for="{{ form.year.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Fiscal Year <span class="text-red-500">*</span>
+                </label>
+                {{ form.year }}
+                {% if form.year.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.year.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-sm text-gray-500">Must fall within the strategic plan's year range</p>
+            </div>
+
+            {# Description Field #}
+            <div class="mb-4">
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-sm text-gray-500">Overview of annual priorities and approach</p>
+            </div>
+        </div>
+
+        {# Status Section #}
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-toggle-on text-purple-500 mr-2"></i>
+                Plan Status
+            </h2>
+
+            <div class="space-y-1">
+                <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Status <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                    {{ form.status }}
+                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                        <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                    </span>
+                </div>
+                {% if form.status.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Form Actions #}
+        <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-200">
+            <a href="{% if plan %}{% url 'planning:annual_detail' plan.pk %}{% else %}{% url 'planning:annual_list' %}{% endif %}"
+               class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200 text-center">
+                <i class="fas fa-times mr-2"></i>
+                Cancel
+            </a>
+            <button type="submit"
+                    class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <i class="fas fa-save mr-2"></i>
+                {% if action == 'Create' %}Create Plan{% else %}Update Plan{% endif %}
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

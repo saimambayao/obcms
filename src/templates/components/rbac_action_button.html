@@ -1,0 +1,62 @@
+{% load rbac_tags %}
+{#
+RBAC Action Button Component
+
+Permission-gated button component that only renders when user has required permission.
+
+Parameters:
+- user: User object (required)
+- permission_code: Permission code to check (required)
+- organization: Optional organization context (uses request.organization if not provided)
+- button_text: Text to display on button (required)
+- button_url: URL for link-style buttons (optional, defaults to '#')
+- button_class: CSS classes for styling (optional, defaults to primary button)
+- button_type: Type of button - 'submit', 'button', 'link' (optional, defaults to 'button')
+- button_id: HTML id attribute (optional)
+- icon_class: Icon class (e.g., 'fa-plus') (optional)
+- onclick: JavaScript onclick handler (optional)
+- disabled: Whether button should be disabled (optional, defaults to False)
+
+Usage Examples:
+
+1. Simple permission-gated button:
+{% include 'components/rbac_action_button.html' with user=request.user permission_code='communities.create_obc' button_text='Add Community' %}
+
+2. Button with custom styling:
+{% include 'components/rbac_action_button.html' with user=request.user permission_code='communities.delete_obc' button_text='Delete' button_class='btn-danger btn-sm' icon_class='fa-trash' %}
+
+3. Link-style button:
+{% include 'components/rbac_action_button.html' with user=request.user permission_code='mana.view_assessment' button_text='View Assessment' button_type='link' button_url='/mana/assessments/123/' %}
+
+4. Submit button with organization context:
+{% include 'components/rbac_action_button.html' with user=request.user permission_code='budget.approve_budget' organization=moa_org button_text='Approve Budget' button_type='submit' button_class='btn-success' %}
+#}
+
+{% has_permission user permission_code organization as has_perm %}
+
+{% if has_perm %}
+    {% if button_type == 'link' %}
+        {# Link-style button #}
+        <a href="{{ button_url|default:'#' }}"
+           {% if button_id %}id="{{ button_id }}"{% endif %}
+           class="{{ button_class|default:'inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring focus:ring-blue-300 disabled:opacity-25 transition' }}"
+           {% if disabled %}aria-disabled="true" style="pointer-events: none; opacity: 0.5;"{% endif %}>
+            {% if icon_class %}
+                <i class="fas {{ icon_class }} mr-2"></i>
+            {% endif %}
+            {{ button_text }}
+        </a>
+    {% else %}
+        {# Regular button #}
+        <button type="{{ button_type|default:'button' }}"
+                {% if button_id %}id="{{ button_id }}"{% endif %}
+                class="{{ button_class|default:'inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring focus:ring-blue-300 disabled:opacity-25 transition' }}"
+                {% if onclick %}onclick="{{ onclick }}"{% endif %}
+                {% if disabled %}disabled{% endif %}>
+            {% if icon_class %}
+                <i class="fas {{ icon_class }} mr-2"></i>
+            {% endif %}
+            {{ button_text }}
+        </button>
+    {% endif %}
+{% endif %}

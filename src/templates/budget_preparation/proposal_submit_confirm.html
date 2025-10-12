@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Submit Budget Proposal - OBCMS{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a></li>
+<li><a href="{% url 'budget_preparation:dashboard' %}" class="text-blue-600 hover:text-blue-800">Budget Preparation</a></li>
+<li><a href="{% url 'budget_preparation:proposal_detail' proposal.pk %}" class="text-blue-600 hover:text-blue-800">FY {{ proposal.fiscal_year }}</a></li>
+<li class="text-neutral-800 font-semibold">Submit</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <div class="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Submit Budget Proposal</h1>
+            <p class="text-lg text-gray-600">
+                Review the proposal before submitting for approval
+            </p>
+        </div>
+
+        <!-- Proposal Summary -->
+        <div class="mb-8 p-6 bg-gray-50 rounded-xl">
+            <div class="mb-4">
+                <h2 class="text-xl font-bold text-gray-900 mb-2">{{ proposal.title }}</h2>
+                <p class="text-sm text-gray-600">{{ proposal.description }}</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <div class="text-sm text-gray-600 mb-1">Fiscal Year</div>
+                    <div class="text-lg font-semibold text-gray-900">FY {{ proposal.fiscal_year }}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-600 mb-1">Total Budget</div>
+                    <div class="text-lg font-semibold text-emerald-600">₱{{ proposal.total_proposed_budget|floatformat:2 }}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-600 mb-1">Program Budgets</div>
+                    <div class="text-lg font-semibold text-gray-900">{{ proposal.program_budgets.count }}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-600 mb-1">Status</div>
+                    <div class="text-lg font-semibold text-gray-900">{{ proposal.get_status_display }}</div>
+                </div>
+            </div>
+        </div>
+
+        {% if validation_errors %}
+        <!-- Validation Errors -->
+        <div class="mb-8 p-6 bg-red-50 border-l-4 border-red-500 rounded-lg">
+            <div class="flex items-start">
+                <i class="fas fa-exclamation-circle text-red-600 text-2xl mr-3 mt-1"></i>
+                <div class="flex-1">
+                    <h3 class="text-lg font-bold text-red-900 mb-3">Validation Errors</h3>
+                    <p class="text-sm text-red-700 mb-4">Please fix the following issues before submitting:</p>
+                    <ul class="list-disc list-inside space-y-2 text-sm text-red-700">
+                        {% for key, error in validation_errors.items %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons (with errors) -->
+        <div class="flex items-center justify-between space-x-4">
+            <a href="{% url 'budget_preparation:proposal_edit' proposal.pk %}"
+               class="flex-1 border-2 border-blue-600 text-blue-600 px-6 py-3 rounded-xl font-semibold text-center hover:bg-blue-50 transition-colors duration-200">
+                <i class="fas fa-edit mr-2"></i>
+                Fix Issues
+            </a>
+            <a href="{% url 'budget_preparation:proposal_detail' proposal.pk %}"
+               class="flex-1 border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-semibold text-center hover:bg-gray-50 transition-colors duration-200">
+                <i class="fas fa-times mr-2"></i>
+                Cancel
+            </a>
+        </div>
+
+        {% else %}
+        <!-- Success - Ready to Submit -->
+        <div class="mb-8 p-6 bg-emerald-50 border-l-4 border-emerald-500 rounded-lg">
+            <div class="flex items-start">
+                <i class="fas fa-check-circle text-emerald-600 text-2xl mr-3 mt-1"></i>
+                <div>
+                    <h3 class="text-lg font-bold text-emerald-900 mb-2">Ready to Submit</h3>
+                    <p class="text-sm text-emerald-700">
+                        This proposal has passed all validation checks and is ready for submission.
+                        Once submitted, it will be reviewed by the budget approval team.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Form -->
+        <form method="post" action="{% url 'budget_preparation:proposal_submit' proposal.pk %}">
+            {% csrf_token %}
+
+            <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <label class="flex items-start">
+                    <input type="checkbox" required
+                           class="mt-1 mr-3 h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <span class="text-sm text-gray-700">
+                        I confirm that all information in this budget proposal is accurate and complete.
+                        I understand that this proposal will be reviewed by the budget approval team.
+                    </span>
+                </label>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-4">
+                <button type="submit"
+                        class="flex-1 bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                    <i class="fas fa-paper-plane mr-2"></i>
+                    Submit for Review
+                </button>
+                <a href="{% url 'budget_preparation:proposal_detail' proposal.pk %}"
+                   class="flex-1 border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-semibold text-center hover:bg-gray-50 transition-colors duration-200">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancel
+                </a>
+            </div>
+        </form>
+        {% endif %}
+
+    </div>
+
+</div>
+{% endblock %}

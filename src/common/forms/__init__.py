@@ -17,6 +17,13 @@ from .community import (
 )
 from .needs import CommunityNeedSubmissionForm
 from .province import ProvinceForm
+from .rbac_forms import (
+    UserRoleAssignmentForm,
+    UserPermissionForm,
+    BulkRoleAssignmentForm,
+    FeatureToggleForm,
+    RolePermissionAssignmentForm,
+)
 from .staff import (
     PerformanceTargetForm,
     StaffDevelopmentPlanForm,
@@ -45,6 +52,11 @@ __all__ = [
     "OBCCommunityForm",
     "CommunityNeedSubmissionForm",
     "ProvinceForm",
+    "UserRoleAssignmentForm",
+    "UserPermissionForm",
+    "BulkRoleAssignmentForm",
+    "FeatureToggleForm",
+    "RolePermissionAssignmentForm",
     "StaffProfileForm",
     "StaffTeamForm",
     "StaffTeamMembershipForm",

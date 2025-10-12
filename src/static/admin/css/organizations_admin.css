@@ -1,0 +1,212 @@
+/**
+ * Custom CSS for Organizations Admin Interface
+ *
+ * Provides visual enhancements for:
+ * - Pilot MOA highlighting (gold background)
+ * - Improved table readability
+ * - Status indicators
+ */
+
+/* Pilot MOA Row Highlighting */
+.pilot-moa-row {
+    background-color: #fffbeb !important;
+    border-left: 4px solid #f59e0b !important;
+}
+
+.pilot-moa-row:hover {
+    background-color: #fef3c7 !important;
+}
+
+/* Enhanced Table Styling */
+.change-list tbody tr.pilot-moa-row td {
+    font-weight: 500;
+}
+
+/* Organization Code Column */
+.field-code {
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-weight: 600;
+    color: #1e40af;
+}
+
+/* Module Flags Container */
+.field-module_flags_display {
+    min-width: 200px;
+}
+
+/* Member Count Indicators */
+.field-member_count {
+    text-align: center;
+}
+
+/* Status Badge Containers */
+.field-active_status,
+.field-pilot_status {
+    text-align: center;
+}
+
+/* Fieldset Styling */
+.module-organizations .aligned .wide {
+    width: 100%;
+}
+
+/* Inline Member Table */
+.inline-group .tabular tbody tr {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.inline-group .tabular tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+/* Action Checkboxes */
+.action-checkbox-column {
+    width: 30px;
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 1024px) {
+    .field-module_flags_display span {
+        display: block;
+        margin-bottom: 2px;
+    }
+}
+
+/* Admin List Header */
+#changelist-filter {
+    background-color: #f9fafb;
+    border-left: 1px solid #e5e7eb;
+}
+
+/* Filter Options */
+#changelist-filter h3 {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+/* Search Bar Enhancement */
+#toolbar {
+    background-color: #ffffff;
+    border-bottom: 2px solid #3b82f6;
+    padding: 10px;
+}
+
+/* Permissions Icons in Membership Admin */
+.field-permissions_display span {
+    display: inline-block;
+    margin: 0 2px;
+    font-size: 16px;
+}
+
+/* Role Badge Spacing */
+.field-role_display {
+    text-align: center;
+}
+
+/* Primary Indicator */
+.field-primary_indicator {
+    text-align: center;
+    font-size: 18px;
+}
+
+/* Organization Display in Membership */
+.field-organization_display {
+    min-width: 200px;
+}
+
+/* Audit Fields */
+.field-created_at,
+.field-updated_at,
+.field-joined_date {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+/* Help Text Styling */
+.help {
+    color: #6b7280;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* Fieldset Headers */
+.module h2,
+.inline-group h2 {
+    background-color: #f3f4f6;
+    padding: 10px;
+    border-radius: 4px;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+/* Member Count Detail Box */
+.field-member_count_detail div {
+    line-height: 1.8;
+}
+
+/* Collapsed Fieldsets */
+.collapse.collapsed {
+    background-color: #f9fafb;
+}
+
+/* Delete Checkbox Disabled for OOBC */
+.delete-row input[type="checkbox"]:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Action Button Styling */
+.actions button[type="submit"] {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.actions button[type="submit"]:hover {
+    background-color: #2563eb;
+}
+
+/* Selected Row Highlighting */
+.changelist tbody tr.selected {
+    background-color: #dbeafe !important;
+}
+
+/* Pagination */
+.pagination {
+    border-top: 2px solid #e5e7eb;
+    padding-top: 15px;
+}
+
+/* Save Buttons */
+.submit-row input[type="submit"] {
+    background-color: #10b981;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.submit-row input[type="submit"]:hover {
+    background-color: #059669;
+}
+
+/* Delete Button */
+.deletelink-box a.deletelink {
+    background-color: #ef4444;
+    color: white !important;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.deletelink-box a.deletelink:hover {
+    background-color: #dc2626;
+}

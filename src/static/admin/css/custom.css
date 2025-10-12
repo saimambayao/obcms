@@ -1,108 +1,740 @@
-/* OBCMS admin theming --------------------------------------------------- */
+/* ============================================================================
+   OBCMS Django Admin Custom Styles
+   Aligned with OBCMS UI Standards Master Guide v3.1
+
+   Official Color System:
+   - Primary Gradient: Blue-800 (#1e40af) to Emerald-600 (#059669)
+   - Semantic Colors: Amber, Emerald, Blue, Purple, Orange, Red
+   - WCAG 2.1 AA Compliant
+   ============================================================================ */
+
+/* ============================================================================
+   CSS VARIABLES - Official OBCMS Color System
+   ============================================================================ */
 
 :root {
-    --oobc-emerald: #079669;
-    --oobc-emerald-soft: #e6f5f1;
-    --oobc-indigo: #2d3a8c;
-    --oobc-surface: #ffffff;
-    --oobc-border: #e5e7eb;
-    --oobc-muted: #6b7280;
+    /* PRIMARY GRADIENT - Bangsamoro Brand */
+    --primary-blue: #1e40af;         /* Blue-800 */
+    --primary-teal: #059669;         /* Emerald-600 */
+    --primary-gradient: linear-gradient(135deg, #1e40af 0%, #059669 100%);
+
+    /* SEMANTIC COLORS */
+    --semantic-amber: #d97706;       /* Total/General */
+    --semantic-emerald: #059669;     /* Success */
+    --semantic-blue: #2563eb;        /* Info */
+    --semantic-purple: #7c3aed;      /* Draft */
+    --semantic-orange: #ea580c;      /* Warning */
+    --semantic-red: #dc2626;         /* Critical */
+
+    /* NEUTRAL COLORS */
+    --neutral-50: #f9fafb;
+    --neutral-100: #f3f4f6;
+    --neutral-200: #e5e7eb;
+    --neutral-300: #d1d5db;
+    --neutral-400: #9ca3af;
+    --neutral-500: #6b7280;
+    --neutral-600: #4b5563;
+    --neutral-700: #374151;
+    --neutral-800: #1f2937;
+    --neutral-900: #111827;
+
+    /* SURFACE & BORDER */
+    --surface-white: #ffffff;
+    --border-gray: #e5e7eb;
+
+    /* SHADOWS */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+
+    /* FOCUS RING */
+    --focus-ring-color: #059669; /* emerald-600 */
+    --focus-ring-offset: 2px;
 }
+
+/* ============================================================================
+   TYPOGRAPHY
+   ============================================================================ */
 
 html {
-    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
+/* ============================================================================
+   DASHBOARD LAYOUT
+   ============================================================================ */
+
 body.dashboard #content {
-    background: linear-gradient(180deg, #f3faf7 0%, #ffffff 24%);
+    background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 24%);
 }
 
 body.dashboard .module {
-    border: 1px solid var(--oobc-border);
+    background: var(--surface-white);
+    border: 1px solid var(--border-gray);
     border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(9, 45, 66, 0.08);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+}
+
+body.dashboard .module:hover {
+    box-shadow: var(--shadow-xl);
 }
 
 body.dashboard .module h2 {
     font-weight: 600;
-    color: var(--oobc-indigo);
+    color: var(--neutral-800);
     letter-spacing: 0.02em;
+    padding: 1rem 1.5rem;
+    margin: 0;
+    background: linear-gradient(90deg, rgba(30, 64, 175, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%);
+    border-bottom: 1px solid var(--border-gray);
 }
 
+/* ============================================================================
+   LINKS & NAVIGATION
+   ============================================================================ */
+
 a {
-    color: var(--oobc-emerald);
+    color: var(--primary-blue);
+    text-decoration: none;
+    transition: color 0.2s ease;
 }
 
 a:hover {
-    color: #05654a;
+    color: var(--primary-teal);
 }
+
+a:focus {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+    border-radius: 4px;
+}
+
+/* ============================================================================
+   BREADCRUMBS
+   ============================================================================ */
+
+.breadcrumbs {
+    background: var(--surface-white);
+    border-bottom: 1px solid var(--border-gray);
+    padding: 0.75rem 1.5rem;
+}
+
+.breadcrumbs a {
+    color: var(--neutral-500);
+    transition: color 0.2s ease;
+}
+
+.breadcrumbs a:hover {
+    color: var(--primary-teal);
+}
+
+/* ============================================================================
+   QUICK ACTION CARDS
+   ============================================================================ */
 
 .dashboard .quick-action-card {
     border-radius: 18px;
-    border: 1px solid rgba(7, 150, 105, 0.08);
-    background: linear-gradient(180deg, var(--oobc-emerald-soft) 0%, #ffffff 100%);
-    box-shadow: 0 12px 25px rgba(7, 150, 105, 0.08);
+    border: 1px solid rgba(30, 64, 175, 0.08);
+    background: linear-gradient(180deg, rgba(240, 249, 255, 0.8) 0%, #ffffff 100%);
+    box-shadow: 0 12px 25px rgba(30, 64, 175, 0.08);
+    transition: all 180ms ease;
+    cursor: pointer;
 }
 
 .dashboard .quick-action-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 16px 32px rgba(7, 150, 105, 0.12);
-    transition: all 180ms ease;
+    box-shadow: 0 16px 32px rgba(30, 64, 175, 0.12);
+    border-color: rgba(30, 64, 175, 0.15);
 }
+
+/* ============================================================================
+   APP LIST
+   ============================================================================ */
 
 .dashboard .app-list .app-label {
     font-weight: 600;
-    color: var(--oobc-indigo);
+    color: var(--neutral-800);
+    font-size: 1.125rem;
+    margin-bottom: 0.75rem;
 }
 
 .dashboard .app-list .model {
     border-radius: 14px;
-    border: 1px solid rgba(45, 58, 140, 0.08);
-    background-color: var(--oobc-surface);
+    border: 1px solid rgba(30, 64, 175, 0.08);
+    background-color: var(--surface-white);
+    margin-bottom: 0.5rem;
+    transition: all 0.2s ease;
 }
 
-.breadcrumbs {
-    background: var(--oobc-surface);
-    border-bottom: 1px solid var(--oobc-border);
+.dashboard .app-list .model:hover {
+    border-color: rgba(30, 64, 175, 0.15);
+    box-shadow: var(--shadow-md);
 }
 
-.breadcrumbs a {
-    color: var(--oobc-muted);
-}
-
-.breadcrumbs a:hover {
-    color: var(--oobc-emerald);
-}
+/* ============================================================================
+   TABLES
+   ============================================================================ */
 
 .module table {
     border-radius: 12px;
-    border: 1px solid rgba(45, 58, 140, 0.05);
+    border: 1px solid var(--border-gray);
     overflow: hidden;
+    width: 100%;
 }
 
+/* Table Headers - Blue-to-Teal Gradient */
 .module table thead {
-    background-color: rgba(7, 150, 105, 0.08);
+    background: linear-gradient(90deg, #1e40af 0%, #059669 100%);
+}
+
+.module table thead th {
+    color: #ffffff;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+    padding: 1rem 1.5rem;
+    text-align: left;
+}
+
+/* Table Body */
+.module table tbody tr {
+    border-bottom: 1px solid var(--neutral-200);
+    transition: background-color 0.2s ease;
 }
 
 .module table tbody tr:hover {
-    background-color: rgba(7, 150, 105, 0.06);
+    background-color: rgba(30, 64, 175, 0.03);
 }
+
+.module table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.module table tbody td {
+    padding: 0.875rem 1.5rem;
+    color: var(--neutral-700);
+}
+
+/* Table Actions */
+.module table tbody td a {
+    color: var(--primary-blue);
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.module table tbody td a:hover {
+    color: var(--primary-teal);
+}
+
+/* ============================================================================
+   BUTTONS - Official Gradient Pattern
+   ============================================================================ */
 
 .button,
 .submit-row input[type="submit"],
-.content > .module .addlink {
-    background: linear-gradient(135deg, #079669 0%, #0bbf84 100%);
+.submit-row input[type="button"],
+.content > .module .addlink,
+input[type="submit"].default {
+    background: linear-gradient(135deg, #1e40af 0%, #059669 100%);
     border: none;
-    border-radius: 999px;
+    border-radius: 12px;
     color: #ffffff;
     font-weight: 600;
-    box-shadow: 0 12px 24px rgba(7, 150, 105, 0.28);
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9375rem;
+    box-shadow: 0 8px 16px rgba(30, 64, 175, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .button:hover,
 .submit-row input[type="submit"]:hover,
-.content > .module .addlink:hover {
+.submit-row input[type="button"]:hover,
+.content > .module .addlink:hover,
+input[type="submit"].default:hover {
     transform: translateY(-2px);
-    box-shadow: 0 16px 32px rgba(7, 150, 105, 0.32);
-    transition: all 160ms ease;
+    box-shadow: 0 12px 24px rgba(30, 64, 175, 0.28);
 }
+
+.button:active,
+.submit-row input[type="submit"]:active,
+.submit-row input[type="button"]:active,
+.content > .module .addlink:active,
+input[type="submit"].default:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 8px rgba(30, 64, 175, 0.2);
+}
+
+.button:focus,
+.submit-row input[type="submit"]:focus,
+.submit-row input[type="button"]:focus,
+.content > .module .addlink:focus,
+input[type="submit"].default:focus {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+}
+
+/* Secondary Buttons */
+.button.secondary,
+input[type="button"],
+.cancel-link {
+    background: var(--surface-white);
+    color: var(--neutral-700);
+    border: 2px solid var(--neutral-300);
+    box-shadow: var(--shadow-sm);
+}
+
+.button.secondary:hover,
+input[type="button"]:hover,
+.cancel-link:hover {
+    background: var(--neutral-50);
+    border-color: var(--neutral-400);
+    transform: none;
+}
+
+/* Danger Buttons */
+.button.danger,
+.deletelink {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    box-shadow: 0 8px 16px rgba(220, 38, 38, 0.2);
+}
+
+.button.danger:hover,
+.deletelink:hover {
+    box-shadow: 0 12px 24px rgba(220, 38, 38, 0.28);
+}
+
+/* ============================================================================
+   FORMS & INPUTS
+   ============================================================================ */
+
+/* Form Containers */
+.form-row {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--neutral-100);
+}
+
+.form-row:last-child {
+    border-bottom: none;
+}
+
+/* Labels */
+label {
+    display: block;
+    font-weight: 500;
+    color: var(--neutral-700);
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Text Inputs */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="url"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+textarea,
+select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 1px solid var(--neutral-200);
+    border-radius: 12px;
+    background: var(--surface-white);
+    color: var(--neutral-900);
+    transition: all 0.2s ease;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+input[type="url"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="datetime-local"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--focus-ring-color);
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+}
+
+/* Select Dropdowns */
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+}
+
+/* Textarea */
+textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* Checkboxes & Radio Buttons */
+input[type="checkbox"],
+input[type="radio"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid var(--neutral-300);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+input[type="radio"] {
+    border-radius: 50%;
+}
+
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+    background-color: var(--primary-teal);
+    border-color: var(--primary-teal);
+}
+
+input[type="checkbox"]:focus,
+input[type="radio"]:focus {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+}
+
+/* Help Text */
+.help {
+    display: block;
+    margin-top: 0.375rem;
+    font-size: 0.875rem;
+    color: var(--neutral-500);
+}
+
+/* ============================================================================
+   ERROR MESSAGES
+   ============================================================================ */
+
+.errorlist {
+    list-style: none;
+    padding: 0.75rem 1rem;
+    margin: 0.5rem 0;
+    background: rgba(220, 38, 38, 0.05);
+    border-left: 4px solid var(--semantic-red);
+    border-radius: 0 8px 8px 0;
+}
+
+.errorlist li {
+    color: var(--semantic-red);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.errornote {
+    background: rgba(220, 38, 38, 0.05);
+    border-left: 4px solid var(--semantic-red);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--semantic-red);
+    font-weight: 600;
+}
+
+/* ============================================================================
+   SUCCESS MESSAGES
+   ============================================================================ */
+
+.messagelist {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.messagelist li {
+    padding: 1rem 1.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.messagelist .success {
+    background: rgba(5, 150, 105, 0.1);
+    border-left: 4px solid var(--semantic-emerald);
+    color: #065f46;
+}
+
+.messagelist .warning {
+    background: rgba(234, 88, 12, 0.1);
+    border-left: 4px solid var(--semantic-orange);
+    color: #9a3412;
+}
+
+.messagelist .error {
+    background: rgba(220, 38, 38, 0.1);
+    border-left: 4px solid var(--semantic-red);
+    color: #991b1b;
+}
+
+.messagelist .info {
+    background: rgba(37, 99, 235, 0.1);
+    border-left: 4px solid var(--semantic-blue);
+    color: #1e3a8a;
+}
+
+/* ============================================================================
+   PAGINATION
+   ============================================================================ */
+
+.paginator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--surface-white);
+    border-radius: 12px;
+    border: 1px solid var(--border-gray);
+    margin: 1rem 0;
+}
+
+.paginator a,
+.paginator .this-page {
+    padding: 0.5rem 0.875rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.paginator a {
+    color: var(--neutral-700);
+    background: var(--neutral-100);
+}
+
+.paginator a:hover {
+    background: var(--neutral-200);
+    color: var(--neutral-900);
+}
+
+.paginator .this-page {
+    background: linear-gradient(135deg, #1e40af 0%, #059669 100%);
+    color: #ffffff;
+}
+
+/* ============================================================================
+   FILTERS & SEARCH
+   ============================================================================ */
+
+#changelist-filter {
+    background: var(--surface-white);
+    border: 1px solid var(--border-gray);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+#changelist-filter h2,
+#changelist-filter h3 {
+    font-weight: 600;
+    color: var(--neutral-800);
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+#changelist-filter ul {
+    list-style: none;
+    padding: 0;
+}
+
+#changelist-filter li {
+    padding: 0.5rem 0;
+}
+
+#changelist-filter a {
+    color: var(--neutral-700);
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+#changelist-filter a:hover {
+    color: var(--primary-teal);
+}
+
+#changelist-filter li.selected a {
+    color: var(--primary-blue);
+    font-weight: 600;
+}
+
+/* ============================================================================
+   CHANGE LIST
+   ============================================================================ */
+
+#changelist {
+    background: var(--surface-white);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+#changelist .actions {
+    background: var(--neutral-50);
+    border: 1px solid var(--border-gray);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* ============================================================================
+   INLINE FORMS
+   ============================================================================ */
+
+.inline-group {
+    background: var(--surface-white);
+    border: 1px solid var(--border-gray);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.inline-group h2 {
+    font-weight: 600;
+    color: var(--neutral-800);
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-gray);
+}
+
+.inline-related {
+    background: var(--neutral-50);
+    border: 1px solid var(--neutral-200);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+/* Skip Link */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--primary-blue);
+    color: white;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    border-radius: 0 0 8px 0;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Screen Reader Only */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    body.dashboard .module {
+        border-radius: 12px;
+    }
+
+    .module table thead th {
+        padding: 0.75rem 1rem;
+        font-size: 0.6875rem;
+    }
+
+    .module table tbody td {
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .button,
+    .submit-row input[type="submit"],
+    .content > .module .addlink {
+        padding: 0.625rem 1.25rem;
+        font-size: 0.875rem;
+        border-radius: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .module table {
+        font-size: 0.8125rem;
+    }
+
+    .module table thead th {
+        padding: 0.625rem 0.75rem;
+    }
+
+    .module table tbody td {
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+
+.text-gradient {
+    background: linear-gradient(135deg, #1e40af 0%, #059669 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.border-gradient {
+    border: 2px solid transparent;
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    background-image: linear-gradient(white, white),
+                      linear-gradient(135deg, #1e40af 0%, #059669 100%);
+}
+
+/* ============================================================================
+   PRINT STYLES
+   ============================================================================ */
+
+@media print {
+    .button,
+    .submit-row,
+    .breadcrumbs,
+    #changelist-filter,
+    .actions {
+        display: none;
+    }
+
+    .module table thead {
+        background: var(--neutral-800) !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
+/* ============================================================================
+   END OF CUSTOM STYLES
+   ============================================================================ */

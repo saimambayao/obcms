@@ -67,7 +67,7 @@
                             <i class="fas fa-tachometer-alt"></i>
                             <span>OBCMS Dashboard</span>
                         </a>
-                        <a href="{% url 'common:recommendations_new' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                        <a href="{% url 'policies:new' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-plus-circle"></i>
                             <span>New Recommendation</span>
                         </a>
@@ -75,7 +75,7 @@
                             <i class="fas fa-chart-line"></i>
                             <span>Add Evidence</span>
                         </a>
-                        <a href="{% url 'common:recommendations_manage' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                        <a href="{% url 'policies:manage' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-list-alt"></i>
                             <span>Manage All</span>
                         </a>
@@ -99,7 +99,7 @@
             </span>
         </div>
 
-        <div hx-get="{% url 'common:recommendations_stats_cards' %}"
+        <div hx-get="{% url 'policies:stats_cards' %}"
              hx-trigger="load, every 60s"
              hx-swap="innerHTML swap:300ms"
              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -253,15 +253,15 @@
                 <p class="mt-1 text-sm text-gray-600">Latest policy, programmatic, and service recommendations logged across the portfolio.</p>
             </div>
             <div class="flex flex-wrap gap-3 text-sm font-medium">
-                <a href="{% url 'common:recommendations_manage' %}" class="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700">
+                <a href="{% url 'policies:manage' %}" class="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700">
                     <i class="fas fa-lightbulb"></i>
                     Manage Policies
                 </a>
-                <a href="{% url 'common:recommendations_manage' %}" class="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700">
+                <a href="{% url 'policies:manage' %}" class="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700">
                     <i class="fas fa-layer-group"></i>
                     Systematic Programs
                 </a>
-                <a href="{% url 'common:recommendations_manage' %}" class="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700">
+                <a href="{% url 'policies:manage' %}" class="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700">
                     <i class="fas fa-hand-holding-heart"></i>
                     Service Improvements
                 </a>
@@ -367,7 +367,7 @@
             </h2>
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {% for area_key, area_info in stats.areas.items %}
-                <a href="{% url 'common:recommendations_by_area' area_info.slug %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+                <a href="{% url 'policies:by_area' area_info.slug %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
                     <div class="p-6 flex flex-col flex-grow">
                         {% if area_info.color == 'green' %}
                         <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
@@ -466,7 +466,7 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {% if user.is_staff %}
-            <a href="{% url 'common:recommendations_new' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+            <a href="{% url 'policies:new' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
                 <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-plus text-white text-xl"></i>
@@ -520,7 +520,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:recommendations_manage' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+            <a href="{% url 'policies:manage' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
                 <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-list-alt text-white text-xl"></i>

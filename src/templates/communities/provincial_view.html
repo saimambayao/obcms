@@ -21,11 +21,11 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:communities_home' %}" class="text-neutral-500 hover:text-neutral-700">OBC Data</a>
+    <a href="{% url 'communities:communities_home' %}" class="text-neutral-500 hover:text-neutral-700">OBC Data</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:communities_manage_provincial' %}" class="text-neutral-500 hover:text-neutral-700">Manage Provincial OBC</a>
+    <a href="{% url 'communities:communities_manage_provincial' %}" class="text-neutral-500 hover:text-neutral-700">Manage Provincial OBC</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">{{ coverage.province.name }}</li>
@@ -62,7 +62,7 @@
         </div>
         <div class="flex flex-wrap gap-2">
             {% if is_archived %}
-            <form method="post" action="{% url 'common:communities_restore_provincial' coverage.id %}" class="inline">
+            <form method="post" action="{% url 'communities:communities_restore_provincial' coverage.id %}" class="inline">
                 {% csrf_token %}
                 <button type="submit"
                         class="inline-flex items-center bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
@@ -71,13 +71,13 @@
             </form>
             {% else %}
                 {% if can_edit %}
-                <a href="{% url 'common:communities_edit_provincial' coverage.id %}"
+                <a href="{% url 'communities:communities_edit_provincial' coverage.id %}"
                    class="inline-flex items-center bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
                     <i class="fas fa-edit mr-2"></i>Edit
                 </a>
                 {% endif %}
                 {% if can_submit %}
-                <form method="post" action="{% url 'common:communities_submit_provincial' coverage.id %}" class="inline" onsubmit="return confirm('Are you sure you want to submit this Provincial OBC? Once submitted, you will not be able to edit it.');">
+                <form method="post" action="{% url 'communities:communities_submit_provincial' coverage.id %}" class="inline" onsubmit="return confirm('Are you sure you want to submit this Provincial OBC? Once submitted, you will not be able to edit it.');">
                     {% csrf_token %}
                     <button type="submit"
                             class="inline-flex items-center bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
@@ -103,7 +103,7 @@
             Confirm that this provincial profile is the one you intend to delete. The record will move to the archive and can be restored at any time.
         </p>
         <div class="mt-4 flex flex-wrap gap-3">
-            <form method="post" action="{% url 'common:communities_delete_provincial' coverage.id %}" class="inline">
+            <form method="post" action="{% url 'communities:communities_delete_provincial' coverage.id %}" class="inline">
                 {% csrf_token %}
                 <button type="submit" class="inline-flex items-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
                     <i class="fas fa-trash mr-2"></i>
@@ -285,11 +285,11 @@
                         <td class="px-6 py-4 text-sm text-gray-600">{{ municipal.updated_at|date:"M d, Y" }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex gap-2">
-                                <a href="{% url 'common:communities_view_municipal' municipal.id %}"
+                                <a href="{% url 'communities:communities_view_municipal' municipal.id %}"
                                    class="text-indigo-600 hover:text-indigo-900">View</a>
-                                <a href="{% url 'common:communities_edit_municipal' municipal.id %}"
+                                <a href="{% url 'communities:communities_edit_municipal' municipal.id %}"
                                    class="text-emerald-600 hover:text-emerald-900">Edit</a>
-                                <a href="{% url 'common:communities_delete_municipal' municipal.id %}?review_delete=1"
+                                <a href="{% url 'communities:communities_delete_municipal' municipal.id %}?review_delete=1"
                                    class="inline-flex items-center justify-center text-red-600 hover:text-red-900"
                                    aria-label="Delete municipal coverage">
                                     <i class="fas fa-trash"></i>
@@ -349,11 +349,11 @@
                         <td class="px-6 py-4 text-sm text-gray-600">{{ community.updated_at|date:"M d, Y" }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex gap-2">
-                                <a href="{% url 'common:communities_view' community.id %}"
+                                <a href="{% url 'communities:communities_view' community.id %}"
                                    class="text-indigo-600 hover:text-indigo-900">View</a>
-                                <a href="{% url 'common:communities_edit' community.id %}"
+                                <a href="{% url 'communities:communities_edit' community.id %}"
                                    class="text-emerald-600 hover:text-emerald-900">Edit</a>
-                                <a href="{% url 'common:communities_delete' community.id %}?review_delete=1"
+                                <a href="{% url 'communities:communities_delete' community.id %}?review_delete=1"
                                    class="inline-flex items-center justify-center text-red-600 hover:text-red-900"
                                    aria-label="Delete community">
                                     <i class="fas fa-trash"></i>
@@ -530,7 +530,7 @@
                             </span>
                         </td>
                         <td class="px-4 py-2 text-gray-700">
-                            <a href="{% url 'common:recommendations_view' rec.id %}"
+                            <a href="{% url 'policies:view' rec.id %}"
                                class="text-indigo-600 hover:text-indigo-800 font-semibold text-xs">View</a>
                         </td>
                     </tr>

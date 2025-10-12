@@ -17,177 +17,307 @@
 
 {% block content %}
 {% with managed_count=app_list|length %}
-<div class="obc-dashboard-shell">
-    <section class="obc-dashboard__hero">
-        <header class="obc-dashboard__hero-mast">
-            <div class="obc-dashboard__hero-mast-primary">
-                <span class="obc-dashboard__hero-mast-icon"><i class="fas fa-compass"></i></span>
-                <div class="obc-dashboard__hero-mast-copy">
-                    <span class="obc-dashboard__badge">{% trans "Admin HQ" %}</span>
-                    <h1 class="obc-dashboard__title">{% trans "Keep Barangay OBC momentum going" %}</h1>
-                    <p class="obc-dashboard__lead">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ========================================= -->
+    <!-- HERO SECTION (Blue-to-Teal Gradient) -->
+    <!-- ========================================= -->
+    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-800 via-sky-600 to-emerald-600 shadow-2xl mb-8">
+        <div class="absolute inset-0 bg-white/10 opacity-20 mix-blend-overlay"></div>
+        <div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48"></div>
+
+        <div class="relative px-6 sm:px-10 py-8 sm:py-10">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+
+                <!-- Left: Hero Content -->
+                <div class="flex-1 space-y-6">
+                    <div class="inline-flex items-center rounded-lg bg-white/20 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold text-white border border-white/30">
+                        <i class="fas fa-compass mr-2"></i>
+                        {% trans "ADMIN HQ" %}
+                    </div>
+
+                    <h2 class="text-3xl sm:text-4xl font-bold text-white leading-tight">
+                        {% trans "Keep Barangay OBC momentum going" %}
+                    </h2>
+
+                    <p class="text-white/90 text-base sm:text-lg max-w-2xl leading-relaxed">
                         {% blocktrans with name=user.get_full_name|default:user.username %}
                         Coordinate ministries, documents, and frontline reports from a single command center tailored for Barangay OBC operations.
                         {% endblocktrans %}
                     </p>
-                </div>
-            </div>
-            <div class="obc-dashboard__hero-actions">
-                <a class="obc-hero-button obc-hero-button--primary" href="#quick-actions">
-                    <i class="fas fa-bolt"></i>
-                    {% trans "Jump to quick actions" %}
-                </a>
-                {% if user.is_staff %}
-                <a class="obc-hero-button obc-hero-button--ghost" href="{% url 'common:dashboard' %}">
-                    <i class="fas fa-chart-line"></i>
-                    {% trans "View frontline dashboard" %}
-                </a>
-                {% endif %}
-            </div>
-        </header>
-        <div class="obc-dashboard__hero-highlights">
-            <article class="obc-dashboard-highlight obc-dashboard-highlight--indigo">
-                <span class="obc-dashboard-highlight__icon"><i class="fas fa-wand-magic-sparkles"></i></span>
-                <div>
-                    <h3 class="obc-dashboard-highlight__title">{% trans "Instant UI" %}</h3>
-                    <p class="obc-dashboard-highlight__meta">{% trans "HTMX ready responses" %}</p>
-                </div>
-            </article>
-            <article class="obc-dashboard-highlight obc-dashboard-highlight--emerald">
-                <span class="obc-dashboard-highlight__icon"><i class="fas fa-users"></i></span>
-                <div>
-                    <h3 class="obc-dashboard-highlight__title">{% trans "Community focus" %}</h3>
-                    <p class="obc-dashboard-highlight__meta">{% trans "Provincial to barangay coverage" %}</p>
-                </div>
-            </article>
-            <article class="obc-dashboard-highlight obc-dashboard-highlight--sky">
-                <span class="obc-dashboard-highlight__icon"><i class="fas fa-shield-halved"></i></span>
-                <div>
-                    <h3 class="obc-dashboard-highlight__title">{% trans "Safeguarded data" %}</h3>
-                    <p class="obc-dashboard-highlight__meta">{% trans "Policy tracking & audits" %}</p>
-                </div>
-            </article>
-        </div>
-        <div class="obc-dashboard-metrics">
-            <div class="obc-dashboard-metric">
-                <span class="obc-dashboard-metric__label">{% trans "Managed apps" %}</span>
-                <strong class="obc-dashboard-metric__value">{{ managed_count }}</strong>
-                <span class="obc-dashboard-metric__hint">{% trans "Modules connected to admin" %}</span>
-            </div>
-            <div class="obc-dashboard-metric">
-                <span class="obc-dashboard-metric__label">{% trans "Signed in as" %}</span>
-                <strong class="obc-dashboard-metric__value">{{ user.get_full_name|default:user.username }}</strong>
-                <span class="obc-dashboard-metric__hint">{% trans "Authorized staff account" %}</span>
-            </div>
-            <div class="obc-dashboard-metric">
-                <span class="obc-dashboard-metric__label">{% trans "Last login" %}</span>
-                <strong class="obc-dashboard-metric__value">
-                    {% if user.last_login %}{{ user.last_login|timesince }}{% else %}{% trans "First session" %}{% endif %}
-                </strong>
-                <span class="obc-dashboard-metric__hint">{% now "M d, Y H:i" %}</span>
-            </div>
-        </div>
-    </section>
 
-    <section id="quick-actions" class="obc-dashboard-section">
-        <header class="obc-dashboard-section__header">
-            <div>
-                <h2 class="obc-dashboard-section__title">
-                    <i class="fas fa-bolt"></i>
-                    {% trans "Quick Actions" %}
-                </h2>
-                <p class="obc-dashboard-section__subtitle">{% trans "Fast lanes for the tasks you reach for every day." %}</p>
-            </div>
-        </header>
-        <div class="obc-quick-grid">
-            <a href="/admin/common/user/add/" class="obc-quick-card obc-quick-card--indigo">
-                <span class="obc-quick-card__icon"><i class="fas fa-user-plus"></i></span>
-                <h3 class="obc-quick-card__title">{% trans "Invite a staff user" %}</h3>
-                <p class="obc-quick-card__meta">{% trans "Provision access with the latest Barangay OBC permissions." %}</p>
-                <span class="obc-quick-card__cta">{% trans "Create user" %} <i class="fas fa-arrow-right"></i></span>
-            </a>
-            <a href="{% url 'common:dashboard' %}" class="obc-quick-card obc-quick-card--emerald">
-                <span class="obc-quick-card__icon"><i class="fas fa-map-location-dot"></i></span>
-                <h3 class="obc-quick-card__title">{% trans "Return to frontline view" %}</h3>
-                <p class="obc-quick-card__meta">{% trans "Sync with live community operations and status boards." %}</p>
-                <span class="obc-quick-card__cta">{% trans "Launch dashboard" %} <i class="fas fa-arrow-right"></i></span>
-            </a>
-            <a href="/admin/auth/group/" class="obc-quick-card obc-quick-card--magenta">
-                <span class="obc-quick-card__icon"><i class="fas fa-user-shield"></i></span>
-                <h3 class="obc-quick-card__title">{% trans "Tune access controls" %}</h3>
-                <p class="obc-quick-card__meta">{% trans "Refresh groups, assign capabilities, and secure every workflow." %}</p>
-                <span class="obc-quick-card__cta">{% trans "Manage groups" %} <i class="fas fa-arrow-right"></i></span>
-            </a>
-        </div>
-    </section>
-
-    {% if app_list %}
-    <section class="obc-dashboard-section">
-        <header class="obc-dashboard-section__header">
-            <div>
-                <h2 class="obc-dashboard-section__title">
-                    <i class="fas fa-th-large"></i>
-                    {% trans "Application Models" %}
-                </h2>
-                <p class="obc-dashboard-section__subtitle">{% trans "Browse every module that powers Barangay OBC programs." %}</p>
-            </div>
-        </header>
-        <div class="obc-app-grid">
-            {% for app in app_list %}
-            <div class="obc-app-card">
-                <div class="obc-app-card__header">
-                    <div class="obc-app-card__heading">
-                        <span class="obc-app-card__icon">
-                            {% if app.app_label == 'common' %}<i class="fas fa-cog"></i>
-                            {% elif app.app_label == 'communities' %}<i class="fas fa-users"></i>
-                            {% elif app.app_label == 'mana' %}<i class="fas fa-map"></i>
-                            {% elif app.app_label == 'coordination' %}<i class="fas fa-handshake"></i>
-                            {% elif app.app_label == 'policy_tracking' %}<i class="fas fa-lightbulb"></i>
-                            {% elif app.app_label == 'documents' %}<i class="fas fa-file-alt"></i>
-                            {% elif app.app_label == 'ai_assistant' %}<i class="fas fa-robot"></i>
-                            {% else %}<i class="fas fa-database"></i>{% endif %}
-                        </span>
-                        <div>
-                            <p class="obc-app-card__title">{{ app.name }}</p>
-                            <span class="obc-app-card__subtitle">{{ app.app_label }}</span>
+                    <!-- Feature Highlights -->
+                    <div class="flex flex-wrap gap-4">
+                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-4 border border-white/20 min-w-[220px]">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="fas fa-wand-magic-sparkles text-white/90"></i>
+                                <h3 class="text-sm text-white/70 uppercase tracking-wide font-semibold">{% trans "Instant UI" %}</h3>
+                            </div>
+                            <p class="text-sm text-white/90 leading-relaxed">
+                                {% trans "HTMX ready responses for smooth, instant interactions" %}
+                            </p>
+                        </div>
+                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-4 border border-white/20 min-w-[220px]">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="fas fa-users text-white/90"></i>
+                                <h3 class="text-sm text-white/70 uppercase tracking-wide font-semibold">{% trans "Community Focus" %}</h3>
+                            </div>
+                            <p class="text-sm text-white/90 leading-relaxed">
+                                {% trans "Provincial to barangay coverage for all OBC regions" %}
+                            </p>
+                        </div>
+                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-4 border border-white/20 min-w-[220px]">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="fas fa-shield-halved text-white/90"></i>
+                                <h3 class="text-sm text-white/70 uppercase tracking-wide font-semibold">{% trans "Safeguarded Data" %}</h3>
+                            </div>
+                            <p class="text-sm text-white/90 leading-relaxed">
+                                {% trans "Policy tracking, audit trails & secure operations" %}
+                            </p>
                         </div>
                     </div>
-                    {% if app.app_url %}
-                    <a href="{{ app.app_url }}" class="obc-app-card__link">
-                        <i class="fas fa-arrow-up-right-from-square"></i>
-                        {% trans "View app" %}
-                    </a>
-                    {% endif %}
                 </div>
-                <div class="obc-app-card__body">
-                    {% for model in app.models %}
-                    <div class="obc-app-card__row">
-                        <div class="obc-app-card__row-meta">
-                            <span class="obc-app-card__row-icon"><i class="fas fa-table"></i></span>
+
+                <!-- Right: Action Buttons -->
+                <div class="flex-shrink-0">
+                    <div class="flex flex-col gap-3 min-w-[220px]">
+                        <a href="#quick-actions" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-blue-700 font-semibold shadow-lg hover:bg-blue-50 hover:shadow-xl transition-all duration-200">
+                            <i class="fas fa-bolt"></i>
+                            <span>{% trans "Jump to quick actions" %}</span>
+                        </a>
+                        {% if user.is_staff %}
+                        <a href="{% url 'common:dashboard' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                            <i class="fas fa-chart-line"></i>
+                            <span>{% trans "View frontline dashboard" %}</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================= -->
+    <!-- METRICS SECTION (3D Milk White Stat Cards) -->
+    <!-- ========================================= -->
+    <section class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">{% trans "System Metrics" %}</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <!-- Managed Apps Stat Card -->
+            <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+                 style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+                <div class="relative p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">{% trans "Managed Apps" %}</p>
+                            <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ managed_count }}</p>
+                            <p class="text-xs text-gray-500 mt-1">{% trans "Modules connected to admin" %}</p>
+                        </div>
+                        <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                             style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                            <i class="fas fa-th-large text-2xl text-amber-600"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Info Stat Card -->
+            <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+                 style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+                <div class="relative p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">{% trans "Signed in as" %}</p>
+                            <p class="text-2xl font-extrabold text-gray-800 mt-1">{{ user.get_full_name|default:user.username|truncatewords:2 }}</p>
+                            <p class="text-xs text-gray-500 mt-1">{% trans "Authorized staff account" %}</p>
+                        </div>
+                        <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                             style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                            <i class="fas fa-user-shield text-2xl text-blue-600"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Last Login Stat Card -->
+            <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+                 style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+                <div class="relative p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">{% trans "Last login" %}</p>
+                            <p class="text-2xl font-extrabold text-gray-800 mt-1">
+                                {% if user.last_login %}{{ user.last_login|timesince }}{% else %}{% trans "First session" %}{% endif %}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">{% now "M d, Y H:i" %}</p>
+                        </div>
+                        <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                             style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                            <i class="fas fa-clock text-2xl text-emerald-600"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ========================================= -->
+    <!-- QUICK ACTIONS SECTION -->
+    <!-- ========================================= -->
+    <section id="quick-actions" class="mb-8">
+        <div class="mb-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                <i class="fas fa-bolt text-blue-600 mr-2"></i>
+                {% trans "Quick Actions" %}
+            </h2>
+            <p class="text-gray-600">{% trans "Fast lanes for the tasks you reach for every day." %}</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <!-- Invite Staff User -->
+            <a href="/admin/common/user/add/" class="block bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center">
+                        <i class="fas fa-user-plus text-white text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
+                            {% trans "Invite a staff user" %}
+                        </h3>
+                        <p class="text-sm text-gray-600">
+                            {% trans "Provision access with the latest Barangay OBC permissions." %}
+                        </p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-arrow-right text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"></i>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Return to Frontline View -->
+            <a href="{% url 'common:dashboard' %}" class="block bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                        <i class="fas fa-map-location-dot text-white text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
+                            {% trans "Return to frontline view" %}
+                        </h3>
+                        <p class="text-sm text-gray-600">
+                            {% trans "Sync with live community operations and status boards." %}
+                        </p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-arrow-right text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"></i>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Tune Access Controls -->
+            <a href="/admin/auth/group/" class="block bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <i class="fas fa-user-shield text-white text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
+                            {% trans "Tune access controls" %}
+                        </h3>
+                        <p class="text-sm text-gray-600">
+                            {% trans "Refresh groups, assign capabilities, and secure every workflow." %}
+                        </p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-arrow-right text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"></i>
+                    </div>
+                </div>
+            </a>
+
+        </div>
+    </section>
+
+    <!-- ========================================= -->
+    <!-- APPLICATION MODELS SECTION -->
+    <!-- ========================================= -->
+    {% if app_list %}
+    <section class="mb-8">
+        <div class="mb-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                <i class="fas fa-th-large text-emerald-600 mr-2"></i>
+                {% trans "Application Models" %}
+            </h2>
+            <p class="text-gray-600">{% trans "Browse every module that powers Barangay OBC programs." %}</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for app in app_list %}
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <!-- App Header -->
+                <div class="bg-gradient-to-r from-blue-800 to-emerald-600 px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                                {% if app.app_label == 'common' %}<i class="fas fa-cog text-white"></i>
+                                {% elif app.app_label == 'communities' %}<i class="fas fa-users text-white"></i>
+                                {% elif app.app_label == 'mana' %}<i class="fas fa-map text-white"></i>
+                                {% elif app.app_label == 'coordination' %}<i class="fas fa-handshake text-white"></i>
+                                {% elif app.app_label == 'policy_tracking' %}<i class="fas fa-lightbulb text-white"></i>
+                                {% elif app.app_label == 'documents' %}<i class="fas fa-file-alt text-white"></i>
+                                {% elif app.app_label == 'ai_assistant' %}<i class="fas fa-robot text-white"></i>
+                                {% else %}<i class="fas fa-database text-white"></i>{% endif %}
+                            </div>
                             <div>
-                                <p class="obc-app-card__row-title">{{ model.name }}</p>
+                                <p class="text-white font-semibold text-lg">{{ app.name }}</p>
+                                <span class="text-white/70 text-xs uppercase tracking-wide">{{ app.app_label }}</span>
+                            </div>
+                        </div>
+                        {% if app.app_url %}
+                        <a href="{{ app.app_url }}" class="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors">
+                            <i class="fas fa-arrow-up-right-from-square"></i>
+                            <span class="sr-only">{% trans "View app" %}</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Models List -->
+                <div class="p-6">
+                    {% for model in app.models %}
+                    <div class="flex items-center justify-between py-3 {% if not forloop.last %}border-b border-gray-200{% endif %}">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                                <i class="fas fa-table text-gray-600 text-sm"></i>
+                            </span>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">{{ model.name }}</p>
                                 {% if model.object_name %}
-                                <p class="obc-app-card__row-hint">{{ model.object_name }}</p>
+                                <p class="text-xs text-gray-500">{{ model.object_name }}</p>
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="obc-app-card__row-actions">
+                        <div class="flex items-center space-x-2">
                             {% if model.admin_url %}
-                            <a href="{{ model.admin_url }}" class="obc-app-card__action obc-app-card__action--ghost">
-                                <i class="fas fa-eye"></i>
+                            <a href="{{ model.admin_url }}" class="px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors">
+                                <i class="fas fa-eye mr-1"></i>
                                 {% trans "View" %}
                             </a>
                             {% endif %}
                             {% if model.add_url %}
-                            <a href="{{ model.add_url }}" class="obc-app-card__action">
-                                <i class="fas fa-plus"></i>
+                            <a href="{{ model.add_url }}" class="px-3 py-1 text-xs font-medium text-white bg-gradient-to-r from-blue-600 to-emerald-600 hover:shadow-lg rounded-lg transition-all">
+                                <i class="fas fa-plus mr-1"></i>
                                 {% trans "Add" %}
                             </a>
                             {% endif %}
                         </div>
                     </div>
                     {% empty %}
-                    <p class="obc-app-card__empty">{% trans "No models exposed in admin for this app." %}</p>
+                    <p class="text-sm text-gray-500 py-4">{% trans "No models exposed in admin for this app." %}</p>
                     {% endfor %}
                 </div>
             </div>
@@ -195,45 +325,57 @@
         </div>
     </section>
     {% else %}
-    <section class="obc-dashboard-section">
-        <div class="obc-system-card obc-system-card--empty">
-            <span class="obc-system-card__icon"><i class="fas fa-inbox"></i></span>
-            <h3 class="obc-system-card__title">{% trans "No applications available" %}</h3>
-            <p class="obc-system-card__meta">{% trans "You do not yet have permission to view or edit any modules." %}</p>
+    <section class="mb-8">
+        <div class="bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-inbox text-amber-400 text-2xl"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-amber-800">{% trans "No applications available" %}</h3>
+                    <div class="mt-2 text-sm text-amber-700">
+                        <p>{% trans "You do not yet have permission to view or edit any modules." %}</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
     {% endif %}
 
-    <section class="obc-dashboard-section">
-        <div class="obc-system-card">
-            <header class="obc-system-card__header">
-                <h2 class="obc-system-card__title">
-                    <i class="fas fa-info-circle"></i>
+    <!-- ========================================= -->
+    <!-- SYSTEM INFORMATION SECTION -->
+    <!-- ========================================= -->
+    <section class="mb-8">
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-800 to-emerald-600 px-6 py-4">
+                <h2 class="text-lg font-semibold text-white flex items-center">
+                    <i class="fas fa-info-circle mr-2"></i>
                     {% trans "System information" %}
                 </h2>
-            </header>
-            <div class="obc-system-card__body">
-                <dl class="obc-system-card__list">
-                    <div>
-                        <dt>{% trans "Current user" %}</dt>
-                        <dd>{{ user.get_username }}</dd>
+            </div>
+            <div class="p-6">
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="border-l-4 border-blue-500 pl-4">
+                        <dt class="text-sm font-medium text-gray-500">{% trans "Current user" %}</dt>
+                        <dd class="mt-1 text-base font-semibold text-gray-900">{{ user.get_username }}</dd>
                     </div>
-                    <div>
-                        <dt>{% trans "Email" %}</dt>
-                        <dd>{{ user.email|default:_('Not provided') }}</dd>
+                    <div class="border-l-4 border-emerald-500 pl-4">
+                        <dt class="text-sm font-medium text-gray-500">{% trans "Email" %}</dt>
+                        <dd class="mt-1 text-base font-semibold text-gray-900">{{ user.email|default:_('Not provided') }}</dd>
                     </div>
-                    <div>
-                        <dt>{% trans "Active language" %}</dt>
-                        <dd>{{ LANGUAGE_CODE|upper }}</dd>
+                    <div class="border-l-4 border-purple-500 pl-4">
+                        <dt class="text-sm font-medium text-gray-500">{% trans "Active language" %}</dt>
+                        <dd class="mt-1 text-base font-semibold text-gray-900">{{ LANGUAGE_CODE|upper }}</dd>
                     </div>
-                    <div>
-                        <dt>{% trans "Server time" %}</dt>
-                        <dd>{% now "l, M d Y H:i" %}</dd>
+                    <div class="border-l-4 border-amber-500 pl-4">
+                        <dt class="text-sm font-medium text-gray-500">{% trans "Server time" %}</dt>
+                        <dd class="mt-1 text-base font-semibold text-gray-900">{% now "l, M d Y H:i" %}</dd>
                     </div>
                 </dl>
             </div>
         </div>
     </section>
+
 </div>
 {% endwith %}
 {% endblock %}

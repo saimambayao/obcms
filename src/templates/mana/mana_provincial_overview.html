@@ -8,7 +8,7 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+    <a href="{% url 'mana:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">Provincial Overview</li>
@@ -101,7 +101,7 @@
                             <i class="fas fa-search mr-2"></i>
                             Apply
                         </button>
-                        <a href="{% url 'common:mana_provincial_overview' %}" class="w-full sm:flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">
+                        <a href="{% url 'mana:mana_provincial_overview' %}" class="w-full sm:flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">
                             <i class="fas fa-undo mr-2"></i>
                             Clear
                         </a>
@@ -294,7 +294,7 @@
             <p class="mt-1 text-sm text-gray-600">Jump to planning, logging, and processing tools for provincial missions.</p>
         </div>
         <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <a href="{% url 'common:mana_activity_planner' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'mana:mana_activity_planner' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-calendar-plus text-white text-xl"></i>
@@ -307,7 +307,7 @@
                     </div>
                 </div>
             </a>
-            <a href="{% url 'common:mana_activity_log' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'mana:mana_activity_log' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-clipboard-check text-white text-xl"></i>
@@ -320,7 +320,7 @@
                     </div>
                 </div>
             </a>
-            <a href="{% url 'common:mana_activity_processing' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'mana:mana_activity_processing' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-chart-line text-white text-xl"></i>

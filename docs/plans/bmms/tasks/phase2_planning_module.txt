@@ -1,0 +1,1991 @@
+================================================================================
+BMMS PHASE 2: PLANNING MODULE (NEW)
+================================================================================
+
+PHASE OVERVIEW
+--------------
+Priority:           HIGH
+Complexity:         Moderate
+Dependencies:       Phase 1 (Organizations App) MUST be completed first
+Type:               NEW module (build from scratch)
+Purpose:            Strategic planning and annual work plans per MOA
+
+This phase creates a new Django app for managing:
+- Strategic Plans (3-5 year organizational plans)
+- Annual Work Plans (yearly operational plans)
+- Program/Project/Activity (PPA) management
+- Barangay linkages for PPAs
+- Status workflow for planning lifecycle
+
+
+================================================================================
+PART 1: DATABASE IMPLEMENTATION
+================================================================================
+
+TASK 1.1: Create Planning Django App
+------------------------------------
+Priority: CRITICAL
+Depends on: Phase 1 Organizations app complete
+
+[ ] Create new Django app structure
+    cd src
+    python manage.py startapp planning
+
+[ ] Add 'planning' to INSTALLED_APPS in settings
+    File: src/obc_management/settings/base.py
+    Location: INSTALLED_APPS list
+
+[ ] Create __init__.py files for proper Python package structure
+    - src/planning/__init__.py
+    - src/planning/migrations/__init__.py
+
+
+TASK 1.2: Implement Core Planning Models
+-----------------------------------------
+Priority: CRITICAL
+Depends on: Task 1.1
+
+File: src/planning/models.py
+
+[ ] Import base classes
+    from organizations.models import OrganizationScopedModel
+    from django.db import models
+    from django.utils import timezone
+
+[ ] Create StrategicPlan model (3-5 year strategic plans)
+    class StrategicPlan(OrganizationScopedModel):
+        """3-5 year strategic plan per organization"""
+
+        # Basic Info
+        title = models.CharField(max_length=255)
+        start_year = models.IntegerField()
+        end_year = models.IntegerField()
+
+        # Strategic Direction
+        vision = models.TextField()
+        mission = models.TextField()
+        strategic_goals = models.JSONField(
+            default=list,
+            help_text="List of strategic goals with indicators"
+        )
+
+        # Status Workflow
+        status = models.CharField(
+            max_length=20,
+            choices=[
+                ('draft', 'Draft'),
+                ('review', 'Under Review'),
+                ('approved', 'Approved'),
+                ('active', 'Active'),
+                ('completed', 'Completed'),
+                ('archived', 'Archived')
+            ],
+            default='draft'
+        )
+
+        # Metadata
+        created_at = models.DateTimeField(auto_now_add=True)
+        updated_at = models.DateTimeField(auto_now=True)
+        created_by = models.ForeignKey(
+            'auth.User',
+            on_delete=models.PROTECT,
+            related_name='strategic_plans_created'
+        )
+
+        class Meta:
+            ordering = ['-start_year']
+            verbose_name = 'Strategic Plan'
+            verbose_name_plural = 'Strategic Plans'
+            indexes = [
+                models.Index(fields=['organization', 'status']),
+                models.Index(fields=['start_year', 'end_year']),
+            ]
+
+        def __str__(self):
+            return f"{self.organization.code} - {self.title} ({self.start_year}-{self.end_year})"
+
+[ ] Create AnnualWorkPlan model (yearly operational plans)
+    class AnnualWorkPlan(OrganizationScopedModel):
+        """Annual operational plan linked to strategic plan"""
+
+        # Link to Strategic Plan
+        strategic_plan = models.ForeignKey(
+            'StrategicPlan',
+            on_delete=models.CASCADE,
+            related_name='annual_plans'
+        )
+
+        # Basic Info
+        year = models.IntegerField()
+        title = models.CharField(max_length=255)
+
+        # Operational Objectives
+        objectives = models.JSONField(
+            default=list,
+            help_text="Annual objectives with performance indicators"
+        )
+
+        # Status Workflow
+        status = models.CharField(
+            max_length=20,
+            choices=[
+                ('draft', 'Draft'),
+                ('review', 'Under Review'),
+                ('approved', 'Approved'),
+                ('active', 'Active'),
+                ('completed', 'Completed')
+            ],
+            default='draft'
+        )
+
+        # Metadata
+        created_at = models.DateTimeField(auto_now_add=True)
+        updated_at = models.DateTimeField(auto_now=True)
+        created_by = models.ForeignKey(
+            'auth.User',
+            on_delete=models.PROTECT,
+            related_name='annual_plans_created'
+        )
+
+        class Meta:
+            ordering = ['-year']
+            verbose_name = 'Annual Work Plan'
+            verbose_name_plural = 'Annual Work Plans'
+            unique_together = [['strategic_plan', 'year']]
+            indexes = [
+                models.Index(fields=['organization', 'year', 'status']),
+            ]
+
+        def __str__(self):
+            return f"{self.organization.code} - {self.title} ({self.year})"
+
+
+TASK 1.3: Implement PPA (Program/Project/Activity) Model
+--------------------------------------------------------
+Priority: CRITICAL
+Depends on: Task 1.2
+
+File: src/planning/models.py (continue)
+
+[ ] Create ProgramProjectActivity model
+    class ProgramProjectActivity(OrganizationScopedModel):
+        """Program/Project/Activity implementation tracking"""
+
+        # Basic Info
+        ppa_code = models.CharField(
+            max_length=50,
+            unique=True,
+            help_text="Unique PPA identifier (e.g., MOH-2025-001)"
+        )
+        title = models.CharField(max_length=255)
+        description = models.TextField()
+
+        # Link to Annual Work Plan
+        annual_work_plan = models.ForeignKey(
+            'AnnualWorkPlan',
+            on_delete=models.CASCADE,
+            related_name='ppas',
+            null=True,
+            blank=True
+        )
+
+        # Classification
+        ppa_type = models.CharField(
+            max_length=20,
+            choices=[
+                ('program', 'Program'),
+                ('project', 'Project'),
+                ('activity', 'Activity')
+            ]
+        )
+
+        # Geographic Coverage (Many-to-Many with Barangays)
+        target_barangays = models.ManyToManyField(
+            'communities.Barangay',
+            related_name='ppas',
+            blank=True,
+            help_text="Barangays where this PPA will be implemented"
+        )
+
+        # Timeline
+        start_date = models.DateField()
+        end_date = models.DateField()
+
+        # Status Workflow
+        status = models.CharField(
+            max_length=20,
+            choices=[
+                ('draft', 'Draft'),
+                ('review', 'Under Review'),
+                ('approved', 'Approved'),
+                ('active', 'Active'),
+                ('completed', 'Completed'),
+                ('cancelled', 'Cancelled'),
+                ('deferred', 'Deferred')
+            ],
+            default='draft'
+        )
+
+        # Budget Link (for future Phase 3)
+        estimated_budget = models.DecimalField(
+            max_digits=14,
+            decimal_places=2,
+            null=True,
+            blank=True,
+            help_text="Estimated budget for this PPA"
+        )
+
+        # Metadata
+        created_at = models.DateTimeField(auto_now_add=True)
+        updated_at = models.DateTimeField(auto_now=True)
+        created_by = models.ForeignKey(
+            'auth.User',
+            on_delete=models.PROTECT,
+            related_name='ppas_created'
+        )
+
+        class Meta:
+            ordering = ['-created_at']
+            verbose_name = 'Program/Project/Activity'
+            verbose_name_plural = 'Programs/Projects/Activities'
+            indexes = [
+                models.Index(fields=['organization', 'status']),
+                models.Index(fields=['ppa_type', 'status']),
+                models.Index(fields=['start_date', 'end_date']),
+            ]
+
+        def __str__(self):
+            return f"{self.ppa_code} - {self.title}"
+
+        def get_target_barangay_count(self):
+            """Get count of target barangays"""
+            return self.target_barangays.count()
+
+        def is_overdue(self):
+            """Check if PPA is past end date but not completed"""
+            if self.status not in ['completed', 'cancelled']:
+                return timezone.now().date() > self.end_date
+            return False
+
+
+TASK 1.4: Create Initial Migration
+-----------------------------------
+Priority: CRITICAL
+Depends on: Task 1.3
+
+[ ] Create migration file
+    cd src
+    python manage.py makemigrations planning
+
+    Expected output: planning/migrations/0001_initial.py
+
+[ ] Review migration file contents
+    - Verify all three models are included (StrategicPlan, AnnualWorkPlan, ProgramProjectActivity)
+    - Verify OrganizationScopedModel fields are inherited
+    - Verify indexes are created
+    - Verify foreign key dependencies are correct
+
+[ ] Test migration in development
+    python manage.py migrate planning 0001_initial
+
+    Expected: All tables created successfully
+
+[ ] Verify database schema
+    python manage.py dbshell
+    .schema planning_strategicplan
+    .schema planning_annualworkplan
+    .schema planning_programprojectactivity
+    .quit
+
+
+TASK 1.5: Create Django Admin Interface
+---------------------------------------
+Priority: HIGH
+Depends on: Task 1.4
+
+File: src/planning/admin.py
+
+[ ] Import models and admin classes
+    from django.contrib import admin
+    from .models import StrategicPlan, AnnualWorkPlan, ProgramProjectActivity
+
+[ ] Register StrategicPlan admin
+    @admin.register(StrategicPlan)
+    class StrategicPlanAdmin(admin.ModelAdmin):
+        list_display = ['title', 'organization', 'start_year', 'end_year', 'status', 'created_at']
+        list_filter = ['status', 'organization', 'start_year']
+        search_fields = ['title', 'vision', 'mission']
+        readonly_fields = ['created_at', 'updated_at', 'created_by']
+
+        fieldsets = (
+            ('Basic Information', {
+                'fields': ('organization', 'title', 'start_year', 'end_year')
+            }),
+            ('Strategic Direction', {
+                'fields': ('vision', 'mission', 'strategic_goals')
+            }),
+            ('Status', {
+                'fields': ('status',)
+            }),
+            ('Metadata', {
+                'fields': ('created_by', 'created_at', 'updated_at'),
+                'classes': ('collapse',)
+            }),
+        )
+
+[ ] Register AnnualWorkPlan admin
+    @admin.register(AnnualWorkPlan)
+    class AnnualWorkPlanAdmin(admin.ModelAdmin):
+        list_display = ['title', 'organization', 'year', 'strategic_plan', 'status', 'created_at']
+        list_filter = ['status', 'organization', 'year']
+        search_fields = ['title']
+        readonly_fields = ['created_at', 'updated_at', 'created_by']
+
+[ ] Register ProgramProjectActivity admin
+    @admin.register(ProgramProjectActivity)
+    class ProgramProjectActivityAdmin(admin.ModelAdmin):
+        list_display = ['ppa_code', 'title', 'organization', 'ppa_type', 'status', 'start_date', 'end_date']
+        list_filter = ['status', 'ppa_type', 'organization', 'start_date']
+        search_fields = ['ppa_code', 'title', 'description']
+        readonly_fields = ['created_at', 'updated_at', 'created_by']
+        filter_horizontal = ['target_barangays']
+
+        fieldsets = (
+            ('Basic Information', {
+                'fields': ('organization', 'ppa_code', 'title', 'description', 'ppa_type')
+            }),
+            ('Planning', {
+                'fields': ('annual_work_plan', 'target_barangays')
+            }),
+            ('Timeline', {
+                'fields': ('start_date', 'end_date')
+            }),
+            ('Budget', {
+                'fields': ('estimated_budget',)
+            }),
+            ('Status', {
+                'fields': ('status',)
+            }),
+            ('Metadata', {
+                'fields': ('created_by', 'created_at', 'updated_at'),
+                'classes': ('collapse',)
+            }),
+        )
+
+[ ] Test admin interface
+    - Start development server
+    - Login to /admin/
+    - Verify planning models appear in admin
+    - Test create/edit/delete for each model
+
+
+================================================================================
+PART 2: API IMPLEMENTATION (Django REST Framework)
+================================================================================
+
+TASK 2.1: Create API Serializers
+---------------------------------
+Priority: HIGH
+Depends on: Task 1.4
+
+File: src/planning/serializers.py (NEW)
+
+[ ] Import dependencies
+    from rest_framework import serializers
+    from .models import StrategicPlan, AnnualWorkPlan, ProgramProjectActivity
+    from communities.models import Barangay
+
+[ ] Create StrategicPlanSerializer
+    class StrategicPlanSerializer(serializers.ModelSerializer):
+        organization_name = serializers.CharField(source='organization.name', read_only=True)
+        organization_code = serializers.CharField(source='organization.code', read_only=True)
+        created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+
+        class Meta:
+            model = StrategicPlan
+            fields = [
+                'id', 'organization', 'organization_name', 'organization_code',
+                'title', 'start_year', 'end_year', 'vision', 'mission',
+                'strategic_goals', 'status', 'created_at', 'updated_at',
+                'created_by', 'created_by_name'
+            ]
+            read_only_fields = ['created_at', 'updated_at', 'created_by']
+
+[ ] Create AnnualWorkPlanSerializer
+    class AnnualWorkPlanSerializer(serializers.ModelSerializer):
+        organization_name = serializers.CharField(source='organization.name', read_only=True)
+        strategic_plan_title = serializers.CharField(source='strategic_plan.title', read_only=True)
+        ppa_count = serializers.SerializerMethodField()
+
+        class Meta:
+            model = AnnualWorkPlan
+            fields = [
+                'id', 'organization', 'organization_name', 'strategic_plan',
+                'strategic_plan_title', 'year', 'title', 'objectives',
+                'status', 'ppa_count', 'created_at', 'updated_at'
+            ]
+            read_only_fields = ['created_at', 'updated_at']
+
+        def get_ppa_count(self, obj):
+            return obj.ppas.count()
+
+[ ] Create BarangayBasicSerializer (nested serializer)
+    class BarangayBasicSerializer(serializers.ModelSerializer):
+        municipality_name = serializers.CharField(source='municipality.name', read_only=True)
+        province_name = serializers.CharField(source='municipality.province.name', read_only=True)
+
+        class Meta:
+            model = Barangay
+            fields = ['id', 'name', 'municipality_name', 'province_name']
+
+[ ] Create ProgramProjectActivitySerializer
+    class ProgramProjectActivitySerializer(serializers.ModelSerializer):
+        organization_name = serializers.CharField(source='organization.name', read_only=True)
+        annual_work_plan_title = serializers.CharField(
+            source='annual_work_plan.title',
+            read_only=True,
+            allow_null=True
+        )
+        target_barangays_detail = BarangayBasicSerializer(
+            source='target_barangays',
+            many=True,
+            read_only=True
+        )
+        target_barangay_ids = serializers.PrimaryKeyRelatedField(
+            queryset=Barangay.objects.all(),
+            source='target_barangays',
+            many=True,
+            write_only=True
+        )
+        is_overdue = serializers.BooleanField(read_only=True)
+
+        class Meta:
+            model = ProgramProjectActivity
+            fields = [
+                'id', 'organization', 'organization_name', 'ppa_code', 'title',
+                'description', 'annual_work_plan', 'annual_work_plan_title',
+                'ppa_type', 'target_barangays_detail', 'target_barangay_ids',
+                'start_date', 'end_date', 'status', 'estimated_budget',
+                'is_overdue', 'created_at', 'updated_at'
+            ]
+            read_only_fields = ['created_at', 'updated_at', 'is_overdue']
+
+        def validate(self, data):
+            """Validate PPA data"""
+            # Validate date range
+            if data.get('end_date') and data.get('start_date'):
+                if data['end_date'] < data['start_date']:
+                    raise serializers.ValidationError(
+                        "End date must be after start date"
+                    )
+
+            # Validate PPA code uniqueness
+            ppa_code = data.get('ppa_code')
+            if ppa_code:
+                instance = self.instance
+                qs = ProgramProjectActivity.objects.filter(ppa_code=ppa_code)
+                if instance:
+                    qs = qs.exclude(pk=instance.pk)
+                if qs.exists():
+                    raise serializers.ValidationError(
+                        {"ppa_code": "PPA code must be unique"}
+                    )
+
+            return data
+
+
+TASK 2.2: Create API ViewSets
+------------------------------
+Priority: HIGH
+Depends on: Task 2.1
+
+File: src/planning/api.py (NEW)
+
+[ ] Import dependencies
+    from rest_framework import viewsets, filters, status
+    from rest_framework.decorators import action
+    from rest_framework.response import Response
+    from rest_framework.permissions import IsAuthenticated
+    from django_filters.rest_framework import DjangoFilterBackend
+    from .models import StrategicPlan, AnnualWorkPlan, ProgramProjectActivity
+    from .serializers import (
+        StrategicPlanSerializer,
+        AnnualWorkPlanSerializer,
+        ProgramProjectActivitySerializer
+    )
+
+[ ] Create StrategicPlanViewSet
+    class StrategicPlanViewSet(viewsets.ModelViewSet):
+        """API endpoint for Strategic Plans"""
+        serializer_class = StrategicPlanSerializer
+        permission_classes = [IsAuthenticated]
+        filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+        filterset_fields = ['status', 'start_year', 'end_year']
+        search_fields = ['title', 'vision', 'mission']
+        ordering_fields = ['start_year', 'created_at']
+        ordering = ['-start_year']
+
+        def get_queryset(self):
+            """Filter by user's organization"""
+            user = self.request.user
+            if hasattr(user, 'default_organization'):
+                return StrategicPlan.objects.filter(
+                    organization=user.default_organization
+                )
+            return StrategicPlan.objects.none()
+
+        def perform_create(self, serializer):
+            """Set organization and creator on create"""
+            serializer.save(
+                organization=self.request.user.default_organization,
+                created_by=self.request.user
+            )
+
+[ ] Create AnnualWorkPlanViewSet
+    class AnnualWorkPlanViewSet(viewsets.ModelViewSet):
+        """API endpoint for Annual Work Plans"""
+        serializer_class = AnnualWorkPlanSerializer
+        permission_classes = [IsAuthenticated]
+        filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+        filterset_fields = ['status', 'year', 'strategic_plan']
+        search_fields = ['title']
+        ordering_fields = ['year', 'created_at']
+        ordering = ['-year']
+
+        def get_queryset(self):
+            """Filter by user's organization"""
+            user = self.request.user
+            if hasattr(user, 'default_organization'):
+                return AnnualWorkPlan.objects.filter(
+                    organization=user.default_organization
+                )
+            return AnnualWorkPlan.objects.none()
+
+        def perform_create(self, serializer):
+            """Set organization and creator on create"""
+            serializer.save(
+                organization=self.request.user.default_organization,
+                created_by=self.request.user
+            )
+
+[ ] Create ProgramProjectActivityViewSet with status transitions
+    class ProgramProjectActivityViewSet(viewsets.ModelViewSet):
+        """API endpoint for PPAs"""
+        serializer_class = ProgramProjectActivitySerializer
+        permission_classes = [IsAuthenticated]
+        filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+        filterset_fields = ['status', 'ppa_type', 'annual_work_plan']
+        search_fields = ['ppa_code', 'title', 'description']
+        ordering_fields = ['start_date', 'created_at', 'ppa_code']
+        ordering = ['-created_at']
+
+        def get_queryset(self):
+            """Filter by user's organization with barangay prefetch"""
+            user = self.request.user
+            if hasattr(user, 'default_organization'):
+                return ProgramProjectActivity.objects.filter(
+                    organization=user.default_organization
+                ).prefetch_related('target_barangays')
+            return ProgramProjectActivity.objects.none()
+
+        def perform_create(self, serializer):
+            """Set organization and creator on create"""
+            serializer.save(
+                organization=self.request.user.default_organization,
+                created_by=self.request.user
+            )
+
+        @action(detail=True, methods=['post'])
+        def transition_status(self, request, pk=None):
+            """Transition PPA to new status"""
+            ppa = self.get_object()
+            new_status = request.data.get('status')
+
+            # Validate status transition
+            valid_transitions = {
+                'draft': ['review'],
+                'review': ['draft', 'approved'],
+                'approved': ['active'],
+                'active': ['completed', 'cancelled', 'deferred'],
+                'completed': [],
+                'cancelled': ['draft'],
+                'deferred': ['active']
+            }
+
+            if new_status not in valid_transitions.get(ppa.status, []):
+                return Response(
+                    {
+                        'error': f'Cannot transition from {ppa.status} to {new_status}',
+                        'valid_transitions': valid_transitions.get(ppa.status, [])
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            ppa.status = new_status
+            ppa.save()
+
+            serializer = self.get_serializer(ppa)
+            return Response(serializer.data)
+
+        @action(detail=False, methods=['get'])
+        def overdue(self, request):
+            """Get list of overdue PPAs"""
+            qs = self.filter_queryset(self.get_queryset())
+            overdue_ppas = [ppa for ppa in qs if ppa.is_overdue()]
+            serializer = self.get_serializer(overdue_ppas, many=True)
+            return Response(serializer.data)
+
+
+TASK 2.3: Configure API URLs
+-----------------------------
+Priority: HIGH
+Depends on: Task 2.2
+
+File: src/planning/urls_api.py (NEW)
+
+[ ] Create API router configuration
+    from django.urls import path, include
+    from rest_framework.routers import DefaultRouter
+    from .api import (
+        StrategicPlanViewSet,
+        AnnualWorkPlanViewSet,
+        ProgramProjectActivityViewSet
+    )
+
+    router = DefaultRouter()
+    router.register(r'strategic-plans', StrategicPlanViewSet, basename='strategicplan')
+    router.register(r'annual-plans', AnnualWorkPlanViewSet, basename='annualworkplan')
+    router.register(r'ppas', ProgramProjectActivityViewSet, basename='ppa')
+
+    app_name = 'planning_api'
+
+    urlpatterns = [
+        path('', include(router.urls)),
+    ]
+
+[ ] Include API URLs in main project URLs
+    File: src/obc_management/urls.py
+
+    Add to urlpatterns:
+    path('api/planning/', include('planning.urls_api')),
+
+[ ] Test API endpoints
+    Start server and test:
+    - GET /api/planning/strategic-plans/
+    - POST /api/planning/strategic-plans/
+    - GET /api/planning/annual-plans/
+    - POST /api/planning/annual-plans/
+    - GET /api/planning/ppas/
+    - POST /api/planning/ppas/
+    - POST /api/planning/ppas/{id}/transition_status/
+    - GET /api/planning/ppas/overdue/
+
+
+================================================================================
+PART 3: UI IMPLEMENTATION (Templates & Views)
+================================================================================
+
+TASK 3.1: Create Base Planning Templates
+-----------------------------------------
+Priority: HIGH
+Depends on: Task 1.4
+
+[ ] Create template directory structure
+    mkdir -p src/templates/planning
+    mkdir -p src/templates/planning/strategic
+    mkdir -p src/templates/planning/annual
+    mkdir -p src/templates/planning/ppas
+
+File: src/templates/planning/base.html (NEW)
+
+[ ] Create planning base template
+    {% extends "base.html" %}
+
+    {% block title %}Planning Module{% endblock %}
+
+    {% block content %}
+    <div class="min-h-screen bg-gray-50">
+        <!-- Navigation Breadcrumbs -->
+        <nav class="bg-white border-b border-gray-200 px-6 py-4">
+            <div class="flex items-center space-x-2 text-sm">
+                <a href="{% url 'common:dashboard' %}" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <span class="text-gray-400">/</span>
+                <a href="{% url 'planning:home' %}" class="text-gray-500 hover:text-gray-700">
+                    Planning
+                </a>
+                {% block breadcrumbs %}{% endblock %}
+            </div>
+        </nav>
+
+        <!-- Page Content -->
+        <div class="container mx-auto px-6 py-8">
+            {% block planning_content %}{% endblock %}
+        </div>
+    </div>
+    {% endblock %}
+
+
+TASK 3.2: Create PPA List View
+-------------------------------
+Priority: CRITICAL
+Depends on: Task 3.1
+
+File: src/planning/views.py (NEW)
+
+[ ] Import dependencies
+    from django.shortcuts import render, get_object_or_404, redirect
+    from django.contrib.auth.decorators import login_required
+    from django.contrib import messages
+    from django.db.models import Q, Count
+    from .models import StrategicPlan, AnnualWorkPlan, ProgramProjectActivity
+    from .forms import ProgramProjectActivityForm
+
+[ ] Create PPA list view
+    @login_required
+    def ppa_list(request):
+        """List all PPAs for user's organization"""
+        user_org = request.user.default_organization
+
+        # Get filter parameters
+        status_filter = request.GET.get('status', '')
+        ppa_type_filter = request.GET.get('ppa_type', '')
+        search_query = request.GET.get('q', '')
+
+        # Base queryset
+        ppas = ProgramProjectActivity.objects.filter(
+            organization=user_org
+        ).select_related(
+            'annual_work_plan', 'created_by'
+        ).prefetch_related('target_barangays')
+
+        # Apply filters
+        if status_filter:
+            ppas = ppas.filter(status=status_filter)
+
+        if ppa_type_filter:
+            ppas = ppas.filter(ppa_type=ppa_type_filter)
+
+        if search_query:
+            ppas = ppas.filter(
+                Q(ppa_code__icontains=search_query) |
+                Q(title__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )
+
+        # Get statistics
+        stats = {
+            'total': ProgramProjectActivity.objects.filter(organization=user_org).count(),
+            'draft': ProgramProjectActivity.objects.filter(organization=user_org, status='draft').count(),
+            'active': ProgramProjectActivity.objects.filter(organization=user_org, status='active').count(),
+            'completed': ProgramProjectActivity.objects.filter(organization=user_org, status='completed').count(),
+        }
+
+        context = {
+            'ppas': ppas,
+            'stats': stats,
+            'status_filter': status_filter,
+            'ppa_type_filter': ppa_type_filter,
+            'search_query': search_query,
+        }
+
+        return render(request, 'planning/ppas/list.html', context)
+
+File: src/templates/planning/ppas/list.html (NEW)
+
+[ ] Create PPA list template
+    {% extends "planning/base.html" %}
+    {% load static %}
+
+    {% block title %}Program/Project/Activity List{% endblock %}
+
+    {% block breadcrumbs %}
+        <span class="text-gray-400">/</span>
+        <span class="text-gray-700 font-medium">PPAs</span>
+    {% endblock %}
+
+    {% block planning_content %}
+    <div class="space-y-6">
+        <!-- Page Header -->
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Programs/Projects/Activities</h1>
+                <p class="text-gray-600 mt-1">Manage your organization's PPAs</p>
+            </div>
+            <a href="{% url 'planning:ppa_create' %}"
+               class="px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-xl hover:shadow-lg transition-all duration-200">
+                <i class="fas fa-plus mr-2"></i> Create PPA
+            </a>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- Total PPAs -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total PPAs</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.total }}</p>
+                    </div>
+                    <div class="p-3 bg-amber-100 rounded-lg">
+                        <i class="fas fa-clipboard-list text-2xl text-amber-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Draft -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Draft</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.draft }}</p>
+                    </div>
+                    <div class="p-3 bg-purple-100 rounded-lg">
+                        <i class="fas fa-edit text-2xl text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Active</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.active }}</p>
+                    </div>
+                    <div class="p-3 bg-emerald-100 rounded-lg">
+                        <i class="fas fa-play-circle text-2xl text-emerald-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completed -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Completed</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.completed }}</p>
+                    </div>
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <i class="fas fa-check-circle text-2xl text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Search -->
+                <div class="md:col-span-2">
+                    <input type="text"
+                           name="q"
+                           value="{{ search_query }}"
+                           placeholder="Search by PPA code, title, or description..."
+                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+
+                <!-- Status Filter -->
+                <div>
+                    <select name="status" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="">All Statuses</option>
+                        <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+                        <option value="review" {% if status_filter == 'review' %}selected{% endif %}>Under Review</option>
+                        <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                    </select>
+                </div>
+
+                <!-- Type Filter -->
+                <div>
+                    <select name="ppa_type" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="">All Types</option>
+                        <option value="program" {% if ppa_type_filter == 'program' %}selected{% endif %}>Program</option>
+                        <option value="project" {% if ppa_type_filter == 'project' %}selected{% endif %}>Project</option>
+                        <option value="activity" {% if ppa_type_filter == 'activity' %}selected{% endif %}>Activity</option>
+                    </select>
+                </div>
+
+                <!-- Submit -->
+                <div class="md:col-span-4 flex justify-end">
+                    <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700">
+                        <i class="fas fa-search mr-2"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- PPA Table -->
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gradient-to-r from-blue-600 to-teal-600">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">PPA Code</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Title</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Barangays</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Timeline</th>
+                        <th class="px-6 py-4 text-right text-xs font-medium text-white uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for ppa in ppas %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="font-mono text-sm text-gray-900">{{ ppa.ppa_code }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">{{ ppa.title }}</div>
+                            <div class="text-sm text-gray-500">{{ ppa.description|truncatewords:10 }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if ppa.ppa_type == 'program' %}bg-blue-100 text-blue-800
+                                {% elif ppa.ppa_type == 'project' %}bg-purple-100 text-purple-800
+                                {% else %}bg-orange-100 text-orange-800{% endif %}">
+                                {{ ppa.get_ppa_type_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ ppa.get_target_barangay_count }} barangay{{ ppa.get_target_barangay_count|pluralize }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if ppa.status == 'draft' %}bg-purple-100 text-purple-800
+                                {% elif ppa.status == 'active' %}bg-emerald-100 text-emerald-800
+                                {% elif ppa.status == 'completed' %}bg-blue-100 text-blue-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ ppa.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ ppa.start_date|date:"M d, Y" }} - {{ ppa.end_date|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <a href="{% url 'planning:ppa_detail' ppa.pk %}" class="text-blue-600 hover:text-blue-900 mr-3">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'planning:ppa_edit' ppa.pk %}" class="text-emerald-600 hover:text-emerald-900 mr-3">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'planning:ppa_delete' ppa.pk %}" class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center">
+                            <i class="fas fa-clipboard-list text-6xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-500 text-lg">No PPAs found</p>
+                            <a href="{% url 'planning:ppa_create' %}" class="mt-4 inline-block px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700">
+                                Create Your First PPA
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endblock %}
+
+
+TASK 3.3: Create PPA Create/Edit Forms
+---------------------------------------
+Priority: CRITICAL
+Depends on: Task 3.2
+
+File: src/planning/forms.py (NEW)
+
+[ ] Create PPA form with barangay multi-select
+    from django import forms
+    from .models import ProgramProjectActivity
+    from communities.models import Barangay
+
+    class ProgramProjectActivityForm(forms.ModelForm):
+        target_barangays = forms.ModelMultipleChoiceField(
+            queryset=Barangay.objects.all().select_related(
+                'municipality__province__region'
+            ),
+            widget=forms.CheckboxSelectMultiple,
+            required=False,
+            help_text="Select target barangays for this PPA"
+        )
+
+        class Meta:
+            model = ProgramProjectActivity
+            fields = [
+                'ppa_code', 'title', 'description', 'ppa_type',
+                'annual_work_plan', 'target_barangays',
+                'start_date', 'end_date', 'estimated_budget', 'status'
+            ]
+            widgets = {
+                'ppa_code': forms.TextInput(attrs={
+                    'class': 'block w-full py-3 px-4 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500',
+                    'placeholder': 'e.g., MOH-2025-001'
+                }),
+                'title': forms.TextInput(attrs={
+                    'class': 'block w-full py-3 px-4 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500',
+                    'placeholder': 'Enter PPA title'
+                }),
+                'description': forms.Textarea(attrs={
+                    'class': 'block w-full py-3 px-4 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500',
+                    'rows': 4,
+                    'placeholder': 'Describe this PPA...'
+                }),
+                'ppa_type': forms.Select(attrs={
+                    'class': 'block w-full py-3 px-4 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500'
+                }),
+                'start_date': forms.DateInput(attrs={
+                    'type': 'date',
+                    'class': 'block w-full py-3 px-4 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500'
+                }),
+                'end_date': forms.DateInput(attrs={
+                    'type': 'date',
+                    'class': 'block w-full py-3 px-4 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500'
+                }),
+                'estimated_budget': forms.NumberInput(attrs={
+                    'class': 'block w-full py-3 px-4 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500',
+                    'placeholder': '0.00',
+                    'step': '0.01'
+                }),
+                'status': forms.Select(attrs={
+                    'class': 'block w-full py-3 px-4 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500'
+                }),
+            }
+
+        def clean(self):
+            cleaned_data = super().clean()
+            start_date = cleaned_data.get('start_date')
+            end_date = cleaned_data.get('end_date')
+
+            if start_date and end_date and end_date < start_date:
+                raise forms.ValidationError("End date must be after start date")
+
+            return cleaned_data
+
+File: src/planning/views.py (continue)
+
+[ ] Add PPA create view
+    @login_required
+    def ppa_create(request):
+        """Create new PPA"""
+        if request.method == 'POST':
+            form = ProgramProjectActivityForm(request.POST)
+            if form.is_valid():
+                ppa = form.save(commit=False)
+                ppa.organization = request.user.default_organization
+                ppa.created_by = request.user
+                ppa.save()
+                form.save_m2m()  # Save many-to-many (barangays)
+
+                messages.success(request, f'PPA "{ppa.title}" created successfully!')
+                return redirect('planning:ppa_detail', pk=ppa.pk)
+        else:
+            form = ProgramProjectActivityForm()
+
+        return render(request, 'planning/ppas/form.html', {
+            'form': form,
+            'action': 'Create'
+        })
+
+[ ] Add PPA edit view
+    @login_required
+    def ppa_edit(request, pk):
+        """Edit existing PPA"""
+        ppa = get_object_or_404(
+            ProgramProjectActivity,
+            pk=pk,
+            organization=request.user.default_organization
+        )
+
+        if request.method == 'POST':
+            form = ProgramProjectActivityForm(request.POST, instance=ppa)
+            if form.is_valid():
+                form.save()
+                messages.success(request, f'PPA "{ppa.title}" updated successfully!')
+                return redirect('planning:ppa_detail', pk=ppa.pk)
+        else:
+            form = ProgramProjectActivityForm(instance=ppa)
+
+        return render(request, 'planning/ppas/form.html', {
+            'form': form,
+            'ppa': ppa,
+            'action': 'Edit'
+        })
+
+
+TASK 3.4: Implement Status Workflow UI
+---------------------------------------
+Priority: HIGH
+Depends on: Task 3.3
+
+File: src/planning/views.py (continue)
+
+[ ] Add status transition view
+    @login_required
+    def ppa_transition_status(request, pk):
+        """Transition PPA status"""
+        ppa = get_object_or_404(
+            ProgramProjectActivity,
+            pk=pk,
+            organization=request.user.default_organization
+        )
+
+        if request.method == 'POST':
+            new_status = request.POST.get('status')
+
+            # Validate transition
+            valid_transitions = {
+                'draft': ['review'],
+                'review': ['draft', 'approved'],
+                'approved': ['active'],
+                'active': ['completed', 'cancelled', 'deferred'],
+                'completed': [],
+                'cancelled': ['draft'],
+                'deferred': ['active']
+            }
+
+            if new_status in valid_transitions.get(ppa.status, []):
+                ppa.status = new_status
+                ppa.save()
+                messages.success(request, f'PPA status changed to {ppa.get_status_display()}')
+            else:
+                messages.error(request, f'Cannot transition from {ppa.get_status_display()} to {new_status}')
+
+            return redirect('planning:ppa_detail', pk=ppa.pk)
+
+        return redirect('planning:ppa_detail', pk=pk)
+
+File: src/templates/planning/ppas/detail.html (NEW)
+
+[ ] Add status workflow buttons to detail template
+    {% extends "planning/base.html" %}
+
+    {% block planning_content %}
+    <div class="space-y-6">
+        <!-- Status Workflow Actions -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold mb-4">Status Workflow</h3>
+            <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-600">Current Status:</span>
+                <span class="px-4 py-2 rounded-full font-semibold
+                    {% if ppa.status == 'draft' %}bg-purple-100 text-purple-800
+                    {% elif ppa.status == 'active' %}bg-emerald-100 text-emerald-800
+                    {% elif ppa.status == 'completed' %}bg-blue-100 text-blue-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ ppa.get_status_display }}
+                </span>
+
+                <!-- Transition Buttons -->
+                <form method="post" action="{% url 'planning:ppa_transition_status' ppa.pk %}" class="inline">
+                    {% csrf_token %}
+                    {% if ppa.status == 'draft' %}
+                        <button type="submit" name="status" value="review"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-arrow-right mr-2"></i> Submit for Review
+                        </button>
+                    {% elif ppa.status == 'review' %}
+                        <button type="submit" name="status" value="approved"
+                                class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                            <i class="fas fa-check mr-2"></i> Approve
+                        </button>
+                        <button type="submit" name="status" value="draft"
+                                class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                            <i class="fas fa-undo mr-2"></i> Return to Draft
+                        </button>
+                    {% elif ppa.status == 'approved' %}
+                        <button type="submit" name="status" value="active"
+                                class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                            <i class="fas fa-play mr-2"></i> Activate
+                        </button>
+                    {% elif ppa.status == 'active' %}
+                        <button type="submit" name="status" value="completed"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-check-circle mr-2"></i> Mark Completed
+                        </button>
+                        <button type="submit" name="status" value="deferred"
+                                class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                            <i class="fas fa-pause mr-2"></i> Defer
+                        </button>
+                        <button type="submit" name="status" value="cancelled"
+                                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                            <i class="fas fa-times mr-2"></i> Cancel
+                        </button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        <!-- PPA Details -->
+        <!-- ... rest of detail view ... -->
+    </div>
+    {% endblock %}
+
+
+TASK 3.5: Configure Planning URLs
+----------------------------------
+Priority: HIGH
+Depends on: Task 3.4
+
+File: src/planning/urls.py (NEW)
+
+[ ] Create URL configuration
+    from django.urls import path
+    from . import views
+
+    app_name = 'planning'
+
+    urlpatterns = [
+        # PPA URLs
+        path('ppas/', views.ppa_list, name='ppa_list'),
+        path('ppas/create/', views.ppa_create, name='ppa_create'),
+        path('ppas/<int:pk>/', views.ppa_detail, name='ppa_detail'),
+        path('ppas/<int:pk>/edit/', views.ppa_edit, name='ppa_edit'),
+        path('ppas/<int:pk>/delete/', views.ppa_delete, name='ppa_delete'),
+        path('ppas/<int:pk>/transition/', views.ppa_transition_status, name='ppa_transition_status'),
+
+        # Strategic Plan URLs
+        path('strategic/', views.strategic_plan_list, name='strategic_list'),
+        path('strategic/create/', views.strategic_plan_create, name='strategic_create'),
+        path('strategic/<int:pk>/', views.strategic_plan_detail, name='strategic_detail'),
+        path('strategic/<int:pk>/edit/', views.strategic_plan_edit, name='strategic_edit'),
+
+        # Annual Work Plan URLs
+        path('annual/', views.annual_work_plan_list, name='annual_list'),
+        path('annual/create/', views.annual_work_plan_create, name='annual_create'),
+        path('annual/<int:pk>/', views.annual_work_plan_detail, name='annual_detail'),
+        path('annual/<int:pk>/edit/', views.annual_work_plan_edit, name='annual_edit'),
+
+        # Home
+        path('', views.planning_home, name='home'),
+    ]
+
+[ ] Include planning URLs in main project URLs
+    File: src/obc_management/urls.py
+
+    Add to urlpatterns:
+    path('planning/', include('planning.urls')),
+
+
+================================================================================
+PART 4: TESTING IMPLEMENTATION
+================================================================================
+
+TASK 4.1: Unit Tests for Models
+--------------------------------
+Priority: CRITICAL
+Depends on: Task 1.4
+
+File: src/planning/tests/__init__.py (NEW)
+File: src/planning/tests/test_models.py (NEW)
+
+[ ] Create model tests
+    import pytest
+    from django.contrib.auth import get_user_model
+    from django.utils import timezone
+    from organizations.models import Organization
+    from communities.models import Region, Province, Municipality, Barangay
+    from planning.models import StrategicPlan, AnnualWorkPlan, ProgramProjectActivity
+
+    User = get_user_model()
+
+    @pytest.mark.django_db
+    class TestPlanningModels:
+        """Test planning module models"""
+
+        @pytest.fixture
+        def setup_data(self):
+            """Setup test data"""
+            # Create organization
+            org = Organization.objects.create(
+                code='MOH',
+                name='Ministry of Health',
+                org_type='MOA'
+            )
+
+            # Create user
+            user = User.objects.create_user(
+                username='moh_staff',
+                email='staff@moh.gov.ph',
+                password='test123',
+                default_organization=org
+            )
+
+            # Create geographic hierarchy
+            region = Region.objects.create(name='Region IX', code='09')
+            province = Province.objects.create(
+                name='Zamboanga del Sur',
+                code='0972',
+                region=region
+            )
+            municipality = Municipality.objects.create(
+                name='Pagadian City',
+                code='097201',
+                province=province
+            )
+            barangay = Barangay.objects.create(
+                name='Poblacion',
+                municipality=municipality
+            )
+
+            return {
+                'org': org,
+                'user': user,
+                'barangay': barangay
+            }
+
+        def test_strategic_plan_creation(self, setup_data):
+            """Test creating a strategic plan"""
+            org = setup_data['org']
+            user = setup_data['user']
+
+            plan = StrategicPlan.objects.create(
+                organization=org,
+                title='MOH Strategic Plan 2025-2028',
+                start_year=2025,
+                end_year=2028,
+                vision='Universal health coverage',
+                mission='Provide quality health services',
+                strategic_goals=[
+                    {'goal': 'Reduce maternal mortality', 'indicator': 'MMR < 50'},
+                    {'goal': 'Increase vaccination coverage', 'indicator': '95% coverage'}
+                ],
+                status='draft',
+                created_by=user
+            )
+
+            assert plan.pk is not None
+            assert plan.organization == org
+            assert str(plan) == 'MOH - MOH Strategic Plan 2025-2028 (2025-2028)'
+
+        def test_ppa_barangay_linkage(self, setup_data):
+            """Test PPA can link to multiple barangays"""
+            org = setup_data['org']
+            user = setup_data['user']
+            barangay = setup_data['barangay']
+
+            ppa = ProgramProjectActivity.objects.create(
+                organization=org,
+                ppa_code='MOH-2025-001',
+                title='Community Health Program',
+                description='Health program for Bangsamoro communities',
+                ppa_type='program',
+                start_date=timezone.now().date(),
+                end_date=timezone.now().date() + timezone.timedelta(days=365),
+                status='draft',
+                created_by=user
+            )
+
+            ppa.target_barangays.add(barangay)
+
+            assert ppa.get_target_barangay_count() == 1
+            assert barangay in ppa.target_barangays.all()
+
+        def test_ppa_overdue_detection(self, setup_data):
+            """Test PPA overdue detection"""
+            org = setup_data['org']
+            user = setup_data['user']
+
+            # Create overdue PPA
+            overdue_ppa = ProgramProjectActivity.objects.create(
+                organization=org,
+                ppa_code='MOH-2024-001',
+                title='Overdue Program',
+                description='This should be overdue',
+                ppa_type='program',
+                start_date=timezone.now().date() - timezone.timedelta(days=365),
+                end_date=timezone.now().date() - timezone.timedelta(days=30),
+                status='active',  # Still active but past end date
+                created_by=user
+            )
+
+            assert overdue_ppa.is_overdue() is True
+
+            # Create on-time PPA
+            ontime_ppa = ProgramProjectActivity.objects.create(
+                organization=org,
+                ppa_code='MOH-2025-002',
+                title='On-time Program',
+                description='This is on time',
+                ppa_type='program',
+                start_date=timezone.now().date(),
+                end_date=timezone.now().date() + timezone.timedelta(days=365),
+                status='active',
+                created_by=user
+            )
+
+            assert ontime_ppa.is_overdue() is False
+
+
+TASK 4.2: API Tests
+--------------------
+Priority: HIGH
+Depends on: Task 2.3
+
+File: src/planning/tests/test_api.py (NEW)
+
+[ ] Create API tests
+    import pytest
+    from django.urls import reverse
+    from rest_framework.test import APIClient
+    from rest_framework import status
+    from django.contrib.auth import get_user_model
+    from organizations.models import Organization
+    from planning.models import ProgramProjectActivity
+    from communities.models import Region, Province, Municipality, Barangay
+
+    User = get_user_model()
+
+    @pytest.mark.django_db
+    class TestPlanningAPI:
+        """Test planning module API endpoints"""
+
+        @pytest.fixture
+        def setup_api_test(self):
+            """Setup API test data"""
+            # Create two organizations
+            moh = Organization.objects.create(
+                code='MOH',
+                name='Ministry of Health',
+                org_type='MOA'
+            )
+
+            mole = Organization.objects.create(
+                code='MOLE',
+                name='Ministry of Labor and Employment',
+                org_type='MOA'
+            )
+
+            # Create users
+            moh_user = User.objects.create_user(
+                username='moh_staff',
+                email='staff@moh.gov.ph',
+                password='test123',
+                default_organization=moh
+            )
+
+            mole_user = User.objects.create_user(
+                username='mole_staff',
+                email='staff@mole.gov.ph',
+                password='test123',
+                default_organization=mole
+            )
+
+            # Create PPAs
+            moh_ppa = ProgramProjectActivity.objects.create(
+                organization=moh,
+                ppa_code='MOH-2025-001',
+                title='MOH Health Program',
+                description='Health program',
+                ppa_type='program',
+                start_date='2025-01-01',
+                end_date='2025-12-31',
+                status='draft',
+                created_by=moh_user
+            )
+
+            mole_ppa = ProgramProjectActivity.objects.create(
+                organization=mole,
+                ppa_code='MOLE-2025-001',
+                title='MOLE Labor Program',
+                description='Labor program',
+                ppa_type='program',
+                start_date='2025-01-01',
+                end_date='2025-12-31',
+                status='draft',
+                created_by=mole_user
+            )
+
+            return {
+                'moh': moh,
+                'mole': mole,
+                'moh_user': moh_user,
+                'mole_user': mole_user,
+                'moh_ppa': moh_ppa,
+                'mole_ppa': mole_ppa
+            }
+
+        def test_ppa_list_org_scoping(self, setup_api_test):
+            """Test PPAs are scoped to user's organization"""
+            client = APIClient()
+            client.force_authenticate(user=setup_api_test['moh_user'])
+
+            url = reverse('planning_api:ppa-list')
+            response = client.get(url)
+
+            assert response.status_code == status.HTTP_200_OK
+            assert len(response.data['results']) == 1
+            assert response.data['results'][0]['ppa_code'] == 'MOH-2025-001'
+            assert response.data['results'][0]['organization'] == setup_api_test['moh'].pk
+
+        def test_ppa_create_auto_org_assignment(self, setup_api_test):
+            """Test PPA creation automatically assigns user's organization"""
+            client = APIClient()
+            client.force_authenticate(user=setup_api_test['moh_user'])
+
+            url = reverse('planning_api:ppa-list')
+            data = {
+                'ppa_code': 'MOH-2025-999',
+                'title': 'New Health Program',
+                'description': 'New program',
+                'ppa_type': 'program',
+                'start_date': '2025-01-01',
+                'end_date': '2025-12-31',
+                'status': 'draft'
+            }
+
+            response = client.post(url, data, format='json')
+
+            assert response.status_code == status.HTTP_201_CREATED
+            assert response.data['organization'] == setup_api_test['moh'].pk
+
+        def test_ppa_status_transition(self, setup_api_test):
+            """Test PPA status transition endpoint"""
+            client = APIClient()
+            client.force_authenticate(user=setup_api_test['moh_user'])
+
+            ppa = setup_api_test['moh_ppa']
+            url = reverse('planning_api:ppa-transition-status', kwargs={'pk': ppa.pk})
+
+            # Valid transition: draft → review
+            response = client.post(url, {'status': 'review'}, format='json')
+            assert response.status_code == status.HTTP_200_OK
+            assert response.data['status'] == 'review'
+
+            # Invalid transition: review → completed (should be review → approved → active → completed)
+            response = client.post(url, {'status': 'completed'}, format='json')
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+TASK 4.3: Organization Scoping Tests
+-------------------------------------
+Priority: CRITICAL
+Depends on: Task 4.2
+
+File: src/planning/tests/test_organization_scoping.py (NEW)
+
+[ ] Create organization scoping tests
+    import pytest
+    from django.contrib.auth import get_user_model
+    from organizations.models import Organization
+    from planning.models import ProgramProjectActivity
+
+    User = get_user_model()
+
+    @pytest.mark.django_db
+    class TestOrganizationScoping:
+        """Test organization data isolation"""
+
+        @pytest.fixture
+        def two_orgs(self):
+            """Create two organizations with PPAs"""
+            moh = Organization.objects.create(code='MOH', name='Ministry of Health', org_type='MOA')
+            mole = Organization.objects.create(code='MOLE', name='Ministry of Labor', org_type='MOA')
+
+            moh_user = User.objects.create_user(
+                username='moh_staff',
+                email='staff@moh.gov.ph',
+                password='test123',
+                default_organization=moh
+            )
+
+            mole_user = User.objects.create_user(
+                username='mole_staff',
+                email='staff@mole.gov.ph',
+                password='test123',
+                default_organization=mole
+            )
+
+            # Create 10 PPAs for MOH
+            for i in range(10):
+                ProgramProjectActivity.objects.create(
+                    organization=moh,
+                    ppa_code=f'MOH-2025-{i:03d}',
+                    title=f'MOH Program {i}',
+                    description='Health program',
+                    ppa_type='program',
+                    start_date='2025-01-01',
+                    end_date='2025-12-31',
+                    status='draft',
+                    created_by=moh_user
+                )
+
+            # Create 5 PPAs for MOLE
+            for i in range(5):
+                ProgramProjectActivity.objects.create(
+                    organization=mole,
+                    ppa_code=f'MOLE-2025-{i:03d}',
+                    title=f'MOLE Program {i}',
+                    description='Labor program',
+                    ppa_type='program',
+                    start_date='2025-01-01',
+                    end_date='2025-12-31',
+                    status='draft',
+                    created_by=mole_user
+                )
+
+            return {
+                'moh': moh,
+                'mole': mole,
+                'moh_user': moh_user,
+                'mole_user': mole_user
+            }
+
+        def test_moa_sees_only_own_ppas(self, two_orgs):
+            """Test MOA can only see their own PPAs"""
+            moh = two_orgs['moh']
+            mole = two_orgs['mole']
+
+            # MOH should see 10 PPAs
+            moh_ppas = ProgramProjectActivity.objects.filter(organization=moh)
+            assert moh_ppas.count() == 10
+
+            # MOLE should see 5 PPAs
+            mole_ppas = ProgramProjectActivity.objects.filter(organization=mole)
+            assert mole_ppas.count() == 5
+
+            # Verify no overlap
+            moh_ids = set(moh_ppas.values_list('id', flat=True))
+            mole_ids = set(mole_ppas.values_list('id', flat=True))
+            assert len(moh_ids & mole_ids) == 0
+
+        def test_queryset_manager_scoping(self, two_orgs):
+            """Test organization-scoped queryset manager"""
+            moh = two_orgs['moh']
+
+            # Using manager method (if implemented)
+            if hasattr(ProgramProjectActivity.objects, 'for_organization'):
+                scoped_ppas = ProgramProjectActivity.objects.for_organization(moh)
+                assert scoped_ppas.count() == 10
+
+                for ppa in scoped_ppas:
+                    assert ppa.organization == moh
+
+
+TASK 4.4: UI Tests
+------------------
+Priority: MEDIUM
+Depends on: Task 3.5
+
+File: src/planning/tests/test_views.py (NEW)
+
+[ ] Create view tests
+    import pytest
+    from django.test import Client
+    from django.urls import reverse
+    from django.contrib.auth import get_user_model
+    from organizations.models import Organization
+    from planning.models import ProgramProjectActivity
+
+    User = get_user_model()
+
+    @pytest.mark.django_db
+    class TestPlanningViews:
+        """Test planning module views"""
+
+        @pytest.fixture
+        def setup_view_test(self):
+            """Setup view test data"""
+            org = Organization.objects.create(
+                code='MOH',
+                name='Ministry of Health',
+                org_type='MOA'
+            )
+
+            user = User.objects.create_user(
+                username='moh_staff',
+                email='staff@moh.gov.ph',
+                password='test123',
+                default_organization=org
+            )
+
+            ppa = ProgramProjectActivity.objects.create(
+                organization=org,
+                ppa_code='MOH-2025-001',
+                title='Health Program',
+                description='Test program',
+                ppa_type='program',
+                start_date='2025-01-01',
+                end_date='2025-12-31',
+                status='draft',
+                created_by=user
+            )
+
+            return {
+                'org': org,
+                'user': user,
+                'ppa': ppa
+            }
+
+        def test_ppa_list_view(self, setup_view_test):
+            """Test PPA list view renders correctly"""
+            client = Client()
+            client.force_login(setup_view_test['user'])
+
+            url = reverse('planning:ppa_list')
+            response = client.get(url)
+
+            assert response.status_code == 200
+            assert 'ppas' in response.context
+            assert 'stats' in response.context
+            assert b'MOH-2025-001' in response.content
+
+        def test_ppa_create_view(self, setup_view_test):
+            """Test PPA creation through view"""
+            client = Client()
+            client.force_login(setup_view_test['user'])
+
+            url = reverse('planning:ppa_create')
+            data = {
+                'ppa_code': 'MOH-2025-999',
+                'title': 'New Program',
+                'description': 'Test description',
+                'ppa_type': 'program',
+                'start_date': '2025-01-01',
+                'end_date': '2025-12-31',
+                'status': 'draft'
+            }
+
+            response = client.post(url, data)
+
+            # Should redirect to detail view
+            assert response.status_code == 302
+
+            # Verify PPA was created
+            assert ProgramProjectActivity.objects.filter(ppa_code='MOH-2025-999').exists()
+
+        def test_ppa_status_transition_view(self, setup_view_test):
+            """Test status transition through view"""
+            client = Client()
+            client.force_login(setup_view_test['user'])
+
+            ppa = setup_view_test['ppa']
+            url = reverse('planning:ppa_transition_status', kwargs={'pk': ppa.pk})
+
+            response = client.post(url, {'status': 'review'})
+
+            # Should redirect to detail
+            assert response.status_code == 302
+
+            # Verify status changed
+            ppa.refresh_from_db()
+            assert ppa.status == 'review'
+
+
+================================================================================
+PART 5: VERIFICATION & DEPLOYMENT
+================================================================================
+
+TASK 5.1: Verification Checklist
+---------------------------------
+Priority: CRITICAL
+Depends on: All previous tasks
+
+[ ] Database verification
+    - [ ] Planning app created
+    - [ ] Three models exist: StrategicPlan, AnnualWorkPlan, ProgramProjectActivity
+    - [ ] PPA model has organization foreign key
+    - [ ] PPA model has barangay many-to-many relationship
+    - [ ] Status workflow implemented (draft → review → approved → active → completed)
+    - [ ] Indexes created for performance
+
+[ ] API verification
+    - [ ] REST API endpoints functional
+    - [ ] Organization scoping working (users see only own data)
+    - [ ] Serializers include nested barangay data
+    - [ ] Status transition endpoint validates workflow
+    - [ ] API authentication required
+
+[ ] UI verification
+    - [ ] PPA list view displays with statistics
+    - [ ] PPA create form works with barangay multi-select
+    - [ ] PPA edit form works
+    - [ ] Status workflow buttons display correctly
+    - [ ] Filters work (status, type, search)
+    - [ ] Forms follow OBCMS UI standards (rounded-xl, emerald focus)
+
+[ ] Testing verification
+    - [ ] Unit tests passing (models)
+    - [ ] API tests passing (CRUD operations, organization scoping)
+    - [ ] View tests passing (list, create, edit)
+    - [ ] Organization isolation verified (MOA A cannot see MOA B's data)
+
+[ ] Integration verification
+    - [ ] Planning URLs accessible: /planning/ppas/
+    - [ ] API URLs accessible: /api/planning/ppas/
+    - [ ] Admin interface functional
+    - [ ] Navigation works from dashboard
+
+
+TASK 5.2: Run Full Test Suite
+------------------------------
+Priority: CRITICAL
+Depends on: Task 5.1
+
+[ ] Run all tests
+    cd src
+    pytest planning/tests/ -v
+
+[ ] Expected results
+    - All model tests pass
+    - All API tests pass
+    - All view tests pass
+    - Organization scoping tests pass
+    - Status transition tests pass
+
+[ ] Fix any failing tests before proceeding
+
+
+TASK 5.3: Performance Testing
+------------------------------
+Priority: HIGH
+Depends on: Task 5.2
+
+[ ] Create test data
+    - Generate 100+ PPAs per organization
+    - Link PPAs to multiple barangays
+    - Test with 5+ organizations
+
+[ ] Test query performance
+    - PPA list page load time < 200ms
+    - API endpoint response time < 100ms
+    - Search/filter operations < 150ms
+
+[ ] Optimize if needed
+    - Add select_related() for foreign keys
+    - Add prefetch_related() for many-to-many
+    - Verify indexes are used
+
+
+TASK 5.4: Documentation
+------------------------
+Priority: MEDIUM
+Depends on: Task 5.3
+
+[ ] Create user documentation
+    File: docs/guides/planning_module_user_guide.md
+
+    Include:
+    - How to create PPAs
+    - How to link barangays
+    - Status workflow explanation
+    - Filter and search tips
+
+[ ] Create developer documentation
+    File: docs/development/planning_module_technical.md
+
+    Include:
+    - Model relationships
+    - API endpoints
+    - Status transition rules
+    - Extension points
+
+
+TASK 5.5: Deployment Preparation
+---------------------------------
+Priority: CRITICAL
+Depends on: Task 5.4
+
+[ ] Create deployment checklist
+    - [ ] Run makemigrations
+    - [ ] Test migration on staging
+    - [ ] Backup database before production migration
+    - [ ] Run migrate on production
+    - [ ] Verify all models created
+    - [ ] Test basic CRUD operations
+    - [ ] Verify organization scoping
+
+[ ] Migration command
+    cd src
+    python manage.py makemigrations planning
+    python manage.py migrate planning
+
+[ ] Post-deployment verification
+    - [ ] Admin interface accessible
+    - [ ] API endpoints responsive
+    - [ ] UI pages render correctly
+    - [ ] No error logs
+
+
+================================================================================
+COMPLETION CRITERIA
+================================================================================
+
+Phase 2 is COMPLETE when ALL of the following are verified:
+
+DATABASE:
+✓ Planning Django app created and configured
+✓ StrategicPlan model implemented with organization scoping
+✓ AnnualWorkPlan model implemented with strategic plan linkage
+✓ ProgramProjectActivity model implemented with:
+  - Organization foreign key
+  - Barangay many-to-many relationship
+  - Status workflow (7 states)
+  - Timeline tracking (start_date, end_date)
+✓ Database migrations applied successfully
+✓ Admin interface functional for all models
+
+API:
+✓ REST API endpoints functional for all three models
+✓ Organization scoping enforced (users see only own data)
+✓ Serializers implemented with nested data
+✓ Status transition endpoint with validation
+✓ Filtering, searching, and ordering implemented
+
+UI:
+✓ PPA list view with statistics cards
+✓ PPA create/edit forms with barangay multi-select
+✓ Status workflow UI with transition buttons
+✓ Filters working (status, type, search)
+✓ Templates follow OBCMS UI standards
+
+TESTING:
+✓ Unit tests passing (100% models)
+✓ API tests passing (CRUD + organization scoping)
+✓ View tests passing (list, create, edit)
+✓ Organization isolation verified
+✓ Performance acceptable (< 200ms page loads)
+
+INTEGRATION:
+✓ URLs configured and accessible
+✓ Navigation from dashboard working
+✓ No breaking changes to existing modules
+✓ Documentation created
+
+================================================================================
+ESTIMATED EFFORT
+================================================================================
+
+Priority:     HIGH
+Complexity:   Moderate
+Dependencies: Phase 1 (Organizations App) MUST be complete
+
+Task Breakdown:
+- Database Implementation:     30-40% of effort
+- API Implementation:          25-30% of effort
+- UI Implementation:           25-30% of effort
+- Testing:                     15-20% of effort
+
+IMPORTANT: This is a NEW module (build from scratch), which is LESS complex
+than migrating existing modules. No legacy code to refactor.
+
+================================================================================
+NEXT PHASE
+================================================================================
+
+After Phase 2 completion, proceed to:
+→ Phase 3: Budgeting Module (Parliament Bill No. 325 compliance)
+
+Phase 3 will depend on Phase 2 because:
+- Budget allocations link to PPAs
+- Budget tracking requires planning structure
+- Financial accountability follows planning lifecycle
+
+================================================================================
+END OF PHASE 2 TASK BREAKDOWN
+================================================================================

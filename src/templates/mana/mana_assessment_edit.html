@@ -9,11 +9,11 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+    <a href="{% url 'mana:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:mana_manage_assessments' %}" class="text-neutral-500 hover:text-neutral-700">Manage Assessments</a>
+    <a href="{% url 'mana:mana_manage_assessments' %}" class="text-neutral-500 hover:text-neutral-700">Manage Assessments</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">Edit {{ assessment.title }}</li>
@@ -28,12 +28,12 @@
                 <p class="text-sm text-gray-600 mt-2">Modify the assessment record while keeping the directory and workshop pipelines in sync.</p>
             </div>
             <div class="flex flex-col sm:flex-row gap-3">
-                <a href="{% url 'common:mana_assessment_detail' assessment.id %}"
+                <a href="{% url 'mana:mana_assessment_detail' assessment.id %}"
                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all duration-200">
                     <i class="fas fa-eye"></i>
                     <span>View Assessment</span>
                 </a>
-                <a href="{% url 'common:mana_manage_assessments' %}"
+                <a href="{% url 'mana:mana_manage_assessments' %}"
                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all duration-200">
                     <i class="fas fa-arrow-left"></i>
                     <span>Back to Directory</span>
@@ -169,7 +169,7 @@
         </section>
 
         <div class="flex items-center justify-end gap-3">
-            <a href="{% url 'common:mana_assessment_detail' assessment.id %}"
+            <a href="{% url 'mana:mana_assessment_detail' assessment.id %}"
                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all duration-200">
                 <i class="fas fa-ban"></i>
                 <span>Cancel</span>

@@ -62,7 +62,7 @@ class ManageMunicipalStatCardsTests(TestCase):
             auto_sync=True,
         )
 
-        response = self.client.get(reverse("common:communities_manage_municipal"))
+        response = self.client.get(reverse("communities:communities_manage_municipal"))
 
         self.assertEqual(response.status_code, 200)
 
@@ -79,7 +79,7 @@ class ManageMunicipalStatCardsTests(TestCase):
     def test_table_rows_include_action_urls(self):
         coverage = self._create_coverage("MUN-010", "Zeta", auto_sync=False)
 
-        response = self.client.get(reverse("common:communities_manage_municipal"))
+        response = self.client.get(reverse("communities:communities_manage_municipal"))
         self.assertEqual(response.status_code, 200)
 
         table = response.context["municipality_table"]
@@ -88,10 +88,10 @@ class ManageMunicipalStatCardsTests(TestCase):
 
         row = table["rows"][0]
         expected_view_url = reverse(
-            "common:communities_view_municipal", args=[coverage.pk]
+            "communities:communities_view_municipal", args=[coverage.pk]
         )
         expected_edit_url = reverse(
-            "common:communities_edit_municipal", args=[coverage.pk]
+            "communities:communities_edit_municipal", args=[coverage.pk]
         )
 
         self.assertEqual(row["view_url"], expected_view_url)
@@ -105,7 +105,7 @@ class ManageMunicipalStatCardsTests(TestCase):
         coverage.soft_delete(user=self.user)
 
         response = self.client.get(
-            reverse("common:communities_manage_municipal"), {"archived": "1"}
+            reverse("communities:communities_manage_municipal"), {"archived": "1"}
         )
         self.assertEqual(response.status_code, 200)
 
@@ -114,10 +114,10 @@ class ManageMunicipalStatCardsTests(TestCase):
         row = table["rows"][0]
 
         expected_view_url = (
-            f"{reverse('common:communities_view_municipal', args=[coverage.pk])}?archived=1"
+            f"{reverse('communities:communities_view_municipal', args=[coverage.pk])}?archived=1"
         )
         expected_restore_url = reverse(
-            "common:communities_restore_municipal", args=[coverage.pk]
+            "communities:communities_restore_municipal", args=[coverage.pk]
         )
 
         self.assertEqual(row["view_url"], expected_view_url)
@@ -134,7 +134,7 @@ class ManageMunicipalStatCardsTests(TestCase):
         self.client.force_login(readonly_user)
         coverage = self._create_coverage("MUN-030", "Xray")
 
-        response = self.client.get(reverse("common:communities_manage_municipal"))
+        response = self.client.get(reverse("communities:communities_manage_municipal"))
         self.assertEqual(response.status_code, 200)
 
         table = response.context["municipality_table"]
@@ -146,6 +146,6 @@ class ManageMunicipalStatCardsTests(TestCase):
         self.assertNotIn("restore_url", row)
 
         expected_view_url = reverse(
-            "common:communities_view_municipal", args=[coverage.pk]
+            "communities:communities_view_municipal", args=[coverage.pk]
         )
         self.assertEqual(row["view_url"], expected_view_url)

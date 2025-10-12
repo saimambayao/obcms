@@ -114,7 +114,7 @@
         </div>
         <div class="p-6">
             <form method="get"
-                  hx-get="{% url 'common:communities_manage_provincial' %}"
+                  hx-get="{% url 'communities:communities_manage_provincial' %}"
                   hx-target="#provincial-results-container"
                   hx-swap="innerHTML transition:true"
                   hx-trigger="change from:select, submit"
@@ -163,7 +163,7 @@
                         </span>
                         <span class="htmx-indicator-shown">Apply</span>
                     </button>
-                    <a href="{% url 'common:communities_manage_provincial' %}" class="inline-flex w-full items-center justify-center rounded-xl border border-emerald-200 bg-white px-6 py-3 font-semibold text-emerald-600 transition-all duration-200 hover:bg-emerald-50">
+                    <a href="{% url 'communities:communities_manage_provincial' %}" class="inline-flex w-full items-center justify-center rounded-xl border border-emerald-200 bg-white px-6 py-3 font-semibold text-emerald-600 transition-all duration-200 hover:bg-emerald-50">
                         Clear
                     </a>
                 </div>

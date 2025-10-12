@@ -1,0 +1,33 @@
+{% load static %}
+
+<!-- Recent Transactions Partial (HTMX) -->
+{% if transactions %}
+    {% for txn in transactions %}
+    <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+        <div class="flex-shrink-0 w-10 h-10 rounded-lg {% if txn.type == 'disbursement' %}bg-emerald-100{% elif txn.type == 'obligation' %}bg-purple-100{% else %}bg-blue-100{% endif %} flex items-center justify-center">
+            {% if txn.type == 'disbursement' %}
+                <i class="fas fa-money-bill-wave text-emerald-600"></i>
+            {% elif txn.type == 'obligation' %}
+                <i class="fas fa-file-contract text-purple-600"></i>
+            {% else %}
+                <i class="fas fa-coins text-blue-600"></i>
+            {% endif %}
+        </div>
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-900 truncate">{{ txn.description }}</p>
+            <p class="text-xs text-gray-500 mt-0.5">{{ txn.program_name|truncatewords:5 }}</p>
+            <div class="flex items-center justify-between mt-1">
+                <span class="text-sm font-semibold {% if txn.type == 'disbursement' %}text-emerald-600{% elif txn.type == 'obligation' %}text-purple-600{% else %}text-blue-600{% endif %}">
+                    ₱{{ txn.amount|floatformat:2 }}
+                </span>
+                <span class="text-xs text-gray-400">{{ txn.date|timesince }} ago</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="text-center py-6 text-gray-500">
+        <i class="fas fa-receipt text-3xl mb-2 opacity-30"></i>
+        <p class="text-sm">No recent transactions</p>
+    </div>
+{% endif %}

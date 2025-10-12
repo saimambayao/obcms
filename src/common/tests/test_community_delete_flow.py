@@ -52,12 +52,12 @@ class CommunityDeleteFlowTest(TestCase):
         community = self._create_barangay_obc()
 
         response = self.client.post(
-            reverse("common:communities_delete", args=[community.pk])
+            reverse("communities:communities_delete", args=[community.pk])
         )
 
         self.assertRedirects(
             response,
-            f"{reverse('common:communities_manage')}?archived=1",
+            f"{reverse('communities:communities_manage')}?archived=1",
             fetch_redirect_response=False,
         )
         community.refresh_from_db()
@@ -68,12 +68,12 @@ class CommunityDeleteFlowTest(TestCase):
         community.soft_delete()
 
         response = self.client.post(
-            reverse("common:communities_restore", args=[community.pk])
+            reverse("communities:communities_restore", args=[community.pk])
         )
 
         self.assertRedirects(
             response,
-            f"{reverse('common:communities_manage')}?archived=1",
+            f"{reverse('communities:communities_manage')}?archived=1",
             fetch_redirect_response=False,
         )
         community.refresh_from_db()
@@ -83,12 +83,12 @@ class CommunityDeleteFlowTest(TestCase):
         coverage = self._create_municipal_coverage()
 
         response = self.client.post(
-            reverse("common:communities_delete_municipal", args=[coverage.pk])
+            reverse("communities:communities_delete_municipal", args=[coverage.pk])
         )
 
         self.assertRedirects(
             response,
-            f"{reverse('common:communities_manage_municipal')}?archived=1",
+            f"{reverse('communities:communities_manage_municipal')}?archived=1",
             fetch_redirect_response=False,
         )
         coverage.refresh_from_db()
@@ -99,12 +99,12 @@ class CommunityDeleteFlowTest(TestCase):
         coverage.soft_delete()
 
         response = self.client.post(
-            reverse("common:communities_restore_municipal", args=[coverage.pk])
+            reverse("communities:communities_restore_municipal", args=[coverage.pk])
         )
 
         self.assertRedirects(
             response,
-            f"{reverse('common:communities_manage_municipal')}?archived=1",
+            f"{reverse('communities:communities_manage_municipal')}?archived=1",
             fetch_redirect_response=False,
         )
         coverage.refresh_from_db()

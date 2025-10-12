@@ -1,0 +1,378 @@
+{% load static %}
+
+<!-- RBAC Dashboard Stats -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total Users Stat Card -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total Users</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ total_users|default:0 }}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-users text-2xl text-amber-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Roles Stat Card -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Active Roles</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ active_roles|default:0 }}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-shield-alt text-2xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Assignments Stat Card -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Pending Assignments</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ pending_assignments|default:0 }}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-clock text-2xl text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Toggles Stat Card -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Feature Toggles</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ feature_count|default:0 }}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-toggle-on text-2xl text-emerald-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Controls -->
+<div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Search -->
+        <div>
+            <label for="user-search" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-search mr-1"></i>Search Users
+            </label>
+            <input type="text"
+                   id="user-search"
+                   name="search"
+                   class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200"
+                   placeholder="Search by name, email, or username..."
+                   hx-get="{% url 'common:rbac_users_list' %}"
+                   hx-trigger="keyup changed delay:500ms"
+                   hx-target="#users-grid"
+                   hx-include="#user-type-filter, #organization-filter">
+        </div>
+
+        <!-- User Type Filter -->
+        <div>
+            <label for="user-type-filter" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-filter mr-1"></i>User Type
+            </label>
+            <div class="relative">
+                <select id="user-type-filter"
+                        name="user_type"
+                        class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200"
+                        hx-get="{% url 'common:rbac_users_list' %}"
+                        hx-trigger="change"
+                        hx-target="#users-grid"
+                        hx-include="#user-search, #organization-filter">
+                    <option value="">All Types</option>
+                    {% for type_choice in user_types %}
+                    <option value="{{ type_choice.0 }}">{{ type_choice.1 }}</option>
+                    {% endfor %}
+                </select>
+                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                </span>
+            </div>
+        </div>
+
+        <!-- Organization Filter -->
+        <div>
+            <label for="organization-filter" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-building mr-1"></i>Organization
+            </label>
+            <div class="relative">
+                <select id="organization-filter"
+                        name="organization"
+                        class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200"
+                        hx-get="{% url 'common:rbac_users_list' %}"
+                        hx-trigger="change"
+                        hx-target="#users-grid"
+                        hx-include="#user-search, #user-type-filter">
+                    <option value="">All Organizations</option>
+                    {% for org in organizations %}
+                    <option value="{{ org.id }}">{{ org.name }}</option>
+                    {% endfor %}
+                </select>
+                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    <div class="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <label class="flex items-center">
+                <input type="checkbox"
+                       id="select-all-users"
+                       class="h-5 w-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                       onchange="toggleAllUserCheckboxes(this)">
+                <span class="ml-2 text-sm text-gray-700">Select All</span>
+            </label>
+            <span id="selected-count" class="text-sm text-gray-500">0 selected</span>
+        </div>
+        <div id="bulk-actions" class="hidden space-x-2">
+            <button type="button"
+                    onclick="openBulkAssignModal()"
+                    class="inline-flex items-center px-4 py-2 border-2 border-blue-600 text-blue-700 rounded-xl font-semibold hover:bg-blue-50 transition-colors duration-200 min-h-[48px]">
+                <i class="fas fa-shield-alt mr-2"></i>
+                Assign Role
+            </button>
+            <button type="button"
+                    onclick="bulkRemoveRoles()"
+                    class="inline-flex items-center px-4 py-2 border-2 border-red-600 text-red-700 rounded-xl font-semibold hover:bg-red-50 transition-colors duration-200 min-h-[48px]">
+                <i class="fas fa-trash mr-2"></i>
+                Remove Roles
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Users Grid -->
+<div id="users-grid" class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+    <div class="bg-gradient-to-r from-blue-800 to-emerald-600 px-6 py-4">
+        <h2 class="text-xl font-semibold text-white flex items-center">
+            <i class="fas fa-users-cog mr-3"></i>
+            User Permissions Management
+        </h2>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 w-12">
+                        <span class="sr-only">Checkbox</span>
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        User
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        User Type
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Organization
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Roles
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for user in users %}
+                <tr class="hover:bg-gray-50 transition-colors duration-150" data-user-id="{{ user.id }}">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="checkbox"
+                               class="user-checkbox h-5 w-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                               value="{{ user.id }}"
+                               onchange="updateSelectedCount()">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
+                                {{ user.get_full_name.0|default:user.username.0|upper }}
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-semibold text-gray-900">
+                                    {{ user.get_full_name|default:user.username }}
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    {{ user.email }}
+                                </p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {{ user.get_user_type_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {{ user.organization|default:"—" }}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex flex-wrap gap-1">
+                            {% for role in user.roles.all %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-800">
+                                {{ role.name }}
+                            </span>
+                            {% empty %}
+                            <span class="text-xs text-gray-400">No roles assigned</span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex items-center justify-end gap-2">
+                            <button type="button"
+                                    hx-get="{% url 'common:rbac_user_permissions' user.id %}"
+                                    hx-target="#rbac-modal-content"
+                                    hx-swap="innerHTML"
+                                    onclick="openRbacModal()"
+                                    class="inline-flex items-center px-3 py-1.5 border border-blue-200 bg-blue-50 text-blue-600 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors duration-200 min-h-[44px]"
+                                    aria-label="Manage permissions for {{ user.get_full_name|default:user.username }}">
+                                <i class="fas fa-user-lock mr-1"></i>
+                                Permissions
+                            </button>
+                            <button type="button"
+                                    hx-get="{% url 'common:rbac_role_assignment_form' user.id %}"
+                                    hx-target="#rbac-modal-content"
+                                    hx-swap="innerHTML"
+                                    onclick="openRbacModal()"
+                                    class="inline-flex items-center px-3 py-1.5 border border-emerald-200 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors duration-200 min-h-[44px]"
+                                    aria-label="Assign role to {{ user.get_full_name|default:user.username }}">
+                                <i class="fas fa-shield-alt mr-1"></i>
+                                Assign Role
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center">
+                        <i class="fas fa-users text-4xl text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">No users found matching your criteria.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- RBAC Modal Container -->
+<div id="rbac-modal"
+     class="fixed inset-0 hidden z-50 flex items-center justify-center px-4 sm:px-6"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="rbac-modal-title">
+    <div class="absolute inset-0 bg-gray-900 bg-opacity-50 transition-opacity"
+         onclick="closeRbacModal()"
+         aria-hidden="true"></div>
+    <div class="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto"
+         id="rbac-modal-content"></div>
+</div>
+
+<script>
+// Modal controls
+function openRbacModal() {
+    document.getElementById('rbac-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeRbacModal() {
+    document.getElementById('rbac-modal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// Checkbox selection
+function toggleAllUserCheckboxes(checkbox) {
+    const userCheckboxes = document.querySelectorAll('.user-checkbox');
+    userCheckboxes.forEach(cb => cb.checked = checkbox.checked);
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
+    const count = checkedBoxes.length;
+    const countElement = document.getElementById('selected-count');
+    const bulkActions = document.getElementById('bulk-actions');
+
+    countElement.textContent = count + ' selected';
+
+    if (count > 0) {
+        bulkActions.classList.remove('hidden');
+    } else {
+        bulkActions.classList.add('hidden');
+    }
+}
+
+// Bulk actions
+function openBulkAssignModal() {
+    const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
+    const userIds = Array.from(checkedBoxes).map(cb => cb.value);
+
+    htmx.ajax('GET', '{% url "common:rbac_bulk_assign_form" %}?user_ids=' + userIds.join(','), {
+        target: '#rbac-modal-content',
+        swap: 'innerHTML'
+    }).then(() => {
+        openRbacModal();
+    });
+}
+
+function bulkRemoveRoles() {
+    const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
+    if (checkedBoxes.length === 0) return;
+
+    if (confirm('Remove all roles from ' + checkedBoxes.length + ' selected users?')) {
+        const userIds = Array.from(checkedBoxes).map(cb => cb.value);
+
+        htmx.ajax('DELETE', '{% url "common:rbac_bulk_remove_roles" %}', {
+            values: { user_ids: userIds.join(',') },
+            target: '#users-grid',
+            swap: 'outerHTML'
+        });
+    }
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeRbacModal();
+    }
+});
+
+// HTMX event listeners for success feedback
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target.id === 'users-grid') {
+        // Refresh selection state
+        updateSelectedCount();
+    }
+});
+</script>

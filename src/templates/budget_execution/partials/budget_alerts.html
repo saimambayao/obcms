@@ -1,0 +1,43 @@
+{% load static %}
+
+<!-- Budget Alerts Partial (HTMX) -->
+{% if alerts %}
+    {% for alert in alerts %}
+    <div class="flex items-start space-x-3 p-3 {% if alert.severity == 'critical' %}bg-red-50 border border-red-200{% elif alert.severity == 'warning' %}bg-orange-50 border border-orange-200{% else %}bg-blue-50 border border-blue-200{% endif %} rounded-lg hover:bg-opacity-80 transition-colors">
+        <div class="flex-shrink-0">
+            <div class="w-10 h-10 {% if alert.severity == 'critical' %}bg-red-100{% elif alert.severity == 'warning' %}bg-orange-100{% else %}bg-blue-100{% endif %} rounded-lg flex items-center justify-center">
+                {% if alert.severity == 'critical' %}
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                {% elif alert.severity == 'warning' %}
+                    <i class="fas fa-exclamation-circle text-orange-600"></i>
+                {% else %}
+                    <i class="fas fa-info-circle text-blue-600"></i>
+                {% endif %}
+            </div>
+        </div>
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium {% if alert.severity == 'critical' %}text-red-900{% elif alert.severity == 'warning' %}text-orange-900{% else %}text-blue-900{% endif %}">
+                High Utilization
+            </p>
+            <p class="text-xs {% if alert.severity == 'critical' %}text-red-700{% elif alert.severity == 'warning' %}text-orange-700{% else %}text-blue-700{% endif %} mt-1">
+                {{ alert.message }}
+            </p>
+            <div class="flex items-center justify-between mt-2">
+                <span class="text-xs font-medium {% if alert.severity == 'critical' %}text-red-600{% elif alert.severity == 'warning' %}text-orange-600{% else %}text-blue-600{% endif %}">
+                    Q{{ alert.allotment.quarter }}
+                </span>
+                <a href="{% url 'budget_execution:allotment_detail' alert.allotment.pk %}"
+                   class="text-xs {% if alert.severity == 'critical' %}text-red-600 hover:text-red-800{% elif alert.severity == 'warning' %}text-orange-600 hover:text-orange-800{% else %}text-blue-600 hover:text-blue-800{% endif %} font-medium">
+                    View →
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="text-center py-6 text-gray-500">
+        <i class="fas fa-shield-alt text-3xl mb-2 opacity-30 text-emerald-500"></i>
+        <p class="text-sm">All systems normal</p>
+        <p class="text-xs mt-1">No budget alerts</p>
+    </div>
+{% endif %}

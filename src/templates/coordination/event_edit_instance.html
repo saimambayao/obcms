@@ -8,11 +8,11 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:coordination_home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
+    <a href="{% url 'coordination:home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:coordination_events' %}" class="text-neutral-500 hover:text-neutral-700">Events</a>
+    <a href="{% url 'coordination:events' %}" class="text-neutral-500 hover:text-neutral-700">Events</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">{{ page_heading|default:page_title }}</li>
@@ -238,7 +238,7 @@
                                 class="flex-1 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50">
                             Cancel
                         </button>
-                        <form method="post" action="{% url 'common:coordination_event_delete' object.id %}" class="flex-1">
+                        <form method="post" action="{% url 'coordination:event_delete' object.id %}" class="flex-1">
                             {% csrf_token %}
                             <input type="hidden" name="confirm" value="yes">
                             <button type="submit"

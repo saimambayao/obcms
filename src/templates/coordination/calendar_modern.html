@@ -9,11 +9,11 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:coordination_home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
+    <a href="{% url 'coordination:home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:coordination_calendar' %}" class="text-neutral-500 hover:text-neutral-700">Calendar</a>
+    <a href="{% url 'coordination:calendar' %}" class="text-neutral-500 hover:text-neutral-700">Calendar</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">Modern View</li>
@@ -30,7 +30,7 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
             <div class="flex items-center gap-3 mb-2">
-                <a href="{% url 'common:coordination_calendar' %}"
+                <a href="{% url 'coordination:calendar' %}"
                    class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Back to Classic View
@@ -45,12 +45,12 @@
             </p>
         </div>
         <div class="flex flex-col sm:flex-row gap-3">
-            <a href="{% url 'common:coordination_activity_add' %}"
+            <a href="{% url 'coordination:activity_add' %}"
                class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg shadow btn-primary">
                 <i class="fas fa-plus mr-2"></i>
                 New Event
             </a>
-            <a href="{% url 'common:coordination_activity_add' %}"
+            <a href="{% url 'coordination:activity_add' %}"
                class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg shadow bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700">
                 <i class="fas fa-handshake mr-2"></i>
                 Log Activity

@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Disbursement Details - OBCMS{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a></li>
+<li><a href="{% url 'budget_execution:dashboard' %}" class="text-blue-600 hover:text-blue-800">Budget Execution</a></li>
+<li><a href="{% url 'budget_execution:disbursement_list' %}" class="text-blue-600 hover:text-blue-800">Disbursements</a></li>
+<li class="text-neutral-800 font-semibold">Details</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Page Header -->
+    <div class="mb-8 flex flex-col lg:flex-row lg:items-start lg:justify-between">
+        <div class="flex-1">
+            <div class="flex items-center mb-2">
+                <h1 class="text-3xl font-bold text-gray-900">Disbursement Details</h1>
+                <span class="ml-4 px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                    <i class="fas fa-check-circle mr-1"></i>Completed
+                </span>
+            </div>
+            <p class="text-lg text-gray-600">Payment to {{ disbursement.payee }}</p>
+            <p class="mt-1 text-sm text-gray-500">
+                <i class="fas fa-calendar mr-1"></i>
+                Disbursed on {{ disbursement.disbursed_date|date:"F d, Y" }}
+            </p>
+        </div>
+        <div class="mt-4 lg:mt-0 flex gap-3">
+            <a href="{% url 'budget_execution:obligation_detail' disbursement.obligation.pk %}"
+               class="flex items-center justify-center px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200 min-h-[48px]">
+                <i class="fas fa-file-contract mr-2"></i>
+                <span>View Obligation</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Disbursement Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+
+        <!-- Amount Card -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Amount Paid</p>
+                        <p class="text-3xl font-extrabold text-gray-800 mt-1">₱{{ disbursement.amount|floatformat:2 }}</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-money-bill-wave text-xl text-emerald-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Method Card -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Payment Method</p>
+                        <p class="text-2xl font-extrabold text-gray-800 mt-1 capitalize">{{ disbursement.payment_method|replace:"_":" " }}</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        {% if disbursement.payment_method == 'check' %}
+                        <i class="fas fa-money-check-alt text-xl text-blue-600"></i>
+                        {% elif disbursement.payment_method == 'bank_transfer' %}
+                        <i class="fas fa-university text-xl text-purple-600"></i>
+                        {% elif disbursement.payment_method == 'cash' %}
+                        <i class="fas fa-money-bill text-xl text-green-600"></i>
+                        {% elif disbursement.payment_method == 'gcash' %}
+                        <i class="fas fa-mobile-alt text-xl text-cyan-600"></i>
+                        {% else %}
+                        <i class="fas fa-question-circle text-xl text-gray-600"></i>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Check/Voucher Number Card -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">
+                            {% if disbursement.check_number %}Check Number{% else %}Reference{% endif %}
+                        </p>
+                        <p class="text-xl font-extrabold text-gray-800 mt-1">
+                            {{ disbursement.check_number|default:disbursement.voucher_number|default:"N/A" }}
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-hashtag text-xl text-amber-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Line Items Count Card -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Line Items</p>
+                        <p class="text-3xl font-extrabold text-gray-800 mt-1">{{ line_items|length }}</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-list text-xl text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <!-- Main Content (Left Column) -->
+        <div class="lg:col-span-2 space-y-8">
+
+            <!-- Line Items -->
+            {% if line_items %}
+            <div class="bg-white shadow-md rounded-xl overflow-hidden border border-gray-200">
+                <div class="px-6 py-4 bg-gradient-to-r from-blue-600 to-emerald-600">
+                    <h2 class="text-xl font-semibold text-white flex items-center">
+                        <i class="fas fa-list mr-2"></i>
+                        Disbursement Line Items
+                    </h2>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Description</th>
+                                <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Amount</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Cost Center</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for item in line_items %}
+                            <tr class="hover:bg-gray-50 transition-colors duration-200">
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ item.description }}</div>
+                                    {% if item.notes %}
+                                    <div class="text-xs text-gray-500 mt-1">{{ item.notes }}</div>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-gray-900">
+                                    ₱{{ item.amount|floatformat:2 }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                    {{ item.cost_center|default:"—" }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="bg-gray-50">
+                            <tr>
+                                <td class="px-6 py-4 text-right font-semibold text-gray-900">Total:</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-base font-bold text-gray-900">
+                                    ₱{{ line_items|sum:"amount"|floatformat:2 }}
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Obligation Information -->
+            <div class="bg-white shadow-md rounded-xl border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-file-contract text-purple-600 mr-2"></i>
+                    Related Obligation
+                </h2>
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Description</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-semibold">{{ disbursement.obligation.description }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Document Reference</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-semibold">{{ disbursement.obligation.document_ref|default:"—" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Obligation Amount</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-semibold">₱{{ disbursement.obligation.amount|floatformat:2 }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Obligation Status</dt>
+                        <dd class="mt-1">
+                            {% if disbursement.obligation.status == 'fully_disbursed' %}
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Fully Disbursed
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                Partially Disbursed
+                            </span>
+                            {% endif %}
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+
+        </div>
+
+        <!-- Sidebar (Right Column) -->
+        <div class="space-y-6">
+
+            <!-- Payment Information -->
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                    Payment Information
+                </h3>
+                <dl class="space-y-3">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Payee</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-semibold">{{ disbursement.payee }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Disbursement Date</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-semibold">{{ disbursement.disbursed_date|date:"F d, Y" }}</dd>
+                    </div>
+                    {% if disbursement.voucher_number %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Voucher Number</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-semibold">{{ disbursement.voucher_number }}</dd>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Program</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-semibold">{{ disbursement.obligation.allotment.program_budget.program.name }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Quarter</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-semibold">{{ disbursement.obligation.allotment.get_quarter_display }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Created By</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-semibold">{{ disbursement.created_by.get_full_name }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Created On</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-semibold">{{ disbursement.created_at|date:"F d, Y g:i A" }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <!-- Notes -->
+            {% if disbursement.notes %}
+            <div class="bg-amber-50 rounded-xl border border-amber-200 p-6">
+                <h3 class="text-lg font-semibold text-amber-900 mb-3 flex items-center">
+                    <i class="fas fa-sticky-note text-amber-600 mr-2"></i>
+                    Notes
+                </h3>
+                <p class="text-sm text-amber-800">{{ disbursement.notes }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="bg-gray-50 rounded-xl border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                <div class="space-y-3">
+                    <a href="{% url 'budget_execution:obligation_detail' disbursement.obligation.pk %}"
+                       class="block w-full px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors duration-200 text-center font-semibold">
+                        <i class="fas fa-file-contract mr-2"></i>View Obligation
+                    </a>
+                    <a href="{% url 'budget_execution:disbursement_list' %}"
+                       class="block w-full px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors duration-200 text-center font-semibold">
+                        <i class="fas fa-list mr-2"></i>All Disbursements
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

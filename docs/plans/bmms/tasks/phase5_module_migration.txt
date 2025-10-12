@@ -1,0 +1,917 @@
+================================================================================
+BMMS PHASE 5: MODULE MIGRATION (MANA/M&E/POLICIES) - TASK BREAKDOWN
+================================================================================
+
+Priority: MEDIUM (OOBC-specific modules, can be deferred)
+Complexity: Simple (repeatable pattern across three modules)
+Dependencies: Phase 1 (Organizations App MUST be complete)
+
+Overview:
+---------
+This phase migrates OOBC-specific modules (MANA, M&E, Policies) to multi-org
+architecture. These modules are currently single-tenant (OOBC only) and need
+organization scoping to support multiple MOAs working independently.
+
+Strategic Note: This phase is OOBC-specific and NOT required for pilot MOA
+onboarding (Phase 7). Pilot MOAs will focus on Planning/Budgeting/Coordination.
+Phase 5 can be completed AFTER pilot launches to minimize early project risk.
+
+Target: Enable each MOA to maintain their own assessments, projects, and policy
+recommendations with proper data isolation.
+
+================================================================================
+SECTION 1: PRE-IMPLEMENTATION CHECKLIST
+================================================================================
+
+Prerequisites (MUST be complete before starting):
+-------------------------------------------------
+[ ] Phase 1 organizations app is fully implemented
+[ ] organizations.Organization model exists with OOBC, OCM (Office of the Chief Minister), and MOAs
+[ ] OrganizationScopedModel base class is available
+[ ] OrganizationMiddleware is active (sets request.organization)
+[ ] OrganizationScopedManager is implemented for automatic filtering
+
+Verify prerequisites:
+[ ] Run: python manage.py shell
+[ ] Execute: from organizations.models import Organization; print(Organization.objects.count())
+[ ] Expected: Should show OOBC + OCM + 44 MOAs = 46 organizations minimum
+[ ] Verify: Organization.objects.get(code='OOBC') exists
+
+Environment Setup:
+[ ] Working directory: src/
+[ ] Virtual environment activated (venv/bin/activate)
+[ ] Database backup created: cp db.sqlite3 db.sqlite3.backup.phase5
+[ ] Git branch: feature/bmms-module-migration
+[ ] Create branch: git checkout -b feature/bmms-module-migration
+
+Current Data Volume (OBCMS - OOBC only):
+-----------------------------------------
+MANA Module:
+  - ~200 assessments
+  - ~1,500 assessment findings
+  - ~800 recommendations
+  - ~3,000 participant records
+
+M&E Module:
+  - ~150 programs
+  - ~400 projects
+  - ~1,200 activities
+  - ~5,000 monitoring records
+
+Policies Module:
+  - ~80 policy recommendations
+  - ~200 evidence items
+  - ~100 stakeholder consultations
+
+================================================================================
+SECTION 2: MODULE A - MANA (MAPPING AND NEEDS ASSESSMENT)
+================================================================================
+
+Objective: Add organization scoping to MANA module to support MOA-specific
+          assessments while maintaining OOBC's historical data.
+
+Complexity: Moderate
+Priority: MEDIUM
+
+================================================================================
+STEP 2.1: ADD ORGANIZATION FIELD TO ASSESSMENT MODEL
+================================================================================
+
+Task 2.1.1: Create Database Migration
+--------------------------------------
+[ ] Navigate to: cd src/mana/migrations/
+[ ] Create migration: python ../manage.py makemigrations mana --empty --name add_organization_to_assessment
+[ ] Edit migration file with following operations:
+    [ ] AddField: organization (FK to organizations.Organization, nullable)
+    [ ] RunPython: populate_assessments_with_oobc (data migration)
+    [ ] AlterField: organization (make NOT NULL after population)
+    [ ] AddIndex: (organization, status) for query performance
+    [ ] AddIndex: (community, assessment_date) for timeline queries
+
+Data Migration Function Template:
+```python
+def populate_assessments_with_oobc(apps, schema_editor):
+    """Assign all existing assessments to OOBC organization"""
+    Assessment = apps.get_model('mana', 'Assessment')
+    Organization = apps.get_model('organizations', 'Organization')
+
+    try:
+        oobc_org = Organization.objects.get(code='OOBC')
+    except Organization.DoesNotExist:
+        raise Exception("OOBC organization not found. Run Phase 1 migrations first.")
+
+    # Assign all assessments without organization to OOBC
+    updated_count = Assessment.objects.filter(
+        organization__isnull=True
+    ).update(
+        organization=oobc_org
+    )
+
+    print(f"✅ Assigned {updated_count} assessments to OOBC")
+```
+
+Testing:
+[ ] Dry run: python manage.py migrate mana --plan
+[ ] Verify dependency: Migration depends on organizations.0002_seed_initial_orgs
+[ ] Apply migration: python manage.py migrate mana
+[ ] Verify: All existing assessments have organization=OOBC
+
+Task 2.1.2: Update Assessment Model
+------------------------------------
+[ ] Open: src/mana/models.py
+[ ] Import: from organizations.models import OrganizationScopedModel
+[ ] Change: class Assessment(models.Model) → class Assessment(OrganizationScopedModel)
+[ ] Note: OrganizationScopedModel provides organization FK automatically
+
+[ ] Add collaborative assessment support (optional):
+    [ ] is_collaborative = BooleanField(default=False)
+    [ ] participating_organizations = M2M(Organization, blank=True)
+    [ ] Help text: "Organizations participating in this joint assessment"
+
+[ ] Add Meta class indexes:
+    [ ] Index on: ['organization', 'status']
+    [ ] Index on: ['community', 'assessment_date']
+
+[ ] Add visibility methods:
+
+```python
+def can_view(self, user):
+    """Check if user can view this assessment"""
+    if user.is_superuser:
+        return True
+
+    # Lead organization members can view
+    if hasattr(user, 'organization') and user.organization == self.organization:
+        return True
+
+    # Participating organization members can view (if collaborative)
+    if self.is_collaborative and hasattr(user, 'organization'):
+        return self.participating_organizations.filter(
+            id=user.organization.id
+        ).exists()
+
+    # OCM staff can view all assessments
+    if hasattr(user, 'is_cmo_staff') and user.is_cmo_staff:
+        return True
+
+    return False
+
+def can_edit(self, user):
+    """Check if user can edit this assessment"""
+    if user.is_superuser:
+        return True
+
+    # Only lead organization members can edit
+    return hasattr(user, 'organization') and user.organization == self.organization
+```
+
+Task 2.1.3: Update Related Models
+----------------------------------
+[ ] AssessmentFinding model: No changes (inherits org from Assessment FK)
+[ ] AssessmentRecommendation model: No changes (inherits org from Finding FK)
+[ ] AssessmentParticipant model: No changes (inherits org from Assessment FK)
+
+Task 2.1.4: Update Queries to Respect Organization Scoping
+-----------------------------------------------------------
+[ ] Open: src/mana/views.py
+[ ] Update assessment_list view:
+
+```python
+# BEFORE
+def assessment_list(request):
+    assessments = Assessment.objects.all()  # Shows ALL assessments
+
+# AFTER
+from organizations.decorators import require_module_enabled
+
+@require_module_enabled('mana')
+def assessment_list(request):
+    # Automatic org filtering via OrganizationScopedManager
+    my_assessments = Assessment.objects.all()  # Only user's org
+
+    # Also show collaborative assessments where user's org participates
+    collaborative = Assessment.objects.filter(
+        is_collaborative=True,
+        participating_organizations=request.organization
+    ).exclude(
+        organization=request.organization  # Don't duplicate
+    )
+
+    all_assessments = my_assessments | collaborative
+
+    return render(request, 'mana/list.html', {
+        'assessments': all_assessments
+    })
+```
+
+[ ] Update assessment_create view:
+    [ ] Set: assessment.organization = request.organization (automatic)
+    [ ] Add validation: User belongs to organization
+
+[ ] Update assessment_edit view:
+    [ ] Check: assessment.can_edit(request.user)
+    [ ] Raise PermissionDenied if False
+
+[ ] Update assessment_detail view:
+    [ ] Check: assessment.can_view(request.user)
+    [ ] Raise PermissionDenied if False
+
+Task 2.1.5: Update Templates
+-----------------------------
+[ ] Open: src/templates/mana/assessment_list.html
+[ ] Add filter: "My Assessments" vs "Collaborative Assessments"
+[ ] Add badge: Show organization code for each assessment
+
+[ ] Open: src/templates/mana/assessment_detail.html
+[ ] Add section: "Organization" (show lead org)
+[ ] Add section: "Participating Organizations" (if collaborative)
+
+[ ] Open: src/templates/mana/assessment_form.html
+[ ] Add field: participating_organizations (multi-select, optional)
+[ ] Label: "Participating BARMM MOAs" (for collaborative assessments)
+
+Task 2.1.6: Update API Endpoints (if applicable)
+-------------------------------------------------
+[ ] Open: src/mana/serializers.py (if exists)
+[ ] Add field: organization to AssessmentSerializer
+[ ] Add field: participating_organizations (read-only)
+
+[ ] Open: src/mana/views.py (API views)
+[ ] Update: Filter assessments by request.organization
+[ ] Add parameter: ?include_collaborative=true (to show collaborative)
+
+Verification Checklist:
+-----------------------
+[ ] Migration applies successfully
+[ ] All existing assessments assigned to OOBC
+[ ] OOBC users can access all legacy assessments
+[ ] New MOA users see empty assessment list (correct isolation)
+[ ] Assessment views respect organization scoping
+[ ] Forms set organization automatically
+[ ] Templates show organization information
+
+================================================================================
+SECTION 3: MODULE B - M&E (MONITORING & EVALUATION / PPAs)
+================================================================================
+
+Objective: Add organization scoping to M&E module (Programs, Projects, Activities)
+          to support MOA-specific PPAs with proper data isolation.
+
+Complexity: Moderate
+Priority: MEDIUM
+
+================================================================================
+STEP 3.1: ADD ORGANIZATION FIELD TO PROGRAM MODEL
+================================================================================
+
+Task 3.1.1: Create Database Migration
+--------------------------------------
+[ ] Navigate to: cd src/monitoring/migrations/ (or appropriate app name)
+[ ] Create migration: python ../manage.py makemigrations monitoring --empty --name add_organization_to_program
+[ ] Edit migration file with following operations:
+    [ ] AddField: organization (FK to organizations.Organization, nullable)
+    [ ] RunPython: populate_programs_with_oobc (data migration)
+    [ ] AlterField: organization (make NOT NULL after population)
+    [ ] AddIndex: (organization, status) for query performance
+
+Data Migration Function:
+```python
+def populate_programs_with_oobc(apps, schema_editor):
+    """Assign all existing programs to OOBC organization"""
+    Program = apps.get_model('monitoring', 'Program')
+    Organization = apps.get_model('organizations', 'Organization')
+
+    try:
+        oobc_org = Organization.objects.get(code='OOBC')
+    except Organization.DoesNotExist:
+        raise Exception("OOBC organization not found. Run Phase 1 migrations first.")
+
+    updated_count = Program.objects.filter(
+        organization__isnull=True
+    ).update(
+        organization=oobc_org
+    )
+
+    print(f"✅ Assigned {updated_count} programs to OOBC")
+```
+
+Testing:
+[ ] Dry run: python manage.py migrate monitoring --plan
+[ ] Verify dependency: Migration depends on organizations.0002_seed_initial_orgs
+[ ] Apply migration: python manage.py migrate monitoring
+[ ] Verify: All existing programs have organization=OOBC
+
+Task 3.1.2: Update Program Model
+---------------------------------
+[ ] Open: src/monitoring/models.py (or appropriate app)
+[ ] Import: from organizations.models import OrganizationScopedModel
+[ ] Change: class Program(models.Model) → class Program(OrganizationScopedModel)
+
+[ ] Add Meta class indexes:
+    [ ] Index on: ['organization', 'status']
+    [ ] Index on: ['organization', 'program_type']
+
+[ ] Add visibility methods (similar to Assessment):
+
+```python
+def can_view(self, user):
+    """Check if user can view this program"""
+    if user.is_superuser:
+        return True
+    if hasattr(user, 'organization') and user.organization == self.organization:
+        return True
+    if hasattr(user, 'is_cmo_staff') and user.is_cmo_staff:
+        return True
+    return False
+
+def can_edit(self, user):
+    """Check if user can edit this program"""
+    if user.is_superuser:
+        return True
+    return hasattr(user, 'organization') and user.organization == self.organization
+```
+
+================================================================================
+STEP 3.2: ADD ORGANIZATION FIELD TO PROJECT MODEL
+================================================================================
+
+Task 3.2.1: Create Database Migration
+--------------------------------------
+[ ] Navigate to: cd src/monitoring/migrations/
+[ ] Create migration: python ../manage.py makemigrations monitoring --empty --name add_organization_to_project
+[ ] Edit migration file with following operations:
+    [ ] AddField: organization (FK to organizations.Organization, nullable)
+    [ ] RunPython: populate_projects_with_oobc (data migration)
+    [ ] AlterField: organization (make NOT NULL after population)
+    [ ] AddIndex: (organization, status) for query performance
+
+Data Migration Function:
+```python
+def populate_projects_with_oobc(apps, schema_editor):
+    """Assign all existing projects to OOBC organization"""
+    Project = apps.get_model('monitoring', 'Project')
+    Organization = apps.get_model('organizations', 'Organization')
+
+    try:
+        oobc_org = Organization.objects.get(code='OOBC')
+    except Organization.DoesNotExist:
+        raise Exception("OOBC organization not found. Run Phase 1 migrations first.")
+
+    updated_count = Project.objects.filter(
+        organization__isnull=True
+    ).update(
+        organization=oobc_org
+    )
+
+    print(f"✅ Assigned {updated_count} projects to OOBC")
+```
+
+Testing:
+[ ] Apply migration: python manage.py migrate monitoring
+[ ] Verify: All existing projects have organization=OOBC
+
+Task 3.2.2: Update Project Model
+---------------------------------
+[ ] Open: src/monitoring/models.py
+[ ] Change: class Project(models.Model) → class Project(OrganizationScopedModel)
+[ ] Add Meta class indexes: ['organization', 'status']
+[ ] Add visibility methods: can_view() and can_edit()
+
+================================================================================
+STEP 3.3: ADD ORGANIZATION FIELD TO ACTIVITY MODEL
+================================================================================
+
+Task 3.3.1: Create Database Migration
+--------------------------------------
+[ ] Navigate to: cd src/monitoring/migrations/
+[ ] Create migration: python ../manage.py makemigrations monitoring --empty --name add_organization_to_activity
+[ ] Follow same pattern as Program and Project migrations
+[ ] Data migration: Assign all activities to OOBC
+
+Task 3.3.2: Update Activity Model
+----------------------------------
+[ ] Open: src/monitoring/models.py
+[ ] Change: class Activity(models.Model) → class Activity(OrganizationScopedModel)
+[ ] Add Meta class indexes: ['organization', 'status']
+[ ] Add visibility methods: can_view() and can_edit()
+
+================================================================================
+STEP 3.4: UPDATE M&E VIEWS AND TEMPLATES
+================================================================================
+
+Task 3.4.1: Update Views
+-------------------------
+[ ] Open: src/monitoring/views.py
+[ ] Update program_list view:
+    [ ] Filter by: request.organization
+    [ ] Use: Program.objects.all() (automatic org filtering)
+
+[ ] Update project_list view:
+    [ ] Filter by: request.organization
+    [ ] Use: Project.objects.all() (automatic org filtering)
+
+[ ] Update activity_list view:
+    [ ] Filter by: request.organization
+    [ ] Use: Activity.objects.all() (automatic org filtering)
+
+[ ] Update create views (program/project/activity):
+    [ ] Set: instance.organization = request.organization (automatic)
+    [ ] Add validation: User belongs to organization
+
+[ ] Update edit views:
+    [ ] Check: instance.can_edit(request.user)
+    [ ] Raise PermissionDenied if False
+
+[ ] Update detail views:
+    [ ] Check: instance.can_view(request.user)
+    [ ] Raise PermissionDenied if False
+
+Task 3.4.2: Update Templates
+-----------------------------
+[ ] Open: src/templates/monitoring/program_list.html
+[ ] Add filter: Organization filter (if OCM user)
+[ ] Add badge: Show organization code for each program
+
+[ ] Open: src/templates/monitoring/project_list.html
+[ ] Add filter: Organization filter (if OCM user)
+[ ] Add badge: Show organization code for each project
+
+[ ] Open: src/templates/monitoring/activity_list.html
+[ ] Add filter: Organization filter (if OCM user)
+[ ] Add badge: Show organization code for each activity
+
+Verification Checklist:
+-----------------------
+[ ] All migrations apply successfully
+[ ] All existing PPAs assigned to OOBC
+[ ] OOBC users can access all legacy PPAs
+[ ] New MOA users see empty PPA lists (correct isolation)
+[ ] Views respect organization scoping
+[ ] Templates show organization information
+[ ] OCM users can view all PPAs across organizations
+
+================================================================================
+SECTION 4: MODULE C - POLICIES (POLICY RECOMMENDATIONS)
+================================================================================
+
+Objective: Add organization scoping to Policies module to support MOA-specific
+          policy recommendations with proper data isolation.
+
+Complexity: Simple
+Priority: MEDIUM
+
+================================================================================
+STEP 4.1: ADD ORGANIZATION FIELD TO POLICY RECOMMENDATION MODEL
+================================================================================
+
+Task 4.1.1: Create Database Migration
+--------------------------------------
+[ ] Navigate to: cd src/recommendations/policies/migrations/ (or appropriate app)
+[ ] Create migration: python ../manage.py makemigrations policies --empty --name add_organization_to_policy_recommendation
+[ ] Edit migration file with following operations:
+    [ ] AddField: organization (FK to organizations.Organization, nullable)
+    [ ] RunPython: populate_policy_recommendations_with_oobc (data migration)
+    [ ] AlterField: organization (make NOT NULL after population)
+    [ ] AddIndex: (organization, status) for query performance
+
+Data Migration Function:
+```python
+def populate_policy_recommendations_with_oobc(apps, schema_editor):
+    """Assign all existing policy recommendations to OOBC organization"""
+    PolicyRecommendation = apps.get_model('policies', 'PolicyRecommendation')
+    Organization = apps.get_model('organizations', 'Organization')
+
+    try:
+        oobc_org = Organization.objects.get(code='OOBC')
+    except Organization.DoesNotExist:
+        raise Exception("OOBC organization not found. Run Phase 1 migrations first.")
+
+    updated_count = PolicyRecommendation.objects.filter(
+        organization__isnull=True
+    ).update(
+        organization=oobc_org
+    )
+
+    print(f"✅ Assigned {updated_count} policy recommendations to OOBC")
+```
+
+Testing:
+[ ] Apply migration: python manage.py migrate policies
+[ ] Verify: All existing policy recommendations have organization=OOBC
+
+Task 4.1.2: Update PolicyRecommendation Model
+----------------------------------------------
+[ ] Open: src/recommendations/policies/models.py (or appropriate path)
+[ ] Import: from organizations.models import OrganizationScopedModel
+[ ] Change: class PolicyRecommendation(models.Model) → class PolicyRecommendation(OrganizationScopedModel)
+
+[ ] Add Meta class indexes:
+    [ ] Index on: ['organization', 'status']
+    [ ] Index on: ['organization', 'recommendation_type']
+
+[ ] Add visibility methods:
+
+```python
+def can_view(self, user):
+    """Check if user can view this policy recommendation"""
+    if user.is_superuser:
+        return True
+    if hasattr(user, 'organization') and user.organization == self.organization:
+        return True
+    if hasattr(user, 'is_cmo_staff') and user.is_cmo_staff:
+        return True
+    return False
+
+def can_edit(self, user):
+    """Check if user can edit this policy recommendation"""
+    if user.is_superuser:
+        return True
+    return hasattr(user, 'organization') and user.organization == self.organization
+```
+
+Task 4.1.3: Update Related Models
+----------------------------------
+[ ] EvidenceItem model: No changes (inherits org from PolicyRecommendation FK)
+[ ] StakeholderConsultation model: No changes (inherits org from PolicyRecommendation FK)
+
+Task 4.1.4: Update Policies Views and Templates
+------------------------------------------------
+[ ] Open: src/recommendations/policies/views.py
+[ ] Update policy_list view:
+    [ ] Filter by: request.organization
+    [ ] Use: PolicyRecommendation.objects.all() (automatic org filtering)
+
+[ ] Update policy_create view:
+    [ ] Set: instance.organization = request.organization (automatic)
+    [ ] Add validation: User belongs to organization
+
+[ ] Update policy_edit view:
+    [ ] Check: instance.can_edit(request.user)
+    [ ] Raise PermissionDenied if False
+
+[ ] Update policy_detail view:
+    [ ] Check: instance.can_view(request.user)
+    [ ] Raise PermissionDenied if False
+
+[ ] Open: src/templates/recommendations/policies/list.html
+[ ] Add filter: Organization filter (if OCM user)
+[ ] Add badge: Show organization code for each policy
+
+Verification Checklist:
+-----------------------
+[ ] Migration applies successfully
+[ ] All existing policy recommendations assigned to OOBC
+[ ] OOBC users can access all legacy policy recommendations
+[ ] New MOA users see empty policy lists (correct isolation)
+[ ] Views respect organization scoping
+[ ] Templates show organization information
+[ ] OCM users can view all policies across organizations
+
+================================================================================
+SECTION 5: BACKFILL ALL EXISTING DATA WITH OOBC ORGANIZATION
+================================================================================
+
+Objective: Ensure all existing OBCMS data is assigned to OOBC and maintain
+          backward compatibility for OOBC users.
+
+Complexity: Simple
+Priority: CRITICAL
+
+Task 5.1: Verify Data Migration for MANA Module
+------------------------------------------------
+[ ] Open Django shell: python manage.py shell
+[ ] Run:
+    from mana.models import Assessment
+    from organizations.models import Organization
+    oobc = Organization.objects.get(code='OOBC')
+    oobc_assessments = Assessment.objects.filter(organization=oobc)
+    print(f"OOBC assessments: {oobc_assessments.count()}")
+    unassigned = Assessment.objects.filter(organization__isnull=True)
+    print(f"Unassigned assessments: {unassigned.count()}")
+
+[ ] Expected: All assessments assigned to OOBC, unassigned = 0
+
+Task 5.2: Verify Data Migration for M&E Module
+-----------------------------------------------
+[ ] Run:
+    from monitoring.models import Program, Project, Activity
+    from organizations.models import Organization
+    oobc = Organization.objects.get(code='OOBC')
+
+    oobc_programs = Program.objects.filter(organization=oobc)
+    print(f"OOBC programs: {oobc_programs.count()}")
+
+    oobc_projects = Project.objects.filter(organization=oobc)
+    print(f"OOBC projects: {oobc_projects.count()}")
+
+    oobc_activities = Activity.objects.filter(organization=oobc)
+    print(f"OOBC activities: {oobc_activities.count()}")
+
+    unassigned_programs = Program.objects.filter(organization__isnull=True)
+    print(f"Unassigned programs: {unassigned_programs.count()}")
+
+[ ] Expected: All PPAs assigned to OOBC, unassigned = 0
+
+Task 5.3: Verify Data Migration for Policies Module
+----------------------------------------------------
+[ ] Run:
+    from recommendations.policies.models import PolicyRecommendation
+    from organizations.models import Organization
+    oobc = Organization.objects.get(code='OOBC')
+
+    oobc_policies = PolicyRecommendation.objects.filter(organization=oobc)
+    print(f"OOBC policies: {oobc_policies.count()}")
+
+    unassigned = PolicyRecommendation.objects.filter(organization__isnull=True)
+    print(f"Unassigned policies: {unassigned.count()}")
+
+[ ] Expected: All policies assigned to OOBC, unassigned = 0
+
+Task 5.4: Manual Backfill (if any unassigned data found)
+---------------------------------------------------------
+[ ] If unassigned data exists, run manual backfill:
+    from organizations.models import Organization
+    oobc = Organization.objects.get(code='OOBC')
+
+    # MANA
+    from mana.models import Assessment
+    Assessment.objects.filter(organization__isnull=True).update(organization=oobc)
+
+    # M&E
+    from monitoring.models import Program, Project, Activity
+    Program.objects.filter(organization__isnull=True).update(organization=oobc)
+    Project.objects.filter(organization__isnull=True).update(organization=oobc)
+    Activity.objects.filter(organization__isnull=True).update(organization=oobc)
+
+    # Policies
+    from recommendations.policies.models import PolicyRecommendation
+    PolicyRecommendation.objects.filter(organization__isnull=True).update(organization=oobc)
+
+Task 5.5: Test OOBC User Access
+--------------------------------
+[ ] Login as OOBC user
+[ ] Navigate to: /moa/OOBC/mana/assessments/
+[ ] Verify: All existing assessments visible
+[ ] Navigate to: /moa/OOBC/me/programs/
+[ ] Verify: All existing programs visible
+[ ] Navigate to: /moa/OOBC/policies/recommendations/
+[ ] Verify: All existing policy recommendations visible
+
+Verification Checklist:
+-----------------------
+[ ] All existing MANA assessments have organization=OOBC
+[ ] All existing M&E PPAs have organization=OOBC
+[ ] All existing policies have organization=OOBC
+[ ] OOBC users can access all legacy data
+[ ] No data loss during migration
+
+================================================================================
+SECTION 6: TESTING CHECKLIST
+================================================================================
+
+Unit Tests (src/{module}/tests/test_models.py):
+------------------------------------------------
+[ ] Test: Assessment.can_view() with different user roles
+[ ] Test: Assessment.can_edit() permission logic
+[ ] Test: Program.can_view() with different user roles
+[ ] Test: Program.can_edit() permission logic
+[ ] Test: Project.can_view() with different user roles
+[ ] Test: Project.can_edit() permission logic
+[ ] Test: Activity.can_view() with different user roles
+[ ] Test: Activity.can_edit() permission logic
+[ ] Test: PolicyRecommendation.can_view() with different user roles
+[ ] Test: PolicyRecommendation.can_edit() permission logic
+[ ] Test: Automatic organization assignment via middleware
+
+Integration Tests (src/{module}/tests/test_views.py):
+------------------------------------------------------
+[ ] Test: Assessment list filtered by organization
+[ ] Test: Program list filtered by organization
+[ ] Test: Project list filtered by organization
+[ ] Test: Activity list filtered by organization
+[ ] Test: PolicyRecommendation list filtered by organization
+[ ] Test: MOA user can create assessment (assigned to their org)
+[ ] Test: MOA user cannot view other org's assessments
+[ ] Test: OCM staff can view all assessments across all orgs
+[ ] Test: Permission denied for unauthorized access
+
+Functional Tests (Manual):
+---------------------------
+[ ] Test Scenario 1: OOBC User (Legacy Data)
+    [ ] Login as OOBC user
+    [ ] Navigate to MANA assessments
+    [ ] Verify: All historical assessments visible
+    [ ] Navigate to M&E programs
+    [ ] Verify: All historical programs visible
+    [ ] Navigate to Policies
+    [ ] Verify: All historical policies visible
+
+[ ] Test Scenario 2: MOH User (New Organization)
+    [ ] Login as MOH user
+    [ ] Navigate to MANA assessments
+    [ ] Verify: Empty list (no access to OOBC data)
+    [ ] Create new assessment
+    [ ] Verify: Assessment assigned to MOH
+    [ ] Verify: Only visible to MOH users
+
+[ ] Test Scenario 3: Data Isolation
+    [ ] Login as MOLE user
+    [ ] Try to access MOH assessment
+    [ ] Verify: 403 Forbidden error
+    [ ] Verify: Cannot see MOH assessments in list
+
+[ ] Test Scenario 4: OCM Oversight
+    [ ] Login as OCM user
+    [ ] Navigate to OCM dashboard
+    [ ] Verify: Can view all assessments across all MOAs
+    [ ] Verify: Can view all programs across all MOAs
+    [ ] Verify: Can view all policies across all MOAs
+    [ ] Verify: OCM has read-only access (cannot edit)
+
+Performance Tests:
+------------------
+[ ] Test: Assessment list query count (should be ≤ 5 queries)
+[ ] Test: Program list query count (should be ≤ 5 queries)
+[ ] Test: Project list query count (should be ≤ 5 queries)
+[ ] Test: Policy list query count (should be ≤ 5 queries)
+[ ] Test: No N+1 problems with organization filtering
+[ ] Use: select_related('organization') in all querysets
+
+Data Integrity Tests:
+---------------------
+[ ] Test: Cannot create assessment without organization
+[ ] Test: Cannot create program without organization
+[ ] Test: Cannot create project without organization
+[ ] Test: Cannot create policy without organization
+[ ] Test: Deleting organization sets models to PROTECT (error)
+
+================================================================================
+SECTION 7: DEPLOYMENT CHECKLIST
+================================================================================
+
+Pre-Deployment:
+---------------
+[ ] All unit tests pass for MANA module
+[ ] All unit tests pass for M&E module
+[ ] All unit tests pass for Policies module
+[ ] All integration tests pass
+[ ] Manual functional tests completed
+[ ] Code review completed (if applicable)
+[ ] All migration files committed to git
+
+Deployment Steps:
+-----------------
+[ ] Stop application server (if production)
+[ ] Backup database: pg_dump obcms_prod > backup_pre_phase5.sql
+[ ] Pull latest code: git pull origin feature/bmms-module-migration
+[ ] Activate virtual environment: source venv/bin/activate
+[ ] Install dependencies: pip install -r requirements/base.txt
+[ ] Run migrations in order:
+    [ ] python manage.py migrate mana
+    [ ] python manage.py migrate monitoring
+    [ ] python manage.py migrate policies
+[ ] Verify migration success: Check migration output for errors
+[ ] Collect static files: python manage.py collectstatic --noinput
+[ ] Restart application server
+[ ] Monitor logs for errors: tail -f logs/django.log
+
+Post-Deployment Verification:
+------------------------------
+[ ] Health check: curl http://localhost:8000/health/
+[ ] Verify: MANA assessments load without errors
+[ ] Verify: M&E programs/projects/activities load without errors
+[ ] Verify: Policy recommendations load without errors
+[ ] Verify: OOBC users can access all legacy data
+[ ] Verify: New MOA users see empty lists (correct isolation)
+[ ] Check error logs: grep ERROR logs/django.log
+
+Rollback Plan (if needed):
+--------------------------
+[ ] Stop application server
+[ ] Restore database: psql obcms_prod < backup_pre_phase5.sql
+[ ] Revert code: git checkout main
+[ ] Restart application server
+[ ] Verify: Application functional with old code
+
+================================================================================
+SECTION 8: DOCUMENTATION UPDATES
+================================================================================
+
+Code Documentation:
+-------------------
+[ ] Update docstrings in mana/models.py
+[ ] Update docstrings in monitoring/models.py
+[ ] Update docstrings in policies/models.py
+[ ] Update docstrings in respective views.py files
+[ ] Add inline comments for permission logic
+
+User Documentation:
+-------------------
+[ ] Update: docs/user-guides/mana-module.md (organization scoping)
+[ ] Update: docs/user-guides/me-module.md (organization scoping)
+[ ] Update: docs/user-guides/policies-module.md (organization scoping)
+[ ] Document: How to create org-specific assessments
+[ ] Document: How to create org-specific PPAs
+[ ] Document: How to create org-specific policies
+
+Technical Documentation:
+------------------------
+[ ] Update: docs/plans/bmms/TRANSITION_PLAN.md (Phase 5 completion)
+[ ] Create: docs/improvements/PHASE5_MODULE_MIGRATION_COMPLETE.md
+[ ] Document: Organization scoping implementation
+[ ] Document: Data isolation patterns
+[ ] Document: Migration procedures and results
+
+API Documentation (if applicable):
+----------------------------------
+[ ] Update: API endpoint documentation for assessments
+[ ] Update: API endpoint documentation for programs/projects/activities
+[ ] Update: API endpoint documentation for policy recommendations
+[ ] Document: Organization filtering parameters
+
+================================================================================
+SECTION 9: COMPLETION CHECKLIST
+================================================================================
+
+MANA Module:
+------------
+[ ] Assessment model with organization FK
+[ ] AssessmentFinding, AssessmentRecommendation (inherit org)
+[ ] Visibility rules: can_view() and can_edit() methods
+[ ] Updated views with organization filtering
+[ ] Updated templates with organization badges
+[ ] Collaborative assessment support (optional)
+[ ] All existing data assigned to OOBC
+
+M&E Module:
+-----------
+[ ] Program model with organization FK
+[ ] Project model with organization FK
+[ ] Activity model with organization FK
+[ ] Visibility rules: can_view() and can_edit() methods
+[ ] Updated views with organization filtering
+[ ] Updated templates with organization badges
+[ ] All existing data assigned to OOBC
+
+Policies Module:
+----------------
+[ ] PolicyRecommendation model with organization FK
+[ ] EvidenceItem, StakeholderConsultation (inherit org)
+[ ] Visibility rules: can_view() and can_edit() methods
+[ ] Updated views with organization filtering
+[ ] Updated templates with organization badges
+[ ] All existing data assigned to OOBC
+
+Database Changes:
+-----------------
+[ ] MANA migrations applied successfully
+[ ] M&E migrations applied successfully
+[ ] Policies migrations applied successfully
+[ ] All data backfilled with OOBC organization
+[ ] Indexes created for performance optimization
+
+Testing:
+--------
+[ ] Unit tests pass (100% coverage for new code)
+[ ] Integration tests pass
+[ ] Manual functional tests completed
+[ ] Performance tests show no regressions
+[ ] Data isolation verified
+
+Documentation:
+--------------
+[ ] Code documentation updated
+[ ] User guides updated
+[ ] Technical documentation complete
+[ ] API documentation updated (if applicable)
+
+Deployment:
+-----------
+[ ] Migrations applied successfully
+[ ] No errors in production logs
+[ ] All existing OOBC data accessible
+[ ] Data isolation working correctly
+[ ] OCM oversight functional
+
+Sign-Off:
+---------
+[ ] MANA module migration complete: __________ (Date)
+[ ] M&E module migration complete: __________ (Date)
+[ ] Policies module migration complete: __________ (Date)
+[ ] Testing complete: __________ (Date)
+[ ] Code review complete: __________ (Date)
+[ ] Documentation complete: __________ (Date)
+[ ] Deployment complete: __________ (Date)
+[ ] Phase 5 COMPLETE: __________ (Date)
+
+================================================================================
+END OF PHASE 5: MODULE MIGRATION (MANA/M&E/POLICIES)
+================================================================================
+
+Next Phase: Phase 6 - OCM Aggregation (Cross-MOA Dashboards)
+Note: Phase 6 can start BEFORE Phase 5 completion (Phase 5 is OOBC-specific)
+Priority: HIGH (Required for OCM oversight and government-wide monitoring)
+
+Strategic Note: Phase 5 can be deferred until after Pilot MOA Onboarding (Phase 7)
+The pilot MOAs will focus on Planning, Budgeting, and Coordination modules.
+MANA, M&E, and Policies migration can be completed incrementally after launch.

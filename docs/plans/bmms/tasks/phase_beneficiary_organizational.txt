@@ -1,0 +1,752 @@
+# BMMS Phase: Beneficiary Organizational Database Integration
+
+## Phase Metadata
+
+**Priority:** MEDIUM (Important for cooperatives, associations, and community organizations)
+**Complexity:** Simple
+**Dependencies:**
+- Phase Beneficiary Individual (shares architecture and utilities)
+- Phase 1: Organizations Module (required for MOA linkage)
+- Phase 2: Planning Module with PPAs (required for enrollment)
+
+**Purpose:**
+Track organizations that benefit from PPAs to enable:
+- Organizational capacity building tracking
+- Cooperative/association program enrollment
+- Link organizational and individual beneficiaries
+- Track organizational assistance and impact
+- Support community-based organization development
+
+---
+
+## Task Breakdown
+
+### Task 1: Implement OrganizationalBeneficiary Model
+
+**Objective:** Create the core model for tracking organizational beneficiaries
+
+**Model Fields:**
+[ ] org_beneficiary_id (CharField, unique, auto-generated: "OBN-YYYY-XXXXXX")
+[ ] organization_name (CharField, max_length=200)
+[ ] organization_type (CharField, choices: Cooperative, Association, NGO, PO, BIPO, Foundation, Other)
+[ ] acronym (CharField, max_length=50, blank=True)
+[ ] registration_number (CharField, max_length=100, blank=True, help_text="SEC/CDA/DOLE registration")
+[ ] registration_date (DateField, null=True, blank=True)
+[ ] registration_agency (CharField, max_length=100, blank=True, choices: SEC, CDA, DOLE, None)
+[ ] barangay (ForeignKey to Barangay, on_delete=CASCADE)
+[ ] purok_sitio (CharField, max_length=100, blank=True)
+[ ] office_address (TextField, blank=True)
+[ ] contact_person (CharField, max_length=200)
+[ ] contact_person_position (CharField, max_length=100)
+[ ] contact_number (CharField, max_length=20)
+[ ] email (EmailField, blank=True)
+[ ] website (URLField, blank=True)
+[ ] date_established (DateField, null=True, blank=True)
+[ ] primary_sector (CharField, choices: Agriculture, Fishery, Livelihood, Education, Health, Infrastructure, Other)
+[ ] secondary_sectors (JSONField, default=list, help_text="List of other sectors")
+[ ] total_members (PositiveIntegerField, default=0)
+[ ] male_members (PositiveIntegerField, default=0)
+[ ] female_members (PositiveIntegerField, default=0)
+[ ] ip_members (PositiveIntegerField, default=0, help_text="Indigenous Person members")
+[ ] pwd_members (PositiveIntegerField, default=0, help_text="PWD members")
+[ ] youth_members (PositiveIntegerField, default=0, help_text="18-30 years old")
+[ ] senior_members (PositiveIntegerField, default=0, help_text="60+ years old")
+[ ] organizational_structure (TextField, blank=True, help_text="Describe leadership structure")
+[ ] main_activities (TextField, help_text="Primary activities/programs")
+[ ] annual_budget_range (CharField, choices: budget brackets, blank=True)
+[ ] funding_sources (TextField, blank=True)
+[ ] is_active (BooleanField, default=True)
+[ ] status (CharField, choices: Active, Inactive, Dissolved, Suspended, default='Active')
+[ ] remarks (TextField, blank=True)
+[ ] created_by (ForeignKey to User)
+[ ] updated_by (ForeignKey to User, null=True)
+[ ] created_at (DateTimeField, auto_now_add=True)
+[ ] updated_at (DateTimeField, auto_now=True)
+
+**Implementation Steps:**
+[ ] Create src/beneficiaries/models/organizational.py
+[ ] Import necessary models (Barangay, User)
+[ ] Define OrganizationalBeneficiary class with all fields
+[ ] Implement __str__ method: "OBN-2024-000001: OOBC Farmers Cooperative"
+[ ] Implement get_age() method (years since date_established)
+[ ] Implement get_absolute_url() method
+[ ] Add Meta class:
+    [ ] ordering = ['-created_at']
+    [ ] verbose_name = "Organizational Beneficiary"
+    [ ] verbose_name_plural = "Organizational Beneficiaries"
+    [ ] indexes on: org_beneficiary_id, barangay, organization_name, organization_type
+[ ] Implement save() override to auto-generate org_beneficiary_id
+[ ] Add validation for member counts (male + female <= total_members)
+[ ] Import in beneficiaries/models/__init__.py
+
+**Validation Rules:**
+[ ] org_beneficiary_id must be unique
+[ ] date_established must not be in the future
+[ ] male_members + female_members <= total_members
+[ ] All member category counts <= total_members
+[ ] Contact number format validation (Philippine format)
+[ ] Email format validation
+
+**Verification:**
+[ ] Run makemigrations: `python manage.py makemigrations beneficiaries`
+[ ] Review migration file for correctness
+[ ] Run migrate: `python manage.py migrate`
+[ ] Test in Django shell: Create sample organizational beneficiary
+[ ] Verify auto-generation of org_beneficiary_id
+[ ] Test member count validations
+
+---
+
+### Task 2: Implement OrganizationalBeneficiaryEnrollment Model
+
+**Objective:** Link organizational beneficiaries to specific PPAs
+
+**Model Fields:**
+[ ] enrollment_id (CharField, unique, auto-generated: "OEN-YYYY-XXXXXX")
+[ ] org_beneficiary (ForeignKey to OrganizationalBeneficiary)
+[ ] ppa (ForeignKey to PPA from monitoring app)
+[ ] enrollment_date (DateField)
+[ ] enrollment_status (CharField, choices: Active, Completed, Dropped, Suspended)
+[ ] program_role (CharField, choices: Implementer, Partner, Recipient, Coordinator)
+[ ] assistance_type (CharField, choices: Capacity Building, Financial, Equipment, Technical, Infrastructure)
+[ ] assistance_received (JSONField, default=dict, help_text="Detailed assistance tracking")
+[ ] participation_level (CharField, choices: Full, Partial, Observer)
+[ ] moa_signed (BooleanField, default=False, help_text="Memorandum of Agreement signed")
+[ ] moa_date (DateField, null=True, blank=True)
+[ ] completion_date (DateField, null=True, blank=True)
+[ ] dropout_reason (TextField, blank=True)
+[ ] outputs_delivered (TextField, blank=True, help_text="Organization's outputs/deliverables")
+[ ] impact_assessment (TextField, blank=True)
+[ ] satisfaction_rating (PositiveIntegerField, null=True, blank=True, choices: 1-5)
+[ ] feedback (TextField, blank=True)
+[ ] remarks (TextField, blank=True)
+[ ] enrolled_by (ForeignKey to User)
+[ ] created_at (DateTimeField, auto_now_add=True)
+[ ] updated_at (DateTimeField, auto_now=True)
+
+**Implementation Steps:**
+[ ] Create src/beneficiaries/models/organizational_enrollment.py
+[ ] Define OrganizationalBeneficiaryEnrollment model
+[ ] Implement __str__ method
+[ ] Add Meta class with unique_together constraint (org_beneficiary, ppa)
+[ ] Create indexes on: org_beneficiary, ppa, enrollment_date, enrollment_status
+[ ] Implement method to calculate enrollment duration
+[ ] Implement method to update assistance_received (JSON operations)
+[ ] Add validation: completion_date must be after enrollment_date
+[ ] Add validation: moa_date must be after enrollment_date (if provided)
+[ ] Import in beneficiaries/models/__init__.py
+
+**Assistance Received JSON Structure:**
+```json
+{
+  "capacity_building": {
+    "trainings": [
+      {"topic": "Cooperative Management", "date": "2024-10-01", "participants": 20},
+      {"topic": "Financial Literacy", "date": "2024-10-15", "participants": 15}
+    ]
+  },
+  "financial": {
+    "grants": [
+      {"amount": 100000, "currency": "PHP", "purpose": "Equipment", "date": "2024-10-20"}
+    ]
+  },
+  "equipment": {
+    "items": [
+      {"name": "Water Pump", "quantity": 1, "date": "2024-11-01"}
+    ]
+  },
+  "technical_assistance": {
+    "sessions": [
+      {"topic": "Crop Management", "hours": 40, "date": "2024-11-05"}
+    ]
+  }
+}
+```
+
+**Verification:**
+[ ] Run makemigrations and migrate
+[ ] Test organizational enrollment creation
+[ ] Test unique constraint (org_beneficiary + ppa)
+[ ] Verify JSON field operations
+[ ] Test status transitions
+[ ] Test MOA tracking
+
+---
+
+### Task 3: Implement OrganizationalBeneficiaryMember Model
+
+**Objective:** Link individual beneficiaries to organizational beneficiaries
+
+**Purpose:**
+- Track which individuals are members of which organizations
+- Enable cross-referencing between individual and organizational enrollments
+- Analyze overlap between individual and organizational assistance
+- Verify member counts in organizational records
+
+**Model Fields:**
+[ ] id (AutoField, primary key)
+[ ] org_beneficiary (ForeignKey to OrganizationalBeneficiary, related_name='memberships')
+[ ] individual_beneficiary (ForeignKey to IndividualBeneficiary, related_name='org_memberships')
+[ ] position (CharField, max_length=100, blank=True, help_text="Officer, Member, etc.")
+[ ] is_officer (BooleanField, default=False)
+[ ] join_date (DateField)
+[ ] end_date (DateField, null=True, blank=True)
+[ ] is_active (BooleanField, default=True)
+[ ] membership_type (CharField, choices: Regular, Associate, Honorary, Board Member)
+[ ] contributions (TextField, blank=True, help_text="Member's contributions to organization")
+[ ] remarks (TextField, blank=True)
+[ ] added_by (ForeignKey to User)
+[ ] created_at (DateTimeField, auto_now_add=True)
+[ ] updated_at (DateTimeField, auto_now=True)
+
+**Implementation Steps:**
+[ ] Create src/beneficiaries/models/organizational_member.py
+[ ] Define OrganizationalBeneficiaryMember model
+[ ] Implement __str__ method: "Juan Dela Cruz - OOBC Farmers Cooperative (Member)"
+[ ] Add Meta class:
+    [ ] unique_together = ['org_beneficiary', 'individual_beneficiary']
+    [ ] ordering = ['-is_officer', 'join_date']
+    [ ] indexes on: org_beneficiary, individual_beneficiary, join_date
+[ ] Implement signal to update org_beneficiary.total_members on save/delete
+[ ] Add validation: end_date must be after join_date (if provided)
+[ ] Import in beneficiaries/models/__init__.py
+
+**Signals to Implement:**
+[ ] Create src/beneficiaries/signals.py
+[ ] post_save signal: Update org_beneficiary.total_members when member added
+[ ] post_delete signal: Update org_beneficiary.total_members when member removed
+[ ] post_save signal: Update gender counts (male_members, female_members) based on individual_beneficiary.sex
+[ ] post_save signal: Update category counts (ip_members, pwd_members, youth_members, senior_members)
+
+**Verification:**
+[ ] Run makemigrations and migrate
+[ ] Test membership creation
+[ ] Test unique constraint (org_beneficiary + individual_beneficiary)
+[ ] Test total_members auto-update on add
+[ ] Test total_members auto-update on delete
+[ ] Test gender count updates
+[ ] Test category count updates
+
+---
+
+### Task 4: Create REST API Endpoints
+
+**Objective:** Provide programmatic access to organizational beneficiary data
+
+**Serializers to Create:**
+
+[ ] **OrganizationalBeneficiarySerializer** (src/beneficiaries/serializers/organizational.py)
+    - All fields from model
+    - Read-only: org_beneficiary_id, created_at, updated_at
+    - Nested: barangay (include municipality, province)
+    - Computed: age (years since establishment), member_demographics
+
+[ ] **OrganizationalBeneficiaryEnrollmentSerializer** (src/beneficiaries/serializers/organizational_enrollment.py)
+    - All fields from model
+    - Nested: org_beneficiary (summary), ppa (summary)
+    - Computed: enrollment_duration
+
+[ ] **OrganizationalBeneficiaryMemberSerializer** (src/beneficiaries/serializers/organizational_member.py)
+    - All fields from model
+    - Nested: org_beneficiary (summary), individual_beneficiary (summary)
+
+**ViewSets to Create:**
+
+[ ] **OrganizationalBeneficiaryViewSet** (src/beneficiaries/views/api.py)
+    - Standard CRUD operations
+    - list: Paginated list with filtering
+    - retrieve: Single organizational beneficiary detail
+    - create: Register new organizational beneficiary
+    - update/partial_update: Update org info
+    - destroy: Soft delete (set is_active=False)
+    - Custom actions:
+        - @action members: List all members
+        - @action add_member: Add individual to organization
+        - @action remove_member: Remove individual from organization
+        - @action enrollments: List all enrollments
+        - @action statistics: Get member demographics
+
+[ ] **OrganizationalBeneficiaryEnrollmentViewSet**
+    - Standard CRUD operations
+    - Custom actions:
+        - @action complete: Mark enrollment as completed
+        - @action drop: Mark as dropped with reason
+        - @action update_assistance: Update assistance_received JSON
+        - @action sign_moa: Mark MOA as signed with date
+
+[ ] **OrganizationalBeneficiaryMemberViewSet**
+    - Standard CRUD operations
+    - list: Filter by org_beneficiary or individual_beneficiary
+    - Custom actions:
+        - @action set_officer: Promote member to officer
+        - @action resign: End membership with end_date
+
+**Filtering & Search:**
+[ ] Implement DjangoFilterBackend
+[ ] Filter by: barangay, municipality, organization_type, primary_sector, status
+[ ] Search by: organization_name, contact_person, org_beneficiary_id
+[ ] Ordering by: created_at, organization_name, total_members, date_established
+
+**URL Configuration:**
+[ ] /api/beneficiaries/organizations/
+[ ] /api/beneficiaries/organizations/{id}/
+[ ] /api/beneficiaries/organizations/{id}/members/
+[ ] /api/beneficiaries/organizations/{id}/add_member/
+[ ] /api/beneficiaries/organizations/{id}/remove_member/
+[ ] /api/beneficiaries/organizations/{id}/enrollments/
+[ ] /api/beneficiaries/organizations/{id}/statistics/
+[ ] /api/beneficiaries/org-enrollments/
+[ ] /api/beneficiaries/org-members/
+
+**Permissions:**
+[ ] IsAuthenticated for all endpoints
+[ ] Staff-only for create/update/delete operations
+[ ] Field-level permissions for sensitive data (contact, budget)
+
+**Verification:**
+[ ] Test all CRUD operations via Postman/curl
+[ ] Test filtering and search
+[ ] Test custom actions
+[ ] Test permissions (unauthorized access blocked)
+[ ] Test pagination (default: 20 per page)
+[ ] Test member management actions
+
+---
+
+### Task 5: Create UI Components
+
+**Objective:** Build user-friendly interfaces for organizational beneficiary management
+
+**5.1: Organizational Beneficiary Registration Form**
+
+[ ] Create src/beneficiaries/forms/organizational.py
+[ ] Implement OrganizationalBeneficiaryForm (ModelForm)
+[ ] Apply form field styles using _apply_form_field_styles utility
+[ ] Use form component templates (components/form_field_*.html)
+
+**Form Sections:**
+1. Basic Information
+   - Organization name, Acronym
+   - Organization type
+   - Date established
+
+2. Registration Details
+   - Registration number
+   - Registration agency (SEC/CDA/DOLE)
+   - Registration date
+
+3. Contact Information
+   - Contact person, Position
+   - Contact number, Email, Website
+   - Office address
+
+4. Location
+   - Barangay (dropdown with search)
+   - Purok/Sitio
+
+5. Organizational Profile
+   - Primary sector, Secondary sectors (multi-select)
+   - Main activities
+   - Organizational structure
+
+6. Membership Information
+   - Total members
+   - Male members, Female members
+   - IP members, PWD members
+   - Youth members, Senior members
+
+7. Financial Information
+   - Annual budget range
+   - Funding sources
+
+**View Implementation:**
+[ ] Create src/beneficiaries/views/organizational.py
+[ ] OrganizationalBeneficiaryCreateView (CreateView)
+[ ] OrganizationalBeneficiaryUpdateView (UpdateView)
+[ ] OrganizationalBeneficiaryDetailView (DetailView)
+[ ] OrganizationalBeneficiaryListView (ListView with filtering)
+
+**Template Implementation:**
+[ ] Create src/templates/beneficiaries/organizational_form.html
+    - Extend base.html
+    - Use card layout (white, rounded-xl)
+    - Multi-section form with headers
+    - Member count validation (client-side JS)
+    - Submit button (blue-to-teal gradient)
+    - Cancel button (outline)
+
+[ ] Create src/templates/beneficiaries/organizational_detail.html
+    - Organization info card
+    - Member demographics stat cards (3D milk white design)
+    - Member list table
+    - Enrollment history table
+    - Action buttons (Edit, Enroll, Add Member)
+
+[ ] Create src/templates/beneficiaries/organizational_list.html
+    - Extend components/data_table_card.html
+    - Search bar (by name, org_beneficiary_id)
+    - Filter sidebar (barangay, organization_type, sector)
+    - Data table with columns:
+        - Org Beneficiary ID, Organization Name, Type
+        - Barangay, Total Members, Primary Sector
+        - Status badge, Actions (View, Edit, Enroll)
+    - Pagination
+
+**HTMX Integration:**
+[ ] Dynamic barangay filtering based on municipality
+[ ] Instant search in list view
+[ ] Member count validation on blur
+[ ] Inline enrollment status updates
+
+**Verification:**
+[ ] Test form submission (create new organizational beneficiary)
+[ ] Test form validation (member counts)
+[ ] Test list view filtering and search
+[ ] Test detail view displays all information
+[ ] Test responsive layout (mobile, tablet, desktop)
+
+---
+
+**5.2: Member Management Interface**
+
+[ ] Create src/beneficiaries/forms/organizational_member.py
+[ ] Implement OrganizationalBeneficiaryMemberForm
+
+**Form Fields:**
+- Individual beneficiary (autocomplete widget)
+- Position
+- Is officer (checkbox)
+- Join date
+- Membership type
+- Contributions
+
+[ ] Create src/templates/beneficiaries/organizational_member_form.html
+    - Modal form for adding members
+    - Individual beneficiary search/select widget
+    - Position and membership type dropdowns
+    - Date picker for join_date
+
+[ ] Create src/templates/beneficiaries/organizational_member_list.html (embedded in detail view)
+    - Data table with members
+    - Columns: Name, Position, Join Date, Status
+    - Actions: View Profile, Update, Remove
+    - Filter by: Is Officer, Membership Type
+
+[ ] Create src/beneficiaries/views/organizational_member.py
+[ ] OrganizationalMemberAddView (CreateView)
+[ ] OrganizationalMemberUpdateView (UpdateView)
+[ ] OrganizationalMemberRemoveView (DeleteView or soft delete)
+
+**HTMX Endpoints:**
+[ ] Add member (modal form, instant UI update)
+[ ] Remove member (confirmation, instant UI update)
+[ ] Update member demographics in org card (real-time)
+
+**Verification:**
+[ ] Test member addition
+[ ] Test member removal
+[ ] Test member demographics auto-update
+[ ] Test member list filtering
+
+---
+
+**5.3: Organizational Enrollment Interface**
+
+[ ] Create src/beneficiaries/forms/organizational_enrollment.py
+[ ] Implement OrganizationalBeneficiaryEnrollmentForm
+
+**Form Fields:**
+- Organizational beneficiary (autocomplete widget)
+- PPA (dropdown filtered by MOA)
+- Enrollment date
+- Program role
+- Assistance type
+- MOA signed (checkbox)
+- MOA date (conditional, if MOA signed)
+- Remarks
+
+[ ] Create src/templates/beneficiaries/organizational_enrollment_form.html
+    - Modal or full-page form
+    - Organization search/select widget
+    - PPA selection with info display
+    - Date picker for enrollment_date and moa_date
+    - Conditional MOA date field (shown if MOA signed checkbox checked)
+
+[ ] Create src/templates/beneficiaries/organizational_enrollment_list.html
+    - Data table with enrollments
+    - Filter by: PPA, Status, Date range, Assistance Type
+    - Status badges (Active: green, Completed: blue, Dropped: red)
+    - Actions: View, Update Status, Record Assistance, Sign MOA
+
+[ ] Create src/beneficiaries/views/organizational_enrollment.py
+[ ] OrganizationalEnrollmentCreateView
+[ ] OrganizationalEnrollmentUpdateView
+[ ] OrganizationalEnrollmentListView
+[ ] OrganizationalEnrollmentStatusUpdateView (HTMX endpoint)
+
+**HTMX Endpoints:**
+[ ] Update enrollment status (instant UI update)
+[ ] Record assistance received (modal form)
+[ ] Sign MOA (with date picker)
+[ ] Mark completion (with completion date)
+
+**Verification:**
+[ ] Test enrollment creation
+[ ] Test status updates with HTMX
+[ ] Test assistance recording
+[ ] Test MOA signing
+[ ] Test enrollment list filtering
+
+---
+
+### Task 6: Create Reports
+
+**Objective:** Provide insights on organizational beneficiary data
+
+**6.1: Organizational Statistics Report**
+
+[ ] Create src/beneficiaries/views/organizational_reports.py
+[ ] Implement OrganizationalStatisticsView
+[ ] Generate statistics:
+    - Total organizations by type
+    - Breakdown by: Sector, Barangay, Status
+    - Total members (aggregated across all orgs)
+    - Average organization size
+    - Average age of organizations
+
+[ ] Create src/templates/beneficiaries/reports/organizational_statistics.html
+    - Stat cards (3D milk white design)
+    - Charts:
+        - Organization type distribution (pie chart)
+        - Sector distribution (bar chart)
+        - Geographic distribution (map)
+        - Member demographics (stacked bar chart)
+    - Filter by: Date range, Barangay, Organization Type
+
+**6.2: Organizational Enrollment Report**
+
+[ ] Implement OrganizationalEnrollmentReportView
+[ ] Generate enrollment statistics:
+    - Total enrollments by PPA
+    - Enrollment status breakdown
+    - Completion rate by PPA
+    - Average satisfaction rating
+    - Assistance type distribution
+
+[ ] Create src/templates/beneficiaries/reports/organizational_enrollment.html
+    - Enrollment trends (line chart over time)
+    - PPA performance comparison (table)
+    - Assistance type breakdown (donut chart)
+    - Filter by: PPA, MOA, Date range, Status, Assistance Type
+
+**6.3: Individual vs Organizational Beneficiary Report**
+
+[ ] Implement IndividualVsOrganizationalReportView
+[ ] Compare:
+    - Total individuals enrolled directly vs through organizations
+    - Overlap analysis (individuals enrolled both directly and through org)
+    - Assistance comparison (individual vs organizational)
+
+[ ] Create src/templates/beneficiaries/reports/individual_vs_organizational.html
+    - Comparison charts
+    - Overlap analysis table
+    - Filter by: Barangay, PPA, Date range
+
+**Export Functionality:**
+[ ] Implement CSV export for all reports
+[ ] Implement PDF export (using ReportLab or WeasyPrint)
+[ ] Add export buttons to all report templates
+
+**Verification:**
+[ ] Test each report with sample data
+[ ] Verify chart rendering (use Chart.js)
+[ ] Test filters and date ranges
+[ ] Test CSV export (correct data, formatting)
+[ ] Test PDF export (layout, pagination)
+
+---
+
+### Task 7: Testing Checklist
+
+**7.1: Unit Tests**
+
+[ ] Create src/beneficiaries/tests/test_organizational_models.py
+    [ ] Test OrganizationalBeneficiary creation
+    [ ] Test org_beneficiary_id auto-generation (unique, correct format)
+    [ ] Test get_age() method (years since establishment)
+    [ ] Test date_established validation (not future)
+    [ ] Test member count validation (male + female <= total)
+    [ ] Test OrganizationalBeneficiaryEnrollment creation
+    [ ] Test unique_together constraint (org_beneficiary + ppa)
+    [ ] Test OrganizationalBeneficiaryMember creation
+    [ ] Test membership signals (total_members update)
+    [ ] Test gender count updates via signals
+    [ ] Test category count updates via signals
+
+[ ] Create src/beneficiaries/tests/test_organizational_forms.py
+    [ ] Test OrganizationalBeneficiaryForm validation
+    [ ] Test member count validation
+    [ ] Test OrganizationalBeneficiaryMemberForm validation
+
+**7.2: Integration Tests**
+
+[ ] Create src/beneficiaries/tests/test_organizational_api.py
+    [ ] Test organizational beneficiary list endpoint
+    [ ] Test organizational beneficiary create endpoint
+    [ ] Test organizational beneficiary update endpoint
+    [ ] Test organizational beneficiary delete endpoint (soft delete)
+    [ ] Test members custom action
+    [ ] Test add_member custom action
+    [ ] Test remove_member custom action
+    [ ] Test enrollments list endpoint
+    [ ] Test organizational enrollment create endpoint
+    [ ] Test organizational enrollment status update endpoint
+    [ ] Test sign_moa custom action
+
+[ ] Create src/beneficiaries/tests/test_organizational_views.py
+    [ ] Test OrganizationalBeneficiaryCreateView
+    [ ] Test OrganizationalBeneficiaryListView (filtering, search)
+    [ ] Test OrganizationalBeneficiaryDetailView
+    [ ] Test OrganizationalMemberAddView
+    [ ] Test OrganizationalEnrollmentCreateView
+    [ ] Test report views (data accuracy)
+
+**7.3: Signal Tests**
+
+[ ] Create src/beneficiaries/tests/test_organizational_signals.py
+    [ ] Test total_members update on member add
+    [ ] Test total_members update on member remove
+    [ ] Test male_members update on member add (male)
+    [ ] Test female_members update on member add (female)
+    [ ] Test ip_members update on member add (IP)
+    [ ] Test pwd_members update on member add (PWD)
+    [ ] Test youth_members update on member add (18-30)
+    [ ] Test senior_members update on member add (60+)
+
+**7.4: Permission Tests**
+
+[ ] Test organizational beneficiary create permission (staff only)
+[ ] Test member management permission
+[ ] Test enrollment permission
+[ ] Test unauthorized access blocked (401/403)
+
+**7.5: Performance Tests**
+
+[ ] Test organizational list view (< 200ms for 1,000 records)
+[ ] Test member list view (< 200ms for 100 members)
+[ ] Test enrollment creation (< 100ms)
+[ ] Test report generation (< 2s for 1,000 orgs)
+
+**7.6: Data Quality Tests**
+
+[ ] Test date_established validation (reject future dates)
+[ ] Test member count consistency (sum of categories <= total)
+[ ] Test org_beneficiary_id uniqueness
+[ ] Test member relationship constraints
+
+**7.7: UI/UX Tests**
+
+[ ] Test form responsiveness (mobile, tablet, desktop)
+[ ] Test form validation messages display correctly
+[ ] Test member count validation (client-side)
+[ ] Test HTMX member addition (instant feedback)
+[ ] Test HTMX enrollment status update
+[ ] Test search functionality (correct results)
+[ ] Test filter combinations
+[ ] Test pagination
+
+**Test Execution:**
+[ ] Run all tests: `pytest src/beneficiaries/tests/ -v -k organizational`
+[ ] Check test coverage: `coverage run -m pytest src/beneficiaries/tests/`
+[ ] Generate coverage report: `coverage report`
+[ ] Aim for: > 90% code coverage
+
+---
+
+## Dependencies Summary
+
+**External Libraries Required:**
+- django-filter (API filtering)
+- djangorestframework (API)
+- Chart.js (frontend charts)
+- ReportLab or WeasyPrint (PDF export)
+
+**Django Apps Required:**
+- beneficiaries (IndividualBeneficiary model from Phase Beneficiary Individual)
+- communities (Barangay model)
+- monitoring (PPA model)
+- common (User model, base utilities)
+
+**Database:**
+- PostgreSQL recommended (JSONB support for assistance_received, secondary_sectors)
+- Indexes required on: org_beneficiary_id, barangay, organization_name, organization_type
+
+---
+
+## Acceptance Criteria
+
+**Phase Complete When:**
+[ ] All 7 tasks completed and verified
+[ ] All models created with proper migrations
+[ ] Signals working correctly (member count updates)
+[ ] REST API fully functional with authentication
+[ ] UI components implemented and responsive
+[ ] Member management working (add/remove members)
+[ ] Enrollment management working
+[ ] Reports generating accurate data
+[ ] Test suite passing with > 90% coverage
+[ ] Documentation updated in docs/
+[ ] Admin approval obtained
+
+---
+
+## Post-Implementation Tasks
+
+[ ] Create user guide for organizational beneficiary registration
+[ ] Create admin guide for member management
+[ ] Train OOBC staff on organizational beneficiary tracking
+[ ] Import existing organizational data (if available)
+[ ] Set up automated data quality checks (member counts consistency)
+[ ] Configure backup and recovery procedures
+[ ] Monitor system performance in production
+[ ] Collect user feedback and iterate
+[ ] Coordinate with cooperatives and associations for data collection
+
+---
+
+## Integration with Phase Beneficiary Individual
+
+**Shared Utilities:**
+- Reuse deduplication utilities (for organization name matching)
+- Reuse data privacy controls (audit logging, permissions)
+- Reuse form styling utilities
+- Reuse report export functionality (CSV, PDF)
+
+**Cross-References:**
+- OrganizationalBeneficiaryMember links IndividualBeneficiary and OrganizationalBeneficiary
+- Enable queries like: "Show all individuals enrolled in PPAs both directly and through their organization"
+- Enable overlap analysis: "Identify beneficiaries receiving duplicate assistance"
+
+**Shared Templates:**
+- components/data_table_card.html
+- components/form_field_*.html
+- components/stat_card.html (3D milk white design)
+
+---
+
+## Notes
+
+- This phase is SIMPLER than Individual phase (fewer fields, no households, no deduplication)
+- Member count updates MUST be accurate (use signals, not manual updates)
+- MOA tracking is critical for organizational partnerships
+- Coordinate with individual beneficiary tracking for overlap analysis
+- Organizations often represent multiple individuals (leverage this for efficiency)
+- Capacity building tracking is key for organizational development
+- Regular verification of member counts recommended (quarterly)
+
+---
+
+**Phase Owner:** TBD
+**Start Date:** TBD
+**Target Completion:** TBD (No time estimates per CLAUDE.md policy)
+**Status:** Not Started

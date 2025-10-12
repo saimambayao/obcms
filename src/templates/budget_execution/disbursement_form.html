@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Record Disbursement - OBCMS{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a></li>
+<li><a href="{% url 'budget_execution:dashboard' %}" class="text-blue-600 hover:text-blue-800">Budget Execution</a></li>
+<li class="text-neutral-800 font-semibold">Record Disbursement</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Record Budget Disbursement</h1>
+        <p class="mt-2 text-lg text-gray-600">
+            Document actual payments and fund releases
+        </p>
+    </div>
+
+    <!-- Form Container -->
+    <form method="post" action="" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Obligation Selection -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-file-contract text-blue-500 mr-2"></i>
+                Obligation Source
+            </h3>
+
+            <div class="space-y-1 mb-4">
+                <label for="obligation" class="block text-sm font-medium text-gray-700 mb-2">
+                    Select Obligation<span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                    <select id="obligation"
+                            name="obligation"
+                            hx-get="{% url 'budget_execution:get_obligation_details' %}"
+                            hx-target="#obligation-details"
+                            hx-trigger="change"
+                            class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200"
+                            required>
+                        <option value="">Select obligation...</option>
+                        {% for obligation in obligations %}
+                        <option value="{{ obligation.id }}">
+                            {{ obligation.document_reference }} - {{ obligation.vendor|truncatewords:5 }} (₱{{ obligation.amount|floatformat:2 }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                        <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Obligation Details (Loaded via HTMX) -->
+            <div id="obligation-details" class="mt-4">
+                <!-- HTMX will load obligation details here -->
+            </div>
+        </div>
+
+        <!-- Payment Details -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-money-bill-wave text-emerald-500 mr-2"></i>
+                Payment Details
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Disbursement Amount -->
+                <div class="space-y-1">
+                    <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
+                        Disbursement Amount<span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">₱</span>
+                        <input type="number"
+                               id="amount"
+                               name="amount"
+                               step="0.01"
+                               min="0.01"
+                               class="w-full pl-8 pr-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px]"
+                               placeholder="0.00"
+                               required>
+                    </div>
+                </div>
+
+                <!-- Disbursement Date -->
+                <div class="space-y-1">
+                    <label for="disbursed_date" class="block text-sm font-medium text-gray-700 mb-2">
+                        Disbursement Date<span class="text-red-500">*</span>
+                    </label>
+                    <input type="date"
+                           id="disbursed_date"
+                           name="disbursed_date"
+                           value="{{ today|date:'Y-m-d' }}"
+                           class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px]"
+                           required>
+                </div>
+
+                <!-- Payee -->
+                <div class="space-y-1 md:col-span-2">
+                    <label for="payee" class="block text-sm font-medium text-gray-700 mb-2">
+                        Payee<span class="text-red-500">*</span>
+                    </label>
+                    <input type="text"
+                           id="payee"
+                           name="payee"
+                           class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px]"
+                           placeholder="Name of payee or recipient"
+                           required>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="space-y-1">
+                    <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-2">
+                        Payment Method<span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <select id="payment_method"
+                                name="payment_method"
+                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200"
+                                required>
+                            <option value="">Select method...</option>
+                            <option value="check">Check</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="cash">Cash</option>
+                            <option value="gcash">GCash</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Check/Voucher Number -->
+                <div class="space-y-1">
+                    <label for="check_number" class="block text-sm font-medium text-gray-700 mb-2">
+                        Check/Voucher Number
+                    </label>
+                    <input type="text"
+                           id="check_number"
+                           name="check_number"
+                           class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px]"
+                           placeholder="e.g., CHK-2025-001">
+                </div>
+
+                <!-- Bank Name (if bank transfer) -->
+                <div class="space-y-1">
+                    <label for="bank_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Bank Name
+                    </label>
+                    <input type="text"
+                           id="bank_name"
+                           name="bank_name"
+                           class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px]"
+                           placeholder="e.g., Land Bank of the Philippines">
+                </div>
+
+                <!-- Account Number -->
+                <div class="space-y-1">
+                    <label for="account_number" class="block text-sm font-medium text-gray-700 mb-2">
+                        Account Number
+                    </label>
+                    <input type="text"
+                           id="account_number"
+                           name="account_number"
+                           class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px]"
+                           placeholder="Payee account number">
+                </div>
+            </div>
+
+            <!-- Remarks -->
+            <div class="mt-6 space-y-1">
+                <label for="remarks" class="block text-sm font-medium text-gray-700 mb-2">
+                    Remarks
+                </label>
+                <textarea id="remarks"
+                          name="remarks"
+                          rows="3"
+                          class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                          placeholder="Optional notes or payment instructions..."></textarea>
+            </div>
+        </div>
+
+        <!-- Proof of Payment -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-file-invoice text-amber-500 mr-2"></i>
+                Proof of Payment
+            </h3>
+
+            <div class="space-y-1">
+                <label for="proof_of_payment" class="block text-sm font-medium text-gray-700 mb-2">
+                    Upload Proof of Payment
+                </label>
+                <input type="file"
+                       id="proof_of_payment"
+                       name="proof_of_payment"
+                       accept=".pdf,.jpg,.jpeg,.png"
+                       class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px]">
+                <p class="mt-1 text-sm text-gray-500">Upload receipt, acknowledgment, or proof of payment (PDF, JPG, PNG - Max 10MB)</p>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-200">
+            <a href="{% url 'budget_execution:dashboard' %}"
+               class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200 text-center">
+                <i class="fas fa-times mr-2"></i>
+                Cancel
+            </a>
+            <button type="submit"
+                    class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <i class="fas fa-check mr-2"></i>
+                Record Disbursement
+            </button>
+        </div>
+
+    </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+{% endblock %}

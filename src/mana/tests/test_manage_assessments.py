@@ -68,11 +68,11 @@ def test_create_assessment_populates_manage_listing(client):
         "workshop_1_facilitator": str(facilitator.id),
     }
 
-    response = client.post(reverse("common:mana_new_assessment"), data=payload)
+    response = client.post(reverse("mana:mana_new_assessment"), data=payload)
 
     assert response.status_code == 302
     assert response.headers["Location"].endswith(
-        reverse("common:mana_manage_assessments")
+        reverse("mana:mana_manage_assessments")
     )
 
     assessment = Assessment.objects.get(title=payload["title"])
@@ -92,6 +92,6 @@ def test_create_assessment_populates_manage_listing(client):
     assert (staff_user.id, "team_leader") in team_roles
     assert (facilitator.id, "facilitator") in team_roles
 
-    manage_response = client.get(reverse("common:mana_manage_assessments"))
+    manage_response = client.get(reverse("mana:mana_manage_assessments"))
     assert manage_response.status_code == 200
     assert payload["title"] in manage_response.content.decode()

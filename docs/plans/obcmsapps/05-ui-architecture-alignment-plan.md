@@ -11,7 +11,7 @@
 
 This document presents a comprehensive plan to align OBCMS user-facing navigation with its technical Django architecture. The analysis reveals **significant misalignments** that create confusion for both users and developers, with the `common` app serving as a bloated routing hub for 4 out of 6 user modules.
 
-**Key Finding:** Current architecture violates Django best practices by consolidating domain logic in a "God Object" `common` app (2000+ lines), creating maintenance bottlenecks and unclear module boundaries.
+**Key Finding:** Current architecture violates Django best practices by consolidating domain logic in a "Monolithic Router Anti-Pattern" `common` app (2000+ lines), creating maintenance bottlenecks and unclear module boundaries.
 
 **Recommendation:** Implement a 3-phase refactoring plan prioritizing critical issues first (navigation consistency, app restructuring) followed by moderate improvements (URL standardization, permission clarity).
 
@@ -153,7 +153,7 @@ urlpatterns = [
 
 ## Critical Issues
 
-### 🔴 Issue #1: Common App "God Object" Anti-Pattern
+### 🔴 Issue #1: Common App "Monolithic Router Anti-Pattern"
 
 **Severity:** CRITICAL
 **Impact:** Developer productivity, code maintainability

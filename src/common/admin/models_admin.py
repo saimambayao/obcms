@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils import timezone
 from django.utils.html import format_html
 
-from .models import (
+from common.models import (
     Barangay,
     CalendarNotification,
     CalendarResource,
@@ -524,6 +524,27 @@ class StaffLeaveAdmin(admin.ModelAdmin):
 
     reject_leave.short_description = "Reject selected leave requests"
 
+
+
 # ========== UNIFIED WORK HIERARCHY ADMIN ==========
 # Import WorkItem admin (Phase 1)
-from .work_item_admin import WorkItemAdmin
+from common.work_item_admin import WorkItemAdmin
+
+__all__ = [
+    'UserAdmin',
+    'RegionAdmin',
+    'ProvinceAdmin',
+    'MunicipalityAdmin',
+    'BarangayAdmin',
+    'StaffTeamAdmin',
+    'StaffTeamMembershipAdmin',
+    'RecurringEventPatternAdmin',
+    'CalendarResourceAdmin',
+    'CalendarResourceBookingAdmin',
+    'CalendarNotificationAdmin',
+    'UserCalendarPreferencesAdmin',
+    'ExternalCalendarSyncAdmin',
+    'SharedCalendarLinkAdmin',
+    'StaffLeaveAdmin',
+    'WorkItemAdmin',
+]

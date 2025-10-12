@@ -1,30 +1,35 @@
-# OBCMS UI Components & Standards Guide
+# OBCMS UI Standards Master Guide
 
-**Version:** 2.1
-**Last Updated:** 2025-10-06
-**Status:** ✅ Official Standard
+**Version:** 3.1
+**Last Updated:** 2025-10-12
+**Status:** ✅ Official Standard | Master Reference
+**Note:** Consolidated from 69+ UI documentation files - Single source of truth for all OBCMS UI/UX
 
 ---
 
-## Table of Contents
+## 📋 Quick Navigation
 
 - [Overview](#overview)
 - [Design Principles](#design-principles)
 - [Color Palette](#color-palette)
 - [Typography](#typography)
-- [Stat Cards (3D Milk White)](#stat-cards-3d-milk-white)
-- [Quick Action Components](#quick-action-components) ⭐ **NEW - COMPREHENSIVE GUIDE**
-- [Forms & Input Components](#forms--input-components)
-- [Buttons](#buttons)
-- [Cards & Containers](#cards--containers)
-- [Modal & Dialogs](#modal--dialogs) ⭐ **NEW**
-- [Navigation Components](#navigation-components)
-- [Alerts & Messages](#alerts--messages)
-- [Tables & Data Display](#tables--data-display)
-- [Calendar Components](#calendar-components) ⭐ **NEW - GOOGLE CALENDAR STYLE**
-- [Status Indicators](#status-indicators)
-- [Layout System](#layout-system)
+- [Component Library](#component-library)
+  - [Stat Cards (3D Milk White)](#stat-cards-3d-milk-white)
+  - [Quick Action Components](#quick-action-components)
+  - [Forms & Input Components](#forms--input-components)
+  - [Buttons](#buttons)
+  - [Cards & Containers](#cards--containers)
+  - [Modal & Dialogs](#modal--dialogs)
+  - [Navigation Components](#navigation-components)
+  - [Alerts & Messages](#alerts--messages)
+  - [Tables & Data Display](#tables--data-display)
+  - [Calendar Components](#calendar-components)
+  - [Status Indicators](#status-indicators)
+- [Patterns & Best Practices](#patterns--best-practices)
+- [HTMX & Instant UI](#htmx--instant-ui)
 - [Accessibility Guidelines](#accessibility-guidelines)
+- [Reference Implementations](#reference-implementations)
+- [For AI Coding Agents](#for-ai-coding-agents)
 
 ---
 
@@ -51,35 +56,97 @@ This document provides the official UI component library and design standards fo
 ## Design Principles
 
 ### 1. Cultural Respect
+
 Colors and design elements honor Bangsamoro heritage while maintaining professional government standards.
 
+- 🌊 **Blue-to-Teal Waters**: Blue-800 to Emerald-600 gradient representing the seas surrounding Mindanao
+- 🌾 **Golden Harvests**: Symbolizing agricultural prosperity and hope
+- 🌿 **Verdant Landscapes**: The lush forests and natural resources
+- 🏛️ **Government Professionalism**: Trust, stability, and transparency
+
 ### 2. Professional Aesthetics
+
 Clean, modern interface suitable for government operations with 3D embossed effects where appropriate.
 
 ### 3. Accessibility First
-- High contrast ratios (WCAG 2.1 AA)
-- Keyboard navigation support
-- Screen reader compatibility
-- Touch-friendly targets (min 48px)
+
+- **High contrast ratios**: WCAG 2.1 AA (4.5:1 minimum for normal text)
+- **Keyboard navigation**: Logical tab order, clear focus indicators
+- **Screen reader compatible**: Semantic HTML, proper ARIA labels
+- **Touch-friendly**: Minimum 48x48px targets, adequate spacing
 
 ### 4. Mobile-First Responsive
-All components adapt gracefully from mobile to desktop.
+
+All components adapt gracefully from mobile (320px) to desktop (1920px+).
 
 ### 5. Consistent Spacing
-Standard spacing scale: 4px, 8px, 16px, 24px, 32px, 48px
+
+**Standard spacing scale:** 4px, 8px, 16px, 24px, 32px, 48px
+
+### 6. Instant UI & Smooth Interactions
+
+- **No full page reloads**: Use HTMX for all CRUD operations
+- **Optimistic updates**: Update UI immediately, handle response asynchronously
+- **Smooth animations**: 300ms transitions for all state changes
+- **Graceful error handling**: Clear feedback with recovery options
 
 ---
 
 ## Color Palette
 
-### Primary Colors
+### Primary Colors (Bangsamoro Brand) ⭐
+
+**OFFICIAL PRIMARY GRADIENT** - Use for navbars, hero sections, tabs, primary buttons:
 
 ```css
 /* Blue-to-Teal Gradient (Bangsamoro Brand) */
---primary-blue: #1e40af;
---primary-teal: #059669;
+--primary-blue: #1e40af;         /* Blue-800 (Bangsamoro Brand) */
+--primary-teal: #059669;         /* Emerald-600 */
 --primary-gradient: linear-gradient(135deg, #1e40af 0%, #059669 100%);
 ```
+
+**Color Notes:**
+- **Blue-800 (`#1e40af`)**: Primary brand color, confirmed from navbar screenshot
+- **Emerald-600 (`#059669`)**: Secondary brand color, complements blue perfectly
+- **Gradient**: Always use 135-degree diagonal from blue to emerald for brand consistency
+
+**Usage:**
+
+- **Navigation bars**: Top navbar, sidebar headers
+- **Hero sections**: Dashboard hero, landing page banners
+- **Primary buttons**: Main action buttons (when on white background)
+- **Tab active states**: Active tab indicators
+- **Progress indicators**: Loading bars, completion status
+- **Section headers**: Gradient headers for data tables
+
+**Examples:**
+
+```html
+<!-- Navbar (Blue-to-Teal Gradient) -->
+<nav class="bg-gradient-to-r from-blue-800 to-emerald-600">
+  <!-- Navigation items -->
+</nav>
+
+<!-- Hero Section (Blue-to-Teal Gradient) -->
+<div class="bg-gradient-to-br from-blue-800 via-teal-600 to-emerald-600">
+  <h1 class="text-white">OOBC Management System</h1>
+</div>
+
+<!-- Primary Button (Blue-to-Teal Gradient) -->
+<button class="bg-gradient-to-r from-blue-800 to-emerald-600 text-white">
+  Save Changes
+</button>
+
+<!-- Active Tab (Blue-800 border with gradient background) -->
+<div class="border-b-4 border-blue-800 bg-gradient-to-r from-blue-50 to-emerald-50">
+  Active Tab
+</div>
+```
+
+**When to Use Gradient vs Solid Colors:**
+
+- ✅ **Use gradient**: Navigation, hero, primary actions, table headers, active states
+- ⚠️ **Use solid colors**: Icons, semantic status indicators, secondary elements
 
 ### 3D Milk White (Stat Cards)
 
@@ -166,6 +233,12 @@ font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
 | `text-2xl` | 24px | Large metrics |
 | `text-3xl` | 30px | Page titles |
 | `text-4xl` | 36px | Stat card numbers |
+
+---
+
+## Component Library
+
+This section contains all official OBCMS UI components with complete code examples.
 
 ---
 
@@ -274,6 +347,7 @@ The **3D Milk White Stat Card** is the official design for all statistical metri
 **Why:** When cards have different label lengths, breakdown items can appear misaligned. Bottom alignment ensures professional symmetry.
 
 **Implementation:**
+
 1. Container: `flex flex-col h-full`
 2. Spacer: `<div class="flex-grow"></div>`
 3. Breakdown: `mt-auto` class
@@ -285,10 +359,12 @@ The **3D Milk White Stat Card** is the official design for all statistical metri
 ### 📚 Comprehensive Documentation Available
 
 **For complete Quick Action implementation guide, see:**
+
 - **[Quick Action Components Guide](QUICK_ACTION_COMPONENTS.md)** - Full component templates and patterns
 - **[Quick Action Decision Guide](QUICK_ACTION_DECISION_GUIDE.md)** - Quick reference for choosing patterns
 
 This section provides a brief overview. **Refer to the comprehensive guides above for:**
+
 - 3 Official Quick Action Patterns (Sidebar, Header, Floating FAB)
 - Complete HTML/CSS templates
 - Context-aware action rules
@@ -647,6 +723,7 @@ Quick action cards provide instant access to common workflows. Used in managemen
 **Official reusable modal for tasks, events, and dynamic content.**
 
 #### Template Location
+
 ```django
 {% include 'common/components/task_modal.html' %}
 ```
@@ -678,6 +755,7 @@ Quick action cards provide instant access to common workflows. Used in managemen
 #### Usage Example
 
 **1. Include the component in your template:**
+
 ```django
 {% extends "common/base_with_sidebar.html" %}
 
@@ -715,6 +793,7 @@ Quick action cards provide instant access to common workflows. Used in managemen
 ```
 
 **3. Define `openTaskModal` function (if using Option B):**
+
 ```javascript
 function openTaskModal(url) {
     const modal = document.getElementById('taskModal');
@@ -732,6 +811,7 @@ function openTaskModal(url) {
 **The modal content (returned by your view) should include:**
 
 1. **Close button with `data-close-modal` attribute:**
+
 ```html
 <button type="button" class="text-gray-400 hover:text-gray-600" data-close-modal>
     <span class="sr-only">Close</span>
@@ -740,11 +820,13 @@ function openTaskModal(url) {
 ```
 
 2. **Proper heading with `id="modal-title"`:**
+
 ```html
 <h2 id="modal-title" class="text-2xl font-bold text-gray-900">Task Title</h2>
 ```
 
 3. **Optional description with `id="modal-description"`:**
+
 ```html
 <div id="modal-description" class="bg-gray-50 border border-gray-200 rounded-xl p-4">
     Task details and description
@@ -763,6 +845,7 @@ function openTaskModal(url) {
 #### Integration with Task Board
 
 This modal component is used in:
+
 - Staff Task Board (`/oobc-management/staff/tasks/`)
 - OOBC Calendar (`/oobc-management/calendar/`)
 - All task-related views
@@ -789,6 +872,7 @@ This modal component is used in:
 #### Reference Implementation
 
 See working examples:
+
 - [Staff Task Board](src/templates/common/staff_task_board.html)
 - [OOBC Calendar](src/templates/common/oobc_calendar.html)
 - [Task Modal Partial](src/templates/common/partials/staff_task_modal.html)
@@ -1121,21 +1205,25 @@ See working examples:
 ### WCAG 2.1 AA Compliance
 
 ✅ **Color Contrast**
+
 - Normal text: Minimum 4.5:1
 - Large text (18px+): Minimum 3:1
 - UI components: Minimum 3:1
 
 ✅ **Keyboard Navigation**
+
 - All interactive elements are focusable
 - Clear focus indicators
 - Logical tab order
 
 ✅ **Screen Reader Support**
+
 - Semantic HTML elements
 - ARIA labels where needed
 - Alt text for images
 
 ✅ **Touch Targets**
+
 - Minimum 48x48px for all interactive elements
 - Adequate spacing between targets
 
@@ -1207,11 +1295,13 @@ Calendar events use a **single horizontal row** with essential information inlin
 **File:** `src/templates/common/oobc_calendar.html` (lines 278-407)
 
 **Container:**
+
 ```javascript
 eventRow.className = 'flex items-center gap-1 text-sm';
 ```
 
 **Elements:**
+
 1. **Hierarchy Indicator** (optional): `└` for child items
 2. **Work Type Icon** (always): Project, Activity, Task icons
 3. **Title Text** (always): `flex-1 truncate font-medium leading-tight`
@@ -1223,16 +1313,19 @@ eventRow.className = 'flex items-center gap-1 text-sm';
 #### Visual Examples
 
 **Basic Event:**
+
 ```
 [📋] Weekly Team Meeting [🔵]
 ```
 
 **Critical Priority with Time:**
+
 ```
 [📊] Q4 Budget Review [🔵] [❗] 2:00 PM
 ```
 
 **Child Item:**
+
 ```
 └ [✓] Submit reports [✅] 3:30 PM
 ```
@@ -1295,19 +1388,23 @@ text-gray-400 text-xs leading-none
 ## Reference Templates
 
 ### Forms
+
 - **Provincial Management**: `src/templates/communities/provincial_manage.html`
 - **MANA Assessment**: `src/templates/mana/mana_new_assessment.html`
 - **Form Components**: `src/templates/components/form_field_*.html`
 
 ### Stat Cards
+
 - **Reference Implementation**: `src/templates/recommendations/recommendations_home.html`
 - **Template Standard**: [STATCARD_TEMPLATE.md](../improvements/UI/STATCARD_TEMPLATE.md)
 
 ### Quick Actions
+
 - **OOBC Management**: `src/templates/common/oobc_management_home.html`
 - **MANA Home**: `src/templates/mana/mana_home.html`
 
 ### Calendar
+
 - **OOBC Calendar**: `src/templates/common/oobc_calendar.html` (lines 278-407)
 - **Layout Guide**: [Calendar Event Layout Guide](../improvements/UI/CALENDAR_EVENT_LAYOUT_GUIDE.md)
 
@@ -1317,6 +1414,8 @@ text-gray-400 text-xs leading-none
 
 | Version | Date | Changes |
 |---------|------|---------|
+| **3.1** | **2025-10-12** | **Color system corrected** - Updated to confirmed Blue-to-Teal gradient (#1e40af to #059669), removed Ocean Blue references, verified from navbar screenshot |
+| **2.1** | **2025-10-12** | **Enhanced with comprehensive patterns** - Added HTMX & Instant UI section, For AI Coding Agents section, decision trees, quick reference tables, accessibility checklist, mobile patterns |
 | 2.1 | 2025-10-06 | Added **Calendar Components** - Google Calendar-style compact event rendering |
 | 2.0 | 2025-10-03 | Added 3D Milk White Stat Cards, Quick Action Cards, Form Standards, **Reusable Modal Component** |
 | 1.0 | 2024-XX-XX | Initial component library |
@@ -1326,15 +1425,326 @@ text-gray-400 text-xs leading-none
 ## Support & Feedback
 
 **Document Owner:** OBCMS UI/UX Team
+
 **Related Documentation:**
 - [STATCARD_TEMPLATE.md](../improvements/UI/STATCARD_TEMPLATE.md)
+- [Quick Action Components](QUICK_ACTION_COMPONENTS.md)
 - [Calendar Event Layout Guide](../improvements/UI/CALENDAR_EVENT_LAYOUT_GUIDE.md)
-- [Calendar Event Compact Refactor](../improvements/UI/CALENDAR_EVENT_COMPACT_REFACTOR.md)
 - [Form Design Standards](../improvements/mana/form_design_standards.md)
-- [UI Design System](ui-design-system.md)
-- [Component Library](component-library.md)
+- [Instant UI Improvements Plan](../improvements/instant_ui_improvements_plan.md)
+
+**Additional Resources:**
+- [DELETE_CONFIRMATION_BEST_PRACTICES.md](DELETE_CONFIRMATION_BEST_PRACTICES.md)
+- [OPTIMISTIC_UI_PATTERN_QUICK_REFERENCE.md](OPTIMISTIC_UI_PATTERN_QUICK_REFERENCE.md)
+- [WORK_ITEM_MODAL_QUICK_REFERENCE.md](WORK_ITEM_MODAL_QUICK_REFERENCE.md)
 
 ---
 
-**Last Updated:** 2025-10-06
-**Status:** ✅ Official OBCMS UI Standards
+**Last Updated:** 2025-10-12
+**Status:** ✅ Official OBCMS UI Standards - Enhanced with AI Agent Instructions
+
+## Patterns & Best Practices
+
+### Form Design Standards
+
+**IMPORTANT**: When designing or modifying forms, ALWAYS reference existing templates for UI/UX consistency:
+
+- **Review similar forms** in `src/templates/` to understand established patterns
+- **Use component templates** (`src/templates/components/`) for standard form elements
+- **Follow dropdown styling**: Use `rounded-xl`, `border-gray-200`, emerald focus rings, chevron icons
+- **Check reference templates**: `src/templates/communities/provincial_manage.html`, `src/templates/components/form_field_select.html`
+- **Maintain consistency** in spacing, colors, borders, and interactive states across all forms
+
+### Data Table Cards
+
+- Directory/list pages should extend `components/data_table_card.html` so Barangay and Municipal OBC lists stay visually aligned.
+- Pass a `headers` array and `rows` data with `view_url`, `edit_url`, and `delete_preview_url`.
+- The component already handles the action buttons and the two-step delete confirmation (confirm dialog → redirect to detail for "Review before deletion").
+
+### Mobile Patterns
+
+#### Touch Target Sizes
+
+**❌ BAD:**
+```html
+<button class="w-6 h-6 text-xs">
+    <i class="fas fa-trash"></i>
+</button>
+```
+
+**✅ GOOD:**
+```html
+<button class="min-w-[48px] min-h-[48px] flex items-center justify-center">
+    <i class="fas fa-trash"></i>
+</button>
+```
+
+#### FAB Mobile Adjustments
+
+```html
+<!-- Mobile-Optimized FAB -->
+<div class="fixed bottom-20 sm:bottom-8 right-4 sm:right-8 z-50">
+    <button class="w-16 h-16 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-2xl">
+        <i class="fas fa-bolt text-2xl sm:text-xl"></i>
+    </button>
+</div>
+```
+
+---
+
+## HTMX & Instant UI
+
+**Status:** ✅ Core architectural pattern
+**Reference:** [instant_ui_improvements_plan.md](../improvements/instant_ui_improvements_plan.md)
+
+### Priority: Always Implement Instant UI Updates
+
+When working on this codebase, **always prioritize instant UI responses** and smooth interactions. Users expect modern web app behavior - no full page reloads, immediate feedback, and seamless transitions.
+
+### HTMX Implementation Requirements
+
+- **Consistent Targeting**: All interactive elements must use `data-task-id="{{ item.id }}"` for both kanban cards and table rows
+- **Optimistic Updates**: Update the UI immediately when user performs an action, then handle server response
+- **Smooth Animations**: Use `hx-swap="outerHTML swap:300ms"` or `delete swap:200ms"` for transitions
+- **Loading Indicators**: Always show spinners, disabled states, or progress feedback during operations
+
+### Key HTMX Patterns
+
+#### 1. Inline Editing
+```html
+<div id="task-title-{{ task.id }}"
+     hx-get="{% url 'task_edit_field' task.id 'title' %}"
+     hx-trigger="click"
+     hx-swap="outerHTML"
+     tabindex="0">
+    <span>{{ task.title }}</span>
+    <i class="fas fa-pen text-gray-400 ml-2"></i>
+</div>
+```
+
+#### 2. Dependent Dropdowns
+```html
+<select id="region-select"
+        hx-get="{% url 'get_provinces' %}"
+        hx-trigger="change"
+        hx-target="#province-select"
+        hx-include="#region-select">
+    <option value="">Select Region...</option>
+</select>
+```
+
+#### 3. Live Counters (Polling)
+```html
+<div hx-get="{% url 'metrics_pending_tasks' %}"
+     hx-trigger="load, every 30s"
+     hx-swap="innerHTML"
+     aria-live="polite">
+    <div class="stat-value">{{ pending_count }}</div>
+</div>
+```
+
+#### 4. Out-of-Band Swaps
+```python
+# Django view
+return HttpResponse(
+    task_html + f'<div id="task-counter" hx-swap-oob="true">{counter_html}</div>'
+)
+```
+
+#### 5. Optimistic Updates
+```html
+<button hx-post="{% url 'task_toggle_favorite' task.id %}"
+        hx-swap="none"
+        onclick="toggleFavoriteOptimistic(this)">
+    <i class="fas fa-star"></i>
+</button>
+```
+
+### Backend Response Standards
+
+All views handling HTMX requests must follow this pattern:
+
+```python
+def task_operation_view(request, task_id):
+    # ... perform operation ...
+
+    if request.headers.get('HX-Request'):
+        return HttpResponse(
+            status=204,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'task-updated': {'id': task_id, 'action': 'delete'},
+                    'show-toast': 'Task updated successfully',
+                    'refresh-counters': True
+                })
+            }
+        )
+```
+
+### Delete Confirmation Pattern
+
+**Status:** ✅ Production-ready best practices
+
+#### Two-Step Delete with Preview
+
+**Step 1: Confirmation Dialog**
+```html
+<button hx-get="{% url 'task_delete_confirm' task.id %}"
+        hx-target="#modal-container"
+        hx-swap="innerHTML"
+        class="btn-icon-danger">
+    <i class="fas fa-trash"></i>
+</button>
+```
+
+**Step 2: Modal with Impact Preview**
+```html
+<div class="modal">
+    <p>Delete <strong>{{ task.title }}</strong>?</p>
+
+    <div class="bg-amber-50 border-l-4 border-amber-400 p-4">
+        <p>This will also delete:</p>
+        <ul>
+            <li>{{ subtask_count }} subtasks</li>
+            <li>{{ attachment_count }} attachments</li>
+        </ul>
+    </div>
+
+    <button hx-delete="{% url 'task_delete' task.id %}"
+            hx-target="[data-task-id='{{ task.id }}']"
+            hx-swap="outerHTML swap:300ms"
+            class="btn-danger">
+        Delete
+    </button>
+</div>
+```
+
+### UI Animation Standards
+
+- **Task Movements**: 300ms smooth transitions between kanban columns
+- **Modal Interactions**: Fade with scale transform for open/close
+- **Button Feedback**: Immediate visual response to clicks (color change, disable state)
+- **Error Handling**: Clear error states with recovery options, no silent failures
+
+### Critical: Never Use Full Page Reloads
+
+- Implement HTMX for all CRUD operations (Create, Read, Update, Delete)
+- Use out-of-band swaps (`hx-swap-oob`) for updating multiple UI regions simultaneously
+- Provide graceful fallback mechanisms when HTMX fails
+- Maintain accessibility with proper ARIA live regions and state updates
+
+---
+
+## For AI Coding Agents
+
+**CRITICAL:** This document is your PRIMARY reference for all UI/UX work in OBCMS.
+
+### Before Creating ANY UI Component:
+
+1. ✅ **READ this document first** - Check if pattern exists
+2. ✅ **COPY existing patterns** - Do NOT create custom components  
+3. ✅ **USE component templates** - Found in `src/templates/components/`
+4. ✅ **FOLLOW semantic HTML** - Proper accessibility structure
+5. ✅ **VERIFY responsive behavior** - Test mobile, tablet, desktop
+6. ✅ **TEST accessibility** - WCAG 2.1 AA required
+7. ✅ **CHECK color contrast** - Use pre-tested combinations (4.5:1 minimum)
+
+### Implementation Decision Tree
+
+```
+Is this a NEW UI component?
+├─ YES → Check this guide first
+│   ├─ Pattern exists? → Copy from reference template
+│   └─ Pattern doesn't exist? → ASK user before creating
+└─ NO → Modifying existing? → Follow existing patterns exactly
+```
+
+### When Creating Forms:
+
+1. **ALWAYS review similar forms** in `src/templates/` first
+2. **USE standard dropdown pattern** (rounded-xl, emerald focus rings)
+3. **INCLUDE component templates** instead of duplicating markup
+4. **MAINTAIN consistency** in spacing, colors, borders
+
+### When Creating Stat Cards:
+
+1. **USE 3D Milk White template** (mandatory)
+2. **COPY from** [STATCARD_TEMPLATE.md](../improvements/UI/STATCARD_TEMPLATE.md)
+3. **IMPLEMENT bottom alignment** for breakdowns
+4. **FOLLOW semantic icon colors** (amber=total, emerald=success, etc.)
+
+### When Implementing Instant UI:
+
+1. **ALWAYS use HTMX** for CRUD operations
+2. **PROVIDE instant feedback** (optimistic updates)
+3. **IMPLEMENT smooth animations** (300ms transitions)
+4. **HANDLE errors gracefully** (rollback on failure)
+
+### Component Selection Quick Reference
+
+| Need | Component | Reference |
+|------|-----------|-----------|
+| **Statistics display** | 3D Milk White Stat Card | [STATCARD_TEMPLATE.md](../improvements/UI/STATCARD_TEMPLATE.md) |
+| **Action buttons** | Quick Action Cards | [QUICK_ACTION_COMPONENTS.md](QUICK_ACTION_COMPONENTS.md) |
+| **Form inputs** | Standard Form Components | This guide § Forms & Input Components |
+| **Modal dialogs** | Task/Event Modal | This guide § Modal & Dialogs |
+| **Data tables** | Basic Data Table | This guide § Tables & Data Display |
+| **Calendar events** | Compact Event Layout | This guide § Calendar Components |
+| **Navigation** | Breadcrumb/Tabs | This guide § Navigation Components |
+| **Alerts** | Success/Error/Warning/Info | This guide § Alerts & Messages |
+
+### Common Mistakes to Avoid:
+
+❌ **DON'T create custom modal components** - Use `task_modal.html`
+❌ **DON'T use full page reloads** - Use HTMX partial updates
+❌ **DON'T skip accessibility** - ARIA labels are mandatory
+❌ **DON'T forget mobile** - Test responsive behavior
+❌ **DON'T create docs in root** - Use `docs/` subdirectories
+❌ **DON'T invent new patterns** - Check this guide first
+
+### Accessibility Checklist
+
+- [ ] **Semantic HTML** - Use proper elements (`<nav>`, `<button>`, `<main>`)
+- [ ] **ARIA labels** - All interactive elements have descriptive labels
+- [ ] **Keyboard navigation** - Tab order is logical, Enter/Space work
+- [ ] **Focus indicators** - Visible 2px emerald ring on all focusable elements
+- [ ] **Color contrast** - Minimum 4.5:1 for normal text (use WCAG checker)
+- [ ] **Touch targets** - Minimum 48x48px, adequate spacing (8px+)
+- [ ] **Screen reader** - Test with VoiceOver (Mac) or NVDA (Windows)
+- [ ] **Responsive** - Test mobile (375px), tablet (768px), desktop (1440px)
+
+### HTMX Best Practices
+
+- [ ] **Consistent targeting** - Use `data-task-id` for all dynamic elements
+- [ ] **Optimistic UI** - Update immediately, handle response asynchronously
+- [ ] **Smooth animations** - `hx-swap="outerHTML swap:300ms"`
+- [ ] **Loading states** - Show spinner or disable button during requests
+- [ ] **Error handling** - Display clear error messages with recovery options
+- [ ] **Out-of-band swaps** - Update multiple regions with `hx-swap-oob`
+- [ ] **ARIA live regions** - Announce dynamic changes to screen readers
+
+### Quick Decision Guide
+
+**"Which Quick Action pattern should I use?"**
+- Dashboard/Detail page → Sidebar Quick Actions
+- List/Table page → Header Quick Actions  
+- Form/Long page → Floating FAB
+
+**"Which delete confirmation?"**
+- Simple delete → Two-step modal (confirm → delete)
+- Complex delete → Impact preview (show related items that will be deleted)
+
+**"Which color for this icon?"**
+- Total/general → Amber (`text-amber-600`)
+- Success/complete → Emerald (`text-emerald-600`)
+- In progress → Blue (`text-blue-600`)
+- Draft/proposed → Purple (`text-purple-600`)
+- Warning → Orange (`text-orange-600`)
+- Critical/error → Red (`text-red-600`)
+
+---
+
+**Remember:** When in doubt, choose accessibility and clarity over aesthetics. Every UI choice should serve the user's needs first.
+
+**Last Updated:** 2025-10-12
+**Status:** ✅ Official OBCMS UI Standards - Enhanced with AI Agent Instructions

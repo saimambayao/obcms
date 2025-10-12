@@ -128,7 +128,7 @@
                            name="start_datetime"
                            required
                            class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
-                           hx-get="{% url 'common:coordination_check_conflicts' %}"
+                           hx-get="{% url 'coordination:check_conflicts' %}"
                            hx-trigger="change delay:500ms"
                            hx-target="#conflict-warnings"
                            hx-include="[name='end_datetime'], [name='resource_id']">
@@ -144,7 +144,7 @@
                            name="end_datetime"
                            required
                            class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
-                           hx-get="{% url 'common:coordination_check_conflicts' %}"
+                           hx-get="{% url 'coordination:check_conflicts' %}"
                            hx-trigger="change delay:500ms"
                            hx-target="#conflict-warnings"
                            hx-include="[name='start_datetime'], [name='resource_id']">
@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
             center: 'title',
             right: 'timeGridWeek,timeGridDay'
         },
-        events: '{% url "common:coordination_resource_bookings_feed" resource_id=resource.id %}',
+        events: '{% url "coordination:resource_bookings_feed" resource_id=resource.id %}',
 
         // Color-code by status
         eventDidMount: function(info) {

@@ -1,0 +1,400 @@
+/**
+ * Budget System Mobile Responsive CSS
+ * OBCMS Phase 2 - Budget Module
+ * Optimized for mobile (320px-768px) and tablet (768px-1024px)
+ */
+
+/* ========================================= */
+/* MOBILE BREAKPOINT ADJUSTMENTS           */
+/* ========================================= */
+
+/* Mobile: 320px - 640px (Tailwind's sm breakpoint) */
+@media (max-width: 640px) {
+    /* Stat Cards - Stack vertically on mobile */
+    .stat-card-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    /* Reduce stat card padding on mobile */
+    .stat-card {
+        padding: 1rem !important;
+    }
+
+    /* Smaller stat card numbers on mobile */
+    .stat-card-value {
+        font-size: 2rem !important; /* Down from 2.25rem (text-4xl) */
+    }
+
+    /* Smaller icon containers */
+    .stat-card-icon {
+        width: 3rem !important; /* Down from 4rem */
+        height: 3rem !important;
+    }
+
+    .stat-card-icon i {
+        font-size: 1.25rem !important; /* Down from 1.5rem */
+    }
+
+    /* Chart containers - Reduce height on mobile */
+    .chart-container {
+        height: 250px !important; /* Down from 320px */
+    }
+
+    /* Table scrolling on mobile */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Hide less important table columns on mobile */
+    .hide-on-mobile {
+        display: none !important;
+    }
+
+    /* Stack form buttons vertically on mobile */
+    .form-actions {
+        flex-direction: column !important;
+        width: 100% !important;
+    }
+
+    .form-actions button,
+    .form-actions a {
+        width: 100% !important;
+        margin: 0.25rem 0 !important;
+    }
+
+    /* Adjust page header spacing */
+    .page-header {
+        margin-bottom: 1.5rem !important;
+    }
+
+    .page-header h1 {
+        font-size: 1.875rem !important; /* Down from 3xl */
+    }
+
+    /* Quick action buttons - Full width on mobile */
+    .quick-actions {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+    }
+
+    .quick-action-btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* Real-time widgets - Stack vertically */
+    .widgets-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Modal dialogs - Full screen on mobile */
+    .modal-dialog {
+        margin: 0 !important;
+        max-width: 100% !important;
+        min-height: 100vh !important;
+        border-radius: 0 !important;
+    }
+
+    /* Form grid - Single column on mobile */
+    .form-grid-2col {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Program budget items - Simpler layout */
+    .program-budget-item {
+        padding: 1rem !important;
+    }
+
+    /* Reduce font sizes for better fit */
+    .text-xs-mobile {
+        font-size: 0.75rem !important;
+    }
+
+    .text-sm-mobile {
+        font-size: 0.875rem !important;
+    }
+
+    /* Touch-friendly spacing */
+    .touch-spacing {
+        padding: 0.75rem !important;
+    }
+
+    /* Transaction list items - Compact on mobile */
+    .transaction-item {
+        padding: 0.75rem !important;
+    }
+
+    .transaction-amount {
+        font-size: 0.875rem !important;
+    }
+}
+
+/* Tablet: 640px - 1024px (Tailwind's md and lg breakpoints) */
+@media (min-width: 641px) and (max-width: 1024px) {
+    /* Stat Cards - 2 columns on tablet */
+    .stat-card-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Widgets - 2 columns on tablet */
+    .widgets-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Charts - Optimal height for tablet */
+    .chart-container {
+        height: 300px !important;
+    }
+
+    /* Form grid - 2 columns on tablet */
+    .form-grid-2col {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Quick actions - Horizontal on tablet */
+    .quick-actions {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+    }
+
+    .quick-action-btn {
+        flex: 1 1 45% !important;
+    }
+}
+
+/* ========================================= */
+/* TOUCH TARGET OPTIMIZATION                */
+/* ========================================= */
+
+/* All interactive elements minimum 48x48px */
+@media (max-width: 1024px) {
+    button,
+    a.btn,
+    .btn,
+    select,
+    input[type="button"],
+    input[type="submit"] {
+        min-height: 48px !important;
+        min-width: 48px !important;
+    }
+
+    /* Table action buttons */
+    .table-action-btn {
+        min-width: 48px !important;
+        min-height: 48px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Icon-only buttons */
+    .btn-icon {
+        min-width: 48px !important;
+        min-height: 48px !important;
+        padding: 0 !important;
+    }
+
+    /* Adequate spacing between touch targets */
+    .touch-target-group > * {
+        margin: 0.5rem !important;
+    }
+}
+
+/* ========================================= */
+/* HORIZONTAL SCROLLING INDICATORS          */
+/* ========================================= */
+
+/* Add scroll hint for tables */
+.table-scroll-hint::after {
+    content: '→ Scroll for more';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(to left, white 30%, transparent);
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+    pointer-events: none;
+}
+
+@media (min-width: 1024px) {
+    .table-scroll-hint::after {
+        display: none;
+    }
+}
+
+/* ========================================= */
+/* LOADING STATES OPTIMIZATION              */
+/* ========================================= */
+
+/* Skeleton loader for mobile */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        #f3f4f6 25%,
+        #e5e7eb 50%,
+        #f3f4f6 75%
+    );
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Mobile-specific loading indicator */
+@media (max-width: 640px) {
+    .loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .loading-spinner {
+        width: 3rem;
+        height: 3rem;
+    }
+}
+
+/* ========================================= */
+/* MOBILE NAVIGATION ENHANCEMENTS          */
+/* ========================================= */
+
+/* Sticky header on mobile */
+@media (max-width: 640px) {
+    .sticky-header {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Bottom action bar for mobile */
+    .mobile-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e5e7eb;
+        padding: 0.75rem;
+        z-index: 40;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Add bottom padding to content to prevent overlap with mobile action bar */
+    .content-with-mobile-bar {
+        padding-bottom: 5rem !important;
+    }
+}
+
+/* ========================================= */
+/* PRINT STYLES                             */
+/* ========================================= */
+
+@media print {
+    /* Hide interactive elements */
+    .quick-actions,
+    .mobile-action-bar,
+    button,
+    .btn,
+    .no-print {
+        display: none !important;
+    }
+
+    /* Expand charts for printing */
+    .chart-container {
+        height: auto !important;
+        page-break-inside: avoid;
+    }
+
+    /* Stat cards - 2 columns for print */
+    .stat-card-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Remove shadows and decorative elements */
+    * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    /* Ensure tables fit on page */
+    .table-responsive {
+        overflow: visible !important;
+    }
+
+    table {
+        font-size: 10pt !important;
+    }
+
+    /* Page breaks */
+    .page-break-after {
+        page-break-after: always;
+    }
+
+    .page-break-before {
+        page-break-before: always;
+    }
+}
+
+/* ========================================= */
+/* ACCESSIBILITY ENHANCEMENTS               */
+/* ========================================= */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .stat-card,
+    .widget-card {
+        border-width: 2px !important;
+        border-color: #000 !important;
+    }
+
+    button,
+    .btn {
+        border: 2px solid currentColor !important;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .skeleton {
+        animation: none !important;
+        background: #f3f4f6 !important;
+    }
+}
+
+/* Focus visible for keyboard navigation */
+:focus-visible {
+    outline: 3px solid #059669 !important;
+    outline-offset: 2px !important;
+}
+
+/* Dark mode support (future enhancement) */
+@media (prefers-color-scheme: dark) {
+    /* Placeholder for dark mode styles */
+    /* To be implemented in future phase */
+}

@@ -3,14 +3,35 @@ Policy Module URL Configuration
 
 URL patterns for policy tracking, recommendations, and AI-powered
 policy analysis features.
+
+Phase 0.2 URL Refactoring:
+- Migrated from common/urls.py (lines 283-310)
+- 12 recommendations URLs moved to policies namespace
+- Old URLs redirect via URL refactoring middleware
+- Views still imported from common app (view migration is a future phase)
 """
 
 from django.urls import path
-from . import views
+from common.views import recommendations as views
 
 app_name = "policies"
 
 urlpatterns = [
+    # Recommendations Module URLs (migrated from common:recommendations_*)
+    # Using simplified names in policies namespace (e.g., 'home' instead of 'recommendations_home')
+    path("", views.recommendations_home, name="home"),
+    path("stats-cards/", views.recommendations_stats_cards, name="stats_cards"),
+    path("new/", views.recommendations_new, name="new"),
+    path("create/", views.recommendations_create, name="create"),
+    path("autosave/", views.recommendations_autosave, name="autosave"),
+    path("manage/", views.recommendations_manage, name="manage"),
+    path("programs/", views.recommendations_programs, name="programs"),
+    path("services/", views.recommendations_services, name="services"),
+    path("<uuid:pk>/view/", views.recommendations_view, name="view"),
+    path("<uuid:pk>/edit/", views.recommendations_edit, name="edit"),
+    path("<uuid:pk>/delete/", views.recommendations_delete, name="delete"),
+    path("area/<str:area_slug>/", views.recommendations_by_area, name="by_area"),
+
     # AI Intelligence Endpoints - TODO: Implement these views
     # path(
     #     'ai/gather-evidence/<int:pk>/',

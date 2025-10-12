@@ -1,0 +1,859 @@
+# BMMS Phase: Beneficiary Individual Database Integration
+
+## Phase Metadata
+
+**Priority:** HIGH (Core feature for program targeting and impact measurement)
+**Complexity:** Moderate
+**Dependencies:**
+- Phase 1: Organizations Module (required for MOA linkage)
+- Phase 2: Planning Module with PPAs (required for enrollment)
+- Communities Module: Barangay entities (existing)
+
+**Purpose:**
+Track individuals who benefit from PPAs (Programs, Projects, Activities) to enable:
+- Targeted program delivery
+- Deduplication across programs
+- Impact measurement and reporting
+- Data-driven policy recommendations
+- Privacy-compliant beneficiary management
+
+---
+
+## Task Breakdown
+
+### Task 1: Create Beneficiaries Django App
+
+**Objective:** Set up the foundational Django app structure for beneficiary management
+
+**Steps:**
+[ ] Create new Django app: `python manage.py startapp beneficiaries`
+[ ] Add 'beneficiaries' to INSTALLED_APPS in settings
+[ ] Create app directory structure:
+    [ ] beneficiaries/models/
+    [ ] beneficiaries/views/
+    [ ] beneficiaries/serializers/
+    [ ] beneficiaries/admin/
+    [ ] beneficiaries/forms/
+    [ ] beneficiaries/utils/
+[ ] Create __init__.py files for each subdirectory
+[ ] Register app in obc_management/settings/base.py
+[ ] Create beneficiaries/urls.py for routing
+[ ] Include beneficiaries URLs in main urls.py
+
+**Files to Create:**
+- src/beneficiaries/__init__.py
+- src/beneficiaries/apps.py
+- src/beneficiaries/urls.py
+- src/beneficiaries/models/__init__.py
+- src/beneficiaries/views/__init__.py
+- src/beneficiaries/serializers/__init__.py
+- src/beneficiaries/admin/__init__.py
+
+**Verification:**
+[ ] App loads without errors: `python manage.py check`
+[ ] App appears in Django admin (empty)
+
+---
+
+### Task 2: Implement IndividualBeneficiary Model
+
+**Objective:** Create the core model for tracking individual beneficiaries
+
+**Model Fields:**
+[ ] beneficiary_id (CharField, unique, auto-generated: "BEN-YYYY-XXXXXX")
+[ ] first_name (CharField, max_length=100)
+[ ] middle_name (CharField, max_length=100, blank=True)
+[ ] last_name (CharField, max_length=100)
+[ ] suffix (CharField, max_length=10, blank=True, choices: Jr., Sr., III, etc.)
+[ ] date_of_birth (DateField)
+[ ] sex (CharField, choices: Male, Female)
+[ ] civil_status (CharField, choices: Single, Married, Widowed, Separated, Divorced)
+[ ] contact_number (CharField, max_length=20, blank=True)
+[ ] email (EmailField, blank=True)
+[ ] barangay (ForeignKey to Barangay, on_delete=CASCADE)
+[ ] purok_sitio (CharField, max_length=100, blank=True)
+[ ] household_number (CharField, max_length=50, blank=True)
+[ ] indigenous_group (CharField, max_length=100, blank=True)
+[ ] is_ip (BooleanField, default=False, help_text="Indigenous Person")
+[ ] is_4ps (BooleanField, default=False, help_text="Pantawid Pamilya beneficiary")
+[ ] is_pwd (BooleanField, default=False, help_text="Person with Disability")
+[ ] is_senior_citizen (BooleanField, default=False)
+[ ] disability_type (CharField, max_length=200, blank=True)
+[ ] occupation (CharField, max_length=200, blank=True)
+[ ] monthly_income_range (CharField, choices: income brackets)
+[ ] education_level (CharField, choices: No Formal, Elementary, High School, College, Graduate)
+[ ] remarks (TextField, blank=True)
+[ ] registration_date (DateField, auto_now_add=True)
+[ ] is_active (BooleanField, default=True)
+[ ] created_by (ForeignKey to User)
+[ ] updated_by (ForeignKey to User, null=True)
+[ ] created_at (DateTimeField, auto_now_add=True)
+[ ] updated_at (DateTimeField, auto_now=True)
+
+**Implementation Steps:**
+[ ] Create src/beneficiaries/models/individual.py
+[ ] Import necessary models (Barangay, User)
+[ ] Define IndividualBeneficiary class with all fields
+[ ] Implement __str__ method: "BEN-2024-000001: Juan Dela Cruz"
+[ ] Implement get_full_name() method
+[ ] Implement get_age() method (calculate from date_of_birth)
+[ ] Implement get_absolute_url() method
+[ ] Add Meta class:
+    [ ] ordering = ['-created_at']
+    [ ] verbose_name = "Individual Beneficiary"
+    [ ] verbose_name_plural = "Individual Beneficiaries"
+    [ ] indexes on: beneficiary_id, barangay, last_name, date_of_birth
+[ ] Implement save() override to auto-generate beneficiary_id
+[ ] Add validation for date_of_birth (not in future)
+[ ] Import in beneficiaries/models/__init__.py
+
+**Validation Rules:**
+[ ] beneficiary_id must be unique
+[ ] date_of_birth must not be in the future
+[ ] Age must be >= 0 and <= 120 years
+[ ] If is_senior_citizen=True, age must be >= 60
+[ ] Contact number format validation (Philippine format)
+
+**Verification:**
+[ ] Run makemigrations: `python manage.py makemigrations beneficiaries`
+[ ] Review migration file for correctness
+[ ] Run migrate: `python manage.py migrate`
+[ ] Test in Django shell: Create sample beneficiary
+[ ] Verify auto-generation of beneficiary_id
+
+---
+
+### Task 3: Implement HouseholdBeneficiary Model
+
+**Objective:** Enable household-level tracking and aggregation
+
+**Model Fields:**
+[ ] household_id (CharField, unique, auto-generated: "HH-YYYY-XXXXXX")
+[ ] barangay (ForeignKey to Barangay)
+[ ] purok_sitio (CharField, max_length=100)
+[ ] household_head (ForeignKey to IndividualBeneficiary, related_name='headed_households')
+[ ] household_members (ManyToManyField to IndividualBeneficiary, through='HouseholdMember')
+[ ] total_members (PositiveIntegerField, default=1)
+[ ] housing_type (CharField, choices: Owned, Rented, Informal Settler, etc.)
+[ ] housing_material (CharField, choices: Concrete, Wood, Mixed, etc.)
+[ ] water_source (CharField, choices: Piped, Well, Spring, etc.)
+[ ] electricity_source (CharField, choices: Grid, Solar, Generator, None)
+[ ] toilet_facility (CharField, choices: Own, Shared, None)
+[ ] is_4ps (BooleanField, default=False)
+[ ] monthly_household_income_range (CharField, choices: income brackets)
+[ ] livelihood_sources (TextField, blank=True)
+[ ] remarks (TextField, blank=True)
+[ ] created_by (ForeignKey to User)
+[ ] created_at (DateTimeField, auto_now_add=True)
+[ ] updated_at (DateTimeField, auto_now=True)
+
+**Additional Model: HouseholdMember (Through Model)**
+[ ] household (ForeignKey to HouseholdBeneficiary)
+[ ] member (ForeignKey to IndividualBeneficiary)
+[ ] relationship_to_head (CharField, choices: Head, Spouse, Child, Parent, Sibling, Other)
+[ ] is_dependent (BooleanField, default=False)
+[ ] added_at (DateTimeField, auto_now_add=True)
+
+**Implementation Steps:**
+[ ] Create src/beneficiaries/models/household.py
+[ ] Define HouseholdBeneficiary model
+[ ] Define HouseholdMember through model
+[ ] Implement __str__ method for both models
+[ ] Add Meta class with proper ordering and indexes
+[ ] Implement method to update total_members automatically
+[ ] Add validation: household_head must be in household_members
+[ ] Import in beneficiaries/models/__init__.py
+
+**Verification:**
+[ ] Run makemigrations and migrate
+[ ] Test creating household with members
+[ ] Verify total_members auto-updates
+[ ] Test relationship constraints
+
+---
+
+### Task 4: Implement BeneficiaryEnrollment Model
+
+**Objective:** Link beneficiaries to specific PPAs (Programs, Projects, Activities)
+
+**Model Fields:**
+[ ] enrollment_id (CharField, unique, auto-generated: "ENR-YYYY-XXXXXX")
+[ ] beneficiary (ForeignKey to IndividualBeneficiary)
+[ ] ppa (ForeignKey to PPA from monitoring app)
+[ ] enrollment_date (DateField)
+[ ] enrollment_status (CharField, choices: Active, Completed, Dropped, Suspended)
+[ ] enrollment_type (CharField, choices: Direct, Indirect, Household)
+[ ] assistance_received (JSONField, default=dict, help_text="Track specific assistance")
+[ ] participation_level (CharField, choices: Full, Partial, None)
+[ ] completion_date (DateField, null=True, blank=True)
+[ ] dropout_reason (TextField, blank=True)
+[ ] satisfaction_rating (PositiveIntegerField, null=True, blank=True, choices: 1-5)
+[ ] feedback (TextField, blank=True)
+[ ] remarks (TextField, blank=True)
+[ ] enrolled_by (ForeignKey to User)
+[ ] created_at (DateTimeField, auto_now_add=True)
+[ ] updated_at (DateTimeField, auto_now=True)
+
+**Implementation Steps:**
+[ ] Create src/beneficiaries/models/enrollment.py
+[ ] Define BeneficiaryEnrollment model
+[ ] Implement __str__ method
+[ ] Add Meta class with unique_together constraint (beneficiary, ppa)
+[ ] Create indexes on: beneficiary, ppa, enrollment_date, enrollment_status
+[ ] Implement method to calculate enrollment duration
+[ ] Implement method to update assistance_received (JSON operations)
+[ ] Add validation: completion_date must be after enrollment_date
+[ ] Import in beneficiaries/models/__init__.py
+
+**Assistance Received JSON Structure:**
+```json
+{
+  "financial": {"amount": 5000, "currency": "PHP", "date": "2024-10-01"},
+  "in_kind": {"items": ["rice", "canned goods"], "date": "2024-10-05"},
+  "training": {"topic": "Livelihood Skills", "hours": 40, "date": "2024-10-10"}
+}
+```
+
+**Verification:**
+[ ] Run makemigrations and migrate
+[ ] Test enrollment creation
+[ ] Test unique constraint (beneficiary + ppa)
+[ ] Verify JSON field operations
+[ ] Test status transitions
+
+---
+
+### Task 5: Create Deduplication Utilities
+
+**Objective:** Prevent duplicate beneficiary records using fuzzy matching
+
+**Deduplication Strategy:**
+- First Name + Last Name + Date of Birth (exact match)
+- Soundex algorithm for phonetic matching
+- Levenshtein distance for typo detection
+- Barangay-level scoping for efficiency
+
+**Implementation Steps:**
+[ ] Create src/beneficiaries/utils/deduplication.py
+[ ] Install dependencies: `pip install python-Levenshtein fuzzywuzzy`
+[ ] Update requirements/base.txt
+
+**Functions to Implement:**
+
+[ ] **calculate_soundex(name: str) -> str**
+    - Convert name to uppercase
+    - Apply soundex algorithm
+    - Return 4-character code
+
+[ ] **calculate_levenshtein_distance(str1: str, str2: str) -> int**
+    - Use Levenshtein library
+    - Return edit distance
+
+[ ] **find_potential_duplicates(beneficiary: IndividualBeneficiary) -> QuerySet**
+    - Search within same barangay
+    - Match on:
+        - Exact: first_name + last_name + date_of_birth
+        - Soundex: first_name soundex + last_name soundex + date_of_birth
+        - Fuzzy: first_name Levenshtein <= 2 + last_name Levenshtein <= 2 + date_of_birth
+    - Return ranked list of matches with confidence scores
+
+[ ] **calculate_similarity_score(ben1: IndividualBeneficiary, ben2: IndividualBeneficiary) -> float**
+    - Compare multiple fields
+    - Weight: name (40%), date_of_birth (30%), address (20%), contact (10%)
+    - Return score 0.0 to 1.0
+
+[ ] **merge_beneficiaries(primary_id: int, duplicate_ids: list) -> IndividualBeneficiary**
+    - Transfer all enrollments to primary
+    - Update household memberships
+    - Soft delete duplicates (is_active=False)
+    - Create audit log entry
+    - Return primary beneficiary
+
+**Verification:**
+[ ] Unit tests for soundex algorithm
+[ ] Unit tests for Levenshtein distance
+[ ] Integration tests for duplicate detection
+[ ] Performance test with 10,000+ records
+
+---
+
+### Task 6: Create REST API Endpoints
+
+**Objective:** Provide programmatic access to beneficiary data
+
+**Serializers to Create:**
+
+[ ] **IndividualBeneficiarySerializer** (src/beneficiaries/serializers/individual.py)
+    - All fields from model
+    - Read-only: beneficiary_id, created_at, updated_at
+    - Nested: barangay (include municipality, province)
+    - Computed: age, full_name
+
+[ ] **HouseholdBeneficiarySerializer** (src/beneficiaries/serializers/household.py)
+    - All fields from model
+    - Nested: household_head, members (summary)
+
+[ ] **BeneficiaryEnrollmentSerializer** (src/beneficiaries/serializers/enrollment.py)
+    - All fields from model
+    - Nested: beneficiary (summary), ppa (summary)
+
+**ViewSets to Create:**
+
+[ ] **IndividualBeneficiaryViewSet** (src/beneficiaries/views/api.py)
+    - Standard CRUD operations
+    - list: Paginated list with filtering
+    - retrieve: Single beneficiary detail
+    - create: Register new beneficiary with deduplication check
+    - update/partial_update: Update beneficiary info
+    - destroy: Soft delete (set is_active=False)
+    - Custom actions:
+        - @action find_duplicates: Return potential duplicates
+        - @action merge: Merge duplicate beneficiaries
+        - @action enrollments: List all enrollments
+
+[ ] **HouseholdBeneficiaryViewSet**
+    - Standard CRUD operations
+    - Custom actions:
+        - @action add_member: Add member to household
+        - @action remove_member: Remove member from household
+
+[ ] **BeneficiaryEnrollmentViewSet**
+    - Standard CRUD operations
+    - Custom actions:
+        - @action complete: Mark enrollment as completed
+        - @action drop: Mark as dropped with reason
+        - @action update_assistance: Update assistance_received JSON
+
+**Filtering & Search:**
+[ ] Implement DjangoFilterBackend
+[ ] Filter by: barangay, municipality, sex, age_range, is_4ps, is_pwd, enrollment_status
+[ ] Search by: first_name, last_name, beneficiary_id
+[ ] Ordering by: created_at, last_name, date_of_birth
+
+**URL Configuration:**
+[ ] /api/beneficiaries/individuals/
+[ ] /api/beneficiaries/individuals/{id}/
+[ ] /api/beneficiaries/individuals/{id}/find_duplicates/
+[ ] /api/beneficiaries/individuals/{id}/merge/
+[ ] /api/beneficiaries/individuals/{id}/enrollments/
+[ ] /api/beneficiaries/households/
+[ ] /api/beneficiaries/enrollments/
+
+**Permissions:**
+[ ] IsAuthenticated for all endpoints
+[ ] Staff-only for merge operations
+[ ] Field-level permissions for sensitive data (contact, income)
+
+**Verification:**
+[ ] Test all CRUD operations via Postman/curl
+[ ] Test filtering and search
+[ ] Test custom actions
+[ ] Test permissions (unauthorized access blocked)
+[ ] Test pagination (default: 20 per page)
+
+---
+
+### Task 7: Create UI Components
+
+**Objective:** Build user-friendly interfaces for beneficiary management
+
+**7.1: Beneficiary Registration Form**
+
+[ ] Create src/beneficiaries/forms/individual.py
+[ ] Implement IndividualBeneficiaryForm (ModelForm)
+[ ] Apply form field styles using _apply_form_field_styles utility
+[ ] Use form component templates:
+    - components/form_field.html
+    - components/form_field_input.html
+    - components/form_field_select.html
+
+**Form Sections:**
+1. Personal Information
+   - Name fields (first, middle, last, suffix)
+   - Date of birth (datepicker)
+   - Sex, Civil status
+
+2. Contact Information
+   - Contact number, Email
+
+3. Address
+   - Barangay (dropdown with search)
+   - Purok/Sitio
+
+4. Special Classifications
+   - Indigenous Person (is_ip, indigenous_group)
+   - 4Ps beneficiary (is_4ps)
+   - Person with Disability (is_pwd, disability_type)
+   - Senior Citizen (is_senior_citizen)
+
+5. Socio-Economic Information
+   - Occupation, Monthly income range
+   - Education level
+
+**View Implementation:**
+[ ] Create src/beneficiaries/views/individual.py
+[ ] BeneficiaryCreateView (CreateView)
+[ ] BeneficiaryUpdateView (UpdateView)
+[ ] BeneficiaryDetailView (DetailView)
+[ ] BeneficiaryListView (ListView with filtering)
+
+**Template Implementation:**
+[ ] Create src/templates/beneficiaries/individual_form.html
+    - Extend base.html
+    - Use card layout (white, rounded-xl)
+    - Multi-section form with headers
+    - Duplicate warning banner (if potential duplicates found)
+    - Submit button (blue-to-teal gradient)
+    - Cancel button (outline)
+
+[ ] Create src/templates/beneficiaries/individual_detail.html
+    - Beneficiary info card with stat display
+    - Enrollment history table
+    - Household information (if applicable)
+    - Action buttons (Edit, Enroll, Find Duplicates)
+
+[ ] Create src/templates/beneficiaries/individual_list.html
+    - Extend components/data_table_card.html
+    - Search bar (by name, beneficiary_id)
+    - Filter sidebar (barangay, classifications)
+    - Data table with columns:
+        - Beneficiary ID, Full Name, Age, Sex
+        - Barangay, Classifications (badges)
+        - Actions (View, Edit, Enroll)
+    - Pagination
+
+**HTMX Integration:**
+[ ] Duplicate detection on form blur (first_name, last_name, date_of_birth)
+[ ] Dynamic barangay filtering based on municipality
+[ ] Instant search in list view
+[ ] Inline enrollment status updates
+
+**Verification:**
+[ ] Test form submission (create new beneficiary)
+[ ] Test form validation errors display
+[ ] Test duplicate warning appears
+[ ] Test list view filtering and search
+[ ] Test detail view displays all information
+[ ] Test responsive layout (mobile, tablet, desktop)
+
+---
+
+**7.2: Beneficiary Search Interface**
+
+[ ] Create src/templates/beneficiaries/individual_search.html
+    - Advanced search form with multiple criteria
+    - Search by: Name, ID, Barangay, Classifications, Age range
+    - Results table with sorting
+    - Export to CSV button
+
+[ ] Create src/beneficiaries/views/search.py
+[ ] Implement BeneficiarySearchView
+[ ] Implement search logic with Q objects
+[ ] Implement CSV export functionality
+
+**Verification:**
+[ ] Test search with various criteria combinations
+[ ] Test CSV export (correct data, formatting)
+[ ] Test search performance with large dataset
+
+---
+
+**7.3: Enrollment Management Interface**
+
+[ ] Create src/beneficiaries/forms/enrollment.py
+[ ] Implement BeneficiaryEnrollmentForm
+
+**Form Fields:**
+- Beneficiary (autocomplete widget)
+- PPA (dropdown filtered by MOA)
+- Enrollment date
+- Enrollment type
+- Remarks
+
+[ ] Create src/templates/beneficiaries/enrollment_form.html
+    - Modal or full-page form
+    - Beneficiary search/select widget
+    - PPA selection with info display
+    - Date picker for enrollment_date
+
+[ ] Create src/templates/beneficiaries/enrollment_list.html
+    - Data table with enrollments
+    - Filter by: PPA, Status, Date range
+    - Status badges (Active: green, Completed: blue, Dropped: red)
+    - Actions: View, Update Status, Record Assistance
+
+[ ] Create src/beneficiaries/views/enrollment.py
+[ ] EnrollmentCreateView
+[ ] EnrollmentUpdateView
+[ ] EnrollmentListView
+[ ] EnrollmentStatusUpdateView (HTMX endpoint)
+
+**HTMX Endpoints:**
+[ ] Update enrollment status (instant UI update)
+[ ] Record assistance received (modal form)
+[ ] Mark completion (with completion date)
+
+**Verification:**
+[ ] Test enrollment creation
+[ ] Test status updates with HTMX
+[ ] Test assistance recording
+[ ] Test enrollment list filtering
+
+---
+
+### Task 8: Implement Data Privacy Controls
+
+**Objective:** Ensure GDPR/Data Privacy Act compliance
+
+**8.1: Access Control**
+
+[ ] Create src/beneficiaries/permissions.py
+[ ] Define permission classes:
+    - CanViewBeneficiaryPII (Personal Identifiable Information)
+    - CanEditBeneficiary
+    - CanMergeBeneficiaries (superuser/admin only)
+    - CanExportBeneficiaryData
+
+[ ] Implement field-level permissions in serializers
+    - Hide contact_number, email from non-authorized users
+    - Mask beneficiary names in list view (show initials only)
+
+[ ] Update ViewSets with permission checks
+[ ] Update templates with permission-based display
+
+**8.2: Audit Logging**
+
+[ ] Create src/beneficiaries/models/audit.py
+[ ] Define BeneficiaryAuditLog model:
+    - action_type (Created, Updated, Deleted, Merged, Viewed, Exported)
+    - beneficiary (ForeignKey)
+    - user (ForeignKey)
+    - timestamp (DateTimeField)
+    - ip_address (GenericIPAddressField)
+    - changes (JSONField, store field-level changes)
+    - reason (TextField, for sensitive actions)
+
+[ ] Implement audit logging in views:
+    - Log every beneficiary view (PII access)
+    - Log all modifications
+    - Log exports (who, when, what data)
+    - Log merge operations
+
+[ ] Create audit log viewer:
+    - src/templates/beneficiaries/audit_log.html
+    - Filter by: beneficiary, user, action_type, date_range
+    - Export audit logs
+
+**8.3: Data Retention Policy**
+
+[ ] Create management command: src/beneficiaries/management/commands/cleanup_inactive_beneficiaries.py
+[ ] Archive beneficiaries inactive for > 5 years
+[ ] Implement soft delete (is_active=False) before hard delete
+[ ] Create archive table for historical data
+
+**8.4: Data Export with Consent**
+
+[ ] Implement consent tracking:
+    - Add data_sharing_consent (BooleanField) to IndividualBeneficiary
+    - Add consent_date (DateField)
+    - Add consent_withdrawn_date (DateField, null=True)
+
+[ ] Implement export with consent check:
+    - Only export beneficiaries with active consent
+    - Include consent status in export metadata
+
+**Verification:**
+[ ] Test permission enforcement (unauthorized access blocked)
+[ ] Test audit log creation for all actions
+[ ] Test audit log viewer
+[ ] Test data export with consent filtering
+[ ] Review compliance with Data Privacy Act requirements
+
+---
+
+### Task 9: Create Reports
+
+**Objective:** Provide actionable insights from beneficiary data
+
+**9.1: Beneficiary Statistics Report**
+
+[ ] Create src/beneficiaries/views/reports.py
+[ ] Implement BeneficiaryStatisticsView
+[ ] Generate statistics:
+    - Total beneficiaries (overall, by barangay, by municipality)
+    - Breakdown by: Sex, Age group, Civil status
+    - Special classifications count: 4Ps, PWD, Indigenous, Senior
+    - Income distribution
+    - Education level distribution
+
+[ ] Create src/templates/beneficiaries/reports/statistics.html
+    - Stat cards (3D milk white design)
+    - Charts:
+        - Age pyramid (male vs female)
+        - Classification distribution (pie chart)
+        - Income range distribution (bar chart)
+        - Geographic distribution (map)
+    - Filter by: Date range, Barangay, Municipality
+
+**9.2: Enrollment Report**
+
+[ ] Implement EnrollmentReportView
+[ ] Generate enrollment statistics:
+    - Total enrollments by PPA
+    - Enrollment status breakdown
+    - Completion rate by PPA
+    - Average satisfaction rating
+    - Dropout rate and reasons
+
+[ ] Create src/templates/beneficiaries/reports/enrollment.html
+    - Enrollment trends (line chart over time)
+    - PPA performance comparison (table)
+    - Status breakdown (donut chart)
+    - Filter by: PPA, MOA, Date range, Status
+
+**9.3: Household Profiling Report**
+
+[ ] Implement HouseholdProfilingReportView
+[ ] Generate household statistics:
+    - Total households
+    - Average household size
+    - Housing conditions (type, material, utilities)
+    - Income distribution
+    - 4Ps coverage
+
+[ ] Create src/templates/beneficiaries/reports/household.html
+    - Household statistics cards
+    - Housing conditions breakdown (stacked bar chart)
+    - Income distribution (histogram)
+    - Filter by: Barangay, Municipality
+
+**9.4: Deduplication Report**
+
+[ ] Implement DeduplicationReportView
+[ ] Generate deduplication statistics:
+    - Potential duplicates detected
+    - Merged records
+    - Duplicate detection rate by barangay
+
+[ ] Create src/templates/beneficiaries/reports/deduplication.html
+    - List of potential duplicates with similarity scores
+    - Action buttons to review and merge
+    - Filter by: Confidence threshold, Barangay
+
+**9.5: Data Quality Report**
+
+[ ] Implement DataQualityReportView
+[ ] Check data completeness:
+    - Missing contact information
+    - Missing household numbers
+    - Missing occupation/income data
+    - Invalid date of birth (future dates, unrealistic ages)
+
+[ ] Create src/templates/beneficiaries/reports/data_quality.html
+    - Completeness percentage by field
+    - List of records with issues
+    - Action buttons to fix issues
+
+**Export Functionality:**
+[ ] Implement CSV export for all reports
+[ ] Implement PDF export (using ReportLab or WeasyPrint)
+[ ] Add export buttons to all report templates
+
+**Verification:**
+[ ] Test each report with sample data
+[ ] Verify chart rendering (use Chart.js)
+[ ] Test filters and date ranges
+[ ] Test CSV export (correct data, formatting)
+[ ] Test PDF export (layout, pagination)
+[ ] Test performance with large datasets
+
+---
+
+### Task 10: Testing Checklist
+
+**10.1: Unit Tests**
+
+[ ] Create src/beneficiaries/tests/test_models.py
+    [ ] Test IndividualBeneficiary creation
+    [ ] Test beneficiary_id auto-generation (unique, correct format)
+    [ ] Test get_age() method (correct calculation)
+    [ ] Test date_of_birth validation (not future)
+    [ ] Test HouseholdBeneficiary creation
+    [ ] Test household_members relationship
+    [ ] Test total_members auto-update
+    [ ] Test BeneficiaryEnrollment creation
+    [ ] Test unique_together constraint (beneficiary + ppa)
+    [ ] Test enrollment status transitions
+
+[ ] Create src/beneficiaries/tests/test_utils.py
+    [ ] Test calculate_soundex() function
+    [ ] Test calculate_levenshtein_distance() function
+    [ ] Test find_potential_duplicates() (various scenarios)
+    [ ] Test calculate_similarity_score() (edge cases)
+    [ ] Test merge_beneficiaries() (data integrity)
+
+[ ] Create src/beneficiaries/tests/test_forms.py
+    [ ] Test IndividualBeneficiaryForm validation
+    [ ] Test form field styles applied
+    [ ] Test BeneficiaryEnrollmentForm validation
+
+**10.2: Integration Tests**
+
+[ ] Create src/beneficiaries/tests/test_api.py
+    [ ] Test beneficiary list endpoint (pagination, filtering)
+    [ ] Test beneficiary create endpoint (with duplicate check)
+    [ ] Test beneficiary update endpoint
+    [ ] Test beneficiary delete endpoint (soft delete)
+    [ ] Test find_duplicates custom action
+    [ ] Test merge custom action (authorization)
+    [ ] Test enrollments list endpoint
+    [ ] Test enrollment create endpoint
+    [ ] Test enrollment status update endpoint
+
+[ ] Create src/beneficiaries/tests/test_views.py
+    [ ] Test BeneficiaryCreateView (form display, submission)
+    [ ] Test BeneficiaryListView (filtering, search)
+    [ ] Test BeneficiaryDetailView (correct data display)
+    [ ] Test EnrollmentCreateView (beneficiary selection)
+    [ ] Test report views (data accuracy)
+
+**10.3: Deduplication Tests**
+
+[ ] Create src/beneficiaries/tests/test_deduplication.py
+    [ ] Test exact match detection (first_name + last_name + date_of_birth)
+    [ ] Test soundex matching (phonetic similarity)
+    [ ] Test fuzzy matching (typos, misspellings)
+    [ ] Test similarity scoring accuracy
+    [ ] Test merge operation (data preservation)
+    [ ] Test performance with 10,000+ records
+    [ ] Test barangay-scoped search efficiency
+
+**10.4: Permission Tests**
+
+[ ] Create src/beneficiaries/tests/test_permissions.py
+    [ ] Test CanViewBeneficiaryPII permission
+    [ ] Test field-level permission enforcement
+    [ ] Test merge permission (superuser only)
+    [ ] Test export permission
+    [ ] Test unauthorized access blocked (401/403)
+
+**10.5: Audit Log Tests**
+
+[ ] Create src/beneficiaries/tests/test_audit.py
+    [ ] Test audit log creation on beneficiary view
+    [ ] Test audit log creation on beneficiary update
+    [ ] Test audit log creation on merge
+    [ ] Test audit log creation on export
+    [ ] Test audit log query filtering
+
+**10.6: Performance Tests**
+
+[ ] Create src/beneficiaries/tests/test_performance.py
+    [ ] Test beneficiary list view (< 200ms for 10,000 records)
+    [ ] Test duplicate detection (< 500ms per beneficiary)
+    [ ] Test enrollment creation (< 100ms)
+    [ ] Test report generation (< 2s for 10,000 records)
+    [ ] Test CSV export (< 5s for 10,000 records)
+
+**10.7: Data Quality Tests**
+
+[ ] Test date_of_birth validation (reject future dates)
+[ ] Test age calculation (correct for all edge cases)
+[ ] Test beneficiary_id uniqueness (no collisions)
+[ ] Test household_members consistency
+[ ] Test enrollment date constraints (not before PPA start date)
+
+**10.8: UI/UX Tests**
+
+[ ] Test form responsiveness (mobile, tablet, desktop)
+[ ] Test form validation messages display correctly
+[ ] Test HTMX duplicate warning appears
+[ ] Test HTMX enrollment status update (instant feedback)
+[ ] Test search functionality (correct results)
+[ ] Test filter combinations (multiple filters work together)
+[ ] Test pagination (correct page navigation)
+
+**Test Execution:**
+[ ] Run all tests: `pytest src/beneficiaries/tests/ -v`
+[ ] Check test coverage: `coverage run -m pytest src/beneficiaries/tests/`
+[ ] Generate coverage report: `coverage report`
+[ ] Aim for: > 90% code coverage
+
+**Verification Checklist:**
+[ ] All unit tests pass
+[ ] All integration tests pass
+[ ] No performance regressions
+[ ] No security vulnerabilities
+[ ] Audit logs capture all sensitive actions
+[ ] Permissions enforced correctly
+[ ] UI responsive on all screen sizes
+[ ] Data integrity maintained across operations
+
+---
+
+## Dependencies Summary
+
+**External Libraries Required:**
+- python-Levenshtein (deduplication)
+- fuzzywuzzy (fuzzy matching)
+- django-filter (API filtering)
+- djangorestframework (API)
+- Chart.js (frontend charts)
+- ReportLab or WeasyPrint (PDF export)
+
+**Django Apps Required:**
+- communities (Barangay model)
+- monitoring (PPA model)
+- common (User model, base utilities)
+
+**Database:**
+- PostgreSQL recommended (JSONB support for assistance_received)
+- Indexes required on: beneficiary_id, barangay, date_of_birth, enrollment_status
+
+---
+
+## Acceptance Criteria
+
+**Phase Complete When:**
+[ ] All 10 tasks completed and verified
+[ ] All models created with proper migrations
+[ ] REST API fully functional with authentication
+[ ] UI components implemented and responsive
+[ ] Deduplication system working with > 95% accuracy
+[ ] Data privacy controls enforced
+[ ] Reports generating accurate data
+[ ] Test suite passing with > 90% coverage
+[ ] Documentation updated in docs/
+[ ] Admin approval obtained
+
+---
+
+## Post-Implementation Tasks
+
+[ ] Create user guide for beneficiary registration
+[ ] Create admin guide for deduplication and merging
+[ ] Create data privacy compliance document
+[ ] Train OOBC staff on beneficiary management
+[ ] Import existing beneficiary data (if available)
+[ ] Set up automated data quality checks
+[ ] Configure backup and recovery procedures
+[ ] Monitor system performance in production
+[ ] Collect user feedback and iterate
+
+---
+
+## Notes
+
+- This phase is CRITICAL for program targeting and impact measurement
+- Deduplication is essential to prevent duplicate aid distribution
+- Data privacy compliance is non-negotiable (Data Privacy Act 2012)
+- Performance optimization required for large beneficiary databases (10,000+)
+- Regular data quality audits recommended (monthly)
+- Coordinate with MOAs for PPA enrollment synchronization
+
+---
+
+**Phase Owner:** TBD
+**Start Date:** TBD
+**Target Completion:** TBD (No time estimates per CLAUDE.md policy)
+**Status:** Not Started

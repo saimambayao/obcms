@@ -7,7 +7,7 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+    <a href="{% url 'mana:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">Regional MANA</li>
@@ -431,7 +431,7 @@
                         <i class="fas fa-arrow-up"></i>
                         <span>Use Dropdown Above</span>
                     </button>
-                    <a href="{% url 'common:mana_new_assessment' %}?assessment_level=regional&primary_methodology=workshop" class="inline-flex items-center gap-2 rounded-lg bg-green-600 text-white text-sm font-semibold px-4 py-2 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200">
+                    <a href="{% url 'mana:mana_new_assessment' %}?assessment_level=regional&primary_methodology=workshop" class="inline-flex items-center gap-2 rounded-lg bg-green-600 text-white text-sm font-semibold px-4 py-2 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200">
                         <i class="fas fa-plus"></i>
                         <span>Create New Assessment</span>
                     </a>
@@ -450,7 +450,7 @@
             <p class="mt-1 text-sm text-gray-600">Launch planning, logging, processing, or open the detailed MANA playbook.</p>
         </div>
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            <a href="{% url 'common:mana_activity_planner' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all.duration-200">
+            <a href="{% url 'mana:mana_activity_planner' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all.duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-calendar-plus text-white text-xl"></i>
@@ -489,7 +489,7 @@
                     </div>
                 </div>
             </a>
-            <a href="{% url 'common:mana_activity_processing' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all.duration-200">
+            <a href="{% url 'mana:mana_activity_processing' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all.duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-chart-line text-white text-xl"></i>
@@ -502,7 +502,7 @@
                     </div>
                 </div>
             </a>
-            <a href="{% url 'common:mana_playbook' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all.duration-200">
+            <a href="{% url 'mana:mana_playbook' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all.duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-route text-white text-xl"></i>

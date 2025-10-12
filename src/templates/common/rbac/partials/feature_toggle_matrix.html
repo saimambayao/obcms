@@ -1,0 +1,122 @@
+{% load static %}
+
+<div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-800 to-emerald-600 px-6 py-4">
+        <h3 class="text-lg font-semibold text-white flex items-center">
+            <i class="fas fa-toggle-on mr-3"></i>
+            Feature Access Matrix: {{ user.get_full_name|default:user.username }}
+        </h3>
+    </div>
+
+    <!-- Matrix Grid -->
+    <div class="p-6">
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b-2 border-gray-200">
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Feature</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Access</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Source</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for feature in features %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150"
+                        id="feature-row-{{ feature.id }}">
+                        <!-- Feature Info -->
+                        <td class="px-4 py-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-{{ feature.icon }} text-white"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">{{ feature.name }}</p>
+                                    <p class="text-xs text-gray-500">{{ feature.description|truncatewords:15 }}</p>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Toggle Switch -->
+                        <td class="px-4 py-4 text-center">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox"
+                                       {% if feature.is_enabled %}checked{% endif %}
+                                       class="sr-only peer"
+                                       hx-post="{% url 'common:rbac_feature_toggle' user.id feature.id %}"
+                                       hx-trigger="change"
+                                       hx-target="#feature-row-{{ feature.id }}"
+                                       hx-swap="outerHTML swap:300ms"
+                                       hx-indicator="#indicator-{{ feature.id }}"
+                                       aria-label="Toggle {{ feature.name }} for {{ user.get_full_name|default:user.username }}">
+                                <div class="w-14 h-7 {% if feature.is_enabled %}bg-emerald-600{% else %}bg-gray-300{% endif %} rounded-full peer peer-focus:ring-4 peer-focus:ring-emerald-300 transition-colors duration-300">
+                                    <div class="absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-6 w-6 transition-transform duration-300 peer-checked:translate-x-7 shadow-md"></div>
+                                </div>
+                            </label>
+                            <div id="indicator-{{ feature.id }}" class="htmx-indicator ml-2 inline-block">
+                                <i class="fas fa-spinner fa-spin text-blue-600"></i>
+                            </div>
+                        </td>
+
+                        <!-- Source Badge -->
+                        <td class="px-4 py-4 text-center">
+                            {% if feature.source == 'role' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                                  title="Inherited from role: {{ feature.role_name }}">
+                                <i class="fas fa-shield-alt mr-1"></i>
+                                Role
+                            </span>
+                            {% elif feature.source == 'direct' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                  title="Directly assigned to user">
+                                <i class="fas fa-user mr-1"></i>
+                                Direct
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                <i class="fas fa-ban mr-1"></i>
+                                Disabled
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="px-4 py-12 text-center">
+                            <i class="fas fa-toggle-off text-5xl text-gray-300 mb-3"></i>
+                            <p class="text-gray-500">No features available for this user.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Legend -->
+        <div class="mt-6 pt-4 border-t border-gray-200">
+            <h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Legend</h4>
+            <div class="flex flex-wrap gap-4 text-xs">
+                <div class="flex items-center">
+                    <span class="inline-block w-4 h-4 bg-emerald-600 rounded mr-2"></span>
+                    <span class="text-gray-600">Enabled</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="inline-block w-4 h-4 bg-gray-300 rounded mr-2"></span>
+                    <span class="text-gray-600">Disabled</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mr-1">
+                        <i class="fas fa-shield-alt mr-1"></i> Role
+                    </span>
+                    <span class="text-gray-600">From assigned role</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-1">
+                        <i class="fas fa-user mr-1"></i> Direct
+                    </span>
+                    <span class="text-gray-600">Direct assignment</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

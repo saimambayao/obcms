@@ -163,4 +163,32 @@ def register_auditlog_models():
         serialize_data=True,
     )
 
+    # Register Budget Preparation models (Phase 2A)
+    from budget_preparation.models import (
+        BudgetProposal,
+        ProgramBudget,
+        BudgetJustification,
+        BudgetLineItem
+    )
+    auditlog.register(
+        BudgetProposal,
+        exclude_fields=[],
+        serialize_data=True,
+    )
+    auditlog.register(
+        ProgramBudget,
+        exclude_fields=[],
+        serialize_data=True,
+    )
+    auditlog.register(
+        BudgetJustification,
+        exclude_fields=[],
+        serialize_data=True,
+    )
+    auditlog.register(
+        BudgetLineItem,
+        exclude_fields=[],
+        serialize_data=True,
+    )
+
     print("✅ Auditlog registered for all security-sensitive models")

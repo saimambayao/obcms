@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ action }} Work Objective - OOBC Management{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:oobc_home' %}" class="text-blue-600 hover:text-blue-800">
+        <i class="fas fa-home"></i>
+    </a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'planning:dashboard' %}" class="text-blue-600 hover:text-blue-800">Planning</a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'planning:annual_list' %}" class="text-blue-600 hover:text-blue-800">Annual Work Plans</a>
+</li>
+{% if plan %}
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'planning:annual_detail' plan.pk %}" class="text-blue-600 hover:text-blue-800">{{ plan.title }}</a>
+</li>
+{% elif objective %}
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'planning:annual_detail' objective.annual_work_plan.pk %}" class="text-blue-600 hover:text-blue-800">{{ objective.annual_work_plan.title }}</a>
+</li>
+{% endif %}
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <span class="text-gray-700">{{ action }} Objective</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    {# Page Header #}
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            <i class="fas fa-{% if action == 'Add' %}plus{% else %}edit{% endif %} text-purple-600 mr-3"></i>
+            {{ action }} Work Objective
+        </h1>
+        <p class="text-gray-600">
+            {% if action == 'Add' %}
+                Add a new objective to the annual work plan
+            {% else %}
+                Update objective details and progress
+            {% endif %}
+        </p>
+    </div>
+
+    {# Form #}
+    <form method="post" class="bg-white rounded-xl p-6 border border-gray-200">
+        {% csrf_token %}
+
+        {# Form Errors #}
+        {% if form.non_field_errors %}
+            <div class="bg-red-50 border-l-4 border-red-500 rounded-r-lg p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">
+                            Please correct the following errors:
+                        </h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            {{ form.non_field_errors }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {# Plan and Goal Links (Hidden if context exists) #}
+        {% if not plan %}
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-link text-purple-500 mr-2"></i>
+                Work Plan Links
+            </h2>
+
+            <div class="space-y-4">
+                <div>
+                    <label for="{{ form.annual_work_plan.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Annual Work Plan <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        {{ form.annual_work_plan }}
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                        </span>
+                    </div>
+                    {% if form.annual_work_plan.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.annual_work_plan.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.strategic_goal.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Link to Strategic Goal (Optional)
+                    </label>
+                    <div class="relative">
+                        {{ form.strategic_goal }}
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                        </span>
+                    </div>
+                    {% if form.strategic_goal.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.strategic_goal.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">Link this objective to a strategic goal for alignment tracking</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Basic Information Section #}
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-info-circle text-purple-500 mr-2"></i>
+                Basic Information
+            </h2>
+
+            {# Title Field #}
+            <div class="mb-4">
+                <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Objective Title <span class="text-red-500">*</span>
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-sm text-gray-500">Example: "Build 5 new classrooms in Lanao del Sur OBCs"</p>
+            </div>
+
+            {# Description Field #}
+            <div class="mb-4">
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-sm text-gray-500">Detailed description of this objective</p>
+            </div>
+
+            {# Target Date Field #}
+            <div class="mb-4">
+                <label for="{{ form.target_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Target Completion Date <span class="text-red-500">*</span>
+                </label>
+                {{ form.target_date }}
+                {% if form.target_date.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.target_date.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-sm text-gray-500">Deadline for completing this objective</p>
+            </div>
+        </div>
+
+        {# Indicator and Progress Section #}
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-chart-line text-purple-500 mr-2"></i>
+                Indicator and Progress Tracking
+            </h2>
+
+            {# Indicator Field #}
+            <div class="mb-4">
+                <label for="{{ form.indicator.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Indicator <span class="text-red-500">*</span>
+                </label>
+                {{ form.indicator }}
+                {% if form.indicator.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.indicator.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-sm text-gray-500">Example: "Number of classrooms constructed" or "Communities reached"</p>
+            </div>
+
+            {# Progress Values #}
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label for="{{ form.baseline_value.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Baseline Value <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.baseline_value }}
+                    {% if form.baseline_value.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.baseline_value.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Starting point</p>
+                </div>
+
+                <div>
+                    <label for="{{ form.target_value.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Target Value <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.target_value }}
+                    {% if form.target_value.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.target_value.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Goal to reach</p>
+                </div>
+
+                <div>
+                    <label for="{{ form.current_value.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Current Value
+                    </label>
+                    {{ form.current_value }}
+                    {% if form.current_value.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.current_value.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Progress so far</p>
+                </div>
+
+                <div>
+                    <label for="{{ form.completion_percentage.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Completion (%)
+                    </label>
+                    {{ form.completion_percentage }}
+                    {% if form.completion_percentage.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.completion_percentage.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">0-100</p>
+                </div>
+            </div>
+        </div>
+
+        {# Status Section #}
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-toggle-on text-purple-500 mr-2"></i>
+                Status
+            </h2>
+
+            <div class="space-y-1">
+                <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Objective Status <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                    {{ form.status }}
+                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                        <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                    </span>
+                </div>
+                {% if form.status.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Form Actions #}
+        <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-200">
+            <a href="{% if plan %}{% url 'planning:annual_detail' plan.pk %}{% elif objective %}{% url 'planning:annual_detail' objective.annual_work_plan.pk %}{% else %}{% url 'planning:annual_list' %}{% endif %}"
+               class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200 text-center min-h-[48px] flex items-center justify-center">
+                <i class="fas fa-times mr-2"></i>
+                Cancel
+            </a>
+            <button type="submit"
+                    class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300 min-h-[48px] flex items-center justify-center">
+                <i class="fas fa-save mr-2"></i>
+                {% if action == 'Add' %}Add Objective{% else %}Update Objective{% endif %}
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

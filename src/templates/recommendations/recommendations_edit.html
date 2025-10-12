@@ -9,7 +9,7 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:recommendations_home' %}" class="text-neutral-500 hover:text-neutral-700">Recommendations</a>
+    <a href="{% url 'policies:home' %}" class="text-neutral-500 hover:text-neutral-700">Recommendations</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">Edit Recommendation</li>
@@ -119,7 +119,7 @@
     <form
         id="recommendation-form"
         method="post"
-        action="{% url 'common:recommendations_edit' recommendation.id %}"
+        action="{% url 'policies:edit' recommendation.id %}"
         enctype="multipart/form-data"
         class="max-w-5xl mx-auto"
         data-selected-region="{{ recommendation.target_region_id|default_if_none:'' }}"
@@ -1623,7 +1623,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     autosaveStatus.textContent = 'Draft saved successfully!';
                     autosaveStatus.className = 'text-xs text-emerald-600';
                     setTimeout(() => {
-                        window.location.href = '{% url "common:recommendations_manage" %}';
+                        window.location.href = '{% url "policies:manage" %}';
                     }, 1000);
                 }
             })

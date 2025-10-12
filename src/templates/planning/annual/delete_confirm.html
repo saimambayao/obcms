@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete Annual Work Plan - OOBC Management{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:oobc_home' %}" class="text-blue-600 hover:text-blue-800">
+        <i class="fas fa-home"></i>
+    </a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'planning:dashboard' %}" class="text-blue-600 hover:text-blue-800">Planning</a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'planning:annual_list' %}" class="text-blue-600 hover:text-blue-800">Annual Work Plans</a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <span class="text-gray-700">Delete Confirmation</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    {# Delete Confirmation Card #}
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-6">
+
+        {# Header with Warning Icon #}
+        <div class="flex items-start gap-3">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600">
+                <i class="fas fa-triangle-exclamation text-xl"></i>
+            </span>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Archive Annual Work Plan</h1>
+                <p class="text-sm text-gray-600 mt-1">
+                    This action will archive the annual work plan and all associated objectives.
+                    The plan will no longer be active but historical data will be preserved.
+                </p>
+            </div>
+        </div>
+
+        {# Plan Details #}
+        <div class="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700 space-y-2">
+            <p class="font-semibold text-lg text-gray-900">{{ plan.title }}</p>
+            <div class="flex flex-wrap items-center gap-4 text-gray-600">
+                <span class="flex items-center">
+                    <i class="fas fa-calendar text-purple-500 mr-2"></i>
+                    Fiscal Year {{ plan.year }}
+                </span>
+                <span class="flex items-center">
+                    <i class="fas fa-tasks text-emerald-500 mr-2"></i>
+                    {{ plan.objectives.count }} Objective{{ plan.objectives.count|pluralize }}
+                </span>
+                <span class="flex items-center">
+                    <i class="fas fa-info-circle text-amber-500 mr-2"></i>
+                    Status: {{ plan.get_status_display }}
+                </span>
+            </div>
+            {% if plan.budget_total %}
+            <div class="pt-2 border-t border-gray-200">
+                <p class="text-sm">
+                    <span class="font-medium">Budget:</span> ₱{{ plan.budget_total|floatformat:2 }}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Strategic Plan Link #}
+        <div class="bg-blue-50 border-l-4 border-blue-500 rounded-r-lg p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-link text-blue-500 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">
+                        Linked to Strategic Plan
+                    </h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <p>This annual plan is part of <strong>{{ plan.strategic_plan.title }}</strong></p>
+                        <p class="mt-1">The strategic plan will not be affected by this archive action.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Warning Message #}
+        {% if plan.objectives.exists %}
+        <div class="bg-amber-50 border-l-4 border-amber-500 rounded-r-lg p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-amber-500 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-amber-800">
+                        This plan has associated objectives
+                    </h3>
+                    <div class="mt-2 text-sm text-amber-700">
+                        <p>This annual work plan contains {{ plan.objectives.count }} work objective{{ plan.objectives.count|pluralize }}. Archiving this plan will:</p>
+                        <ul class="list-disc pl-5 mt-2 space-y-1">
+                            <li>Preserve all objective data and progress tracking</li>
+                            <li>Maintain historical records for reporting purposes</li>
+                            <li>Prevent further updates to objectives</li>
+                            <li>Keep links to M&E programs intact</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Action Buttons #}
+        <form method="post" class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-gray-200">
+            {% csrf_token %}
+            <a href="{% url 'planning:annual_detail' plan.pk %}"
+               class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border-2 border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors duration-200 min-h-[48px]">
+                <i class="fas fa-arrow-left"></i>
+                Cancel
+            </a>
+            <button type="submit"
+                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-red-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-red-600 hover:to-red-700 hover:-translate-y-1 transition-all duration-300 min-h-[48px]">
+                <i class="fas fa-archive"></i>
+                Archive Plan
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

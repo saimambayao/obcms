@@ -1,0 +1,1226 @@
+================================================================================
+BMMS URL STRUCTURE REFACTORING TASK BREAKDOWN
+================================================================================
+
+Task ID: BMMS-URL-REFACTOR
+Phase: URL Refactoring & Technical Debt Resolution
+Priority: HIGH (Technical debt resolution required before BMMS expansion)
+Complexity: HIGH
+Dependencies: Can be done in parallel with Phase 2-5 (Planning/Budgeting modules)
+Branch: feature/bmms-url-refactor (split from main)
+Status: NOT STARTED
+
+================================================================================
+PHASE OVERVIEW
+================================================================================
+
+Purpose:
+--------
+Fix the "Monolithic Router Anti-Pattern" where common/urls.py (847 lines) routes
+ALL modules, and common/views.py (2266 lines) handles ALL module logic. This
+violates Django best practices and blocks clean BMMS multi-tenancy implementation.
+
+Current Problems:
+-----------------
+❌ common/urls.py: 847 lines routing 6 modules (should be <150 lines)
+❌ common/views.py: 2266 lines handling 6 modules (should be <500 lines)
+❌ Namespace confusion: common:communities_home suggests Communities is part of common
+❌ Developer friction: Finding code requires searching 2000+ lines
+❌ Blocks BMMS: Cannot implement organization-scoped URLs (/moa/<ORG_CODE>/)
+
+Target URL Structure:
+---------------------
+BEFORE (Current - OBCMS):
+  /communities/                  → communities module (but routed through common)
+  /mana/                         → mana module (but routed through common)
+  /coordination/                 → coordination module (but routed through common)
+
+AFTER (Phase 0 - Proper Module Routing):
+  /communities/                  → communities module (directly routed)
+  /mana/                         → mana module (directly routed)
+  /coordination/                 → coordination module (directly routed)
+
+AFTER (Phase 1 - BMMS Multi-Tenancy):
+  /moa/OOBC/communities/         → OOBC Communities (organization-scoped)
+  /moa/MOH/mana/                 → MOH MANA (organization-scoped)
+  /moa/MSSD/coordination/        → MSSD Coordination (organization-scoped)
+
+Benefits:
+---------
+✅ Clean separation of concerns (each app owns its URLs)
+✅ Reduced file sizes (847 → <150 lines common/urls.py)
+✅ Clear namespaces (communities:home, not common:communities_home)
+✅ Faster code navigation (MANA code in src/mana/, not src/common/)
+✅ Enables BMMS multi-tenancy (organization-scoped URLs)
+
+Reference Documentation:
+------------------------
+- docs/plans/bmms/TRANSITION_PLAN.md (Sections 20-22)
+- docs/plans/bmms/05-ui-architecture-alignment-plan.md
+
+================================================================================
+IMPLEMENTATION TASKS
+================================================================================
+
+PHASE 0: PRE-REFACTORING (CRITICAL - DO FIRST)
+Priority: CRITICAL | Complexity: HIGH | Branch: main
+--------------------------------------------------------------------------------
+Goal: Extract routing from common app to respective modules WITHOUT changing URLs.
+      This is preparatory work that benefits both OBCMS and BMMS.
+
+Why Phase 0 First:
+- Can be done on main branch (no BMMS features)
+- Reduces technical debt immediately
+- Simplifies Phase 1 implementation
+- OBCMS production benefits from cleaner architecture
+
+Task 0.1: Audit Current URL Structure
+--------------------------------------
+[ ] Document all URLs in common/urls.py (847 lines)
+[ ] Categorize by module:
+    [ ] Communities URLs (50+ URLs)
+    [ ] MANA URLs (30+ URLs)
+    [ ] Coordination URLs (20+ URLs)
+    [ ] Recommendations/Policies URLs (15+ URLs)
+    [ ] Dashboard/Infrastructure URLs (keep in common)
+    [ ] OOBC Management URLs (internal operations)
+[ ] Create spreadsheet: URL path, view function, target module
+[ ] Identify any shared/ambiguous URLs
+
+Deliverable: docs/plans/bmms/url_audit_spreadsheet.csv
+
+Task 0.2: Create Module-Specific URL Files
+-------------------------------------------
+[ ] Create src/communities/urls.py
+    [ ] Define app_name = "communities"
+    [ ] Move all communities URLs from common/urls.py
+    [ ] Update import statements (from common import views → from . import views)
+    [ ] Keep view references to common.views (temporary)
+
+[ ] Enhance src/mana/urls.py (file exists, needs extension)
+    [ ] Keep app_name = "mana"
+    [ ] Move all MANA staff URLs from common/urls.py
+    [ ] Merge with existing workshop URLs
+    [ ] Update import statements
+    [ ] Keep view references to common.views (temporary)
+
+[ ] Create src/coordination/urls.py
+    [ ] Define app_name = "coordination"
+    [ ] Move all coordination URLs from common/urls.py
+    [ ] Update import statements
+    [ ] Keep view references to common.views (temporary)
+
+[ ] Create src/recommendations/policies/urls.py
+    [ ] Define app_name = "policies"
+    [ ] Move all recommendations URLs from common/urls.py
+    [ ] Update import statements
+    [ ] Keep view references to common.views (temporary)
+
+[ ] Clean up src/common/urls.py
+    [ ] Keep only: dashboard, profile, calendar (infrastructure)
+    [ ] Keep only: OOBC management, staff operations
+    [ ] Remove all module-specific routes
+    [ ] Target: Reduce from 847 lines to <150 lines
+
+Verification:
+  ✓ Each module has proper urls.py with app_name defined
+  ✓ No duplicate URL patterns across files
+  ✓ All view functions still callable (even if in common.views)
+
+Task 0.3: Update Project-Level URL Configuration
+-------------------------------------------------
+[ ] Modify src/obc_management/urls.py
+    [ ] Add: path("communities/", include("communities.urls"))
+    [ ] Add: path("mana/", include("mana.urls"))
+    [ ] Add: path("coordination/", include("coordination.urls"))
+    [ ] Add: path("recommendations/", include("recommendations.policies.urls"))
+    [ ] Modify: path("", include("common.urls")) → path("dashboard/", include("common.urls"))
+    [ ] Keep: path("oobc-management/", include("common.urls.oobc"))
+    [ ] Verify: No URL path changes (only routing mechanism changed)
+
+[ ] Test URL resolution
+    [ ] Run: python manage.py show_urls (if django-extensions installed)
+    [ ] Verify all URLs still resolve
+    [ ] No 404 errors for existing URLs
+
+Task 0.4: Update ALL Template References (CRITICAL)
+----------------------------------------------------
+This is the most time-consuming task. Every template using old namespaces
+must be updated.
+
+[ ] Run automated namespace replacements:
+    [ ] find . -name "*.html" -exec sed -i '' 's/common:communities_/communities:/g' {} +
+    [ ] find . -name "*.html" -exec sed -i '' 's/common:mana_/mana:/g' {} +
+    [ ] find . -name "*.html" -exec sed -i '' 's/common:coordination_/coordination:/g' {} +
+    [ ] find . -name "*.html" -exec sed -i '' 's/common:recommendations_/policies:/g' {} +
+
+[ ] Manual template review (automated replacement may miss edge cases)
+    [ ] Check src/templates/common/*.html (dashboard, base templates)
+    [ ] Check src/templates/communities/*.html
+    [ ] Check src/templates/mana/*.html
+    [ ] Check src/templates/coordination/*.html
+    [ ] Check src/templates/recommendations/*.html
+
+[ ] Update template URL tag examples:
+    BEFORE: {% url 'common:communities_home' %}
+    AFTER:  {% url 'communities:home' %}
+
+    BEFORE: {% url 'common:mana_regional_overview' %}
+    AFTER:  {% url 'mana:regional_overview' %}
+
+    BEFORE: {% url 'common:coordination_partnerships' %}
+    AFTER:  {% url 'coordination:partnerships' %}
+
+[ ] Search for string-based URL references (may exist in JavaScript)
+    [ ] grep -r "common:communities" src/static/
+    [ ] grep -r "common:mana" src/static/
+    [ ] Update JavaScript code if found
+
+Task 0.5: Update View Redirects
+--------------------------------
+[ ] Audit all redirect() calls in src/common/views.py
+    [ ] Find: return redirect('common:communities_')
+    [ ] Replace: return redirect('communities:')
+
+[ ] Audit all redirect() calls in module views
+    [ ] src/communities/views.py (if exists)
+    [ ] src/mana/views.py
+    [ ] src/coordination/views.py
+
+[ ] Update reverse() calls in views
+    BEFORE: url = reverse('common:communities_manage')
+    AFTER:  url = reverse('communities:manage')
+
+Task 0.6: Update Tests
+-----------------------
+[ ] Update test_urls.py (if exists)
+    [ ] Change: reverse('common:communities_home')
+    [ ] To: reverse('communities:home')
+
+[ ] Update integration tests
+    [ ] src/communities/tests/
+    [ ] src/mana/tests/
+    [ ] src/coordination/tests/
+
+[ ] Run full test suite
+    [ ] pytest -v
+    [ ] Fix any URL resolution failures
+    [ ] Ensure 100% pass rate
+
+Task 0.7: Create Comprehensive Test Suite for Phase 0
+------------------------------------------------------
+[ ] Create src/common/tests/test_phase0_urls.py
+    [ ] Test: Communities URLs resolve correctly
+    [ ] Test: MANA URLs resolve correctly
+    [ ] Test: Coordination URLs resolve correctly
+    [ ] Test: No namespace conflicts
+    [ ] Test: Template rendering with new namespaces
+    [ ] Test: View redirects use new namespaces
+    [ ] Test: Common URLs still work (dashboard, profile)
+
+[ ] Run tests
+    [ ] python manage.py test common.tests.test_phase0_urls -v2
+    [ ] Fix any failures
+    [ ] Ensure 100% pass rate
+
+Task 0.8: Manual Testing & QA
+------------------------------
+[ ] Start development server: python manage.py runserver
+[ ] Test each module navigation:
+    [ ] Dashboard → Communities (link works)
+    [ ] Dashboard → MANA (link works)
+    [ ] Dashboard → Coordination (link works)
+    [ ] Dashboard → M&E (link works)
+    [ ] Dashboard → Recommendations (link works)
+
+[ ] Test form submissions (ensure redirects work)
+    [ ] Create new Barangay OBC → redirects to list
+    [ ] Create new MANA assessment → redirects to detail
+    [ ] Create new partnership → redirects to coordination home
+
+[ ] Test breadcrumb navigation
+    [ ] All breadcrumb links resolve correctly
+    [ ] No broken links in breadcrumbs
+
+[ ] Test paginated views
+    [ ] Communities list pagination works
+    [ ] MANA assessments pagination works
+
+[ ] Test error pages
+    [ ] 404 page renders (visit non-existent URL)
+    [ ] 500 page renders (if test environment allows)
+
+Task 0.9: Documentation
+------------------------
+[ ] Update docs/development/README.md
+    [ ] Document new URL structure
+    [ ] Explain why refactoring was necessary
+    [ ] Add examples of new namespaces
+
+[ ] Create docs/improvements/URL_REFACTORING_PHASE0_COMPLETE.md
+    [ ] Document what changed
+    [ ] Before/after comparison
+    [ ] Files modified
+    [ ] Testing results
+
+[ ] Update CLAUDE.md (if URL guidance exists)
+    [ ] Document proper namespace usage
+    [ ] Provide examples
+
+Task 0.10: Rollback Plan & Contingency
+---------------------------------------
+[ ] Create git tag before merge: git tag v1.x.x-pre-url-refactor
+[ ] Document rollback procedure:
+    [ ] git checkout HEAD~1 -- src/obc_management/urls.py
+    [ ] git rm src/communities/urls.py src/mana/urls_staff.py
+    [ ] git checkout HEAD~1 -- src/templates/
+    [ ] python manage.py runserver
+
+[ ] Test rollback in separate branch
+    [ ] Verify system works with rollback
+    [ ] Ensure data not affected
+
+Task 0.11: Code Review & Merge
+-------------------------------
+[ ] Create pull request: "Phase 0: URL Refactoring - Extract Module Routing"
+[ ] Self-review checklist:
+    [ ] All templates updated
+    [ ] All tests passing
+    [ ] No URL path changes (only namespaces)
+    [ ] common/urls.py reduced to <150 lines
+    [ ] Documentation updated
+
+[ ] Merge to main branch
+[ ] Deploy to staging for validation
+[ ] Monitor for 48 hours (ensure no production issues)
+
+PHASE 0 SUCCESS CRITERIA:
+--------------------------
+✓ All modules have proper urls.py with app_name defined
+✓ obc_management/urls.py routes directly to module URLs
+✓ All templates use new namespaces (communities:*, not common:communities_*)
+✓ All view redirects use new namespaces
+✓ 100% test pass rate (no regressions)
+✓ common/urls.py reduced from 847 lines to <150 lines
+✓ common/views.py remains at 2266 lines (views NOT moved yet - that's later)
+✓ Zero changes to actual URL paths (only namespaces changed)
+✓ Zero changes to database (URL refactoring is routing-only)
+
+================================================================================
+
+PHASE 1: ORGANIZATION CONTEXT URLS (BMMS FOUNDATION)
+Priority: CRITICAL | Complexity: HIGH | Branch: feature/bmms
+--------------------------------------------------------------------------------
+Goal: Implement organization-scoped URLs (/moa/<ORG_CODE>/) while maintaining
+      backward compatibility with OBCMS URLs.
+
+Prerequisite: Phase 0 must be completed and merged to main first.
+
+Task 1.1: Create organizations Django App
+------------------------------------------
+[ ] Create new Django app: python manage.py startapp organizations
+[ ] Add to INSTALLED_APPS in settings/base.py
+[ ] Create Organization model (src/organizations/models.py)
+    [ ] code: CharField (unique, e.g., 'OOBC', 'MOH')
+    [ ] name: CharField
+    [ ] org_type: CharField (choices: ministry, office, agency, special)
+    [ ] enable_mana: BooleanField (default=True)
+    [ ] enable_planning: BooleanField (default=True)
+    [ ] enable_budgeting: BooleanField (default=True)
+    [ ] enable_me: BooleanField (default=True)
+    [ ] enable_coordination: BooleanField (default=True)
+    [ ] primary_region: ForeignKey to Region (nullable)
+    [ ] head_official: CharField
+    [ ] primary_focal_person: ForeignKey to User (nullable)
+    [ ] created_at: DateTimeField (auto_now_add)
+    [ ] is_active: BooleanField (default=True)
+
+[ ] Create OrganizationMembership model
+    [ ] user: ForeignKey to User
+    [ ] organization: ForeignKey to Organization
+    [ ] role: CharField (choices: admin, planning_officer, budget_officer, staff, viewer)
+    [ ] is_primary: BooleanField (default=False)
+    [ ] Meta: unique_together = ['user', 'organization']
+    [ ] Meta: indexes for (user, is_primary) and (organization, role)
+
+[ ] Run migrations
+    [ ] python manage.py makemigrations organizations
+    [ ] python manage.py migrate
+
+Task 1.2: Populate Initial Organization Data
+---------------------------------------------
+[ ] Create data migration: organizations/migrations/0002_populate_organizations.py
+[ ] Add OOBC as first organization (code='OOBC', name='Office for Other Bangsamoro Communities')
+[ ] Add 3 pilot MOAs:
+    [ ] MSSD: Ministry of Social Services and Development
+    [ ] MOH: Ministry of Health
+    [ ] MOLE: Ministry of Labor and Employment
+
+[ ] Run migration: python manage.py migrate organizations 0002
+
+Task 1.3: Create Organization Middleware
+-----------------------------------------
+[ ] Create src/common/middleware/organization.py
+[ ] Implement OrganizationMiddleware class
+    [ ] Extract org_code from URL path (/moa/<ORG_CODE>/)
+    [ ] Look up Organization by code
+    [ ] Set request.organization if found
+    [ ] Handle invalid org codes (404 or redirect)
+    [ ] Handle legacy URLs (no org code)
+    [ ] Handle CMO URLs (no org context needed)
+
+[ ] Add middleware to settings/base.py MIDDLEWARE list
+    MIDDLEWARE = [
+        ...
+        'common.middleware.organization.OrganizationMiddleware',  # ADD
+    ]
+
+Task 1.4: Update Project-Level URL Configuration
+-------------------------------------------------
+[ ] Modify src/obc_management/urls.py
+[ ] Add organization context routing:
+    path('moa/<str:org_code>/', include([
+        path('', RedirectView.as_view(pattern_name='common:dashboard')),
+        path('dashboard/', include('common.urls')),
+        path('communities/', include('communities.urls')),
+        path('mana/', include('mana.urls')),
+        path('coordination/', include('coordination.urls')),
+        path('me/', include('monitoring.urls')),
+        path('policies/', include('recommendations.policies.urls')),
+        path('planning/', include('planning.urls')),  # NEW (if ready)
+        path('budgeting/', include('budget_system.urls')),  # NEW (if ready)
+    ])),
+
+[ ] Add backward compatibility redirects (legacy OBCMS URLs)
+    [ ] path('communities/', legacy_redirect, {...})
+    [ ] path('communities/<path:subpath>', legacy_redirect, {...})
+    [ ] path('mana/', legacy_redirect, {...})
+    [ ] path('mana/<path:subpath>', legacy_redirect, {...})
+    [ ] path('coordination/', legacy_redirect, {...})
+    [ ] path('coordination/<path:subpath>', legacy_redirect, {...})
+    [ ] path('recommendations/', legacy_redirect, {...})
+    [ ] path('dashboard/', dashboard_redirect)  # Redirect to user's default org
+
+Task 1.5: Implement Legacy Redirect Views
+------------------------------------------
+[ ] Create src/common/views/legacy.py
+[ ] Implement legacy_redirect(request, module, default_org, subpath)
+    [ ] Determine user's organization (if authenticated)
+    [ ] Map legacy module names to BMMS module names
+    [ ] Handle special URL mappings:
+        - communities/manage/ → communities/barangay/
+        - communities/managemunicipal/ → communities/municipal/
+        - mana/manage-assessments/ → mana/assessments/
+    [ ] Build full BMMS URL: /moa/<ORG_CODE>/<module>/<subpath>
+    [ ] Preserve query parameters
+    [ ] Return 302 temporary redirect
+
+[ ] Implement dashboard_redirect(request)
+    [ ] Get user's default organization
+    [ ] Redirect to /moa/<ORG_CODE>/dashboard/
+    [ ] Handle unauthenticated users → redirect to login
+
+Task 1.6: Update User Profile Model
+------------------------------------
+[ ] Add default_organization field to User profile
+    [ ] default_organization: ForeignKey to Organization (nullable)
+
+[ ] Create migration: common/migrations/00XX_add_default_organization.py
+[ ] Run migration: python manage.py migrate common
+
+[ ] Create data migration: Set all existing users' default_organization to OOBC
+    [ ] python manage.py shell
+    [ ] from common.models import User, Organization
+    [ ] oobc = Organization.objects.get(code='OOBC')
+    [ ] User.objects.all().update(profile__default_organization=oobc)
+
+Task 1.7: Update Templates for Organization Context
+----------------------------------------------------
+[ ] Update base template (src/templates/common/base.html)
+    [ ] Add organization context display in header
+    [ ] Show current organization name
+    [ ] Add organization switcher button (modal trigger)
+
+[ ] Update all module templates to include org_code in URLs
+    BEFORE: {% url 'communities:home' %}
+    AFTER:  {% url 'communities:home' org_code=request.organization.code %}
+
+    BEFORE: {% url 'mana:assessment_detail' id=assessment.id %}
+    AFTER:  {% url 'mana:assessment_detail' org_code=request.organization.code id=assessment.id %}
+
+[ ] Create organization switcher modal (src/templates/components/org_switcher_modal.html)
+    [ ] List all accessible organizations for user
+    [ ] Highlight current organization
+    [ ] Link to same page in different org context
+
+[ ] Update navigation menu (src/templates/common/navbar.html)
+    [ ] All links include org_code parameter
+    [ ] Dashboard: {% url 'common:dashboard' org_code=request.organization.code %}
+    [ ] Communities: {% url 'communities:home' org_code=request.organization.code %}
+    [ ] MANA: {% url 'mana:home' org_code=request.organization.code %}
+    [ ] Coordination: {% url 'coordination:home' org_code=request.organization.code %}
+    [ ] M&E: {% url 'monitoring:home' org_code=request.organization.code %}
+    [ ] Planning: {% url 'planning:home' org_code=request.organization.code %}
+    [ ] Budgeting: {% url 'budgeting:home' org_code=request.organization.code %}
+
+[ ] Update breadcrumbs to include organization context
+    [ ] Show: OOBC > Communities > Barangay OBC > Detail
+    [ ] Not: Communities > Barangay OBC > Detail
+
+Task 1.8: Update View Functions
+--------------------------------
+[ ] Review all views for organization context usage
+[ ] No code changes needed yet (middleware sets request.organization)
+[ ] Verify views can access request.organization
+[ ] Later: Filter querysets by organization (Phase 5)
+
+Task 1.9: Create Comprehensive Test Suite for Phase 1
+------------------------------------------------------
+[ ] Create src/common/tests/test_phase1_organization_urls.py
+    [ ] Test: Organization URLs resolve correctly
+    [ ] Test: Middleware sets request.organization
+    [ ] Test: Invalid organization code raises 404
+    [ ] Test: Legacy redirect works (/communities/ → /moa/OOBC/communities/)
+    [ ] Test: Legacy redirect preserves subpath
+    [ ] Test: Legacy redirect preserves query parameters
+    [ ] Test: User default organization redirect
+    [ ] Test: Organization switcher dropdown renders
+    [ ] Test: Breadcrumbs include organization
+
+[ ] Run tests: python manage.py test common.tests.test_phase1_organization_urls -v2
+[ ] Fix any failures
+[ ] Ensure 100% pass rate
+
+Task 1.10: Manual Testing & QA
+-------------------------------
+[ ] Test organization-scoped URLs
+    [ ] Visit: /moa/OOBC/dashboard/ (should work)
+    [ ] Visit: /moa/OOBC/communities/ (should work)
+    [ ] Visit: /moa/MSSD/dashboard/ (should work)
+    [ ] Visit: /moa/MOH/mana/ (should work)
+
+[ ] Test legacy URL redirects
+    [ ] Visit: /communities/ → should redirect to /moa/OOBC/communities/
+    [ ] Visit: /mana/ → should redirect to /moa/OOBC/mana/
+    [ ] Visit: /dashboard/ → should redirect to /moa/<USER_DEFAULT_ORG>/dashboard/
+
+[ ] Test organization switcher
+    [ ] Click "Switch Organization" button
+    [ ] Modal appears with organization list
+    [ ] Click different organization
+    [ ] URL changes to /moa/<NEW_ORG_CODE>/...
+    [ ] Page reloads with new organization context
+
+[ ] Test invalid organization codes
+    [ ] Visit: /moa/INVALID/dashboard/ → should show 404
+    [ ] Visit: /moa/xyz/communities/ → should show 404
+
+[ ] Test unauthenticated access
+    [ ] Log out
+    [ ] Visit: /moa/OOBC/dashboard/ → should redirect to login
+    [ ] Visit: /communities/ → should redirect to /moa/OOBC/communities/
+
+Task 1.11: Documentation
+-------------------------
+[ ] Update docs/development/README.md
+    [ ] Document organization-scoped URL structure
+    [ ] Explain OrganizationMiddleware
+    [ ] Provide URL examples
+
+[ ] Create docs/improvements/URL_REFACTORING_PHASE1_COMPLETE.md
+    [ ] Document Phase 1 changes
+    [ ] Before/after URL comparison
+    [ ] Organization context explanation
+
+[ ] Update CLAUDE.md
+    [ ] Document that all URLs now require org_code parameter
+    [ ] Provide template examples
+    [ ] Explain backward compatibility approach
+
+Task 1.12: Code Review & Merge to feature/bmms
+-----------------------------------------------
+[ ] Create pull request: "Phase 1: Organization Context URLs - BMMS Foundation"
+[ ] Self-review checklist:
+    [ ] OrganizationMiddleware implemented
+    [ ] All module URLs work with /moa/<ORG_CODE>/ prefix
+    [ ] Legacy URLs redirect correctly
+    [ ] All templates include org_code parameter
+    [ ] Tests passing
+    [ ] Documentation updated
+
+[ ] Merge to feature/bmms branch
+[ ] Test in BMMS development environment
+[ ] Do NOT merge to main yet (BMMS not ready for production)
+
+PHASE 1 SUCCESS CRITERIA:
+--------------------------
+✓ OrganizationMiddleware extracts org_code and sets request.organization
+✓ All module URLs work with /moa/<ORG_CODE>/ prefix
+✓ Legacy OBCMS URLs redirect to /moa/OOBC/... (302 temporary redirect)
+✓ Authenticated users redirect to their default organization
+✓ Invalid organization codes raise 404
+✓ Organization switcher dropdown works
+✓ All templates include org_code in URL tags
+✓ 100% test pass rate for organization routing
+✓ No data filtering by organization yet (that's Phase 5)
+
+================================================================================
+
+PHASE 2: MULTI-TENANT URLS (FULL BMMS PRODUCTION)
+Priority: HIGH | Complexity: MEDIUM | Branch: feature/bmms → main
+--------------------------------------------------------------------------------
+Goal: Finalize BMMS URL structure, add CMO aggregation URLs, deprecate legacy redirects.
+
+Prerequisite: Phase 1 completed, BMMS modules (Planning, Budgeting) operational.
+
+Task 2.1: Create CMO Django App
+--------------------------------
+[ ] Create new Django app: python manage.py startapp cmo
+[ ] Add to INSTALLED_APPS in settings/base.py
+[ ] Create CMO-specific views (cross-organization aggregation)
+[ ] Create src/cmo/urls.py with CMO URL patterns
+
+Task 2.2: Add CMO URL Configuration
+------------------------------------
+[ ] Add to src/obc_management/urls.py
+    path('cmo/', include('cmo.urls'))
+
+[ ] Define CMO URLs (src/cmo/urls.py)
+    [ ] path('', views.dashboard, name='dashboard')
+    [ ] path('budget-aggregation/', views.budget_aggregation, name='budget_aggregation')
+    [ ] path('budget-aggregation/<str:org_code>/', views.budget_detail, name='budget_detail')
+    [ ] path('reports/', views.reports, name='reports')
+    [ ] path('reports/obc-coverage/', views.obc_coverage, name='obc_coverage')
+    [ ] path('reports/coordination-matrix/', views.coordination_matrix, name='coordination_matrix')
+    [ ] path('moa-performance/', views.moa_performance, name='moa_performance')
+
+Task 2.3: Update Navigation for CMO Access
+-------------------------------------------
+[ ] Update src/templates/common/navbar.html
+    [ ] Add CMO menu item (only visible to CMO staff)
+    [ ] Link: {% url 'cmo:dashboard' %}
+
+[ ] Create CMO dashboard template
+    [ ] Show all 44 MOAs
+    [ ] Cross-organization metrics
+    [ ] Budget aggregation summary
+
+Task 2.4: Add Legacy URL Deprecation Warnings
+----------------------------------------------
+[ ] Create deprecation warning banner template
+    src/templates/components/legacy_url_warning.html
+    [ ] Display when user accesses legacy URL
+    [ ] Show new URL format
+    [ ] "Copy New URL" button
+
+[ ] Add deprecation date to legacy redirects (comments in urls.py)
+    # Deprecation date: 2026-01-01
+    # Removal date: 2026-06-01
+
+Task 2.5: Documentation
+------------------------
+[ ] Update docs/deployment/BMMS_URL_STRUCTURE.md (create if not exists)
+    [ ] Complete URL hierarchy documentation
+    [ ] Examples for all modules
+    [ ] CMO special URLs
+    [ ] Legacy URL handling
+
+[ ] Create docs/improvements/URL_REFACTORING_PHASE2_COMPLETE.md
+    [ ] Phase 2 completion report
+    [ ] CMO URLs documented
+    [ ] Deprecation strategy explained
+
+Task 2.6: Final Testing & Deployment
+-------------------------------------
+[ ] Full system test with 4+ organizations
+    [ ] OOBC, MSSD, MOH, MOLE all accessible
+    [ ] Organization switcher works across all orgs
+    [ ] CMO dashboard shows all organizations
+
+[ ] Performance testing
+    [ ] Test with 30 organizations
+    [ ] Verify acceptable response times
+    [ ] Check database query counts (N+1 issues)
+
+[ ] Security audit
+    [ ] Verify no cross-organization data leakage
+    [ ] Test organization access permissions
+    [ ] Ensure middleware handles edge cases
+
+[ ] Merge to main branch (BMMS v1.0 release)
+[ ] Deploy to staging
+[ ] Run smoke tests
+[ ] Deploy to production
+
+PHASE 2 SUCCESS CRITERIA:
+--------------------------
+✓ CMO aggregation views operational
+✓ Organization switcher modal works across all modules
+✓ Legacy URL warning banner displays on old URLs
+✓ All 44 MOAs can access their scoped data
+✓ Performance acceptable with 30 organizations
+✓ Security audit passed (no cross-org data leakage)
+✓ 100% test pass rate across all modules
+✓ Production deployment successful
+
+================================================================================
+TESTING TASKS
+================================================================================
+
+Unit Tests
+----------
+[ ] Test URL resolution for all modules
+    [ ] Communities URLs resolve correctly
+    [ ] MANA URLs resolve correctly
+    [ ] Coordination URLs resolve correctly
+    [ ] M&E URLs resolve correctly
+    [ ] Policies URLs resolve correctly
+    [ ] Planning URLs resolve correctly (BMMS)
+    [ ] Budgeting URLs resolve correctly (BMMS)
+    [ ] CMO URLs resolve correctly (BMMS)
+
+[ ] Test OrganizationMiddleware (Phase 1+)
+    [ ] Valid organization code sets request.organization
+    [ ] Invalid organization code raises 404
+    [ ] Legacy URLs handled correctly
+    [ ] CMO URLs handled correctly (no org context)
+
+[ ] Test legacy redirect views (Phase 1+)
+    [ ] Legacy URLs redirect to BMMS equivalents
+    [ ] Subpaths preserved in redirects
+    [ ] Query parameters preserved in redirects
+    [ ] User default organization used when authenticated
+
+Integration Tests
+-----------------
+[ ] Test full user workflows
+    [ ] User logs in → redirected to default org dashboard
+    [ ] User navigates Communities → Communities list loads
+    [ ] User creates Barangay OBC → redirects to detail page
+    [ ] User switches organization → URL updates, page reloads
+
+[ ] Test form submissions across modules
+    [ ] Communities: Create, Edit, Delete
+    [ ] MANA: Create assessment, Submit for approval
+    [ ] Coordination: Create partnership, Schedule event
+
+[ ] Test pagination and filtering
+    [ ] Communities list pagination works
+    [ ] MANA assessments filter by status
+    [ ] Coordination partnerships filter by organization
+
+Backward Compatibility Tests
+-----------------------------
+[ ] Test OBCMS URLs still work (Phase 0)
+    [ ] /communities/ resolves
+    [ ] /mana/ resolves
+    [ ] /coordination/ resolves
+    [ ] /recommendations/ resolves
+    [ ] /dashboard/ resolves
+
+[ ] Test legacy URL redirects (Phase 1+)
+    [ ] /communities/ → /moa/OOBC/communities/ (302)
+    [ ] /mana/ → /moa/OOBC/mana/ (302)
+    [ ] /coordination/ → /moa/OOBC/coordination/ (302)
+
+Template Rendering Tests
+-------------------------
+[ ] Test all templates render without errors
+    [ ] Dashboard template
+    [ ] Communities templates (list, detail, form)
+    [ ] MANA templates (home, assessments, regional)
+    [ ] Coordination templates (home, partnerships, calendar)
+    [ ] Navigation menu renders correctly
+    [ ] Breadcrumbs render correctly
+    [ ] Organization switcher modal renders
+
+Performance Tests
+-----------------
+[ ] Test with 4 organizations (pilot)
+    [ ] Response time < 200ms for list views
+    [ ] Response time < 100ms for detail views
+    [ ] No N+1 query issues
+
+[ ] Test with 30 organizations (full rollout)
+    [ ] Response time < 300ms for list views
+    [ ] Response time < 150ms for detail views
+    [ ] Organization switcher loads < 50ms
+
+Security Tests
+--------------
+[ ] Test organization data isolation
+    [ ] OOBC user cannot access MSSD data
+    [ ] MSSD user cannot access MOH data
+    [ ] CMO user can access all organization data
+
+[ ] Test invalid organization codes
+    [ ] /moa/INVALID/dashboard/ returns 404
+    [ ] /moa/123/communities/ returns 404
+
+[ ] Test URL tampering
+    [ ] User cannot access unauthorized organization by URL manipulation
+    [ ] Middleware enforces organization membership
+
+================================================================================
+VERIFICATION CHECKLIST
+================================================================================
+
+Phase 0 Verification (Pre-Refactoring)
+---------------------------------------
+[ ] common/urls.py reduced from 847 lines to <150 lines
+[ ] common/views.py remains at 2266 lines (views not moved yet)
+[ ] All modules have proper app-level URL configuration
+    [ ] src/communities/urls.py exists (app_name = "communities")
+    [ ] src/mana/urls.py enhanced (app_name = "mana")
+    [ ] src/coordination/urls.py exists (app_name = "coordination")
+    [ ] src/recommendations/policies/urls.py exists (app_name = "policies")
+[ ] All templates use new namespaces
+    [ ] No templates contain 'common:communities_'
+    [ ] No templates contain 'common:mana_'
+    [ ] No templates contain 'common:coordination_'
+    [ ] No templates contain 'common:recommendations_'
+[ ] All view redirects use new namespaces
+[ ] All tests passing (100% pass rate)
+[ ] Manual testing confirms no regressions
+[ ] Documentation updated
+
+Phase 1 Verification (Organization Context)
+--------------------------------------------
+[ ] OrganizationMiddleware implemented and configured
+[ ] Organization model created with 4+ organizations
+[ ] All module URLs work with /moa/<ORG_CODE>/ prefix
+[ ] Legacy URLs redirect to /moa/OOBC/... (302 temporary)
+[ ] All templates include org_code in URL tags
+[ ] Organization switcher modal functional
+[ ] Breadcrumbs include organization context
+[ ] Invalid organization codes raise 404
+[ ] User profile has default_organization field
+[ ] All tests passing (100% pass rate)
+[ ] Documentation updated
+
+Phase 2 Verification (Multi-Tenant Production)
+-----------------------------------------------
+[ ] CMO app created with aggregation views
+[ ] CMO URLs configured at /cmo/
+[ ] All 44 MOAs operational (or 4+ pilot MOAs)
+[ ] Organization switcher works across all modules
+[ ] Legacy URL warning banner displays
+[ ] Deprecation dates documented
+[ ] Performance acceptable with 30 organizations
+[ ] Security audit passed (no cross-org data leakage)
+[ ] All tests passing (100% pass rate)
+[ ] Production deployment successful
+
+================================================================================
+ROLLBACK PROCEDURES
+================================================================================
+
+Phase 0 Rollback (If Issues Found)
+-----------------------------------
+1. Create git tag before merge: git tag v1.x.x-pre-phase0-url-refactor
+2. If rollback needed:
+   $ git checkout HEAD~1 -- src/obc_management/urls.py
+   $ git rm src/communities/urls.py
+   $ git rm src/coordination/urls.py
+   $ git rm src/recommendations/policies/urls.py
+   $ git checkout HEAD~1 -- src/mana/urls.py
+   $ git checkout HEAD~1 -- src/templates/
+   $ git checkout HEAD~1 -- src/common/urls.py
+   $ python manage.py runserver
+3. Verify system works with rollback
+4. Fix issues in separate branch before re-attempting
+
+Phase 1 Rollback (If Issues Found)
+-----------------------------------
+1. Phase 1 is on feature/bmms branch (not production yet)
+2. If issues found:
+   $ git checkout feature/bmms
+   $ git reset --hard HEAD~N  # N = number of Phase 1 commits
+   $ git push -f origin feature/bmms
+3. Fix issues before re-attempting
+4. Phase 1 does NOT affect main branch (OBCMS production)
+
+Phase 2 Rollback (If Issues Found in Production)
+-------------------------------------------------
+1. Phase 2 involves merging feature/bmms to main
+2. If critical issues found after production deployment:
+   $ git checkout main
+   $ git revert HEAD  # Revert merge commit
+   $ git push origin main
+3. Redeploy previous version
+4. Fix issues on feature/bmms branch
+5. Re-test thoroughly before re-merging
+
+================================================================================
+RISK MITIGATION
+================================================================================
+
+Risk 1: Template Update Incomplete
+-----------------------------------
+Impact: Broken links, NoReverseMatch errors
+Likelihood: HIGH
+Mitigation:
+  - Use automated find-and-replace for namespace changes
+  - Manual review of all templates
+  - Comprehensive template rendering tests
+  - Test every page in development before deployment
+Recovery:
+  - Rollback to Phase 0 pre-refactor state
+  - Fix missed templates
+  - Re-deploy
+
+Risk 2: View Redirects Not Updated
+-----------------------------------
+Impact: Redirects fail, form submissions break
+Likelihood: MEDIUM
+Mitigation:
+  - Audit all redirect() and reverse() calls
+  - Integration tests for form submissions
+  - Manual testing of all forms
+Recovery:
+  - Identify broken redirects from error logs
+  - Fix redirect calls
+  - Hotfix deployment
+
+Risk 3: Organization Middleware Breaks Legacy URLs
+---------------------------------------------------
+Impact: Old bookmarks break, external links fail
+Likelihood: MEDIUM
+Mitigation:
+  - Comprehensive legacy redirect tests
+  - Test with authenticated and unauthenticated users
+  - Monitor 404 errors after deployment
+Recovery:
+  - Fix legacy_redirect view logic
+  - Update middleware to handle edge cases
+  - Hotfix deployment
+
+Risk 4: Performance Degradation with Multiple Organizations
+------------------------------------------------------------
+Impact: Slow page loads, poor user experience
+Likelihood: LOW (with proper indexing)
+Mitigation:
+  - Database indexes on organization foreign keys
+  - Query optimization (select_related, prefetch_related)
+  - Performance tests with 30+ organizations
+  - Monitor query counts (django-debug-toolbar)
+Recovery:
+  - Add missing indexes
+  - Optimize slow queries
+  - Consider caching if needed
+
+Risk 5: Cross-Organization Data Leakage
+----------------------------------------
+Impact: CRITICAL SECURITY ISSUE
+Likelihood: LOW (with proper middleware)
+Mitigation:
+  - OrganizationMiddleware enforces organization context
+  - Security audit before production
+  - Automated tests for data isolation
+  - Manual penetration testing
+Recovery:
+  - Immediate rollback if leakage found
+  - Fix middleware/view filtering
+  - Security patch deployment
+  - Incident report and user notification
+
+================================================================================
+FILE MODIFICATIONS SUMMARY
+================================================================================
+
+New Files Created:
+------------------
+Phase 0:
+  src/communities/urls.py
+  src/coordination/urls.py
+  src/recommendations/policies/urls.py
+  src/common/tests/test_phase0_urls.py
+  docs/plans/bmms/url_audit_spreadsheet.csv
+  docs/improvements/URL_REFACTORING_PHASE0_COMPLETE.md
+
+Phase 1:
+  src/organizations/__init__.py
+  src/organizations/models.py
+  src/organizations/admin.py
+  src/organizations/migrations/0001_initial.py
+  src/organizations/migrations/0002_populate_organizations.py
+  src/common/middleware/organization.py
+  src/common/views/legacy.py
+  src/templates/components/org_switcher_modal.html
+  src/common/tests/test_phase1_organization_urls.py
+  docs/improvements/URL_REFACTORING_PHASE1_COMPLETE.md
+
+Phase 2:
+  src/cmo/__init__.py
+  src/cmo/models.py
+  src/cmo/views.py
+  src/cmo/urls.py
+  src/cmo/templates/cmo/dashboard.html
+  src/templates/components/legacy_url_warning.html
+  docs/deployment/BMMS_URL_STRUCTURE.md
+  docs/improvements/URL_REFACTORING_PHASE2_COMPLETE.md
+
+Files Modified:
+---------------
+Phase 0:
+  src/obc_management/urls.py (routing changes)
+  src/common/urls.py (847 → <150 lines)
+  src/mana/urls.py (enhanced with staff URLs)
+  src/templates/**/*.html (ALL templates - namespace changes)
+  src/common/views.py (redirect() calls updated)
+  src/communities/views.py (if exists)
+  src/coordination/views.py
+  docs/development/README.md
+
+Phase 1:
+  src/obc_management/urls.py (add organization context routing)
+  src/obc_management/settings/base.py (MIDDLEWARE, INSTALLED_APPS)
+  src/common/models.py (User profile: add default_organization)
+  src/templates/common/base.html (organization context display)
+  src/templates/common/navbar.html (all links with org_code)
+  src/templates/**/*.html (ALL module templates - add org_code parameter)
+  docs/development/README.md
+
+Phase 2:
+  src/obc_management/urls.py (add CMO URLs, deprecation comments)
+  src/obc_management/settings/base.py (add cmo to INSTALLED_APPS)
+  src/templates/common/navbar.html (add CMO menu item)
+  docs/development/README.md
+
+Files NOT Modified (Important):
+--------------------------------
+- Database content (no data changes, only schema additions)
+- Static files (CSS, JS, images - no changes needed)
+- API endpoints (if they exist - separate refactoring)
+- Third-party packages (no dependency changes)
+
+================================================================================
+ESTIMATED COMPLEXITY
+================================================================================
+
+Phase 0: Pre-Refactoring
+-------------------------
+File Changes: ~100 files (all templates + URL files + views)
+Lines Changed: ~500 lines (routing logic + template tags)
+Testing Effort: HIGH (every page must be tested)
+Risk Level: MEDIUM (no URL path changes, but namespace changes everywhere)
+Time Commitment: SIGNIFICANT (template updates are tedious)
+
+Phase 1: Organization Context
+------------------------------
+File Changes: ~150 files (all templates + new middleware + models)
+Lines Changed: ~800 lines (middleware + models + template updates)
+Testing Effort: HIGH (organization context testing)
+Risk Level: MEDIUM (new architecture, backward compatibility critical)
+Time Commitment: SIGNIFICANT (new models + middleware + testing)
+
+Phase 2: Multi-Tenant Production
+---------------------------------
+File Changes: ~50 files (CMO app + documentation)
+Lines Changed: ~300 lines (CMO views + templates + URLs)
+Testing Effort: MEDIUM (focus on CMO features + performance)
+Risk Level: LOW (builds on Phase 1 foundation)
+Time Commitment: MODERATE (mostly new features, less refactoring)
+
+Total Effort: VERY HIGH
+Recommendation: Complete Phase 0 first, validate in production, then proceed to Phase 1.
+
+================================================================================
+DEPENDENCIES & PREREQUISITES
+================================================================================
+
+Prerequisites for Phase 0:
+---------------------------
+✓ Working OBCMS system (current production state)
+✓ All tests passing before starting
+✓ Git branch for refactoring work
+✓ Backup of current system
+✓ Staging environment for testing
+
+Prerequisites for Phase 1:
+---------------------------
+✓ Phase 0 completed and merged to main
+✓ Phase 0 validated in production
+✓ BMMS feature branch created (feature/bmms)
+✓ PostgreSQL migration completed (if not already done)
+✓ Understanding of multi-tenancy architecture
+
+Prerequisites for Phase 2:
+---------------------------
+✓ Phase 1 completed on feature/bmms branch
+✓ BMMS modules operational (Planning, Budgeting)
+✓ 4+ organizations created and tested
+✓ Security audit completed
+✓ Performance testing passed
+
+External Dependencies:
+----------------------
+✓ Django 5.x (no URL routing changes needed)
+✓ PostgreSQL (if using production database)
+✓ Redis (for session management if needed)
+✓ No new Python packages required
+
+================================================================================
+SUCCESS METRICS
+================================================================================
+
+Code Quality Metrics:
+---------------------
+✓ common/urls.py: 847 lines → <150 lines (82% reduction)
+✓ common/views.py: 2266 lines → <500 lines (78% reduction - Phase 3)
+✓ Module URL files: Each module owns its URLs
+✓ Namespace clarity: communities:*, mana:*, coordination:* (not common:*)
+
+Testing Metrics:
+----------------
+✓ Test pass rate: 100% (no regressions)
+✓ New tests added: 50+ tests for URL refactoring
+✓ Manual testing: Every page tested in development
+✓ Performance: No degradation in response times
+
+User Experience Metrics:
+------------------------
+✓ No broken links after deployment
+✓ Legacy URLs redirect seamlessly (302 temporary)
+✓ Organization switcher works smoothly
+✓ No user-facing disruptions during rollout
+
+Developer Experience Metrics:
+------------------------------
+✓ Code navigation: Find MANA code in src/mana/ (not src/common/)
+✓ Time to add feature: Reduced from 10+ minutes to 30 seconds
+✓ Namespace clarity: Obvious which app owns which URL
+✓ Onboarding: New developers understand structure immediately
+
+Production Metrics:
+-------------------
+✓ Zero downtime deployment
+✓ No 500 errors after deployment
+✓ 404 rate unchanged (or reduced)
+✓ Response times maintained
+✓ User complaints: ZERO
+
+================================================================================
+COMMUNICATION PLAN
+================================================================================
+
+Stakeholders:
+-------------
+- Development team (primary implementer)
+- QA team (testing and validation)
+- System administrators (deployment)
+- End users (OOBC staff, MOA staff)
+- Management (Chief Minister Office)
+
+Phase 0 Communication:
+----------------------
+Before: Notify team of URL namespace changes (no user-facing changes)
+During: Code review with team, ensure understanding
+After: Announce completion, update developer documentation
+
+Phase 1 Communication:
+----------------------
+Before: Explain BMMS multi-tenancy approach to stakeholders
+During: Pilot testing with 3-4 MOAs
+After: Training sessions for pilot MOA users
+
+Phase 2 Communication:
+----------------------
+Before: Announce BMMS v1.0 release date
+During: Gradual onboarding of all 44 MOAs
+After: Legacy URL deprecation announcement (6-month notice)
+
+User Training:
+--------------
+- Organization switcher usage
+- Bookmark updates (optional, legacy URLs work)
+- New URL structure explanation
+- CMO dashboard for Chief Minister Office staff
+
+================================================================================
+NOTES & CONSIDERATIONS
+================================================================================
+
+Why Phase 0 Before BMMS Work:
+------------------------------
+- Reduces technical debt immediately
+- Makes Phase 1 implementation cleaner
+- Benefits both OBCMS and BMMS
+- Can be done on main branch (no BMMS features)
+- Lower risk than doing URL refactor + BMMS simultaneously
+
+Why Temporary Redirects (302):
+-------------------------------
+- Allows changing redirect target later if needed
+- Signals to search engines that URLs moved temporarily
+- Preserves ability to remove redirects in future
+- More flexible than permanent redirects (301)
+
+Why Organization-First URL Design:
+-----------------------------------
+- Clear multi-tenancy from URL structure
+- Middleware can extract organization without view logic
+- URLs self-document which organization user is viewing
+- Enables organization-level permissions easily
+
+Why Not Subdomain-Based Multi-Tenancy:
+---------------------------------------
+- Requires DNS configuration for each organization
+- SSL certificate complexity (wildcard cert needed)
+- Session management more complex across subdomains
+- Path-based approach simpler for BARMM context
+
+Why CMO Gets Separate URL Space:
+---------------------------------
+- CMO views aggregate data across ALL organizations
+- No single organization context for CMO users
+- Clearer separation: /moa/<ORG>/ vs /cmo/
+- Prevents confusion about which org CMO user is viewing
+
+================================================================================
+FINAL CHECKLIST BEFORE STARTING
+================================================================================
+
+Before Starting Phase 0:
+-------------------------
+[ ] Current system fully functional
+[ ] All tests passing (baseline: 254/256)
+[ ] Git repository clean (no uncommitted changes)
+[ ] Backup created
+[ ] Staging environment available
+[ ] Team aware of refactoring plan
+[ ] Estimated 1-2 weeks allocated for Phase 0
+
+Before Starting Phase 1:
+-------------------------
+[ ] Phase 0 merged to main and validated
+[ ] BMMS feature branch created
+[ ] Team understands multi-tenancy architecture
+[ ] Database migration strategy confirmed
+[ ] 4+ organizations planned for pilot
+[ ] Estimated 2-3 weeks allocated for Phase 1
+
+Before Starting Phase 2:
+-------------------------
+[ ] Phase 1 completed and tested thoroughly
+[ ] BMMS modules (Planning, Budgeting) operational
+[ ] Security audit completed
+[ ] Performance testing passed with 30+ organizations
+[ ] CMO stakeholders briefed on aggregation features
+[ ] Production deployment plan finalized
+
+================================================================================
+END OF TASK BREAKDOWN
+================================================================================
+
+This comprehensive task breakdown provides step-by-step instructions for
+refactoring OBCMS URL structure to prepare for BMMS multi-tenancy. Follow
+the phases sequentially, validate each phase before proceeding to the next,
+and maintain backward compatibility throughout.
+
+For questions or clarifications, refer to:
+- docs/plans/bmms/TRANSITION_PLAN.md (Sections 20-22)
+- docs/plans/bmms/05-ui-architecture-alignment-plan.md
+- Django URL routing documentation
+
+Good luck with the refactoring! 🚀

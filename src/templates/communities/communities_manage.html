@@ -6,7 +6,7 @@
 {% block breadcrumb %}
 <li class="flex items-center space-x-2">
     <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-    <a href="{% url 'common:communities_home' %}" class="text-gray-600 hover:text-gray-900">Communities</a>
+    <a href="{% url 'communities:communities_home' %}" class="text-gray-600 hover:text-gray-900">Communities</a>
 </li>
 <li class="flex items-center space-x-2">
     <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
@@ -120,7 +120,7 @@
         <div class="p-6">
             <form id="barangay-filter-form"
                   method="get"
-                  hx-get="{% url 'common:communities_manage' %}"
+                  hx-get="{% url 'communities:communities_manage' %}"
                   hx-target="#barangay-results-container"
                   hx-swap="innerHTML transition:true"
                   hx-trigger="change from:select, submit"
@@ -194,7 +194,7 @@
                         </span>
                         <span class="htmx-indicator-shown">Apply</span>
                     </button>
-                    <a href="{% url 'common:communities_manage' %}"
+                    <a href="{% url 'communities:communities_manage' %}"
                        class="w-full sm:flex-1 inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-white px-6 py-3 font-semibold text-emerald-600 transition-all duration-200 hover:bg-emerald-50">
                         Clear
                     </a>

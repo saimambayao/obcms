@@ -59,7 +59,7 @@ def new_assessment(request):
                     ]
                 ):
                     messages.error(request, "Please fill in all required fields.")
-                    return redirect("common:mana_new_assessment")
+                    return redirect("mana:mana_new_assessment")
 
                 # Get community
                 community = get_object_or_404(OBCCommunity, id=community_id)
@@ -130,11 +130,11 @@ def new_assessment(request):
                     create_workshop_activities(assessment, request.POST)
 
                 messages.success(request, f'Assessment "{title}" created successfully!')
-                return redirect("common:mana_manage_assessments")
+                return redirect("mana:mana_manage_assessments")
 
         except Exception as e:
             messages.error(request, f"Error creating assessment: {str(e)}")
-            return redirect("common:mana_new_assessment")
+            return redirect("mana:mana_new_assessment")
 
     # GET request - show form
     context = {

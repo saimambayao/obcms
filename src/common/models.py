@@ -1670,6 +1670,133 @@ from common.proxies import (
 )
 
 
+# ========== AUDIT LOGGING ==========
+
+
+class AuditLog(models.Model):
+    """
+    Comprehensive audit logging for all financial transactions
+
+    Legal Requirement: Parliament Bill No. 325 Section 78
+    Tracks ALL CREATE/UPDATE/DELETE operations on financial records
+
+    Features:
+    - Polymorphic tracking using ContentType and GenericForeignKey
+    - User attribution with IP address and user agent
+    - Change tracking (old/new values) for updates
+    - Efficient indexing for performance
+    - Tamper-proof audit trail
+    """
+
+    ACTION_CHOICES = [
+        ('create', 'Create'),
+        ('update', 'Update'),
+        ('delete', 'Delete'),
+    ]
+
+    # Primary Key (UUID for security)
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+
+    # Polymorphic reference to any model
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        help_text="Type of object being audited"
+    )
+    object_id = models.UUIDField(
+        help_text="ID of object being audited"
+    )
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    # Action performed
+    action = models.CharField(
+        max_length=10,
+        choices=ACTION_CHOICES,
+        db_index=True,
+        help_text="Type of action performed"
+    )
+
+    # Who performed the action
+    user = models.ForeignKey(
+        'common.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='audit_logs',
+        help_text="User who performed the action"
+    )
+
+    # When it happened
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+        help_text="When the action was performed"
+    )
+
+    # What changed (JSON for flexibility)
+    changes = models.JSONField(
+        default=dict,
+        help_text="Old and new values for update operations"
+    )
+
+    # Request metadata (for security audit)
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        help_text="IP address of the requester"
+    )
+    user_agent = models.TextField(
+        blank=True,
+        help_text="Browser/client user agent string"
+    )
+
+    # Additional context
+    notes = models.TextField(
+        blank=True,
+        help_text="Additional context or reason for change"
+    )
+
+    class Meta:
+        db_table = 'common_audit_log'
+        ordering = ['-timestamp']
+        verbose_name = 'Audit Log'
+        verbose_name_plural = 'Audit Logs'
+        indexes = [
+            models.Index(fields=['content_type', 'object_id', '-timestamp']),
+            models.Index(fields=['user', '-timestamp']),
+            models.Index(fields=['action', '-timestamp']),
+        ]
+
+    def __str__(self):
+        action_display = self.get_action_display()
+        user_display = self.user.get_full_name() if self.user else "System"
+        return f"{action_display} {self.content_type} by {user_display} at {self.timestamp}"
+
+    def get_model_name(self):
+        """Get human-readable model name"""
+        return self.content_type.model_class()._meta.verbose_name
+
+    def get_object_representation(self):
+        """Get string representation of the audited object"""
+        if self.content_object:
+            return str(self.content_object)
+        return f"{self.content_type} #{self.object_id}"
+
+
+# ========== RBAC MODELS ==========
+# Import RBAC models for role-based access control
+from common.rbac_models import (
+    Feature,
+    Permission,
+    Role,
+    RolePermission,
+    UserRole,
+    UserPermission,
+)
+
 # ========== AI ASSISTANT ==========
 
 

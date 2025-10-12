@@ -1,0 +1,635 @@
+================================================================================
+BMMS IMPLEMENTATION - MASTER TASK INDEX AND DEPENDENCIES MAP
+================================================================================
+
+Version: 1.1
+Last Updated: 2025-10-12
+Status: Planning Phase
+Total Phases: 10 Core Phases + 2 Continuous Activities (URL, Testing)
+
+================================================================================
+1. BMMS IMPLEMENTATION OVERVIEW
+================================================================================
+
+The Bangsamoro Multi-MOA Management System (BMMS) transforms OBCMS from a
+single-tenant system (OOBC-only) into a multi-tenant government-wide platform
+serving 44 Ministries, Offices, and Agencies (MOAs) within BARMM.
+
+Total Phases: 12 (10 sequential + 2 parallel)
+Total Tasks: 365+ individual tasks across all phases
+Total Organizations: 44 MOAs + OOBC + OCM = 46 organizations
+Total Users (Target): 700-1100 government staff
+Implementation Approach: Sequential phases with parallel task execution
+
+Key Deliverables:
+- Multi-tenant architecture with data isolation
+- Organization-scoped Planning, Budgeting, Coordination modules
+- OCM (Office of the Chief Minister) aggregation and oversight layer
+- 3 pilot MOAs onboarded with full UAT
+- 44 MOAs fully operational government-wide
+- Comprehensive training and support infrastructure
+
+Strategic Goals:
+- Enable each MOA to manage their own strategic plans and budgets
+- Support inter-MOA coordination and partnerships
+- Provide OCM with government-wide oversight and monitoring
+- Maintain OOBC's existing functionality (backward compatibility)
+- Scale to support 700-1100 concurrent users
+
+================================================================================
+2. PHASE SUMMARY TABLE
+================================================================================
+
+┌───────┬────────────────────────────────┬──────────┬────────────┬──────────────────┬───────────┐
+│ Phase │ Name                           │ Priority │ Complexity │ Dependencies     │ Est Tasks │
+├───────┼────────────────────────────────┼──────────┼────────────┼──────────────────┼───────────┤
+│   1   │ Foundation (Organizations)     │ CRITICAL │ Moderate   │ None             │    45     │
+├───────┼────────────────────────────────┼──────────┼────────────┼──────────────────┼───────────┤
+│   2   │ Planning Module                │ HIGH     │ Moderate   │ Phase 1          │    35     │
+├───────┼────────────────────────────────┼──────────┼────────────┼──────────────────┼───────────┤
+│   3   │ Budgeting Module               │ CRITICAL │ Complex    │ Phase 2          │    50     │
+├───────┼────────────────────────────────┼──────────┼────────────┼──────────────────┼───────────┤
+│   4   │ Coordination Enhancement       │ MEDIUM   │ Simple     │ Phase 1          │    25     │
+├───────┼────────────────────────────────┼──────────┼────────────┼──────────────────┼───────────┤
+│   5   │ Module Migration (MANA/M&E)    │ MEDIUM   │ Simple     │ Phase 1          │    40     │
+├───────┼────────────────────────────────┼──────────┼────────────┼──────────────────┼───────────┤
+│   6   │ OCM Aggregation                │ HIGH     │ Moderate   │ 2, 3, 4          │    35     │
+├───────┼────────────────────────────────┼──────────┼────────────┼──────────────────┼───────────┤
+│   7   │ Pilot MOA Onboarding           │ HIGH     │ Simple     │ 1-6              │    30     │
+├───────┼────────────────────────────────┼──────────┼────────────┼──────────────────┼───────────┤
+│   8   │ Full Rollout (44 MOAs)         │ MEDIUM   │ Simple     │ Phase 7          │    40     │
+├───────┼────────────────────────────────┼──────────┼────────────┼──────────────────┼───────────┤
+│ BEN-I │ Beneficiary (Individual)       │ HIGH     │ Moderate   │ 1, 2             │    40     │
+├───────┼────────────────────────────────┼──────────┼────────────┼──────────────────┼───────────┤
+│ BEN-O │ Beneficiary (Organizational)   │ MEDIUM   │ Simple     │ BEN-I            │    25     │
+├───────┼────────────────────────────────┼──────────┼────────────┼──────────────────┼───────────┤
+│  URL  │ URL Refactoring                │ HIGH     │ High       │ Parallel 2-5     │    30     │
+├───────┼────────────────────────────────┼──────────┼────────────┼──────────────────┼───────────┤
+│ TEST  │ Testing Strategy               │ CRITICAL │ High       │ Continuous       │  Ongoing  │
+└───────┴────────────────────────────────┴──────────┴────────────┴──────────────────┴───────────┘
+
+Legend:
+- Priority: CRITICAL > HIGH > MEDIUM > LOW
+- Complexity: Complex > Moderate > Simple
+- Dependencies: Must complete before starting this phase
+- Est Tasks: Approximate number of individual tasks
+
+================================================================================
+3. DEPENDENCY GRAPH (ASCII ART)
+================================================================================
+
+                          ┌─────────────────────────────────────────┐
+                          │   Phase 1: Foundation (Organizations)   │
+                          │   - 44 MOAs, OOBC, OCM                 │
+                          │   - Multi-tenant architecture           │
+                          │   - OrganizationMiddleware              │
+                          └──────────────┬──────────────────────────┘
+                                         │
+                ┌────────────────────────┼────────────────────────┬──────────────────────┐
+                │                        │                        │                      │
+                ▼                        ▼                        ▼                      ▼
+    ┌───────────────────┐   ┌───────────────────┐   ┌───────────────────┐   ┌───────────────────┐
+    │ Phase 2: Planning │   │ Phase 4: Coord    │   │ Phase 5: Module   │   │ BEN-I: Individual │
+    │ - Strategic Plans │   │ - Partnerships    │   │   Migration       │   │ Beneficiaries     │
+    │ - Barangay Links  │   │ - Communications  │   │ - MANA/M&E/Policies│   │ - Deduplication   │
+    └─────────┬─────────┘   └─────────┬─────────┘   └─────────┬─────────┘   └─────────┬─────────┘
+              │                       │                         │                       │
+              ▼                       │                         │                       ▼
+    ┌───────────────────┐             │                         │             ┌───────────────────┐
+    │ Phase 3: Budgeting│             │                         │             │ BEN-O: Org Benef  │
+    │ - Parliament Bill │             │                         │             │ - Cooperatives    │
+    │ - Budget Tracking │             │                         │             │ - Associations    │
+    └─────────┬─────────┘             │                         │             └─────────┬─────────┘
+              │                       │                         │                       │
+              └───────────────────────┴─────────────────────────┼───────────────────────┘
+                                      │                         │
+                                      ▼                         │
+                          ┌───────────────────────┐             │
+                          │ Phase 6: OCM          │             │
+                          │   Aggregation         │             │
+                          │ - Cross-MOA Dashboard │             │
+                          │ - Budget Consolidation│             │
+                          └──────────┬────────────┘             │
+                                     │                          │
+                                     ▼                          │
+                          ┌───────────────────────┐             │
+                          │ Phase 7: Pilot MOAs   │             │
+                          │ - MOH, MOLE, MAFAR    │             │
+                          │ - UAT & Training      │             │
+                          └──────────┬────────────┘             │
+                                     │                          │
+                                     ▼                          │
+                          ┌───────────────────────┐             │
+                          │ Phase 8: Full Rollout │             │
+                          │ - 41 Remaining MOAs   │             │
+                          │ - Wave Deployment     │             │
+                          └───────────────────────┘             │
+                                                                 │
+    ┌────────────────────────────────────────────────────────────┘
+    │
+    │   PARALLEL TRACKS (Can run alongside Phases 2-5):
+    │
+    ├─→ URL Refactoring: Migrate to /moa/{org_code}/ pattern
+    │   - Can start during Phase 2
+    │   - Should complete before Phase 7
+    │
+    └─→ Testing Strategy: Continuous throughout all phases
+        - Unit tests, integration tests, performance tests
+        - Security audits, accessibility testing
+        - UAT during Phase 7
+
+================================================================================
+4. CRITICAL PATH
+================================================================================
+
+The critical path determines the minimum time needed to complete BMMS:
+
+Phase 1 → Phase 2 → Phase 3 → Phase 6 → Phase 7 → Phase 8
+
+Duration Estimate (based on complexity, NOT time):
+- Phase 1: Moderate complexity (foundation work)
+- Phase 2: Moderate complexity (planning module)
+- Phase 3: Complex (budgeting module, Parliament Bill integration)
+- Phase 6: Moderate complexity (aggregation layer)
+- Phase 7: Simple complexity (pilot onboarding + UAT)
+- Phase 8: Simple complexity (wave-based rollout)
+
+Bottlenecks:
+- Phase 3 is the most complex and may take longest
+- Phase 7 UAT is user-dependent (2-week UAT period minimum)
+- Phase 8 wave deployment requires 2 weeks per wave × 9 waves
+
+Acceleration Opportunities:
+- Phases 4 and 5 can run parallel with Phases 2-3
+- URL refactoring can run parallel with Phases 2-5
+- Multiple developers can work on different phases simultaneously
+
+================================================================================
+5. PARALLEL EXECUTION OPPORTUNITIES
+================================================================================
+
+Parallelization Strategy (minimize total calendar time):
+
+Group A (Sequential - Critical Path):
+  Phase 1 → Phase 2 → Phase 3 → Phase 6 → Phase 7 → Phase 8
+
+Group B (Parallel with Phase 2-3):
+  Phase 4 (Coordination Enhancement)
+  - Can start immediately after Phase 1
+  - No dependency on Phase 2 or 3
+  - Completes before Phase 6
+
+Group C (Parallel with Phase 2-4):
+  Phase 5 (Module Migration)
+  - OOBC-specific modules
+  - NOT required for pilot MOAs
+  - Can be deferred until after Phase 7
+
+Group D (Parallel with Phase 2-5):
+  URL Refactoring
+  - Can start during Phase 2
+  - Should complete before Phase 7 (pilot)
+  - High priority for clean architecture
+
+Group E (Continuous):
+  Testing Strategy
+  - Unit tests written alongside each phase
+  - Integration tests after phase completion
+  - Performance tests before Phase 7
+  - Security audits before Phase 8
+
+Optimal Team Structure:
+- Team 1: Critical path (Phases 1-3-6-7-8)
+- Team 2: Parallel work (Phases 4-5, URL)
+- Team 3: Testing (continuous)
+- Team 4: Documentation & training materials
+
+================================================================================
+6. DETAILED FILE INDEX
+================================================================================
+
+Primary Task Files (docs/plans/bmms/tasks/):
+
+1. phase1_foundation_organizations.txt (37,994 bytes)
+   - Description: Create organizations Django app
+   - Deliverable: 44 MOAs + OOBC + OCM in database
+   - Key Components: Organization model, OrganizationMiddleware
+   - Database: Organization, OrganizationMembership tables
+   - Prerequisites: None (first phase)
+   - Est. Tasks: 45 individual tasks
+   - Critical: YES
+
+2. phase2_planning_module.txt (75,637 bytes)
+   - Description: Add multi-org support to strategic planning
+   - Deliverable: MOA-specific strategic plans
+   - Key Components: StrategicPlan model, MOA-scoped queries
+   - Features: Barangay linkage, partnership awareness
+   - Prerequisites: Phase 1 complete
+   - Est. Tasks: 35 individual tasks
+   - Critical Path: YES
+
+3. phase3_budgeting_module.txt (83,855 bytes)
+   - Description: Build comprehensive budget management
+   - Deliverable: Parliament Bill No. 325 implementation
+   - Key Components: MOABudgetProposal, BudgetWorkItem models
+   - Features: Multi-year tracking, disbursement monitoring
+   - Prerequisites: Phase 2 complete (plans → budgets)
+   - Est. Tasks: 50 individual tasks
+   - Critical Path: YES
+   - Most Complex: YES
+
+4. phase4_coordination_enhancement.txt (25,785 bytes)
+   - Description: Enhance coordination for multi-MOA partnerships
+   - Deliverable: Inter-MOA partnership tracking
+   - Key Components: Partnership model, communication logs
+   - Features: Collaborative coordination, partnership matrix
+   - Prerequisites: Phase 1 complete
+   - Est. Tasks: 25 individual tasks
+   - Can Run Parallel: YES (with Phases 2-3)
+
+5. phase5_module_migration.txt (35,887 bytes)
+   - Description: Migrate OOBC-specific modules to multi-org
+   - Deliverable: MANA, M&E, Policies with org scoping
+   - Key Components: Assessment, Program, PolicyRecommendation
+   - Features: Organization-scoped data isolation
+   - Prerequisites: Phase 1 complete
+   - Est. Tasks: 40 individual tasks
+   - Can Be Deferred: YES (not needed for pilot)
+
+6. phase6_ocm_aggregation.txt (22,217 bytes)
+   - Description: Build OCM oversight and aggregation layer
+   - Deliverable: Cross-MOA dashboard, budget consolidation
+   - Key Components: OCM dashboard, read-only aggregation
+   - Features: Government-wide statistics, performance metrics
+   - Prerequisites: Phases 2, 3, 4 complete
+   - Est. Tasks: 35 individual tasks
+   - Critical Path: YES
+
+7. phase7_pilot_moa_onboarding.txt (24,760 bytes)
+   - Description: Onboard 3 pilot MOAs for UAT
+   - Deliverable: MOH, MOLE, MAFAR operational with 15-30 users
+   - Key Activities: Training, UAT (2 weeks), bug fixing
+   - Success Criteria: User satisfaction >4.0/5, UAT >80% complete
+   - Prerequisites: Phases 1-6 complete
+   - Est. Tasks: 30 individual tasks
+   - Critical Path: YES
+   - Go/No-Go Decision: Required before Phase 8
+
+8. phase8_full_rollout.txt (31,917 bytes)
+   - Description: Roll out to remaining 41 MOAs (44 total)
+   - Deliverable: 700-1100 users onboarded, government-wide
+   - Rollout Strategy: 9 waves × 5-10 MOAs per wave
+   - Timeline: 2 weeks per wave (16-18 weeks total)
+   - Prerequisites: Phase 7 complete + pilot sign-off
+   - Est. Tasks: 40 individual tasks
+   - Critical Path: YES (final phase)
+
+9. phase_beneficiary_individual.txt
+   - Description: Track individuals benefiting from PPAs
+   - Deliverable: Beneficiary database with deduplication
+   - Key Components: IndividualBeneficiary model, privacy controls
+   - Features: Deduplication system, privacy safeguards
+   - Prerequisites: Phases 1, 2 complete
+   - Est. Tasks: 40 individual tasks
+   - Priority: HIGH
+
+10. phase_beneficiary_organizational.txt
+    - Description: Track organizations (cooperatives, associations)
+    - Deliverable: Organizational beneficiary management
+    - Key Components: OrganizationalBeneficiary model
+    - Features: Organization tracking, association management
+    - Prerequisites: BEN-I complete
+    - Est. Tasks: 25 individual tasks
+    - Priority: MEDIUM
+
+Supporting Documentation:
+
+11. URL Refactoring (referenced, file may not exist yet)
+    - Description: Migrate URLs to /moa/{org_code}/ pattern
+    - Deliverable: Clean, organization-scoped URL structure
+    - Impact: All views, templates, navigation
+    - Prerequisites: Can start during Phase 2
+    - Est. Tasks: 30 individual tasks
+    - Priority: HIGH (architectural improvement)
+
+12. Testing Strategy (continuous activity)
+    - Description: Comprehensive testing framework
+    - Deliverable: >95% test coverage, all tests passing
+    - Types: Unit, integration, performance, security, UAT
+    - Schedule: Continuous throughout all phases
+    - Prerequisites: None (starts with Phase 1)
+    - Est. Tasks: Ongoing (tests written per feature)
+    - Priority: CRITICAL
+
+================================================================================
+7. QUICK START GUIDE
+================================================================================
+
+For New Team Members:
+
+Step 1: Understand the Context
+  - Read: docs/plans/bmms/TRANSITION_PLAN.md (if exists)
+  - Read: This file (00_MASTER_INDEX.txt)
+  - Understand: OBCMS → BMMS transformation scope
+
+Step 2: Set Up Environment
+  - Clone repository: git clone <repo_url>
+  - Create branch: git checkout -b feature/bmms-<phase>
+  - Set up venv: ./scripts/bootstrap_venv.sh
+  - Activate: source venv/bin/activate
+  - Install deps: pip install -r requirements/development.txt
+  - Database backup: cp src/db.sqlite3 src/db.sqlite3.backup
+
+Step 3: Start with Phase 1
+  - Open: docs/plans/bmms/tasks/phase1_foundation_organizations.txt
+  - Read: Section 1 (Pre-Implementation Checklist)
+  - Follow: Step-by-step task breakdown
+  - Test: Each task as you complete it
+  - Commit: Incrementally with clear messages
+
+Step 4: Track Progress
+  - Use: Checkboxes in task files (mark with [x])
+  - Update: MASTER_INDEX.txt completion status
+  - Document: Issues in GitHub/Jira
+  - Communicate: Daily standups with team
+
+Prerequisites Checklist:
+[ ] Python 3.12 installed
+[ ] PostgreSQL installed (for production)
+[ ] Redis installed (for caching)
+[ ] Git repository access
+[ ] Understanding of Django framework
+[ ] Understanding of multi-tenant architecture
+[ ] Access to BARMM organizational structure docs
+
+First Tasks (Phase 1):
+1. Read phase1_foundation_organizations.txt completely
+2. Create organizations Django app
+3. Define Organization model (44 MOAs)
+4. Create OrganizationMiddleware
+5. Run migrations
+6. Test organization switching
+
+================================================================================
+8. SUCCESS METRICS
+================================================================================
+
+Technical Metrics:
+- All 10 core phases complete: 100%
+- All 365+ tasks complete: 100%
+- Test coverage: >95%
+- Test pass rate: 100%
+- Performance: Dashboard <3s, Budget <2s
+- Uptime: >99.5% during rollout
+- Zero critical bugs unresolved
+- Beneficiary database operational: YES
+- Deduplication system functional: YES
+- Privacy controls implemented: YES
+
+Organizational Metrics:
+- 44 MOAs operational: 100%
+- 700-1100 users onboarded: 100%
+- User training completion: >80%
+- User satisfaction: >4.0/5.0
+- Active user rate (MAU): >60%
+- OCM dashboard adoption: 100% of OCM staff
+
+Business Impact Metrics:
+- Strategic plans created: 200+ (across 44 MOAs)
+- Budget proposals submitted: 150+ (annual)
+- Inter-MOA partnerships: 50+ active
+- Coordination events: 500+ per quarter
+- Government-wide visibility: 100%
+
+Adoption Metrics:
+- Login frequency: >3x per week per user
+- Features used per user: >3 modules
+- Help desk ticket volume: Decreasing trend
+- Self-service resolution: >60% via knowledge base
+- Net Promoter Score: >50
+
+Risk Mitigation:
+- Zero security breaches
+- Zero data loss incidents
+- Zero extended outages (>4 hours)
+- Rollback plan tested: YES
+- Disaster recovery tested: YES
+
+================================================================================
+9. PHASE COMPLETION STATUS
+================================================================================
+
+Track overall BMMS implementation progress:
+
+Phase 1: Foundation (Organizations)
+Status: [ ] Not Started  [ ] In Progress  [ ] Complete
+Est. Tasks Complete: 0/45 (0%)
+Critical Blocker: NO
+Notes: Starting point for all subsequent phases
+
+Phase 2: Planning Module
+Status: [ ] Not Started  [ ] In Progress  [ ] Complete
+Est. Tasks Complete: 0/35 (0%)
+Critical Blocker: NO
+Notes: Depends on Phase 1
+
+Phase 3: Budgeting Module
+Status: [ ] Not Started  [ ] In Progress  [ ] Complete
+Est. Tasks Complete: 0/50 (0%)
+Critical Blocker: NO
+Notes: Most complex phase, Parliament Bill No. 325
+
+Phase 4: Coordination Enhancement
+Status: [ ] Not Started  [ ] In Progress  [ ] Complete
+Est. Tasks Complete: 0/25 (0%)
+Critical Blocker: NO
+Notes: Can run parallel with Phases 2-3
+
+Phase 5: Module Migration (MANA/M&E/Policies)
+Status: [ ] Not Started  [ ] In Progress  [ ] Complete
+Est. Tasks Complete: 0/40 (0%)
+Critical Blocker: NO
+Notes: OOBC-specific, can be deferred
+
+Phase 6: OCM Aggregation
+Status: [ ] Not Started  [ ] In Progress  [ ] Complete
+Est. Tasks Complete: 0/35 (0%)
+Critical Blocker: NO
+Notes: Requires Phases 2, 3, 4
+
+Phase 7: Pilot MOA Onboarding
+Status: [ ] Not Started  [ ] In Progress  [ ] Complete
+Est. Tasks Complete: 0/30 (0%)
+Critical Blocker: NO
+Notes: UAT phase, 3 pilot MOAs
+
+Phase 8: Full Rollout (44 MOAs)
+Status: [ ] Not Started  [ ] In Progress  [ ] Complete
+Est. Tasks Complete: 0/40 (0%)
+Critical Blocker: NO
+Notes: Requires Phase 7 sign-off
+
+BEN-I: Beneficiary (Individual)
+Status: [ ] Not Started  [ ] In Progress  [ ] Complete
+Est. Tasks Complete: 0/40 (0%)
+Critical Blocker: NO
+Notes: Track individuals, deduplication system
+
+BEN-O: Beneficiary (Organizational)
+Status: [ ] Not Started  [ ] In Progress  [ ] Complete
+Est. Tasks Complete: 0/25 (0%)
+Critical Blocker: NO
+Notes: Track cooperatives, associations
+
+URL Refactoring
+Status: [ ] Not Started  [ ] In Progress  [ ] Complete
+Est. Tasks Complete: 0/30 (0%)
+Critical Blocker: NO
+Notes: Can run parallel, high priority
+
+Testing Strategy
+Status: [ ] Not Started  [ ] In Progress  [ ] Complete
+Est. Tasks Complete: Ongoing
+Critical Blocker: NO
+Notes: Continuous activity
+
+Overall Progress: 0/365+ tasks (0%)
+Overall Status: Planning Phase
+
+Sign-Off:
+[ ] Phase 1 Complete: __________ (Date: ______)
+[ ] Phase 2 Complete: __________ (Date: ______)
+[ ] Phase 3 Complete: __________ (Date: ______)
+[ ] Phase 4 Complete: __________ (Date: ______)
+[ ] Phase 5 Complete: __________ (Date: ______)
+[ ] Phase 6 Complete: __________ (Date: ______)
+[ ] Phase 7 Complete: __________ (Date: ______)
+[ ] Phase 8 Complete: __________ (Date: ______)
+[ ] BEN-I Complete: __________ (Date: ______)
+[ ] BEN-O Complete: __________ (Date: ______)
+[ ] URL Refactor Complete: __________ (Date: ______)
+[ ] Testing Complete: __________ (Date: ______)
+[ ] BMMS FULLY OPERATIONAL: __________ (Date: ______)
+
+================================================================================
+10. KEY CONTACTS AND RESOURCES
+================================================================================
+
+Project Team:
+- Project Manager: __________________
+- Technical Lead: __________________
+- Lead Developer: __________________
+- QA Lead: __________________
+- Training Coordinator: __________________
+- Help Desk Manager: __________________
+
+Stakeholders:
+- OOBC Director: __________________
+- OCM Representative: __________________
+- Pilot MOA Contacts:
+  * MOH: __________________
+  * MOLE: __________________
+  * MAFAR: __________________
+
+Technical Resources:
+- Repository: [Git URL]
+- Documentation: docs/README.md
+- API Docs: docs/api/
+- User Guides: docs/user-guides/
+- Testing Guides: docs/testing/
+
+Communication Channels:
+- Daily Standup: [Time/Location]
+- Slack/Teams: [Channel Name]
+- Email: bmms-team@oobc.gov.ph
+- Help Desk: support@bmms.barmm.gov.ph
+- Status Page: status.bmms.barmm.gov.ph (TBD)
+
+Meeting Schedule:
+- Daily Standup: 9:00 AM (15 min)
+- Weekly Planning: Monday 10:00 AM (1 hr)
+- Weekly Review: Friday 3:00 PM (1 hr)
+- Monthly Executive Review: Last Friday 2:00 PM (1 hr)
+
+================================================================================
+11. IMPORTANT NOTES
+================================================================================
+
+Strategic Decisions:
+1. Phase 5 (MANA/M&E/Policies) is OOBC-specific and can be deferred
+   until after pilot MOA launch. Pilot MOAs focus on Planning, Budgeting,
+   and Coordination only.
+
+2. URL refactoring should be completed before Phase 7 (pilot) to avoid
+   confusing early users with URL structure changes.
+
+3. Testing is continuous and critical. Every phase must have >95% test
+   coverage before moving to the next phase.
+
+4. Phase 7 requires formal sign-off from all 3 pilot MOAs before proceeding
+   to Phase 8. A Go/No-Go decision meeting is mandatory.
+
+5. Phase 8 uses wave-based deployment (9 waves × 5-10 MOAs) to reduce risk
+   and allow stabilization time between waves.
+
+Technical Considerations:
+- Multi-tenancy: Each MOA sees ONLY their data (strict isolation)
+- OCM Exception: OCM users have READ-ONLY access to all MOAs
+- OOBC Backward Compatibility: OOBC retains access to legacy data
+- Performance: System must scale to 700-1100 concurrent users
+- Database: PostgreSQL required for production (SQLite for dev only)
+
+Risk Management:
+- Phase 3 (Budgeting) is the most complex and highest risk phase
+- Phase 7 (Pilot UAT) is user-dependent and may surface unexpected issues
+- Phase 8 (Full Rollout) requires robust help desk and monitoring
+- Data migration MUST preserve all existing OOBC data (zero data loss)
+
+Timeline Considerations:
+- This is a complex, government-wide transformation
+- Each phase has unique challenges and dependencies
+- Buffer time should be allocated for unexpected issues
+- User training and change management are critical success factors
+
+================================================================================
+12. VERSION HISTORY
+================================================================================
+
+Version 1.0 - 2025-10-12
+- Initial master index created
+- All 8 core phases documented
+- Dependency graph established
+- File index compiled
+- Success metrics defined
+
+Version 1.1 - 2025-10-12
+- Added BEN-I (Beneficiary Individual) phase
+- Added BEN-O (Beneficiary Organizational) phase
+- Updated total phases: 8 → 10 core phases
+- Updated total tasks: 300+ → 365+ tasks
+- Updated dependency graph to include beneficiary phases
+- Added beneficiary metrics to success criteria
+- Updated file index with phase_beneficiary_individual.txt and phase_beneficiary_organizational.txt
+
+Future Updates:
+- Version 1.2: Update completion status as phases progress
+- Version 1.3: Add actual vs. estimated metrics
+- Version 2.0: Post-rollout retrospective and lessons learned
+
+================================================================================
+END OF MASTER INDEX
+================================================================================
+
+Next Steps:
+1. Review this master index with project team
+2. Assign phase ownership (lead developer per phase)
+3. Create GitHub/Jira project for task tracking
+4. Schedule kickoff meeting
+5. Begin Phase 1: Foundation (Organizations)
+
+For Questions:
+- Technical: Contact Technical Lead
+- Process: Contact Project Manager
+- Documentation: Refer to docs/README.md
+
+Good luck with BMMS implementation! 🚀

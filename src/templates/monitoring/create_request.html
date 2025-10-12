@@ -122,7 +122,7 @@
                         {% include "components/form_field.html" with field=form.coverage_municipality label="Municipality / City" %}
                         {% include "components/form_field.html" with field=form.coverage_barangay label="Barangay" %}
                     </div>
-                    <div class="obc-map-container" data-coverage-map="primary" data-obc-map data-mode="coverage" data-region-field="id_coverage_region" data-province-field="id_coverage_province" data-municipality-field="id_coverage_municipality" data-barangay-field="id_coverage_barangay" data-location-script="location-data" data-centroid-url="{% url 'common:location_centroid' %}">
+                    <div class="obc-map-container" data-coverage-map="primary" data-obc-map data-mode="coverage" data-region-field="id_coverage_region" data-province-field="id_coverage_province" data-municipality-field="id_coverage_municipality" data-barangay-field="id_coverage_barangay" data-location-script="location-data" data-centroid-url="{% url 'communities:location_centroid' %}">
                         <div class="obc-map-header">
                             <h3 class="flex items-center gap-2 text-neutral-800"><i class="fas fa-map-marker-alt text-blue-500"></i>Coverage Map</h3>
                             <span class="obc-map-status"><i class="fas fa-crosshairs"></i>Select a location to drop a pin</span>
@@ -153,7 +153,7 @@
                             <select data-field="barangay" data-placeholder="Select barangay..." class="block w-full px-4 py-3 rounded-xl border border-neutral-200 bg-white shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm transition"></select>
                         </div>
                     </div>
-                    <div class="obc-map-container" data-coverage-map data-obc-map data-mode="coverage" data-location-script="location-data" data-centroid-url="{% url 'common:location_centroid' %}">
+                    <div class="obc-map-container" data-coverage-map data-obc-map data-mode="coverage" data-location-script="location-data" data-centroid-url="{% url 'communities:location_centroid' %}">
                         <div class="obc-map-header">
                             <h3 class="flex items-center gap-2 text-neutral-800"><i class="fas fa-map-marker-alt text-blue-500"></i>Coverage Map</h3>
                             <span class="obc-map-status"><i class="fas fa-crosshairs"></i>Select a location to drop a pin</span>

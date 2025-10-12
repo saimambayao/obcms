@@ -17,7 +17,7 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+    <a href="{% url 'mana:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">Geographic Data</li>
@@ -149,7 +149,7 @@
                     <button type="submit" class="w-full sm:flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200">
                         Apply
                     </button>
-                    <a href="{% url 'common:mana_geographic_data' %}"
+                    <a href="{% url 'mana:mana_geographic_data' %}"
                        class="w-full sm:flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">
                         Clear
                     </a>
@@ -375,7 +375,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:mana_manage_assessments' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'mana:mana_manage_assessments' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-clipboard-list text-white text-xl"></i>
@@ -393,7 +393,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:mana_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'mana:mana_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-chart-bar text-white text-xl"></i>

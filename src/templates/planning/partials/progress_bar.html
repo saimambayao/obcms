@@ -1,0 +1,14 @@
+{# Reusable Progress Bar Component #}
+{# Parameters: percentage (0-100), color (emerald|blue|purple|amber) #}
+{% if not color %}{% with color='emerald' %}{% endwith %}{% endif %}
+
+<div class="w-full bg-gray-200 rounded-full h-2.5">
+    <div class="
+        {% if color == 'emerald' %}bg-emerald-600
+        {% elif color == 'blue' %}bg-blue-600
+        {% elif color == 'purple' %}bg-purple-600
+        {% elif color == 'amber' %}bg-amber-600
+        {% else %}bg-gray-600{% endif %}
+        h-2.5 rounded-full transition-all duration-300"
+         style="width: {{ percentage|default:0 }}%"></div>
+</div>

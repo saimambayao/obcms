@@ -8,7 +8,7 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:communities_home' %}" class="text-neutral-500 hover:text-neutral-700">Communities</a>
+    <a href="{% url 'communities:communities_home' %}" class="text-neutral-500 hover:text-neutral-700">Communities</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">Manage Stakeholders</li>
@@ -152,7 +152,7 @@
                     <button type="submit" class="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200">Apply</button>
                 </div>
                 <div class="flex items-end">
-                    <a href="{% url 'common:communities_stakeholders' %}" class="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">Clear</a>
+                    <a href="{% url 'communities:communities_stakeholders' %}" class="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">Clear</a>
                 </div>
             </form>
         </div>
@@ -295,7 +295,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:communities_manage' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'communities:communities_manage' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-cogs text-white text-xl"></i>
@@ -313,7 +313,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:communities_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'communities:communities_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-chart-bar text-white text-xl"></i>

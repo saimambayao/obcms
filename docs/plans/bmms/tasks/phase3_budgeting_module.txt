@@ -1,0 +1,2292 @@
+================================================================================
+BMMS PHASE 3: BUDGETING MODULE (PARLIAMENT BILL NO. 325 COMPLIANCE)
+================================================================================
+
+PHASE OVERVIEW
+================================================================================
+Priority:       CRITICAL (Parliament Bill No. 325 Legal Compliance Required)
+Complexity:     Very Complex (New system + legal compliance framework)
+Dependencies:
+  - Phase 1: Organizations app (REQUIRED - OrganizationScopedModel base class)
+  - Phase 2: Planning Module (REQUIRED - PPAs needed for budget linkage)
+  - M&E Module: Monitoring & Evaluation (REQUIRED - Program/Project/Activity data)
+
+Legal Foundation: Parliament Bill No. 325 (Bangsamoro Budget System Act)
+
+Key Requirements:
+  - Budget preparation (per MOA - Ministry/Office/Agency)
+  - Budget authorization (GAAB approval)
+  - Budget execution (allotments, obligations, disbursements)
+  - Financial accountability reporting
+  - WorkItem breakdown per Parliament Bill No. 325
+  - Organization-scoped + OCM (Office of the Chief Minister) aggregation capability
+
+
+================================================================================
+SECTION 1: DJANGO APP STRUCTURE SETUP
+================================================================================
+
+Task 1.1: Create Core Budget Django Apps
+--------------------------------------------------------------------------------
+Description: Set up the budgeting app structure following Django best practices
+
+Commands to Execute:
+  cd src
+  python manage.py startapp budget_system
+  python manage.py startapp budget_preparation
+  python manage.py startapp budget_authorization
+  python manage.py startapp budget_execution
+  python manage.py startapp financial_accountability
+
+Expected Directory Structure:
+  src/
+  ├── budget_system/          # Core budget models and utilities
+  ├── budget_preparation/     # Annual budget call and MOA submissions
+  ├── budget_authorization/   # GAAB approval and authorization
+  ├── budget_execution/       # Allotments, obligations, disbursements
+  └── financial_accountability/ # Reporting and compliance
+
+Verification:
+  [ ] All 5 apps created successfully
+  [ ] Each app has __init__.py, models.py, views.py, admin.py
+  [ ] Apps are empty/default (ready for implementation)
+
+
+Task 1.2: Register Apps in Django Settings
+--------------------------------------------------------------------------------
+Description: Add new budget apps to INSTALLED_APPS
+
+File to Edit: src/obc_management/settings/base.py
+
+Changes Required:
+  INSTALLED_APPS = [
+      # ... existing apps ...
+      'budget_system',
+      'budget_preparation',
+      'budget_authorization',
+      'budget_execution',
+      'financial_accountability',
+  ]
+
+Verification:
+  [ ] Apps added to INSTALLED_APPS
+  [ ] Django recognizes apps (python manage.py check)
+  [ ] No import errors when starting server
+
+
+================================================================================
+SECTION 2: DATABASE MODELS IMPLEMENTATION
+================================================================================
+
+Task 2.1: Implement Budget System Core Models
+--------------------------------------------------------------------------------
+Description: Create fiscal policy and system-wide budget models
+
+File: src/budget_system/models.py
+
+Models to Create:
+
+1. FiscalPolicyStatement (Section 7 - Parliament Bill No. 325)
+   Fields:
+     - title: CharField(max_length=255)
+     - fiscal_year: IntegerField (e.g., 2024, 2025)
+     - medium_term_objectives: JSONField (3-year objectives)
+     - status: CharField(max_length=20, choices=[draft, approved, published])
+     - created_at: DateTimeField(auto_now_add=True)
+     - updated_at: DateTimeField(auto_now=True)
+
+2. MediumTermFiscalStrategy (Section 8 - MTFS)
+   Fields:
+     - fiscal_policy: ForeignKey(FiscalPolicyStatement, on_delete=CASCADE)
+     - year: IntegerField (year 1, 2, or 3 of MTFS)
+     - revenue_projection: DecimalField(max_digits=14, decimal_places=2)
+     - expenditure_projection: DecimalField(max_digits=14, decimal_places=2)
+     - deficit_projection: DecimalField(max_digits=14, decimal_places=2)
+     - created_at: DateTimeField(auto_now_add=True)
+
+Implementation Notes:
+  - Use Django's JSONField for medium_term_objectives
+  - Add Meta class with ordering = ['-fiscal_year']
+  - Implement __str__ method returning title + fiscal year
+
+Verification:
+  [ ] FiscalPolicyStatement model created
+  [ ] MediumTermFiscalStrategy model created
+  [ ] Models follow Django naming conventions
+  [ ] __str__ methods implemented
+
+
+Task 2.2: Implement Budget Preparation Models
+--------------------------------------------------------------------------------
+Description: Create models for annual budget call and MOA budget proposals
+
+File: src/budget_preparation/models.py
+
+Import Required:
+  from organizations.models import OrganizationScopedModel
+
+Models to Create:
+
+1. BudgetCall (System-wide, not org-scoped)
+   Fields:
+     - fiscal_year: IntegerField (unique=True)
+     - submission_deadline: DateField
+     - budget_ceiling: DecimalField(max_digits=14, decimal_places=2)
+     - guidelines: TextField (budget call instructions)
+     - status: CharField(max_length=20, choices=[open, closed])
+     - created_by: ForeignKey(User, on_delete=PROTECT)
+     - created_at: DateTimeField(auto_now_add=True)
+
+   Meta:
+     - ordering = ['-fiscal_year']
+     - unique_together = None (fiscal_year already unique)
+
+2. MOABudgetProposal (Organization-scoped)
+   Base Class: OrganizationScopedModel
+   Fields:
+     - budget_call: ForeignKey(BudgetCall, on_delete=CASCADE)
+     - proposed_amount: DecimalField(max_digits=14, decimal_places=2)
+     - justification: TextField (why this budget is needed)
+     - status: CharField(max_length=20, choices=[draft, submitted, under_review, approved, rejected])
+     - submitted_at: DateTimeField(null=True, blank=True)
+     - reviewed_at: DateTimeField(null=True, blank=True)
+     - created_by: ForeignKey(User, on_delete=PROTECT)
+     - created_at: DateTimeField(auto_now_add=True)
+     - updated_at: DateTimeField(auto_now=True)
+
+   Meta:
+     - ordering = ['-budget_call__fiscal_year']
+     - unique_together = [['organization', 'budget_call']] (one proposal per MOA per year)
+
+3. ProgramBudget (Organization-scoped)
+   Base Class: OrganizationScopedModel
+   Fields:
+     - budget_proposal: ForeignKey(MOABudgetProposal, on_delete=CASCADE, related_name='program_budgets')
+     - ppa: ForeignKey('monitoring.ProgramProjectActivity', on_delete=PROTECT)
+     - requested_amount: DecimalField(max_digits=12, decimal_places=2)
+     - justification: TextField
+     - created_at: DateTimeField(auto_now_add=True)
+
+   Meta:
+     - ordering = ['budget_proposal', 'ppa']
+
+Verification:
+  [ ] BudgetCall model created (not org-scoped)
+  [ ] MOABudgetProposal extends OrganizationScopedModel
+  [ ] ProgramBudget extends OrganizationScopedModel
+  [ ] Foreign key relationships correctly defined
+  [ ] unique_together constraints added
+
+
+Task 2.3: Implement Budget Authorization Models
+--------------------------------------------------------------------------------
+Description: Create GAAB (General Appropriations Act of Bangsamoro) models
+
+File: src/budget_authorization/models.py
+
+Models to Create:
+
+1. GAAB (System-wide, not org-scoped)
+   Fields:
+     - fiscal_year: IntegerField (unique=True)
+     - parliament_bill_number: CharField(max_length=50, e.g., "Parliament Bill No. 325")
+     - total_appropriation: DecimalField(max_digits=14, decimal_places=2)
+     - status: CharField(max_length=20, choices=[draft, enacted, published])
+     - enacted_date: DateField(null=True, blank=True)
+     - published_date: DateField(null=True, blank=True)
+     - created_at: DateTimeField(auto_now_add=True)
+
+   Meta:
+     - ordering = ['-fiscal_year']
+
+2. GAABItem (Line items per MOA)
+   Fields:
+     - gaab: ForeignKey(GAAB, on_delete=CASCADE, related_name='items')
+     - organization: ForeignKey('organizations.Organization', on_delete=PROTECT)
+     - appropriated_amount: DecimalField(max_digits=12, decimal_places=2)
+     - notes: TextField(blank=True)
+     - created_at: DateTimeField(auto_now_add=True)
+
+   Meta:
+     - ordering = ['gaab', 'organization']
+     - unique_together = [['gaab', 'organization']] (one line item per MOA per GAAB)
+
+Verification:
+  [ ] GAAB model created with parliament_bill_number field
+  [ ] GAABItem model created linking GAAB to organizations
+  [ ] unique_together constraint on GAABItem
+  [ ] Status choices implemented correctly
+
+
+Task 2.4: Implement Budget Execution Models (Parliament Bill No. 325 Core)
+--------------------------------------------------------------------------------
+Description: Create allotment, obligation, disbursement, and WorkItem models
+
+File: src/budget_execution/models.py
+
+Import Required:
+  from organizations.models import OrganizationScopedModel
+
+Models to Create:
+
+1. BudgetAllocation (Organization-scoped) ⭐ PRIMARY MODEL
+   Base Class: OrganizationScopedModel
+   Fields:
+     - ppa: ForeignKey('monitoring.ProgramProjectActivity', on_delete=PROTECT, related_name='budget_allocations')
+     - fiscal_year: IntegerField
+     - gaab_item: ForeignKey('budget_authorization.GAABItem', on_delete=PROTECT, null=True, blank=True)
+     - total_amount: DecimalField(max_digits=12, decimal_places=2, help_text='Total budget allocated')
+     - disbursed_amount: DecimalField(max_digits=12, decimal_places=2, default=0, help_text='Amount disbursed so far')
+     - status: CharField(max_length=20, choices=[draft, approved, active, completed, cancelled])
+     - approved_at: DateTimeField(null=True, blank=True)
+     - created_by: ForeignKey(User, on_delete=PROTECT)
+     - created_at: DateTimeField(auto_now_add=True)
+     - updated_at: DateTimeField(auto_now=True)
+
+   Meta:
+     - ordering = ['-fiscal_year', 'ppa']
+     - indexes = [
+         models.Index(fields=['organization', 'fiscal_year']),
+         models.Index(fields=['ppa', 'fiscal_year']),
+         models.Index(fields=['status']),
+       ]
+
+   Methods:
+     - utilization_percentage() -> Decimal:
+         """Calculate (disbursed_amount / total_amount) * 100"""
+     - remaining_amount() -> Decimal:
+         """Calculate total_amount - disbursed_amount"""
+
+2. WorkItem (Organization-scoped) ⭐ PARLIAMENT BILL NO. 325 COMPLIANCE
+   Base Class: OrganizationScopedModel
+   Purpose: Breakdown of budget allocation per Parliament Bill No. 325 requirements
+
+   Fields:
+     - budget_allocation: ForeignKey(BudgetAllocation, on_delete=CASCADE, related_name='work_items')
+     - code: CharField(max_length=50, help_text='Work item code (e.g., WI-001)')
+     - description: TextField (detailed description of work item)
+     - allocated_amount: DecimalField(max_digits=12, decimal_places=2, help_text='Budget allocated to this work item')
+     - disbursed_amount: DecimalField(max_digits=12, decimal_places=2, default=0, help_text='Amount disbursed so far')
+     - status: CharField(max_length=20, choices=[pending, in_progress, completed, cancelled])
+     - start_date: DateField(null=True, blank=True)
+     - target_completion_date: DateField(null=True, blank=True)
+     - actual_completion_date: DateField(null=True, blank=True)
+     - notes: TextField(blank=True)
+     - created_at: DateTimeField(auto_now_add=True)
+     - updated_at: DateTimeField(auto_now=True)
+
+   Meta:
+     - ordering = ['budget_allocation', 'code']
+     - unique_together = [['budget_allocation', 'code']]
+     - indexes = [
+         models.Index(fields=['budget_allocation', 'status']),
+       ]
+
+   Methods:
+     - utilization_percentage() -> Decimal:
+         """Calculate (disbursed_amount / allocated_amount) * 100"""
+     - is_overbudget() -> bool:
+         """Check if disbursed_amount > allocated_amount"""
+
+3. Allotment (Organization-scoped)
+   Base Class: OrganizationScopedModel
+   Fields:
+     - gaab_item: ForeignKey('budget_authorization.GAABItem', on_delete=CASCADE)
+     - amount: DecimalField(max_digits=12, decimal_places=2)
+     - allotment_date: DateField
+     - status: CharField(max_length=20, choices=[pending, approved, released])
+     - notes: TextField(blank=True)
+     - created_at: DateTimeField(auto_now_add=True)
+
+4. Obligation (Organization-scoped)
+   Base Class: OrganizationScopedModel
+   Fields:
+     - allotment: ForeignKey(Allotment, on_delete=CASCADE, related_name='obligations')
+     - work_item: ForeignKey(WorkItem, on_delete=PROTECT, null=True, blank=True, help_text='Link to specific work item')
+     - amount: DecimalField(max_digits=12, decimal_places=2)
+     - obligated_date: DateField
+     - payee: CharField(max_length=255, help_text='Who will receive payment')
+     - purpose: TextField
+     - status: CharField(max_length=20, choices=[pending, approved])
+     - created_at: DateTimeField(auto_now_add=True)
+
+5. Disbursement (Organization-scoped)
+   Base Class: OrganizationScopedModel
+   Fields:
+     - obligation: ForeignKey(Obligation, on_delete=CASCADE, related_name='disbursements')
+     - amount: DecimalField(max_digits=12, decimal_places=2)
+     - disbursed_date: DateField
+     - reference_number: CharField(max_length=100, help_text='Payment reference')
+     - disbursed_by: ForeignKey(User, on_delete=PROTECT)
+     - notes: TextField(blank=True)
+     - created_at: DateTimeField(auto_now_add=True)
+
+   Signals:
+     - post_save: Update work_item.disbursed_amount when disbursement is created
+     - post_save: Update budget_allocation.disbursed_amount
+
+Verification:
+  [ ] BudgetAllocation model created with utilization methods
+  [ ] WorkItem model created (Parliament Bill No. 325 compliance)
+  [ ] Allotment, Obligation, Disbursement models created
+  [ ] All models extend OrganizationScopedModel
+  [ ] Foreign key relationships correct
+  [ ] Indexes created for performance
+  [ ] Signal handlers implemented for disbursed_amount updates
+
+
+Task 2.5: Create Database Migrations
+--------------------------------------------------------------------------------
+Description: Generate and apply migrations for all budget models
+
+Commands to Execute:
+  cd src
+  python manage.py makemigrations budget_system
+  python manage.py makemigrations budget_preparation
+  python manage.py makemigrations budget_authorization
+  python manage.py makemigrations budget_execution
+  python manage.py makemigrations financial_accountability
+
+  # Review migrations before applying
+  python manage.py migrate --plan
+
+  # Apply migrations
+  python manage.py migrate
+
+Expected Migrations:
+  - budget_system/migrations/0001_initial.py (FiscalPolicyStatement, MTFS)
+  - budget_preparation/migrations/0001_initial.py (BudgetCall, MOABudgetProposal, ProgramBudget)
+  - budget_authorization/migrations/0001_initial.py (GAAB, GAABItem)
+  - budget_execution/migrations/0001_initial.py (BudgetAllocation, WorkItem, Allotment, Obligation, Disbursement)
+
+Verification:
+  [ ] All migrations created successfully
+  [ ] No migration conflicts
+  [ ] Migrations applied without errors
+  [ ] Database tables created (check with python manage.py dbshell)
+
+
+Task 2.6: Create Database Indexes for Performance
+--------------------------------------------------------------------------------
+Description: Add indexes for common query patterns
+
+File: src/budget_execution/models.py (Meta class updates)
+
+Indexes to Add:
+
+BudgetAllocation indexes:
+  - organization + fiscal_year (filtering budgets by MOA and year)
+  - ppa + fiscal_year (filtering budgets by program and year)
+  - status (filtering by status)
+
+WorkItem indexes:
+  - budget_allocation + status (filtering work items by allocation and status)
+  - organization + status (OCM aggregation queries)
+
+Commands to Execute:
+  cd src
+  python manage.py makemigrations
+  python manage.py migrate
+
+Verification:
+  [ ] Indexes added to model Meta classes
+  [ ] Migration generated with AddIndex operations
+  [ ] Migration applied successfully
+  [ ] Query performance improved (test with sample data)
+
+
+================================================================================
+SECTION 3: BUDGET WORKFLOW IMPLEMENTATION
+================================================================================
+
+Task 3.1: Implement Budget Preparation Workflow
+--------------------------------------------------------------------------------
+Description: Create workflow for MOAs to prepare and submit budget proposals
+
+File: src/budget_preparation/services.py (CREATE NEW)
+
+Functions to Implement:
+
+1. create_budget_call(fiscal_year, submission_deadline, budget_ceiling, guidelines, user)
+   Purpose: OCM creates annual budget call
+   Returns: BudgetCall instance
+   Validation:
+     - fiscal_year must be unique
+     - submission_deadline must be in future
+     - budget_ceiling must be positive
+
+2. create_moa_budget_proposal(organization, budget_call, proposed_amount, justification, user)
+   Purpose: MOA creates budget proposal in response to budget call
+   Returns: MOABudgetProposal instance
+   Validation:
+     - Organization must be MOA type
+     - Budget call must be open
+     - Proposed amount must not exceed budget ceiling
+     - One proposal per organization per budget call
+
+3. add_program_budget(budget_proposal, ppa, requested_amount, justification)
+   Purpose: Add program-level budget breakdown
+   Returns: ProgramBudget instance
+   Validation:
+     - PPA must belong to same organization
+     - Sum of all program budgets must not exceed proposed_amount
+
+4. submit_budget_proposal(budget_proposal, user)
+   Purpose: MOA submits proposal for review
+   Returns: Updated MOABudgetProposal
+   Side Effects:
+     - Set status = 'submitted'
+     - Set submitted_at = timezone.now()
+     - Send notification to OCM
+
+Verification:
+  [ ] services.py file created
+  [ ] All 4 workflow functions implemented
+  [ ] Validation logic implemented
+  [ ] Unit tests pass
+
+
+Task 3.2: Implement Budget Approval Stages
+--------------------------------------------------------------------------------
+Description: Create workflow for OCM to review and approve MOA budget proposals
+
+File: src/budget_preparation/services.py (EXTEND)
+
+Functions to Add:
+
+1. review_budget_proposal(budget_proposal, status, reviewer, notes)
+   Purpose: OCM reviews MOA budget proposal
+   Parameters:
+     - status: 'under_review', 'approved', or 'rejected'
+     - reviewer: User performing review
+     - notes: Review comments
+   Returns: Updated MOABudgetProposal
+   Side Effects:
+     - Update status
+     - Set reviewed_at = timezone.now()
+     - Send notification to MOA
+
+2. create_gaab_from_approved_proposals(fiscal_year, parliament_bill_number, user)
+   Purpose: Generate GAAB from all approved MOA proposals
+   Returns: GAAB instance with GAABItem entries
+   Validation:
+     - All proposals for fiscal_year must be approved
+     - Calculate total_appropriation from sum of approved proposals
+   Side Effects:
+     - Create GAAB instance
+     - Create GAABItem for each approved MOABudgetProposal
+     - Set GAAB status = 'draft'
+
+3. enact_gaab(gaab, enacted_date, user)
+   Purpose: Mark GAAB as enacted (passed by Parliament)
+   Returns: Updated GAAB
+   Side Effects:
+     - Set status = 'enacted'
+     - Set enacted_date
+     - Trigger budget execution readiness
+
+Verification:
+  [ ] Review workflow function implemented
+  [ ] GAAB generation function implemented
+  [ ] GAAB enactment function implemented
+  [ ] Unit tests cover all approval stages
+
+
+Task 3.3: Implement Disbursement Tracking
+--------------------------------------------------------------------------------
+Description: Create system to track budget disbursements per work item
+
+File: src/budget_execution/services.py (CREATE NEW)
+
+Functions to Implement:
+
+1. create_budget_allocation(ppa, fiscal_year, total_amount, organization, user)
+   Purpose: Create budget allocation for a PPA
+   Returns: BudgetAllocation instance
+   Validation:
+     - PPA must belong to organization
+     - Total amount must be positive
+     - Link to GAABItem if exists
+
+2. create_work_item(budget_allocation, code, description, allocated_amount, start_date, target_completion_date)
+   Purpose: Break down budget allocation into work items (Parliament Bill No. 325)
+   Returns: WorkItem instance
+   Validation:
+     - Sum of all work items must not exceed budget_allocation.total_amount
+     - Code must be unique within budget allocation
+     - Allocated amount must be positive
+
+3. record_disbursement(obligation, amount, disbursed_date, reference_number, user)
+   Purpose: Record actual disbursement of funds
+   Returns: Disbursement instance
+   Side Effects:
+     - Create Disbursement record
+     - Update work_item.disbursed_amount (if linked)
+     - Update budget_allocation.disbursed_amount
+     - Calculate utilization percentage
+   Validation:
+     - Amount must not exceed obligation.amount
+     - Disbursed_date must not be in future
+
+4. get_disbursement_summary(budget_allocation)
+   Purpose: Calculate disbursement statistics
+   Returns: dict with:
+     - total_allocated
+     - total_disbursed
+     - utilization_percentage
+     - remaining_amount
+     - work_items_summary (list of work item statuses)
+
+Verification:
+  [ ] Budget allocation creation function implemented
+  [ ] Work item creation with validation
+  [ ] Disbursement recording with amount updates
+  [ ] Summary calculation function implemented
+  [ ] Unit tests cover disbursement tracking
+
+
+Task 3.4: Calculate Utilization Percentages
+--------------------------------------------------------------------------------
+Description: Implement methods to calculate budget utilization
+
+Files to Update:
+  - src/budget_execution/models.py (add methods to BudgetAllocation, WorkItem)
+  - src/budget_execution/services.py (add aggregation functions)
+
+Methods to Add:
+
+BudgetAllocation.utilization_percentage():
+  """
+  Calculate (disbursed_amount / total_amount) * 100
+  Return as Decimal rounded to 2 decimal places
+  Handle division by zero (return Decimal('0.00'))
+  """
+
+WorkItem.utilization_percentage():
+  """
+  Calculate (disbursed_amount / allocated_amount) * 100
+  Return as Decimal rounded to 2 decimal places
+  Handle division by zero (return Decimal('0.00'))
+  """
+
+Service Function: calculate_organization_utilization(organization, fiscal_year)
+  Purpose: Calculate overall budget utilization for an MOA
+  Returns: dict with:
+    - total_allocated: Sum of all budget allocations
+    - total_disbursed: Sum of all disbursements
+    - overall_utilization: Percentage
+    - by_ppa: List of utilization per PPA
+
+Verification:
+  [ ] Model methods implemented
+  [ ] Service function for organization utilization
+  [ ] Edge cases handled (zero division, null values)
+  [ ] Unit tests verify correct calculations
+
+
+================================================================================
+SECTION 4: REST API IMPLEMENTATION
+================================================================================
+
+Task 4.1: Create Budget Serializers
+--------------------------------------------------------------------------------
+Description: Implement DRF serializers for all budget models
+
+File: src/budget_execution/serializers.py (CREATE NEW)
+
+Serializers to Create:
+
+1. BudgetAllocationSerializer
+   Meta:
+     - model = BudgetAllocation
+     - fields = '__all__'
+     - read_only_fields = ['created_at', 'updated_at', 'organization']
+
+   Custom Fields:
+     - utilization_percentage = SerializerMethodField()
+     - remaining_amount = SerializerMethodField()
+     - ppa_title = CharField(source='ppa.title', read_only=True)
+     - organization_name = CharField(source='organization.name', read_only=True)
+
+2. WorkItemSerializer
+   Meta:
+     - model = WorkItem
+     - fields = '__all__'
+     - read_only_fields = ['created_at', 'updated_at', 'organization']
+
+   Custom Fields:
+     - utilization_percentage = SerializerMethodField()
+     - is_overbudget = SerializerMethodField()
+
+3. BudgetAllocationDetailSerializer (with nested work items)
+   Inherits: BudgetAllocationSerializer
+   Additional Fields:
+     - work_items = WorkItemSerializer(many=True, read_only=True)
+
+File: src/budget_preparation/serializers.py (CREATE NEW)
+
+4. MOABudgetProposalSerializer
+   Meta:
+     - model = MOABudgetProposal
+     - fields = '__all__'
+     - read_only_fields = ['organization', 'submitted_at', 'reviewed_at']
+
+5. ProgramBudgetSerializer
+   Meta:
+     - model = ProgramBudget
+     - fields = '__all__'
+
+Verification:
+  [ ] All serializers created
+  [ ] Custom fields implemented (utilization, remaining)
+  [ ] Read-only fields properly marked
+  [ ] Serializers work with DRF browsable API
+
+
+Task 4.2: Create Budget CRUD API Endpoints
+--------------------------------------------------------------------------------
+Description: Implement REST API views for budget operations
+
+File: src/budget_execution/views.py (CREATE NEW)
+
+ViewSets to Create:
+
+1. BudgetAllocationViewSet (ModelViewSet)
+   Base Class: viewsets.ModelViewSet
+   Serializer: BudgetAllocationSerializer
+   Permission: IsAuthenticated
+   Queryset: BudgetAllocation.objects.all() (auto-scoped by middleware)
+
+   Features:
+     - Standard CRUD operations (list, create, retrieve, update, destroy)
+     - Filter by: fiscal_year, ppa, status
+     - Search by: ppa__title
+     - Ordering: fiscal_year, created_at
+
+   Custom Actions:
+     - @action(detail=True, methods=['get'])
+       get_work_items(self, request, pk=None):
+         """Get all work items for this budget allocation"""
+         Return: WorkItemSerializer(many=True)
+
+     - @action(detail=False, methods=['get'])
+       by_fiscal_year(self, request):
+         """Get all budget allocations for a fiscal year"""
+         Query Param: fiscal_year (required)
+
+2. WorkItemViewSet (ModelViewSet)
+   Base Class: viewsets.ModelViewSet
+   Serializer: WorkItemSerializer
+   Permission: IsAuthenticated
+   Queryset: WorkItem.objects.all()
+
+   Features:
+     - Standard CRUD operations
+     - Filter by: budget_allocation, status
+     - Search by: description, code
+
+   Custom Actions:
+     - @action(detail=True, methods=['post'])
+       record_disbursement(self, request, pk=None):
+         """Record a disbursement for this work item"""
+         Request Data: amount, disbursed_date, reference_number
+         Calls: services.record_disbursement()
+
+File: src/budget_execution/urls.py (CREATE NEW)
+
+URL Configuration:
+  from rest_framework.routers import DefaultRouter
+  from . import views
+
+  router = DefaultRouter()
+  router.register(r'allocations', views.BudgetAllocationViewSet, basename='budget-allocation')
+  router.register(r'work-items', views.WorkItemViewSet, basename='work-item')
+
+  urlpatterns = router.urls
+
+Add to Main URLs:
+  File: src/obc_management/urls.py
+
+  urlpatterns += [
+      path('api/budget/', include('budget_execution.urls')),
+  ]
+
+Verification:
+  [ ] BudgetAllocationViewSet implemented
+  [ ] WorkItemViewSet implemented
+  [ ] URLs configured correctly
+  [ ] API browsable at /api/budget/allocations/
+  [ ] Custom actions work correctly
+
+
+Task 4.3: Implement Budget Aggregation Endpoints
+--------------------------------------------------------------------------------
+Description: Create API endpoints for aggregating budget data
+
+File: src/budget_execution/views.py (EXTEND)
+
+New ViewSet:
+
+BudgetAggregationViewSet (ViewSet)
+  Purpose: Read-only aggregation endpoints
+  Base Class: viewsets.ViewSet
+  Permission: IsAuthenticated
+
+  Actions:
+
+  1. @action(detail=False, methods=['get'])
+     by_organization(self, request):
+     """Aggregate budget data by MOA"""
+     Query Params:
+       - fiscal_year (required)
+       - organization_id (optional, for specific MOA)
+
+     Returns: JSON
+       {
+         "fiscal_year": 2024,
+         "organizations": [
+           {
+             "id": 1,
+             "code": "MOH",
+             "name": "Ministry of Health",
+             "total_allocated": "50000000.00",
+             "total_disbursed": "30000000.00",
+             "utilization_percentage": "60.00",
+             "budget_allocations_count": 15
+           },
+           ...
+         ],
+         "total_allocated": "500000000.00",
+         "total_disbursed": "300000000.00",
+         "overall_utilization": "60.00"
+       }
+
+  2. @action(detail=False, methods=['get'])
+     by_program(self, request):
+     """Aggregate budget data by Program/Project"""
+     Query Params:
+       - fiscal_year (required)
+       - organization_id (optional)
+
+     Returns: JSON
+       {
+         "programs": [
+           {
+             "ppa_id": 123,
+             "ppa_code": "MOH-2024-001",
+             "ppa_title": "Rural Health Program",
+             "total_allocated": "10000000.00",
+             "total_disbursed": "6000000.00",
+             "utilization_percentage": "60.00"
+           },
+           ...
+         ]
+       }
+
+  3. @action(detail=False, methods=['get'])
+     cmo_dashboard_summary(self, request):
+     """OCM aggregated summary across all MOAs"""
+     Purpose: Office of the Chief Minister overview
+     Query Params:
+       - fiscal_year (required)
+
+     Returns: JSON
+       {
+         "fiscal_year": 2024,
+         "total_moas": 44,
+         "total_budget_allocated": "5000000000.00",
+         "total_disbursed": "3000000000.00",
+         "overall_utilization": "60.00",
+         "top_performers": [...],  # Top 5 MOAs by utilization
+         "low_performers": [...],  # Bottom 5 MOAs by utilization
+         "by_sector": [...]  # Aggregation by sector
+       }
+
+URL Configuration:
+  router.register(r'aggregation', views.BudgetAggregationViewSet, basename='budget-aggregation')
+
+Verification:
+  [ ] BudgetAggregationViewSet implemented
+  [ ] All 3 aggregation actions created
+  [ ] OCM dashboard summary functional
+  [ ] API endpoints return correct JSON structure
+
+
+Task 4.4: Create Disbursement Tracking Endpoints
+--------------------------------------------------------------------------------
+Description: API endpoints for recording and tracking disbursements
+
+File: src/budget_execution/views.py (EXTEND)
+
+New ViewSet:
+
+DisbursementViewSet (ModelViewSet)
+  Base Class: viewsets.ModelViewSet
+  Serializer: DisbursementSerializer (create in serializers.py)
+  Permission: IsAuthenticated
+  Queryset: Disbursement.objects.all()
+
+  Features:
+    - List all disbursements (auto-scoped by organization)
+    - Create new disbursement
+    - Retrieve disbursement details
+    - Filter by: disbursed_date (range), work_item, obligation
+
+  Custom Action:
+    @action(detail=False, methods=['get'])
+    monthly_summary(self, request):
+      """Get monthly disbursement summary"""
+      Query Params:
+        - fiscal_year (required)
+        - month (optional, 1-12)
+
+      Returns: JSON
+        {
+          "fiscal_year": 2024,
+          "monthly_disbursements": [
+            {"month": 1, "total": "50000000.00"},
+            {"month": 2, "total": "45000000.00"},
+            ...
+          ],
+          "total_fiscal_year": "600000000.00"
+        }
+
+Serializer to Create:
+
+File: src/budget_execution/serializers.py (EXTEND)
+
+DisbursementSerializer:
+  Meta:
+    - model = Disbursement
+    - fields = '__all__'
+    - read_only_fields = ['created_at', 'organization']
+
+  Custom Fields:
+    - work_item_code = CharField(source='obligation.work_item.code', read_only=True)
+    - disbursed_by_name = CharField(source='disbursed_by.get_full_name', read_only=True)
+
+URL Configuration:
+  router.register(r'disbursements', views.DisbursementViewSet, basename='disbursement')
+
+Verification:
+  [ ] DisbursementViewSet implemented
+  [ ] DisbursementSerializer created
+  [ ] Monthly summary action works
+  [ ] URLs configured correctly
+
+
+Task 4.5: Create Utilization Report Endpoints
+--------------------------------------------------------------------------------
+Description: API endpoints for budget utilization reporting
+
+File: src/budget_execution/views.py (EXTEND)
+
+New ViewSet:
+
+UtilizationReportViewSet (ViewSet)
+  Base Class: viewsets.ViewSet
+  Permission: IsAuthenticated
+
+  Actions:
+
+  1. @action(detail=False, methods=['get'])
+     organization_utilization(self, request):
+     """Detailed utilization report for current organization"""
+     Query Params:
+       - fiscal_year (required)
+
+     Calls: services.calculate_organization_utilization()
+
+     Returns: JSON
+       {
+         "organization": {...},
+         "fiscal_year": 2024,
+         "total_allocated": "100000000.00",
+         "total_disbursed": "60000000.00",
+         "overall_utilization": "60.00",
+         "by_ppa": [
+           {
+             "ppa_code": "MOH-2024-001",
+             "ppa_title": "Rural Health",
+             "allocated": "20000000.00",
+             "disbursed": "12000000.00",
+             "utilization": "60.00"
+           },
+           ...
+         ],
+         "by_quarter": [...],  # Q1, Q2, Q3, Q4 breakdown
+         "work_items_status": {
+           "pending": 5,
+           "in_progress": 10,
+           "completed": 3,
+           "cancelled": 0
+         }
+       }
+
+  2. @action(detail=False, methods=['get'])
+     low_utilization_alert(self, request):
+     """Identify PPAs with low utilization (< 30%)"""
+     Query Params:
+       - fiscal_year (required)
+       - threshold (optional, default 30.0)
+
+     Returns: JSON
+       {
+         "threshold": 30.0,
+         "low_utilization_ppas": [
+           {
+             "ppa": {...},
+             "allocated": "10000000.00",
+             "disbursed": "1000000.00",
+             "utilization": "10.00",
+             "alert_level": "critical"
+           },
+           ...
+         ]
+       }
+
+URL Configuration:
+  router.register(r'reports', views.UtilizationReportViewSet, basename='utilization-report')
+
+Verification:
+  [ ] UtilizationReportViewSet implemented
+  [ ] Organization utilization report working
+  [ ] Low utilization alert functional
+  [ ] JSON responses match documented structure
+
+
+================================================================================
+SECTION 5: USER INTERFACE IMPLEMENTATION
+================================================================================
+
+Task 5.1: Create Budget Allocation List View
+--------------------------------------------------------------------------------
+Description: Create UI for viewing all budget allocations
+
+Files to Create:
+  - src/templates/budget_execution/budget_allocation_list.html
+  - src/budget_execution/views.py (add template view)
+
+View Function:
+
+def budget_allocation_list(request):
+    """List all budget allocations for current organization"""
+    allocations = BudgetAllocation.objects.select_related('ppa', 'organization').all()
+
+    # Filter by fiscal year if provided
+    fiscal_year = request.GET.get('fiscal_year')
+    if fiscal_year:
+        allocations = allocations.filter(fiscal_year=fiscal_year)
+
+    # Calculate stats
+    stats = {
+        'total_allocated': allocations.aggregate(Sum('total_amount'))['total_amount__sum'] or 0,
+        'total_disbursed': allocations.aggregate(Sum('disbursed_amount'))['disbursed_amount__sum'] or 0,
+    }
+    if stats['total_allocated'] > 0:
+        stats['overall_utilization'] = (stats['total_disbursed'] / stats['total_allocated']) * 100
+    else:
+        stats['overall_utilization'] = 0
+
+    return render(request, 'budget_execution/budget_allocation_list.html', {
+        'allocations': allocations,
+        'stats': stats,
+        'fiscal_year': fiscal_year,
+    })
+
+Template Structure (budget_allocation_list.html):
+
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Stat Cards (3D Milk White - OBCMS UI Standard) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Total Allocated Card -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                <i class="fas fa-coins text-white text-xl"></i>
+            </div>
+        </div>
+        <h3 class="text-gray-500 text-sm font-medium mb-2">Total Allocated</h3>
+        <p class="text-3xl font-bold text-gray-900">₱{{ stats.total_allocated|floatformat:2|intcomma }}</p>
+    </div>
+
+    <!-- Total Disbursed Card -->
+    <!-- Utilization Card -->
+    <!-- ... similar structure ... -->
+</div>
+
+<!-- Budget Allocations Table -->
+<div class="bg-white rounded-xl border border-gray-100 shadow-lg overflow-hidden">
+    <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-teal-500">
+        <h2 class="text-xl font-bold text-white">Budget Allocations</h2>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PPA</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fiscal Year</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Allocated</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Disbursed</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Utilization</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for allocation in allocations %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900">{{ allocation.ppa.code }}</div>
+                        <div class="text-sm text-gray-500">{{ allocation.ppa.title|truncatewords:8 }}</div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900">{{ allocation.fiscal_year }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">₱{{ allocation.total_amount|floatformat:2|intcomma }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">₱{{ allocation.disbursed_amount|floatformat:2|intcomma }}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="flex-1 bg-gray-200 rounded-full h-2 mr-2">
+                                <div class="bg-emerald-500 h-2 rounded-full" style="width: {{ allocation.utilization_percentage }}%"></div>
+                            </div>
+                            <span class="text-sm font-medium text-gray-700">{{ allocation.utilization_percentage|floatformat:1 }}%</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                            {% if allocation.status == 'active' %}bg-emerald-100 text-emerald-800
+                            {% elif allocation.status == 'completed' %}bg-blue-100 text-blue-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ allocation.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right text-sm font-medium">
+                        <a href="{% url 'budget:allocation-detail' allocation.pk %}" class="text-blue-600 hover:text-blue-900">
+                            View <i class="fas fa-arrow-right ml-1"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">No budget allocations found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+URL Configuration:
+  File: src/budget_execution/urls.py
+
+  urlpatterns = [
+      path('allocations/', budget_allocation_list, name='allocation-list'),
+  ]
+
+Verification:
+  [ ] View function implemented
+  [ ] Template created following OBCMS UI standards
+  [ ] Stat cards use 3D milk white design
+  [ ] Table displays all allocations correctly
+  [ ] Utilization percentage calculated and displayed
+  [ ] URL configured correctly
+
+
+Task 5.2: Create Budget Preparation Forms
+--------------------------------------------------------------------------------
+Description: Create forms for MOA staff to prepare budget proposals
+
+Files to Create:
+  - src/budget_preparation/forms.py
+  - src/templates/budget_preparation/budget_proposal_form.html
+  - src/budget_preparation/views.py (add form views)
+
+Forms to Create:
+
+1. MOABudgetProposalForm (forms.ModelForm)
+   Meta:
+     - model = MOABudgetProposal
+     - fields = ['budget_call', 'proposed_amount', 'justification']
+     - widgets = {
+         'justification': forms.Textarea(attrs={'rows': 6}),
+       }
+
+   Custom Validation:
+     - def clean_proposed_amount(self):
+         """Ensure proposed amount does not exceed budget ceiling"""
+
+2. ProgramBudgetFormSet (forms.inlineformset_factory)
+   Parent Model: MOABudgetProposal
+   Child Model: ProgramBudget
+   Extra: 3
+   Can Delete: True
+
+View Functions:
+
+def create_budget_proposal(request):
+    """Create new budget proposal"""
+    if request.method == 'POST':
+        form = MOABudgetProposalForm(request.POST)
+        formset = ProgramBudgetFormSet(request.POST)
+
+        if form.is_valid() and formset.is_valid():
+            proposal = form.save(commit=False)
+            proposal.organization = request.user.default_organization
+            proposal.created_by = request.user
+            proposal.save()
+
+            formset.instance = proposal
+            formset.save()
+
+            messages.success(request, 'Budget proposal created successfully.')
+            return redirect('budget-prep:proposal-detail', pk=proposal.pk)
+    else:
+        form = MOABudgetProposalForm()
+        formset = ProgramBudgetFormSet()
+
+    return render(request, 'budget_preparation/budget_proposal_form.html', {
+        'form': form,
+        'formset': formset,
+    })
+
+Template Structure (budget_proposal_form.html):
+
+<!-- Follow OBCMS form component standards -->
+<!-- Use rounded-xl dropdowns with emerald focus rings -->
+<!-- Reference: src/templates/communities/provincial_manage.html -->
+
+<form method="post" class="space-y-6">
+    {% csrf_token %}
+
+    <!-- Budget Call Selection -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Budget Call Information</h3>
+        {% include "components/form_field_select.html" with field=form.budget_call %}
+    </div>
+
+    <!-- Proposed Amount -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Budget Request</h3>
+        {% include "components/form_field_input.html" with field=form.proposed_amount %}
+        {% include "components/form_field.html" with field=form.justification %}
+    </div>
+
+    <!-- Program Budget Breakdown -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Program Budget Breakdown</h3>
+        {{ formset.management_form }}
+
+        <div id="program-budget-forms" class="space-y-4">
+            {% for form in formset %}
+            <div class="border border-gray-200 rounded-lg p-4">
+                <!-- Formset fields -->
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Submit Buttons -->
+    <div class="flex gap-4">
+        <button type="submit" name="action" value="save_draft" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-teal-500 text-white rounded-xl">
+            Save as Draft
+        </button>
+        <button type="submit" name="action" value="submit" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl">
+            Submit for Review
+        </button>
+    </div>
+</form>
+
+Verification:
+  [ ] Forms created and validated
+  [ ] View functions handle POST/GET correctly
+  [ ] Template follows OBCMS UI standards
+  [ ] Form components match existing patterns
+  [ ] Inline formset works correctly
+
+
+Task 5.3: Implement WorkItem Breakdown UI
+--------------------------------------------------------------------------------
+Description: Create UI for breaking down budget allocations into work items
+
+Files to Create:
+  - src/templates/budget_execution/work_item_breakdown.html
+  - src/budget_execution/forms.py
+  - src/budget_execution/views.py (add view function)
+
+Form to Create:
+
+WorkItemForm (forms.ModelForm)
+  Meta:
+    - model = WorkItem
+    - fields = ['code', 'description', 'allocated_amount', 'start_date', 'target_completion_date', 'notes']
+    - widgets = {
+        'description': forms.Textarea(attrs={'rows': 4}),
+        'start_date': forms.DateInput(attrs={'type': 'date'}),
+        'target_completion_date': forms.DateInput(attrs={'type': 'date'}),
+      }
+
+View Function:
+
+def work_item_breakdown(request, allocation_id):
+    """Manage work items for a budget allocation"""
+    allocation = get_object_or_404(BudgetAllocation, pk=allocation_id)
+    work_items = allocation.work_items.all()
+
+    if request.method == 'POST':
+        form = WorkItemForm(request.POST)
+        if form.is_valid():
+            work_item = form.save(commit=False)
+            work_item.budget_allocation = allocation
+            work_item.organization = request.user.default_organization
+
+            # Validate total does not exceed allocation
+            total_allocated = work_items.aggregate(Sum('allocated_amount'))['allocated_amount__sum'] or 0
+            if total_allocated + work_item.allocated_amount > allocation.total_amount:
+                messages.error(request, 'Work item allocation exceeds budget total.')
+            else:
+                work_item.save()
+                messages.success(request, 'Work item created successfully.')
+                return redirect('budget:work-item-breakdown', allocation_id=allocation.pk)
+    else:
+        form = WorkItemForm()
+
+    # Calculate remaining budget
+    total_work_items = work_items.aggregate(Sum('allocated_amount'))['allocated_amount__sum'] or 0
+    remaining_budget = allocation.total_amount - total_work_items
+
+    return render(request, 'budget_execution/work_item_breakdown.html', {
+        'allocation': allocation,
+        'work_items': work_items,
+        'form': form,
+        'remaining_budget': remaining_budget,
+    })
+
+Template Structure (work_item_breakdown.html):
+
+<!-- Budget Allocation Header -->
+<div class="bg-white rounded-xl border border-gray-100 shadow-lg p-6 mb-6">
+    <h2 class="text-2xl font-bold text-gray-900 mb-4">{{ allocation.ppa.title }}</h2>
+    <div class="grid grid-cols-3 gap-4">
+        <div>
+            <p class="text-sm text-gray-500">Total Budget</p>
+            <p class="text-xl font-semibold text-gray-900">₱{{ allocation.total_amount|floatformat:2|intcomma }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500">Allocated to Work Items</p>
+            <p class="text-xl font-semibold text-blue-600">₱{{ total_work_items|floatformat:2|intcomma }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500">Remaining Budget</p>
+            <p class="text-xl font-semibold {% if remaining_budget < 0 %}text-red-600{% else %}text-emerald-600{% endif %}">
+                ₱{{ remaining_budget|floatformat:2|intcomma }}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Work Items Table -->
+<div class="bg-white rounded-xl border border-gray-100 shadow-lg overflow-hidden mb-6">
+    <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-teal-500">
+        <h3 class="text-xl font-bold text-white">Work Items (Parliament Bill No. 325)</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left">Code</th>
+                    <th class="px-6 py-3 text-left">Description</th>
+                    <th class="px-6 py-3 text-left">Allocated</th>
+                    <th class="px-6 py-3 text-left">Disbursed</th>
+                    <th class="px-6 py-3 text-left">Utilization</th>
+                    <th class="px-6 py-3 text-left">Status</th>
+                    <th class="px-6 py-3 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for work_item in work_items %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ work_item.code }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-700">{{ work_item.description|truncatewords:10 }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">₱{{ work_item.allocated_amount|floatformat:2|intcomma }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">₱{{ work_item.disbursed_amount|floatformat:2|intcomma }}</td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-medium">{{ work_item.utilization_percentage|floatformat:1 }}%</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 text-xs rounded-full {% if work_item.status == 'completed' %}bg-emerald-100 text-emerald-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {{ work_item.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <a href="{% url 'budget:work-item-detail' work_item.pk %}" class="text-blue-600 hover:text-blue-900">View</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">No work items yet. Add one below.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Work Item Form -->
+<div class="bg-white rounded-xl border border-gray-100 shadow-lg p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Add Work Item</h3>
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <!-- Form fields using OBCMS components -->
+        <button type="submit" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-teal-500 text-white rounded-xl">
+            Add Work Item
+        </button>
+    </form>
+</div>
+
+Verification:
+  [ ] WorkItemForm created
+  [ ] View function validates total allocation
+  [ ] Template displays allocation header with stats
+  [ ] Work items table shows all items
+  [ ] Add work item form functional
+  [ ] UI follows OBCMS standards
+
+
+Task 5.4: Add Disbursement Tracking Interface
+--------------------------------------------------------------------------------
+Description: Create UI for recording and viewing disbursements
+
+Files to Create:
+  - src/templates/budget_execution/disbursement_tracker.html
+  - src/budget_execution/forms.py (add DisbursementForm)
+  - src/budget_execution/views.py (add view functions)
+
+Form to Create:
+
+DisbursementForm (forms.ModelForm)
+  Meta:
+    - model = Disbursement
+    - fields = ['obligation', 'amount', 'disbursed_date', 'reference_number', 'notes']
+    - widgets = {
+        'disbursed_date': forms.DateInput(attrs={'type': 'date'}),
+        'notes': forms.Textarea(attrs={'rows': 3}),
+      }
+
+View Function:
+
+def disbursement_tracker(request, work_item_id):
+    """Track disbursements for a work item"""
+    work_item = get_object_or_404(WorkItem, pk=work_item_id)
+
+    # Get all obligations for this work item
+    obligations = Obligation.objects.filter(work_item=work_item).prefetch_related('disbursements')
+
+    if request.method == 'POST':
+        form = DisbursementForm(request.POST)
+        if form.is_valid():
+            disbursement = form.save(commit=False)
+            disbursement.organization = request.user.default_organization
+            disbursement.disbursed_by = request.user
+
+            # Call service function to record disbursement and update amounts
+            try:
+                services.record_disbursement(
+                    obligation=disbursement.obligation,
+                    amount=disbursement.amount,
+                    disbursed_date=disbursement.disbursed_date,
+                    reference_number=disbursement.reference_number,
+                    user=request.user
+                )
+                messages.success(request, 'Disbursement recorded successfully.')
+                return redirect('budget:disbursement-tracker', work_item_id=work_item.pk)
+            except ValidationError as e:
+                messages.error(request, str(e))
+    else:
+        form = DisbursementForm()
+
+    return render(request, 'budget_execution/disbursement_tracker.html', {
+        'work_item': work_item,
+        'obligations': obligations,
+        'form': form,
+    })
+
+Template Structure:
+
+<!-- Work Item Header with Progress Bar -->
+<div class="bg-white rounded-xl border border-gray-100 shadow-lg p-6 mb-6">
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ work_item.code }}: {{ work_item.description }}</h2>
+
+    <div class="mt-4">
+        <div class="flex justify-between text-sm text-gray-600 mb-2">
+            <span>Disbursement Progress</span>
+            <span>{{ work_item.utilization_percentage|floatformat:1 }}%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+            <div class="bg-gradient-to-r from-emerald-400 to-green-500 h-4 rounded-full" style="width: {{ work_item.utilization_percentage }}%"></div>
+        </div>
+        <div class="flex justify-between text-sm mt-2">
+            <span class="text-gray-600">Disbursed: ₱{{ work_item.disbursed_amount|floatformat:2|intcomma }}</span>
+            <span class="text-gray-600">Allocated: ₱{{ work_item.allocated_amount|floatformat:2|intcomma }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Disbursements Table -->
+<!-- Record Disbursement Form -->
+
+Verification:
+  [ ] DisbursementForm created
+  [ ] View function records disbursements correctly
+  [ ] Template displays progress bar
+  [ ] Disbursements table shows all records
+  [ ] Form updates work_item amounts via service function
+
+
+Task 5.5: Create Utilization Dashboard/Charts
+--------------------------------------------------------------------------------
+Description: Create dashboard with charts showing budget utilization
+
+Files to Create:
+  - src/templates/budget_execution/utilization_dashboard.html
+  - src/budget_execution/views.py (add dashboard view)
+
+View Function:
+
+def utilization_dashboard(request):
+    """Budget utilization dashboard for current organization"""
+    fiscal_year = request.GET.get('fiscal_year', timezone.now().year)
+
+    # Get utilization data
+    utilization_data = services.calculate_organization_utilization(
+        organization=request.user.default_organization,
+        fiscal_year=fiscal_year
+    )
+
+    # Get monthly disbursement trend
+    disbursements_by_month = (
+        Disbursement.objects
+        .filter(disbursed_date__year=fiscal_year)
+        .annotate(month=ExtractMonth('disbursed_date'))
+        .values('month')
+        .annotate(total=Sum('amount'))
+        .order_by('month')
+    )
+
+    # Get top 5 PPAs by utilization
+    top_ppas = (
+        BudgetAllocation.objects
+        .filter(fiscal_year=fiscal_year)
+        .annotate(
+            utilization=Cast(F('disbursed_amount') * 100.0 / F('total_amount'), DecimalField(max_digits=5, decimal_places=2))
+        )
+        .order_by('-utilization')[:5]
+    )
+
+    return render(request, 'budget_execution/utilization_dashboard.html', {
+        'fiscal_year': fiscal_year,
+        'utilization_data': utilization_data,
+        'disbursements_by_month': list(disbursements_by_month),
+        'top_ppas': top_ppas,
+    })
+
+Template Structure:
+
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Overall Stats (3D Milk White Stat Cards) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <!-- Total Budget Card -->
+    <!-- Total Disbursed Card -->
+    <!-- Utilization Card -->
+    <!-- Remaining Card -->
+</div>
+
+<!-- Charts Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <!-- Monthly Disbursement Trend (Line Chart) -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Monthly Disbursement Trend</h3>
+        <canvas id="monthlyDisbursementChart"></canvas>
+    </div>
+
+    <!-- Utilization by PPA (Bar Chart) -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Programs by Utilization</h3>
+        <canvas id="utilizationByPpaChart"></canvas>
+    </div>
+</div>
+
+<!-- Work Items Status Breakdown -->
+<div class="bg-white rounded-xl border border-gray-100 shadow-lg p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Work Items Status</h3>
+    <div class="grid grid-cols-4 gap-4">
+        <!-- Pending, In Progress, Completed, Cancelled counts -->
+    </div>
+</div>
+
+<!-- JavaScript for Charts (Chart.js) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Monthly Disbursement Trend Chart
+const monthlyCtx = document.getElementById('monthlyDisbursementChart').getContext('2d');
+new Chart(monthlyCtx, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [{
+            label: 'Disbursements (₱)',
+            data: {{ disbursements_by_month|safe }},
+            borderColor: 'rgb(16, 185, 129)',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        }
+    }
+});
+
+// Utilization by PPA Bar Chart
+const ppaCtx = document.getElementById('utilizationByPpaChart').getContext('2d');
+new Chart(ppaCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for ppa in top_ppas %}'{{ ppa.ppa.code }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Utilization (%)',
+            data: [{% for ppa in top_ppas %}{{ ppa.utilization }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+            borderRadius: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+</script>
+
+{% endblock %}
+
+Verification:
+  [ ] Dashboard view function implemented
+  [ ] Template displays stat cards correctly
+  [ ] Monthly trend chart renders with Chart.js
+  [ ] Top PPAs bar chart displays correctly
+  [ ] Work items status breakdown shown
+  [ ] All charts update based on fiscal_year filter
+
+
+================================================================================
+SECTION 6: PARLIAMENT BILL NO. 325 COMPLIANCE VERIFICATION
+================================================================================
+
+Task 6.1: Verify WorkItem Model Implementation
+--------------------------------------------------------------------------------
+Description: Ensure WorkItem model meets Parliament Bill No. 325 requirements
+
+Compliance Checklist:
+
+  [ ] WorkItem model created and operational
+  [ ] Required fields implemented:
+      - code (unique work item identifier)
+      - description (detailed work item description)
+      - allocated_amount (budget allocated to work item)
+      - disbursed_amount (actual disbursement tracking)
+      - status (workflow tracking)
+      - start_date and target_completion_date (timeline)
+  [ ] Foreign key to BudgetAllocation (linking to PPA budget)
+  [ ] Organization scoping enabled (extends OrganizationScopedModel)
+  [ ] Utilization percentage calculation method
+  [ ] Over-budget detection method
+  [ ] Database indexes created for performance
+
+Testing:
+  cd src
+  python manage.py shell
+
+  >>> from budget_execution.models import WorkItem
+  >>> WorkItem.objects.all()  # Should return empty queryset initially
+  >>> # Create test work item after budget allocation exists
+
+
+Task 6.2: Verify Budget Allocation Tracking Per PPA
+--------------------------------------------------------------------------------
+Description: Ensure budget allocations are correctly linked to PPAs
+
+Compliance Checklist:
+
+  [ ] BudgetAllocation model links to ProgramProjectActivity (PPA)
+  [ ] One-to-many relationship: One PPA can have multiple budget allocations (different fiscal years)
+  [ ] Foreign key constraint prevents deletion of PPA if budget allocation exists (on_delete=PROTECT)
+  [ ] Organization scoping ensures MOA only sees their own allocations
+  [ ] Fiscal year tracking implemented
+  [ ] Status workflow (draft → approved → active → completed)
+
+Testing:
+  # Test in Django shell
+  >>> from budget_execution.models import BudgetAllocation
+  >>> from monitoring.models import ProgramProjectActivity
+  >>> ppa = ProgramProjectActivity.objects.first()
+  >>> allocations = BudgetAllocation.objects.filter(ppa=ppa)
+  >>> # Should show all allocations for this PPA
+
+
+Task 6.3: Verify Disbursement vs. Allocation Reporting
+--------------------------------------------------------------------------------
+Description: Ensure accurate tracking of allocated vs. disbursed amounts
+
+Compliance Checklist:
+
+  [ ] BudgetAllocation.total_amount stores allocated budget
+  [ ] BudgetAllocation.disbursed_amount tracks actual disbursements
+  [ ] WorkItem.allocated_amount stores work item budget
+  [ ] WorkItem.disbursed_amount tracks work item disbursements
+  [ ] Disbursement model records individual payments
+  [ ] Signal handlers update disbursed_amount fields automatically
+  [ ] Remaining amount calculation: total_amount - disbursed_amount
+  [ ] Over-disbursement prevention (validation logic)
+
+Testing:
+  # Test disbursement tracking
+  >>> from budget_execution.models import BudgetAllocation, WorkItem, Disbursement
+  >>> allocation = BudgetAllocation.objects.first()
+  >>> print(f"Allocated: {allocation.total_amount}, Disbursed: {allocation.disbursed_amount}")
+  >>> print(f"Remaining: {allocation.remaining_amount()}")
+
+
+Task 6.4: Verify Utilization Percentage Calculations
+--------------------------------------------------------------------------------
+Description: Ensure accurate utilization percentage calculations
+
+Compliance Checklist:
+
+  [ ] BudgetAllocation.utilization_percentage() method implemented
+  [ ] WorkItem.utilization_percentage() method implemented
+  [ ] Formula: (disbursed_amount / total_amount) * 100
+  [ ] Returns Decimal type rounded to 2 decimal places
+  [ ] Handles edge cases:
+      - Division by zero (returns Decimal('0.00'))
+      - Null disbursed_amount (treats as 0)
+  [ ] Dashboard displays utilization percentages correctly
+  [ ] API endpoints return utilization in JSON responses
+  [ ] OCM aggregation calculates overall utilization across MOAs
+
+Testing:
+  # Test utilization calculation
+  >>> allocation = BudgetAllocation.objects.first()
+  >>> print(f"Utilization: {allocation.utilization_percentage()}%")
+
+  >>> work_item = WorkItem.objects.first()
+  >>> print(f"Work Item Utilization: {work_item.utilization_percentage()}%")
+
+  # Test edge case: zero allocation
+  >>> from decimal import Decimal
+  >>> test_allocation = BudgetAllocation.objects.create(
+  ...     ppa=some_ppa,
+  ...     total_amount=Decimal('0.00'),
+  ...     disbursed_amount=Decimal('0.00')
+  ... )
+  >>> print(test_allocation.utilization_percentage())  # Should return 0.00 without error
+
+
+================================================================================
+SECTION 7: TESTING TASKS
+================================================================================
+
+Task 7.1: Unit Tests for Budget Models
+--------------------------------------------------------------------------------
+Description: Create comprehensive unit tests for all budget models
+
+File: src/tests/budget/test_budget_models.py (CREATE NEW)
+
+Test Classes to Create:
+
+1. TestBudgetAllocationModel
+   Tests:
+     - test_create_budget_allocation()
+     - test_budget_allocation_str_method()
+     - test_utilization_percentage_calculation()
+     - test_utilization_percentage_zero_division()
+     - test_remaining_amount_calculation()
+     - test_organization_scoping()
+     - test_foreign_key_constraints()
+
+2. TestWorkItemModel
+   Tests:
+     - test_create_work_item()
+     - test_work_item_unique_code_per_allocation()
+     - test_work_item_utilization_percentage()
+     - test_work_item_is_overbudget()
+     - test_work_item_status_choices()
+     - test_organization_scoping()
+
+3. TestDisbursementModel
+   Tests:
+     - test_create_disbursement()
+     - test_disbursement_updates_work_item_amount()
+     - test_disbursement_updates_allocation_amount()
+     - test_disbursement_signal_handlers()
+
+Commands to Run Tests:
+  cd src
+  pytest tests/budget/test_budget_models.py -v
+
+Verification:
+  [ ] Test file created with all test classes
+  [ ] All model creation tests pass
+  [ ] Calculation tests pass (utilization, remaining)
+  [ ] Organization scoping tests pass
+  [ ] Signal handler tests pass
+  [ ] 100% code coverage for models
+
+
+Task 7.2: API Tests for Budget Operations
+--------------------------------------------------------------------------------
+Description: Test all budget REST API endpoints
+
+File: src/tests/budget/test_budget_api.py (CREATE NEW)
+
+Test Classes to Create:
+
+1. TestBudgetAllocationAPI
+   Tests:
+     - test_list_budget_allocations()
+     - test_create_budget_allocation()
+     - test_retrieve_budget_allocation()
+     - test_update_budget_allocation()
+     - test_delete_budget_allocation()
+     - test_filter_by_fiscal_year()
+     - test_custom_action_get_work_items()
+
+2. TestWorkItemAPI
+   Tests:
+     - test_list_work_items()
+     - test_create_work_item()
+     - test_record_disbursement_action()
+     - test_work_item_validation_exceeds_allocation()
+
+3. TestBudgetAggregationAPI
+   Tests:
+     - test_aggregation_by_organization()
+     - test_aggregation_by_program()
+     - test_cmo_dashboard_summary()
+     - test_aggregation_requires_fiscal_year()
+
+4. TestUtilizationReportAPI
+   Tests:
+     - test_organization_utilization_report()
+     - test_low_utilization_alert()
+     - test_quarterly_breakdown()
+
+Setup Fixture:
+  @pytest.fixture
+  def setup_budget_data(self):
+      """Create test organizations, PPAs, and budget allocations"""
+      # Create test data
+      return {'moa': moa, 'ppa': ppa, 'allocation': allocation}
+
+Commands to Run Tests:
+  cd src
+  pytest tests/budget/test_budget_api.py -v
+
+Verification:
+  [ ] API test file created
+  [ ] All CRUD operations tested
+  [ ] Custom actions tested
+  [ ] Aggregation endpoints tested
+  [ ] All tests pass with 200/201 status codes
+
+
+Task 7.3: Organization Scoping Tests
+--------------------------------------------------------------------------------
+Description: Verify budget data is properly scoped to organizations
+
+File: src/tests/budget/test_organization_scoping.py (CREATE NEW)
+
+Test Scenarios:
+
+1. test_moa_only_sees_own_budget_allocations()
+   Purpose: Ensure MOA staff only see their organization's budget allocations
+   Setup:
+     - Create MOH organization with budget allocations
+     - Create MOLE organization with budget allocations
+     - Create MOH user and MOLE user
+   Test:
+     - Login as MOH user
+     - Query BudgetAllocation.objects.all()
+     - Assert only MOH allocations returned
+     - Assert MOLE allocations NOT visible
+
+2. test_cmo_can_aggregate_all_moa_budgets()
+   Purpose: Ensure OCM can view all MOA budgets (aggregation)
+   Setup:
+     - Create multiple MOAs with budget allocations
+     - Create OCM user
+   Test:
+     - Login as OCM user
+     - Call aggregation API endpoint
+     - Assert all MOA budgets included in response
+
+3. test_work_items_scoped_to_organization()
+   Purpose: Ensure work items are organization-scoped
+   Test:
+     - Create work items for MOH
+     - Create work items for MOLE
+     - Login as MOH user
+     - Assert only MOH work items visible
+
+4. test_disbursements_scoped_to_organization()
+   Purpose: Ensure disbursements are organization-scoped
+   Test:
+     - Similar to work items test
+
+Commands to Run Tests:
+  cd src
+  pytest tests/budget/test_organization_scoping.py -v
+
+Verification:
+  [ ] Organization scoping test file created
+  [ ] MOA-only visibility tests pass
+  [ ] OCM aggregation tests pass
+  [ ] Cross-organization data leakage prevented
+  [ ] All tests pass
+
+
+Task 7.4: Utilization Calculation Tests
+--------------------------------------------------------------------------------
+Description: Verify all utilization percentage calculations are accurate
+
+File: src/tests/budget/test_utilization_calculations.py (CREATE NEW)
+
+Test Cases:
+
+1. test_budget_allocation_utilization_100_percent()
+   Setup: total_amount = 10000000, disbursed_amount = 10000000
+   Expected: utilization_percentage() returns Decimal('100.00')
+
+2. test_budget_allocation_utilization_50_percent()
+   Setup: total_amount = 10000000, disbursed_amount = 5000000
+   Expected: utilization_percentage() returns Decimal('50.00')
+
+3. test_budget_allocation_utilization_zero_disbursed()
+   Setup: total_amount = 10000000, disbursed_amount = 0
+   Expected: utilization_percentage() returns Decimal('0.00')
+
+4. test_budget_allocation_utilization_zero_allocated()
+   Setup: total_amount = 0, disbursed_amount = 0
+   Expected: utilization_percentage() returns Decimal('0.00') (no division error)
+
+5. test_work_item_utilization_partial()
+   Setup: allocated_amount = 5000000, disbursed_amount = 3000000
+   Expected: utilization_percentage() returns Decimal('60.00')
+
+6. test_organization_overall_utilization()
+   Setup:
+     - Create 3 budget allocations for MOH
+     - Allocation 1: 10M allocated, 6M disbursed (60%)
+     - Allocation 2: 5M allocated, 5M disbursed (100%)
+     - Allocation 3: 15M allocated, 0M disbursed (0%)
+   Expected: Overall utilization = (11M / 30M) * 100 = 36.67%
+
+Commands to Run Tests:
+  cd src
+  pytest tests/budget/test_utilization_calculations.py -v
+
+Verification:
+  [ ] Utilization test file created
+  [ ] All percentage calculations correct
+  [ ] Edge cases handled (zero division)
+  [ ] Organization aggregation calculations correct
+  [ ] All tests pass with exact Decimal values
+
+
+Task 7.5: UI Tests for Budget Management
+--------------------------------------------------------------------------------
+Description: Test budget management UI functionality
+
+File: src/tests/budget/test_budget_ui.py (CREATE NEW)
+
+Test Cases:
+
+1. test_budget_allocation_list_view()
+   Test:
+     - Navigate to /budget/allocations/
+     - Assert stat cards display correct totals
+     - Assert table displays all allocations
+     - Assert utilization progress bars render
+
+2. test_work_item_breakdown_view()
+   Test:
+     - Navigate to work item breakdown page
+     - Assert work items table displays
+     - Assert remaining budget calculation correct
+     - Submit new work item form
+     - Assert work item created and displayed
+
+3. test_disbursement_tracker_view()
+   Test:
+     - Navigate to disbursement tracker
+     - Assert disbursements table displays
+     - Record new disbursement
+     - Assert work item disbursed_amount updated
+     - Assert progress bar updated
+
+4. test_utilization_dashboard_charts()
+   Test:
+     - Navigate to utilization dashboard
+     - Assert Chart.js renders (check canvas elements)
+     - Assert monthly trend data correct
+     - Assert top PPAs data correct
+
+5. test_budget_proposal_form_submission()
+   Test:
+     - Navigate to budget proposal form
+     - Fill out form fields
+     - Add program budget formsets
+     - Submit form
+     - Assert proposal created successfully
+
+Commands to Run Tests:
+  cd src
+  pytest tests/budget/test_budget_ui.py -v
+
+  # Or use Selenium/Playwright for browser-based tests
+  pytest tests/budget/test_budget_ui_selenium.py -v
+
+Verification:
+  [ ] UI test file created
+  [ ] All views load successfully (200 status)
+  [ ] Forms submit correctly
+  [ ] Templates render without errors
+  [ ] JavaScript charts render (if using Selenium)
+  [ ] All tests pass
+
+
+================================================================================
+SECTION 8: FINAL VERIFICATION CHECKLIST
+================================================================================
+
+Task 8.1: Database Verification
+--------------------------------------------------------------------------------
+Verify Database Structure:
+
+  [ ] Budgeting apps created (5 apps)
+  [ ] All models created and migrated
+  [ ] Database tables exist:
+      - budget_system_fiscalpolicystatement
+      - budget_system_mediumtermfiscalstrategy
+      - budget_preparation_budgetcall
+      - budget_preparation_moabudgetproposal
+      - budget_preparation_programbudget
+      - budget_authorization_gaab
+      - budget_authorization_gaabitem
+      - budget_execution_budgetallocation
+      - budget_execution_workitem
+      - budget_execution_allotment
+      - budget_execution_obligation
+      - budget_execution_disbursement
+  [ ] Foreign key relationships correct
+  [ ] Indexes created for performance
+  [ ] Organization field exists on scoped models
+
+Commands to Verify:
+  cd src
+  python manage.py dbshell
+  .tables  # (SQLite) or \dt (PostgreSQL)
+  .schema budget_execution_budgetallocation
+
+
+Task 8.2: Models and Business Logic Verification
+--------------------------------------------------------------------------------
+Verify Models Implementation:
+
+  [ ] BudgetAllocation model complete
+  [ ] WorkItem model complete (Parliament Bill No. 325 compliance)
+  [ ] All models extend OrganizationScopedModel (where required)
+  [ ] utilization_percentage() methods implemented
+  [ ] remaining_amount() method implemented
+  [ ] is_overbudget() method implemented (WorkItem)
+  [ ] Signal handlers for disbursed_amount updates
+  [ ] Status choices implemented correctly
+  [ ] __str__ methods return meaningful strings
+
+Commands to Verify:
+  cd src
+  python manage.py shell
+
+  >>> from budget_execution.models import BudgetAllocation, WorkItem
+  >>> BudgetAllocation._meta.get_fields()  # Inspect fields
+  >>> hasattr(BudgetAllocation, 'utilization_percentage')  # Check method exists
+
+
+Task 8.3: Parliament Bill No. 325 Compliance Verification
+--------------------------------------------------------------------------------
+Compliance Checklist:
+
+  [ ] WorkItem model implements required budget breakdown
+  [ ] Budget allocation tracking per PPA operational
+  [ ] Disbursement vs. allocation reporting functional
+  [ ] Utilization percentage calculations accurate
+  [ ] Organization scoping ensures MOA data isolation
+  [ ] OCM can aggregate budget data across all MOAs
+  [ ] Financial accountability reporting possible
+  [ ] All GAAB (General Appropriations Act) models implemented
+
+Documentation to Review:
+  - Parliament Bill No. 325 (Bangsamoro Budget System Act)
+  - GAAB requirements
+  - Budget execution workflow
+
+Legal Compliance Sign-Off:
+  [ ] Legal/Compliance team review completed
+  [ ] All statutory requirements met
+  [ ] Audit trail mechanisms in place
+
+
+Task 8.4: REST API Verification
+--------------------------------------------------------------------------------
+Verify API Functionality:
+
+  [ ] Budget allocation CRUD endpoints working
+  [ ] Work item CRUD endpoints working
+  [ ] Disbursement recording endpoint working
+  [ ] Aggregation by organization endpoint working
+  [ ] Aggregation by program endpoint working
+  [ ] OCM dashboard summary endpoint working
+  [ ] Utilization report endpoints working
+  [ ] Low utilization alert endpoint working
+  [ ] API authentication enforced
+  [ ] API pagination working
+  [ ] API filtering working (fiscal_year, status, etc.)
+  [ ] API returns correct JSON structure
+
+Commands to Test API:
+  # Start dev server
+  cd src
+  python manage.py runserver
+
+  # Test in browser or with curl
+  curl -H "Authorization: Bearer <token>" http://localhost:8000/api/budget/allocations/
+
+  # Or use DRF browsable API
+  Open: http://localhost:8000/api/budget/
+
+
+Task 8.5: User Interface Verification
+--------------------------------------------------------------------------------
+Verify UI Implementation:
+
+  [ ] Budget allocation list view functional
+  [ ] Budget allocation list displays stat cards (3D milk white)
+  [ ] Budget allocation table displays correctly
+  [ ] Work item breakdown view functional
+  [ ] Work item breakdown UI shows remaining budget
+  [ ] Add work item form works correctly
+  [ ] Disbursement tracker view functional
+  [ ] Disbursement tracker shows progress bars
+  [ ] Record disbursement form works
+  [ ] Utilization dashboard displays
+  [ ] Charts render correctly (Chart.js)
+  [ ] Monthly trend chart displays
+  [ ] Top PPAs bar chart displays
+  [ ] Budget proposal form functional
+  [ ] Program budget formsets work
+  [ ] All templates follow OBCMS UI standards
+  [ ] Responsive design on mobile/tablet/desktop
+  [ ] Accessibility standards met (WCAG 2.1 AA)
+
+Manual Testing Checklist:
+  [ ] Login as MOA user
+  [ ] Navigate to budget module
+  [ ] Create budget allocation
+  [ ] Add work items
+  [ ] Record disbursements
+  [ ] View utilization dashboard
+  [ ] Verify stat cards display correctly
+  [ ] Verify charts render correctly
+
+
+Task 8.6: Testing Suite Verification
+--------------------------------------------------------------------------------
+Verify All Tests Pass:
+
+  [ ] Unit tests for budget models (100% pass rate)
+  [ ] API tests for budget operations (100% pass rate)
+  [ ] Organization scoping tests (100% pass rate)
+  [ ] Utilization calculation tests (100% pass rate)
+  [ ] UI tests for budget management (100% pass rate)
+  [ ] Overall test coverage > 80%
+
+Commands to Run Full Test Suite:
+  cd src
+  pytest tests/budget/ -v --cov=budget_execution --cov=budget_preparation --cov=budget_authorization
+
+  # Generate coverage report
+  coverage report
+  coverage html  # Open htmlcov/index.html in browser
+
+Expected Results:
+  - All tests pass (no failures)
+  - Code coverage > 80%
+  - No critical warnings
+
+
+Task 8.7: Integration with Other Modules Verification
+--------------------------------------------------------------------------------
+Verify Integration Points:
+
+  [ ] Integration with Organizations app (OrganizationScopedModel)
+  [ ] Integration with Planning Module (PPA linkage)
+  [ ] Integration with M&E Module (ProgramProjectActivity)
+  [ ] Integration with User authentication
+  [ ] Organization switcher works with budget module
+  [ ] OCM user can see all MOA budgets
+  [ ] MOA user can only see own budgets
+  [ ] Permissions enforced correctly
+
+Test Scenarios:
+  [ ] Create PPA in M&E module
+  [ ] Create budget allocation for that PPA
+  [ ] Verify linkage works correctly
+  [ ] Delete PPA (should be prevented by PROTECT)
+  [ ] Switch organization in UI
+  [ ] Verify budget data filtered correctly
+
+
+Task 8.8: Documentation Verification
+--------------------------------------------------------------------------------
+Verify Documentation Complete:
+
+  [ ] This task breakdown document created
+  [ ] API documentation generated (OpenAPI/Swagger)
+  [ ] Model documentation (docstrings)
+  [ ] View/function documentation (docstrings)
+  [ ] User guide for budget module (if required)
+  [ ] Developer guide for extending budget module
+  [ ] Parliament Bill No. 325 compliance documentation
+
+Commands to Generate API Docs:
+  cd src
+  python manage.py generateschema --format openapi > budget_api_schema.yaml
+
+  # Or use drf-spectacular
+  python manage.py spectacular --color --file schema.yml
+
+
+Task 8.9: Performance Verification
+--------------------------------------------------------------------------------
+Verify Performance Benchmarks:
+
+  [ ] Budget allocation list loads < 500ms
+  [ ] Work item breakdown loads < 500ms
+  [ ] Utilization dashboard loads < 1000ms
+  [ ] API endpoints respond < 200ms
+  [ ] OCM aggregation query < 1000ms
+  [ ] Database indexes improve query performance
+  [ ] N+1 query problems resolved (select_related, prefetch_related)
+
+Performance Testing Commands:
+  cd src
+  python manage.py shell
+
+  >>> from django.test.utils import override_settings
+  >>> from django.db import connection
+  >>> from django.db import reset_queries
+
+  >>> with override_settings(DEBUG=True):
+  ...     reset_queries()
+  ...     allocations = BudgetAllocation.objects.all()
+  ...     print(len(connection.queries))  # Should be minimal with proper indexing
+
+
+Task 8.10: Final Sign-Off
+--------------------------------------------------------------------------------
+Final Review Checklist:
+
+  [ ] All tasks in Sections 1-7 completed
+  [ ] All models implemented and tested
+  [ ] All API endpoints functional
+  [ ] All UI components working
+  [ ] Parliament Bill No. 325 compliance verified
+  [ ] All tests passing (100% pass rate)
+  [ ] Code coverage > 80%
+  [ ] Performance benchmarks met
+  [ ] Documentation complete
+  [ ] Integration with other modules verified
+  [ ] Security review completed (no data leakage)
+  [ ] User acceptance testing (UAT) passed
+  [ ] Deployment readiness confirmed
+
+Sign-Off:
+  Technical Lead:  _______________________  Date: __________
+  OOBC Director:   _______________________  Date: __________
+  Legal/Compliance: _______________________  Date: __________
+
+
+================================================================================
+SECTION 9: DEPLOYMENT NOTES
+================================================================================
+
+Deployment Prerequisites:
+  - Phase 1 (Organizations app) MUST be deployed first
+  - Phase 2 (Planning Module) MUST be deployed first
+  - M&E Module MUST be operational (for PPA linkage)
+  - PostgreSQL database configured (production)
+  - Redis configured (for Celery, if needed)
+
+Deployment Commands:
+  cd src
+  python manage.py migrate  # Apply all budget migrations
+  python manage.py collectstatic --noinput
+  python manage.py check --deploy
+
+Post-Deployment Verification:
+  [ ] All migrations applied successfully
+  [ ] Budget allocation list page loads
+  [ ] API endpoints accessible
+  [ ] OCM aggregation working
+  [ ] Test user can create budget allocation
+  [ ] No errors in logs
+
+Rollback Plan:
+  - If deployment fails, run migration rollback:
+    python manage.py migrate budget_system zero
+    python manage.py migrate budget_preparation zero
+    python manage.py migrate budget_authorization zero
+    python manage.py migrate budget_execution zero
+
+
+================================================================================
+END OF PHASE 3: BUDGETING MODULE TASK BREAKDOWN
+================================================================================
+
+Total Estimated Tasks: 45+ individual tasks across 8 sections
+Priority: CRITICAL (Parliament Bill No. 325 legal compliance required)
+Complexity: Very Complex (new system + legal framework)
+
+Next Steps After Phase 3 Completion:
+  1. Phase 4: Coordination Enhancement (cross-MOA partnerships)
+  2. Phase 5: Module Migration (MANA, M&E, Policies organization scoping)
+  3. Phase 6: OCM Aggregation Layer (consolidated dashboards)
+  4. Phase 7: Pilot MOA Onboarding (MOH, MOLE, MAFAR)
+  5. Phase 8: Full Rollout (all 44 MOAs)
+
+For Questions or Issues:
+  - Refer to: docs/plans/bmms/TRANSITION_PLAN.md
+  - Contact: Technical Lead or OOBC Director
+
+================================================================================

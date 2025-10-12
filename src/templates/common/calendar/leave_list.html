@@ -19,7 +19,7 @@
     <div class="flex items-center justify-between">
         <h1 class="text-3xl font-bold text-gray-900">Staff Leave Requests</h1>
         {% if can_view_all %}
-        <a href="{% url 'common:staff_leave_request' %}" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg shadow-sm hover:bg-emerald-700">
+        <a href="{% url 'coordination:leave_request' %}" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg shadow-sm hover:bg-emerald-700">
             <i class="fas fa-plus mr-2"></i>Request Leave
         </a>
         {% endif %}

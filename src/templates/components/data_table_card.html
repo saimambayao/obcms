@@ -21,16 +21,16 @@
             {% for header in headers %}
             <div class="{{ header.width|default:'' }} {{ header.class|default:'flex items-center' }}">{{ header.label }}</div>
             {% endfor %}
-            {% if show_actions %}<div class="w-[8%] min-w-[100px] text-right">Actions</div>{% endif %}
+            {% if show_actions %}<div class="{{ actions_width|default:'w-[8%] min-w-[100px]' }} text-right">Actions</div>{% endif %}
         </div>
         {% if rows %}
             {% for row in rows %}
-            <div class="px-6 py-4 flex gap-4 md:items-center">
+            <div class="px-6 py-4 flex flex-wrap md:flex-nowrap gap-4">
                 {% for cell in row.cells %}
-                <div class="{{ cell.class|default:'text-sm text-gray-700' }}">{{ cell.content|safe }}</div>
+                <div class="{{ cell.class|default:'text-sm text-gray-700' }} flex items-center">{{ cell.content|safe }}</div>
                 {% endfor %}
                 {% if show_actions %}
-                <div class="w-[8%] min-w-[100px] flex items-center justify-end gap-2">
+                <div class="{{ actions_width|default:'w-[8%] min-w-[100px]' }} flex items-center justify-end gap-2">
                     {% if row.view_url %}
                     <a href="{{ row.view_url }}" class="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-100">
                         <i class="fas fa-eye"></i>

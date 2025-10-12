@@ -19,14 +19,40 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     <!-- Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">User Approvals</h1>
+        <h1 class="text-3xl font-bold text-gray-900">User Management</h1>
         <p class="mt-2 text-lg text-gray-600 max-w-3xl">
-            Review and approve pending user account registrations. Approved users will gain access to the system based on their assigned roles.
+            Review pending approvals and manage user permissions and roles across the system.
         </p>
     </div>
 
-    <!-- Metrics Summary -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+    <!-- Tab Navigation -->
+    <div class="border-b border-gray-200 mb-8">
+        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+            <button type="button"
+                    onclick="showTab('approvals')"
+                    id="approvals-tab"
+                    class="tab-button border-b-4 border-blue-800 py-4 px-1 text-sm font-semibold text-blue-800 whitespace-nowrap"
+                    aria-selected="true">
+                <i class="fas fa-user-check mr-2"></i>
+                User Approvals
+            </button>
+            <button type="button"
+                    onclick="showTab('permissions')"
+                    id="permissions-tab"
+                    class="tab-button border-b-4 border-transparent py-4 px-1 text-sm font-semibold text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap"
+                    aria-selected="false">
+                <i class="fas fa-shield-alt mr-2"></i>
+                Permissions & Roles
+            </button>
+        </nav>
+    </div>
+
+    <!-- Tab Content Container -->
+    <div class="tab-content">
+        <!-- User Approvals Tab -->
+        <div id="approvals-content" class="tab-pane">
+            <!-- Metrics Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
         <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             <div class="bg-gradient-to-r from-amber-500 to-orange-500 p-4 text-white">
                 <div class="flex items-center justify-between">
@@ -225,5 +251,64 @@
         </div>
     </div>
     {% endif %}
+        </div>
+        <!-- End User Approvals Tab -->
+
+        <!-- Permissions & Roles Tab -->
+        <div id="permissions-content" class="tab-pane hidden">
+            <div hx-get="{% url 'common:rbac_dashboard' %}"
+                 hx-trigger="load once"
+                 hx-swap="innerHTML"
+                 hx-indicator="#rbac-loading">
+                <!-- Loading Indicator -->
+                <div id="rbac-loading" class="flex items-center justify-center py-12">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+                        <p class="text-gray-600">Loading RBAC dashboard...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Permissions & Roles Tab -->
+    </div>
 </div>
+
+{% block extra_js %}
+<script>
+// Tab switching functionality
+function showTab(tabName) {
+    // Hide all tab content
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.add('hidden');
+    });
+
+    // Remove active state from all tabs
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('border-blue-800', 'text-blue-800');
+        button.classList.add('border-transparent', 'text-gray-500');
+        button.setAttribute('aria-selected', 'false');
+    });
+
+    // Show selected tab content
+    const contentId = tabName + '-content';
+    const contentElement = document.getElementById(contentId);
+    if (contentElement) {
+        contentElement.classList.remove('hidden');
+    }
+
+    // Add active state to selected tab
+    const tabButton = document.getElementById(tabName + '-tab');
+    if (tabButton) {
+        tabButton.classList.remove('border-transparent', 'text-gray-500');
+        tabButton.classList.add('border-blue-800', 'text-blue-800');
+        tabButton.setAttribute('aria-selected', 'true');
+    }
+}
+
+// Initialize first tab as active on load
+document.addEventListener('DOMContentLoaded', function() {
+    showTab('approvals');
+});
+</script>
+{% endblock %}
 {% endblock %}

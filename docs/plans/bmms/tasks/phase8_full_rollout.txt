@@ -1,0 +1,989 @@
+BMMS PHASE 8: FULL ROLLOUT - TASK BREAKDOWN
+
+================================================================================
+PHASE METADATA
+================================================================================
+
+Phase: 8
+Title: Full Rollout to 44 MOAs
+Priority: MEDIUM
+Complexity: Simple
+Status: Not Started
+
+Dependencies:
+  - Phase 7: Pilot MOA Onboarding (successful completion)
+  - All 3 pilot MOAs signed off
+  - Go decision from go/no-go meeting
+  - Critical bugs fixed
+  - Infrastructure scaled
+
+Description:
+  Roll out BMMS to remaining 41 MOAs (total 44 including pilot MOAs) using
+  batched approach with 5-10 MOAs per wave. Includes training, onboarding,
+  support, and monitoring for government-wide adoption.
+
+Rollout Strategy:
+  - Wave-based deployment (6-9 waves)
+  - 5-10 MOAs per wave
+  - 2 weeks per wave (training + stabilization)
+  - Total: 12-18 weeks
+
+Target Scale:
+  - 44 MOAs operational
+  - 700-1100 total users
+  - Government-wide BMMS adoption
+
+Key Deliverables:
+  - All 44 MOAs onboarded
+  - 700+ users trained
+  - Help desk operational
+  - Success metrics tracked
+  - Post-rollout support plan
+
+================================================================================
+TASK 1: ROLLOUT WAVE PLANNING
+================================================================================
+
+Priority: CRITICAL
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Plan rollout waves grouping MOAs logically, set schedule, assign
+  coordinators, and prepare wave-specific communications.
+
+Subtasks:
+
+[ ] 1.1 Group MOAs into Rollout Waves
+    Strategy: Group by ministry type and interdependencies
+
+    Wave 1 (Pilot - COMPLETE):
+    - MOH (Ministry of Health)
+    - MOLE (Ministry of Labor and Employment)
+    - MAFAR (Ministry of Agriculture)
+
+    Wave 2 (Social Services - 5 MOAs):
+    - MSSD (Ministry of Social Services and Development)
+    - MBHTE (Ministry of Basic, Higher and Technical Education)
+    - MIPA (Ministry of Indigenous Peoples Affairs)
+    - MHSD (Ministry of Human Settlements and Development)
+    - BUWIS (Bangsamoro Women Commission)
+
+    Wave 3 (Governance & Finance - 6 MOAs):
+    - MFBM (Ministry of Finance, Budget and Management)
+    - MILG (Ministry of Interior and Local Government)
+    - OCM (Office of the Chief Minister)
+    - OMP (Office of the Member of Parliament)
+    - BARMM Regional Government
+    - Bangsamoro Civil Service Commission
+
+    Wave 4 (Infrastructure & Development - 5 MOAs):
+    - MPW (Ministry of Public Works)
+    - MTC (Ministry of Transportation and Communications)
+    - MENRE (Ministry of Environment, Natural Resources and Energy)
+    - BPDA (Bangsamoro Planning and Development Authority)
+    - Bangsamoro Investment and Development Authority
+
+    Wave 5 (Economic Development - 6 MOAs):
+    - MTIT (Ministry of Trade, Investments and Tourism)
+    - Bangsamoro Economic Zone Authority
+    - Bangsamoro Cooperative Development Authority
+    - Bangsamoro Information Office
+    - Bangsamoro Youth Commission
+    - Bangsamoro Tourism Board
+
+    Wave 6 (Security & Legal - 5 MOAs):
+    - MPOS (Ministry of Public Order and Safety)
+    - Bangsamoro Attorney General
+    - Bangsamoro Human Rights Commission
+    - BIAF (Bangsamoro Islamic Armed Forces Liaison)
+    - Bangsamoro Police Office
+
+    Wave 7 (Science & Technology - 4 MOAs):
+    - MOST (Ministry of Science and Technology)
+    - Bangsamoro Technology and Innovation Authority
+    - Bangsamoro Research and Development Institute
+    - Bangsamoro Digital Transformation Office
+
+    Wave 8 (Special Bodies - 5 MOAs):
+    - Office of the Wali
+    - Bangsamoro Electoral Office
+    - Bangsamoro Audit Office
+    - Bangsamoro Statistics Office
+    - Bangsamoro Sustainable Development Goals Council
+
+    Wave 9 (Final Wave - 5 MOAs):
+    - Any remaining MOAs
+    - Reserve capacity for late additions
+    - Mop-up for delayed onboardings
+
+[ ] 1.2 Set Rollout Schedule
+    Timeline (2 weeks per wave):
+    - Wave 2: Weeks 1-2
+    - Wave 3: Weeks 3-4
+    - Wave 4: Weeks 5-6
+    - Wave 5: Weeks 7-8
+    - Wave 6: Weeks 9-10
+    - Wave 7: Weeks 11-12
+    - Wave 8: Weeks 13-14
+    - Wave 9: Weeks 15-16
+    - Buffer: Weeks 17-18 (catch-up)
+    - Total: 16-18 weeks (4-4.5 months)
+
+[ ] 1.3 Assign Wave Coordinators
+    For each wave, assign:
+    - Technical coordinator (developer)
+    - Training coordinator (trainer)
+    - Support coordinator (help desk)
+    - Wave lead (project manager)
+    - Responsibilities: training, issue tracking, reporting
+
+[ ] 1.4 Create Wave Communication Plan
+    For each wave:
+    - Pre-wave email (2 weeks before): Announcement
+    - Week 1 email: Training schedule, prep instructions
+    - Week 2 email: Go-live announcement, support info
+    - Post-wave email: Thank you, feedback survey
+    - Templates: docs/communications/WAVE_EMAIL_TEMPLATES.md
+
+[ ] 1.5 Document Wave Plan
+    File: docs/deployment/WAVE_ROLLOUT_PLAN.md
+    - Wave composition (MOA list)
+    - Wave schedule (dates)
+    - Wave coordinators (names)
+    - Communication templates
+    - Success criteria per wave
+
+Testing Checklist:
+[ ] All 44 MOAs assigned to waves
+[ ] Schedule set (2 weeks per wave)
+[ ] Wave coordinators assigned
+[ ] Communication plan created
+[ ] Wave plan documented
+
+================================================================================
+TASK 2: INFRASTRUCTURE PREPARATION
+================================================================================
+
+Priority: CRITICAL
+Complexity: Moderate
+Estimated Complexity: Moderate
+
+Description:
+  Scale infrastructure to support 44 MOAs and 700-1100 users with high
+  availability, performance, and reliability.
+
+Subtasks:
+
+[ ] 2.1 Scale Database
+    - Increase PostgreSQL max connections: 500
+    - Increase shared_buffers: 4GB
+    - Increase work_mem: 16MB
+    - Enable connection pooling (PgBouncer)
+    - Set up read replicas (2x)
+    - Configure automatic failover
+
+[ ] 2.2 Scale Application Servers
+    - Deploy 4-6 application servers (horizontal scaling)
+    - Configure load balancer (HAProxy or AWS ALB)
+    - Set up auto-scaling (based on CPU >70%)
+    - Health check endpoints: /health/, /ready/
+    - Zero-downtime deployment (blue-green)
+
+[ ] 2.3 Scale Cache Layer
+    - Increase Redis memory: 8GB
+    - Set up Redis cluster (3 nodes)
+    - Configure Redis persistence (AOF + RDB)
+    - Set up Redis monitoring (redis-cli --latency)
+    - Cache hit rate target: >80%
+
+[ ] 2.4 Scale Storage
+    - Increase file storage: 500GB
+    - Configure S3 or MinIO for media files
+    - Set up CDN (CloudFront or similar)
+    - Enable compression (gzip, brotli)
+    - Configure backup retention: 30 days
+
+[ ] 2.5 Set Up Monitoring & Alerting
+    Tools:
+    - APM: New Relic, Datadog, or Prometheus
+    - Logs: ELK Stack (Elasticsearch, Logstash, Kibana)
+    - Uptime: Pingdom, UptimeRobot
+    - Alerts: PagerDuty, Slack, Email
+
+    Metrics to monitor:
+    - Response time (target: <3s for dashboard)
+    - Error rate (target: <1%)
+    - CPU usage (alert: >80%)
+    - Memory usage (alert: >85%)
+    - Database connections (alert: >400)
+    - Concurrent users (track peak)
+
+Testing Checklist:
+[ ] Database scaled and tested (500+ connections)
+[ ] Application servers deployed (4-6 servers)
+[ ] Load balancer configured
+[ ] Cache layer scaled (8GB Redis)
+[ ] Storage scaled (500GB)
+[ ] Monitoring dashboards created
+[ ] Alerts configured and tested
+
+================================================================================
+TASK 3: BATCH USER ACCOUNT CREATION
+================================================================================
+
+Priority: HIGH
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Create user accounts for all 41 remaining MOAs (estimated 550-800 users)
+  with efficient batch processing and automated welcome emails.
+
+Subtasks:
+
+[ ] 3.1 Create User Import Template
+    File: user_import_template.xlsx
+    Columns:
+    - Organization Code (MOH, MOLE, etc.)
+    - Full Name
+    - Email Address
+    - Username
+    - Role (admin, planning_officer, budget_officer, etc.)
+    - Is Primary Organization (Yes/No)
+    - Phone Number (optional)
+
+[ ] 3.2 Collect User Data from MOAs
+    - Send import template to all 41 MOAs
+    - Set deadline: 1 week before wave start
+    - Request 5-20 users per MOA
+    - Validate email domains (@barmm.gov.ph preferred)
+    - Follow up with late MOAs
+
+[ ] 3.3 Create Batch Import Script
+    File: src/organizations/management/commands/import_users.py
+    - Read Excel file
+    - Validate data (unique emails, valid org codes)
+    - Create User records
+    - Create OrganizationMembership records
+    - Generate random temporary passwords
+    - Output: CSV with username, password, email
+    - Log import results
+
+[ ] 3.4 Run Batch Import (per wave)
+    Commands:
+    - python manage.py import_users wave2_users.xlsx
+    - python manage.py import_users wave3_users.xlsx
+    - ... for each wave
+    - Review import logs for errors
+    - Fix errors and re-import if needed
+
+[ ] 3.5 Send Automated Welcome Emails
+    Script: src/organizations/management/commands/send_welcome_emails.py
+    - Query newly created users (per wave)
+    - Generate personalized welcome email
+    - Include: username, temp password, login URL
+    - Include: training schedule, user guide link
+    - Use email service (SendGrid, AWS SES)
+    - Track email delivery status
+
+Testing Checklist:
+[ ] Import template created
+[ ] User data collected (all 41 MOAs)
+[ ] Batch import script tested
+[ ] Users imported successfully (550-800 users)
+[ ] Welcome emails sent (100% delivery rate)
+[ ] Users can log in with temp passwords
+
+================================================================================
+TASK 4: TRAINING EXECUTION (WAVE-BY-WAVE)
+================================================================================
+
+Priority: CRITICAL
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Conduct training sessions for each wave of MOAs using standardized
+  materials and recorded sessions for flexibility.
+
+Subtasks:
+
+[ ] 4.1 Prepare Training Infrastructure
+    - Set up Zoom/Google Meet for each session
+    - Create training Slack/Teams channel per wave
+    - Set up demo BMMS environment (reset per wave)
+    - Test video recording and screen sharing
+    - Prepare backup internet connection
+
+[ ] 4.2 Conduct Wave 2 Training
+    Sessions (5 MOAs × 10 users = 50 users):
+    - Session 2A: MSSD, MBHTE (Day 1, 2 hrs)
+    - Session 2B: MIPA, MHSD, BUWIS (Day 2, 2 hrs)
+    - Recorded sessions shared with all attendees
+    - Office hours: 2 hrs/day for 1 week
+
+[ ] 4.3 Conduct Wave 3 Training
+    Sessions (6 MOAs × 10 users = 60 users):
+    - Session 3A: MFBM, MILG, Office of the Chief Minister (Day 1)
+    - Session 3B: OMP, BARMM Reg Gov, Civil Service (Day 2)
+    - Recorded sessions shared
+    - Office hours: 2 hrs/day
+
+[ ] 4.4 Conduct Wave 4 Training
+    Sessions (5 MOAs × 10 users = 50 users):
+    - Session 4A: MPW, MTC, MENRE (Day 1)
+    - Session 4B: BPDA, Investment Dev Authority (Day 2)
+    - Recorded sessions shared
+    - Office hours: 2 hrs/day
+
+[ ] 4.5 Conduct Waves 5-9 Training
+    Repeat pattern:
+    - 2 training sessions per wave (split MOAs)
+    - 2 hours per session
+    - Record all sessions
+    - Share materials immediately
+    - Office hours: 2 hrs/day for 1 week
+
+[ ] 4.6 Create Training Metrics Dashboard
+    Track per wave:
+    - Attendance rate (target: >80%)
+    - Training completion rate
+    - Office hours attendance
+    - Feedback scores (1-5)
+    - Common questions (FAQ updates)
+
+Testing Checklist:
+[ ] All wave training sessions completed (Waves 2-9)
+[ ] Attendance rate >80% per wave
+[ ] All sessions recorded and shared
+[ ] Office hours attendance tracked
+[ ] Training metrics dashboard created
+[ ] Positive feedback scores (>4.0/5)
+
+================================================================================
+TASK 5: HELP DESK & SUPPORT SYSTEM
+================================================================================
+
+Priority: CRITICAL
+Complexity: Moderate
+Estimated Complexity: Moderate
+
+Description:
+  Set up comprehensive help desk system with ticketing, knowledge base,
+  live chat, and escalation procedures.
+
+Subtasks:
+
+[ ] 5.1 Set Up Ticketing System
+    Tool: Jira Service Desk, Zendesk, or FreshDesk
+    - Configure ticket categories:
+      * Technical issue
+      * Feature request
+      * Training question
+      * Bug report
+      * Access request
+    - Set up SLAs:
+      * Critical: 4 hours
+      * High: 1 business day
+      * Medium: 3 business days
+      * Low: 5 business days
+    - Configure email integration (support@bmms.barmm.gov.ph)
+
+[ ] 5.2 Create Knowledge Base
+    Platform: Confluence, Notion, or custom Django app
+    Categories:
+    - Getting Started
+    - Planning Module
+    - Budgeting Module
+    - Coordination Module
+    - M&E Module
+    - Troubleshooting
+    - FAQs (50+ articles)
+    - Video tutorials (embedded)
+    - Searchable, with ratings
+
+[ ] 5.3 Implement Live Chat
+    Tool: Intercom, Drift, or Crisp
+    - Widget on every BMMS page
+    - Office hours: 8 AM - 5 PM (Mon-Fri)
+    - Auto-response after hours: "Submit ticket"
+    - Chat history saved to tickets
+    - Agent assignment: Round-robin
+
+[ ] 5.4 Staff Help Desk Team
+    Team composition:
+    - 1 Help Desk Manager
+    - 3-5 Support Agents (rotating shifts)
+    - 2 Technical Specialists (escalation)
+    - 1 Training Specialist (training questions)
+    - Total: 7-9 people
+
+    Training for help desk team:
+    - BMMS feature training (8 hours)
+    - Ticketing system training (2 hours)
+    - Customer service training (4 hours)
+    - Escalation procedures (2 hours)
+    - Knowledge base authoring (2 hours)
+
+[ ] 5.5 Create Escalation Procedures
+    Levels:
+    - L1: Help Desk Agent (resolve within SLA)
+    - L2: Technical Specialist (complex issues)
+    - L3: Development Team (bugs, system issues)
+    - L4: Project Manager (major incidents)
+
+    Escalation criteria:
+    - Critical system outage → L4 immediately
+    - Data loss/corruption → L3 + L4
+    - Performance degradation → L2 → L3
+    - User cannot log in → L1 → L2
+    - Feature requests → L1 (log, no escalation)
+
+Testing Checklist:
+[ ] Ticketing system operational
+[ ] Knowledge base published (50+ articles)
+[ ] Live chat widget installed
+[ ] Help desk team staffed (7-9 people)
+[ ] Help desk team trained
+[ ] Escalation procedures documented
+[ ] Test ticket submitted and resolved
+
+================================================================================
+TASK 6: MONITORING & ISSUE TRACKING
+================================================================================
+
+Priority: HIGH
+Complexity: Moderate
+Estimated Complexity: Moderate
+
+Description:
+  Implement comprehensive monitoring and issue tracking system to ensure
+  smooth rollout and rapid issue resolution.
+
+Subtasks:
+
+[ ] 6.1 Create Rollout Dashboard
+    Tool: Grafana, Tableau, or custom Django dashboard
+    Metrics per wave:
+    - MOAs onboarded (count, %)
+    - Users onboarded (count, %)
+    - Training completion rate (%)
+    - Active users (daily, weekly)
+    - Login success rate (%)
+    - Help desk tickets (count, by category)
+    - Average ticket resolution time
+    - User satisfaction score (1-5)
+
+[ ] 6.2 Set Up Real-Time Alerts
+    Alert rules:
+    - System downtime → Immediate (PagerDuty)
+    - Error rate >5% → High priority (Slack + Email)
+    - Response time >5s → Medium priority (Slack)
+    - Help desk SLA breach → High priority (Email)
+    - Wave training attendance <70% → Warning (Email)
+    - Failed logins >10 for user → Security alert
+
+[ ] 6.3 Create Daily Rollout Report
+    Automated report (email, 8 AM daily):
+    - Yesterday's onboarding progress
+    - New users created (count)
+    - Training sessions completed
+    - Help desk tickets: opened, closed, pending
+    - System performance: uptime %, avg response time
+    - Critical issues (if any)
+    - Today's planned activities
+    - Recipients: Project team, stakeholders
+
+[ ] 6.4 Implement Issue Tracking
+    GitHub/Jira project: BMMS Rollout
+    Issue types:
+    - Bug (severity: critical, high, medium, low)
+    - Enhancement (priority: P0, P1, P2, P3)
+    - Task (onboarding, training, support)
+    - Incident (system outage, data issue)
+
+    Workflow:
+    - Open → In Progress → Code Review → Testing → Closed
+    - Daily triage meeting (30 min)
+    - Weekly rollout sync (1 hour)
+
+[ ] 6.5 Create Rollout Status Page
+    Public status page: status.bmms.barmm.gov.ph
+    Tool: Statuspage.io or custom
+    - System status: Operational, Degraded, Outage
+    - Scheduled maintenance notices
+    - Incident history
+    - Subscribe to updates (email, SMS)
+    - Uptime percentage (target: >99.5%)
+
+Testing Checklist:
+[ ] Rollout dashboard operational
+[ ] Real-time alerts configured and tested
+[ ] Daily report automated
+[ ] Issue tracking project created
+[ ] Status page published
+[ ] All metrics collecting data
+
+================================================================================
+TASK 7: SUCCESS METRICS TRACKING
+================================================================================
+
+Priority: HIGH
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Track key success metrics throughout rollout to measure adoption,
+  satisfaction, and system health.
+
+Subtasks:
+
+[ ] 7.1 Define Success Metrics
+    Adoption Metrics:
+    - MOAs onboarded (target: 44/44)
+    - Users onboarded (target: >700)
+    - Active users (DAU/MAU) (target: >60% MAU)
+    - Features used per user (target: >3)
+    - Login frequency (target: >3x/week)
+
+    Satisfaction Metrics:
+    - User satisfaction score (target: >4.0/5)
+    - Net Promoter Score (target: >50)
+    - Training satisfaction (target: >4.0/5)
+    - Help desk satisfaction (target: >4.0/5)
+    - System reliability rating (target: >4.5/5)
+
+    Performance Metrics:
+    - System uptime (target: >99.5%)
+    - Dashboard load time (target: <3s)
+    - Help desk response time (target: <4 hrs)
+    - Ticket resolution time (target: <1 day for high)
+    - Bug resolution time (target: <24 hrs for critical)
+
+    Business Impact Metrics:
+    - Budget proposals submitted (count)
+    - Strategic plans created (count)
+    - Inter-MOA partnerships (count)
+    - Coordination activities tracked (count)
+    - Reports generated (count)
+
+[ ] 7.2 Implement Analytics Tracking
+    Tools:
+    - Google Analytics (page views, sessions)
+    - Mixpanel (feature usage, user cohorts)
+    - Django custom tracking (models created, actions)
+    - Database queries (aggregate statistics)
+
+    Events to track:
+    - User login
+    - Plan created
+    - Budget submitted
+    - Partnership created
+    - Report generated
+    - Help desk ticket created
+    - Training completed
+
+[ ] 7.3 Create Success Metrics Dashboard
+    Tool: Grafana or custom Django dashboard
+    Sections:
+    - Adoption (charts: onboarded MOAs, active users)
+    - Satisfaction (gauges: scores, NPS)
+    - Performance (line charts: uptime, response time)
+    - Business impact (bar charts: plans, budgets)
+    - Help desk (tables: tickets, resolution times)
+    - Update frequency: Real-time
+
+[ ] 7.4 Set Up Weekly Metrics Report
+    Automated report (email, Monday 8 AM):
+    - Last week's progress summary
+    - MOAs onboarded (cumulative)
+    - Active users (weekly count)
+    - User satisfaction (average score)
+    - System uptime (%)
+    - Help desk tickets (opened, closed)
+    - Top issues (if any)
+    - Next week's goals
+    - Recipients: Project team, executives
+
+[ ] 7.5 Conduct Monthly Executive Review
+    Meeting (1 hour, last Friday of month):
+    - Present success metrics dashboard
+    - Review adoption trends
+    - Review satisfaction trends
+    - Discuss challenges and solutions
+    - Adjust rollout strategy if needed
+    - Document decisions and action items
+
+Testing Checklist:
+[ ] Success metrics defined
+[ ] Analytics tracking implemented
+[ ] Success metrics dashboard created
+[ ] Weekly metrics report automated
+[ ] Monthly executive review scheduled
+[ ] Metrics collecting accurately
+
+================================================================================
+TASK 8: CONTINUOUS IMPROVEMENT
+================================================================================
+
+Priority: MEDIUM
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Implement continuous feedback loop, iterate on issues, and improve BMMS
+  based on real user feedback during rollout.
+
+Subtasks:
+
+[ ] 8.1 Create Feedback Collection System
+    Channels:
+    - In-app feedback widget (Usersnap, Hotjar)
+    - Post-training surveys (Google Forms)
+    - Monthly user surveys (NPS, satisfaction)
+    - Help desk feedback (after ticket closed)
+    - Feature request portal (Canny, UserVoice)
+
+    Questions to ask:
+    - What do you like most about BMMS?
+    - What frustrates you most?
+    - What feature is missing?
+    - How would you rate ease of use? (1-5)
+    - Would you recommend BMMS? (1-10 NPS)
+
+[ ] 8.2 Implement A/B Testing
+    Test variations:
+    - Dashboard layout (v1 vs v2)
+    - Button labels ("Submit" vs "Save and Submit")
+    - Navigation structure (sidebar vs top nav)
+    - Help text placement (tooltip vs inline)
+    - Track conversion rates, click rates
+
+    Tool: Django-AB or custom implementation
+
+[ ] 8.3 Conduct User Interviews
+    Schedule: 5 interviews per wave
+    - Select diverse users (admin, planning, budget, staff)
+    - 30-minute video interviews
+    - Questions: pain points, feature requests, workflow
+    - Record with permission
+    - Analyze for patterns
+    - Prioritize improvements
+
+[ ] 8.4 Iterate on Quick Wins
+    Process:
+    - Review feedback weekly
+    - Identify quick wins (< 4 hrs dev time)
+    - Prioritize by impact and effort
+    - Implement top 3-5 quick wins per week
+    - Deploy to production
+    - Announce improvements to users
+    - Track adoption of new features
+
+[ ] 8.5 Maintain Product Roadmap
+    Tool: ProductBoard, Aha!, or Jira
+    - Log all feature requests
+    - Vote on features (user upvotes)
+    - Prioritize by votes + impact
+    - Share roadmap publicly (transparency)
+    - Update quarterly
+    - Communicate shipped features
+
+Testing Checklist:
+[ ] Feedback widget installed
+[ ] Surveys distributed (monthly)
+[ ] A/B testing framework set up
+[ ] User interviews conducted (5 per wave)
+[ ] Quick wins implemented (3-5 per week)
+[ ] Product roadmap published
+[ ] Feedback loop operational
+
+================================================================================
+TASK 9: RISK MANAGEMENT
+================================================================================
+
+Priority: HIGH
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Identify, assess, and mitigate risks during full rollout to prevent
+  major incidents and ensure smooth operations.
+
+Subtasks:
+
+[ ] 9.1 Create Risk Register
+    File: docs/deployment/ROLLOUT_RISK_REGISTER.md
+
+    Risk categories:
+    - Technical (system outages, bugs, performance)
+    - Adoption (low usage, resistance to change)
+    - Training (low attendance, poor comprehension)
+    - Support (overwhelmed help desk, long wait times)
+    - Data (data loss, security breach, incorrect data)
+    - Timeline (delays, resource constraints)
+
+    For each risk:
+    - Risk ID, title, description
+    - Probability (Low, Medium, High)
+    - Impact (Low, Medium, High)
+    - Risk score (Probability × Impact)
+    - Mitigation strategy
+    - Owner, status
+
+[ ] 9.2 Identify Top 10 Risks
+    Prioritized by risk score:
+    1. System outage during rollout (High × High)
+    2. Critical bug affecting all users (High × High)
+    3. Database corruption (Low × High)
+    4. Security breach (Low × High)
+    5. Low user adoption (<50%) (Medium × High)
+    6. Help desk overwhelmed (High × Medium)
+    7. Wave training delays (Medium × Medium)
+    8. Key personnel unavailable (Medium × Medium)
+    9. MOA resistance to BMMS (Medium × Medium)
+    10. Performance degradation (High × Medium)
+
+[ ] 9.3 Develop Mitigation Strategies
+    For each top risk:
+
+    Risk 1: System outage
+    - Mitigation: Multi-region deployment, auto-failover
+    - Contingency: 24/7 on-call team, incident response plan
+
+    Risk 2: Critical bug
+    - Mitigation: Comprehensive testing, gradual rollout
+    - Contingency: Hotfix process, rollback plan
+
+    Risk 3: Database corruption
+    - Mitigation: Hourly backups, replication
+    - Contingency: Restore from backup, data reconciliation
+
+    Risk 4: Security breach
+    - Mitigation: Security audit, penetration testing
+    - Contingency: Incident response plan, user notification
+
+    Risk 5: Low adoption
+    - Mitigation: Quality training, executive sponsorship
+    - Contingency: Incentive program, mandatory usage policy
+
+    (Continue for all top 10 risks...)
+
+[ ] 9.4 Create Incident Response Plan
+    File: docs/deployment/INCIDENT_RESPONSE_PLAN.md
+
+    Incident types:
+    - System outage (downtime)
+    - Security incident (breach, attack)
+    - Data incident (loss, corruption)
+    - Performance incident (severe degradation)
+
+    Response steps:
+    1. Detect (monitoring, alerts)
+    2. Assess (severity, impact)
+    3. Respond (fix, mitigate)
+    4. Communicate (users, stakeholders)
+    5. Recover (restore service)
+    6. Post-mortem (root cause, prevention)
+
+    Roles:
+    - Incident Commander
+    - Technical Lead
+    - Communications Lead
+    - Support Lead
+
+[ ] 9.5 Conduct Risk Review Meetings
+    Frequency: Weekly during rollout
+    Duration: 30 minutes
+    Attendees: Project team
+    Agenda:
+    - Review risk register
+    - Update risk probabilities/impacts
+    - Discuss new risks
+    - Review mitigation progress
+    - Assign action items
+    - Document decisions
+
+Testing Checklist:
+[ ] Risk register created
+[ ] Top 10 risks identified
+[ ] Mitigation strategies developed
+[ ] Incident response plan documented
+[ ] Risk review meetings scheduled
+[ ] Risk owners assigned
+
+================================================================================
+TASK 10: POST-ROLLOUT TRANSITION
+================================================================================
+
+Priority: MEDIUM
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Transition from rollout mode to steady-state operations, hand off to
+  support team, and close out rollout project.
+
+Subtasks:
+
+[ ] 10.1 Conduct Final Rollout Review
+    Meeting (2 hours) after Wave 9:
+    - Review success metrics (actual vs target)
+    - Celebrate successes
+    - Discuss challenges and lessons learned
+    - Review support ticket trends
+    - Assess readiness for steady-state
+    - Approve transition to operations
+
+[ ] 10.2 Create Rollout Completion Report
+    File: docs/reports/ROLLOUT_COMPLETION_REPORT.md
+    Sections:
+    - Executive summary
+    - Rollout statistics (44 MOAs, 700+ users)
+    - Success metrics achieved
+    - Timeline (planned vs actual)
+    - Budget (planned vs actual)
+    - Challenges and solutions
+    - Lessons learned
+    - User satisfaction summary
+    - Recommendations for future rollouts
+    - Appendices: Data tables, charts
+
+[ ] 10.3 Handoff to Operations Team
+    Deliverables:
+    - System documentation (up-to-date)
+    - Runbooks (incident response, maintenance)
+    - Access credentials (secure vault)
+    - Monitoring dashboards (logins)
+    - Help desk knowledge base (access)
+    - Escalation procedures (contacts)
+    - Training: 2-day operations training for ops team
+
+[ ] 10.4 Schedule Post-Rollout Support
+    Support plan (3 months):
+    - Enhanced support (4-6 help desk agents)
+    - Extended office hours (8 AM - 6 PM)
+    - Weekly check-ins with MOAs
+    - Monthly user satisfaction surveys
+    - Gradual transition to standard support
+
+    After 3 months:
+    - Standard support (2-3 help desk agents)
+    - Regular office hours (8 AM - 5 PM)
+    - Quarterly check-ins with MOAs
+    - Quarterly user surveys
+
+[ ] 10.5 Celebrate and Close Project
+    - Organize team celebration (lunch/dinner)
+    - Thank MOA participants (certificates)
+    - Publish success story (internal newsletter)
+    - Archive project documents
+    - Close Jira/GitHub project
+    - Update resumes (team members)
+    - Conduct retrospective (final lessons learned)
+
+Testing Checklist:
+[ ] Final rollout review completed
+[ ] Rollout completion report published
+[ ] Handoff to operations team done
+[ ] Post-rollout support scheduled
+[ ] Team celebration organized
+[ ] Project officially closed
+
+================================================================================
+DEPLOYMENT CHECKLIST
+================================================================================
+
+Pre-Rollout:
+[ ] Wave plan finalized (9 waves, 5-10 MOAs each)
+[ ] Infrastructure scaled (4-6 servers, 500+ connections)
+[ ] User data collected (all 41 MOAs, 550-800 users)
+[ ] Training materials updated (based on pilot)
+[ ] Help desk operational (ticketing, knowledge base, chat)
+[ ] Monitoring dashboards created
+[ ] Risk register reviewed
+
+During Rollout (per wave):
+[ ] User accounts created (batch import)
+[ ] Welcome emails sent (100% delivery)
+[ ] Training sessions conducted (>80% attendance)
+[ ] Office hours staffed (2 hrs/day)
+[ ] Issues tracked and resolved (daily triage)
+[ ] Daily reports sent (project team)
+[ ] Success metrics tracked (dashboard)
+[ ] Risks reviewed (weekly meeting)
+
+Post-Rollout:
+[ ] All 44 MOAs onboarded successfully
+[ ] All 700+ users trained
+[ ] Final rollout review conducted
+[ ] Rollout completion report published
+[ ] Handoff to operations team complete
+[ ] Post-rollout support scheduled
+[ ] Project closed
+
+================================================================================
+SUCCESS CRITERIA
+================================================================================
+
+Phase 8 is complete when:
+
+✅ All 44 MOAs onboarded successfully
+✅ 700+ users trained and using BMMS
+✅ User satisfaction score >4.0/5.0
+✅ System uptime >99.5% during rollout
+✅ Help desk response time <4 hours (average)
+✅ Active user rate >60% (MAU)
+✅ No critical incidents unresolved
+✅ All wave training sessions completed
+✅ Rollout completion report approved
+✅ Handoff to operations team complete
+
+================================================================================
+NOTES
+================================================================================
+
+Wave Strategy Rationale:
+- Gradual rollout reduces risk (vs. big-bang)
+- 2 weeks per wave allows stabilization time
+- Grouping by ministry type enables shared learning
+- Buffer weeks allow catching up on delays
+
+Key Risks:
+- System outage (mitigation: high availability, failover)
+- Overwhelmed help desk (mitigation: staff adequately, knowledge base)
+- Low adoption (mitigation: executive sponsorship, quality training)
+- Timeline delays (mitigation: buffer weeks, resource flexibility)
+
+Timeline Estimate:
+- Wave planning: 1 week
+- Infrastructure prep: 2 weeks
+- Rollout execution: 16-18 weeks (9 waves × 2 weeks)
+- Post-rollout transition: 2 weeks
+- Total: 21-23 weeks (5-6 months)
+
+Resource Requirements:
+- Project Manager: 1 FTE
+- Technical Lead: 1 FTE
+- Developers: 2-3 FTEs (bug fixes, enhancements)
+- Trainers: 2 FTEs (rotating)
+- Help Desk: 7-9 FTEs (shifts)
+- Total: 13-16 FTEs
+
+Budget Considerations:
+- Infrastructure: ~$5,000/month (scaled servers, monitoring)
+- Help desk software: ~$500/month (Zendesk, Jira)
+- Training platform: ~$300/month (Zoom, LMS)
+- Monitoring tools: ~$700/month (New Relic, Datadog)
+- Total: ~$6,500/month during rollout
+
+Post-Rollout Recommendations:
+- Continue monthly user surveys (track satisfaction)
+- Quarterly feature releases (based on feedback)
+- Annual BMMS conference (best practices, networking)
+- Expand to more modules (MANA, M&E) after stabilization
+
+================================================================================
+END OF PHASE 8 TASK BREAKDOWN
+================================================================================

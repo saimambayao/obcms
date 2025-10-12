@@ -1,0 +1,199 @@
+{% comment %}
+Organization Selector Component
+
+Displays organization context and allows switching for authorized users.
+
+Usage:
+    {% include 'components/organization_selector.html' %}
+
+Context Required:
+    - current_organization: Current organization object (from middleware)
+    - available_organizations: List of orgs user can access (from RBACService)
+    - can_switch_organization: Boolean from RBACService
+    - is_ocm_user: Boolean indicating OCM user
+    - is_moa_staff: Boolean indicating MOA staff
+
+Integration:
+    Add to navbar or header for organization context visibility.
+{% endcomment %}
+
+{% if user.is_authenticated and available_organizations %}
+<div class="organization-selector" x-data="organizationSelector()">
+    {% if current_organization %}
+        {# Current Organization Display #}
+        <div class="flex items-center gap-3 px-4 py-2 bg-white border border-gray-200 rounded-lg">
+            {# Organization Icon #}
+            <div class="flex-shrink-0">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center">
+                    <span class="text-white font-semibold text-sm">
+                        {% if current_organization.acronym %}
+                            {{ current_organization.acronym|slice:":2"|upper }}
+                        {% else %}
+                            {{ current_organization.name|slice:":2"|upper }}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            {# Organization Info #}
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900 truncate">
+                    {% if current_organization.acronym %}
+                        {{ current_organization.acronym }} - {{ current_organization.name }}
+                    {% else %}
+                        {{ current_organization.name }}
+                    {% endif %}
+                </p>
+                <p class="text-xs text-gray-500">
+                    {% if is_ocm_user %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                            OCM - Read Only
+                        </span>
+                    {% elif is_moa_staff %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            MOA Staff
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                            OOBC Staff
+                        </span>
+                    {% endif %}
+                </p>
+            </div>
+
+            {# Switch Button (if authorized) #}
+            {% if can_switch_organization and available_organizations|length > 1 %}
+            <div class="flex-shrink-0">
+                <button
+                    @click="toggleDropdown()"
+                    type="button"
+                    class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    Switch
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Dropdown Menu (if can switch) #}
+        {% if can_switch_organization and available_organizations|length > 1 %}
+        <div
+            x-show="isOpen"
+            @click.away="closeDropdown()"
+            x-transition:enter="transition ease-out duration-100"
+            x-transition:enter-start="transform opacity-0 scale-95"
+            x-transition:enter-end="transform opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-75"
+            x-transition:leave-start="transform opacity-100 scale-100"
+            x-transition:leave-end="transform opacity-0 scale-95"
+            class="absolute right-0 z-10 mt-2 w-80 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+            style="display: none;"
+        >
+            <div class="py-1">
+                <div class="px-4 py-2 border-b border-gray-200">
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Select Organization
+                    </p>
+                </div>
+
+                {# Organization List #}
+                <div class="max-h-80 overflow-y-auto">
+                    {% for org in available_organizations %}
+                    <button
+                        type="button"
+                        @click="switchOrganization('{{ org.id }}')"
+                        class="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors {% if org == current_organization %}bg-blue-50{% endif %}"
+                    >
+                        <div class="flex items-center gap-3">
+                            {# Org Icon #}
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-teal-400 flex items-center justify-center">
+                                    <span class="text-white font-semibold text-xs">
+                                        {% if org.acronym %}
+                                            {{ org.acronym|slice:":2"|upper }}
+                                        {% else %}
+                                            {{ org.name|slice:":2"|upper }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {# Org Details #}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">
+                                    {% if org.acronym %}
+                                        {{ org.acronym }}
+                                    {% else %}
+                                        {{ org.name }}
+                                    {% endif %}
+                                </p>
+                                <p class="text-xs text-gray-500 truncate">
+                                    {{ org.name }}
+                                </p>
+                            </div>
+
+                            {# Selected Indicator #}
+                            {% if org == current_organization %}
+                            <div class="flex-shrink-0">
+                                <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    {% else %}
+        {# No Organization Context #}
+        <div class="px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <span class="text-sm font-medium text-yellow-800">
+                    No organization selected
+                </span>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function organizationSelector() {
+    return {
+        isOpen: false,
+
+        toggleDropdown() {
+            this.isOpen = !this.isOpen;
+        },
+
+        closeDropdown() {
+            this.isOpen = false;
+        },
+
+        switchOrganization(orgId) {
+            // Add organization parameter to current URL
+            const url = new URL(window.location.href);
+            url.searchParams.set('org', orgId);
+
+            // Reload with new organization context
+            window.location.href = url.toString();
+        }
+    }
+}
+</script>
+
+<style>
+.organization-selector {
+    position: relative;
+}
+</style>
+{% endif %}

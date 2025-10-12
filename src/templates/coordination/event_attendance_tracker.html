@@ -64,7 +64,7 @@
                     <i class="fas fa-chart-pie text-emerald-600 mr-2"></i>
                     Live Attendance
                 </h3>
-                <div hx-get="{% url 'common:coordination_event_attendance_count' event_id=event.id %}"
+                <div hx-get="{% url 'coordination:event_attendance_count' event_id=event.id %}"
                      hx-trigger="load, every 10s"
                      hx-swap="innerHTML"
                      class="min-h-[300px] flex items-center justify-center">
@@ -110,7 +110,7 @@
                 </h3>
 
                 <div id="participant-list"
-                     hx-get="{% url 'common:coordination_event_participant_list' event_id=event.id %}"
+                     hx-get="{% url 'coordination:event_participant_list' event_id=event.id %}"
                      hx-trigger="load, every 10s"
                      hx-swap="innerHTML"
                      class="min-h-[400px]">
@@ -167,7 +167,7 @@ function startScanner() {
                     html5QrCode.pause(true);
 
                     // Send check-in request
-                    fetch('{% url "common:coordination_event_check_in" event_id=event.id %}', {
+                    fetch('{% url "coordination:event_check_in" event_id=event.id %}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',

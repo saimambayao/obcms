@@ -1,0 +1,78 @@
+{# Reusable Strategic Goal Card Component #}
+<div class="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow duration-200">
+    <div class="flex items-start justify-between mb-3">
+        <div class="flex-1">
+            <h4 class="text-lg font-semibold text-gray-900 mb-1">{{ goal.title }}</h4>
+            <p class="text-sm text-gray-600">{{ goal.target_metric }}: {{ goal.target_value }}</p>
+        </div>
+        <div>
+            {% if goal.priority == 'critical' %}
+                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    Critical
+                </span>
+            {% elif goal.priority == 'high' %}
+                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                    <i class="fas fa-arrow-up mr-1"></i>
+                    High
+                </span>
+            {% elif goal.priority == 'medium' %}
+                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <i class="fas fa-minus mr-1"></i>
+                    Medium
+                </span>
+            {% else %}
+                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                    <i class="fas fa-arrow-down mr-1"></i>
+                    Low
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Progress Section #}
+    <div class="mb-3">
+        <div class="flex justify-between text-sm text-gray-600 mb-1">
+            <span class="font-medium">Progress</span>
+            <span>{{ goal.completion_percentage|floatformat:0 }}%</span>
+        </div>
+        {% include 'planning/partials/progress_bar.html' with percentage=goal.completion_percentage color='blue' %}
+    </div>
+
+    {# Status and Actions #}
+    <div class="flex items-center justify-between pt-3 border-t border-gray-200">
+        <div>
+            {% if goal.status == 'completed' %}
+                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    Completed
+                </span>
+            {% elif goal.status == 'in_progress' %}
+                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <i class="fas fa-spinner mr-1"></i>
+                    In Progress
+                </span>
+            {% elif goal.status == 'deferred' %}
+                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                    <i class="fas fa-pause mr-1"></i>
+                    Deferred
+                </span>
+            {% else %}
+                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                    <i class="fas fa-circle mr-1"></i>
+                    Not Started
+                </span>
+            {% endif %}
+        </div>
+        <div class="flex space-x-2">
+            <a href="{% url 'planning:goal_edit' goal.pk %}"
+               class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                <i class="fas fa-edit"></i>
+            </a>
+            <a href="{% url 'planning:goal_progress_update' goal.pk %}"
+               class="text-emerald-600 hover:text-emerald-800 text-sm font-medium">
+                <i class="fas fa-chart-line"></i>
+            </a>
+        </div>
+    </div>
+</div>

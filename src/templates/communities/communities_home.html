@@ -67,20 +67,20 @@
                             <i class="fas fa-tachometer-alt"></i>
                             <span>OBCMS Dashboard</span>
                         </a>
-                        <a href="{% url 'common:communities_manage' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                        <a href="{% url 'communities:communities_manage' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-users"></i>
                             <span>Barangay OBCs</span>
                         </a>
-                        <a href="{% url 'common:communities_manage_municipal' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                        <a href="{% url 'communities:communities_manage_municipal' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-city"></i>
                             <span>Municipal OBCs</span>
                         </a>
-                        <a href="{% url 'common:communities_manage_provincial' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                        <a href="{% url 'communities:communities_manage_provincial' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-landmark"></i>
                             <span>Provincial OBCs</span>
                         </a>
                         {% if show_geographic_links %}
-                        <a href="{% url 'common:mana_geographic_data' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                        <a href="{% url 'mana:mana_geographic_data' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-map"></i>
                             <span>Geographic Data</span>
                         </a>
@@ -179,15 +179,15 @@
                 <p class="mt-1 text-sm text-gray-600">Latest barangay, municipal, and provincial OBC records added or refreshed.</p>
             </div>
             <div class="flex flex-wrap gap-3 text-sm font-medium">
-                <a href="{% url 'common:communities_manage' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                <a href="{% url 'communities:communities_manage' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
                     <i class="fas fa-list"></i>
                     View Barangay Directory
                 </a>
-                <a href="{% url 'common:communities_manage_municipal' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                <a href="{% url 'communities:communities_manage_municipal' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
                     <i class="fas fa-city"></i>
                     View Municipal Coverage
                 </a>
-                <a href="{% url 'common:communities_manage_provincial' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
+                <a href="{% url 'communities:communities_manage_provincial' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700">
                     <i class="fas fa-flag"></i>
                     View Provincial Coverage
                 </a>
@@ -385,7 +385,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {% if user.is_staff %}
             <!-- Add Actions First -->
-            <a href="{% url 'common:communities_add' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+            <a href="{% url 'communities:communities_add' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
                 <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-plus text-white text-xl"></i>
@@ -403,7 +403,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:communities_add_municipality' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+            <a href="{% url 'communities:communities_add_municipality' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
                 <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-sky-500 to-sky-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-city text-white text-xl"></i>
@@ -421,7 +421,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:communities_add_province' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+            <a href="{% url 'communities:communities_add_province' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
                 <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-flag text-white text-xl"></i>
@@ -460,7 +460,7 @@
             {% endif %}
 
             <!-- Manage Actions Second -->
-            <a href="{% url 'common:communities_manage' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+            <a href="{% url 'communities:communities_manage' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
                 <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-edit text-white text-xl"></i>
@@ -478,7 +478,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:communities_manage_municipal' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+            <a href="{% url 'communities:communities_manage_municipal' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
                 <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-clipboard-list text-white text-xl"></i>
@@ -496,7 +496,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:communities_manage_provincial' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+            <a href="{% url 'communities:communities_manage_provincial' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
                 <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-flag text-white text-xl"></i>
@@ -514,7 +514,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:mana_geographic_data' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
+            <a href="{% url 'mana:mana_geographic_data' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
                 <div class="p-6 flex flex-col flex-grow">
                     <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-globe-asia text-white text-xl"></i>

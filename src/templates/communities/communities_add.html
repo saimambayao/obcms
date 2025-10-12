@@ -15,7 +15,7 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:communities_home' %}" class="text-neutral-500 hover:text-neutral-700">OBC Data</a>
+    <a href="{% url 'communities:communities_home' %}" class="text-neutral-500 hover:text-neutral-700">OBC Data</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">{{ breadcrumb_label|default:page_title|default:"Add Barangay OBC" }}</li>
@@ -233,7 +233,7 @@
                             </div>
 
                             <div id="geodata-notice"
-                                 data-base-url="{% url 'common:mana_geographic_data' %}"
+                                 data-base-url="{% url 'mana:mana_geographic_data' %}"
                                  class="md:col-span-2 hidden">
                                 <div class="flex items-start bg-blue-50 border border-blue-100 rounded-lg px-4 py-3">
                                     <div class="flex-shrink-0 mt-1">
@@ -242,7 +242,7 @@
                                     <div class="ml-3">
                                         <p id="geodata-notice-text" class="text-sm font-medium text-blue-800"></p>
                                         <a id="geodata-notice-link"
-                                           href="{% url 'common:mana_geographic_data' %}"
+                                           href="{% url 'mana:mana_geographic_data' %}"
                                            class="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700 mt-1">
                                             <span>Open Geographic Data</span>
                                             <i class="fas fa-external-link-alt ml-2 text-xs"></i>
@@ -368,7 +368,7 @@
                                 data-lat-field="{{ form.latitude.id_for_label }}"
                                 data-lng-field="{{ form.longitude.id_for_label }}"
                                 data-location-script="location-data"
-                                data-centroid-url="{% url 'common:location_centroid' %}"
+                                data-centroid-url="{% url 'communities:location_centroid' %}"
                                 data-focus-zoom="15"
                                 {% if form.region %}data-region-field="{{ form.region.id_for_label }}"{% endif %}
                                 {% if form.province %}data-province-field="{{ form.province.id_for_label }}"{% endif %}
@@ -1112,7 +1112,7 @@
                                 <i class="fas fa-save mr-2"></i>
                                 Save Draft
                             </button>
-                            <a href="{% url 'common:communities_manage' %}" 
+                            <a href="{% url 'communities:communities_manage' %}" 
                                class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200">
                                 <i class="fas fa-times mr-2"></i>
                                 Cancel
@@ -1168,7 +1168,7 @@
                 </button>
                 
                 <!-- Data Guidelines -->
-                <a href="{% url 'common:data_guidelines' %}" class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-left group">
+                <a href="{% url 'communities:data_guidelines' %}" class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-left group">
                     <div class="flex items-center mb-2">
                         <i class="fas fa-book text-orange-600 text-xl mr-3"></i>
                         <h3 class="font-semibold text-gray-900">Data Guidelines</h3>
@@ -1263,7 +1263,7 @@
             </div>
             
             <div class="mt-6 flex justify-center">
-                <a href="{% url 'common:communities_manage' %}" 
+                <a href="{% url 'communities:communities_manage' %}" 
                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors duration-200">
                     View All Communities
                     <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
@@ -2241,7 +2241,7 @@ function handleImport() {
     importBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Importing...';
     importBtn.disabled = true;
     
-    fetch('{% url "common:import_communities" %}', {
+    fetch('{% url "communities:import_communities" %}', {
         method: 'POST',
         body: formData,
         headers: {
@@ -2276,7 +2276,7 @@ function handleExport() {
     const fields = Array.from(document.querySelectorAll('input[name="exportFields"]:checked'))
                        .map(cb => cb.value);
     
-    let url = `{% url "common:export_communities" %}?format=${format}`;
+    let url = `{% url "communities:export_communities" %}?format=${format}`;
     if (fields.length > 0) {
         fields.forEach(field => {
             url += `&fields[]=${field}`;
@@ -2292,7 +2292,7 @@ function handleReportGeneration() {
     const reportType = document.getElementById('reportType').value;
     const reportFormat = document.getElementById('reportFormat').value;
     
-    const url = `{% url "common:generate_obc_report" %}?type=${reportType}&format=${reportFormat}`;
+    const url = `{% url "communities:generate_obc_report" %}?type=${reportType}&format=${reportFormat}`;
     
     // Open in new window to trigger download
     window.open(url, '_blank');

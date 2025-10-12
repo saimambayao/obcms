@@ -9,7 +9,7 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:coordination_home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
+    <a href="{% url 'coordination:home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">View All</li>
@@ -70,17 +70,17 @@
     <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Navigation</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <a href="{% url 'common:coordination_organizations' %}" class="block bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 text-center">
+            <a href="{% url 'coordination:organizations' %}" class="block bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 text-center">
                 <i class="fas fa-building text-2xl mb-2"></i>
                 <div class="font-semibold">Organizations</div>
                 <div class="text-sm opacity-90">Manage partner organizations</div>
             </a>
-            <a href="{% url 'common:coordination_partnerships' %}" class="block bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 transform hover:scale-105 text-center">
+            <a href="{% url 'coordination:partnerships' %}" class="block bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 transform hover:scale-105 text-center">
                 <i class="fas fa-handshake text-2xl mb-2"></i>
                 <div class="font-semibold">Partnerships</div>
                 <div class="text-sm opacity-90">Track agreements</div>
             </a>
-            <a href="{% url 'common:coordination_events' %}" class="block bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 text-center">
+            <a href="{% url 'coordination:events' %}" class="block bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 text-center">
                 <i class="fas fa-calendar-alt text-2xl mb-2"></i>
                 <div class="font-semibold">Coordination Management</div>
                 <div class="text-sm opacity-90">Coordinate events and follow-ups</div>
@@ -215,7 +215,7 @@
     <div class="mt-8">
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <a href="{% url 'common:coordination_organizations' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'coordination:organizations' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-building text-white text-xl"></i>
@@ -233,7 +233,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:coordination_partnerships' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'coordination:partnerships' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-handshake text-white text-xl"></i>
@@ -251,7 +251,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:coordination_events' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'coordination:events' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-calendar-alt text-white text-xl"></i>

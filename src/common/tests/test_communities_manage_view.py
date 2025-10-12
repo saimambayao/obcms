@@ -72,7 +72,7 @@ class ManageBarangayStatCardsTests(TestCase):
         return community
 
     def test_stat_cards_present_expected_totals(self):
-        response = self.client.get(reverse("common:communities_manage"))
+        response = self.client.get(reverse("communities:communities_manage"))
         self.assertEqual(response.status_code, 200)
 
         stat_cards = response.context["stat_cards"]
@@ -104,7 +104,7 @@ class ManageBarangayStatCardsTests(TestCase):
 
     def test_stat_cards_respect_region_filter(self):
         response = self.client.get(
-            reverse("common:communities_manage"),
+            reverse("communities:communities_manage"),
             {"region": self.region_one.id},
         )
         self.assertEqual(response.status_code, 200)
@@ -120,7 +120,7 @@ class ManageBarangayStatCardsTests(TestCase):
 
     def test_stat_cards_respect_province_filter(self):
         response = self.client.get(
-            reverse("common:communities_manage"),
+            reverse("communities:communities_manage"),
             {"province": self.province_two.id},
         )
         self.assertEqual(response.status_code, 200)

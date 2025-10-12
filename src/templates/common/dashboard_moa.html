@@ -281,7 +281,7 @@
                             <p class="font-semibold text-gray-900">{{ policy.title }}</p>
                             <p class="text-xs text-gray-500">Status: {{ policy.get_status_display }} · Updated {{ policy.updated_at|date:"M d, Y" }}</p>
                         </div>
-                        <a href="{% url 'common:recommendations_view' policy.id %}" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+                        <a href="{% url 'policies:view' policy.id %}" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
                             View details
                             <i class="fas fa-arrow-right"></i>
                         </a>

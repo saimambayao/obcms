@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Budget Execution Dashboard - OBCMS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'budget/css/budget-mobile.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a></li>
+<li class="text-neutral-800 font-semibold">Budget Execution</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Page Header with Quick Actions -->
+    <div class="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Budget Execution Dashboard</h1>
+            <p class="mt-2 text-lg text-gray-600">
+                FY {{ fiscal_year|default:"2025" }} Budget Monitoring & Execution
+            </p>
+            <div class="mt-2 flex items-center text-sm text-gray-500">
+                <i class="fas fa-clock mr-2"></i>
+                <span id="last-updated">Last updated: Just now</span>
+                <button onclick="refreshDashboard()"
+                        class="ml-4 text-blue-600 hover:text-blue-800">
+                    <i class="fas fa-sync-alt mr-1"></i>Refresh
+                </button>
+            </div>
+        </div>
+        <div class="mt-4 lg:mt-0 flex flex-col sm:flex-row gap-3">
+            <a href="{% url 'budget_execution:allotment_release' %}"
+               class="flex items-center justify-center px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200 min-h-[48px]">
+                <i class="fas fa-coins mr-2"></i>
+                <span>Release Allotment</span>
+            </a>
+            <a href="{% url 'budget_execution:obligation_form' %}"
+               class="flex items-center justify-center px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200 min-h-[48px]">
+                <i class="fas fa-file-contract mr-2"></i>
+                <span>Record Obligation</span>
+            </a>
+            <a href="{% url 'budget_execution:disbursement_form' %}"
+               class="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-blue-600 to-emerald-600 text-white rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300 min-h-[48px]">
+                <i class="fas fa-money-bill-wave mr-2"></i>
+                <span>Record Payment</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- 4 STAT CARDS - 3D MILK WHITE STYLE      -->
+    <!-- ========================================= -->
+    <div class="stat-card-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+        <!-- Approved Budget Card (Amber Icon) -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Approved Budget</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">₱{{ approved_budget|floatformat:0|default:"0" }}M</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-check-circle text-2xl text-amber-600"></i>
+                    </div>
+                </div>
+                <div class="flex-grow"></div>
+                <div class="pt-3 border-t border-gray-200/60 mt-auto">
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500 font-medium">Total Budget for FY {{ fiscal_year|default:"2025" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Allotted Card (Blue Icon) -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Allotted</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">₱{{ allotted_amount|floatformat:0|default:"0" }}M</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-coins text-2xl text-blue-600"></i>
+                    </div>
+                </div>
+                <div class="flex-grow"></div>
+                <div class="pt-3 border-t border-gray-200/60 mt-auto">
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ allotted_percentage|floatformat:0|default:"0" }}%</p>
+                        <p class="text-xs text-gray-500 font-medium">of Approved</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Obligated Card (Purple Icon) -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Obligated</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">₱{{ obligated_amount|floatformat:0|default:"0" }}M</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-file-contract text-2xl text-purple-600"></i>
+                    </div>
+                </div>
+                <div class="flex-grow"></div>
+                <div class="pt-3 border-t border-gray-200/60 mt-auto">
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ obligated_percentage|floatformat:0|default:"0" }}%</p>
+                        <p class="text-xs text-gray-500 font-medium">of Allotted</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disbursed Card (Emerald Icon) -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Disbursed</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">₱{{ disbursed_amount|floatformat:0|default:"0" }}M</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-money-bill-wave text-2xl text-emerald-600"></i>
+                    </div>
+                </div>
+                <div class="flex-grow"></div>
+                <div class="pt-3 border-t border-gray-200/60 mt-auto">
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ disbursed_percentage|floatformat:0|default:"0" }}%</p>
+                        <p class="text-xs text-gray-500 font-medium">of Obligated</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- REAL-TIME TRACKING WIDGETS               -->
+    <!-- ========================================= -->
+    <div class="widgets-grid grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+        <!-- Recent Transactions Widget -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-receipt text-emerald-600 mr-2"></i>
+                    Recent Transactions
+                </h3>
+                <a href="#" class="text-sm text-blue-600 hover:text-blue-800">View All</a>
+            </div>
+            <div class="space-y-3" id="recent-transactions" hx-get="{% url 'budget_execution:recent_transactions' %}" hx-trigger="load, every 30s" hx-swap="innerHTML">
+                <!-- Loading state -->
+                <div class="flex items-center justify-center py-8 text-gray-400">
+                    <i class="fas fa-spinner fa-spin text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Approvals Widget -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-clock text-amber-600 mr-2"></i>
+                    Pending Approvals
+                </h3>
+                <span class="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-semibold rounded-full" id="pending-count">
+                    {{ pending_approvals_count|default:"0" }}
+                </span>
+            </div>
+            <div class="space-y-3" id="pending-approvals" hx-get="{% url 'budget_execution:pending_approvals' %}" hx-trigger="load, every 30s" hx-swap="innerHTML">
+                <!-- Loading state -->
+                <div class="flex items-center justify-center py-8 text-gray-400">
+                    <i class="fas fa-spinner fa-spin text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Budget Alerts Widget -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-bell text-red-600 mr-2"></i>
+                    Budget Alerts
+                </h3>
+                <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full" id="alerts-count">
+                    {{ alerts_count|default:"0" }}
+                </span>
+            </div>
+            <div class="space-y-3" id="budget-alerts" hx-get="{% url 'budget_execution:budget_alerts' %}" hx-trigger="load, every 60s" hx-swap="innerHTML">
+                <!-- Loading state -->
+                <div class="flex items-center justify-center py-8 text-gray-400">
+                    <i class="fas fa-spinner fa-spin text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- QUARTERLY EXECUTION CHART                -->
+    <!-- ========================================= -->
+    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
+            Quarterly Budget Execution
+        </h2>
+        <div class="chart-container relative h-80">
+            <canvas id="quarterlyExecutionChart"></canvas>
+        </div>
+        <div class="mt-4 flex justify-center space-x-6 text-sm">
+            <div class="flex items-center">
+                <span class="w-4 h-4 bg-blue-600 rounded mr-2"></span>
+                <span class="text-gray-600">Allotted</span>
+            </div>
+            <div class="flex items-center">
+                <span class="w-4 h-4 bg-orange-500 rounded mr-2"></span>
+                <span class="text-gray-600">Obligated</span>
+            </div>
+            <div class="flex items-center">
+                <span class="w-4 h-4 bg-emerald-600 rounded mr-2"></span>
+                <span class="text-gray-600">Disbursed</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- PROGRAM-WISE UTILIZATION TABLE           -->
+    <!-- ========================================= -->
+    <div class="bg-white shadow-md rounded-xl overflow-hidden border border-gray-200">
+        <div class="px-6 py-4 bg-gradient-to-r from-blue-600 to-emerald-600">
+            <h2 class="text-xl font-semibold text-white flex items-center">
+                <i class="fas fa-list-alt mr-2"></i>
+                Program-Wise Budget Utilization
+            </h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Program
+                        </th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Approved
+                        </th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Allotted
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Utilization
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for program in program_budgets %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-200">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ program.name }}</div>
+                            <div class="text-sm text-gray-500">{{ program.code }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                            ₱{{ program.approved_amount|floatformat:2 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                            ₱{{ program.allotted_amount|floatformat:2 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-700 mr-3">{{ program.utilization_percentage|floatformat:0 }}%</span>
+                                <div class="flex-1 bg-gray-200 rounded-full h-2.5 max-w-xs">
+                                    <div class="bg-emerald-600 h-2.5 rounded-full transition-all duration-300"
+                                         style="width: {{ program.utilization_percentage }}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-2"></i>
+                            <p>No program budgets available</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'budget/js/budget_charts.js' %}"></script>
+<script>
+    // Initialize quarterly execution chart
+    document.addEventListener('DOMContentLoaded', function() {
+        const quarterlyData = {
+            labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+            datasets: [
+                {
+                    label: 'Allotted',
+                    data: {{ quarterly_allotted|safe|default:"[0, 0, 0, 0]" }},
+                    backgroundColor: 'rgba(37, 99, 235, 0.8)', // blue-600
+                    borderColor: 'rgba(37, 99, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Obligated',
+                    data: {{ quarterly_obligated|safe|default:"[0, 0, 0, 0]" }},
+                    backgroundColor: 'rgba(249, 115, 22, 0.8)', // orange-500
+                    borderColor: 'rgba(249, 115, 22, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Disbursed',
+                    data: {{ quarterly_disbursed|safe|default:"[0, 0, 0, 0]" }},
+                    backgroundColor: 'rgba(5, 150, 105, 0.8)', // emerald-600
+                    borderColor: 'rgba(5, 150, 105, 1)',
+                    borderWidth: 1
+                }
+            ]
+        };
+
+        initQuarterlyChart('quarterlyExecutionChart', quarterlyData);
+    });
+
+    // Dashboard refresh function
+    function refreshDashboard() {
+        const lastUpdated = document.getElementById('last-updated');
+        lastUpdated.textContent = 'Refreshing...';
+
+        // Trigger HTMX refresh for all real-time widgets
+        htmx.trigger('#recent-transactions', 'load');
+        htmx.trigger('#pending-approvals', 'load');
+        htmx.trigger('#budget-alerts', 'load');
+
+        // Update timestamp
+        setTimeout(() => {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            lastUpdated.textContent = `Last updated: ${timeStr}`;
+        }, 500);
+    }
+
+    // Auto-refresh every 5 minutes
+    setInterval(refreshDashboard, 300000);
+</script>
+{% endblock %}

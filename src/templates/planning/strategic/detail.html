@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ plan.title }} - Strategic Plans{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:oobc_home' %}" class="text-blue-600 hover:text-blue-800">
+        <i class="fas fa-home"></i>
+    </a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'planning:dashboard' %}" class="text-blue-600 hover:text-blue-800">Planning</a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'planning:strategic_list' %}" class="text-blue-600 hover:text-blue-800">Strategic Plans</a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <span class="text-gray-700">{{ plan.title }}</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    {# Plan Header #}
+    <div class="bg-white rounded-xl p-6 border border-gray-200 mb-6">
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex-1">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    <i class="fas fa-bullseye text-blue-600 mr-3"></i>
+                    {{ plan.title }}
+                </h1>
+                <p class="text-lg text-gray-600">{{ plan.year_range }} ({{ plan.duration_years }} years)</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                {% if plan.status == 'active' %}
+                    <span class="px-3 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                        <i class="fas fa-check-circle mr-1"></i>
+                        Active
+                    </span>
+                {% elif plan.status == 'draft' %}
+                    <span class="px-3 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                        <i class="fas fa-pencil-alt mr-1"></i>
+                        Draft
+                    </span>
+                {% elif plan.status == 'approved' %}
+                    <span class="px-3 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        <i class="fas fa-thumbs-up mr-1"></i>
+                        Approved
+                    </span>
+                {% else %}
+                    <span class="px-3 py-1 inline-flex items-center text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                        <i class="fas fa-archive mr-1"></i>
+                        Archived
+                    </span>
+                {% endif %}
+
+                <a href="{% url 'planning:strategic_edit' plan.pk %}"
+                   class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-edit mr-1"></i>
+                    Edit
+                </a>
+            </div>
+        </div>
+
+        {# Vision and Mission #}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <h3 class="text-sm font-semibold text-blue-800 uppercase tracking-wide mb-2">
+                    <i class="fas fa-eye mr-1"></i>
+                    Vision
+                </h3>
+                <p class="text-gray-700">{{ plan.vision }}</p>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                <h3 class="text-sm font-semibold text-emerald-800 uppercase tracking-wide mb-2">
+                    <i class="fas fa-compass mr-1"></i>
+                    Mission
+                </h3>
+                <p class="text-gray-700">{{ plan.mission }}</p>
+            </div>
+        </div>
+
+        {# Overall Progress #}
+        <div class="mt-6">
+            <div class="flex justify-between text-sm text-gray-600 mb-2">
+                <span class="font-medium">Overall Progress</span>
+                <span>{{ plan.overall_progress|floatformat:0 }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-3">
+                <div class="bg-gradient-to-r from-blue-600 to-emerald-600 h-3 rounded-full transition-all duration-300"
+                     style="width: {{ plan.overall_progress }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    {# Strategic Goals #}
+    <div class="bg-white rounded-xl p-6 border border-gray-200 mb-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-flag text-blue-600 mr-3"></i>
+                Strategic Goals
+            </h2>
+            <a href="{% url 'planning:goal_create' plan.pk %}"
+               class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <i class="fas fa-plus mr-2"></i>
+                Add Goal
+            </a>
+        </div>
+
+        {% if goals_by_priority.critical or goals_by_priority.high or goals_by_priority.medium or goals_by_priority.low %}
+            {# Critical Priority Goals #}
+            {% if goals_by_priority.critical %}
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-red-600 mb-3">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        Critical Priority
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for goal in goals_by_priority.critical %}
+                            {% include 'planning/partials/goal_card.html' with goal=goal %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {# High Priority Goals #}
+            {% if goals_by_priority.high %}
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-orange-600 mb-3">
+                        <i class="fas fa-arrow-up mr-2"></i>
+                        High Priority
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for goal in goals_by_priority.high %}
+                            {% include 'planning/partials/goal_card.html' with goal=goal %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {# Medium Priority Goals #}
+            {% if goals_by_priority.medium %}
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-blue-600 mb-3">
+                        <i class="fas fa-minus mr-2"></i>
+                        Medium Priority
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for goal in goals_by_priority.medium %}
+                            {% include 'planning/partials/goal_card.html' with goal=goal %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {# Low Priority Goals #}
+            {% if goals_by_priority.low %}
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-600 mb-3">
+                        <i class="fas fa-arrow-down mr-2"></i>
+                        Low Priority
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for goal in goals_by_priority.low %}
+                            {% include 'planning/partials/goal_card.html' with goal=goal %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-flag text-4xl text-gray-300 mb-3"></i>
+                <p>No strategic goals defined yet</p>
+                <a href="{% url 'planning:goal_create' plan.pk %}"
+                   class="inline-block mt-4 text-blue-600 hover:text-blue-800 font-medium">
+                    <i class="fas fa-plus mr-1"></i>
+                    Add first goal
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    {# Annual Work Plans #}
+    <div class="bg-white rounded-xl p-6 border border-gray-200">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-calendar-alt text-purple-600 mr-3"></i>
+                Annual Work Plans
+            </h2>
+            <a href="{% url 'planning:annual_create' %}?strategic_plan={{ plan.pk }}"
+               class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                <i class="fas fa-plus mr-2"></i>
+                Add Annual Plan
+            </a>
+        </div>
+
+        {% if annual_plans %}
+            <div class="space-y-4">
+                {% for annual_plan in annual_plans %}
+                    <div class="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow duration-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-1">
+                                    <a href="{% url 'planning:annual_detail' annual_plan.pk %}"
+                                       class="hover:text-purple-600 transition-colors">
+                                        {{ annual_plan.title }}
+                                    </a>
+                                </h3>
+                                <p class="text-sm text-gray-600">
+                                    {{ annual_plan.objective_count }} objectives •
+                                    {{ annual_plan.avg_objective_progress|default:0|floatformat:0 }}% complete
+                                </p>
+                            </div>
+                            <div>
+                                <span class="px-3 py-1 inline-flex text-xs font-semibold rounded-full
+                                    {% if annual_plan.status == 'active' %}bg-emerald-100 text-emerald-800
+                                    {% elif annual_plan.status == 'draft' %}bg-gray-100 text-gray-800
+                                    {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                    {{ annual_plan.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        {# Progress Bar #}
+                        <div class="w-full bg-gray-200 rounded-full h-2 mt-3">
+                            <div class="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                                 style="width: {{ annual_plan.avg_objective_progress|default:0 }}%"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-calendar-alt text-4xl text-gray-300 mb-3"></i>
+                <p>No annual work plans created yet</p>
+                <a href="{% url 'planning:annual_create' %}?strategic_plan={{ plan.pk }}"
+                   class="inline-block mt-4 text-purple-600 hover:text-purple-800 font-medium">
+                    <i class="fas fa-plus mr-1"></i>
+                    Create first annual plan
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

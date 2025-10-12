@@ -356,7 +356,7 @@ if (modal) {
                     </h3>
 
                     <!-- Add Activity Quick Action -->
-                    <a href="{% url 'common:coordination_activity_add' %}?related_project={{ workflow.id }}&is_project_activity=true"
+                    <a href="{% url 'coordination:activity_add' %}?related_project={{ workflow.id }}&is_project_activity=true"
                        class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all duration-200 shadow-sm">
                         <i class="fas fa-plus"></i>
                         Add Activity

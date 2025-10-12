@@ -1,0 +1,1183 @@
+================================================================================
+BMMS PHASE 1: FOUNDATION (ORGANIZATIONS APP)
+================================================================================
+
+PRIORITY: CRITICAL
+COMPLEXITY: Moderate
+DEPENDENCIES: None (foundation phase - no prerequisites)
+BLOCKS: All other BMMS phases (2-8)
+
+This phase establishes the multi-tenancy foundation for BMMS by creating the
+organizations app with the Organization model, OrganizationMembership model,
+OrganizationMiddleware, and OrganizationScopedModel base class.
+
+TARGET BRANCH: feature/bmms-organizations
+BASE BRANCH: bmms/base
+
+
+================================================================================
+SECTION 1: PROJECT SETUP & INITIALIZATION
+================================================================================
+
+Task 1.1: Create BMMS Base Branch
+----------------------------------
+□ Create new bmms/base branch from main
+□ Verify clean working directory (git status)
+□ Document branch strategy in commit message
+
+Commands:
+```bash
+cd /Users/saidamenmambayao/Library/Mobile Documents/com~apple~CloudDocs/BTA/OOBC/obcms
+git checkout main
+git pull origin main
+git checkout -b bmms/base
+git push -u origin bmms/base
+```
+
+Expected Result:
+- bmms/base branch created and pushed to remote
+- Branch protection rules to be configured later
+
+
+Task 1.2: Create Organizations Django App
+------------------------------------------
+□ Navigate to src/ directory
+□ Activate Python virtual environment
+□ Create organizations app using manage.py
+□ Verify app structure created correctly
+
+Commands:
+```bash
+cd src
+source ../venv/bin/activate
+python manage.py startapp organizations
+```
+
+Expected Result:
+- New directory: src/organizations/
+- Files created: __init__.py, admin.py, apps.py, models.py, tests.py, views.py
+- migrations/ directory created
+
+
+Task 1.3: Register Organizations App in Settings
+-------------------------------------------------
+□ Open src/obc_management/settings/base.py
+□ Add 'organizations' to INSTALLED_APPS
+□ Position after 'common' and before 'communities'
+
+File: src/obc_management/settings/base.py
+```python
+INSTALLED_APPS = [
+    # ... existing apps ...
+    'common',
+    'organizations',  # ADD THIS
+    'communities',
+    # ... rest of apps ...
+]
+```
+
+Expected Result:
+- Organizations app registered in Django settings
+- App will be recognized by Django management commands
+
+
+================================================================================
+SECTION 2: DATABASE MODELS (ORGANIZATION & MEMBERSHIP)
+================================================================================
+
+Task 2.1: Implement Organization Model
+---------------------------------------
+□ Open src/organizations/models.py
+□ Import required Django modules
+□ Create Organization model with all fields
+□ Add __str__ method for admin display
+□ Add Meta class with ordering and indexes
+
+File: src/organizations/models.py
+
+Required Fields:
+- code (CharField, max_length=20, unique=True) - e.g., OOBC, MOH, MOLE
+- name (CharField, max_length=200) - Full organization name
+- acronym (CharField, max_length=20, blank=True) - Alternative acronym
+- org_type (CharField, max_length=20, choices) - ministry/office/agency/special/commission
+- mandate (TextField, blank=True) - Legal mandate and responsibilities
+- powers (JSONField, default=list) - List of powers and functions
+
+Module Activation Flags:
+- enable_mana (BooleanField, default=True)
+- enable_planning (BooleanField, default=True)
+- enable_budgeting (BooleanField, default=True)
+- enable_me (BooleanField, default=True)
+- enable_coordination (BooleanField, default=True)
+- enable_policies (BooleanField, default=True)
+
+Geographic Fields:
+- primary_region (ForeignKey to common.Region, null=True, blank=True)
+- service_areas (ManyToManyField to common.Municipality, blank=True)
+
+Leadership Fields:
+- head_official (CharField, max_length=200, blank=True)
+- head_title (CharField, max_length=100, blank=True)
+- primary_focal_person (ForeignKey to User, null=True, blank=True)
+
+Contact Fields:
+- email (EmailField, blank=True)
+- phone (CharField, max_length=20, blank=True)
+- website (URLField, blank=True)
+- address (TextField, blank=True)
+
+Status Fields:
+- is_active (BooleanField, default=True)
+- is_pilot (BooleanField, default=False)
+- onboarding_date (DateField, null=True, blank=True)
+- go_live_date (DateField, null=True, blank=True)
+
+Audit Fields:
+- created_at (DateTimeField, auto_now_add=True)
+- updated_at (DateTimeField, auto_now=True)
+
+Example Implementation:
+```python
+from django.db import models
+from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
+
+User = get_user_model()
+
+class Organization(models.Model):
+    """BARMM Ministry, Office, or Agency (MOA)"""
+
+    # Identification
+    code = models.CharField(
+        max_length=20,
+        unique=True,
+        help_text=_('Unique organization code (e.g., OOBC, MOH, MOLE)')
+    )
+    name = models.CharField(
+        max_length=200,
+        help_text=_('Full organization name')
+    )
+    # ... add all other fields ...
+
+    class Meta:
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['code']),
+            models.Index(fields=['org_type', 'is_active']),
+        ]
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+```
+
+Expected Result:
+- Organization model fully implemented with all 44 fields
+- Model follows Django best practices
+- Help text added for all fields
+
+
+Task 2.2: Implement OrganizationMembership Model
+-------------------------------------------------
+□ Add OrganizationMembership model in same file
+□ Implement foreign keys to User and Organization
+□ Add role field with choices
+□ Add is_primary flag for default organization
+□ Add permissions and access control fields
+
+File: src/organizations/models.py (continue)
+
+Required Fields:
+- user (ForeignKey to User, on_delete=CASCADE, related_name='organization_memberships')
+- organization (ForeignKey to Organization, on_delete=CASCADE, related_name='memberships')
+- role (CharField, max_length=20, choices) - admin/manager/staff/viewer
+- is_primary (BooleanField, default=False) - Primary organization for user
+- position (CharField, max_length=200, blank=True) - Job title/position
+- department (CharField, max_length=200, blank=True) - Department within org
+- joined_date (DateField, auto_now_add=True)
+- is_active (BooleanField, default=True)
+
+Permissions Fields:
+- can_manage_users (BooleanField, default=False)
+- can_approve_plans (BooleanField, default=False)
+- can_approve_budgets (BooleanField, default=False)
+- can_view_reports (BooleanField, default=True)
+
+Audit Fields:
+- created_at (DateTimeField, auto_now_add=True)
+- updated_at (DateTimeField, auto_now=True)
+
+Example Implementation:
+```python
+class OrganizationMembership(models.Model):
+    """User membership in an organization"""
+
+    ROLE_CHOICES = [
+        ('admin', _('Administrator')),
+        ('manager', _('Manager')),
+        ('staff', _('Staff')),
+        ('viewer', _('Viewer')),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='organization_memberships'
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='memberships'
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    is_primary = models.BooleanField(default=False)
+    # ... add all other fields ...
+
+    class Meta:
+        unique_together = [['user', 'organization']]
+        ordering = ['-is_primary', 'user__username']
+        indexes = [
+            models.Index(fields=['user', 'is_primary']),
+            models.Index(fields=['organization', 'role']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} @ {self.organization.code} ({self.role})"
+```
+
+Expected Result:
+- OrganizationMembership model fully implemented
+- Unique constraint on user-organization pair
+- Primary organization flag for user's default org
+
+
+Task 2.3: Implement OrganizationScopedModel Base Class
+-------------------------------------------------------
+□ Add thread-local storage helper
+□ Create OrganizationScopedManager custom manager
+□ Create OrganizationScopedModel abstract base class
+□ Add helper functions for organization context
+
+File: src/organizations/models.py (continue)
+
+Components:
+1. Thread-local storage for request context
+2. get_current_organization() helper function
+3. OrganizationScopedManager (auto-filters by org)
+4. OrganizationScopedModel abstract base class
+
+Example Implementation:
+```python
+import threading
+
+# Thread-local storage for request context
+_thread_locals = threading.local()
+
+def get_current_organization():
+    """Get organization from current request context"""
+    return getattr(_thread_locals, 'organization', None)
+
+class OrganizationScopedManager(models.Manager):
+    """Manager that auto-filters by request organization"""
+
+    def get_queryset(self):
+        """Auto-filter by organization from request context"""
+        queryset = super().get_queryset()
+        current_org = get_current_organization()
+
+        if current_org:
+            # Filter by current organization
+            return queryset.filter(organization=current_org)
+
+        # No organization in context: return unfiltered
+        # (for management commands, migrations, etc.)
+        return queryset
+
+class OrganizationScopedModel(models.Model):
+    """Abstract base class for organization-scoped models"""
+
+    organization = models.ForeignKey(
+        'organizations.Organization',
+        on_delete=models.PROTECT,
+        related_name='%(app_label)s_%(class)s_set',
+        help_text='Organization that owns this record'
+    )
+
+    # Default manager (auto-filters by org)
+    objects = OrganizationScopedManager()
+
+    # Unfiltered manager (bypass org scoping)
+    all_objects = models.Manager()
+
+    class Meta:
+        abstract = True
+        indexes = [
+            models.Index(fields=['organization']),
+        ]
+```
+
+Expected Result:
+- OrganizationScopedModel available for other apps to inherit
+- Automatic organization filtering in querysets
+- all_objects manager for admin/OCM (Office of the Chief Minister) cross-org queries
+
+
+================================================================================
+SECTION 3: MIDDLEWARE IMPLEMENTATION
+================================================================================
+
+Task 3.1: Create OrganizationMiddleware
+----------------------------------------
+□ Create src/organizations/middleware.py file
+□ Implement OrganizationMiddleware class
+□ Add organization extraction from URL
+□ Add access control verification
+□ Handle thread-local storage cleanup
+
+File: src/organizations/middleware.py
+
+Required Functionality:
+- Extract organization code from URL pattern (/moa/<ORG_CODE>/...)
+- Load organization from database
+- Verify user has access to organization
+- Set request.organization attribute
+- Store organization in thread-local storage
+- Clean up thread-local after response
+
+Example Implementation:
+```python
+from django.http import HttpResponseForbidden
+from organizations.models import Organization, OrganizationMembership, _thread_locals
+
+class OrganizationMiddleware:
+    """Set organization context on every request"""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Store request in thread-local for manager access
+        _thread_locals.request = request
+
+        # Extract organization from URL pattern
+        org_code = self._extract_org_code(request.path)
+
+        if org_code:
+            # URL has organization code: /moa/OOBC/...
+            try:
+                organization = Organization.objects.get(code=org_code)
+
+                # Verify user has access to this organization
+                if request.user.is_authenticated:
+                    has_access = OrganizationMembership.objects.filter(
+                        user=request.user,
+                        organization=organization
+                    ).exists()
+
+                    if not has_access and not request.user.is_superuser:
+                        return HttpResponseForbidden(
+                            f"You do not have access to {organization.name}"
+                        )
+
+                request.organization = organization
+                _thread_locals.organization = organization
+
+            except Organization.DoesNotExist:
+                return HttpResponseForbidden(f"Invalid organization code: {org_code}")
+
+        else:
+            # No org in URL: use user's primary organization
+            if request.user.is_authenticated:
+                membership = OrganizationMembership.objects.filter(
+                    user=request.user,
+                    is_primary=True
+                ).select_related('organization').first()
+
+                if membership:
+                    request.organization = membership.organization
+                    _thread_locals.organization = membership.organization
+                else:
+                    request.organization = None
+                    _thread_locals.organization = None
+            else:
+                request.organization = None
+                _thread_locals.organization = None
+
+        response = self.get_response(request)
+
+        # Cleanup thread-local
+        if hasattr(_thread_locals, 'request'):
+            del _thread_locals.request
+        if hasattr(_thread_locals, 'organization'):
+            del _thread_locals.organization
+
+        return response
+
+    def _extract_org_code(self, path):
+        """Extract organization code from URL path"""
+        # Pattern: /moa/<ORG_CODE>/...
+        parts = path.strip('/').split('/')
+        if len(parts) >= 2 and parts[0] == 'moa':
+            return parts[1].upper()
+        return None
+```
+
+Expected Result:
+- Middleware file created with complete implementation
+- Organization extracted from URL
+- Access control enforced
+- Thread-local storage managed
+
+
+Task 3.2: Register Middleware in Settings
+------------------------------------------
+□ Open src/obc_management/settings/base.py
+□ Add OrganizationMiddleware to MIDDLEWARE list
+□ Position after AuthenticationMiddleware
+
+File: src/obc_management/settings/base.py
+
+```python
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'organizations.middleware.OrganizationMiddleware',  # ADD THIS
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+```
+
+Expected Result:
+- Middleware registered and will run on every request
+- Positioned correctly after authentication
+
+
+================================================================================
+SECTION 4: DATABASE MIGRATIONS
+================================================================================
+
+Task 4.1: Create Initial Migration (0001_initial.py)
+-----------------------------------------------------
+□ Ensure organizations app is in INSTALLED_APPS
+□ Navigate to src/ directory
+□ Run makemigrations command
+□ Review generated migration file
+□ Verify all fields are included
+
+Commands:
+```bash
+cd src
+python manage.py makemigrations organizations
+```
+
+Expected Result:
+- Migration file: src/organizations/migrations/0001_initial.py
+- Contains CreateModel operations for Organization and OrganizationMembership
+- All fields properly defined with correct types and constraints
+
+
+Task 4.2: Create Data Migration for 44 BARMM MOAs
+--------------------------------------------------
+□ Create new empty migration
+□ Add seed_organizations function
+□ Add all 44 BARMM MOAs data
+□ Create RunPython operation
+
+Commands:
+```bash
+cd src
+python manage.py makemigrations organizations --empty --name seed_initial_orgs
+```
+
+File: src/organizations/migrations/0002_seed_initial_orgs.py
+
+BARMM MOAs to Seed (44 Total):
+
+MINISTRIES (16):
+1. OOBC - Office for Other Bangsamoro Communities
+2. MAFAR - Ministry of Agriculture, Fisheries and Agrarian Reform
+3. MBHTE - Ministry of Basic, Higher and Technical Education
+4. MENRE - Ministry of Environment, Natural Resources and Energy
+5. MFBM - Ministry of Finance, Budget and Management
+6. MOH - Ministry of Health
+7. MHSD - Ministry of Human Settlements and Development
+8. MIPA - Ministry of Indigenous Peoples Affairs
+9. MILG - Ministry of Interior and Local Government
+10. MOLE - Ministry of Labor and Employment
+11. MPWH - Ministry of Public Works and Highways
+12. MSSD - Ministry of Social Services and Development
+13. MTI - Ministry of Trade, Investments and Tourism
+14. MTIT - Ministry of Transportation and Information Technology
+15. MWDWA - Ministry of Women, Development and Welfare Affairs
+16. MYNDA - Ministry of Youth and Nonprofit Development Affairs
+
+OFFICES (10):
+17. OCM - Office of the Chief Minister
+18. OMP - Office of the Majority Floor Leader (Parliament)
+19. OPARL - Office of the Bangsamoro Parliament
+20. OPMDA - Office of the Prime Minister on Disasters and Assistance
+21. OSM - Office of the Senior Minister
+22. OTAF - Office of Technical Assistance and Facilitation
+23. OADP - Office for Ancestral Domain Programs
+24. OBCE - Office of Business and Community Empowerment
+25. OCRE - Office of Cultural and Religious Endowments
+26. OMLA - Office of Muslim Legal Affairs
+
+AGENCIES (8):
+27. BAI - Bangsamoro Audit Institution
+28. BEDC - Bangsamoro Economic Development Council
+29. BTA - Bangsamoro Transition Authority
+30. BSWM - Bangsamoro Statistics and Water Management
+31. CAB - Commission on Appointments (Bangsamoro)
+32. CSC-BARMM - Civil Service Commission
+33. RLEA - Regional Law Enforcement Agency
+34. TESDA-BARMM - Technical Education and Skills Development Authority
+
+SPECIAL BODIES (7):
+35. BIDA - Bangsamoro Investment and Development Authority
+36. BIAF - Bangsamoro Islamic Affairs
+37. BRTA - Bangsamoro Radio and Television Authority
+38. BSBC - Bangsamoro Sustainable Blue Carbon
+39. BWPB - Bangsamoro Water and Power Board
+40. MUWASSCO - Mindanao Utilities Water and Sanitation Service Company
+41. SPBI - Special Program for Bangsamoro Innovation
+
+COMMISSIONS (3):
+42. BCHRC - Bangsamoro Commission on Human Rights
+43. BWCRC - Bangsamoro Women's Commission on Rights and Concerns
+44. BYDC - Bangsamoro Youth Development Commission
+
+Example Implementation:
+```python
+from django.db import migrations
+
+def seed_organizations(apps, schema_editor):
+    Organization = apps.get_model('organizations', 'Organization')
+
+    # CRITICAL: Create OOBC first (ID=1 for default references)
+    Organization.objects.create(
+        code='OOBC',
+        name='Office for Other Bangsamoro Communities',
+        org_type='office',
+        enable_mana=True,
+        enable_planning=True,
+        enable_budgeting=True,
+        enable_me=True,
+        enable_coordination=True,
+        enable_policies=True,
+        is_active=True,
+    )
+
+    # PILOT MOAs (3)
+    Organization.objects.create(
+        code='MOH',
+        name='Ministry of Health',
+        org_type='ministry',
+        is_pilot=True,
+        # ... other fields ...
+    )
+
+    Organization.objects.create(
+        code='MOLE',
+        name='Ministry of Labor and Employment',
+        org_type='ministry',
+        is_pilot=True,
+        # ... other fields ...
+    )
+
+    Organization.objects.create(
+        code='MAFAR',
+        name='Ministry of Agriculture, Fisheries and Agrarian Reform',
+        org_type='ministry',
+        is_pilot=True,
+        # ... other fields ...
+    )
+
+    # Add remaining 40 MOAs...
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ('organizations', '0001_initial'),
+    ]
+
+    operations = [
+        migrations.RunPython(seed_organizations, reverse_code=migrations.RunPython.noop),
+    ]
+```
+
+Expected Result:
+- Migration file with all 44 MOAs data
+- OOBC created first (ID=1)
+- Pilot MOAs flagged (MOH, MOLE, MAFAR)
+- All other MOAs with appropriate org_type
+
+
+Task 4.3: Run Migrations
+-------------------------
+□ Review migration files
+□ Backup current database (development safety)
+□ Run migrate command
+□ Verify organizations table created
+□ Verify 44 organizations seeded
+
+Commands:
+```bash
+cd src
+python manage.py migrate organizations
+```
+
+Verification:
+```bash
+# Check organizations created
+python manage.py shell
+>>> from organizations.models import Organization
+>>> Organization.objects.count()  # Should be 44
+>>> Organization.objects.filter(is_pilot=True).count()  # Should be 3
+>>> Organization.objects.get(code='OOBC')  # Verify OOBC exists
+```
+
+Expected Result:
+- organizations_organization table created
+- organizations_organizationmembership table created
+- 44 organizations seeded successfully
+- OOBC has ID=1
+- 3 pilot MOAs flagged
+
+
+Task 4.4: Add Performance Indexes
+----------------------------------
+□ Create new migration for indexes
+□ Add composite indexes for common queries
+□ Focus on organization + status fields
+
+Commands:
+```bash
+cd src
+python manage.py makemigrations organizations --empty --name add_performance_indexes
+```
+
+Indexes to Add:
+- (organization, is_active) for active record filtering
+- (user, is_primary) in OrganizationMembership for primary org lookup
+- (organization, role) in OrganizationMembership for role-based queries
+
+Expected Result:
+- Additional migration file with index operations
+- Improved query performance for multi-tenant queries
+
+
+================================================================================
+SECTION 5: ADMIN INTERFACE
+================================================================================
+
+Task 5.1: Register Models in Admin
+-----------------------------------
+□ Open src/organizations/admin.py
+□ Create OrganizationAdmin class
+□ Create OrganizationMembershipAdmin class
+□ Configure list display, filters, and search
+□ Add inline for memberships in Organization admin
+
+File: src/organizations/admin.py
+
+Example Implementation:
+```python
+from django.contrib import admin
+from .models import Organization, OrganizationMembership
+
+class OrganizationMembershipInline(admin.TabularInline):
+    model = OrganizationMembership
+    extra = 0
+    fields = ['user', 'role', 'is_primary', 'is_active']
+
+@admin.register(Organization)
+class OrganizationAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name', 'org_type', 'is_active', 'is_pilot']
+    list_filter = ['org_type', 'is_active', 'is_pilot', 'enable_mana', 'enable_planning']
+    search_fields = ['code', 'name', 'acronym']
+    ordering = ['name']
+
+    fieldsets = [
+        ('Identification', {
+            'fields': ['code', 'name', 'acronym', 'org_type']
+        }),
+        ('Module Activation', {
+            'fields': [
+                'enable_mana', 'enable_planning', 'enable_budgeting',
+                'enable_me', 'enable_coordination', 'enable_policies'
+            ]
+        }),
+        ('Status', {
+            'fields': ['is_active', 'is_pilot', 'onboarding_date', 'go_live_date']
+        }),
+    ]
+
+    inlines = [OrganizationMembershipInline]
+
+@admin.register(OrganizationMembership)
+class OrganizationMembershipAdmin(admin.ModelAdmin):
+    list_display = ['user', 'organization', 'role', 'is_primary', 'is_active']
+    list_filter = ['role', 'is_primary', 'is_active', 'organization']
+    search_fields = ['user__username', 'user__email', 'organization__name']
+    ordering = ['organization', 'user']
+```
+
+Expected Result:
+- Organizations visible in Django admin
+- Memberships manageable from Organization detail page
+- Proper filtering and search functionality
+
+
+Task 5.2: Create Management Command for Bulk MOA Creation
+----------------------------------------------------------
+□ Create management/commands/ directory structure
+□ Create create_all_moas.py command
+□ Implement command to create/update all 44 MOAs
+
+File: src/organizations/management/commands/create_all_moas.py
+
+Commands:
+```bash
+mkdir -p src/organizations/management/commands
+touch src/organizations/management/commands/__init__.py
+```
+
+Expected Result:
+- Management command available: python manage.py create_all_moas
+- Idempotent (can run multiple times safely)
+- Creates missing MOAs, updates existing ones
+
+
+================================================================================
+SECTION 6: UI COMPONENTS (ORGANIZATION SWITCHER)
+================================================================================
+
+Task 6.1: Create Organization Switcher Dropdown Component
+----------------------------------------------------------
+□ Create template: src/templates/organizations/components/org_switcher.html
+□ Implement dropdown with user's organizations
+□ Add current organization display
+□ Add organization change handler
+
+File: src/templates/organizations/components/org_switcher.html
+
+Features:
+- Display current organization
+- List all organizations user has access to
+- Highlight primary organization
+- Change organization (redirect to /moa/<ORG_CODE>/)
+
+Example Implementation:
+```html
+<!-- Organization Switcher Dropdown -->
+<div class="relative" x-data="{ open: false }">
+    <button @click="open = !open"
+            class="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50">
+        <i class="fas fa-building text-blue-600"></i>
+        <span class="font-medium">
+            {% if request.organization %}
+                {{ request.organization.code }}
+            {% else %}
+                Select Organization
+            {% endif %}
+        </span>
+        <i class="fas fa-chevron-down text-gray-400"></i>
+    </button>
+
+    <div x-show="open" @click.away="open = false"
+         class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
+        <div class="p-2">
+            {% for membership in request.user.organization_memberships.all %}
+            <a href="/moa/{{ membership.organization.code }}/"
+               class="block px-4 py-2 rounded-lg hover:bg-gray-50
+                      {% if request.organization.id == membership.organization.id %}bg-blue-50{% endif %}">
+                <div class="font-medium">{{ membership.organization.code }}</div>
+                <div class="text-sm text-gray-600">{{ membership.organization.name }}</div>
+                {% if membership.is_primary %}
+                <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Primary</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+```
+
+Expected Result:
+- Dropdown component in header
+- Lists all user's organizations
+- Current organization highlighted
+- Click to switch organization
+
+
+Task 6.2: Add Organization Context to Base Template
+----------------------------------------------------
+□ Open src/templates/base.html
+□ Add organization switcher to header
+□ Display current organization name
+□ Add organization code to page title
+
+File: src/templates/base.html
+
+Changes:
+- Include org_switcher.html in header
+- Add {{ request.organization.code }} to title
+- Show current organization info in header
+
+Expected Result:
+- Organization switcher visible on all pages
+- Current organization displayed in header
+- Organization context available in all templates
+
+
+Task 6.3: Create Organization Selection Persistence
+----------------------------------------------------
+□ Store selected organization in session
+□ Update session when organization changes
+□ Restore organization on subsequent requests
+
+Implementation:
+- Session key: 'selected_organization_code'
+- Set when user switches organization
+- Read by middleware to determine current org
+
+Expected Result:
+- User's organization selection persists across page loads
+- Middleware uses session if no org in URL
+
+
+================================================================================
+SECTION 7: TESTING
+================================================================================
+
+Task 7.1: Unit Tests for Organization Model
+--------------------------------------------
+□ Create tests/organizations/ directory
+□ Create test_models.py file
+□ Test Organization model creation
+□ Test unique constraints
+□ Test string representation
+
+File: src/organizations/tests/test_models.py
+
+Test Cases:
+- test_create_organization_success
+- test_organization_code_unique_constraint
+- test_organization_str_method
+- test_organization_module_flags_default_true
+- test_organization_type_choices
+
+Expected Result:
+- All organization model tests passing
+- Coverage > 90% for models.py
+
+
+Task 7.2: Unit Tests for OrganizationMembership
+------------------------------------------------
+□ Add tests for OrganizationMembership model
+□ Test user-organization relationship
+□ Test primary organization flag
+□ Test unique constraint
+
+Test Cases:
+- test_create_membership_success
+- test_user_organization_unique_constraint
+- test_primary_membership_flag
+- test_membership_str_method
+- test_user_can_have_multiple_orgs
+
+Expected Result:
+- All membership tests passing
+- Relationship constraints validated
+
+
+Task 7.3: Integration Tests for Middleware
+-------------------------------------------
+□ Create test_middleware.py file
+□ Test organization extraction from URL
+□ Test access control enforcement
+□ Test thread-local storage
+
+File: src/organizations/tests/test_middleware.py
+
+Test Cases:
+- test_middleware_extracts_org_from_url
+- test_middleware_sets_request_organization
+- test_middleware_blocks_unauthorized_access
+- test_middleware_allows_superuser_access
+- test_middleware_uses_primary_org_fallback
+- test_thread_local_cleanup
+
+Expected Result:
+- All middleware tests passing
+- Access control verified
+- Thread-local storage working correctly
+
+
+Task 7.4: Data Isolation Tests
+-------------------------------
+□ Create test_data_isolation.py file
+□ Test organization data isolation
+□ Test cross-organization access prevention
+□ Test admin cross-organization access
+
+File: src/organizations/tests/test_data_isolation.py
+
+Test Cases:
+- test_user_only_sees_own_org_data
+- test_cannot_access_other_org_via_url_manipulation
+- test_admin_can_see_all_data
+- test_organizationscopedmodel_auto_filtering
+
+This is CRITICAL for security - users must NEVER see other organizations' data.
+
+Expected Result:
+- Data isolation verified
+- Cross-organization access blocked
+- Admin access to all data confirmed
+
+
+Task 7.5: Run Full Test Suite
+------------------------------
+□ Run all organizations app tests
+□ Verify 100% pass rate
+□ Check code coverage
+
+Commands:
+```bash
+cd src
+pytest organizations/tests/ -v
+coverage run -m pytest organizations/tests/
+coverage report --include="organizations/*"
+```
+
+Expected Result:
+- All tests passing
+- Coverage > 85% for organizations app
+
+
+================================================================================
+SECTION 8: DOCUMENTATION
+================================================================================
+
+Task 8.1: Create Organizations App README
+------------------------------------------
+□ Create src/organizations/README.md
+□ Document Organization model fields
+□ Document OrganizationMembership usage
+□ Document middleware functionality
+□ Add usage examples
+
+Expected Result:
+- Comprehensive README for organizations app
+- Code examples for common use cases
+- Migration instructions
+
+
+Task 8.2: Update BMMS Transition Plan
+--------------------------------------
+□ Mark Phase 1 as complete in TRANSITION_PLAN.md
+□ Document implementation decisions
+□ Add lessons learned
+
+Expected Result:
+- Phase 1 marked complete
+- Implementation notes added
+
+
+================================================================================
+SECTION 9: VERIFICATION & DEPLOYMENT
+================================================================================
+
+Task 9.1: Manual Testing Checklist
+-----------------------------------
+□ Start development server
+□ Log in as OOBC staff user
+□ Verify organization switcher appears in header
+□ Verify current organization displays correctly
+□ Create test user for MOH
+□ Add OrganizationMembership for test user
+□ Switch to MOH organization
+□ Verify middleware blocks access to OOBC data
+□ Test superuser can access all organizations
+
+Commands:
+```bash
+cd src
+python manage.py runserver
+```
+
+Test Users to Create:
+- oobc_staff (primary: OOBC)
+- moh_staff (primary: MOH)
+- admin (superuser)
+
+Expected Result:
+- Organization switcher functional
+- Data isolation working
+- Access control enforced
+
+
+Task 9.2: Performance Verification
+-----------------------------------
+□ Check query counts on dashboard load
+□ Verify organization filtering uses indexes
+□ Check no N+1 queries in organization lookups
+
+Tools:
+- Django Debug Toolbar
+- django-silk (query profiling)
+
+Expected Result:
+- Dashboard loads with < 20 queries
+- Organization lookups use index
+- No performance regressions
+
+
+Task 9.3: Git Commit & Branch Merge
+------------------------------------
+□ Review all changes
+□ Stage files for commit
+□ Create detailed commit message
+□ Push to feature/bmms-organizations branch
+□ Create pull request to bmms/base
+
+Commands:
+```bash
+git add src/organizations/
+git add src/obc_management/settings/base.py
+git add src/templates/organizations/
+
+git commit -m "[BMMS] Add Organization model and multi-tenancy foundation
+
+- Created organizations Django app
+- Implemented Organization model with all 44 BARMM MOAs
+- Implemented OrganizationMembership for user-org relationships
+- Added OrganizationMiddleware for request context
+- Created OrganizationScopedModel base class
+- Seeded 44 BARMM MOAs (OOBC + 16 ministries + 10 offices + 8 agencies + 7 special bodies + 3 commissions)
+- Added organization switcher UI component
+- Implemented data isolation and access control
+
+This establishes the foundation for multi-tenant BMMS.
+
+Refs: #BMMS-001"
+
+git push -u origin feature/bmms-organizations
+```
+
+Expected Result:
+- All changes committed
+- Branch pushed to remote
+- Ready for code review
+
+
+================================================================================
+FINAL VERIFICATION CHECKLIST
+================================================================================
+
+Core Implementation:
+□ organizations Django app created
+□ Organization model implemented with all 44 fields
+□ OrganizationMembership model implemented
+□ OrganizationScopedModel base class created
+□ OrganizationMiddleware implemented
+□ 44 BARMM MOAs seeded successfully
+
+Database:
+□ Migration 0001_initial.py created and applied
+□ Migration 0002_seed_initial_orgs.py created and applied
+□ Performance indexes added
+□ OOBC organization has ID=1
+□ 3 pilot MOAs flagged (MOH, MOLE, MAFAR)
+
+Admin Interface:
+□ Organization model registered in admin
+□ OrganizationMembership model registered in admin
+□ Inline memberships on Organization detail page
+□ Filters and search working
+
+UI Components:
+□ Organization switcher dropdown implemented
+□ Current organization displayed in header
+□ Organization switching functional
+□ Session persistence working
+
+Testing:
+□ Organization model tests passing (100%)
+□ OrganizationMembership tests passing (100%)
+□ Middleware tests passing (100%)
+□ Data isolation tests passing (100%)
+□ Code coverage > 85%
+
+Security:
+□ Data isolation verified
+□ Cross-organization access blocked
+□ Middleware access control enforced
+□ Superuser can access all organizations
+
+Documentation:
+□ Organizations app README created
+□ TRANSITION_PLAN.md updated
+□ Code comments added
+
+Git:
+□ All changes committed
+□ Branch pushed to remote
+□ Pull request created
+
+
+================================================================================
+NEXT PHASE: PHASE 2 - PLANNING MODULE
+================================================================================
+
+After Phase 1 is complete and merged, proceed to Phase 2:
+- Strategic Planning module (NEW module)
+- Depends on Phase 1 (Organization model)
+- Enables needs-based planning aligned with MANA
+- Foundation for budgeting (Parliament Bill No. 325)
+
+Refer to: docs/plans/bmms/tasks/phase2_planning_module.txt
+
+
+================================================================================
+NOTES & CONSIDERATIONS
+================================================================================
+
+Critical Implementation Notes:
+- OOBC must be created first (ID=1) for backward compatibility
+- All existing OBCMS data will be assigned to OOBC organization
+- Thread-local storage is safe for WSGI/ASGI servers
+- Middleware position matters: must be after AuthenticationMiddleware
+- OrganizationScopedModel is abstract: no database table created
+
+Security Considerations:
+- Organization code in URL is the source of truth
+- User must have OrganizationMembership to access organization
+- Superusers bypass organization restrictions (for admin/OCM)
+- Primary organization is fallback when no org in URL
+
+Performance Considerations:
+- Indexes on (organization, status) for common queries
+- select_related('organization') to avoid N+1 queries
+- Thread-local storage minimal overhead
+- Middleware runs on every request (keep logic fast)
+
+Common Issues:
+- If middleware not registered: organization context missing
+- If thread-local not cleaned up: memory leaks possible
+- If OOBC not ID=1: backward compatibility breaks
+- If migrations run out of order: foreign key errors
+
+Rollback Plan:
+- Keep SQLite backup before migrations
+- Migration 0002 can be rolled back (delete orgs)
+- Migration 0001 rollback requires app uninstall
+- Feature branch can be abandoned if needed
+
+
+================================================================================
+END OF PHASE 1 TASK BREAKDOWN
+================================================================================

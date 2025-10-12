@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if proposal %}Edit{% else %}Create{% endif %} Budget Proposal - OBCMS{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a></li>
+<li><a href="{% url 'budget_preparation:proposal_list' %}" class="text-blue-600 hover:text-blue-800">Budget Proposals</a></li>
+<li class="text-neutral-800 font-semibold">{% if proposal %}Edit{% else %}Create{% endif %} Proposal</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">
+            {% if proposal %}Edit Budget Proposal{% else %}Create Budget Proposal{% endif %}
+        </h1>
+        <p class="mt-2 text-lg text-gray-600">
+            {% if proposal %}Update budget proposal for FY {{ proposal.fiscal_year }}{% else %}Prepare annual budget proposal{% endif %}
+        </p>
+    </div>
+
+    <!-- Form Container -->
+    <form method="post" action="" enctype="multipart/form-data" id="budget-proposal-form" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Basic Information Section -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                Basic Information
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Fiscal Year -->
+                <div class="space-y-1">
+                    <label for="fiscal_year" class="block text-sm font-medium text-gray-700 mb-2">
+                        Fiscal Year<span class="text-red-500">*</span>
+                    </label>
+                    <input type="number"
+                           id="fiscal_year"
+                           name="fiscal_year"
+                           value="{{ proposal.fiscal_year|default:'' }}"
+                           min="{{ current_year }}"
+                           max="{{ current_year|add:5 }}"
+                           class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200"
+                           placeholder="e.g., 2025"
+                           required>
+                    <p class="mt-1 text-sm text-gray-500">Budget year (current year or future)</p>
+                </div>
+
+                <!-- Strategic Plan -->
+                <div class="space-y-1">
+                    <label for="strategic_plan" class="block text-sm font-medium text-gray-700 mb-2">
+                        Strategic Plan<span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <select id="strategic_plan"
+                                name="strategic_plan"
+                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200"
+                                required>
+                            <option value="">Select strategic plan...</option>
+                            {% for plan in strategic_plans %}
+                            <option value="{{ plan.id }}" {% if proposal.strategic_plan_id == plan.id %}selected{% endif %}>
+                                {{ plan.name }} ({{ plan.start_year }}-{{ plan.end_year }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Proposed Amount (Auto-calculated) -->
+                <div class="space-y-1">
+                    <label for="proposed_amount" class="block text-sm font-medium text-gray-700 mb-2">
+                        Total Proposed Amount
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">₱</span>
+                        <input type="text"
+                               id="proposed_amount"
+                               name="proposed_amount"
+                               value="{{ proposal.proposed_amount|floatformat:2|default:'0.00' }}"
+                               class="w-full pl-8 pr-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm bg-gray-50 min-h-[48px] text-gray-700 font-semibold"
+                               readonly>
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">Auto-calculated from program budgets</p>
+                </div>
+
+                <!-- Status -->
+                <div class="space-y-1">
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
+                        Status<span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <select id="status"
+                                name="status"
+                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200"
+                                required>
+                            <option value="draft" {% if proposal.status == 'draft' %}selected{% endif %}>Draft</option>
+                            <option value="submitted" {% if proposal.status == 'submitted' %}selected{% endif %}>Submitted</option>
+                            <option value="approved" {% if proposal.status == 'approved' %}selected{% endif %}>Approved</option>
+                            <option value="enacted" {% if proposal.status == 'enacted' %}selected{% endif %}>Enacted</option>
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Program Budgets Section -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-list-ul text-emerald-500 mr-2"></i>
+                    Program Budgets
+                </h3>
+                <button type="button"
+                        id="add-program-budget"
+                        hx-get="{% url 'budget_preparation:add_program_budget' %}"
+                        hx-target="#program-budgets"
+                        hx-swap="beforeend"
+                        class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-4 py-2 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                    <i class="fas fa-plus mr-2"></i>Add Program
+                </button>
+            </div>
+
+            <div id="program-budgets" class="space-y-4">
+                {% for program_budget in proposal.program_budgets.all %}
+                {% include 'budget_preparation/partials/program_budget_item.html' with program_budget=program_budget %}
+                {% empty %}
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-inbox text-4xl mb-2"></i>
+                    <p>No program budgets added. Click "Add Program" to get started.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Total Display -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <span class="text-lg font-semibold text-gray-900">Total Proposed Budget:</span>
+                    <span id="total-proposed" class="text-2xl font-bold text-emerald-600">
+                        ₱{{ proposal.proposed_amount|floatformat:2|default:'0.00' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-200">
+            <a href="{% url 'budget_preparation:proposal_list' %}"
+               class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200 text-center">
+                <i class="fas fa-times mr-2"></i>
+                Cancel
+            </a>
+            <button type="submit"
+                    name="action"
+                    value="save_draft"
+                    class="border-2 border-blue-600 text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-colors duration-200">
+                <i class="fas fa-save mr-2"></i>
+                Save as Draft
+            </button>
+            <button type="submit"
+                    name="action"
+                    value="submit"
+                    class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <i class="fas fa-paper-plane mr-2"></i>
+                Submit for Approval
+            </button>
+        </div>
+
+    </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<script>
+    // Real-time total calculation
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('budget-proposal-form');
+        const totalDisplay = document.getElementById('total-proposed');
+        const proposedAmountInput = document.getElementById('proposed_amount');
+
+        // Listen for changes in program budget amounts
+        form.addEventListener('input', function(e) {
+            if (e.target.name && e.target.name.includes('requested_amount')) {
+                calculateTotal();
+            }
+        });
+
+        // Listen for HTMX events (when program budgets are added/removed)
+        document.body.addEventListener('htmx:afterSwap', function(e) {
+            if (e.detail.target.id === 'program-budgets') {
+                calculateTotal();
+            }
+        });
+
+        function calculateTotal() {
+            let total = 0;
+            const amountInputs = form.querySelectorAll('input[name*="requested_amount"]');
+
+            amountInputs.forEach(input => {
+                const value = parseFloat(input.value) || 0;
+                total += value;
+            });
+
+            // Update displays
+            totalDisplay.textContent = '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            proposedAmountInput.value = total.toFixed(2);
+        }
+
+        // Initial calculation
+        calculateTotal();
+    });
+
+    // Remove program budget item
+    function removeProgramBudget(button) {
+        const item = button.closest('.program-budget-item');
+        item.remove();
+
+        // Recalculate total
+        const form = document.getElementById('budget-proposal-form');
+        const event = new Event('input', { bubbles: true });
+        form.dispatchEvent(event);
+    }
+</script>
+{% endblock %}

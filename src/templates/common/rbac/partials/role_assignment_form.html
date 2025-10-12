@@ -1,0 +1,197 @@
+{% load static %}
+
+<div class="bg-white rounded-2xl shadow-2xl max-w-2xl mx-auto">
+    <!-- Modal Header -->
+    <div class="bg-gradient-to-r from-blue-800 to-emerald-600 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <i class="fas fa-shield-alt text-white text-xl"></i>
+            </div>
+            <div>
+                <h2 id="rbac-modal-title" class="text-xl font-bold text-white">
+                    Assign Role
+                </h2>
+                <p class="text-sm text-blue-100">
+                    {{ user.get_full_name|default:user.username }}
+                </p>
+            </div>
+        </div>
+        <button type="button"
+                onclick="closeRbacModal()"
+                class="text-white hover:text-gray-200 transition-colors duration-200"
+                aria-label="Close modal">
+            <i class="fas fa-times text-2xl"></i>
+        </button>
+    </div>
+
+    <!-- Form Body -->
+    <form hx-post="{% url 'common:rbac_role_assign' user.id %}"
+          hx-target="#rbac-modal-content"
+          hx-swap="innerHTML"
+          hx-indicator="#assign-loading"
+          class="p-6 space-y-6">
+        {% csrf_token %}
+
+        <!-- Role Selection -->
+        <div>
+            <label for="role-select" class="block text-sm font-medium text-gray-700 mb-2">
+                Role <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+                <select id="role-select"
+                        name="role_id"
+                        required
+                        class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                    <option value="">Select a role...</option>
+                    {% for role in available_roles %}
+                    <option value="{{ role.id }}"
+                            data-description="{{ role.description|default:'' }}"
+                            data-permissions-count="{{ role.permissions.count }}">
+                        {{ role.name }} ({{ role.permissions.count }} permissions)
+                    </option>
+                    {% endfor %}
+                </select>
+                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                </span>
+            </div>
+            <p class="mt-1 text-sm text-gray-500" id="role-description">
+                Select a role to view its description
+            </p>
+        </div>
+
+        <!-- Organization Selector (for BMMS) -->
+        {% if organizations %}
+        <div>
+            <label for="organization-select" class="block text-sm font-medium text-gray-700 mb-2">
+                Organization Context <span class="text-gray-400">(Optional)</span>
+            </label>
+            <div class="relative">
+                <select id="organization-select"
+                        name="organization_id"
+                        class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                    <option value="">All Organizations</option>
+                    {% for org in organizations %}
+                    <option value="{{ org.id }}">{{ org.name }}</option>
+                    {% endfor %}
+                </select>
+                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                </span>
+            </div>
+            <p class="mt-1 text-sm text-gray-500">
+                Limit role to specific organization (BMMS only)
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Validity Period (Optional) -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 rounded-r-lg p-4">
+            <h4 class="text-sm font-semibold text-blue-900 mb-3 flex items-center">
+                <i class="fas fa-calendar-alt mr-2"></i>
+                Validity Period (Optional)
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="valid-from" class="block text-xs font-medium text-blue-800 mb-1">
+                        Valid From
+                    </label>
+                    <input type="date"
+                           id="valid-from"
+                           name="valid_from"
+                           class="w-full px-3 py-2 text-sm rounded-lg border border-blue-200 shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white transition-all duration-200">
+                </div>
+                <div>
+                    <label for="valid-until" class="block text-xs font-medium text-blue-800 mb-1">
+                        Valid Until
+                    </label>
+                    <input type="date"
+                           id="valid-until"
+                           name="valid_until"
+                           class="w-full px-3 py-2 text-sm rounded-lg border border-blue-200 shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white transition-all duration-200">
+                </div>
+            </div>
+            <p class="mt-2 text-xs text-blue-700">
+                Leave blank for permanent assignment
+            </p>
+        </div>
+
+        <!-- Notes Field -->
+        <div>
+            <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
+                Notes
+            </label>
+            <textarea id="notes"
+                      name="notes"
+                      rows="3"
+                      class="w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-vertical"
+                      placeholder="Add any notes about this role assignment..."></textarea>
+        </div>
+
+        <!-- Permission Preview -->
+        <div id="permission-preview" class="hidden bg-gray-50 rounded-xl p-4">
+            <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                <i class="fas fa-list-check text-purple-600 mr-2"></i>
+                Permissions Included in Role
+            </h4>
+            <div id="permission-list" class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <!-- Populated dynamically via JavaScript -->
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200">
+            <button type="button"
+                    onclick="closeRbacModal()"
+                    class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors duration-200 min-h-[48px]">
+                <i class="fas fa-times mr-2"></i>
+                Cancel
+            </button>
+            <button type="submit"
+                    class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300 min-h-[48px] disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-shield-check mr-2"></i>
+                <span id="assign-loading" class="htmx-indicator">
+                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                </span>
+                Assign Role
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Role selection with description preview
+document.getElementById('role-select').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const description = selectedOption.getAttribute('data-description') || 'No description available';
+    const permissionsCount = selectedOption.getAttribute('data-permissions-count') || '0';
+
+    document.getElementById('role-description').textContent = description;
+
+    // Show permission preview (would be populated via HTMX in real implementation)
+    if (this.value) {
+        document.getElementById('permission-preview').classList.remove('hidden');
+        // In production, this would trigger an HTMX request to fetch permissions
+    } else {
+        document.getElementById('permission-preview').classList.add('hidden');
+    }
+});
+
+// Date validation
+document.getElementById('valid-from').addEventListener('change', function() {
+    const validUntil = document.getElementById('valid-until');
+    if (this.value) {
+        validUntil.min = this.value;
+    }
+});
+
+document.getElementById('valid-until').addEventListener('change', function() {
+    const validFrom = document.getElementById('valid-from');
+    if (this.value && validFrom.value) {
+        if (new Date(this.value) < new Date(validFrom.value)) {
+            alert('End date must be after start date');
+            this.value = '';
+        }
+    }
+});
+</script>

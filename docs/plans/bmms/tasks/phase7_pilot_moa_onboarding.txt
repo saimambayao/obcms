@@ -1,0 +1,826 @@
+BMMS PHASE 7: PILOT MOA ONBOARDING - TASK BREAKDOWN
+
+================================================================================
+PHASE METADATA
+================================================================================
+
+Phase: 7
+Title: Pilot MOA Onboarding & UAT
+Priority: HIGH
+Complexity: Simple
+Status: Not Started
+
+Dependencies:
+  - Phase 1: Foundation (Organizations app)
+  - Phase 2: Planning Module
+  - Phase 3: Budgeting Module
+  - Phase 4: Coordination Enhancement
+  - Phase 6: OCM Aggregation
+  - Phase 5 optional (MANA, M&E can come later)
+
+Description:
+  Onboard 3 pilot MOAs (Ministry of Health, Ministry of Labor and Employment,
+  Ministry of Agriculture) to BMMS for user acceptance testing, training,
+  bug fixing, and system validation before full rollout.
+
+Pilot MOAs:
+  1. MOH - Ministry of Health
+  2. MOLE - Ministry of Labor and Employment
+  3. MAFAR - Ministry of Agriculture, Fisheries and Agrarian Reform
+
+Target Users:
+  - MOH staff (planning, budget, coordination officers)
+  - MOLE staff (planning, budget, coordination officers)
+  - MAFAR staff (planning, budget, coordination officers)
+  - Estimated: 15-30 pilot users total
+
+Key Deliverables:
+  - 3 pilot MOAs fully operational
+  - User accounts created and configured
+  - Training sessions completed
+  - User guides distributed
+  - Bug fixes implemented
+  - UAT sign-off from pilot MOAs
+
+================================================================================
+TASK 1: PILOT MOA DATA SETUP
+================================================================================
+
+Priority: CRITICAL
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Create organization records for the 3 pilot MOAs with proper configuration,
+  module enablement, and baseline data.
+
+Subtasks:
+
+[ ] 1.1 Create MOH Organization Record
+    Database entry:
+    - code: 'MOH'
+    - name: 'Ministry of Health'
+    - org_type: 'ministry'
+    - enable_planning: True
+    - enable_budgeting: True
+    - enable_coordination: True
+    - enable_me: True
+    - enable_mana: False (deferred to Phase 5)
+    - is_active: True
+    - primary_region: Region IX (or appropriate)
+
+[ ] 1.2 Create MOLE Organization Record
+    Database entry:
+    - code: 'MOLE'
+    - name: 'Ministry of Labor and Employment'
+    - org_type: 'ministry'
+    - enable_planning: True
+    - enable_budgeting: True
+    - enable_coordination: True
+    - enable_me: True
+    - enable_mana: False
+    - is_active: True
+
+[ ] 1.3 Create MAFAR Organization Record
+    Database entry:
+    - code: 'MAFAR'
+    - name: 'Ministry of Agriculture, Fisheries and Agrarian Reform'
+    - org_type: 'ministry'
+    - enable_planning: True
+    - enable_budgeting: True
+    - enable_coordination: True
+    - enable_me: True
+    - enable_mana: False
+    - is_active: True
+
+[ ] 1.4 Verify Organization Records
+    - Run management command: python manage.py list_organizations
+    - Verify 3 pilot MOAs appear in list
+    - Verify module flags set correctly
+    - Test organization URLs resolve
+
+[ ] 1.5 Seed Sample Data (Optional)
+    - Create 2-3 sample strategic plans per MOA
+    - Create 2-3 sample budget proposals per MOA
+    - Create 1-2 sample partnerships per MOA
+    - Label as "DEMO DATA - DELETE AFTER TRAINING"
+
+Testing Checklist:
+[ ] All 3 organizations created
+[ ] Organization codes unique
+[ ] Module flags set correctly
+[ ] URLs resolve: /moa/MOH/, /moa/MOLE/, /moa/MAFAR/
+[ ] OCM dashboard shows 3 pilot MOAs
+
+================================================================================
+TASK 2: USER ACCOUNT CREATION
+================================================================================
+
+Priority: CRITICAL
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Create user accounts for pilot MOA staff with appropriate roles and
+  permissions for testing BMMS functionality.
+
+Subtasks:
+
+[ ] 2.1 Collect User Information
+    From each pilot MOA, collect:
+    - Full name
+    - Email address (gov.ph domain preferred)
+    - Phone number
+    - Role (admin, planning officer, budget officer, staff)
+    - Preferred username
+    - Target: 5-10 users per MOA
+
+[ ] 2.2 Create MOH User Accounts
+    Users:
+    - 1 Organization Administrator (full access)
+    - 1 Planning Officer (planning module)
+    - 1 Budget Officer (budgeting module)
+    - 1 M&E Officer (M&E module)
+    - 2-6 General Staff (view + limited edit)
+
+    For each user:
+    - Create User record
+    - Create OrganizationMembership (user ↔ MOH)
+    - Assign appropriate role
+    - Set is_primary=True for MOH
+    - Generate temporary password
+
+[ ] 2.3 Create MOLE User Accounts
+    Same structure as MOH:
+    - 1 Organization Administrator
+    - 1 Planning Officer
+    - 1 Budget Officer
+    - 1 M&E Officer
+    - 2-6 General Staff
+
+[ ] 2.4 Create MAFAR User Accounts
+    Same structure as MOH:
+    - 1 Organization Administrator
+    - 1 Planning Officer
+    - 1 Budget Officer
+    - 1 M&E Officer
+    - 2-6 General Staff
+
+[ ] 2.5 Prepare Welcome Emails
+    For each user, prepare email with:
+    - BMMS login URL: https://bmms.barmm.gov.ph/login/
+    - Username
+    - Temporary password (must change on first login)
+    - Training schedule
+    - User guide link
+    - Support contact information
+    - Send via official channel
+
+Testing Checklist:
+[ ] All user accounts created successfully
+[ ] Each user can log in
+[ ] Organization memberships correct
+[ ] Roles assigned properly
+[ ] Users see only their MOA data
+[ ] Welcome emails sent
+
+================================================================================
+TASK 3: USER TRAINING MATERIALS
+================================================================================
+
+Priority: HIGH
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Create comprehensive training materials including user guides, video
+  tutorials, quick reference cards, and presentation slides.
+
+Subtasks:
+
+[ ] 3.1 Create BMMS User Guide
+    File: docs/user-guides/BMMS_USER_GUIDE.md
+    Sections:
+    - Logging in to BMMS
+    - Understanding your dashboard
+    - Creating strategic plans
+    - Submitting budget proposals
+    - Managing coordination activities
+    - Using the calendar
+    - Generating reports
+    - Troubleshooting common issues
+    - 20-30 pages, with screenshots
+
+[ ] 3.2 Create Role-Specific Guides
+    Files:
+    - BMMS_PLANNING_OFFICER_GUIDE.md (planning module)
+    - BMMS_BUDGET_OFFICER_GUIDE.md (budgeting module)
+    - BMMS_ME_OFFICER_GUIDE.md (M&E module)
+    - BMMS_ADMIN_GUIDE.md (org admin tasks)
+    - Each 10-15 pages, focused on specific role
+
+[ ] 3.3 Create Quick Reference Cards
+    - One-page cheat sheets (PDF, printable)
+    - Common tasks: Create plan, submit budget, etc.
+    - Keyboard shortcuts
+    - Where to find help
+    - Laminate and distribute during training
+
+[ ] 3.4 Record Video Tutorials
+    Videos (5-10 minutes each):
+    - Welcome to BMMS
+    - Dashboard walkthrough
+    - Creating your first strategic plan
+    - Submitting a budget proposal
+    - Managing partnerships
+    - Generating reports
+    - Upload to YouTube (unlisted) or internal server
+
+[ ] 3.5 Create Training Presentation
+    PowerPoint/Google Slides (60 slides):
+    - BMMS overview
+    - Key features by module
+    - Live demo walkthrough
+    - Q&A prompts
+    - Hands-on exercise instructions
+    - Share with trainers before sessions
+
+Testing Checklist:
+[ ] User guide complete and reviewed
+[ ] Role-specific guides complete
+[ ] Quick reference cards printed
+[ ] Video tutorials recorded
+[ ] Training presentation ready
+[ ] Materials approved by BMMS team
+
+================================================================================
+TASK 4: CONDUCT TRAINING SESSIONS
+================================================================================
+
+Priority: CRITICAL
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Conduct live training sessions for pilot MOA staff covering all BMMS
+  modules, with hands-on exercises and Q&A.
+
+Subtasks:
+
+[ ] 4.1 Schedule Training Sessions
+    - Session 1: MOH staff (2 hours)
+    - Session 2: MOLE staff (2 hours)
+    - Session 3: MAFAR staff (2 hours)
+    - Schedule 1 week before UAT start
+    - Send calendar invites with Zoom/Google Meet link
+    - Include training materials link in invite
+
+[ ] 4.2 Prepare Training Environment
+    - Set up demo BMMS instance (staging)
+    - Preload sample data
+    - Create training accounts (prefix: training_)
+    - Test all features work
+    - Prepare backup internet connection
+
+[ ] 4.3 Conduct MOH Training Session
+    Agenda:
+    - 0:00-0:10: Welcome & BMMS overview
+    - 0:10-0:30: Dashboard & navigation
+    - 0:30-0:50: Planning module demo
+    - 0:50-1:10: Budgeting module demo
+    - 1:10-1:30: Coordination module demo
+    - 1:30-1:50: Hands-on exercises
+    - 1:50-2:00: Q&A
+    - Record session for absent staff
+
+[ ] 4.4 Conduct MOLE Training Session
+    Same agenda as MOH
+    - Tailor examples to labor/employment context
+    - Address MOLE-specific use cases
+    - Record session
+
+[ ] 4.5 Conduct MAFAR Training Session
+    Same agenda as MOH/MOLE
+    - Tailor examples to agriculture context
+    - Address MAFAR-specific use cases
+    - Record session
+
+[ ] 4.6 Follow-Up Support
+    - Send training recordings to all attendees
+    - Share training materials again
+    - Set up Slack/Teams channel for questions
+    - Assign dedicated support contact per MOA
+    - Schedule office hours (2 hrs/day for 1 week)
+
+Testing Checklist:
+[ ] All 3 training sessions completed
+[ ] Attendance tracked (target: 80% of users)
+[ ] Recordings shared with all users
+[ ] Support channel active
+[ ] Office hours scheduled
+[ ] Positive feedback collected
+
+================================================================================
+TASK 5: USER ACCEPTANCE TESTING (UAT)
+================================================================================
+
+Priority: CRITICAL
+Complexity: Moderate
+Estimated Complexity: Moderate
+
+Description:
+  Conduct structured UAT with pilot MOAs, collect feedback, identify bugs,
+  and validate system readiness for full rollout.
+
+Subtasks:
+
+[ ] 5.1 Create UAT Test Plan
+    File: docs/testing/UAT_TEST_PLAN.md
+    Test scenarios:
+    - TS1: Create and submit strategic plan
+    - TS2: Create and submit budget proposal
+    - TS3: Create inter-MOA partnership
+    - TS4: Generate performance report
+    - TS5: View OCM dashboard (if OCM user)
+    - TS6: Use calendar for coordination
+    - TS7: Export data to Excel
+    - Each scenario: Steps, expected result, actual result
+
+[ ] 5.2 Distribute UAT Test Cases
+    - Share test plan with all pilot users
+    - Assign test cases per user role
+    - Set UAT period: 2 weeks
+    - Daily check-ins with each MOA
+    - Track completion in shared spreadsheet
+
+[ ] 5.3 Monitor UAT Progress
+    - Daily Slack/Teams updates from users
+    - Track bugs reported (use GitHub Issues or Jira)
+    - Track feature requests
+    - Track usability feedback
+    - Create UAT dashboard: % complete per MOA
+
+[ ] 5.4 Conduct UAT Mid-Point Review
+    Meeting (1 hour) at end of Week 1:
+    - Review bugs found so far
+    - Discuss major blockers
+    - Adjust test plan if needed
+    - Address urgent issues
+    - Motivate users to complete testing
+
+[ ] 5.5 Collect Final UAT Feedback
+    Surveys (Google Forms):
+    - Overall satisfaction (1-5)
+    - Ease of use (1-5)
+    - Feature completeness (1-5)
+    - Training quality (1-5)
+    - Likelihood to recommend (1-10)
+    - Open feedback (text)
+    - Distribute to all pilot users
+
+[ ] 5.6 Compile UAT Report
+    File: docs/testing/UAT_RESULTS_PILOT.md
+    Sections:
+    - Executive summary
+    - Test completion rate (target: >80%)
+    - Bugs found (count by severity)
+    - Feature requests (prioritized)
+    - User satisfaction scores
+    - Recommendations for full rollout
+    - Sign-off from pilot MOA leads
+
+Testing Checklist:
+[ ] UAT test plan created
+[ ] All test cases assigned
+[ ] UAT completed by all MOAs
+[ ] Mid-point review conducted
+[ ] Surveys collected (target: >80% response)
+[ ] UAT report compiled
+[ ] Sign-off received from 3 MOAs
+
+================================================================================
+TASK 6: BUG FIXING & REFINEMENTS
+================================================================================
+
+Priority: CRITICAL
+Complexity: Moderate
+Estimated Complexity: Moderate
+
+Description:
+  Address all critical and high-priority bugs found during UAT, implement
+  quick-win feature requests, and polish the user experience.
+
+Subtasks:
+
+[ ] 6.1 Triage Bug Reports
+    - Categorize bugs by severity:
+      * CRITICAL: System crash, data loss
+      * HIGH: Major feature broken
+      * MEDIUM: Minor feature broken
+      * LOW: Cosmetic issue
+    - Assign priority (P0, P1, P2, P3)
+    - Assign to developers
+    - Create GitHub Issues for each bug
+
+[ ] 6.2 Fix Critical Bugs (P0)
+    - Target: Fix within 24 hours
+    - Deploy fixes to staging immediately
+    - Notify affected users to re-test
+    - Examples:
+      * Budget submission fails
+      * Login doesn't work
+      * Data visible to wrong MOA
+
+[ ] 6.3 Fix High-Priority Bugs (P1)
+    - Target: Fix within 3 days
+    - Deploy in batches to staging
+    - Notify users to re-test
+    - Examples:
+      * Report export broken
+      * Calendar events not saving
+      * Performance issues
+
+[ ] 6.4 Implement Quick-Win Features
+    - Review feature requests from UAT
+    - Identify quick wins (< 4 hours dev time)
+    - Implement top 5-10 requests
+    - Examples:
+      * Add bulk delete
+      * Add export to PDF
+      * Add sort by date
+      * Improve loading indicators
+
+[ ] 6.5 UI/UX Refinements
+    - Address usability feedback
+    - Improve button labels
+    - Add missing tooltips
+    - Fix mobile responsiveness issues
+    - Improve error messages (clearer text)
+    - Test accessibility (keyboard navigation)
+
+[ ] 6.6 Regression Testing
+    - After all fixes, run full test suite
+    - pytest -v (target: 100% pass rate)
+    - Run performance tests
+    - Run security tests
+    - Re-test all UAT scenarios
+
+Testing Checklist:
+[ ] All critical bugs fixed (100%)
+[ ] All high-priority bugs fixed (>90%)
+[ ] Quick-win features implemented
+[ ] UI/UX refinements complete
+[ ] Regression tests pass
+[ ] Users re-test and confirm fixes
+
+================================================================================
+TASK 7: PERFORMANCE OPTIMIZATION
+================================================================================
+
+Priority: HIGH
+Complexity: Moderate
+Estimated Complexity: Moderate
+
+Description:
+  Optimize BMMS performance based on real user load from pilot MOAs,
+  ensuring system can handle full rollout (44 MOAs, 800+ users).
+
+Subtasks:
+
+[ ] 7.1 Analyze Performance Bottlenecks
+    - Review slow query logs
+    - Identify N+1 query problems
+    - Check database indexes
+    - Profile dashboard load times
+    - Measure API response times
+    - Tool: Django Debug Toolbar
+
+[ ] 7.2 Optimize Database Queries
+    - Add select_related() for foreign keys
+    - Add prefetch_related() for many-to-many
+    - Add database indexes on commonly filtered fields
+    - Optimize aggregation queries (Count, Sum)
+    - Example: Organization filter queries
+
+[ ] 7.3 Implement Caching
+    - Cache dashboard statistics (5 min TTL)
+    - Cache OCM aggregation queries (10 min TTL)
+    - Cache organization list (1 hour TTL)
+    - Use Redis for cache backend
+    - Add cache invalidation on data updates
+
+[ ] 7.4 Optimize Frontend Performance
+    - Minify CSS/JS files
+    - Enable gzip compression
+    - Lazy load images
+    - Defer non-critical JavaScript
+    - Use CDN for static files
+    - Target: PageSpeed score >90
+
+[ ] 7.5 Load Testing
+    File: src/tests/performance/test_pilot_load.py
+    Scenarios:
+    - 30 concurrent users (pilot load)
+    - 100 concurrent users (projected load)
+    - Dashboard load time (<3 seconds)
+    - Budget submission (<2 seconds)
+    - Report generation (<10 seconds)
+    - Use Locust or JMeter
+
+Testing Checklist:
+[ ] Database queries optimized
+[ ] Caching implemented
+[ ] Frontend optimized
+[ ] Load tests pass (30 concurrent users)
+[ ] Page load times meet targets
+[ ] No timeout errors
+
+================================================================================
+TASK 8: DOCUMENTATION UPDATES
+================================================================================
+
+Priority: MEDIUM
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Update all documentation based on UAT feedback, bug fixes, and system
+  changes made during pilot phase.
+
+Subtasks:
+
+[ ] 8.1 Update User Guide
+    - Add new features documented
+    - Update screenshots (if UI changed)
+    - Add troubleshooting section for common issues
+    - Add FAQ based on user questions
+    - Version: 1.1
+
+[ ] 8.2 Update API Documentation
+    File: docs/api/BMMS_API.md
+    - Document new endpoints (if any)
+    - Update authentication examples
+    - Add rate limiting info
+    - Add error codes reference
+    - Version: 1.1
+
+[ ] 8.3 Create Pilot Phase Report
+    File: docs/reports/PILOT_PHASE_REPORT.md
+    Sections:
+    - Executive summary
+    - Pilot MOAs overview
+    - UAT results summary
+    - Bugs found and fixed (count)
+    - Feature requests (implemented vs deferred)
+    - Performance metrics
+    - User satisfaction scores
+    - Lessons learned
+    - Recommendations for full rollout
+
+[ ] 8.4 Update Deployment Guide
+    File: docs/deployment/BMMS_DEPLOYMENT.md
+    - Add pilot-specific configurations
+    - Document scaling requirements
+    - Update environment variables
+    - Add monitoring setup instructions
+    - Add rollback procedures
+
+[ ] 8.5 Create Rollout Readiness Checklist
+    File: docs/deployment/ROLLOUT_READINESS.md
+    Checklist:
+    - [ ] All pilot bugs fixed
+    - [ ] UAT sign-off received
+    - [ ] Performance targets met
+    - [ ] Documentation updated
+    - [ ] Training materials finalized
+    - [ ] Support team briefed
+    - [ ] Rollout plan approved
+
+Testing Checklist:
+[ ] User guide updated
+[ ] API documentation updated
+[ ] Pilot phase report complete
+[ ] Deployment guide updated
+[ ] Rollout readiness checklist complete
+[ ] Documentation reviewed by team
+
+================================================================================
+TASK 9: PILOT SIGN-OFF & GO/NO-GO DECISION
+================================================================================
+
+Priority: CRITICAL
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Obtain formal sign-off from pilot MOAs and conduct go/no-go decision
+  meeting for full rollout to remaining 41 MOAs.
+
+Subtasks:
+
+[ ] 9.1 Prepare Sign-Off Document
+    File: docs/approvals/PILOT_SIGN_OFF.md
+    Content:
+    - Pilot phase summary
+    - UAT completion confirmation
+    - Bug fix confirmation
+    - Training completion confirmation
+    - User satisfaction summary
+    - Signature section for each MOA lead
+
+[ ] 9.2 Obtain MOH Sign-Off
+    - Meet with MOH Organization Administrator
+    - Review pilot results
+    - Address any final concerns
+    - Obtain signature
+    - Date: ___________
+
+[ ] 9.3 Obtain MOLE Sign-Off
+    - Meet with MOLE Organization Administrator
+    - Review pilot results
+    - Address any final concerns
+    - Obtain signature
+    - Date: ___________
+
+[ ] 9.4 Obtain MAFAR Sign-Off
+    - Meet with MAFAR Organization Administrator
+    - Review pilot results
+    - Address any final concerns
+    - Obtain signature
+    - Date: ___________
+
+[ ] 9.5 Conduct Go/No-Go Meeting
+    Attendees:
+    - BMMS project manager
+    - Technical lead
+    - Pilot MOA representatives
+    - Office of the Chief Minister representative
+    - Agenda:
+      * Review pilot results
+      * Review bugs/issues status
+      * Review user satisfaction
+      * Review performance metrics
+      * Review rollout plan
+      * Decision: GO or NO-GO
+    - Document decision with rationale
+
+[ ] 9.6 Prepare Rollout Announcement
+    If GO decision:
+    - Draft announcement email
+    - List remaining 41 MOAs
+    - Announce rollout waves
+    - Set expectations (timeline)
+    - Highlight pilot success
+    - Send to all BARMM MOAs
+
+Testing Checklist:
+[ ] Sign-off document prepared
+[ ] MOH sign-off obtained
+[ ] MOLE sign-off obtained
+[ ] MAFAR sign-off obtained
+[ ] Go/no-go meeting conducted
+[ ] Decision documented (GO or NO-GO)
+[ ] Announcement sent (if GO)
+
+================================================================================
+TASK 10: TRANSITION TO PHASE 8 (FULL ROLLOUT)
+================================================================================
+
+Priority: MEDIUM
+Complexity: Simple
+Estimated Complexity: Low
+
+Description:
+  Prepare for Phase 8 (full rollout) by finalizing processes, scaling
+  infrastructure, and briefing support team.
+
+Subtasks:
+
+[ ] 10.1 Scale Infrastructure
+    - Increase database connections (500+)
+    - Add more application servers (horizontal scaling)
+    - Increase Redis cache memory
+    - Set up load balancer
+    - Test with 100+ concurrent users
+
+[ ] 10.2 Set Up Monitoring
+    - Configure APM (Application Performance Monitoring)
+    - Set up error tracking (Sentry or similar)
+    - Configure uptime monitoring (Pingdom, UptimeRobot)
+    - Set up alerts (email, SMS)
+    - Create monitoring dashboard
+
+[ ] 10.3 Brief Support Team
+    - Conduct support team training (2 hours)
+    - Share common issues from pilot
+    - Share troubleshooting guide
+    - Assign support rotations
+    - Set up ticketing system (Zendesk, Jira Service Desk)
+
+[ ] 10.4 Finalize Rollout Plan
+    File: docs/plans/bmms/tasks/phase8_full_rollout.txt
+    - Review wave structure (5-10 MOAs per wave)
+    - Assign MOAs to waves
+    - Set wave schedule (2 weeks per wave)
+    - Prepare wave-specific communications
+    - Assign wave coordinators
+
+[ ] 10.5 Conduct Retrospective
+    Meeting (1.5 hours) with project team:
+    - What went well in pilot phase?
+    - What could be improved?
+    - What surprised us?
+    - What should we do differently in Phase 8?
+    - Document lessons learned
+    - Update rollout plan based on lessons
+
+Testing Checklist:
+[ ] Infrastructure scaled
+[ ] Monitoring set up
+[ ] Support team briefed
+[ ] Rollout plan finalized
+[ ] Retrospective completed
+[ ] Lessons learned documented
+
+================================================================================
+DEPLOYMENT CHECKLIST
+================================================================================
+
+Pre-Pilot:
+[ ] 3 pilot MOAs created in database
+[ ] 15-30 user accounts created
+[ ] Training materials prepared
+[ ] UAT test plan created
+[ ] Bug tracking system ready
+[ ] Support channel set up
+
+During Pilot:
+[ ] Training sessions completed (3/3)
+[ ] UAT in progress (2 weeks)
+[ ] Daily check-ins with MOAs
+[ ] Bug fixes deployed to staging
+[ ] Performance monitoring active
+[ ] Feedback collected continuously
+
+Post-Pilot:
+[ ] All critical bugs fixed
+[ ] UAT completed by all MOAs
+[ ] Sign-off obtained (3/3)
+[ ] Go/no-go decision made
+[ ] Documentation updated
+[ ] Infrastructure scaled
+[ ] Rollout plan finalized
+
+================================================================================
+SUCCESS CRITERIA
+================================================================================
+
+Phase 7 is complete when:
+
+✅ All 3 pilot MOAs onboarded successfully
+✅ 15-30 users trained and using BMMS
+✅ UAT completion rate >80%
+✅ User satisfaction score >4.0/5.0
+✅ All critical bugs fixed (100%)
+✅ All high-priority bugs fixed (>90%)
+✅ Performance targets met (dashboard <3s)
+✅ Formal sign-off from all 3 MOAs
+✅ Go/no-go decision made (GO)
+✅ Ready for Phase 8 (full rollout)
+
+================================================================================
+NOTES
+================================================================================
+
+Pilot MOA Selection Rationale:
+- MOH: Healthcare is critical, high visibility
+- MOLE: Labor programs serve large populations
+- MAFAR: Agriculture is BARMM's economic backbone
+
+These 3 MOAs represent diverse use cases and will stress-test the system
+comprehensively.
+
+Key Risks:
+- Low user adoption (mitigation: quality training)
+- Major bugs found (mitigation: thorough UAT)
+- Performance issues (mitigation: load testing)
+- Resistance to change (mitigation: executive buy-in)
+
+Timeline Estimate:
+- Data setup: 1 day
+- User account creation: 2 days
+- Training materials: 1 week
+- Training sessions: 3 days
+- UAT: 2 weeks
+- Bug fixing: 1-2 weeks
+- Sign-off: 3 days
+- Total: 5-6 weeks
+
+Dependencies for Next Phase:
+- Phase 8: Full Rollout requires successful pilot completion
+- All 3 MOAs must sign off before proceeding
+- Go decision required from go/no-go meeting
+
+================================================================================
+END OF PHASE 7 TASK BREAKDOWN
+================================================================================

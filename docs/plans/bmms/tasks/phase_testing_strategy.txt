@@ -1,0 +1,1238 @@
+================================================================================
+BMMS TESTING STRATEGY IMPLEMENTATION
+================================================================================
+
+Phase Overview
+--------------
+Priority:       CRITICAL (runs throughout all phases)
+Complexity:     High
+Dependencies:   Continuous - runs parallel with all development phases
+Purpose:        Ensure quality, data isolation, performance, and reliability
+
+This testing strategy runs CONTINUOUSLY throughout all BMMS implementation phases.
+All features must pass tests before being considered complete.
+
+
+================================================================================
+SECTION 1: UNIT TESTING
+================================================================================
+
+Priority:       CRITICAL
+Coverage:       90%+ required
+Location:       src/tests/
+
+1.1 Organization-Scoped Model Tests
+------------------------------------
+
+□ Test OrganizationScopedModel queryset filtering
+  - Create test organizations (OOBC, MOH, MOLE, MAFAR)
+  - Create organization-scoped data (assessments, partnerships, etc.)
+  - Verify for_organization() manager method filters correctly
+  - Verify MOA A cannot see MOA B's data
+  - Test queryset chaining preserves organization filter
+
+  Files to create:
+  - src/tests/test_organizations.py
+
+  Test cases:
+  □ test_org_scoped_queryset_filtering
+  □ test_org_scoped_queryset_excludes_others
+  □ test_queryset_chaining_preserves_org_filter
+  □ test_get_queryset_respects_organization
+
+  Reference: TRANSITION_PLAN.md Section 23.2.1
+
+
+1.2 Permission Decorator Tests
+-------------------------------
+
+□ Test require_organization decorator
+  - Authenticated user with organization
+  - Anonymous user (redirect to login)
+  - User with missing organization (403)
+
+□ Test require_moa_or_cmo decorator
+  - MOA user access (allow)
+  - CMO user access (allow)
+  - Invalid org type (deny)
+
+□ Test require_cmo_only decorator
+  - CMO user access (allow)
+  - MOA user access (403 forbidden)
+
+  Files to create:
+  - src/tests/test_permissions.py
+
+  Test cases:
+  □ test_require_organization_authenticated
+  □ test_require_organization_missing_org
+  □ test_require_organization_anonymous
+  □ test_require_moa_or_cmo_allows_both
+  □ test_require_cmo_only_blocks_moa
+
+  Reference: TRANSITION_PLAN.md Section 23.2.2
+
+
+1.3 URL Routing Tests
+----------------------
+
+□ Test organization-aware URL generation
+  - reverse() with org_code parameter
+  - Verify correct URL patterns: /moa/{CODE}/, /cmo/{CODE}/
+
+□ Test URL resolution
+  - resolve() extracts org_code correctly
+  - Module URLs preserve organization context
+
+□ Test legacy URL redirects
+  - Preserve query parameters
+  - Preserve subpaths
+  - Use user's default organization
+
+  Files to create:
+  - src/tests/test_url_routing.py
+
+  Test cases:
+  □ test_org_dashboard_url_generation
+  □ test_org_dashboard_url_resolution
+  □ test_mana_url_generation
+  □ test_coordination_url_generation
+  □ test_planning_url_generation
+  □ test_budget_url_generation
+  □ test_legacy_redirect_preserves_query_params
+  □ test_legacy_redirect_preserves_subpaths
+
+  Reference: TRANSITION_PLAN.md Section 23.2.3
+
+
+1.4 Middleware Tests
+--------------------
+
+□ Test OrganizationMiddleware
+  - Extract organization from URL path (/moa/MOH/, /cmo/OOBC/)
+  - Fallback to user's default organization
+  - Return None for anonymous users
+  - Return None for invalid organization codes
+
+  Files to create:
+  - src/tests/test_middleware.py
+
+  Test cases:
+  □ test_extract_org_from_url
+  □ test_extract_org_cmo_path
+  □ test_fallback_to_user_default_org
+  □ test_no_organization_for_anonymous
+  □ test_invalid_org_code_returns_none
+
+  Reference: TRANSITION_PLAN.md Section 23.2.4
+
+
+1.5 Model Method Tests
+----------------------
+
+□ Test BudgetAllocation model methods
+  - disbursement_percentage() calculation
+  - remaining_balance() calculation
+  - is_fully_disbursed() status check
+
+□ Test WorkItem model methods
+  - allocation validation (cannot exceed budget)
+  - disbursement tracking
+
+□ Test ProgramProjectActivity model methods
+  - budget_utilization() calculation
+  - ppa_code generation
+
+  Files to create:
+  - src/tests/budget/test_models.py
+  - src/tests/planning/test_models.py
+
+  Test cases:
+  □ test_budget_allocation_calculations
+  □ test_work_item_validation
+  □ test_ppa_code_generation
+  □ test_ppa_budget_utilization
+
+
+Coverage Goal: 90%+ for all unit tests
+Expected Runtime: <5 minutes for full unit test suite
+
+
+================================================================================
+SECTION 2: INTEGRATION TESTING
+================================================================================
+
+Priority:       HIGH
+Coverage:       85%+ required
+Location:       src/tests/integration/
+
+2.1 Data Isolation Tests (CRITICAL)
+------------------------------------
+
+□ Test MANA module data isolation
+  - MOH cannot see MOLE assessments
+  - MOH cannot access MOLE assessment details (404)
+  - MOH list view only shows MOH assessments
+
+□ Test Coordination module data isolation
+  - MOH cannot see MOLE partnerships
+  - MOH cannot access MOLE partnership details
+
+□ Test Policy module data isolation
+  - MOH cannot see MOLE policy recommendations
+
+□ Test API endpoint data isolation
+  - API returns only organization-scoped data
+  - API query parameters enforce org_code
+
+□ Test direct model query isolation
+  - for_organization() enforced in all queries
+
+  Files to create:
+  - src/tests/integration/test_data_isolation.py
+
+  Test cases:
+  □ test_mana_assessment_isolation
+  □ test_coordination_partnership_isolation
+  □ test_policy_recommendation_isolation
+  □ test_api_isolation
+  □ test_direct_model_query_isolation
+
+  CRITICAL: 100% pass rate required for data isolation tests
+  Reference: TRANSITION_PLAN.md Section 23.3.1
+
+
+2.2 Shared Data Tests
+----------------------
+
+□ Test shared OBC communities data
+  - All MOAs see same Regions
+  - All MOAs see same Provinces
+  - All MOAs see same Municipalities
+  - All MOAs see same Barangays
+
+□ Test communities API
+  - API returns identical data for all MOAs
+  - No organization filter applied to communities
+
+  Files to create:
+  - src/tests/integration/test_shared_data.py
+
+  Test cases:
+  □ test_all_moas_see_same_regions
+  □ test_all_moas_see_same_barangays
+  □ test_communities_api_shared_across_orgs
+
+  Reference: TRANSITION_PLAN.md Section 23.3.2
+
+
+2.3 Cross-Organization Coordination Tests
+------------------------------------------
+
+□ Test inter-MOA partnership coordination
+  - MOH creates partnership
+  - MOLE added as stakeholder
+  - MOH sees own partnership
+  - MOLE sees partnership where it's a stakeholder
+  - MOLE can update partnership notes/contributions
+
+  Files to create:
+  - src/tests/integration/test_cross_org_coordination.py
+
+  Test cases:
+  □ test_moh_sees_own_partnership
+  □ test_mole_sees_partnership_as_stakeholder
+  □ test_mole_can_update_partnership_contributions
+
+  Reference: TRANSITION_PLAN.md Section 23.3.3
+
+
+2.4 Budget Distribution Tests
+------------------------------
+
+□ Test Parliament Bill No. 325 budget distribution
+  - Work items sum equals total budget allocation
+  - Disbursement tracking per work item
+  - Budget utilization rate calculation
+  - Work items cannot exceed budget allocation
+
+  Files to create:
+  - src/tests/integration/test_budget_distribution.py
+
+  Test cases:
+  □ test_work_items_sum_equals_budget
+  □ test_work_item_disbursement_tracking
+  □ test_budget_utilization_calculation
+  □ test_budget_cannot_exceed_allocation
+
+  Reference: TRANSITION_PLAN.md Section 23.3.4
+
+
+2.5 CMO Aggregation Tests
+--------------------------
+
+□ Test CMO read-only access to all MOA data
+  - CMO sees all MOA budgets (aggregate view)
+  - CMO calculates correct total budget
+  - CMO sees all MOA assessments
+  - CMO counts assessments by status across MOAs
+  - CMO CANNOT modify MOA data (read-only)
+
+  Files to create:
+  - src/tests/integration/test_cmo_aggregation.py
+
+  Test cases:
+  □ test_cmo_sees_all_moa_budgets
+  □ test_cmo_budget_total_calculation
+  □ test_cmo_sees_all_moa_assessments
+  □ test_cmo_assessment_count_by_status
+  □ test_cmo_cannot_modify_moa_data (CRITICAL)
+
+  Reference: TRANSITION_PLAN.md Section 23.3.5
+
+
+Coverage Goal: 85%+ for integration tests
+Expected Runtime: <3 minutes for full integration test suite
+
+
+================================================================================
+SECTION 3: COMPONENT TESTING (NEW)
+================================================================================
+
+Priority:       HIGH
+Coverage:       All UI components
+Location:       src/tests/components/
+
+3.1 Form Component Tests
+-------------------------
+
+□ Test text input component
+  - Renders with correct Tailwind classes (rounded-xl, border-gray-200, min-h-[48px])
+  - Focus ring (focus:ring-emerald-500)
+  - Required field indicator (red asterisk)
+
+□ Test dropdown component
+  - Renders with rounded-xl, appearance-none, pr-12
+  - Chevron icon (fa-chevron-down, pointer-events-none)
+  - Proper spacing for icon
+
+□ Test form validation display
+  - Error messages visible (text-red-600)
+  - "This field is required" messages
+  - "Enter a valid email" messages
+
+□ Test cascading dropdowns
+  - HTMX attributes (hx-get, hx-target, hx-trigger="change")
+  - Region → Province → Municipality cascade
+  - API endpoints return filtered data
+
+□ Test date picker component
+  - type="date" attribute
+  - Proper styling (rounded-xl, min-h-[48px])
+
+  Files to create:
+  - src/tests/components/test_form_components.py
+
+  Test cases:
+  □ test_text_input_component
+  □ test_dropdown_component
+  □ test_form_validation_display
+  □ test_cascading_dropdowns
+  □ test_date_picker_component
+
+  Reference: TRANSITION_PLAN.md Section 23.7.2
+
+
+3.2 UI Component Tests
+-----------------------
+
+□ Test stat card component (3D milk white design)
+  - Simple variant (no breakdown)
+  - Breakdown variant (3-column layout, bottom alignment)
+  - Semantic icon colors (amber, emerald, blue, purple, orange, red)
+  - Gradient background, rounded-2xl border
+  - Hover effects (translateY, shadow)
+
+□ Test quick action card component
+  - Gradient icon containers
+  - Hover effects
+  - Arrow indicators
+
+□ Test alert components
+  - Success alert (emerald border-left)
+  - Error alert (red border-left)
+  - Warning alert (amber border-left)
+  - Info alert (blue border-left)
+  - Icon presence
+
+□ Test breadcrumb navigation
+  - Chevron separators
+  - Active/inactive states
+
+  Files to create:
+  - src/tests/components/test_ui_components.py
+
+  Test cases:
+  □ test_stat_card_simple_variant
+  □ test_stat_card_breakdown_variant
+  □ test_quick_action_card
+  □ test_alert_components
+  □ test_breadcrumb_navigation
+
+  Reference: docs/ui/OBCMS_UI_STANDARDS_MASTER.md
+
+
+3.3 HTMX Interaction Tests
+---------------------------
+
+□ Test instant UI updates (<50ms swap time)
+  - Task status change (optimistic update)
+  - Task deletion (modal → delete → remove card)
+  - Form submission (inline validation)
+
+□ Test HTMX attributes
+  - hx-get, hx-post, hx-delete
+  - hx-target (correct element targeting)
+  - hx-swap (outerHTML, delete, innerHTML)
+  - hx-trigger (click, change, submit)
+
+□ Test HTMX error handling
+  - Server error responses
+  - Network failures
+  - Graceful fallback
+
+□ Test HTMX loading states
+  - Spinner visibility during request
+  - Disabled state on buttons
+  - Progress indicators
+
+  Files to create:
+  - src/tests/components/test_htmx_interactions.py
+
+  Test cases:
+  □ test_htmx_instant_update_timing
+  □ test_htmx_task_deletion
+  □ test_htmx_form_submission
+  □ test_htmx_error_handling
+  □ test_htmx_loading_states
+
+  Performance requirement: <50ms for HTMX swaps
+
+
+3.4 JavaScript Component Tests (Jest)
+--------------------------------------
+
+□ Test FullCalendar component
+  - Calendar initialization
+  - Event rendering
+  - Date navigation
+  - Event click handlers
+  - Resource booking integration
+
+□ Test Organization Switcher component
+  - Dropdown toggle
+  - Organization selection
+  - URL redirection
+  - Active organization highlight
+
+□ Test Leaflet.js map component
+  - Map initialization
+  - GeoJSON boundary loading
+  - Marker placement
+  - Popup rendering
+  - Zoom controls
+
+  Files to create:
+  - src/static/common/tests/calendar.test.js
+  - src/static/common/tests/org-switcher.test.js
+  - src/static/common/tests/map.test.js
+
+  Setup: Install Jest
+  - npm install --save-dev jest @testing-library/jest-dom
+  - Configure jest.config.js
+
+  Test cases:
+  □ test_calendar_initialization
+  □ test_calendar_event_rendering
+  □ test_org_switcher_selection
+  □ test_leaflet_map_initialization
+  □ test_geojson_boundary_rendering
+
+
+3.5 Accessibility Tests (WCAG 2.1 AA)
+--------------------------------------
+
+□ Test accessibility with Axe DevTools
+  - Color contrast ratios (4.5:1 minimum)
+  - Keyboard navigation
+  - Focus indicators on interactive elements
+  - Screen reader compatibility
+  - Touch targets (48px minimum)
+  - ARIA labels and roles
+
+□ Test form accessibility
+  - Label associations
+  - Error message announcements
+  - Required field indicators
+
+□ Test button accessibility
+  - Disabled state visibility
+  - Loading state announcements
+
+  Tools required:
+  - Axe DevTools browser extension
+  - axe-core library for automated testing
+
+  Files to create:
+  - src/tests/components/test_accessibility.py
+
+  Test cases:
+  □ test_color_contrast_ratios
+  □ test_keyboard_navigation
+  □ test_focus_indicators
+  □ test_screen_reader_compatibility
+  □ test_form_accessibility
+  □ test_button_accessibility
+
+  Compliance requirement: 100% WCAG 2.1 AA
+
+
+Coverage Goal: 100% of UI components
+Expected Runtime: <2 minutes for component tests
+
+
+================================================================================
+SECTION 4: PERFORMANCE TESTING (EXPANDED)
+================================================================================
+
+Priority:       HIGH
+Location:       src/tests/performance/
+
+4.1 Page Load Performance Tests
+--------------------------------
+
+□ Dashboard load time: <200ms
+  - MOA dashboard with stat cards
+  - CMO aggregate dashboard
+  - Calendar view
+
+□ List view load time: <300ms
+  - Assessment list (50+ items, paginated)
+  - Partnership list (30+ items, paginated)
+  - Barangay list (100+ items, paginated)
+
+□ Calendar view load time: <500ms
+  - FullCalendar with 20+ events
+  - Resource booking view
+
+□ GeoJSON rendering performance: <400ms
+  - Region boundaries
+  - Province boundaries
+  - Municipality boundaries
+
+  Files to create:
+  - src/tests/performance/test_page_load.py
+
+  Test cases:
+  □ test_dashboard_load_time
+  □ test_assessment_list_load_time
+  □ test_calendar_view_load_time
+  □ test_geojson_rendering_performance
+
+  Reference: TRANSITION_PLAN.md Section 23.4.1
+
+
+4.2 Database Query Performance Tests
+-------------------------------------
+
+□ Test for N+1 query problems
+  - Use Django Debug Toolbar
+  - CaptureQueriesContext for query counting
+  - Identify missing select_related()/prefetch_related()
+
+□ Test query optimization
+  - Assessment list queries (should be <10 queries)
+  - Dashboard stat calculations (should be <15 queries)
+  - CMO aggregation queries (should be <20 queries)
+
+□ Test database indexes
+  - organization field indexed
+  - foreign keys indexed
+  - frequently filtered fields indexed
+
+  Files to create:
+  - src/tests/performance/test_query_performance.py
+
+  Test cases:
+  □ test_assessment_list_query_count
+  □ test_dashboard_query_optimization
+  □ test_cmo_aggregation_query_count
+  □ test_no_n_plus_1_queries
+
+  Query limits:
+  - List views: <10 queries
+  - Dashboard: <15 queries
+  - Aggregations: <20 queries
+
+  Reference: TRANSITION_PLAN.md Section 23.4.2
+
+
+4.3 HTMX Performance Tests
+---------------------------
+
+□ Test HTMX swap timing
+  - Task status update: <50ms
+  - Task deletion: <50ms
+  - Form submission: <100ms
+  - Inline validation: <30ms
+
+□ Test optimistic updates
+  - Immediate UI feedback
+  - Server response handling
+  - Rollback on error
+
+  Files to create:
+  - src/tests/performance/test_htmx_performance.py
+
+  Test cases:
+  □ test_htmx_swap_timing
+  □ test_optimistic_update_speed
+  □ test_inline_validation_performance
+
+  Performance requirement: <50ms for HTMX operations
+
+
+4.4 Concurrent User Load Testing (Locust)
+------------------------------------------
+
+□ Test concurrent user scenarios
+  - 500 users: Browse dashboards, view lists
+  - 800 users: Create assessments, update partnerships
+  - 1100 users: Peak load test (all operations)
+
+□ Test API performance under load
+  - REST endpoints: <500ms at 800 concurrent users
+  - GeoJSON endpoints: <600ms at 500 concurrent users
+
+□ Locust test scenarios
+  - User login → Dashboard → Assessment list → Create assessment
+  - User login → Coordination → Partnership list → Edit partnership
+  - CMO login → Aggregate views → Budget reports
+
+  Setup: Install Locust
+  - pip install locust
+  - Create locustfile.py
+
+  Files to create:
+  - src/tests/performance/locustfile.py
+
+  Test scenarios:
+  □ test_500_concurrent_users
+  □ test_800_concurrent_users_peak
+  □ test_1100_users_stress_test
+
+  Performance targets:
+  - 500 users: <300ms average response time
+  - 800 users: <500ms average response time
+  - 1100 users: <800ms average response time (degraded)
+
+  Reference: TRANSITION_PLAN.md Section 23.4 (Load Testing)
+
+
+4.5 API Performance Tests
+--------------------------
+
+□ Test REST API endpoints
+  - GET /api/mana/assessments/: <500ms
+  - POST /api/mana/assessments/: <600ms
+  - GET /api/coordination/partnerships/: <500ms
+  - GET /api/budget/allocations/: <700ms (complex calculations)
+
+□ Test GeoJSON API endpoints
+  - GET /api/communities/regions/{id}/geojson/: <400ms
+  - GET /api/communities/provinces/{id}/geojson/: <350ms
+
+□ Test API pagination performance
+  - 20 items per page: <300ms
+  - 50 items per page: <500ms
+  - 100 items per page: <800ms
+
+  Files to create:
+  - src/tests/performance/test_api_performance.py
+
+  Test cases:
+  □ test_rest_api_response_times
+  □ test_geojson_api_performance
+  □ test_api_pagination_performance
+
+
+4.6 Caching Performance Tests
+------------------------------
+
+□ Test cache hit rates
+  - Dashboard stats: >90% hit rate
+  - Frequently accessed data: >85% hit rate
+
+□ Test cache invalidation
+  - Update triggers invalidation
+  - Stale data detected and refreshed
+
+□ Test Redis performance
+  - Connection pooling efficiency
+  - Cache key expiration
+
+  Files to create:
+  - src/tests/performance/test_caching_performance.py
+
+  Test cases:
+  □ test_cache_hit_rates
+  □ test_cache_invalidation_timing
+  □ test_redis_connection_performance
+
+
+4.7 Frontend Performance Tests (Core Web Vitals)
+-------------------------------------------------
+
+□ Test Largest Contentful Paint (LCP)
+  - Target: <2.5 seconds
+  - Measure on dashboard, list views, calendar
+
+□ Test First Input Delay (FID)
+  - Target: <100ms
+  - Measure on button clicks, form inputs
+
+□ Test Cumulative Layout Shift (CLS)
+  - Target: <0.1
+  - Measure on all pages (no unexpected shifts)
+
+□ Test Time to Interactive (TTI)
+  - Target: <3.8 seconds
+
+  Tools:
+  - Lighthouse CI
+  - Web Vitals JavaScript library
+
+  Files to create:
+  - src/tests/performance/test_web_vitals.py
+
+  Test cases:
+  □ test_largest_contentful_paint
+  □ test_first_input_delay
+  □ test_cumulative_layout_shift
+  □ test_time_to_interactive
+
+
+4.8 Performance Monitoring Setup
+---------------------------------
+
+□ Set up Prometheus + Grafana
+  - Install prometheus-client library
+  - Configure metrics collection
+  - Set up Grafana dashboards
+
+□ Monitor key metrics
+  - Request/response times
+  - Database query times
+  - Cache hit/miss rates
+  - Error rates
+  - Active user count
+
+□ Set up alerts
+  - Response time >1 second
+  - Error rate >5%
+  - Cache hit rate <80%
+  - Database queries >50 per request
+
+  Files to create:
+  - src/obc_management/monitoring.py (Prometheus metrics)
+  - docker-compose.monitoring.yml (Prometheus + Grafana)
+
+  Setup tasks:
+  □ Install prometheus-client
+  □ Configure metrics endpoints
+  □ Create Grafana dashboards
+  □ Set up alerting rules
+
+
+Expected Runtime: <10 minutes for full performance test suite
+
+
+================================================================================
+SECTION 5: SECURITY TESTING
+================================================================================
+
+Priority:       CRITICAL
+Coverage:       100% required
+Location:       src/tests/security/
+
+5.1 Data Isolation Security Tests
+----------------------------------
+
+□ Test unauthorized data access
+  - MOA A cannot query MOA B's data directly
+  - URL manipulation cannot bypass organization filter
+  - API calls enforce organization scope
+
+□ Test permission enforcement
+  - CMO cannot modify MOA data (read-only)
+  - MOA cannot access other MOA's private data
+  - Anonymous users redirected to login
+
+  Files to create:
+  - src/tests/security/test_data_isolation_security.py
+
+  Test cases:
+  □ test_unauthorized_org_data_access_blocked
+  □ test_url_manipulation_blocked
+  □ test_api_organization_scope_enforced
+  □ test_cmo_cannot_modify_moa_data
+
+  CRITICAL: 100% pass rate required
+
+
+5.2 Authentication Security Tests
+----------------------------------
+
+□ Test password requirements
+  - Minimum length (8 characters)
+  - Complexity requirements
+  - Password hashing (PBKDF2)
+
+□ Test session security
+  - Session timeout (30 minutes)
+  - Secure cookies in production
+  - CSRF protection enabled
+
+  Files to create:
+  - src/tests/security/test_authentication.py
+
+  Test cases:
+  □ test_password_requirements
+  □ test_password_hashing
+  □ test_session_timeout
+  □ test_csrf_protection
+
+
+5.3 SQL Injection Tests
+------------------------
+
+□ Test user inputs for SQL injection
+  - Search queries
+  - Filter parameters
+  - Form submissions
+
+□ Verify Django ORM parameterization
+  - No raw SQL with string concatenation
+  - All queries use parameterized queries
+
+  Files to create:
+  - src/tests/security/test_sql_injection.py
+
+  Test cases:
+  □ test_search_sql_injection_blocked
+  □ test_filter_sql_injection_blocked
+  □ test_orm_parameterization_verified
+
+
+Coverage Goal: 100% for security tests (no failures allowed)
+Expected Runtime: <2 minutes
+
+
+================================================================================
+SECTION 6: END-TO-END (E2E) TESTING
+================================================================================
+
+Priority:       MEDIUM
+Coverage:       Critical user workflows
+Location:       src/tests/e2e/
+Tools:          Selenium or Playwright
+
+6.1 User Workflow Tests
+------------------------
+
+□ MOA Staff Workflow
+  1. Login with MOA credentials
+  2. View MOA dashboard
+  3. Create new assessment
+  4. Add needs analysis
+  5. Publish assessment
+  6. Verify assessment appears in list
+
+□ CMO Administrator Workflow
+  1. Login with CMO credentials
+  2. View CMO aggregate dashboard
+  3. Browse all MOA assessments (read-only)
+  4. View budget reports (all MOAs)
+  5. Export consolidated reports
+
+□ Coordination Workflow
+  1. MOH creates partnership
+  2. MOH adds MOLE as stakeholder
+  3. MOLE logs in
+  4. MOLE views partnership (as stakeholder)
+  5. MOLE adds contribution notes
+  6. MOH sees MOLE's contributions
+
+  Files to create:
+  - src/tests/e2e/test_moa_workflow.py
+  - src/tests/e2e/test_cmo_workflow.py
+  - src/tests/e2e/test_coordination_workflow.py
+
+  Test cases:
+  □ test_moa_assessment_creation_workflow
+  □ test_cmo_aggregate_reporting_workflow
+  □ test_inter_moa_coordination_workflow
+
+
+6.2 Cross-Browser Testing
+--------------------------
+
+□ Test on Chrome (latest)
+□ Test on Firefox (latest)
+□ Test on Safari (latest)
+□ Test on Edge (latest)
+
+□ Test responsive design
+  - Desktop (1920x1080)
+  - Tablet (768x1024)
+  - Mobile (375x667)
+
+
+Expected Runtime: <15 minutes for E2E tests
+
+
+================================================================================
+SECTION 7: TEST INFRASTRUCTURE
+================================================================================
+
+7.1 Continuous Integration (CI/CD)
+-----------------------------------
+
+□ Set up GitHub Actions workflow
+  - .github/workflows/test-bmms.yml
+
+□ Configure test services
+  - PostgreSQL 15
+  - Redis 7
+
+□ Configure test steps
+  1. Checkout code
+  2. Set up Python 3.12
+  3. Install dependencies (requirements/development.txt)
+  4. Run unit tests (pytest --cov)
+  5. Check coverage threshold (>90%)
+  6. Run security tests (--maxfail=0)
+  7. Run integration tests
+  8. Upload coverage to Codecov
+
+□ Configure test triggers
+  - On push to: feature/bmms, staging, main
+  - On pull requests to: feature/bmms, staging, main
+
+  Files to create:
+  - .github/workflows/test-bmms.yml
+
+  Reference: TRANSITION_PLAN.md Section 23.1
+
+
+7.2 Test Data Management
+-------------------------
+
+□ Create test fixtures
+  - Organizations (OOBC, MOH, MOLE, MAFAR)
+  - Users (per organization)
+  - Geographic data (Region IX, provinces, municipalities)
+  - Sample assessments, partnerships, budgets
+
+□ Use pytest fixtures for setup/teardown
+  - @pytest.fixture for reusable test data
+  - Database isolation per test
+
+  Files to create:
+  - src/tests/fixtures/organizations.py
+  - src/tests/fixtures/communities.py
+  - src/tests/fixtures/users.py
+
+
+7.3 Test Environment Configuration
+-----------------------------------
+
+□ Create test settings
+  - src/obc_management/settings/test.py
+  - Use SQLite for speed (or PostgreSQL for production parity)
+  - Disable CSRF checks for tests
+  - Use console email backend
+
+□ Configure pytest
+  - pytest.ini configuration
+  - Coverage settings (.coveragerc)
+
+  Files to create:
+  - src/obc_management/settings/test.py
+  - pytest.ini
+  - .coveragerc
+
+
+7.4 Test Documentation
+-----------------------
+
+□ Document testing strategy
+  - docs/testing/TESTING_STRATEGY.md
+
+□ Document test execution
+  - How to run unit tests
+  - How to run integration tests
+  - How to run performance tests
+  - How to run E2E tests
+
+□ Document test coverage reports
+  - How to generate coverage reports
+  - How to view HTML coverage reports
+  - How to interpret coverage metrics
+
+  Files to create:
+  - docs/testing/TESTING_STRATEGY.md
+  - docs/testing/TEST_EXECUTION_GUIDE.md
+  - docs/testing/COVERAGE_REPORTING.md
+
+
+================================================================================
+SECTION 8: VERIFICATION CHECKLIST
+================================================================================
+
+Overall Testing Requirements
+-----------------------------
+
+□ Unit test coverage: >90% (REQUIRED)
+□ Integration test coverage: >85% (REQUIRED)
+□ Data isolation tests: 100% passing (CRITICAL - NO FAILURES ALLOWED)
+□ Component tests: All UI components tested
+□ Performance tests: All benchmarks met
+□ Security tests: 100% passing (CRITICAL - NO FAILURES ALLOWED)
+□ Accessibility tests: WCAG 2.1 AA compliant
+
+Test Suite Performance
+----------------------
+
+□ Unit tests complete in <5 minutes
+□ Integration tests complete in <3 minutes
+□ Component tests complete in <2 minutes
+□ Performance tests complete in <10 minutes
+□ Security tests complete in <2 minutes
+□ E2E tests complete in <15 minutes
+□ Total test suite runtime: <40 minutes
+
+CI/CD Integration
+-----------------
+
+□ GitHub Actions workflow configured
+□ Tests run on all pull requests
+□ Tests run on push to feature/bmms, staging, main
+□ Coverage reports uploaded to Codecov
+□ Test failures block merges
+□ Security test failures block merges immediately
+
+Performance Benchmarks Met
+---------------------------
+
+□ Dashboard load: <200ms
+□ List views load: <300ms
+□ Calendar load: <500ms
+□ HTMX swaps: <50ms
+□ API responses: <500ms
+□ GeoJSON rendering: <400ms
+□ Concurrent users: 500-1100 supported
+□ Database queries: N+1 problems eliminated
+
+Data Isolation Verified
+------------------------
+
+□ MOA A cannot see MOA B's assessments (100% verified)
+□ MOA A cannot see MOA B's partnerships (100% verified)
+□ MOA A cannot see MOA B's policies (100% verified)
+□ MOA A cannot see MOA B's budgets (100% verified)
+□ CMO can view all MOA data (read-only) (100% verified)
+□ CMO cannot modify MOA data (100% verified)
+□ Shared communities data accessible to all (100% verified)
+
+Accessibility Compliance
+-------------------------
+
+□ Color contrast ratios: 4.5:1 minimum (100% compliant)
+□ Keyboard navigation: All interactive elements (100% compliant)
+□ Focus indicators: Visible on all interactive elements (100% compliant)
+□ Screen reader compatibility: ARIA labels correct (100% compliant)
+□ Touch targets: 48px minimum (100% compliant)
+□ Form accessibility: Labels, errors announced (100% compliant)
+
+
+================================================================================
+SECTION 9: CONTINUOUS TESTING THROUGHOUT BMMS PHASES
+================================================================================
+
+Phase 1 Testing: Foundation & Organizations Module
+---------------------------------------------------
+□ Organization model tests
+□ Organization middleware tests
+□ URL routing tests
+□ Permission decorator tests
+□ Admin interface tests
+□ Organization switcher tests
+
+Phase 2 Testing: MANA Module (Organization-Scoped)
+---------------------------------------------------
+□ Assessment model tests (organization-scoped)
+□ Assessment queryset filtering tests
+□ Data isolation tests (assessments)
+□ MANA API tests
+□ MANA form tests
+□ MANA dashboard tests
+
+Phase 3 Testing: Coordination Module (Organization-Scoped)
+-----------------------------------------------------------
+□ Partnership model tests (organization-scoped)
+□ Partnership queryset filtering tests
+□ Data isolation tests (partnerships)
+□ Cross-organization coordination tests
+□ Coordination API tests
+□ Calendar integration tests
+
+Phase 4 Testing: Planning Module (Organization-Scoped)
+-------------------------------------------------------
+□ PPA model tests (organization-scoped)
+□ PPA queryset filtering tests
+□ Data isolation tests (PPAs)
+□ Planning API tests
+□ PPA dashboard tests
+
+Phase 5 Testing: Budget Module (Organization-Scoped)
+-----------------------------------------------------
+□ BudgetAllocation model tests
+□ WorkItem model tests
+□ Budget distribution tests
+□ Budget utilization calculation tests
+□ Budget API tests
+□ Budget dashboard tests
+□ Parliament Bill No. 325 validation tests
+
+Phase 6 Testing: Policies Module (Organization-Scoped)
+-------------------------------------------------------
+□ PolicyRecommendation model tests (organization-scoped)
+□ Policy queryset filtering tests
+□ Data isolation tests (policies)
+□ Policy API tests
+□ Policy dashboard tests
+
+Phase 7 Testing: CMO Aggregate Views
+-------------------------------------
+□ CMO read-only access tests (CRITICAL)
+□ CMO aggregation tests (all MOAs)
+□ CMO budget reporting tests
+□ CMO dashboard tests
+□ CMO cannot modify MOA data tests (CRITICAL)
+
+Phase 8 Testing: Production Readiness
+--------------------------------------
+□ All unit tests passing (>90% coverage)
+□ All integration tests passing (>85% coverage)
+□ All security tests passing (100%)
+□ All performance benchmarks met
+□ All accessibility tests passing (WCAG 2.1 AA)
+□ Load testing completed (500-1100 users)
+□ E2E workflows verified
+□ Cross-browser testing completed
+□ Monitoring configured (Prometheus + Grafana)
+
+
+================================================================================
+SECTION 10: TEST EXECUTION COMMANDS
+================================================================================
+
+Run All Tests
+-------------
+cd src
+pytest -v
+
+Run Unit Tests Only
+-------------------
+cd src
+pytest tests/ -v --ignore=tests/integration/ --ignore=tests/e2e/ --ignore=tests/performance/
+
+Run Integration Tests Only
+---------------------------
+cd src
+pytest tests/integration/ -v
+
+Run Component Tests Only
+-------------------------
+cd src
+pytest tests/components/ -v
+
+Run Performance Tests Only
+---------------------------
+cd src
+pytest tests/performance/ -v
+
+Run Security Tests Only
+------------------------
+cd src
+pytest tests/security/ -v --maxfail=0
+
+Run E2E Tests Only
+------------------
+cd src
+pytest tests/e2e/ -v
+
+Run Tests with Coverage
+------------------------
+cd src
+pytest --cov=. --cov-report=html --cov-report=term
+
+Check Coverage Threshold
+-------------------------
+cd src
+coverage report --fail-under=90
+
+Run Locust Load Tests
+----------------------
+cd src
+locust -f tests/performance/locustfile.py --host=http://localhost:8000 --users=500 --spawn-rate=10
+
+Run JavaScript Tests (Jest)
+----------------------------
+cd src/static/common
+npm test
+
+Run Accessibility Tests (Axe)
+------------------------------
+# Install axe-core
+npm install --save-dev axe-core
+
+# Run automated accessibility tests
+cd src
+pytest tests/components/test_accessibility.py -v
+
+
+================================================================================
+SUMMARY
+================================================================================
+
+This testing strategy ensures:
+
+✓ Data Isolation: 100% verified (CRITICAL requirement)
+✓ Performance: All benchmarks met (200ms dashboards, 50ms HTMX, 500 concurrent users)
+✓ Security: 100% passing (no data leakage)
+✓ Accessibility: WCAG 2.1 AA compliant
+✓ Component Quality: All UI components tested
+✓ Continuous Testing: Tests run throughout all BMMS phases
+✓ CI/CD Integration: Automated testing on all pull requests
+✓ Monitoring: Prometheus + Grafana for production
+
+Total Estimated Test Suite Runtime: <40 minutes
+Coverage Target: >90% unit, >85% integration, 100% security
+
+All tests must pass before deploying to staging or production.
+
+================================================================================
+END OF BMMS TESTING STRATEGY
+================================================================================

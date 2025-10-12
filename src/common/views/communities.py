@@ -43,6 +43,29 @@ DEFAULT_MAP_CENTER = (7.1907, 125.4553, 6)
 PAGE_SIZE_OPTIONS = (10, 25, 50)
 
 
+def _exclude_huc_provinces(queryset):
+    """
+    Filter out HUC (Highly Urbanized City) pseudo-provinces from a Province queryset.
+
+    HUCs exist in the database as Province records for data integrity (so their
+    single municipality can reference them), but should only appear in Municipal OBC
+    views, NOT in Provincial OBC views.
+
+    HUCs are identified by having "City" in their name or "(Huc)" suffix.
+
+    Args:
+        queryset: A Province QuerySet to filter
+
+    Returns:
+        QuerySet with HUC pseudo-provinces excluded
+    """
+    from django.db.models import Q
+
+    return queryset.exclude(
+        Q(name__icontains='City of') | Q(name__icontains='(Huc)')
+    )
+
+
 def _ensure_can_manage_communities(user):
     """
     Raise PermissionDenied if the user is limited to read-only access.
@@ -228,12 +251,6 @@ def _format_stat_value(value, default: str = "N/A") -> str:
 def _build_barangay_table(communities_page, *, can_manage: bool) -> dict:
     """Assemble data-table friendly rows for the barangay registry."""
 
-    headers = [
-        {"label": "Community"},
-        {"label": "Location"},
-        {"label": "Coverage Snapshot"},
-    ]
-
     rows: list[dict] = []
 
     for community in communities_page:
@@ -242,16 +259,11 @@ def _build_barangay_table(communities_page, *, can_manage: bool) -> dict:
         province = getattr(municipality, "province", None)
         region = getattr(province, "region", None)
 
-        community_html = format_html(
-            "<div class='flex items-center gap-3'>"
-            "<span class='inline-flex h-10 w-10 items-center justify-center rounded-xl "
-            "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm'>"
-            "<i class='fas fa-map-marker-alt'></i>"
-            "</span>"
-            "<div>"
+        # Barangay name and ID (icon now in template first column)
+        barangay_name_html = format_html(
+            "<div class='space-y-0.5'>"
             "<div class='text-sm font-semibold text-gray-900'>{}</div>"
             "{}"
-            "</div>"
             "</div>",
             barangay.name,
             (
@@ -263,25 +275,32 @@ def _build_barangay_table(communities_page, *, can_manage: bool) -> dict:
             ),
         )
 
-        location_lines = [
-            format_html(
-                "<div class='text-sm font-medium text-gray-900'>{}</div>",
-                municipality.name if municipality else "—",
-            ),
-            format_html(
-                "<div class='text-base font-medium text-gray-700'>{}</div>",
-                province.name if province else "—",
-            ),
-        ]
-        if region:
-            location_lines.append(
+        location_parts = []
+        if municipality:
+            location_parts.append(
                 format_html(
-                    "<div class='text-base text-gray-600'>Region {} &middot; {}</div>",
+                    "<div class='text-sm font-medium text-gray-900'>{}</div>",
+                    municipality.name,
+                )
+            )
+        if province:
+            location_parts.append(
+                format_html(
+                    "<div class='text-sm text-gray-700'>{}</div>", province.name
+                )
+            )
+        if region:
+            location_parts.append(
+                format_html(
+                    "<div class='text-xs text-gray-500'>Region {} · {}</div>",
                     region.code or "—",
                     region.name,
                 )
             )
-        location_html = mark_safe("".join(line for line in location_lines))
+        location_html = format_html(
+            "<div class='space-y-0.5'>{}</div>",
+            mark_safe("".join(location_parts)) if location_parts else "—",
+        )
 
         snapshot_html = format_html(
             "<div class='space-y-1 text-sm text-gray-700'>"
@@ -299,14 +318,14 @@ def _build_barangay_table(communities_page, *, can_manage: bool) -> dict:
         rows.append(
             {
                 "cells": [
-                    {"content": community_html},
+                    {"content": barangay_name_html},
                     {"content": location_html},
                     {"content": snapshot_html},
                 ],
-                "view_url": reverse("common:communities_view", args=[community.id]),
-                "edit_url": reverse("common:communities_edit", args=[community.id]),
+                "view_url": reverse("communities:communities_view", args=[community.id]),
+                "edit_url": reverse("communities:communities_edit", args=[community.id]),
                 "delete_preview_url": reverse(
-                    "common:communities_delete", args=[community.id]
+                    "communities:communities_delete", args=[community.id]
                 ),
                 "delete_message": (
                     "Delete this barangay OBC record? You will be able to review "
@@ -316,7 +335,6 @@ def _build_barangay_table(communities_page, *, can_manage: bool) -> dict:
         )
 
     return {
-        "headers": headers,
         "rows": rows,
         "show_actions": can_manage,
     }
@@ -420,7 +438,10 @@ def communities_home(request):
     )
     province_ids.update(province_coverages.values_list("province_id", flat=True))
     province_ids.discard(None)
-    total_provincial_obcs = Province.objects.filter(pk__in=province_ids).count()
+    # Exclude HUC pseudo-provinces from Provincial OBC count
+    provincial_obcs_qs = Province.objects.filter(pk__in=province_ids)
+    provincial_obcs_qs = _exclude_huc_provinces(provincial_obcs_qs)
+    total_provincial_obcs = provincial_obcs_qs.count()
 
     stats = {
         "communities": {
@@ -508,7 +529,7 @@ def communities_add(request):
                 request,
                 f'Community "{community.barangay.name}" has been successfully added.',
             )
-            return redirect("common:communities_manage")
+            return redirect("communities:communities_manage")
     else:
         form = OBCCommunityForm()
 
@@ -552,7 +573,7 @@ def communities_add_municipality(request):
                 request,
                 f'Municipality/City "{coverage.municipality.name}" has been added to the Bangsamoro coverage map.',
             )
-            return redirect("common:communities_manage")
+            return redirect("communities:communities_manage")
     else:
         form = MunicipalityCoverageForm()
 
@@ -595,7 +616,7 @@ def communities_add_province(request):
                 request,
                 f'Province "{coverage.province.name}" has been added to the Bangsamoro coverage map.',
             )
-            return redirect("common:communities_manage_provincial")
+            return redirect("communities:communities_manage_provincial")
     else:
         form = ProvinceCoverageForm()
 
@@ -691,6 +712,9 @@ def communities_manage(request):
         .filter(is_active=True, region__is_active=True)
         .order_by("region__name", "name")
     )
+    # Exclude HUC pseudo-provinces from filtering dropdowns
+    base_provinces_qs = _exclude_huc_provinces(base_provinces_qs)
+
     provinces = base_provinces_qs
     if region_filter:
         provinces = provinces.filter(region__id=region_filter)
@@ -821,7 +845,7 @@ def communities_manage(request):
     if can_manage_communities:
         hero_actions.append(
             {
-                "href": reverse("common:communities_add"),
+                "href": reverse("communities:communities_add"),
                 "label": "Add barangay OBC",
                 "icon": "fas fa-plus",
                 "variant": "primary",
@@ -829,7 +853,7 @@ def communities_manage(request):
         )
     hero_actions.append(
         {
-            "href": reverse("common:communities_manage_municipal"),
+            "href": reverse("communities:communities_manage_municipal"),
             "label": "Go to municipal view",
             "icon": "fas fa-landmark",
             "variant": "ghost",
@@ -954,6 +978,9 @@ def communities_manage_municipal(request):
         .filter(is_active=True, region__is_active=True)
         .order_by("region__name", "name")
     )
+    # Exclude HUC pseudo-provinces from filtering dropdowns
+    base_provinces_qs = _exclude_huc_provinces(base_provinces_qs)
+
     provinces = base_provinces_qs
     if region_filter:
         provinces = provinces.filter(region__id=region_filter)
@@ -1079,9 +1106,9 @@ def communities_manage_municipal(request):
     hero_actions = [
         {
             "href": (
-                reverse("common:communities_manage_municipal")
+                reverse("communities:communities_manage_municipal")
                 if show_archived
-                else f"{reverse('common:communities_manage_municipal')}?archived=1"
+                else f"{reverse('communities:communities_manage_municipal')}?archived=1"
             ),
             "label": (
                 "Back to active records" if show_archived else "View archived records"
@@ -1093,7 +1120,7 @@ def communities_manage_municipal(request):
     if can_manage_communities:
         hero_actions.append(
             {
-                "href": reverse("common:communities_add_municipality"),
+                "href": reverse("communities:communities_add_municipality"),
                 "label": "Add municipal OBC",
                 "icon": "fas fa-plus",
                 "variant": "primary",
@@ -1101,7 +1128,7 @@ def communities_manage_municipal(request):
         )
     hero_actions.append(
         {
-            "href": reverse("common:communities_manage_provincial"),
+            "href": reverse("communities:communities_manage_provincial"),
             "label": "Go to provincial view",
             "icon": "fas fa-flag",
             "variant": "ghost",
@@ -1130,26 +1157,12 @@ def communities_manage_municipal(request):
     coverages_page = paginator.get_page(page_number)
 
     municipality_table_headers = [
-        {
-            "label": "Municipality / City",
-            "width": "w-[18%] min-w-[180px]",
-        },
-        {
-            "label": "Province & Region",
-            "width": "w-[15%] min-w-[150px] hidden md:table-cell",
-        },
-        {
-            "label": "Coverage Snapshot",
-            "width": "w-[22%] min-w-[200px] hidden lg:table-cell",
-        },
-        {
-            "label": "Top 5 Barangays",
-            "width": "w-1/4 min-w-[220px] hidden xl:table-cell",
-        },
-        {
-            "label": "Sync Mode",
-            "width": "w-[12%] min-w-[120px] hidden md:table-cell",
-        },
+        {"label": "", "class": "w-14"},  # Icon column (no label)
+        {"label": "Municipality/City", "class": "flex-1 min-w-[140px]"},
+        {"label": "Province & Region", "class": "flex-1 min-w-[140px]"},
+        {"label": "Coverage Snapshot", "class": "flex-1 min-w-[180px]"},
+        {"label": "Top 5 Barangays", "class": "flex-1 min-w-[200px]"},
+        {"label": "Sync Mode", "class": "w-32"},
     ]
 
     municipality_table_rows: list[dict] = []
@@ -1163,15 +1176,12 @@ def communities_manage_municipal(request):
             if municipality and hasattr(municipality, "get_municipality_type_display")
             else "—"
         )
-        municipality_html = format_html(
-            "<div class='flex items-center gap-3'>"
-            "<span class='inline-flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600'>"
-            "<i class='fas fa-city'></i>"
-            "</span>"
-            "<div>"
+
+        # Municipality name and type (icon is now in template)
+        municipality_name_html = format_html(
+            "<div class='space-y-0.5'>"
             "<div class='text-sm font-semibold text-gray-900'>{}</div>"
             "<div class='text-xs text-gray-500'>{}</div>"
-            "</div>"
             "</div>",
             municipality.name if municipality else "—",
             municipality_type,
@@ -1221,15 +1231,23 @@ def communities_manage_municipal(request):
             format_html_join("", "{}", ((part,) for part in snapshot_parts)),
         )
 
-        # Top 5 Barangays column
-        if getattr(coverage, "key_barangays", ""):
+        # Top 5 Barangays column (by Estimated OBC Population)
+        top_barangays = OBCCommunity.objects.filter(
+            barangay__municipality=municipality,
+            estimated_obc_population__isnull=False
+        ).order_by('-estimated_obc_population').values_list(
+            'barangay__name', flat=True
+        )[:5]
+
+        if top_barangays:
+            barangay_names = ", ".join(top_barangays)
             key_barangays_html = format_html(
-                "<div class='text-sm text-gray-700'>{}</div>",
-                coverage.key_barangays,
+                "<div class='text-sm text-gray-700 break-words whitespace-normal'>{}</div>",
+                barangay_names,
             )
         else:
             key_barangays_html = format_html(
-                "<div class='text-sm text-gray-400'>—</div>"
+                "<div class='text-sm text-gray-400 italic'>No OBC Population recorded</div>"
             )
 
         if coverage.auto_sync:
@@ -1249,7 +1267,7 @@ def communities_manage_municipal(request):
                 "</span>"
             )
 
-        view_url_base = reverse("common:communities_view_municipal", args=[coverage.pk])
+        view_url_base = reverse("communities:communities_view_municipal", args=[coverage.pk])
         view_url = f"{view_url_base}?archived=1" if show_archived else view_url_base
 
         edit_url = None
@@ -1259,11 +1277,11 @@ def communities_manage_municipal(request):
         if can_manage_communities:
             if show_archived:
                 restore_url = reverse(
-                    "common:communities_restore_municipal", args=[coverage.pk]
+                    "communities:communities_restore_municipal", args=[coverage.pk]
                 )
             else:
                 edit_url = reverse(
-                    "common:communities_edit_municipal", args=[coverage.pk]
+                    "communities:communities_edit_municipal", args=[coverage.pk]
                 )
                 delete_preview_url = f"{view_url_base}?review_delete=1"
                 delete_message = (
@@ -1273,11 +1291,11 @@ def communities_manage_municipal(request):
 
         row = {
             "cells": [
-                {"content": municipality_html, "class": "w-[18%] min-w-[180px]"},
-                {"content": province_html, "class": "w-[15%] min-w-[150px] hidden md:block"},
-                {"content": snapshot_html, "class": "w-[22%] min-w-[200px] hidden lg:block"},
-                {"content": key_barangays_html, "class": "w-1/4 min-w-[220px] hidden xl:block"},
-                {"content": sync_html, "class": "w-[12%] min-w-[120px] hidden md:block"},
+                {"content": municipality_name_html},
+                {"content": province_html},
+                {"content": snapshot_html},
+                {"content": key_barangays_html},
+                {"content": sync_html},
             ],
             "view_url": view_url,
         }
@@ -1322,6 +1340,7 @@ def communities_manage_municipal(request):
             "headers": municipality_table_headers,
             "rows": municipality_table_rows,
             "show_actions": can_manage_communities,
+            "actions_width": "w-44",
         },
     }
     template_name = "communities/municipal_manage.html"
@@ -1337,7 +1356,7 @@ def communities_manage_provincial(request):
 
     from django.db.models import Q
 
-    from communities.models import ProvinceCoverage
+    from communities.models import MunicipalityCoverage, ProvinceCoverage
 
     show_archived = request.GET.get("archived") == "1"
 
@@ -1357,6 +1376,13 @@ def communities_manage_provincial(request):
     coverages = coverages.filter(
         province__is_active=True,
         province__region__is_active=True,
+    )
+
+    # Exclude HUC pseudo-provinces from Provincial OBC display
+    # HUCs should only appear in Municipal OBC views
+    from django.db.models import Q
+    coverages = coverages.exclude(
+        Q(province__name__icontains='City of') | Q(province__name__icontains='(Huc)')
     )
 
     if show_archived:
@@ -1525,9 +1551,9 @@ def communities_manage_provincial(request):
     hero_actions = [
         {
             "href": (
-                reverse("common:communities_manage_provincial")
+                reverse("communities:communities_manage_provincial")
                 if show_archived
-                else f"{reverse('common:communities_manage_provincial')}?archived=1"
+                else f"{reverse('communities:communities_manage_provincial')}?archived=1"
             ),
             "label": (
                 "Back to active records" if show_archived else "View archived records"
@@ -1539,7 +1565,7 @@ def communities_manage_provincial(request):
     if can_manage_communities:
         hero_actions.append(
             {
-                "href": reverse("common:communities_add_province"),
+                "href": reverse("communities:communities_add_province"),
                 "label": "Add provincial OBC",
                 "icon": "fas fa-plus",
                 "variant": "primary",
@@ -1547,7 +1573,7 @@ def communities_manage_provincial(request):
         )
     hero_actions.append(
         {
-            "href": reverse("common:communities_manage_municipal"),
+            "href": reverse("communities:communities_manage_municipal"),
             "label": "Go to municipal view",
             "icon": "fas fa-city",
             "variant": "ghost",
@@ -1607,11 +1633,12 @@ def communities_manage_provincial(request):
         )
 
     province_table_headers = [
-        {"label": "Province", "width": "w-[18%] min-w-[180px]"},
-        {"label": "Region", "width": "w-[12%] min-w-[120px] hidden md:table-cell"},
-        {"label": "Coverage Snapshot", "width": "w-[22%] min-w-[200px] hidden md:table-cell"},
-        {"label": "Top 5 Municipalities/Cities", "width": "w-[28%] min-w-[240px] hidden md:table-cell"},
-        {"label": "Sync Mode", "width": "w-[12%] min-w-[120px] hidden md:table-cell"},
+        {"label": "", "class": "w-14"},  # Icon column (no label)
+        {"label": "Province", "class": "flex-1 min-w-[160px]"},
+        {"label": "Region", "class": "flex-1 min-w-[120px]"},
+        {"label": "Coverage Snapshot", "class": "flex-1 min-w-[200px]"},
+        {"label": "Top 5 Municipalities/Cities", "class": "flex-1 min-w-[240px]"},
+        {"label": "Sync Mode", "class": "w-32"},
     ]
 
     province_table_rows: list[dict] = []
@@ -1619,27 +1646,22 @@ def communities_manage_provincial(request):
         province = getattr(coverage, "province", None)
         region = getattr(province, "region", None)
 
+        # Province name column (matches Municipal table style)
         province_html = format_html(
-            "<div class='flex items-center gap-3'>"
-            "<span class='inline-flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600'>"
-            "<i class='fas fa-flag'></i>"
-            "</span>"
-            "<div>"
-            "<div class='text-sm font-semibold text-gray-900'>{}</div>"
-            "<div class='text-xs text-gray-500'>{}</div>"
-            "</div>"
+            "<div class='flex flex-col'>"
+            "<span class='text-sm font-semibold text-gray-900'>{}</span>"
             "</div>",
             province.name if province else "—",
-            getattr(coverage, "display_name", "—") or "—",
         )
 
+        # Region column (matches Municipal table style)
         region_html = format_html(
-            "<div class='space-y-1'>"
-            "<div class='text-sm font-medium text-gray-900'>Region {}</div>"
-            "<div class='text-xs text-gray-500'>{}</div>"
+            "<div class='flex flex-col'>"
+            "<span class='text-sm text-gray-700'>{}</span>"
+            "<span class='text-xs text-gray-500'>{}</span>"
             "</div>",
-            region.code if region else "—",
-            region.name if region else "—",
+            f"Region {region.code}" if region else "—",
+            region.name if region else "",
         )
 
         estimated_population_html = (
@@ -1659,40 +1681,52 @@ def communities_manage_provincial(request):
             else mark_safe("&mdash;")
         )
 
+        # Coverage Snapshot (matches Municipal table style)
+        total_municipalities = coverage.total_municipalities or 0
+        total_barangay_obcs = coverage.total_obc_communities or 0
+        estimated_population = coverage.estimated_obc_population or 0
+        households = getattr(coverage, "households", 0) or 0
+
         snapshot_parts = [
             format_html(
                 "<div class='text-sm font-semibold text-gray-900'>{} municipalities tracked</div>",
-                intcomma(coverage.total_municipalities or 0),
+                intcomma(total_municipalities),
             ),
             format_html(
                 "<div class='text-xs text-gray-500'>Barangay OBCs: {}</div>",
-                intcomma(coverage.total_obc_communities or 0),
+                intcomma(total_barangay_obcs),
             ),
             format_html(
                 "<div class='text-xs text-gray-500'>Est. OBC Population: {}</div>",
-                estimated_population_html,
+                intcomma(estimated_population),
             ),
             format_html(
                 "<div class='text-xs text-gray-500'>Households: {}</div>",
-                households_html,
+                intcomma(households),
             ),
         ]
-
         snapshot_html = format_html(
             "<div class='space-y-1'>{}</div>",
             format_html_join("", "{}", ((part,) for part in snapshot_parts)),
         )
 
-        # Top 5 Municipalities/Cities column
-        if getattr(coverage, "key_municipalities", ""):
+        # Top 5 Municipalities/Cities column (by Estimated OBC Population)
+        top_municipalities = MunicipalityCoverage.objects.filter(
+            municipality__province=province,
+            estimated_obc_population__isnull=False
+        ).order_by('-estimated_obc_population').values_list(
+            'municipality__name', flat=True
+        )[:5]
+
+        if top_municipalities:
+            municipality_names = ", ".join(top_municipalities)
             key_municipalities_html = format_html(
-                "<div class='text-sm text-gray-700 truncate' title='{}'>{}</div>",
-                coverage.key_municipalities,  # Full text in tooltip
-                coverage.key_municipalities,
+                "<div class='text-sm text-gray-700 break-words whitespace-normal'>{}</div>",
+                municipality_names,
             )
         else:
             key_municipalities_html = format_html(
-                "<div class='text-sm text-gray-400'>—</div>"
+                "<div class='text-sm text-gray-400 italic'>No OBC Population recorded</div>"
             )
 
         # Sync Mode column (consistent with Municipal table)
@@ -1714,7 +1748,7 @@ def communities_manage_provincial(request):
             )
 
         view_url_base = reverse(
-            "common:communities_view_provincial", args=[coverage.pk]
+            "communities:communities_view_provincial", args=[coverage.pk]
         )
         view_url = f"{view_url_base}?archived=1" if show_archived else view_url_base
 
@@ -1726,11 +1760,11 @@ def communities_manage_provincial(request):
         if can_manage_communities:
             if show_archived:
                 restore_url = reverse(
-                    "common:communities_restore_provincial", args=[coverage.pk]
+                    "communities:communities_restore_provincial", args=[coverage.pk]
                 )
             else:
                 edit_url = reverse(
-                    "common:communities_edit_provincial", args=[coverage.pk]
+                    "communities:communities_edit_provincial", args=[coverage.pk]
                 )
                 delete_preview_url = f"{view_url_base}?review_delete=1"
                 delete_message = (
@@ -1740,11 +1774,11 @@ def communities_manage_provincial(request):
 
         row = {
             "cells": [
-                {"content": province_html, "class": "w-[18%] min-w-[180px]"},
-                {"content": region_html, "class": "w-[12%] min-w-[120px] hidden md:table-cell"},
-                {"content": snapshot_html, "class": "w-[22%] min-w-[200px] hidden md:table-cell"},
-                {"content": key_municipalities_html, "class": "w-[28%] min-w-[240px] hidden md:table-cell"},
-                {"content": sync_mode_html, "class": "w-[12%] min-w-[120px] hidden md:table-cell"},
+                {"content": province_html, "class": "flex-1 min-w-[160px]"},
+                {"content": region_html, "class": "flex-1 min-w-[120px]"},
+                {"content": snapshot_html, "class": "flex-1 min-w-[200px]"},
+                {"content": key_municipalities_html, "class": "flex-1 min-w-[240px]"},
+                {"content": sync_mode_html, "class": "w-32"},
             ],
             "view_url": view_url,
         }
@@ -1768,7 +1802,7 @@ def communities_manage_provincial(request):
             "<i class='fas fa-plus-circle'></i>"
             "<span>Add provincial OBC</span>"
             "</a>",
-            reverse("common:communities_add_province"),
+            reverse("communities:communities_add_province"),
         )
 
     request_params = request.GET.dict()
@@ -1799,6 +1833,10 @@ def communities_manage_provincial(request):
         "can_manage_communities": can_manage_communities,
         "province_table_headers": province_table_headers,
         "province_table_rows": province_table_rows,
+        "province_table": {
+            "rows": province_table_rows,
+            "show_actions": can_manage_communities,
+        },
         "province_table_empty_message": empty_state_message,
     }
     template_name = "communities/provincial_manage.html"
@@ -1826,7 +1864,7 @@ def communities_view(request, community_id):
     delete_review_mode = (
         request.GET.get("review_delete") == "1" and not community.is_deleted
     )
-    default_next = reverse("common:communities_manage")
+    default_next = reverse("communities:communities_manage")
     if request.GET.get("archived") == "1":
         default_next = f"{default_next}?archived=1"
     redirect_after_action = request.GET.get("next") or default_next
@@ -1930,7 +1968,7 @@ def communities_view_municipal(request, coverage_id):
     delete_review_mode = (
         request.GET.get("review_delete") == "1" and not coverage.is_deleted
     )
-    default_next = reverse("common:communities_manage_municipal")
+    default_next = reverse("communities:communities_manage_municipal")
     if request.GET.get("archived") == "1":
         default_next = f"{default_next}?archived=1"
     redirect_after_action = request.GET.get("next") or default_next
@@ -2047,7 +2085,7 @@ def communities_view_provincial(request, coverage_id):
     delete_review_mode = (
         request.GET.get("review_delete") == "1" and not coverage.is_deleted
     )
-    default_next = reverse("common:communities_manage_provincial")
+    default_next = reverse("communities:communities_manage_provincial")
     if request.GET.get("archived") == "1":
         default_next = f"{default_next}?archived=1"
     redirect_after_action = request.GET.get("next") or default_next
@@ -2220,7 +2258,7 @@ def communities_edit(request, community_id):
                 request,
                 f'Barangay OBC "{community.display_name}" has been updated successfully.',
             )
-            return redirect("common:communities_manage")
+            return redirect("communities:communities_manage")
     else:
         form = OBCCommunityForm(instance=community)
 
@@ -2267,7 +2305,7 @@ def communities_delete(request, community_id):
             "You can restore it from the Archived Barangay OBCs view."
         ),
     )
-    return redirect(f"{reverse('common:communities_manage')}?archived=1")
+    return redirect(f"{reverse('communities:communities_manage')}?archived=1")
 
 
 @login_required
@@ -2294,7 +2332,7 @@ def communities_restore(request, community_id):
         request,
         f'Barangay OBC "{community.display_name}" has been restored to the active registry.',
     )
-    return redirect(f"{reverse('common:communities_manage')}?archived=1")
+    return redirect(f"{reverse('communities:communities_manage')}?archived=1")
 
 
 @login_required
@@ -2367,7 +2405,7 @@ def communities_edit_municipal(request, coverage_id):
                 request,
                 f"Municipal OBC coverage for {coverage.municipality.name} has been updated.",
             )
-            return redirect("common:communities_manage_municipal")
+            return redirect("communities:communities_manage_municipal")
     else:
         form = MunicipalityCoverageForm(instance=coverage)
 
@@ -2424,7 +2462,7 @@ def communities_edit_provincial(request, coverage_id):
                 "Contact OOBC staff if you need to make changes.",
             )
             return redirect(
-                "common:communities_view_provincial", coverage_id=coverage.id
+                "communities:communities_view_provincial", coverage_id=coverage.id
             )
 
     if request.method == "POST":
@@ -2438,7 +2476,7 @@ def communities_edit_provincial(request, coverage_id):
                 request,
                 f"Provincial OBC coverage for {coverage.province.name} has been updated.",
             )
-            return redirect("common:communities_manage_provincial")
+            return redirect("communities:communities_manage_provincial")
     else:
         form = ProvinceCoverageForm(instance=coverage)
 
@@ -2485,7 +2523,7 @@ def communities_delete_municipal(request, coverage_id):
             "You can restore it from the Archived Municipal OBCs view."
         ),
     )
-    return redirect(f"{reverse('common:communities_manage_municipal')}?archived=1")
+    return redirect(f"{reverse('communities:communities_manage_municipal')}?archived=1")
 
 
 @login_required
@@ -2511,7 +2549,7 @@ def communities_restore_municipal(request, coverage_id):
         request,
         f"Municipal OBC coverage for {coverage.municipality.name} has been restored.",
     )
-    return redirect(f"{reverse('common:communities_manage_municipal')}?archived=1")
+    return redirect(f"{reverse('communities:communities_manage_municipal')}?archived=1")
 
 
 @login_required
@@ -2548,7 +2586,7 @@ def communities_delete_provincial(request, coverage_id):
                 "Contact OOBC staff if you need to remove it.",
             )
             return redirect(
-                "common:communities_view_provincial", coverage_id=coverage.id
+                "communities:communities_view_provincial", coverage_id=coverage.id
             )
 
     province_name = coverage.province.name
@@ -2561,7 +2599,7 @@ def communities_delete_provincial(request, coverage_id):
             "You can restore it from the Archived Provincial OBCs view."
         ),
     )
-    return redirect(f"{reverse('common:communities_manage_provincial')}?archived=1")
+    return redirect(f"{reverse('communities:communities_manage_provincial')}?archived=1")
 
 
 @login_required
@@ -2597,7 +2635,7 @@ def communities_submit_provincial(request, coverage_id):
             request,
             f"Provincial OBC for {coverage.province.name} has already been submitted.",
         )
-        return redirect("common:communities_view_provincial", coverage_id=coverage.id)
+        return redirect("communities:communities_view_provincial", coverage_id=coverage.id)
 
     # Mark as submitted
     coverage.is_submitted = True
@@ -2610,7 +2648,7 @@ def communities_submit_provincial(request, coverage_id):
         f"Provincial OBC for {coverage.province.name} has been submitted successfully. "
         "This record is now read-only. Contact OOBC staff if you need to make changes.",
     )
-    return redirect("common:communities_view_provincial", coverage_id=coverage.id)
+    return redirect("communities:communities_view_provincial", coverage_id=coverage.id)
 
 
 @login_required
@@ -2646,7 +2684,7 @@ def communities_restore_provincial(request, coverage_id):
         request,
         f"Provincial OBC coverage for {coverage.province.name} has been restored.",
     )
-    return redirect(f"{reverse('common:communities_manage_provincial')}?archived=1")
+    return redirect(f"{reverse('communities:communities_manage_provincial')}?archived=1")
 
 
 __all__ = [

@@ -7,7 +7,7 @@
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li>
-    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+    <a href="{% url 'mana:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
 </li>
 <li><span class="text-neutral-400 mx-1">/</span></li>
 <li class="text-neutral-800 font-semibold">Facilitator Dashboard</li>
@@ -127,12 +127,12 @@
                     There are no regional workshop assessments in the system yet.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                    <a href="{% url 'common:mana_new_assessment' %}?assessment_level=regional&primary_methodology=workshop"
+                    <a href="{% url 'mana:mana_new_assessment' %}?assessment_level=regional&primary_methodology=workshop"
                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 hover:bg-blue-700 transition-all duration-200">
                         <i class="fas fa-plus"></i>
                         <span>Create New Assessment</span>
                     </a>
-                    <a href="{% url 'common:mana_regional_overview' %}"
+                    <a href="{% url 'mana:mana_regional_overview' %}"
                        class="inline-flex items-center gap-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold px-5 py-2.5 hover:bg-gray-200 transition-all duration-200">
                         <i class="fas fa-arrow-left"></i>
                         <span>Back to Regional MANA</span>

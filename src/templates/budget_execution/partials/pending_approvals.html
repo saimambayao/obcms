@@ -1,0 +1,31 @@
+{% load static %}
+
+<!-- Pending Approvals Partial (HTMX) -->
+{% if approvals %}
+    {% for approval in approvals %}
+    <div class="flex items-start space-x-3 p-3 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors">
+        <div class="flex-shrink-0">
+            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-clock text-amber-600"></i>
+            </div>
+        </div>
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-900">Q{{ approval.quarter }} Allotment</p>
+            <p class="text-xs text-gray-600 mt-0.5">{{ approval.program_budget.program.name|truncatewords:4 }}</p>
+            <div class="flex items-center justify-between mt-2">
+                <span class="text-sm font-semibold text-amber-600">₱{{ approval.amount|floatformat:2 }}</span>
+                <a href="{% url 'budget_execution:allotment_detail' approval.pk %}"
+                   class="text-xs text-amber-600 hover:text-amber-800 font-medium">
+                    Review →
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="text-center py-6 text-gray-500">
+        <i class="fas fa-check-circle text-3xl mb-2 opacity-30 text-emerald-500"></i>
+        <p class="text-sm">All clear!</p>
+        <p class="text-xs mt-1">No pending approvals</p>
+    </div>
+{% endif %}

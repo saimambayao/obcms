@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if program_budget %}Edit{% else %}Add{% endif %} Program Budget - OBCMS{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a></li>
+<li><a href="{% url 'budget_preparation:dashboard' %}" class="text-blue-600 hover:text-blue-800">Budget Preparation</a></li>
+<li><a href="{% url 'budget_preparation:proposal_detail' proposal.pk %}" class="text-blue-600 hover:text-blue-800">FY {{ proposal.fiscal_year }}</a></li>
+<li class="text-neutral-800 font-semibold">{% if program_budget %}Edit{% else %}Add{% endif %} Program</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <div class="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                {% if program_budget %}Edit{% else %}Add{% endif %} Program Budget
+            </h1>
+            <p class="text-lg text-gray-600">
+                Link budget allocation to work plan objectives
+            </p>
+        </div>
+
+        <!-- Proposal Context -->
+        <div class="mb-8 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
+            <div class="flex items-start">
+                <i class="fas fa-info-circle text-blue-600 text-lg mr-3 mt-0.5"></i>
+                <div class="text-sm text-blue-700">
+                    <p class="font-semibold mb-1">Budget Proposal: {{ proposal.title }}</p>
+                    <p>Fiscal Year {{ proposal.fiscal_year }} • Current Total: ₱{{ proposal.total_proposed_budget|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form method="post"
+              {% if program_budget %}
+              action="{% url 'budget_preparation:program_edit' program_budget.pk %}"
+              {% else %}
+              action="{% url 'budget_preparation:program_create' proposal.pk %}"
+              {% endif %}>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-circle text-red-600 text-lg mr-3 mt-0.5"></i>
+                    <div class="text-sm text-red-700">
+                        {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Work Plan Objective -->
+            <div class="mb-6">
+                <label for="{{ form.program.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    {{ form.program.label }} <span class="text-red-600">*</span>
+                </label>
+                {{ form.program }}
+                {% if form.program.errors %}
+                <p class="mt-2 text-sm text-red-600">{{ form.program.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-2 text-sm text-gray-500">
+                    Select the strategic objective this budget will support
+                </p>
+            </div>
+
+            <!-- Allocated Amount -->
+            <div class="mb-6">
+                <label for="{{ form.allocated_amount.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    {{ form.allocated_amount.label }} <span class="text-red-600">*</span>
+                </label>
+                {{ form.allocated_amount }}
+                {% if form.allocated_amount.errors %}
+                <p class="mt-2 text-sm text-red-600">{{ form.allocated_amount.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-2 text-sm text-gray-500">
+                    Total budget allocation for this program
+                </p>
+            </div>
+
+            <!-- Priority Level -->
+            <div class="mb-6">
+                <label for="{{ form.priority_level.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    {{ form.priority_level.label }} <span class="text-red-600">*</span>
+                </label>
+                {{ form.priority_level }}
+                {% if form.priority_level.errors %}
+                <p class="mt-2 text-sm text-red-600">{{ form.priority_level.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-2 text-sm text-gray-500">
+                    Set the priority level for resource allocation
+                </p>
+            </div>
+
+            <!-- Justification -->
+            <div class="mb-6">
+                <label for="{{ form.justification.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    {{ form.justification.label }} <span class="text-red-600">*</span>
+                </label>
+                {{ form.justification }}
+                {% if form.justification.errors %}
+                <p class="mt-2 text-sm text-red-600">{{ form.justification.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-2 text-sm text-gray-500">
+                    Explain why this budget allocation is necessary
+                </p>
+            </div>
+
+            <!-- Expected Outputs -->
+            <div class="mb-8">
+                <label for="{{ form.expected_outputs.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    {{ form.expected_outputs.label }} <span class="text-red-600">*</span>
+                </label>
+                {{ form.expected_outputs }}
+                {% if form.expected_outputs.errors %}
+                <p class="mt-2 text-sm text-red-600">{{ form.expected_outputs.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-2 text-sm text-gray-500">
+                    Describe expected deliverables and outcomes
+                </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-4">
+                <button type="submit"
+                        class="flex-1 bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                    <i class="fas fa-save mr-2"></i>
+                    {% if program_budget %}Update{% else %}Add{% endif %} Program Budget
+                </button>
+                <a href="{% url 'budget_preparation:proposal_edit' proposal.pk %}"
+                   class="flex-1 border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-semibold text-center hover:bg-gray-50 transition-colors duration-200">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancel
+                </a>
+            </div>
+        </form>
+
+    </div>
+
+</div>
+{% endblock %}
