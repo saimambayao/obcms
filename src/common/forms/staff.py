@@ -15,6 +15,7 @@ from common.models import (
     TrainingProgram,
     User,
 )
+from coordination.models import Organization
 
 
 def _apply_form_field_styles(form, mode: str = "default"):
@@ -198,6 +199,13 @@ class StaffProfileForm(forms.ModelForm):
         label="Official role / title",
         help_text="Displayed beneath the staff member name on profile pages.",
     )
+    staff_member_organization = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        label="MOA Organization",
+        help_text="Select the BARMM Ministry, Office, or Agency this staff member belongs to.",
+        empty_label="Select organization",
+    )
     core_competencies = forms.CharField(
         required=False,
         widget=CompetenciesTextarea(),
@@ -354,6 +362,13 @@ class StaffProfileForm(forms.ModelForm):
         if request:
             self.fields["user"].empty_label = "Select staff member"
 
+        # Set up organization field queryset (only BMOA organizations)
+        org_qs = Organization.objects.filter(
+            organization_type='bmoa',
+            is_active=True
+        ).order_by("acronym", "name")
+        self.fields["staff_member_organization"].queryset = org_qs
+
         editing_existing = bool(self.instance and self.instance.pk)
         if editing_existing:
             user = self.instance.user
@@ -367,10 +382,18 @@ class StaffProfileForm(forms.ModelForm):
 
             position_field = self.fields["staff_member_position"]
             position_field.initial = user.position
+
+            # Set initial organization value from user's moa_organization
+            org_field = self.fields["staff_member_organization"]
+            org_field.initial = user.moa_organization
+            # Make required for OOBC Staff user types
+            if user.user_type in STAFF_USER_TYPES:
+                org_field.required = True
         else:
             self.fields.pop("staff_member_name")
             self.fields.pop("staff_member_username")
             self.fields.pop("staff_member_position")
+            self.fields.pop("staff_member_organization")
 
         list_fields = (
             "core_competencies",
@@ -434,6 +457,7 @@ class StaffProfileForm(forms.ModelForm):
         staff_name = self.cleaned_data.get("staff_member_name")
         username = self.cleaned_data.get("staff_member_username")
         position = self.cleaned_data.get("staff_member_position")
+        organization = self.cleaned_data.get("staff_member_organization")
 
         if profile.user_id:
             user = profile.user
@@ -456,6 +480,10 @@ class StaffProfileForm(forms.ModelForm):
             if position is not None and position != user.position:
                 user.position = position
                 user_dirty_fields.append("position")
+
+            if organization is not None and user.moa_organization != organization:
+                user.moa_organization = organization
+                user_dirty_fields.append("moa_organization")
 
             if user_dirty_fields:
                 user.save(update_fields=list(dict.fromkeys(user_dirty_fields)))

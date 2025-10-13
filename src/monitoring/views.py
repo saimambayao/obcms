@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import uuid
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import connection, transaction
 from django.db.models import Avg, Count, Max, Q, Sum
@@ -22,6 +22,7 @@ from django.utils.html import format_html, format_html_join
 from django.template.defaultfilters import truncatechars
 from django.views.decorators.http import require_POST
 
+from common.decorators.rbac import require_feature_access
 from common.utils.moa_permissions import moa_can_edit_ppa
 
 from common.services.locations import build_location_data, get_object_centroid
@@ -347,6 +348,7 @@ def _render_workitems_tab(request, entry, *, status=200, triggers=None):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def work_items_summary_partial(request, pk):
     """
     HTMX endpoint: return refreshed Work Items summary metrics.
@@ -406,6 +408,7 @@ def work_items_summary_partial(request, pk):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def work_items_tab_partial(request, pk):
     """
     HTMX endpoint: Return the full Work Items tab for the given PPA entry.
@@ -415,6 +418,7 @@ def work_items_tab_partial(request, pk):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def monitoring_dashboard(request):
     """Render the consolidated Monitoring & Evaluation workspace."""
     # Restrict access for MANA participants
@@ -425,7 +429,8 @@ def monitoring_dashboard(request):
         and user.has_perm("mana.can_access_regional_mana")
         and not user.has_perm("mana.can_facilitate_workshop")
     ):
-        return redirect("common:page_restricted")
+        messages.error(request, "You do not have permission to access monitoring.")
+        raise PermissionDenied("User lacks required permission to access monitoring")
 
     entries = _prefetch_entries()
     base_queryset = MonitoringEntry.objects.all()
@@ -524,7 +529,37 @@ def monitoring_dashboard(request):
         ],
     }
 
-    stats_cards = [moa_stats, oobc_stats, request_stats]
+    # Budget Allocation statistics
+    total_budget = entries.aggregate(
+        total=Sum("budget_allocation"),
+        obc_total=Sum("budget_obc_allocation")
+    )
+
+    budget_stats = {
+        "title": "Budget Allocation",
+        "subtitle": f"{current_year} Overview",
+        "icon": "fas fa-coins",
+        "icon_color": "text-amber-600",
+        "gradient": "from-amber-500 via-yellow-500 to-orange-500",
+        "total": f"₱{total_budget['total'] or 0:,.0f}",
+        "is_budget_card": True,  # Flag to identify this card for smaller font
+        "metrics": [
+            {
+                "label": "OBC Budget",
+                "value": f"₱{total_budget['obc_total'] or 0:,.0f}",
+            },
+            {
+                "label": "With Budget",
+                "value": entries.exclude(budget_allocation__isnull=True).count(),
+            },
+            {
+                "label": "No Budget",
+                "value": entries.filter(budget_allocation__isnull=True).count(),
+            },
+        ],
+    }
+
+    stats_cards = [moa_stats, oobc_stats, budget_stats, request_stats]
 
     recent_moa_entries = entries.filter(category="moa_ppa").order_by(
         "-updated_at", "-created_at"
@@ -536,8 +571,28 @@ def monitoring_dashboard(request):
         "-updated_at", "-created_at"
     )[:10]
 
+    # Pagination for M&E Portfolio Overview
+    page_number = request.GET.get('page', 1)
+    per_page = request.GET.get('per_page', '10')  # Default to 10 per page
+
+    # Validate per_page parameter
+    try:
+        per_page = int(per_page)
+        if per_page not in [10, 20, 50]:
+            per_page = 10
+    except (ValueError, TypeError):
+        per_page = 10
+
+    # Paginate entries
+    paginator = Paginator(entries.order_by('-updated_at', '-created_at'), per_page)
+    try:
+        paginated_entries = paginator.get_page(page_number)
+    except Exception:
+        paginated_entries = paginator.get_page(1)
+
+    # Group paginated entries by category
     grouped_entries = defaultdict(list)
-    for entry in entries:
+    for entry in paginated_entries:
         grouped_entries[entry.category].append(entry)
 
     raw_category_summary = (
@@ -663,6 +718,8 @@ def monitoring_dashboard(request):
         "stats_cards": stats_cards,
         "quick_actions": quick_actions,
         "entries": entries,
+        "paginated_entries": paginated_entries,
+        "per_page": per_page,
         "recent_feeds": {
             "moa": recent_moa_entries,
             "oobc": recent_oobc_entries,
@@ -679,10 +736,16 @@ def monitoring_dashboard(request):
         "status_labels": status_labels,
         "request_status_labels": request_status_labels,
     }
+
+    # If HTMX request, return only the portfolio content partial
+    if request.headers.get('HX-Request'):
+        return render(request, "monitoring/partials/portfolio_content.html", context)
+
     return render(request, "monitoring/dashboard.html", context)
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def monitoring_entry_detail(request, pk):
     """Display a monitoring entry with recent updates and linked data."""
 
@@ -808,6 +871,7 @@ def monitoring_entry_detail(request, pk):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def create_moa_entry(request):
     """Create view for MOA PPAs."""
 
@@ -835,6 +899,7 @@ def create_moa_entry(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 @require_POST
 def ajax_create_obc(request):
     """Handle inline creation of OBC communities from the MOA form."""
@@ -870,6 +935,7 @@ def ajax_create_obc(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def create_oobc_entry(request):
     """Create view for OOBC initiatives."""
 
@@ -894,6 +960,7 @@ def create_oobc_entry(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def create_request_entry(request):
     """Create view for OBC requests and proposals."""
 
@@ -960,6 +1027,7 @@ def create_request_entry(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def moa_ppas_dashboard(request):
     """Dedicated dashboard for MOA PPAs (Ministries, Offices, and Agencies Programs, Projects, and Activities)."""
 
@@ -1401,6 +1469,7 @@ def moa_ppas_dashboard(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def import_moa_data(request):
     """Import MOA PPAs data from CSV or Excel file."""
 
@@ -1480,6 +1549,7 @@ def import_moa_data(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def export_moa_data(request):
     """Export MOA PPAs data to CSV format."""
 
@@ -1548,6 +1618,7 @@ def export_moa_data(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def generate_moa_report(request):
     """Generate comprehensive MOA PPAs report."""
 
@@ -1607,6 +1678,7 @@ def generate_moa_report(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def bulk_update_moa_status(request):
     """Bulk update status for multiple MOA PPAs."""
 
@@ -1658,6 +1730,7 @@ def bulk_update_moa_status(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def schedule_moa_review(request):
     """Schedule coordination meeting for MOA PPAs review."""
 
@@ -1704,6 +1777,7 @@ def schedule_moa_review(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def oobc_initiatives_dashboard(request):
     """Dedicated dashboard for OOBC Initiatives."""
 
@@ -1982,6 +2056,7 @@ def oobc_initiatives_dashboard(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def oobc_initiatives_calendar_feed(request):
     """Return FullCalendar events for OOBC initiative work items."""
 
@@ -2067,6 +2142,7 @@ def oobc_initiatives_calendar_feed(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def obc_requests_dashboard(request):
     """Dedicated dashboard for OBC Requests and Proposals with rich analytics."""
 
@@ -2831,6 +2907,7 @@ def obc_requests_dashboard(request):
 
 # Placeholder views for OOBC Initiatives quick actions
 @login_required
+@require_feature_access('monitoring_access')
 def oobc_impact_report(request):
     """Placeholder for OOBC impact assessment report."""
     messages.info(request, "Impact Assessment feature coming soon!")
@@ -2838,6 +2915,7 @@ def oobc_impact_report(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def oobc_unit_performance(request):
     """Placeholder for OOBC unit performance comparison."""
     messages.info(request, "Unit Performance feature coming soon!")
@@ -2845,6 +2923,7 @@ def oobc_unit_performance(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def export_oobc_data(request):
     """Placeholder for OOBC data export."""
     messages.info(request, "OOBC Data Export feature coming soon!")
@@ -2852,6 +2931,7 @@ def export_oobc_data(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def oobc_budget_review(request):
     """Placeholder for OOBC budget review."""
     messages.info(request, "Budget Review feature coming soon!")
@@ -2859,6 +2939,7 @@ def oobc_budget_review(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def oobc_community_feedback(request):
     """Placeholder for OOBC community feedback."""
     messages.info(request, "Community Feedback feature coming soon!")
@@ -2867,6 +2948,7 @@ def oobc_community_feedback(request):
 
 # Placeholder views for OBC Requests quick actions
 @login_required
+@require_feature_access('monitoring_access')
 def obc_priority_queue(request):
     """Placeholder for OBC priority queue."""
     messages.info(request, "Priority Queue feature coming soon!")
@@ -2874,6 +2956,7 @@ def obc_priority_queue(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def obc_community_dashboard(request):
     """Placeholder for OBC community dashboard."""
     messages.info(request, "Community Dashboard feature coming soon!")
@@ -2881,6 +2964,7 @@ def obc_community_dashboard(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def generate_obc_report(request):
     """Placeholder for OBC requests report."""
     messages.info(request, "OBC Reports feature coming soon!")
@@ -2888,6 +2972,7 @@ def generate_obc_report(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def bulk_update_obc_status(request):
     """Placeholder for OBC bulk status update."""
     messages.info(request, "Bulk Status Update feature coming soon!")
@@ -2895,6 +2980,7 @@ def bulk_update_obc_status(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def export_obc_data(request):
     """Placeholder for OBC data export."""
     messages.info(request, "OBC Data Export feature coming soon!")
@@ -2904,8 +2990,9 @@ def export_obc_data(request):
 # ==================== WORKITEM INTEGRATION VIEWS ====================
 
 
-@moa_can_edit_ppa
 @login_required
+@require_feature_access('monitoring_access')
+@moa_can_edit_ppa
 @require_POST
 def enable_workitem_tracking(request, pk):
     """
@@ -2996,8 +3083,9 @@ def enable_workitem_tracking(request, pk):
     )
 
 
-@moa_can_edit_ppa
 @login_required
+@require_feature_access('monitoring_access')
+@moa_can_edit_ppa
 @require_POST
 def disable_workitem_tracking(request, pk):
     """
@@ -3044,8 +3132,9 @@ def disable_workitem_tracking(request, pk):
     return JsonResponse({"success": True})
 
 
-@moa_can_edit_ppa
 @login_required
+@require_feature_access('monitoring_access')
+@moa_can_edit_ppa
 @require_POST
 def distribute_budget(request, pk):
     """
@@ -3150,6 +3239,7 @@ def distribute_budget(request, pk):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 @require_POST
 def sync_progress(request, pk):
     """
@@ -3190,6 +3280,7 @@ def sync_progress(request, pk):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def work_item_children(request, work_item_id):
     """
     HTMX endpoint: Return children of a WorkItem for lazy loading.
@@ -3213,6 +3304,7 @@ def work_item_children(request, work_item_id):
 # ==================== COMPLIANCE REPORTS (Phase 5) ====================
 
 @login_required
+@require_feature_access('monitoring_access')
 def reports_dashboard(request):
     """
     Compliance Reports Dashboard.
@@ -3256,6 +3348,7 @@ def reports_dashboard(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def mfbm_budget_report_download(request):
     """
     Download MFBM Budget Execution Report.
@@ -3303,6 +3396,7 @@ def mfbm_budget_report_download(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def bpda_development_report_download(request):
     """
     Download BPDA Development Alignment Report.
@@ -3350,6 +3444,7 @@ def bpda_development_report_download(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def coa_variance_report_download(request):
     """
     Download COA Budget Variance Report.
@@ -3397,6 +3492,7 @@ def coa_variance_report_download(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def ppa_calendar_feed(request, entry_id):
     """
     Calendar feed endpoint for a specific PPA.

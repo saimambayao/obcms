@@ -213,7 +213,7 @@ class ReportGenerator:
 
         if fiscal_year:
             queryset = queryset.filter(
-                Q(initiated_date__year=fiscal_year) | Q(ppa__fiscal_year=fiscal_year)
+                Q(start_date__year=fiscal_year) | Q(ppa__fiscal_year=fiscal_year)
             )
 
         workflow_details = []

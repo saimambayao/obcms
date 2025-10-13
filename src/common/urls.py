@@ -27,12 +27,16 @@ urlpatterns = [
     # ============================================================================
     path("oobc-management/", views.oobc_management_home, name="oobc_management_home"),
 
-    # MOA User Approvals
-    path("oobc-management/user-approvals/", views.MOAApprovalListView.as_view(), name="moa_approval_list"),
-    path("oobc-management/approvals/<int:user_id>/endorse/", views.approve_moa_user_stage_one, name="approve_moa_user_stage_one"),
-    path("oobc-management/approvals/<int:user_id>/risk/", views.moa_approval_risk_prompt, name="moa_approval_risk_prompt"),
-    path("oobc-management/approvals/<int:user_id>/approve/", views.approve_moa_user, name="approve_moa_user"),
-    path("oobc-management/approvals/<int:user_id>/reject/", views.reject_moa_user, name="reject_moa_user"),
+    # User Approvals (All Users)
+    path("oobc-management/user-approvals/", views.user_approvals, name="user_approvals"),
+    path("oobc-management/user-approvals/<int:user_id>/action/", views.user_approval_action, name="user_approval_action"),
+
+    # MOA User Approvals (Two-Level Workflow)
+    path("oobc-management/moa-approvals/", views.MOAApprovalListView.as_view(), name="moa_approval_list"),
+    path("oobc-management/moa-approvals/<int:user_id>/endorse/", views.approve_moa_user_stage_one, name="approve_moa_user_stage_one"),
+    path("oobc-management/moa-approvals/<int:user_id>/risk/", views.moa_approval_risk_prompt, name="moa_approval_risk_prompt"),
+    path("oobc-management/moa-approvals/<int:user_id>/approve/", views.approve_moa_user, name="approve_moa_user"),
+    path("oobc-management/moa-approvals/<int:user_id>/reject/", views.reject_moa_user, name="reject_moa_user"),
 
     # OOBC Calendar
     path("oobc-management/calendar/", views.oobc_calendar, name="oobc_calendar"),
@@ -60,8 +64,6 @@ urlpatterns = [
 
     # Planning & Budgeting
     path("oobc-management/planning-budgeting/", views.planning_budgeting, name="planning_budgeting"),
-    path("oobc-management/user-approvals/", views.user_approvals, name="user_approvals"),
-    path("oobc-management/user-approvals/<int:user_id>/action/", views.user_approval_action, name="user_approval_action"),
 
     # ============================================================================
     # DASHBOARD HTMX ENDPOINTS
@@ -70,6 +72,7 @@ urlpatterns = [
     path("dashboard/metrics/", views.dashboard_metrics, name="dashboard_metrics"),
     path("dashboard/activity/", views.dashboard_activity, name="dashboard_activity"),
     path("dashboard/alerts/", views.dashboard_alerts, name="dashboard_alerts"),
+    path("dashboard/staff/stats/", views.staff_dashboard_stats, name="staff_dashboard_stats"),
 
     # ============================================================================
     # PLANNING & BUDGETING INTEGRATION

@@ -206,11 +206,18 @@ def can_edit_communities(user):
 
 @register.filter(name="can_access_geographic_data")
 def can_access_geographic_data(user):
-    """Return True if the user can reach the geographic data module."""
+    """
+    Return True if the user can reach the geographic data module.
+
+    Geographic data is part of the MANA module and requires mana_access feature.
+    """
     user = _get_authenticated_user(user)
     if not user:
         return False
-    return _has_staff_or_superpowers(user)
+
+    # Check for mana_access feature using RBAC system
+    from common.services.rbac_service import RBACService
+    return RBACService.has_feature_access(user, 'mana_access', organization=None)
 
 
 @register.filter(name="can_access_oobc_initiatives")
@@ -224,11 +231,19 @@ def can_access_oobc_initiatives(user):
 
 @register.filter(name="can_access_me_analytics")
 def can_access_me_analytics(user):
-    """Return True if the user can view M&E analytics dashboards."""
+    """
+    Return True if the user can view M&E analytics dashboards.
+
+    M&E Analytics is part of the Project Management module and requires
+    project_management_access feature.
+    """
     user = _get_authenticated_user(user)
     if not user:
         return False
-    return _has_staff_or_superpowers(user)
+
+    # Check for project_management_access feature using RBAC system
+    from common.services.rbac_service import RBACService
+    return RBACService.has_feature_access(user, 'project_management_access', organization=None)
 
 
 @register.filter(name="can_access_oobc_management")

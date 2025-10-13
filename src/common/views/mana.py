@@ -7,6 +7,8 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+
+from common.decorators.rbac import require_feature_access
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Case, Count, F, IntegerField, Q, When
@@ -535,6 +537,7 @@ def _build_regional_dataset(request):
     }
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_home(request):
     """MANA module home page."""
@@ -618,6 +621,7 @@ def mana_home(request):
     return render(request, "mana/mana_home.html", {"stats": stats})
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_stats_cards(request):
     """Return just the MANA stat cards for HTMX auto-refresh."""
@@ -646,6 +650,7 @@ def mana_stats_cards(request):
     return render(request, "partials/mana_stats_cards.html", {"stats": stats})
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_new_assessment(request):
     """New MANA assessment page."""
@@ -899,6 +904,7 @@ def mana_new_assessment(request):
     return render(request, "mana/mana_new_assessment.html", context)
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_manage_assessments(request):
     """Manage MANA assessments page."""
@@ -947,6 +953,7 @@ def mana_manage_assessments(request):
     return render(request, "mana/mana_manage_assessments.html", context)
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_assessment_detail(request, assessment_id):
     """Render a rich detail page for a specific assessment."""
@@ -1027,6 +1034,7 @@ def mana_assessment_detail(request, assessment_id):
     return render(request, "mana/mana_assessment_detail.html", context)
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_assessment_edit(request, assessment_id):
     """Allow users to edit an assessment using the frontend form."""
@@ -1095,6 +1103,7 @@ def mana_assessment_edit(request, assessment_id):
     )
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_assessment_delete(request, assessment_id):
     """Delete a MANA assessment."""
@@ -1110,6 +1119,7 @@ def mana_assessment_delete(request, assessment_id):
     return redirect("common:mana_manage_assessments")
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_regional_overview(request):
     """
@@ -1959,6 +1969,7 @@ def _build_provincial_snapshot(provinces, *, recent_limit=8, include_querysets=F
     return snapshot
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_provincial_overview(request):
     """Provincial dashboards and operational guidance for MANA deployments."""
@@ -2257,6 +2268,7 @@ def mana_provincial_overview(request):
     return render(request, "mana/mana_provincial_overview.html", context)
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_provincial_card_detail(request, province_id):
     """Detailed provincial assessment card view with operational breakdown."""
@@ -2358,6 +2370,7 @@ def mana_provincial_card_detail(request, province_id):
     return render(request, "mana/mana_provincial_card_detail.html", context)
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_province_edit(request, province_id):
     """Edit basic province metadata used across provincial MANA views."""
@@ -2391,6 +2404,7 @@ def mana_province_edit(request, province_id):
     return render(request, "mana/mana_province_form.html", context)
 
 
+@require_feature_access('mana_access')
 @login_required
 @require_POST
 def mana_province_delete(request, province_id):
@@ -2410,6 +2424,7 @@ def mana_province_delete(request, province_id):
     return redirect(next_url)
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_desk_review(request):
     """Desk review methodology hub anchored on the MANA guidelines."""
@@ -2583,6 +2598,7 @@ def mana_desk_review(request):
     return render(request, "mana/mana_desk_review.html", context)
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_survey_module(request):
     """Survey operations playbook for MANA field deployments."""
@@ -2731,6 +2747,7 @@ def mana_survey_module(request):
     return render(request, "mana/mana_survey.html", context)
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_key_informant_interviews(request):
     """Key Informant Interview (KII) module with facilitation and documentation guides."""
@@ -2888,6 +2905,7 @@ def mana_key_informant_interviews(request):
     return render(request, "mana/mana_kii.html", context)
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_playbook(request):
     """Comprehensive MANA playbook based on official guidelines."""
@@ -2994,6 +3012,7 @@ def mana_playbook(request):
     return render(request, "mana/mana_playbook.html", context)
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_activity_planner(request):
     """Planner for scheduling consultations and MANA activities."""
@@ -3041,6 +3060,7 @@ def mana_activity_planner(request):
     return render(request, "mana/mana_activity_planner.html", context)
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_activity_log(request):
     """Daily logging hub for MANA field implementation."""
@@ -3084,6 +3104,7 @@ def mana_activity_log(request):
     return render(request, "mana/mana_activity_log.html", context)
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_activity_processing(request):
     """Post-activity processing workspace for reports, MEL, and dissemination."""
@@ -3132,6 +3153,7 @@ def mana_activity_processing(request):
     return render(request, "mana/mana_activity_processing.html", context)
 
 
+@require_feature_access('mana_access')
 @login_required
 def mana_geographic_data(request):
     """MANA geographic data and mapping page with location-aware filters."""

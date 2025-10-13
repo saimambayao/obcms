@@ -82,6 +82,7 @@
                         {% include "components/form_field_input.html" with field=form.position_classification label="Position classification" help_text=form.position_classification.help_text %}
                         {% if profile %}
                             {% include "components/form_field_input.html" with field=form.staff_member_position label="Official role / title" %}
+                            {% include "components/form_field_select.html" with field=form.staff_member_organization label="MOA Organization" help_text=form.staff_member_organization.help_text %}
                         {% endif %}
                         {% include "components/form_field_input.html" with field=form.plantilla_item_number label="Plantilla / item number" help_text=form.plantilla_item_number.help_text %}
                         {% include "components/form_field_input.html" with field=form.salary_grade label="Salary grade" help_text=form.salary_grade.help_text %}

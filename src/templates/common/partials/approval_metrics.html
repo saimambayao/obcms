@@ -1,0 +1,28 @@
+<!-- Approval Metrics Cards - OOB Swap Fragment -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-amber-500 to-orange-500 p-4 text-white">
+            <div class="flex items-center justify-between">
+                <span class="text-sm uppercase tracking-wide text-amber-100">Pending Approvals</span>
+                <i class="fas fa-user-clock text-xl"></i>
+            </div>
+            <p class="mt-2 text-3xl font-bold">{{ pending_count }}</p>
+        </div>
+        <div class="p-4 text-sm text-gray-600">
+            User accounts awaiting review and approval.
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-emerald-500 to-green-500 p-4 text-white">
+            <div class="flex items-center justify-between">
+                <span class="text-sm uppercase tracking-wide text-emerald-100">Recently Approved</span>
+                <i class="fas fa-user-check text-xl"></i>
+            </div>
+            <p class="mt-2 text-3xl font-bold">{{ recently_approved_count }}</p>
+        </div>
+        <div class="p-4 text-sm text-gray-600">
+            Users approved in recent activity.
+        </div>
+    </div>
+</div>

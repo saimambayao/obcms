@@ -645,7 +645,7 @@ def communities_manage(request):
 
     from django.db.models import Count, Q
 
-    from communities.models import MunicipalityCoverage, OBCCommunity
+    from communities.models import MunicipalityCoverage, OBCCommunity, ProvinceCoverage
 
     communities = (
         OBCCommunity.objects.select_related("barangay__municipality__province__region")
@@ -661,6 +661,10 @@ def communities_manage(request):
         "municipality__name",
     )
 
+    province_coverages = ProvinceCoverage.objects.select_related(
+        "province__region"
+    ).order_by("province__region__name", "province__name")
+
     region_filter = _sanitize_filter_value(request.GET.get("region"))
     province_filter = _sanitize_filter_value(request.GET.get("province"))
     municipality_filter = _sanitize_filter_value(request.GET.get("municipality"))
@@ -673,6 +677,9 @@ def communities_manage(request):
         municipality_coverages = municipality_coverages.filter(
             municipality__province__region__id=region_filter
         )
+        province_coverages = province_coverages.filter(
+            province__region__id=region_filter
+        )
 
     if province_filter:
         communities = communities.filter(
@@ -680,6 +687,9 @@ def communities_manage(request):
         )
         municipality_coverages = municipality_coverages.filter(
             municipality__province__id=province_filter
+        )
+        province_coverages = province_coverages.filter(
+            province__id=province_filter
         )
 
     if municipality_filter:
@@ -773,6 +783,7 @@ def communities_manage(request):
         municipality_coverages.aggregate(total=Sum("total_obc_communities"))["total"]
         or 0
     )
+    total_province_obcs = province_coverages.count()
 
     barangay_page_size = _resolve_page_size(request, "barangay_page_size")
     municipality_page_size = _resolve_page_size(request, "municipality_page_size")
@@ -825,6 +836,14 @@ def communities_manage(request):
             "gradient": "from-purple-500 via-purple-600 to-purple-700",
             "text_color": "text-purple-100",
             "icon_color": "text-purple-600",
+        },
+        {
+            "title": "Total Provincial OBCs in the Database",
+            "value": total_province_obcs,
+            "icon": "fas fa-map-marked-alt",
+            "gradient": "from-amber-500 via-amber-600 to-amber-700",
+            "text_color": "text-amber-100",
+            "icon_color": "text-amber-600",
         },
     ]
 

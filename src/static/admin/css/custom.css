@@ -95,16 +95,152 @@ body.dashboard .module h2 {
 }
 
 /* ============================================================================
+   HEADER & NAVBAR - Official OBCMS Blue-to-Teal Gradient
+   ============================================================================ */
+
+/* Force header gradient - highest specificity */
+body #container #header,
+body #container header#header,
+body div#container div#header,
+#header,
+header#header,
+.django-admin-header,
+#branding,
+header[role="banner"] {
+    background: linear-gradient(135deg, #1e40af 0%, #059669 100%) !important;
+    background-color: #1e40af !important; /* Fallback */
+    color: #ffffff !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Force all header text to white - EXCEPT user dropdown menu */
+#header *:not(.admin-user-dropdown-menu):not(.admin-user-dropdown-menu *),
+#header h1,
+#header h1 a,
+#header h1 a span,
+#site-name,
+#site-name a,
+#site-name a span,
+#branding,
+#branding h1,
+#branding h1 a,
+#branding h1 a span,
+header#header *:not(.admin-user-dropdown-menu):not(.admin-user-dropdown-menu *),
+header[role="banner"] *:not(.admin-user-dropdown-menu):not(.admin-user-dropdown-menu *),
+header[role="banner"] h1,
+header[role="banner"] h1 a {
+    color: #ffffff !important;
+    text-decoration: none !important;
+}
+
+/* Header links - EXCEPT user dropdown menu */
+#header a:not(.admin-user-dropdown-menu a),
+#header nav a:not(.admin-user-dropdown-menu a),
+#user-tools,
+#user-tools a:not(.admin-user-dropdown-menu a),
+#user-tools strong,
+.usertools,
+.usertools a:not(.admin-user-dropdown-menu a),
+header[role="banner"] a:not(.admin-user-dropdown-menu a),
+header[role="banner"] nav a:not(.admin-user-dropdown-menu a) {
+    color: rgba(255, 255, 255, 0.9) !important;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+#header a:hover:not(.admin-user-dropdown-menu a),
+#header nav a:hover:not(.admin-user-dropdown-menu a),
+#user-tools a:hover:not(.admin-user-dropdown-menu a),
+.usertools a:hover:not(.admin-user-dropdown-menu a),
+header[role="banner"] a:hover:not(.admin-user-dropdown-menu a) {
+    color: #ffffff !important;
+    text-decoration: none !important;
+}
+
+/* User Tools in Header */
+#user-tools,
+nav#user-tools {
+    color: #ffffff !important;
+}
+
+/* Welcome message */
+#header .welcome-msg,
+#user-tools .welcome-msg,
+.welcome-msg {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Logout Button in Header */
+#header .logout-link,
+#header a[href*="logout"],
+#user-tools .logout-link,
+#user-tools a[href*="logout"],
+header a[href*="logout"],
+a[href*="admin/logout"] {
+    background: rgba(255, 255, 255, 0.1) !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 8px !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+#header .logout-link:hover,
+#header a[href*="logout"]:hover,
+#user-tools .logout-link:hover,
+#user-tools a[href*="logout"]:hover,
+header a[href*="logout"]:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+}
+
+/* Icon colors in header */
+#header i,
+#header .fas,
+#header .fa,
+#user-tools i,
+#user-tools .fas,
+header i {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Force site title to be white (override any yellow/gold styling) */
+#header #site-name,
+#header #site-name a,
+#header #site-name a:link,
+#header #site-name a:visited,
+header #site-name,
+header #site-name a,
+h1#site-name a {
+    color: #ffffff !important;
+    background: transparent !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Override any Tailwind text color classes in header - EXCEPT user dropdown menu */
+#header [class*="text-"]:not(.admin-user-dropdown-menu):not(.admin-user-dropdown-menu *),
+header [class*="text-"]:not(.admin-user-dropdown-menu):not(.admin-user-dropdown-menu *) {
+    color: #ffffff !important;
+}
+
+/* User dropdown menu - exempt from header white text rules */
+.admin-user-dropdown-menu,
+.admin-user-dropdown-menu * {
+    /* This block ensures dropdown is not affected by header white color rules */
+}
+
+/* ============================================================================
    LINKS & NAVIGATION
    ============================================================================ */
 
-a {
+/* Default link styles - exclude gradient buttons */
+a:not([class*="bg-gradient"]) {
     color: var(--primary-blue);
     text-decoration: none;
     transition: color 0.2s ease;
 }
 
-a:hover {
+a:not([class*="bg-gradient"]):hover {
     color: var(--primary-teal);
 }
 
@@ -240,11 +376,19 @@ a:focus {
 .submit-row input[type="submit"],
 .submit-row input[type="button"],
 .content > .module .addlink,
-input[type="submit"].default {
-    background: linear-gradient(135deg, #1e40af 0%, #059669 100%);
-    border: none;
+input[type="submit"].default,
+.obc-admin-button--primary,
+a.button,
+button[type="submit"],
+.object-tools a,
+.object-tools li a,
+.addlink,
+.changelink,
+.viewlink {
+    background: linear-gradient(135deg, #1e40af 0%, #059669 100%) !important;
+    border: none !important;
     border-radius: 12px;
-    color: #ffffff;
+    color: #ffffff !important;
     font-weight: 600;
     padding: 0.75rem 1.5rem;
     font-size: 0.9375rem;
@@ -254,22 +398,39 @@ input[type="submit"].default {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    text-decoration: none;
 }
 
 .button:hover,
 .submit-row input[type="submit"]:hover,
 .submit-row input[type="button"]:hover,
 .content > .module .addlink:hover,
-input[type="submit"].default:hover {
+input[type="submit"].default:hover,
+.obc-admin-button--primary:hover,
+a.button:hover,
+button[type="submit"]:hover,
+.object-tools a:hover,
+.object-tools li a:hover,
+.addlink:hover,
+.changelink:hover,
+.viewlink:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 24px rgba(30, 64, 175, 0.28);
+    color: #ffffff !important;
 }
 
 .button:active,
 .submit-row input[type="submit"]:active,
 .submit-row input[type="button"]:active,
 .content > .module .addlink:active,
-input[type="submit"].default:active {
+input[type="submit"].default:active,
+.obc-admin-button--primary:active,
+a.button:active,
+button[type="submit"]:active,
+.object-tools a:active,
+.addlink:active,
+.changelink:active,
+.viewlink:active {
     transform: translateY(0);
     box-shadow: 0 4px 8px rgba(30, 64, 175, 0.2);
 }
@@ -278,7 +439,14 @@ input[type="submit"].default:active {
 .submit-row input[type="submit"]:focus,
 .submit-row input[type="button"]:focus,
 .content > .module .addlink:focus,
-input[type="submit"].default:focus {
+input[type="submit"].default:focus,
+.obc-admin-button--primary:focus,
+a.button:focus,
+button[type="submit"]:focus,
+.object-tools a:focus,
+.addlink:focus,
+.changelink:focus,
+.viewlink:focus {
     outline: 2px solid var(--focus-ring-color);
     outline-offset: var(--focus-ring-offset);
 }
@@ -697,6 +865,118 @@ input[type="radio"]:focus {
 }
 
 /* ============================================================================
+   NAVIGATION BAR - Dropdown Functionality
+   ============================================================================ */
+
+/* Desktop Dropdown Menus */
+.admin-nav-dropdown:hover .admin-dropdown-menu,
+.admin-nav-dropdown:focus-within .admin-dropdown-menu {
+    display: flex;
+    flex-direction: column;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.admin-dropdown-menu {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Dropdown chevron rotation on hover */
+.admin-nav-dropdown:hover .fa-chevron-down,
+.admin-nav-dropdown:focus-within .fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+/* User Dropdown */
+.admin-user-dropdown:hover .admin-user-dropdown-menu,
+.admin-user-dropdown:focus-within .admin-user-dropdown-menu {
+    display: block;
+    opacity: 1;
+    transform: scale(1);
+}
+
+.admin-user-dropdown-menu {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Navigation Item Hover States */
+.admin-nav-item {
+    position: relative;
+}
+
+.admin-nav-item::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateX(-50%);
+    transition: width 0.3s ease;
+}
+
+.admin-nav-item:hover::before,
+.admin-nav-item:focus::before {
+    width: 80%;
+}
+
+/* Mobile Menu Animation */
+#adminMobileMenu {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile Toggle Chevron Rotation */
+.admin-mobile-toggle[aria-expanded="true"] .fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+/* Mobile Submenu Slide */
+.admin-mobile-section .hidden {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.admin-mobile-section .show {
+    max-height: 500px;
+    transition: max-height 0.3s ease;
+}
+
+/* Sticky Header Enhancement */
+#header {
+    transition: box-shadow 0.3s ease;
+}
+
+#header.scrolled {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Active Navigation State */
+.admin-nav-item.active {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.admin-nav-item.active::before {
+    width: 80%;
+}
+
+/* ============================================================================
    UTILITY CLASSES
    ============================================================================ */
 
@@ -715,6 +995,22 @@ input[type="radio"]:focus {
                       linear-gradient(135deg, #1e40af 0%, #059669 100%);
 }
 
+/* Fade-in animation for messages */
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.3s ease;
+}
+
 /* ============================================================================
    PRINT STYLES
    ============================================================================ */
@@ -724,8 +1020,18 @@ input[type="radio"]:focus {
     .submit-row,
     .breadcrumbs,
     #changelist-filter,
-    .actions {
-        display: none;
+    .actions,
+    nav,
+    #header nav,
+    .admin-nav-dropdown,
+    .admin-user-dropdown,
+    #adminMobileMenu {
+        display: none !important;
+    }
+
+    #header {
+        position: static !important;
+        box-shadow: none !important;
     }
 
     .module table thead {
@@ -733,6 +1039,124 @@ input[type="radio"]:focus {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS FOR NAVBAR
+   ============================================================================ */
+
+@media (max-width: 1024px) {
+    .admin-nav-dropdown,
+    .admin-nav-item {
+        font-size: 0.875rem;
+    }
+
+    .admin-dropdown-menu {
+        width: 20rem;
+    }
+}
+
+@media (max-width: 768px) {
+    #header h1#site-name {
+        font-size: 1rem;
+    }
+
+    .admin-user-dropdown-menu {
+        width: 14rem;
+    }
+}
+
+/* ============================================================================
+   ADMIN INDEX PAGE - View/Add Buttons
+   ============================================================================ */
+
+/* Force white text on View and Add buttons in Application Models section */
+.module table tbody td a[href*="admin"][class*="bg-gradient"],
+.module table tbody td a[href*="admin"][class*="from-blue"],
+a[href*="admin"][class*="bg-gradient-to-r"],
+a[class*="bg-gradient-to-r"][class*="from-blue-600"],
+a[class*="bg-gradient-to-r"][class*="to-emerald-600"] {
+    color: #ffffff !important;
+}
+
+/* Specific override for admin index page model buttons */
+body.dashboard a[href*="/admin/"][class*="bg-gradient"],
+body.dashboard-home a[href*="/admin/"][class*="bg-gradient"] {
+    color: #ffffff !important;
+}
+
+/* Icon colors in gradient buttons */
+a[class*="bg-gradient"] i,
+a[class*="from-blue"] i {
+    color: #ffffff !important;
+}
+
+/* ============================================================================
+   USER DROPDOWN MENU - Ensure Readable Text
+   CRITICAL: These rules MUST override all header white text rules
+   ============================================================================ */
+
+/* User dropdown container and all children - reset from header white color */
+#header .admin-user-dropdown-menu,
+#header .admin-user-dropdown-menu *,
+header[role="banner"] .admin-user-dropdown-menu,
+header[role="banner"] .admin-user-dropdown-menu * {
+    color: initial !important; /* Reset to allow specific colors below */
+}
+
+/* User dropdown menu links - force proper text colors */
+#header .admin-user-dropdown-menu a,
+header[role="banner"] .admin-user-dropdown-menu a,
+.admin-user-dropdown-menu a {
+    color: #374151 !important; /* gray-700 - default for menu items */
+    text-decoration: none !important;
+}
+
+/* Ensure specific gray text for spans inside links */
+#header .admin-user-dropdown-menu a span,
+header[role="banner"] .admin-user-dropdown-menu a span,
+.admin-user-dropdown-menu a span {
+    color: #374151 !important; /* gray-700 */
+}
+
+/* Red text for logout */
+#header .admin-user-dropdown-menu a[href*="logout"],
+header[role="banner"] .admin-user-dropdown-menu a[href*="logout"],
+.admin-user-dropdown-menu a[href*="logout"],
+#header .admin-user-dropdown-menu a.text-red-600,
+.admin-user-dropdown-menu a.text-red-600 {
+    color: #dc2626 !important; /* red-600 */
+}
+
+/* Logout link spans */
+#header .admin-user-dropdown-menu a[href*="logout"] span,
+.admin-user-dropdown-menu a[href*="logout"] span {
+    color: #dc2626 !important; /* red-600 */
+}
+
+/* Hover state for menu items */
+#header .admin-user-dropdown-menu a:hover,
+header[role="banner"] .admin-user-dropdown-menu a:hover,
+.admin-user-dropdown-menu a:hover {
+    color: #1f2937 !important; /* Darker gray on hover */
+    background-color: #f9fafb !important; /* Very light gray background */
+}
+
+/* Logout hover - keep red but slightly darker */
+#header .admin-user-dropdown-menu a[href*="logout"]:hover,
+header[role="banner"] .admin-user-dropdown-menu a[href*="logout"]:hover,
+.admin-user-dropdown-menu a[href*="logout"]:hover {
+    color: #b91c1c !important; /* Darker red on hover */
+    background-color: #fef2f2 !important; /* Very light red background */
+}
+
+/* Icons in dropdown menu - keep them colored */
+#header .admin-user-dropdown-menu a i,
+#header .admin-user-dropdown-menu a .fas,
+header[role="banner"] .admin-user-dropdown-menu a i,
+.admin-user-dropdown-menu a i,
+.admin-user-dropdown-menu a .fas {
+    color: inherit !important; /* Inherit from parent link color */
 }
 
 /* ============================================================================

@@ -11,6 +11,7 @@ from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
+from common.decorators.rbac import require_feature_access
 from django.db.models import Avg, Count, Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -212,6 +213,7 @@ def deprecated_workflow_view(replacement_info=None):
 
 
 @login_required
+@require_feature_access('project_management_access')
 def portfolio_dashboard_view(request):
     """
     Integrated portfolio dashboard showing project lifecycle with budget metrics.
@@ -441,6 +443,7 @@ def _format_currency(value):
 
 
 @login_required
+@require_feature_access('project_management_access')
 def moa_ppa_list_view(request):
     """List MOA PPAs so users can transition them into Project Management Portal workflows."""
 
@@ -599,6 +602,7 @@ def moa_ppa_list_view(request):
 
 
 @login_required
+@require_feature_access('project_management_access')
 def create_moa_ppa_view(request):
     """Create a new MOA PPA entry from Project Management Portal."""
 
@@ -630,6 +634,7 @@ def create_moa_ppa_view(request):
 
 
 @login_required
+@require_feature_access('project_management_access')
 def edit_moa_ppa_view(request, ppa_id):
     """Edit an existing MOA PPA."""
 
@@ -659,6 +664,7 @@ def edit_moa_ppa_view(request, ppa_id):
 
 
 @login_required
+@require_feature_access('project_management_access')
 def delete_moa_ppa_view(request, ppa_id):
     """Confirm and delete a MOA PPA."""
 
@@ -679,6 +685,7 @@ def delete_moa_ppa_view(request, ppa_id):
 
 
 @login_required
+@require_feature_access('project_management_access')
 def moa_ppa_detail_view(request, ppa_id):
     """Show details for a MOA PPA including linked workflow and activities."""
 
@@ -984,6 +991,7 @@ def advance_project_stage(request, workflow_id):
 
 
 @login_required
+@require_feature_access('project_management_access')
 def alert_list_view(request):
     """Alert listing view with filters and acknowledgment."""
     alerts = Alert.objects.all().order_by("-created_at")
@@ -1122,6 +1130,7 @@ def generate_alerts_now(request):
 
 
 @login_required
+@require_feature_access('project_management_access')
 def budget_planning_dashboard(request):
     """Basic budget planning dashboard - budget allocation, utilization by sector/source."""
     current_year = timezone.now().year
@@ -1178,6 +1187,7 @@ def budget_planning_dashboard(request):
 
 
 @login_required
+@require_feature_access('project_management_access')
 @moa_no_access
 def me_analytics_dashboard(request):
     """M&E Analytics Dashboard with comprehensive project metrics."""
@@ -1204,6 +1214,7 @@ def me_analytics_dashboard(request):
 
 
 @login_required
+@require_feature_access('project_management_access')
 @moa_no_access
 def sector_analytics(request, sector):
     """Detailed analytics for a specific sector."""
@@ -1244,6 +1255,7 @@ def sector_analytics(request, sector):
 
 
 @login_required
+@require_feature_access('project_management_access')
 @moa_no_access
 def geographic_analytics(request):
     """Geographic distribution of budget and projects."""
@@ -1263,6 +1275,7 @@ def geographic_analytics(request):
 
 
 @login_required
+@require_feature_access('project_management_access')
 @moa_no_access
 def policy_analytics(request, policy_id):
     """Analytics for a specific policy recommendation."""
@@ -1296,6 +1309,7 @@ def policy_analytics(request, policy_id):
 
 
 @login_required
+@require_feature_access('project_management_access')
 def report_list_view(request):
     """List of available reports."""
     reports = [
@@ -1608,6 +1622,7 @@ def download_report(request, report_id):
 
 
 @login_required
+@require_feature_access('project_management_access')
 def my_tasks_with_projects(request):
     from django.db.models import Q
 
@@ -1790,6 +1805,7 @@ def generate_workflow_tasks(request, workflow_id):
 
 
 @login_required
+@require_feature_access('project_management_access')
 def budget_approval_dashboard(request):
     """
     Budget approval dashboard showing PPAs at each approval stage.
@@ -2051,6 +2067,7 @@ def project_calendar_events(request, workflow_id):
 
 
 @login_required
+@require_feature_access('project_management_access')
 def ppa_me_dashboard(request, ppa_id):
     """
     M&E dashboard for single PPA with detailed analytics.

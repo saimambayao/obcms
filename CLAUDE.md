@@ -2,6 +2,85 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## CRITICAL RULE: No Temporary Fixes
+
+**NEVER use temporary fixes, workarounds, or shortcuts when debugging issues.**
+
+When you encounter an error:
+- ❌ DO NOT remove decorators, comment out code, or bypass validation
+- ❌ DO NOT use placeholder data or mock implementations
+- ❌ DO NOT skip proper migrations or database changes
+- ✅ ALWAYS identify and fix the root cause
+- ✅ ALWAYS implement the proper, complete solution
+- ✅ ALWAYS create missing data, migrations, or configurations
+
+**Examples:**
+
+**WRONG (Temporary Fix):**
+```python
+# Error: Permission 'oobc_management.manage_users' doesn't exist
+@login_required
+# @require_permission('oobc_management.manage_users')  # Commented out temporarily
+def manage_users(request):
+    pass
+```
+
+**RIGHT (Proper Fix):**
+```python
+# 1. Create migration to add the missing permission
+# 2. Keep decorator in place
+@login_required
+@require_permission('oobc_management.manage_users')
+def manage_users(request):
+    pass
+```
+
+This rule is MANDATORY and must be followed at all times.
+
+## CRITICAL RULE: No Assumptions - Research When Unsure
+
+**NEVER make assumptions when you are uncertain. ALWAYS research and verify facts.**
+
+When you encounter uncertainty:
+- ❌ DO NOT assume how code works without checking
+- ❌ DO NOT guess at solutions based on "likely" behavior
+- ❌ DO NOT assume issues are caused by common problems (e.g., "probably cache")
+- ✅ ALWAYS use parallel agents/tasks to research thoroughly
+- ✅ ALWAYS verify facts by reading actual code, documentation, or searching online
+- ✅ ALWAYS state explicitly when you don't know something and need to investigate
+
+**Examples:**
+
+**WRONG (Making Assumptions):**
+```
+"The issue is probably a cache problem. Users need to clear their browser cookies."
+# Made assumption without verifying the actual root cause
+```
+
+**RIGHT (Research-Based):**
+```
+"Let me use parallel agents to investigate:
+1. Agent 1: Check RBAC permission logic in rbac_service.py
+2. Agent 2: Verify view decorators in mana/views.py
+3. Agent 3: Examine template permission checks
+[After investigation] The issue is X in file Y at line Z."
+```
+
+**When to Research Online:**
+- Django/Python best practices you're unsure about
+- Library-specific behavior (HTMX, Tailwind, etc.)
+- Error messages you haven't seen before
+- Performance optimization techniques
+- Security considerations
+
+**How to Research:**
+- Use WebSearch for current documentation, Stack Overflow solutions
+- Use WebFetch for official documentation pages
+- Use parallel agents for multi-faceted investigations
+- Cross-reference multiple sources before concluding
+
+This rule is MANDATORY and must be followed at all times.
+
 ## Time Estimates Policy
 
 **NEVER provide time estimates in hours, days, weeks, or months for implementation tasks.**

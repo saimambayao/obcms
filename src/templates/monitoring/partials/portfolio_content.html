@@ -1,0 +1,142 @@
+{% load humanize %}
+
+<!-- Update header record count using out-of-band swap -->
+<div id="record-count" hx-swap-oob="true" class="text-sm text-neutral-500 mt-1">
+    Showing {{ paginated_entries.start_index }}-{{ paginated_entries.end_index }} of {{ paginated_entries.paginator.count }} records
+</div>
+
+{% for section in category_sections %}
+<div>
+    <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base font-semibold text-neutral-700">{{ section.label }}</h3>
+        <span class="text-sm text-neutral-400">{{ section.entries|length }} records</span>
+    </div>
+    {% if section.entries %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-neutral-200 text-sm">
+            <thead class="bg-neutral-100">
+                <tr>
+                    <th class="px-4 py-2 text-left font-medium text-neutral-600">Title</th>
+                    <th class="px-4 py-2 text-left font-medium text-neutral-600">Status</th>
+                    <th class="px-4 py-2 text-left font-medium text-neutral-600">Lead / Requesting Party</th>
+                    <th class="px-4 py-2 text-left font-medium text-neutral-600">Progress</th>
+                    <th class="px-4 py-2"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-100">
+                {% for entry in section.entries %}
+                <tr class="hover:bg-neutral-50">
+                    <td class="px-4 py-2">
+                        <p class="font-medium text-neutral-800">{{ entry.title }}</p>
+                        {% if entry.summary %}
+                        <p class="text-xs text-neutral-500 line-clamp-2">{{ entry.summary }}</p>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-2">
+                        <p class="text-sm font-medium text-neutral-700">{{ entry.get_status_display }}</p>
+                        {% if entry.is_request %}
+                        <p class="text-xs text-orange-500">{{ entry.get_request_status_display }}</p>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-2 text-sm text-neutral-600">
+                        {% if entry.is_request %}
+                            {% if entry.submitted_by_community %}
+                            <p><span class="font-medium">Requester:</span> {{ entry.submitted_by_community.name }}</p>
+                            {% endif %}
+                            {% if entry.submitted_to_organization %}
+                            <p><span class="font-medium">Receiving:</span> {{ entry.submitted_to_organization.name }}</p>
+                            {% endif %}
+                        {% else %}
+                            {% if entry.lead_organization %}
+                            <p>{{ entry.lead_organization.name }}</p>
+                            {% elif entry.oobc_unit %}
+                            <p>{{ entry.oobc_unit }}</p>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-2">
+                        <div class="w-full bg-neutral-200 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-blue-500 to-teal-500 h-2 rounded-full" style="width: {{ entry.progress }}%"></div>
+                        </div>
+                        <p class="text-xs text-neutral-500 mt-1">{{ entry.progress }}%</p>
+                    </td>
+                    <td class="px-4 py-2 text-right">
+                        <a href="{% url 'monitoring:detail' entry.pk %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="bg-neutral-50 border border-dashed border-neutral-200 rounded-lg px-4 py-6 text-center text-neutral-500">
+        No records logged for this category yet.
+    </div>
+    {% endif %}
+</div>
+{% empty %}
+<p class="text-neutral-500">No monitoring entries recorded yet.</p>
+{% endfor %}
+
+<!-- Pagination Navigation -->
+{% if paginated_entries.has_other_pages %}
+<div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-neutral-200">
+    <div class="text-sm text-neutral-600">
+        Page {{ paginated_entries.number }} of {{ paginated_entries.paginator.num_pages }}
+    </div>
+    <nav class="flex items-center gap-2">
+        {% if paginated_entries.has_previous %}
+        <button class="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+                hx-get="{% url 'monitoring:home' %}?page={{ paginated_entries.previous_page_number }}&per_page={{ per_page }}"
+                hx-target="#portfolio-content"
+                hx-swap="innerHTML">
+            <i class="fas fa-chevron-left mr-1"></i> Previous
+        </button>
+        {% else %}
+        <button class="px-3 py-1.5 border border-neutral-200 rounded-lg text-sm font-medium text-neutral-400 cursor-not-allowed" disabled>
+            <i class="fas fa-chevron-left mr-1"></i> Previous
+        </button>
+        {% endif %}
+
+        <!-- Page numbers -->
+        <div class="flex items-center gap-1">
+            {% for page_num in paginated_entries.paginator.page_range %}
+                {% if page_num == paginated_entries.number %}
+                <button class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium" disabled>
+                    {{ page_num }}
+                </button>
+                {% elif page_num > paginated_entries.number|add:"-3" and page_num < paginated_entries.number|add:"3" %}
+                <button class="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+                        hx-get="{% url 'monitoring:home' %}?page={{ page_num }}&per_page={{ per_page }}"
+                        hx-target="#portfolio-content"
+                        hx-swap="innerHTML">
+                    {{ page_num }}
+                </button>
+                {% elif page_num == 1 or page_num == paginated_entries.paginator.num_pages %}
+                <button class="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+                        hx-get="{% url 'monitoring:home' %}?page={{ page_num }}&per_page={{ per_page }}"
+                        hx-target="#portfolio-content"
+                        hx-swap="innerHTML">
+                    {{ page_num }}
+                </button>
+                {% elif page_num == paginated_entries.number|add:"-3" or page_num == paginated_entries.number|add:"3" %}
+                <span class="px-2 text-neutral-500">...</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        {% if paginated_entries.has_next %}
+        <button class="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+                hx-get="{% url 'monitoring:home' %}?page={{ paginated_entries.next_page_number }}&per_page={{ per_page }}"
+                hx-target="#portfolio-content"
+                hx-swap="innerHTML">
+            Next <i class="fas fa-chevron-right ml-1"></i>
+        </button>
+        {% else %}
+        <button class="px-3 py-1.5 border border-neutral-200 rounded-lg text-sm font-medium text-neutral-400 cursor-not-allowed" disabled>
+            Next <i class="fas fa-chevron-right ml-1"></i>
+        </button>
+        {% endif %}
+    </nav>
+</div>
+{% endif %}

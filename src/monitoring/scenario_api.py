@@ -8,11 +8,12 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from common.utils.permissions import HasFeatureAccess
 from .models import MonitoringEntry, MonitoringEntryFunding
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasFeatureAccess])
 def scenario_rebalance_budget(request):
     """
     Simulate budget rebalancing across PPAs.
@@ -109,7 +110,7 @@ def scenario_rebalance_budget(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasFeatureAccess])
 def scenario_funding_mix(request):
     """
     Analyze what-if funding source mix changes.
@@ -190,7 +191,7 @@ def scenario_funding_mix(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasFeatureAccess])
 def scenario_obligation_forecast(request):
     """
     Forecast obligation and disbursement rates.

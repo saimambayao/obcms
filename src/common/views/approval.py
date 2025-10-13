@@ -4,6 +4,7 @@ import json
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -13,6 +14,7 @@ from django.views.generic import ListView
 
 from ..models import User
 from ..security_logging import log_security_event
+from ..utils.htmx_responses import htmx_403_response
 from ..utils.permissions import (
     can_approve_moa_users,
     get_pending_first_level_count,
@@ -32,6 +34,12 @@ class MOAApprovalListView(ListView):
     context_object_name = "pending_users"
     paginate_by = 20
 
+    def get_template_names(self):
+        """Return partial template for HTMX requests, full template otherwise."""
+        if self.request.headers.get('HX-Request'):
+            return ["common/approval/moa_approval_list_partial.html"]
+        return [self.template_name]
+
     def dispatch(self, request, *args, **kwargs):
         """Check if user has approval permissions."""
         self.is_level_two_approver = can_approve_moa_users(request.user)
@@ -42,7 +50,7 @@ class MOAApprovalListView(ListView):
                 request,
                 "You do not have permission to approve MOA staff registrations."
             )
-            return redirect('common:page_restricted')
+            raise PermissionDenied("User lacks required permission to approve MOA staff registrations")
 
         self.approval_stage = self._determine_stage(request)
 
@@ -181,9 +189,8 @@ def approve_moa_user_stage_one(request, user_id):
     Provide first-level approval by a MOA/NGA/LGU focal person.
     """
     if not is_moa_focal_approver(request.user):
-        return HttpResponse(
-            status=403,
-            content="You do not have permission to endorse users for OOBC approval.",
+        return htmx_403_response(
+            message="You do not have permission to endorse users for OOBC approval."
         )
 
     user_to_endorse = get_object_or_404(
@@ -199,9 +206,8 @@ def approve_moa_user_stage_one(request, user_id):
         not request.user.moa_organization
         or request.user.moa_organization_id != user_to_endorse.moa_organization_id
     ):
-        return HttpResponse(
-            status=403,
-            content="You can only endorse users from your assigned organization.",
+        return htmx_403_response(
+            message="You can only endorse users from your assigned organization."
         )
 
     user_to_endorse.moa_first_level_approved = True
@@ -283,9 +289,8 @@ def approve_moa_user(request, user_id):
     """
     # Check permissions
     if not can_approve_moa_users(request.user):
-        return HttpResponse(
-            status=403,
-            content="You do not have permission to approve users."
+        return htmx_403_response(
+            message="You do not have permission to approve users."
         )
 
     # Get user to approve
@@ -392,9 +397,8 @@ def reject_moa_user(request, user_id):
     is_final_approver = can_approve_moa_users(request.user)
     is_focal_approver = is_moa_focal_approver(request.user)
     if not (is_final_approver or is_focal_approver):
-        return HttpResponse(
-            status=403,
-            content="You do not have permission to reject users."
+        return htmx_403_response(
+            message="You do not have permission to reject users."
         )
 
     # Get user to reject
@@ -413,9 +417,8 @@ def reject_moa_user(request, user_id):
             or request.user.moa_organization_id != user_to_reject.moa_organization_id
         )
     ):
-        return HttpResponse(
-            status=403,
-            content="You can only reject registrations from your organization.",
+        return htmx_403_response(
+            message="You can only reject registrations from your organization."
         )
 
     # Deactivate user (soft delete)
@@ -495,9 +498,8 @@ def moa_approval_risk_prompt(request, user_id):
     Display a risk confirmation screen for OOBC approvers when bypassing focal endorsement.
     """
     if not can_approve_moa_users(request.user):
-        return HttpResponse(
-            status=403,
-            content="You do not have permission to finalize approvals.",
+        return htmx_403_response(
+            message="You do not have permission to finalize approvals."
         )
 
     stage = request.GET.get("stage") or "final"

@@ -116,6 +116,113 @@ def _render_moa_dashboard(request):
     return render(request, "common/dashboard_moa.html", context)
 
 
+def _render_staff_dashboard(request):
+    """Render the dedicated dashboard for OOBC staff members."""
+    from datetime import timedelta
+    from django.db.models import Count, Q
+
+    from common.rbac_models import UserRole
+    from communities.models import OBCCommunity, MunicipalityCoverage, ProvinceCoverage
+    from coordination.models import Event, Partnership
+    from common.work_item_model import WorkItem
+
+    user = request.user
+
+    # Check if user has OOBC staff role via RBAC
+    has_oobc_staff_role = UserRole.objects.filter(
+        user=user,
+        role__slug='oobc-staff',
+        is_active=True
+    ).exists()
+
+    # Communities stats
+    communities_qs = OBCCommunity.objects.all()
+    barangay_total = communities_qs.count()
+    municipal_total = MunicipalityCoverage.objects.count()
+    provincial_total = ProvinceCoverage.objects.count()
+    combined_total = barangay_total + municipal_total
+
+    # Partnerships stats
+    partnerships_qs = Partnership.objects.filter(status='active')
+    total_partnerships = partnerships_qs.count()
+
+    # Partnership breakdown
+    bmoa_partnerships = partnerships_qs.filter(
+        lead_organization__organization_type='bmoa'
+    ).count()
+    nga_partnerships = partnerships_qs.filter(
+        lead_organization__organization_type='nga'
+    ).count()
+    lgu_partnerships = partnerships_qs.filter(
+        lead_organization__organization_type='lgu'
+    ).count()
+
+    # Work items (tasks) for this user
+    today = timezone.now().date()
+    upcoming_threshold = today + timedelta(days=14)
+
+    user_tasks_qs = WorkItem.objects.filter(
+        Q(assignees=user) | Q(created_by=user)
+    ).distinct()
+
+    # Task status counts
+    open_statuses = [
+        WorkItem.STATUS_NOT_STARTED,
+        WorkItem.STATUS_IN_PROGRESS,
+        WorkItem.STATUS_AT_RISK,
+        WorkItem.STATUS_BLOCKED,
+    ]
+
+    open_tasks = user_tasks_qs.filter(status__in=open_statuses)
+    overdue_tasks = open_tasks.filter(due_date__lt=today).count()
+    due_soon_tasks = open_tasks.filter(
+        due_date__gte=today,
+        due_date__lte=upcoming_threshold
+    ).count()
+    completed_tasks = user_tasks_qs.filter(status=WorkItem.STATUS_COMPLETED).count()
+
+    # Upcoming events (next 30 days)
+    events_qs = Event.objects.filter(
+        start_date__gte=today,
+        start_date__lte=today + timedelta(days=30),
+        status='planned'
+    ).order_by('start_date')
+
+    upcoming_events = list(events_qs[:5])
+
+    # Recent activity - user's recent tasks
+    recent_tasks = list(
+        user_tasks_qs.order_by('-updated_at')[:5]
+    )
+
+    context = {
+        'user': user,
+        'has_oobc_staff_role': has_oobc_staff_role,
+        'communities_stats': {
+            'total': combined_total,
+            'barangay': barangay_total,
+            'municipal': municipal_total,
+            'provincial': provincial_total,
+        },
+        'partnerships_stats': {
+            'total': total_partnerships,
+            'bmoa': bmoa_partnerships,
+            'nga': nga_partnerships,
+            'lgu': lgu_partnerships,
+        },
+        'tasks_stats': {
+            'open': open_tasks.count(),
+            'overdue': overdue_tasks,
+            'due_soon': due_soon_tasks,
+            'completed': completed_tasks,
+        },
+        'upcoming_events': upcoming_events,
+        'recent_tasks': recent_tasks,
+    }
+
+    return render(request, 'common/staff_dashboard.html', context)
+
+
 @login_required
 def dashboard(request):
     """Main dashboard view after login."""
@@ -143,6 +250,18 @@ def dashboard(request):
                 except WorkshopParticipantAccount.DoesNotExist:
                     # No participant account - redirect to regional overview
                     return redirect("common:mana_regional_overview")
+
+    # Check if user has OOBC staff role (non-executive staff)
+    from common.rbac_models import UserRole
+
+    has_oobc_staff_role = UserRole.objects.filter(
+        user=request.user,
+        role__slug='oobc-staff',
+        is_active=True
+    ).exists()
+
+    if has_oobc_staff_role and not request.user.is_superuser:
+        return _render_staff_dashboard(request)
 
     if request.user.is_moa_staff:
         return _render_moa_dashboard(request)
@@ -819,4 +938,220 @@ def dashboard_stats_cards(request):
     return HttpResponse(html)
 
 
-__all__ = ["dashboard", "dashboard_stats_cards", "dashboard_metrics", "dashboard_activity", "dashboard_alerts"]
+@login_required
+def staff_dashboard_stats(request):
+    """Render staff dashboard stats cards (HTMX endpoint)."""
+    from django.http import HttpResponse
+    from django.db.models import Q
+    from datetime import timedelta
+
+    from common.rbac_models import UserRole
+    from communities.models import OBCCommunity, MunicipalityCoverage, ProvinceCoverage
+    from coordination.models import Partnership, CoordinationNote, StakeholderEngagement
+    from common.work_item_model import WorkItem
+
+    user = request.user
+
+    # Check if user has OOBC staff role
+    has_oobc_staff_role = UserRole.objects.filter(
+        user=user,
+        role__slug='oobc-staff',
+        is_active=True
+    ).exists()
+
+    # Communities stats
+    communities_qs = OBCCommunity.objects.all()
+    barangay_total = communities_qs.count()
+    municipal_total = MunicipalityCoverage.objects.count()
+    provincial_total = ProvinceCoverage.objects.count()
+    combined_total = barangay_total + municipal_total
+
+    # Partnerships stats
+    partnerships_qs = Partnership.objects.filter(status='active')
+    total_partnerships = partnerships_qs.count()
+
+    # Partnership breakdown
+    bmoa_partnerships = partnerships_qs.filter(
+        lead_organization__organization_type='bmoa'
+    ).count()
+    nga_partnerships = partnerships_qs.filter(
+        lead_organization__organization_type='nga'
+    ).count()
+    lgu_partnerships = partnerships_qs.filter(
+        lead_organization__organization_type='lgu'
+    ).count()
+
+    # Coordination activities stats
+    today = timezone.now().date()
+    thirty_days_ago = today - timedelta(days=30)
+
+    total_coordination_notes = CoordinationNote.objects.count()
+    recent_coordination_notes = CoordinationNote.objects.filter(
+        note_date__gte=thirty_days_ago
+    ).count()
+
+    total_engagements = StakeholderEngagement.objects.count()
+    active_engagements = StakeholderEngagement.objects.filter(
+        status__in=['scheduled', 'in_progress']
+    ).count()
+
+    # Work items (tasks) for this user
+    today = timezone.now().date()
+    upcoming_threshold = today + timedelta(days=14)
+
+    user_tasks_qs = WorkItem.objects.filter(
+        Q(assignees=user) | Q(created_by=user)
+    ).distinct()
+
+    # Task status counts
+    open_statuses = [
+        WorkItem.STATUS_NOT_STARTED,
+        WorkItem.STATUS_IN_PROGRESS,
+        WorkItem.STATUS_AT_RISK,
+        WorkItem.STATUS_BLOCKED,
+    ]
+
+    open_tasks = user_tasks_qs.filter(status__in=open_statuses)
+    overdue_tasks = open_tasks.filter(due_date__lt=today).count()
+    due_soon_tasks = open_tasks.filter(
+        due_date__gte=today,
+        due_date__lte=upcoming_threshold
+    ).count()
+    completed_tasks = user_tasks_qs.filter(status=WorkItem.STATUS_COMPLETED).count()
+
+    # Render HTML stat cards
+    html = f"""
+    <!-- Communities Card -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">OBC Communities</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{combined_total}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-mosque text-2xl text-blue-600"></i>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60">
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{barangay_total}</p>
+                    <p class="text-xs text-gray-500 font-medium">Barangay</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{municipal_total}</p>
+                    <p class="text-xs text-gray-500 font-medium">Municipal</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{provincial_total}</p>
+                    <p class="text-xs text-gray-500 font-medium">Provincial</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Partnerships Card -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Active Partnerships</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{total_partnerships}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-handshake text-2xl text-purple-600"></i>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60">
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{bmoa_partnerships}</p>
+                    <p class="text-xs text-gray-500 font-medium">BMOAs</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{nga_partnerships}</p>
+                    <p class="text-xs text-gray-500 font-medium">NGAs</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{lgu_partnerships}</p>
+                    <p class="text-xs text-gray-500 font-medium">LGUs</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coordination Activities Card -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Coordination Activities</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{total_coordination_notes}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-users text-2xl text-emerald-600"></i>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60">
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{recent_coordination_notes}</p>
+                    <p class="text-xs text-gray-500 font-medium">Recent</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{total_engagements}</p>
+                    <p class="text-xs text-gray-500 font-medium">Engagements</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xl font-bold text-gray-700">{active_engagements}</p>
+                    <p class="text-xs text-gray-500 font-medium">Active</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks Card -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">My Tasks</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{open_tasks.count()}</p>
+                    <p class="text-xs text-gray-500 mt-1">Open</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-tasks text-2xl text-amber-600"></i>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60">
+                <div class="text-center">
+                    <p class="text-xl font-bold text-red-600">{overdue_tasks}</p>
+                    <p class="text-xs text-gray-500 font-medium">Overdue</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xl font-bold text-yellow-600">{due_soon_tasks}</p>
+                    <p class="text-xs text-gray-500 font-medium">Due Soon</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xl font-bold text-emerald-600">{completed_tasks}</p>
+                    <p class="text-xs text-gray-500 font-medium">Done</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+
+    return HttpResponse(html)
+
+
+__all__ = ["dashboard", "dashboard_stats_cards", "dashboard_metrics", "dashboard_activity", "dashboard_alerts", "staff_dashboard_stats"]

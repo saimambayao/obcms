@@ -28,6 +28,7 @@
 
 .calendar-page-container {
     /* Navbar (64px) + Breadcrumb (42px) = 106px */
+    /* Container fills remaining viewport height */
     height: calc(100vh - 106px);
     display: grid;
     grid-template-columns: 280px 1fr 0px;
@@ -35,7 +36,7 @@
     gap: 1rem;
     padding: 1rem;
     background: #f8fafc;
-    overflow: hidden;
+    overflow: visible;
     transition: grid-template-columns 300ms ease-in-out;
 }
 
@@ -79,6 +80,7 @@
     border-radius: 1rem;
     border: 1px solid #e2e8f0;
     overflow-y: auto;
+    height: 100%;
     z-index: 10;
     transition: transform 300ms ease-in-out;
 }
@@ -105,7 +107,7 @@
     background: white;
     border-radius: 1rem;
     border: 1px solid #e2e8f0;
-    overflow: auto;
+    overflow: hidden;
     padding: 1.5rem;
     min-height: 0;
     display: flex;
@@ -119,14 +121,15 @@
     width: 100%;
 }
 
-/* Detail Panel - Spans header + calendar rows */
+/* Detail Panel - Spans ALL rows (hero + stats + header + calendar) */
 .calendar-detail-panel {
     grid-column: 3 / 4;
-    grid-row: 3 / 5;
+    grid-row: 1 / 5;
     background: white;
     border-radius: 1rem;
     border: 1px solid #e2e8f0;
     overflow-y: auto;
+    height: 100%;
     box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
     transition: all 300ms ease-in-out;
     width: 0;
@@ -478,6 +481,75 @@
     display: none; /* Using custom header */
 }
 
+/* Remove all scrollbars from FullCalendar */
+.fc .fc-scroller {
+    overflow: hidden !important;
+}
+
+.fc .fc-scroller-liquid-absolute {
+    overflow: hidden !important;
+}
+
+.fc .fc-daygrid-body {
+    overflow: hidden !important;
+}
+
+/* Force FullCalendar to fit all content within available height */
+.fc .fc-view-harness {
+    height: 100% !important;
+}
+
+.fc .fc-view-harness-active {
+    height: 100% !important;
+}
+
+.fc-daygrid {
+    height: 100% !important;
+}
+
+/* Equal height rows for all weeks */
+.fc .fc-scrollgrid {
+    border: none !important;
+    height: 100% !important;
+}
+
+.fc .fc-scrollgrid-sync-table {
+    height: 100% !important;
+}
+
+.fc .fc-daygrid-body {
+    height: 100% !important;
+}
+
+.fc .fc-scrollgrid-section-body > td,
+.fc .fc-scrollgrid-section-body table {
+    height: 100% !important;
+}
+
+/* Force table to use fixed layout for equal row distribution */
+.fc-daygrid-body table {
+    table-layout: fixed;
+    height: 100% !important;
+}
+
+.fc .fc-daygrid-body-unbalanced .fc-daygrid-day-frame {
+    min-height: 0 !important;
+}
+
+.fc-daygrid-day-frame {
+    min-height: 0 !important;
+}
+
+/* Ensure all week rows have equal height */
+.fc .fc-daygrid-body tr {
+    height: 16.666% !important; /* 100% / 6 weeks = equal distribution */
+}
+
+.fc-daygrid-body tbody {
+    height: 100% !important;
+    display: table-row-group;
+}
+
 .fc .fc-event {
     border: none;
     border-radius: 0.375rem;
@@ -656,7 +728,7 @@
                 </a>
                 <a href="{% url 'common:oobc_calendar_advanced_modern' %}" class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg font-medium hover:bg-white/30 transition-colors text-sm border border-white/30">
                     <i class="fas fa-star mr-2"></i>
-                    Advanced
+                    Full Calendar
                 </a>
             </div>
         </div>
@@ -948,9 +1020,9 @@
 
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: savedView,
-            headerToolbar: false, // Using custom header
-            height: '100%', // Fill parent container
-            editable: true, // Enable drag-and-drop and resizing
+            headerToolbar: false,
+            height: '100%',
+            editable: true,
             events: fetchEvents,
             eventClick: handleEventClick,
             eventDrop: handleEventDrop,
@@ -1056,7 +1128,25 @@
                 allEvents = data;
                 console.log(`📅 Calendar feed loaded: ${data.length} events (cache-buster: ${cacheBuster})`);
 
+                // 🐛 DEBUG: Log multiday events specifically
+                const multidayEvents = data.filter(e => {
+                    if (e.start && e.end) {
+                        const start = new Date(e.start);
+                        const end = new Date(e.end);
+                        const durationDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+                        return durationDays > 1;
+                    }
+                    return false;
+                });
+
+                console.log(`🔍 Found ${multidayEvents.length} multiday events:`);
+                multidayEvents.forEach(e => {
+                    console.log(`  - "${e.title}": ${e.start} → ${e.end} (allDay: ${e.allDay})`);
+                });
+
                 const filteredEvents = applyFilters(data);
+                console.log(`📤 Passing ${filteredEvents.length} events to FullCalendar after filtering`);
+
                 successCallback(filteredEvents);
             })
             .catch(error => {
@@ -1088,16 +1178,16 @@
     // Apply filters
     function applyFilters(events) {
         return events.filter(event => {
-            // FIX: workType is at TOP LEVEL in raw API data, not in extendedProps
-            const workType = event.workType || event.extendedProps?.work_type;
+            // Get workType from extendedProps (matches Advanced Calendar)
+            const workType = event.extendedProps?.workType;
 
             // Check work type filter
             if (workType && !activeFilters[workType]) {
                 return false;
             }
 
-            // Check completed filter
-            const isCompleted = event.status === 'completed';
+            // Check completed filter (matches Advanced Calendar)
+            const isCompleted = event.extendedProps?.status === 'completed';
             if (isCompleted && !activeFilters.completed) {
                 return false;
             }

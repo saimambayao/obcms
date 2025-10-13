@@ -1,5 +1,6 @@
 <!-- Navigation Bar -->
 {% load moa_rbac %}
+{% load rbac_tags %}
 {% if user.is_authenticated %}
 <nav class="bg-bangsamoro shadow-lg sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 xl:px-8">
@@ -89,7 +90,8 @@
                     </div>
                 </div>
 
-                {% if user|can_access_mana_filter %}
+                {% has_feature_access user 'mana_access' as can_access_mana %}
+                {% if can_access_mana %}
                 <div class="relative group">
                     <a href="{% url 'mana:mana_home' %}" class="nav-item px-3 xl:px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors duration-200 flex items-center space-x-2">
                         <i class="fas fa-map-marked-alt text-sm"></i>
@@ -181,7 +183,8 @@
                 </div>
                 {% endif %}
 
-                {% if user|can_access_policies %}
+                {% has_feature_access user 'recommendations_access' as can_access_recommendations %}
+                {% if can_access_recommendations %}
                     <div class="relative group">
                         <a href="{% url 'policies:home' %}" class="nav-item px-3 xl:px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors duration-200 flex items-center space-x-2">
                             <i class="fas fa-gavel text-sm"></i>
@@ -214,6 +217,8 @@
                     </div>
                 {% endif %}
 
+                {% has_feature_access user 'monitoring_access' as can_access_monitoring %}
+                {% if can_access_monitoring %}
                 <div class="relative group">
                     <a href="{% url 'monitoring:home' %}" class="nav-item px-3 xl:px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors duration-200 flex items-center space-x-2">
                         <i class="fas fa-chart-pie text-sm"></i>
@@ -255,6 +260,7 @@
                         {% endif %}
                     </div>
                 </div>
+                {% endif %}
 
                 {% if user|can_access_oobc_management %}
                     <div class="relative group">
@@ -278,6 +284,8 @@
                                 <span class="block text-xs text-gray-500">Unified task, activity, and project management system.</span>
                             </span>
                         </a>
+                        {% has_feature_access user 'planning_budgeting_access' as can_access_planning %}
+                        {% if can_access_planning %}
                         <a href="{% url 'common:planning_budgeting' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
                             <i class="fas fa-file-signature text-blue-500 mt-1"></i>
                             <span>
@@ -285,6 +293,7 @@
                                 <span class="block text-xs text-gray-500">Manage OOBC Office PPAs and OBC MOA PPAs.</span>
                             </span>
                         </a>
+                        {% endif %}
                         <a href="{% url 'common:oobc_calendar' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
                             <i class="fas fa-calendar-week text-blue-500 mt-1"></i>
                             <span>
@@ -292,6 +301,8 @@
                                 <span class="block text-xs text-gray-500">Organization-wide schedule for coordination, MANA, and staff actions.</span>
                             </span>
                         </a>
+                        {% has_feature_access user 'project_management_access' as can_access_projects %}
+                        {% if can_access_projects %}
                         <a href="{% url 'project_central:portfolio_dashboard' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
                             <i class="fas fa-project-diagram text-purple-500 mt-1"></i>
                             <span>
@@ -299,7 +310,9 @@
                                 <span class="block text-xs text-gray-500">Project-activity-task integration dashboard and workflow management.</span>
                             </span>
                         </a>
-                        {% if user.is_superuser or user.user_type == 'admin' or user.user_type == 'oobc_staff' and user.position == 'Executive Director' or user.user_type == 'oobc_staff' and user.position == 'Deputy Executive Director' or user.user_type == 'oobc_staff' and user.position == 'DMO IV' or user.user_type == 'oobc_staff' and user.position == 'DMO III' or user.user_type == 'oobc_staff' and user.position == 'Information System Analyst' or user.user_type == 'oobc_staff' and user.position == 'Information System Analyst II' or user.user_type == 'oobc_staff' and user.position == 'Planning Officer I' or user.user_type == 'oobc_staff' and user.position == 'Planning Officer II' or user.user_type == 'oobc_staff' and user.position == 'Community Development Officer I' %}
+                        {% endif %}
+                        {% has_feature_access user 'user_approvals_access' as can_access_approvals %}
+                        {% if can_access_approvals %}
                         <a href="{% url 'common:user_approvals' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
                             <i class="fas fa-user-check text-amber-500 mt-1"></i>
                             <span>
@@ -443,7 +456,8 @@
             </div>
             {% endif %}
 
-            {% if user|can_access_mana_filter %}
+            {% has_feature_access user 'mana_access' as can_access_mana_mobile %}
+            {% if can_access_mana_mobile %}
             <div class="mobile-section space-y-2">
                 <button type="button"
                         class="mobile-section-toggle mobile-nav-item w-full px-3 py-2 rounded-md text-left text-white bg-white bg-opacity-5 flex items-center justify-between"
@@ -512,7 +526,8 @@
             </div>
             {% endif %}
 
-            {% if user|can_access_policies %}
+            {% has_feature_access user 'recommendations_access' as can_access_recommendations_mobile %}
+            {% if can_access_recommendations_mobile %}
             <div class="mobile-section space-y-2">
                 <button type="button"
                         class="mobile-section-toggle mobile-nav-item w-full px-3 py-2 rounded-md text-left text-white bg-white bg-opacity-5 flex items-center justify-between"
@@ -542,6 +557,8 @@
             </div>
             {% endif %}
 
+            {% has_feature_access user 'monitoring_access' as can_access_monitoring_mobile %}
+            {% if can_access_monitoring_mobile %}
             <div class="mobile-section space-y-2">
                 <button type="button"
                         class="mobile-section-toggle mobile-nav-item w-full px-3 py-2 rounded-md text-left text-white bg-white bg-opacity-5 flex items-center justify-between"
@@ -577,6 +594,7 @@
                     {% endif %}
                 </div>
             </div>
+            {% endif %}
 
             {% if user|can_access_oobc_management %}
             <div class="mobile-section space-y-2">
@@ -600,18 +618,24 @@
                         Staff Management
                         <span class="block text-xs text-white text-opacity-70">Manage workloads, tasks, and staffing needs</span>
                     </a>
+                    {% has_feature_access user 'planning_budgeting_access' as can_access_planning_mobile %}
+                    {% if can_access_planning_mobile %}
                     <a href="{% url 'common:planning_budgeting' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Planning &amp; Budgeting
                         <span class="block text-xs text-white text-opacity-70">OOBC Office PPAs and MOA PPAs for OBCs</span>
                     </a>
+                    {% endif %}
                     <a href="{% url 'common:oobc_calendar' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Calendar Management
                         <span class="block text-xs text-white text-opacity-70">Organization-wide schedule for coordination, MANA, and staff actions</span>
                     </a>
+                    {% has_feature_access user 'project_management_access' as can_access_projects_mobile %}
+                    {% if can_access_projects_mobile %}
                     <a href="{% url 'project_central:portfolio_dashboard' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Project Management Portal
                         <span class="block text-xs text-white text-opacity-70">Project-activity-task integration dashboard</span>
                     </a>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}

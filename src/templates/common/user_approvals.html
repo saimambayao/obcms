@@ -37,6 +37,14 @@
                 User Approvals
             </button>
             <button type="button"
+                    onclick="showTab('moa')"
+                    id="moa-tab"
+                    class="tab-button border-b-4 border-transparent py-4 px-1 text-sm font-semibold text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap"
+                    aria-selected="false">
+                <i class="fas fa-building mr-2"></i>
+                MOA Staff Approvals
+            </button>
+            <button type="button"
                     onclick="showTab('permissions')"
                     id="permissions-tab"
                     class="tab-button border-b-4 border-transparent py-4 px-1 text-sm font-semibold text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap"
@@ -51,41 +59,245 @@
     <div class="tab-content">
         <!-- User Approvals Tab -->
         <div id="approvals-content" class="tab-pane">
-            <!-- Metrics Summary -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-amber-500 to-orange-500 p-4 text-white">
-                <div class="flex items-center justify-between">
-                    <span class="text-sm uppercase tracking-wide text-amber-100">Pending Approvals</span>
-                    <i class="fas fa-user-clock text-xl"></i>
-                </div>
-                <p class="mt-2 text-3xl font-bold">{{ pending_count }}</p>
+            <!-- Metrics Summary - OOB Swap Target -->
+            <div id="approval-metrics">
+                {% include 'common/partials/approval_metrics.html' with pending_count=pending_count recently_approved_count=recently_approved.count %}
             </div>
-            <div class="p-4 text-sm text-gray-600">
-                User accounts awaiting review and approval.
-            </div>
-        </div>
 
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-emerald-500 to-green-500 p-4 text-white">
-                <div class="flex items-center justify-between">
-                    <span class="text-sm uppercase tracking-wide text-emerald-100">Recently Approved</span>
-                    <i class="fas fa-user-check text-xl"></i>
-                </div>
-                <p class="mt-2 text-3xl font-bold">{{ recently_approved.count }}</p>
-            </div>
-            <div class="p-4 text-sm text-gray-600">
-                Users approved in recent activity.
-            </div>
-        </div>
-    </div>
+            <!-- Access Levels Information Section -->
+            <div class="mb-8">
+                <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden transform transition-all hover:shadow-xl">
+                    <div class="bg-gradient-to-r from-blue-500 to-cyan-500 px-6 py-4">
+                        <h2 class="text-xl font-semibold text-white flex items-center">
+                            <i class="fas fa-info-circle mr-3"></i>
+                            Default Access Levels for OOBC Staff
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Access Granted Section -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                    <i class="fas fa-check-circle text-emerald-500 mr-2"></i>
+                                    Modules with Access
+                                </h3>
+                                <div class="space-y-2">
+                                    <div class="flex items-start p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                                        <i class="fas fa-check-circle text-emerald-500 mt-1 mr-3"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-900">Communities Management</p>
+                                            <p class="text-sm text-gray-600">Full access to community data and stakeholder management</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                                        <i class="fas fa-check-circle text-emerald-500 mt-1 mr-3"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-900">Coordination & Events</p>
+                                            <p class="text-sm text-gray-600">Event planning, partnerships, and organizational coordination</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                                        <i class="fas fa-check-circle text-emerald-500 mt-1 mr-3"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-900">Calendar & Resources</p>
+                                            <p class="text-sm text-gray-600">Schedule management and resource booking</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-    <!-- Pending Users Section -->
-    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-10"
-         hx-trigger="refresh-page from:body"
-         hx-get="{% url 'common:user_approvals' %}"
-         hx-target="body"
-         hx-swap="innerHTML">
+                            <!-- Restricted Modules Section -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                    <i class="fas fa-lock text-red-500 mr-2"></i>
+                                    Executive-Only Modules
+                                </h3>
+                                <div class="space-y-2">
+                                    <div class="flex items-start p-3 bg-red-50 rounded-lg border border-red-200">
+                                        <i class="fas fa-times-circle text-red-500 mt-1 mr-3"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-900">MANA Assessments</p>
+                                            <p class="text-sm text-gray-600">Sensitive assessment data and analysis</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start p-3 bg-red-50 rounded-lg border border-red-200">
+                                        <i class="fas fa-times-circle text-red-500 mt-1 mr-3"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-900">Policy Recommendations</p>
+                                            <p class="text-sm text-gray-600">Policy formulation and strategic recommendations</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start p-3 bg-red-50 rounded-lg border border-red-200">
+                                        <i class="fas fa-times-circle text-red-500 mt-1 mr-3"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-900">Planning & Budgeting</p>
+                                            <p class="text-sm text-gray-600">Budget preparation and financial planning</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start p-3 bg-red-50 rounded-lg border border-red-200">
+                                        <i class="fas fa-times-circle text-red-500 mt-1 mr-3"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-900">Project Management</p>
+                                            <p class="text-sm text-gray-600">PPAs and project lifecycle management</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start p-3 bg-red-50 rounded-lg border border-red-200">
+                                        <i class="fas fa-times-circle text-red-500 mt-1 mr-3"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-900">User Approvals</p>
+                                            <p class="text-sm text-gray-600">User account management and approvals</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Executive Access Note -->
+                        <div class="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                            <div class="flex items-start">
+                                <i class="fas fa-crown text-blue-600 mt-1 mr-3"></i>
+                                <div>
+                                    <p class="text-sm font-semibold text-blue-900">Executive Director & Deputy Executive Director</p>
+                                    <p class="text-sm text-blue-700 mt-1">
+                                        Executive-level staff receive full system access including all restricted modules.
+                                        This includes MANA assessments, policy recommendations, planning & budgeting, project management, and user approvals.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Access Matrix -->
+                        <div class="mt-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Access Matrix</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+                                    <thead class="bg-gradient-to-r from-blue-500 to-teal-500">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                                User Type
+                                            </th>
+                                            <th class="px-4 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                                                Communities
+                                            </th>
+                                            <th class="px-4 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                                                Coordination
+                                            </th>
+                                            <th class="px-4 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                                                MANA
+                                            </th>
+                                            <th class="px-4 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                                                Policies
+                                            </th>
+                                            <th class="px-4 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                                                Planning/Budget
+                                            </th>
+                                            <th class="px-4 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                                                Projects
+                                            </th>
+                                            <th class="px-4 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                                                Approvals
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900">
+                                                OOBC Staff
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-times-circle text-red-500 text-lg" title="Restricted"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-times-circle text-red-500 text-lg" title="Restricted"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-times-circle text-red-500 text-lg" title="Restricted"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-times-circle text-red-500 text-lg" title="Restricted"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-times-circle text-red-500 text-lg" title="Restricted"></i>
+                                            </td>
+                                        </tr>
+                                        <tr class="bg-blue-50">
+                                            <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900">
+                                                <i class="fas fa-crown text-blue-600 mr-1"></i> OOBC Executive
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                        </tr>
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900">
+                                                <i class="fas fa-crown text-blue-600 mr-1"></i> Deputy Executive
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <i class="fas fa-check-circle text-emerald-500 text-lg" title="Full Access"></i>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Help Text -->
+                        <div class="mt-6 text-sm text-gray-600">
+                            <p class="flex items-start">
+                                <i class="fas fa-question-circle text-blue-500 mt-1 mr-2"></i>
+                                <span>
+                                    <strong>Need additional access?</strong> Contact the Executive Director to request special permissions for specific modules or features.
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Users Section -->
+            <div id="pending-users-section" class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-10">
         <div class="bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-4">
             <h2 class="text-xl font-semibold text-white flex items-center">
                 <i class="fas fa-user-plus mr-3"></i>
@@ -105,7 +317,7 @@
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 User Type
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-64">
                                 Organization
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -134,8 +346,14 @@
                                     {{ user.get_user_type_display }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {{ user.organization|default:"—" }}
+                            <td class="px-6 py-4 text-sm text-gray-600">
+                                {% if user.moa_organization %}
+                                    <span class="font-medium">{{ user.moa_organization.acronym|default:user.moa_organization.name }}</span>
+                                {% elif user.organization %}
+                                    {{ user.organization }}
+                                {% else %}
+                                    —
+                                {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 {{ user.date_joined|date:"M d, Y" }}
@@ -152,15 +370,17 @@
                                     <button type="submit"
                                             name="action"
                                             value="approve"
-                                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200">
+                                            hx-disabled-elt="this"
+                                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                                         <i class="fas fa-check mr-1"></i>
                                         Approve
                                     </button>
                                     <button type="submit"
                                             name="action"
                                             value="reject"
-                                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
-                                            onclick="return confirm('Are you sure you want to reject this user? This will mark their account as inactive.');">
+                                            hx-disabled-elt="this"
+                                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            hx-confirm="Are you sure you want to reject this user? This will mark their account as inactive.">
                                         <i class="fas fa-times mr-1"></i>
                                         Reject
                                     </button>
@@ -254,28 +474,51 @@
         </div>
         <!-- End User Approvals Tab -->
 
-        <!-- Permissions & Roles Tab -->
-        <div id="permissions-content" class="tab-pane hidden">
-            <div hx-get="{% url 'common:rbac_dashboard' %}"
-                 hx-trigger="load once"
+        <!-- MOA Staff Approvals Tab -->
+        <div id="moa-content" class="tab-pane hidden">
+            <div hx-get="{% url 'common:moa_approval_list' %}"
+                 hx-trigger="revealed once"
                  hx-swap="innerHTML"
-                 hx-indicator="#rbac-loading">
+                 hx-indicator="#moa-loading">
                 <!-- Loading Indicator -->
-                <div id="rbac-loading" class="flex items-center justify-center py-12">
+                <div id="moa-loading" class="flex items-center justify-center py-12">
                     <div class="text-center">
                         <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
-                        <p class="text-gray-600">Loading RBAC dashboard...</p>
+                        <p class="text-gray-600">Loading MOA Staff Approvals...</p>
                     </div>
                 </div>
+            </div>
+        </div>
+        <!-- End MOA Staff Approvals Tab -->
+
+        <!-- Permissions & Roles Tab -->
+        <div id="permissions-content" class="tab-pane hidden">
+            <!-- Loading Indicator (outside swap target) -->
+            <div class="rbac-loading htmx-indicator flex items-center justify-center py-12">
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+                    <p class="text-gray-600">Loading RBAC dashboard...</p>
+                </div>
+            </div>
+
+            <!-- Content Container (swap target) -->
+            <div id="rbac-content"
+                 hx-get="{% url 'common:rbac_dashboard' %}"
+                 hx-trigger="revealed once"
+                 hx-swap="innerHTML"
+                 hx-indicator=".rbac-loading">
             </div>
         </div>
         <!-- End Permissions & Roles Tab -->
     </div>
 </div>
 
+<!-- Include Error Toast Component -->
+{% include 'components/error_toast.html' %}
+
 {% block extra_js %}
 <script>
-// Tab switching functionality
+// Tab switching functionality with HTMX revealed trigger support
 function showTab(tabName) {
     // Hide all tab content
     document.querySelectorAll('.tab-pane').forEach(pane => {
@@ -294,6 +537,9 @@ function showTab(tabName) {
     const contentElement = document.getElementById(contentId);
     if (contentElement) {
         contentElement.classList.remove('hidden');
+
+        // Trigger HTMX 'revealed' event for lazy loading
+        htmx.trigger(contentElement, 'revealed');
     }
 
     // Add active state to selected tab

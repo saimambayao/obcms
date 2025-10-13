@@ -10,7 +10,9 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.db import OperationalError, transaction
+from common.decorators.rbac import require_feature_access
 from django.db.models import (
     Avg,
     Case,
@@ -554,7 +556,8 @@ def oobc_management_home(request):
         and user.has_perm("mana.can_access_regional_mana")
         and not user.has_perm("mana.can_facilitate_workshop")
     ):
-        return redirect("common:page_restricted")
+        messages.error(request, "You do not have permission to access OOBC staff management.")
+        raise PermissionDenied("User lacks required permission for OOBC staff management")
 
     staff_qs = staff_queryset().order_by("-date_joined")
     pending_qs = User.objects.filter(is_approved=False).order_by("-date_joined")
@@ -2855,8 +2858,13 @@ def staff_profiles_list(request):
     staff_users_qs = staff_queryset().order_by("last_name", "first_name")
     ensure_staff_profiles_for_users(staff_users_qs)
 
+    profile_scope = Q(user__user_type__in=STAFF_USER_TYPES) | Q(
+        user__is_superuser=True
+    )
+
     profiles_qs = (
-        StaffProfile.objects.select_related("user")
+        StaffProfile.objects.filter(profile_scope)
+        .select_related("user")
         .prefetch_related("user__team_memberships__team")
         .order_by("user__last_name", "user__first_name")
     )
@@ -2957,14 +2965,15 @@ def staff_profiles_list(request):
     profiles.sort(key=_profile_sort_key)
 
     status_totals = (
-        StaffProfile.objects.values("employment_status")
+        StaffProfile.objects.filter(profile_scope)
+        .values("employment_status")
         .annotate(total=Count("id"))
         .order_by()
     )
     status_totals_map = {
         row["employment_status"]: row["total"] for row in status_totals
     }
-    total_profiles = StaffProfile.objects.count()
+    total_profiles = StaffProfile.objects.filter(profile_scope).count()
     available_staff = (
         User.objects.filter(user_type__in=STAFF_USER_TYPES)
         .filter(staff_profile__isnull=True)
@@ -3090,7 +3099,7 @@ def staff_profile_update(request, pk):
             request,
             "You do not have permission to edit OOBC staff profiles.",
         )
-        return redirect("common:page_restricted")
+        raise PermissionDenied("User lacks required permission to edit OOBC staff profiles")
 
     profile = get_object_or_404(StaffProfile.objects.select_related("user"), pk=pk)
     form = StaffProfileForm(request.POST or None, instance=profile, request=request)
@@ -3339,6 +3348,7 @@ ZERO_FLOAT = Value(0, output_field=FloatField())
 
 
 @login_required
+@require_feature_access('planning_budgeting_access')
 def planning_budgeting(request):
     """Planning and budgeting dashboard summarising PPAs and allocations."""
     entries = MonitoringEntry.objects.select_related(
@@ -3729,12 +3739,14 @@ def staff_task_create_api(request):
 
 
 @login_required
+@require_feature_access('user_approvals_access')
 def user_approvals(request):
     """User approval management page - review and approve pending user accounts."""
 
     # Restrict to authorized approvers only
     if not _can_approve_users(request.user):
-        return redirect("common:page_restricted")
+        messages.error(request, "You do not have permission to access user approvals.")
+        raise PermissionDenied("User lacks required permission to access user approvals")
 
     # Get all pending users ordered by registration date
     pending_users = User.objects.filter(is_approved=False).order_by("-date_joined")
@@ -3771,24 +3783,47 @@ def user_approval_action(request, user_id: int):
         user_to_process.approved_at = timezone.now()
         user_to_process.save()
 
+        # Get updated metrics counts
+        pending_count = User.objects.filter(is_approved=False, is_active=True).count()
+        recently_approved_count = User.objects.filter(
+            is_approved=True,
+            approved_at__gte=timezone.now() - timedelta(days=7)
+        ).count()
+
+        # Return HTMX response with OOB swap for metrics update
+        if request.headers.get("HX-Request"):
+            # Render updated metrics fragment for OOB swap
+            from django.template.loader import render_to_string
+            metrics_html = render_to_string(
+                'common/partials/approval_metrics.html',
+                {
+                    'pending_count': pending_count,
+                    'recently_approved_count': recently_approved_count
+                },
+                request=request
+            )
+
+            # Return empty response (row deleted by hx-swap="delete")
+            # Plus OOB swap for metrics
+            response = HttpResponse(f'''
+                <div id="approval-metrics" hx-swap-oob="innerHTML">
+                    {metrics_html}
+                </div>
+            ''')
+
+            response['HX-Trigger'] = json.dumps({
+                'showMessage': {
+                    'type': 'success',
+                    'message': f'Approved {user_to_process.get_full_name() or user_to_process.username}'
+                }
+            })
+
+            return response
+
         messages.success(
             request,
             f"✓ {user_to_process.get_full_name() or user_to_process.username} has been approved.",
         )
-
-        # Return HTMX response to refresh the page
-        if request.headers.get("HX-Request"):
-            return HttpResponse(
-                status=204,
-                headers={
-                    "HX-Trigger": json.dumps(
-                        {
-                            "user-approved": {"id": user_id},
-                            "refresh-page": True,
-                        }
-                    )
-                },
-            )
         return redirect("common:user_approvals")
 
     elif action == "reject":
@@ -3797,24 +3832,44 @@ def user_approval_action(request, user_id: int):
         user_to_process.is_active = False
         user_to_process.save()
 
+        # Get updated metrics counts
+        pending_count = User.objects.filter(is_approved=False, is_active=True).count()
+        recently_approved_count = User.objects.filter(
+            is_approved=True,
+            approved_at__gte=timezone.now() - timedelta(days=7)
+        ).count()
+
+        # Return HTMX response with OOB swap for metrics update
+        if request.headers.get("HX-Request"):
+            from django.template.loader import render_to_string
+            metrics_html = render_to_string(
+                'common/partials/approval_metrics.html',
+                {
+                    'pending_count': pending_count,
+                    'recently_approved_count': recently_approved_count
+                },
+                request=request
+            )
+
+            response = HttpResponse(f'''
+                <div id="approval-metrics" hx-swap-oob="innerHTML">
+                    {metrics_html}
+                </div>
+            ''')
+
+            response['HX-Trigger'] = json.dumps({
+                'showMessage': {
+                    'type': 'error',
+                    'message': f'Rejected {user_to_process.get_full_name() or user_to_process.username}'
+                }
+            })
+
+            return response
+
         messages.warning(
             request,
             f"✗ {user_to_process.get_full_name() or user_to_process.username} has been rejected and marked inactive.",
         )
-
-        # Return HTMX response to refresh the page
-        if request.headers.get("HX-Request"):
-            return HttpResponse(
-                status=204,
-                headers={
-                    "HX-Trigger": json.dumps(
-                        {
-                            "user-rejected": {"id": user_id},
-                            "refresh-page": True,
-                        }
-                    )
-                },
-            )
         return redirect("common:user_approvals")
 
     messages.error(request, "Invalid action specified.")

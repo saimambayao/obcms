@@ -6,11 +6,13 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Sum
 from django.shortcuts import render
 
+from common.decorators.rbac import require_feature_access
 from mana.models import Assessment, Need
 from .models import MonitoringEntry
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def prioritization_matrix(request):
     """
     Display prioritization matrix linking MANA needs to PPAs.

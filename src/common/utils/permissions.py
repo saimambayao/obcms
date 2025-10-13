@@ -1,7 +1,8 @@
-"""Permission utilities for MOA staff management."""
+"""Permission utilities for MOA staff management and RBAC feature access."""
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from rest_framework import permissions
 
 from common.constants import STAFF_USER_TYPES
 
@@ -132,10 +133,59 @@ def has_oobc_management_access(user):
     return getattr(user, "user_type", None) in STAFF_USER_TYPES
 
 
+class HasFeatureAccess(permissions.BasePermission):
+    """
+    DRF permission class for RBAC feature-based access control.
+
+    Usage in DRF views:
+        @api_view(['POST'])
+        @permission_classes([IsAuthenticated, HasFeatureAccess])
+        def my_view(request):
+            # View must set feature_key attribute
+            pass
+
+    Or specify feature in view:
+        class MyAPIView(APIView):
+            permission_classes = [HasFeatureAccess]
+            feature_key = 'monitoring_access'
+    """
+
+    message = "You do not have permission to access this resource."
+
+    def has_permission(self, request, view):
+        """Check if user has required feature access."""
+        # Get feature key from view attribute or request
+        feature_key = getattr(view, 'feature_key', None)
+
+        if not feature_key:
+            # Default to monitoring_access for M&E API views
+            feature_key = 'monitoring_access'
+
+        if not request.user or not request.user.is_authenticated:
+            self.message = "Authentication required."
+            return False
+
+        # Import here to avoid circular dependency
+        from common.services.rbac_service import RBACService
+
+        # Check feature access using RBAC service
+        has_access = RBACService.has_feature_access(
+            request.user,
+            feature_key,
+            organization=getattr(request.user, 'moa_organization', None)
+        )
+
+        if not has_access:
+            self.message = f"You do not have access to this feature."
+
+        return has_access
+
+
 __all__ = [
     'can_approve_moa_users',
     'get_pending_moa_count',
     'get_pending_first_level_count',
     'is_moa_focal_approver',
     'has_oobc_management_access',
+    'HasFeatureAccess',
 ]

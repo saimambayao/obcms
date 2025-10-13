@@ -21,7 +21,7 @@ class CoordinationNoteCreateViewTests(TestCase):
     """Ensure coordination notes can be recorded against WorkItem activities."""
 
     def setUp(self):
-        self.url = reverse("common:coordination_note_add")
+        self.url = reverse("coordination:note_add")
         self.activity = self._create_activity("Coordination Dialogue", date(2025, 5, 12))
         self.user = User.objects.create_user(
             username="note_taker",
@@ -90,7 +90,7 @@ class CoordinationNoteActivityOptionsTests(TestCase):
     """Validate HTMX activity options endpoint for coordination notes."""
 
     def setUp(self):
-        self.url = reverse("common:coordination_note_activity_options")
+        self.url = reverse("coordination:note_activity_options")
         self.user = User.objects.create_user(
             username="note_user",
             password="secret123",

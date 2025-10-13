@@ -434,6 +434,16 @@ LOGGING = {
             "format": "{levelname} {message}",
             "style": "{",
         },
+        "security_audit": {
+            "format": (
+                "{levelname} {asctime} - {message} | "
+                "User: {username} (ID: {user_id}) | "
+                "Organization: {organization_name} (ID: {organization_id}) | "
+                "IP: {client_ip} | "
+                "Event: {event_type}"
+            ),
+            "style": "{",
+        },
     },
     "handlers": {
         "file": {
@@ -446,6 +456,14 @@ LOGGING = {
             "level": "INFO",
             "class": "logging.StreamHandler",
             "formatter": "simple",
+        },
+        "rbac_security": {
+            "level": "WARNING",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": BASE_DIR / "logs" / "rbac_security.log",
+            "maxBytes": 10485760,  # 10MB
+            "backupCount": 10,  # Keep 10 backup files (~100MB total)
+            "formatter": "security_audit",
         },
     },
     "root": {
@@ -461,6 +479,11 @@ LOGGING = {
         "obc_management": {
             "handlers": ["console", "file"],
             "level": "INFO",
+            "propagate": False,
+        },
+        "rbac.access_denied": {
+            "handlers": ["rbac_security", "console"],
+            "level": "WARNING",
             "propagate": False,
         },
     },

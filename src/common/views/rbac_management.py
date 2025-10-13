@@ -27,6 +27,7 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
+from django_ratelimit.decorators import ratelimit
 
 from common.decorators.rbac import require_permission
 from common.forms.rbac_forms import (
@@ -261,19 +262,28 @@ def user_permissions_detail(request, user_id):
         id__in=permission_ids
     ).select_related('feature').order_by('feature__module', 'feature__name', 'codename')
 
-    # Get accessible features
+    # Get accessible features (returns Feature objects)
     accessible_features = RBACService.get_accessible_features(user, organization)
 
+    # Format feature keys for display (convert underscore_case to Title Case)
+    formatted_features = [
+        {
+            'key': feature.feature_key,
+            'display_name': feature.feature_key.replace('_', ' ').title()
+        }
+        for feature in accessible_features
+    ]
+
     context = {
-        'target_user': user,
+        'user': user,
         'user_roles': user_roles,
         'direct_permissions': direct_permissions,
         'effective_permissions': effective_permissions,
-        'accessible_features': accessible_features,
+        'features': formatted_features,
         'organization': organization,
     }
 
-    return render(request, 'common/rbac/user_permissions_detail.html', context)
+    return render(request, 'common/rbac/partials/user_permissions_modal.html', context)
 
 
 # ============================================================================
@@ -282,10 +292,13 @@ def user_permissions_detail(request, user_id):
 
 @login_required
 @require_POST
+@ratelimit(key='user', rate='10/m', method='POST', block=True)
 @require_permission('oobc_management.assign_user_roles')
 def user_role_assign(request, user_id):
     """
     Assign a role to a user (HTMX endpoint).
+
+    Rate limit: 10 requests per minute per user (prevents abuse)
 
     Handles:
     - Role assignment with organization context
@@ -420,10 +433,13 @@ def user_role_remove(request, user_id, role_id):
 
 @login_required
 @require_POST
+@ratelimit(key='user', rate='20/m', method='POST', block=True)
 @require_permission('oobc_management.manage_feature_access')
 def user_feature_toggle(request, user_id, feature_id):
     """
     Enable/disable a feature for a user (HTMX endpoint).
+
+    Rate limit: 20 requests per minute per user
 
     Creates direct permission grant/denial for feature access.
     """
@@ -507,10 +523,13 @@ def user_feature_toggle(request, user_id, feature_id):
 
 @login_required
 @require_POST
+@ratelimit(key='user', rate='5/m', method='POST', block=True)
 @require_permission('oobc_management.assign_user_roles')
 def bulk_assign_roles(request):
     """
     Assign role to multiple users at once.
+
+    Rate limit: 5 requests per minute per user (stricter for bulk operations)
 
     Features:
     - Bulk role assignment

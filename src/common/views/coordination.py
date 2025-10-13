@@ -1,6 +1,8 @@
 """Views for coordination module dashboards and listings."""
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render
 from django.urls import reverse
 from django.template.loader import render_to_string
@@ -38,7 +40,8 @@ def coordination_home(request):
         and user.has_perm("mana.can_access_regional_mana")
         and not user.has_perm("mana.can_facilitate_workshop")
     ):
-        return redirect("common:page_restricted")
+        messages.error(request, "You do not have permission to access coordination.")
+        raise PermissionDenied("User lacks required permission to access coordination")
 
     from datetime import timedelta
 
@@ -539,7 +542,7 @@ def coordination_events(request):
             "icon": "fas fa-clipboard-list",
             "icon_gradient": "from-emerald-500 to-teal-500",
             "cta": "Record Notes",
-            "url": reverse("common:coordination_note_add"),
+            "url": reverse("coordination:note_add"),
         },
         {
             "title": "Coordination Insights",
@@ -547,7 +550,7 @@ def coordination_events(request):
             "icon": "fas fa-chart-line",
             "icon_gradient": "from-orange-500 to-amber-500",
             "cta": "Open Dashboard",
-            "url": reverse("common:coordination_view_all"),
+            "url": reverse("coordination:view_all"),
         },
         {
             "title": "Calendar Management",

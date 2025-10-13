@@ -120,6 +120,10 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [PostgreSQL Migration Guide](deployment/postgres-migration-guide.md)
   - [Regional MANA Deployment Checklist](deployment/regional_mana_deployment_checklist.md)
 
+- **OOBC Organization Setup:**
+  - [OOBC Organization Verification](deployment/OOBC_ORGANIZATION_VERIFICATION.md) ✅ **OOBC Database Record Verified**
+  - [OOBC Quick Reference](deployment/OOBC_QUICK_REFERENCE.md) 🚀 **Quick Command Reference**
+
 ### 🌍 Environment Configuration
 - [Development Environment](env/development.md)
 - [Staging Environment - Complete Guide](env/staging-complete.md) ⭐ **NEW - 12-Step Deployment**
@@ -157,6 +161,7 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [Gemini Configuration](../GEMINI.md)
   - [Constitutional Workflow Agent Integration](ai/agents/CONSTITUTIONAL_WORKFLOW_AGENT.md)
 - [Development README](development/README.md) - Setup guide
+- [HTMX Response Utilities](development/HTMX_RESPONSE_UTILITIES.md) ⭐ **NEW - Standardized Error Handling**
 - [Task Template Automation Service Guide](development/task_template_automation.md) ⭐ **NEW - Automation Contract & Examples**
 
 ### 📚 Program Guidelines

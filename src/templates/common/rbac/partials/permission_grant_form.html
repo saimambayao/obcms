@@ -1,0 +1,110 @@
+{% load static %}
+
+<!-- Permission Grant Form (HTMX) -->
+<div class="bg-gray-50 border border-gray-200 rounded-xl p-5">
+    <h4 class="text-base font-semibold text-gray-900 mb-4 flex items-center">
+        <i class="fas fa-key text-amber-600 mr-2"></i>
+        Grant Direct Permission
+    </h4>
+
+    <form hx-post="{% url 'common:rbac_permission_grant' user.id %}"
+          hx-target="#rbac-modal-content"
+          hx-swap="innerHTML"
+          class="space-y-4">
+        {% csrf_token %}
+
+        <!-- Permission Selection -->
+        <div>
+            <label for="id_permission" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-shield-alt mr-1"></i>Permission
+            </label>
+            <div class="relative">
+                <select id="id_permission"
+                        name="permission"
+                        required
+                        class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                    <option value="">Select a permission...</option>
+                    {% for permission in permissions %}
+                    <option value="{{ permission.id }}">
+                        {{ permission.feature.name }} - {{ permission.get_permission_type_display }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                </span>
+            </div>
+        </div>
+
+        <!-- Organization (Optional) -->
+        <div>
+            <label for="id_organization" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-building mr-1"></i>Organization (Optional)
+            </label>
+            <div class="relative">
+                <select id="id_organization"
+                        name="organization"
+                        class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                    <option value="">All Organizations</option>
+                    {% for org in organizations %}
+                    <option value="{{ org.id }}">{{ org.name }}</option>
+                    {% endfor %}
+                </select>
+                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                </span>
+            </div>
+        </div>
+
+        <!-- Expiration Date (Optional) -->
+        <div>
+            <label for="id_expires_at" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-calendar-times mr-1"></i>Expires On (Optional)
+            </label>
+            <input type="date"
+                   id="id_expires_at"
+                   name="expires_at"
+                   class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200">
+        </div>
+
+        <!-- Reason -->
+        <div>
+            <label for="id_reason" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-comment mr-1"></i>Reason
+            </label>
+            <textarea id="id_reason"
+                      name="reason"
+                      rows="3"
+                      class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                      placeholder="Explain why this permission is being granted..."></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+            <button type="button"
+                    onclick="document.getElementById('permission-grant-form').innerHTML = ''"
+                    class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-100 transition-colors duration-200 min-h-[48px]">
+                <i class="fas fa-times mr-2"></i>
+                Cancel
+            </button>
+            <button type="submit"
+                    class="px-6 py-3 bg-gradient-to-r from-blue-600 to-emerald-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-200 min-h-[48px]">
+                <i class="fas fa-check mr-2"></i>
+                Grant Permission
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Handle form submission feedback
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target.id === 'rbac-modal-content') {
+        // Clear the form container on success
+        const formContainer = document.getElementById('permission-grant-form');
+        if (formContainer && evt.detail.xhr.status === 200) {
+            formContainer.innerHTML = '';
+        }
+    }
+});
+</script>

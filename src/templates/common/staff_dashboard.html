@@ -1,0 +1,428 @@
+{% extends 'base.html' %}
+{% load rbac_tags %}
+
+{% block title %}OOBC Staff Dashboard - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li class="text-neutral-800 font-semibold">Staff Dashboard</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Staff Dashboard</h1>
+        <p class="mt-2 text-lg text-gray-600">
+            Welcome back, <span class="font-medium">{{ user.get_full_name|default:user.username }}</span>
+        </p>
+        <div class="mt-4 flex items-center space-x-4">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {% if user.is_approved or user.is_superuser %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                {% if user.is_approved or user.is_superuser %}
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Account Approved
+                {% else %}
+                    <i class="fas fa-clock mr-2"></i>
+                    Pending Approval
+                {% endif %}
+            </span>
+            <span class="text-sm text-gray-500">{{ user.position|default:"OOBC Staff Member" }} • Last login: {{ user.last_login|date:"M d, Y H:i" }}</span>
+        </div>
+    </div>
+
+    <!-- User Status Alert -->
+    {% if not user.is_approved and not user.is_superuser %}
+    <div class="mb-8 bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-md">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-amber-400 text-lg"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-amber-800">Account Pending Approval</h3>
+                <div class="mt-2 text-sm text-amber-700">
+                    <p>Your account is pending approval from an administrator. Some features may be limited until your account is approved.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ========================================= -->
+    <!-- HERO SECTION (Staff Workspace) -->
+    <!-- ========================================= -->
+    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-800 via-sky-600 to-emerald-600 shadow-2xl mb-8">
+        <div class="absolute inset-0 bg-white/10 opacity-20 mix-blend-overlay"></div>
+        <div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48"></div>
+
+        <div class="relative px-6 sm:px-10 py-8 sm:py-10">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+
+                <div class="flex-1 space-y-6">
+                    <div class="inline-flex items-center rounded-lg bg-white/20 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold text-white border border-white/30">
+                        <i class="fas fa-user-tie mr-2"></i>
+                        STAFF WORKSPACE
+                    </div>
+
+                    <h2 class="text-3xl sm:text-4xl font-bold text-white leading-tight">
+                        OOBC Staff Workspace
+                    </h2>
+
+                    <p class="text-white/90 text-base sm:text-lg max-w-2xl leading-relaxed">
+                        Your centralized workspace for managing daily operations. Access community data, track tasks, coordinate partnerships, and stay updated on OOBC activities.
+                    </p>
+
+                    <div class="flex flex-wrap gap-4">
+                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-4 border border-white/20 min-w-[220px]">
+                            <p class="text-sm text-white/70 uppercase tracking-wide">Your Role</p>
+                            <p class="text-sm text-white/90 leading-relaxed">
+                                {{ user.position|default:"OOBC Staff Member" }} - Supporting Bangsamoro communities through effective coordination.
+                            </p>
+                        </div>
+                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-4 border border-white/20 min-w-[220px]">
+                            <p class="text-sm text-white/70 uppercase tracking-wide">Quick Access</p>
+                            <p class="text-sm text-white/90 leading-relaxed">
+                                Use the quick action cards at the right side to jump into your most common tasks and workflows.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-shrink-0">
+                    <div class="flex flex-col gap-3 min-w-[220px]">
+                        <a href="{% url 'communities:communities_home' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-blue-700 font-semibold shadow-lg hover:bg-blue-50 hover:shadow-xl transition-all duration-200">
+                            <i class="fas fa-mosque"></i>
+                            <span>OBC Data</span>
+                        </a>
+                        <a href="{% url 'coordination:home' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                            <i class="fas fa-handshake"></i>
+                            <span>Coordination</span>
+                        </a>
+                        <a href="{% url 'monitoring:home' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                            <i class="fas fa-chart-line"></i>
+                            <span>M&E</span>
+                        </a>
+                        <a href="{% url 'common:work_item_list' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                            <i class="fas fa-tasks"></i>
+                            <span>My Tasks</span>
+                        </a>
+                        <a href="{% url 'common:oobc_calendar' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 backdrop-blur-sm text-white font-medium border border-white/20 hover:bg-white/20 transition-all duration-200">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Calendar</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- System Overview Statistics - Auto-refresh every 60s -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold text-gray-900">My Workspace Overview</h2>
+            <span class="text-xs text-gray-500">
+                <i class="fas fa-sync-alt"></i> Updates every 60s
+            </span>
+        </div>
+
+        <div hx-get="{% url 'common:staff_dashboard_stats' %}"
+             hx-trigger="load, every 60s"
+             hx-swap="innerHTML swap:300ms"
+             class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Loading state -->
+            <div class="col-span-full flex items-center justify-center py-12">
+                <i class="fas fa-spinner fa-spin text-gray-400 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden: Original stat cards markup (now loaded via HTMX) -->
+    <div class="hidden">
+        <!-- This ensures the page still works if HTMX fails -->
+    <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Communities Stat Card -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Communities</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ communities_stats.total|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-mosque text-2xl text-amber-600"></i>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60">
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ communities_stats.barangay|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">Barangay</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ communities_stats.municipal|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">Municipal</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ communities_stats.provincial|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">Provincial</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Partnerships Stat Card -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Active Partnerships</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ partnerships_stats.total|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-handshake text-2xl text-emerald-600"></i>
+                    </div>
+                </div>
+                <div class="flex-grow"></div>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ partnerships_stats.bmoa|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">BMOAs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ partnerships_stats.nga|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">NGAs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">{{ partnerships_stats.lgu|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">LGUs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Tasks Stat Card -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+             style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+            <div class="relative p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">My Tasks</p>
+                        <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ tasks_stats.open|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                        <i class="fas fa-tasks text-2xl text-blue-600"></i>
+                    </div>
+                </div>
+                <div class="flex-grow"></div>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200/60 mt-auto">
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-red-600">{{ tasks_stats.overdue|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">Overdue</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-amber-600">{{ tasks_stats.due_soon|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">Due Soon</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-emerald-600">{{ tasks_stats.completed|default:0 }}</p>
+                        <p class="text-xs text-gray-500 font-medium">Done</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <!-- End hidden fallback -->
+
+    <!-- Upcoming Tasks & Events (Two-Column Layout) -->
+    <div class="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Upcoming Events -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6 flex flex-col">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-calendar-alt text-amber-600 mr-3"></i>
+                Upcoming Events
+            </h3>
+
+            <div class="flex-grow min-h-[240px] flex flex-col">
+                {% if upcoming_events %}
+                <div class="space-y-3 flex-grow">
+                    {% for event in upcoming_events|slice:":5" %}
+                    <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div class="flex-shrink-0 mt-1">
+                            <i class="fas fa-calendar-day text-amber-500"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">
+                                {{ event.title }}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-clock mr-1"></i>{{ event.start_date|date:"M d, Y" }}
+                                {% if event.location %}
+                                <span class="ml-2"><i class="fas fa-map-marker-alt mr-1"></i>{{ event.location }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <a href="{% url 'common:oobc_calendar' %}?event={{ event.id }}"
+                               class="text-amber-600 hover:text-amber-800">
+                                <i class="fas fa-arrow-right text-sm"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8 text-gray-500 flex-grow flex flex-col items-center justify-center">
+                    <i class="fas fa-calendar-times text-4xl mb-3"></i>
+                    <p>No upcoming events</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <a href="{% url 'common:oobc_calendar' %}"
+                   class="text-amber-600 hover:text-amber-800 font-medium text-sm flex items-center justify-center">
+                    View Full Calendar
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Upcoming Tasks -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6 flex flex-col">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-tasks text-purple-600 mr-3"></i>
+                Upcoming Tasks
+            </h3>
+
+            <div class="flex-grow min-h-[240px] flex flex-col">
+                {% if recent_tasks %}
+                <div class="space-y-3 flex-grow">
+                    {% for task in recent_tasks|slice:":5" %}
+                    <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div class="flex-shrink-0 mt-1">
+                            {% if task.status == 'completed' %}
+                            <i class="fas fa-check-circle text-emerald-500"></i>
+                            {% elif task.status == 'in_progress' %}
+                            <i class="fas fa-spinner text-blue-500"></i>
+                            {% elif task.status == 'blocked' %}
+                            <i class="fas fa-exclamation-circle text-red-500"></i>
+                            {% else %}
+                            <i class="fas fa-circle text-gray-400"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">
+                                {{ task.title }}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                {% if task.due_date %}
+                                <i class="fas fa-calendar mr-1"></i>Due {{ task.due_date|date:"M d, Y" }}
+                                {% else %}
+                                <i class="fas fa-info-circle mr-1"></i>No due date
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <a href="{% url 'common:work_item_list' %}"
+                               class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-arrow-right text-sm"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8 text-gray-500 flex-grow flex flex-col items-center justify-center">
+                    <i class="fas fa-inbox text-4xl mb-3"></i>
+                    <p>No tasks assigned</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <a href="{% url 'common:work_item_list' %}"
+                   class="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center justify-center">
+                    View All Tasks
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Section -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold text-gray-900">Recent Activity</h2>
+            <span class="text-xs text-gray-500">
+                <i class="fas fa-history"></i> Last 30 days
+            </span>
+        </div>
+        <div class="bg-white rounded-xl shadow-md p-6 max-h-96 overflow-y-auto">
+            {% if recent_tasks %}
+            <div class="space-y-3">
+                {% for task in recent_tasks %}
+                <div class="flex items-start space-x-4 pb-3 {% if not forloop.last %}border-b border-gray-200{% endif %}">
+                    <div class="flex-shrink-0 mt-1">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                            <i class="fas fa-check text-blue-600 text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-900">
+                            <span class="font-medium">{{ task.get_work_type_display }}:</span> {{ task.title }}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Updated {{ task.updated_at|timesince }} ago
+                            {% if task.status == 'completed' %}
+                            <span class="ml-2 text-emerald-600"><i class="fas fa-check-circle mr-1"></i>Completed</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-inbox text-4xl mb-3"></i>
+                <p>No recent activity</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Help & Guidance Section -->
+    <div class="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl p-6 border border-blue-200">
+        <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+            <i class="fas fa-question-circle text-blue-600 mr-3"></i>
+            Help & Guidance
+        </h3>
+        <p class="text-gray-700 mb-4">
+            Need assistance? Access user guides, training materials, or contact support for help with the OOBC Management System.
+        </p>
+        <div class="flex flex-wrap gap-3">
+            <a href="#"
+               class="inline-flex items-center px-4 py-2 bg-white border border-blue-300 rounded-lg text-blue-700 hover:bg-blue-50 transition-colors">
+                <i class="fas fa-book-open mr-2"></i>
+                User Guide
+            </a>
+            <a href="#"
+               class="inline-flex items-center px-4 py-2 bg-white border border-emerald-300 rounded-lg text-emerald-700 hover:bg-emerald-50 transition-colors">
+                <i class="fas fa-life-ring mr-2"></i>
+                Contact Support
+            </a>
+            <a href="#"
+               class="inline-flex items-center px-4 py-2 bg-white border border-purple-300 rounded-lg text-purple-700 hover:bg-purple-50 transition-colors">
+                <i class="fas fa-graduation-cap mr-2"></i>
+                Training Materials
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

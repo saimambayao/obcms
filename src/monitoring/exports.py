@@ -10,6 +10,8 @@ from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.utils import timezone
+
+from common.decorators.rbac import require_feature_access
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
@@ -24,6 +26,7 @@ ZERO_DECIMAL = Decimal("0.00")
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def export_aip_summary_excel(request):
     """Export Annual Investment Plan summary to Excel format."""
     # Get filter parameters
@@ -189,6 +192,7 @@ def export_aip_summary_excel(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def export_compliance_report_excel(request):
     """Export compliance tracking report (GAD, CCET, IP, Peace, SDG)."""
     entries = MonitoringEntry.objects.select_related(
@@ -281,6 +285,7 @@ def export_compliance_report_excel(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def export_budget_csv(request):
     """Export budget summary as CSV."""
     entries = MonitoringEntry.objects.select_related(
@@ -348,6 +353,7 @@ def export_budget_csv(request):
 
 
 @login_required
+@require_feature_access('monitoring_access')
 def export_funding_timeline_excel(request):
     """Export funding timeline (allocations, obligations, disbursements)."""
     tranches = MonitoringEntryFunding.objects.select_related(

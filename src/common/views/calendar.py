@@ -153,8 +153,12 @@ def work_items_calendar_feed(request):
         logger = logging.getLogger(__name__)
         logger.info(f"Filtering calendar by assignee ID: {assignee_id}, found {queryset.count()} work items")
 
-    # Serialize to calendar format
-    work_items = [serialize_work_item_for_calendar(item) for item in queryset]
+    # Serialize to calendar format (filter out None values for items without dates)
+    work_items = [
+        event for event in
+        [serialize_work_item_for_calendar(item) for item in queryset]
+        if event is not None
+    ]
 
     # Build hierarchy metadata
     hierarchy = {
@@ -191,8 +195,30 @@ def serialize_work_item_for_calendar(work_item: WorkItem) -> dict:
     from django.urls import reverse
 
     # FullCalendar requires exclusive end dates for multi-day spans.
+    # Handle various date scenarios:
+    # - Both dates: span from start_date to due_date (inclusive)
+    # - Only start_date: single-day event on start_date
+    # - Only due_date: single-day event on due_date
+    # - Neither: skip event (return None will be filtered out)
+
+    if not work_item.start_date and not work_item.due_date:
+        return None  # No dates, can't display on calendar
+
+    start_date = None
     end_date = None
-    if work_item.due_date:
+
+    if work_item.start_date and work_item.due_date:
+        # Both dates exist - create spanning event
+        start_date = work_item.start_date.isoformat()
+        # Add 1 day to due_date for exclusive end (FullCalendar requirement)
+        end_date = (work_item.due_date + timedelta(days=1)).isoformat()
+    elif work_item.start_date:
+        # Only start_date - single day event
+        start_date = work_item.start_date.isoformat()
+        end_date = (work_item.start_date + timedelta(days=1)).isoformat()
+    elif work_item.due_date:
+        # Only due_date - single day event on due date
+        start_date = work_item.due_date.isoformat()
         end_date = (work_item.due_date + timedelta(days=1)).isoformat()
 
     breadcrumb = _build_breadcrumb(work_item)
@@ -201,9 +227,13 @@ def serialize_work_item_for_calendar(work_item: WorkItem) -> dict:
     return {
         'id': f'work-item-{work_item.pk}',
         'title': work_item.title,
-        'start': work_item.start_date.isoformat() if work_item.start_date else None,
+        'start': start_date,
         'end': end_date,
+        'allDay': True,  # All work items are all-day events (no specific times)
         'color': work_item.calendar_color,
+        # Top-level fields for JavaScript filtering (must match template expectations)
+        'workType': work_item.work_type,
+        'status': work_item.status,
         'extendedProps': {
             'workType': work_item.work_type,
             'type': work_item.get_work_type_display(),

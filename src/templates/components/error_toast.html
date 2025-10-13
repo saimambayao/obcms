@@ -1,0 +1,128 @@
+<!-- Global HTMX Error Toast Component -->
+<div id="htmx-error-toast"
+     class="hidden fixed top-4 right-4 z-50 max-w-md animate-slide-in-right"
+     role="alert"
+     aria-live="assertive"
+     aria-atomic="true">
+    <div class="bg-red-50 border-l-4 border-red-500 rounded-lg shadow-lg p-4">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-xl text-red-500"></i>
+            </div>
+            <div class="ml-3 flex-1">
+                <p class="text-sm font-semibold text-red-800">Error</p>
+                <p id="htmx-error-message" class="mt-1 text-sm text-red-700"></p>
+            </div>
+            <button type="button"
+                    onclick="this.closest('#htmx-error-toast').classList.add('hidden')"
+                    class="ml-4 flex-shrink-0 text-red-400 hover:text-red-600 transition-colors duration-200"
+                    aria-label="Close error message">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Global HTMX Success Toast Component -->
+<div id="htmx-success-toast"
+     class="hidden fixed top-4 right-4 z-50 max-w-md animate-slide-in-right"
+     role="alert"
+     aria-live="polite"
+     aria-atomic="true">
+    <div class="bg-emerald-50 border-l-4 border-emerald-500 rounded-lg shadow-lg p-4">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-check-circle text-xl text-emerald-500"></i>
+            </div>
+            <div class="ml-3 flex-1">
+                <p class="text-sm font-semibold text-emerald-800">Success</p>
+                <p id="htmx-success-message" class="mt-1 text-sm text-emerald-700"></p>
+            </div>
+            <button type="button"
+                    onclick="this.closest('#htmx-success-toast').classList.add('hidden')"
+                    class="ml-4 flex-shrink-0 text-emerald-400 hover:text-emerald-600 transition-colors duration-200"
+                    aria-label="Close success message">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global HTMX Error Handler
+document.body.addEventListener('htmx:responseError', function(evt) {
+    const errorToast = document.getElementById('htmx-error-toast');
+    const errorMessage = document.getElementById('htmx-error-message');
+
+    let message = 'An error occurred. Please try again.';
+
+    try {
+        const response = evt.detail.xhr.responseText;
+        if (response) {
+            const data = JSON.parse(response);
+            message = data.error || data.message || message;
+        }
+    } catch (e) {
+        message = evt.detail.xhr.responseText || message;
+    }
+
+    errorMessage.textContent = message;
+    errorToast.classList.remove('hidden');
+
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        errorToast.classList.add('hidden');
+    }, 5000);
+});
+
+// Global HTMX Success Message Handler
+document.body.addEventListener('showMessage', function(evt) {
+    const detail = evt.detail;
+
+    if (detail.type === 'success') {
+        const successToast = document.getElementById('htmx-success-toast');
+        const successMessage = document.getElementById('htmx-success-message');
+
+        successMessage.textContent = detail.message;
+        successToast.classList.remove('hidden');
+
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            successToast.classList.add('hidden');
+        }, 3000);
+    } else if (detail.type === 'error') {
+        const errorToast = document.getElementById('htmx-error-toast');
+        const errorMessage = document.getElementById('htmx-error-message');
+
+        errorMessage.textContent = detail.message;
+        errorToast.classList.remove('hidden');
+
+        setTimeout(() => {
+            errorToast.classList.add('hidden');
+        }, 5000);
+    }
+});
+
+// Add animation styles if not already in Tailwind config
+if (!document.getElementById('htmx-toast-animations')) {
+    const styleElement = document.createElement('style');
+    styleElement.id = 'htmx-toast-animations';
+    styleElement.textContent = `
+    @keyframes slide-in-right {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .animate-slide-in-right {
+        animation: slide-in-right 0.3s ease-out;
+    }
+    `;
+    document.head.appendChild(styleElement);
+}
+</script>

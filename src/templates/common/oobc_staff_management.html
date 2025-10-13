@@ -218,7 +218,11 @@
                             <p class="text-lg font-semibold text-gray-900">{{ profile.staff.get_full_name|default:profile.staff.username }}</p>
                             <p class="text-sm text-gray-500">
                                 {{ profile.staff.position|default:"Role not set" }}
-                                {% if profile.staff.organization %}• {{ profile.staff.organization }}{% endif %}
+                                {% if profile.staff.moa_organization %}
+                                    • {% if profile.staff.moa_organization.acronym %}{{ profile.staff.moa_organization.acronym }}{% else %}{{ profile.staff.moa_organization.name }}{% endif %}
+                                {% elif profile.staff.organization %}
+                                    • {{ profile.staff.organization }}
+                                {% endif %}
                             </p>
                         </div>
                         {% if profile.status == 'Active' %}
@@ -414,7 +418,14 @@
                         <li class="py-4 flex items-start justify-between">
                             <div>
                                 <p class="text-base font-semibold text-gray-900">{{ staff.get_full_name|default:staff.username }}</p>
-                                <p class="text-sm text-gray-500">{{ staff.get_user_type_display }}{% if staff.organization %} • {{ staff.organization }}{% endif %}</p>
+                                <p class="text-sm text-gray-500">
+                                    {{ staff.get_user_type_display }}
+                                    {% if staff.moa_organization %}
+                                        • {% if staff.moa_organization.acronym %}{{ staff.moa_organization.acronym }}{% else %}{{ staff.moa_organization.name }}{% endif %}
+                                    {% elif staff.organization %}
+                                        • {{ staff.organization }}
+                                    {% endif %}
+                                </p>
                                 <p class="text-xs text-gray-400 mt-1">Requested {{ staff.date_joined|date:"M d, Y" }}</p>
                             </div>
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">Awaiting</span>
@@ -443,7 +454,14 @@
                         <li class="py-4 flex items-start justify-between">
                             <div>
                                 <p class="text-base font-semibold text-gray-900">{{ staff.get_full_name|default:staff.username }}</p>
-                                <p class="text-sm text-gray-500">{{ staff.get_user_type_display }}{% if staff.organization %} • {{ staff.organization }}{% endif %}</p>
+                                <p class="text-sm text-gray-500">
+                                    {{ staff.get_user_type_display }}
+                                    {% if staff.moa_organization %}
+                                        • {% if staff.moa_organization.acronym %}{{ staff.moa_organization.acronym }}{% else %}{{ staff.moa_organization.name }}{% endif %}
+                                    {% elif staff.organization %}
+                                        • {{ staff.organization }}
+                                    {% endif %}
+                                </p>
                                 <p class="text-xs text-gray-400 mt-1">
                                     {% if staff.last_login %}
                                         Last login {{ staff.last_login|date:"M d, Y H:i" }}
@@ -478,7 +496,14 @@
                         <li class="py-4 flex items-start justify-between">
                             <div>
                                 <p class="text-base font-semibold text-gray-900">{{ staff.get_full_name|default:staff.username }}</p>
-                                <p class="text-sm text-gray-500">{{ staff.get_user_type_display }}{% if staff.organization %} • {{ staff.organization }}{% endif %}</p>
+                                <p class="text-sm text-gray-500">
+                                    {{ staff.get_user_type_display }}
+                                    {% if staff.moa_organization %}
+                                        • {% if staff.moa_organization.acronym %}{{ staff.moa_organization.acronym }}{% else %}{{ staff.moa_organization.name }}{% endif %}
+                                    {% elif staff.organization %}
+                                        • {{ staff.organization }}
+                                    {% endif %}
+                                </p>
                                 <p class="text-xs text-gray-400 mt-1">Deactivated account</p>
                             </div>
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 text-xs font-medium">Inactive</span>
@@ -521,7 +546,15 @@
                     <tr class="hover:bg-emerald-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ staff.get_full_name|default:staff.username }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ staff.get_user_type_display }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ staff.organization|default:"—" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if staff.moa_organization %}
+                                {% if staff.moa_organization.acronym %}{{ staff.moa_organization.acronym }}{% else %}{{ staff.moa_organization.name }}{% endif %}
+                            {% elif staff.organization %}
+                                {{ staff.organization }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if staff.is_active and staff.is_approved %}
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Active</span>

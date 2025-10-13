@@ -519,7 +519,7 @@ Tasks have been automatically generated for this stage.
 
         if fiscal_year:
             workflows = workflows.filter(
-                Q(initiated_date__year=fiscal_year) | Q(ppa__fiscal_year=fiscal_year)
+                Q(start_date__year=fiscal_year) | Q(ppa__fiscal_year=fiscal_year)
             )
 
         metrics = {

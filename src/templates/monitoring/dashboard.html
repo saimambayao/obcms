@@ -90,7 +90,7 @@
     </section>
 
     <!-- Statistics Cards - 3D Milk White Design (Official Template) -->
-    <section class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+    <section class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {% for card in stats_cards %}
         <article class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
                  style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
@@ -103,7 +103,11 @@
                 <div class="flex items-center justify-between mb-3">
                     <div>
                         <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">{{ card.title }}</p>
+                        {% if card.is_budget_card %}
+                        <p class="text-2xl font-extrabold text-gray-800 mt-1">{{ card.total }}</p>
+                        {% else %}
                         <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ card.total }}</p>
+                        {% endif %}
                     </div>
                     <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
                          style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
@@ -251,109 +255,32 @@
         </div>
     </section>
 
-    <section id="quick-actions">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for action in quick_actions %}
-            <a href="{{ action.url }}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 flex flex-col">
-                <div class="p-6 flex flex-col flex-grow">
-                    <div class="w-12 h-12 {{ action.color }} rounded-lg flex items-center justify-center mb-4">
-                        <i class="{{ action.icon }} text-white text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-violet-600 transition-colors">
-                        {{ action.title }}
-                    </h3>
-                    <p class="mt-2 text-sm text-gray-600 flex-grow">
-                        {{ action.description }}
-                    </p>
-                    <div class="mt-4 flex items-center text-violet-600 text-sm font-medium">
-                        <span>Open</span>
-                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
-                    </div>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
-    </section>
-
     <section class="grid gap-6 lg:grid-cols-3">
         <div class="lg:col-span-2 bg-white border border-neutral-200 rounded-xl shadow">
-            <header class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-neutral-800">M&amp;E Portfolio Overview</h2>
-            </header>
-            <div class="px-6 py-6 space-y-8">
-                {% for section in category_sections %}
+            <header class="px-6 py-4 border-b border-neutral-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-base font-semibold text-neutral-700">{{ section.label }}</h3>
-                        <span class="text-sm text-neutral-400">{{ section.entries|length }} records</span>
+                    <h2 class="text-lg font-semibold text-neutral-800">M&amp;E Portfolio Overview</h2>
+                    <div id="record-count" class="text-sm text-neutral-500 mt-1">
+                        Showing {{ paginated_entries.start_index }}-{{ paginated_entries.end_index }} of {{ paginated_entries.paginator.count }} records
                     </div>
-                    {% if section.entries %}
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                            <thead class="bg-neutral-100">
-                                <tr>
-                                    <th class="px-4 py-2 text-left font-medium text-neutral-600">Title</th>
-                                    <th class="px-4 py-2 text-left font-medium text-neutral-600">Status</th>
-                                    <th class="px-4 py-2 text-left font-medium text-neutral-600">Lead / Requesting Party</th>
-                                    <th class="px-4 py-2 text-left font-medium text-neutral-600">Progress</th>
-                                    <th class="px-4 py-2"></th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-neutral-100">
-                                {% for entry in section.entries %}
-                                <tr class="hover:bg-neutral-50">
-                                    <td class="px-4 py-2">
-                                        <p class="font-medium text-neutral-800">{{ entry.title }}</p>
-                                        {% if entry.summary %}
-                                        <p class="text-xs text-neutral-500 line-clamp-2">{{ entry.summary }}</p>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-4 py-2">
-                                        <p class="text-sm font-medium text-neutral-700">{{ entry.get_status_display }}</p>
-                                        {% if entry.is_request %}
-                                        <p class="text-xs text-orange-500">{{ entry.get_request_status_display }}</p>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-4 py-2 text-sm text-neutral-600">
-                                        {% if entry.is_request %}
-                                            {% if entry.submitted_by_community %}
-                                            <p><span class="font-medium">Requester:</span> {{ entry.submitted_by_community.name }}</p>
-                                            {% endif %}
-                                            {% if entry.submitted_to_organization %}
-                                            <p><span class="font-medium">Receiving:</span> {{ entry.submitted_to_organization.name }}</p>
-                                            {% endif %}
-                                        {% else %}
-                                            {% if entry.lead_organization %}
-                                            <p>{{ entry.lead_organization.name }}</p>
-                                            {% elif entry.oobc_unit %}
-                                            <p>{{ entry.oobc_unit }}</p>
-                                            {% endif %}
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-4 py-2">
-                                        <div class="w-full bg-neutral-200 rounded-full h-2">
-                                            <div class="bg-gradient-to-r from-blue-500 to-teal-500 h-2 rounded-full" style="width: {{ entry.progress }}%"></div>
-                                        </div>
-                                        <p class="text-xs text-neutral-500 mt-1">{{ entry.progress }}%</p>
-                                    </td>
-                                    <td class="px-4 py-2 text-right">
-                                        <a href="{% url 'monitoring:detail' entry.pk %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View</a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="bg-neutral-50 border border-dashed border-neutral-200 rounded-lg px-4 py-6 text-center text-neutral-500">
-                        No records logged for this category yet.
-                    </div>
-                    {% endif %}
                 </div>
-                {% empty %}
-                <p class="text-neutral-500">No monitoring entries recorded yet.</p>
-                {% endfor %}
+                <div class="flex items-center gap-3">
+                    <label for="per-page-select" class="text-sm text-neutral-600 whitespace-nowrap">Records per page:</label>
+                    <select id="per-page-select"
+                            class="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            hx-get="{% url 'monitoring:home' %}"
+                            hx-target="#portfolio-content"
+                            hx-swap="innerHTML"
+                            hx-include="[name='page']"
+                            name="per_page">
+                        <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                        <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+                        <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                    </select>
+                </div>
+            </header>
+            <div id="portfolio-content" class="px-6 py-6 space-y-8">
+                {% include "monitoring/partials/portfolio_content.html" %}
             </div>
         </div>
 

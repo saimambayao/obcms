@@ -6,6 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
+from common.decorators.rbac import require_feature_access
 from ..constants import RECOMMENDATIONS_AREAS
 from ..utils.permissions import has_oobc_management_access
 
@@ -24,6 +25,7 @@ def _ensure_can_manage_recommendations(user):
         )
 
 
+@require_feature_access('recommendations_access')
 @login_required
 def recommendations_home(request):
     """Recommendations Tracking module home page."""
@@ -37,7 +39,8 @@ def recommendations_home(request):
         and user.has_perm("mana.can_access_regional_mana")
         and not user.has_perm("mana.can_facilitate_workshop")
     ):
-        return redirect("common:page_restricted")
+        messages.error(request, "You do not have permission to access recommendations.")
+        raise PermissionDenied("User lacks required permission to access recommendations")
 
     from django.db.models import Count, Q
 
@@ -208,6 +211,7 @@ def recommendations_home(request):
     return render(request, "recommendations/recommendations_home.html", context)
 
 
+@require_feature_access('recommendations_access')
 @login_required
 def recommendations_stats_cards(request):
     """Return just the recommendations stat cards for HTMX auto-refresh."""
@@ -278,6 +282,7 @@ def recommendations_stats_cards(request):
     return render(request, "partials/recommendations_stats_cards.html", {"stats": stats})
 
 
+@require_feature_access('recommendations_access')
 @login_required
 def recommendations_new(request):
     """Create new recommendation page."""
@@ -314,6 +319,7 @@ def recommendations_new(request):
     return render(request, "recommendations/recommendations_new.html", context)
 
 
+@require_feature_access('recommendations_access')
 @login_required
 def recommendations_create(request):
     """Handle recommendation creation (POST)."""
@@ -462,6 +468,7 @@ def recommendations_create(request):
         return redirect('common:recommendations_new')
 
 
+@require_feature_access('recommendations_access')
 @login_required
 def recommendations_autosave(request):
     """Auto-save recommendation draft (AJAX)."""
@@ -474,6 +481,7 @@ def recommendations_autosave(request):
     return JsonResponse({'success': True})
 
 
+@require_feature_access('recommendations_access')
 @login_required
 def recommendations_manage(request):
     """Manage recommendations page."""
@@ -602,18 +610,21 @@ def _recommendations_by_type(request, recommendation_type: str):
     return render(request, template_name, context)
 
 
+@require_feature_access('recommendations_access')
 @login_required
 def recommendations_programs(request):
     """List program recommendations only."""
     return _recommendations_by_type(request, "program")
 
 
+@require_feature_access('recommendations_access')
 @login_required
 def recommendations_services(request):
     """List service recommendations only."""
     return _recommendations_by_type(request, "service")
 
 
+@require_feature_access('recommendations_access')
 @login_required
 def recommendations_view(request, pk):
     """Display a read-only view of a policy recommendation."""
@@ -644,6 +655,7 @@ def recommendations_view(request, pk):
     return render(request, "recommendations/recommendations_view.html", context)
 
 
+@require_feature_access('recommendations_access')
 @login_required
 def recommendations_edit(request, pk):
     """Edit an existing policy recommendation."""
@@ -850,6 +862,7 @@ def recommendations_edit(request, pk):
     return render(request, "recommendations/recommendations_edit.html", context)
 
 
+@require_feature_access('recommendations_access')
 @login_required
 def recommendations_delete(request, pk):
     """Delete a recommendation."""
@@ -878,6 +891,7 @@ def recommendations_delete(request, pk):
     return render(request, "recommendations/recommendations_delete_confirm.html", context)
 
 
+@require_feature_access('recommendations_access')
 @login_required
 def recommendations_by_area(request, area_slug):
     """View recommendations filtered by specific area."""

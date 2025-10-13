@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load rbac_tags %}
 
 {% block title %}Dashboard - OBC Management System{% endblock %}
 
@@ -95,6 +96,8 @@
                             <i class="fas fa-mosque"></i>
                             <span>OBC Data</span>
                         </a>
+                        {% has_feature_access user 'mana_access' as can_access_mana %}
+                        {% if can_access_mana %}
                         {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana and not perms.mana.can_facilitate_workshop and participant_assessment_id %}
                         <a href="{% url 'mana:participant_dashboard' participant_assessment_id %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                         {% else %}
@@ -103,6 +106,7 @@
                             <i class="fas fa-map-marked-alt"></i>
                             <span>MANA</span>
                         </a>
+                        {% endif %}
                         {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana and not perms.mana.can_facilitate_workshop %}
                         <a href="{% url 'common:page_restricted' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200 opacity-60">
                         {% else %}
@@ -111,14 +115,20 @@
                             <i class="fas fa-handshake"></i>
                             <span>Coordination</span>
                         </a>
+                        {% has_feature_access user 'recommendations_access' as can_access_recommendations %}
+                        {% if can_access_recommendations %}
                         <a href="{% url 'policies:home' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-bullhorn"></i>
                             <span>Recommendations</span>
                         </a>
+                        {% endif %}
+                        {% has_feature_access user 'monitoring_access' as can_access_monitoring %}
+                        {% if can_access_monitoring %}
                         <a href="{% url 'monitoring:home' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
                             <i class="fas fa-chart-pie"></i>
                             <span>M&amp;E</span>
                         </a>
+                        {% endif %}
                         {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana and not perms.mana.can_facilitate_workshop %}
                         <a href="{% url 'common:page_restricted' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 backdrop-blur-sm text-white font-medium border border-white/20 hover:bg-white/20 transition-all duration-200 opacity-60">
                         {% else %}
