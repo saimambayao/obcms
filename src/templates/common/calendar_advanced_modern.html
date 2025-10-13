@@ -71,7 +71,7 @@
     grid-column: 2 / 3;
     grid-row: 2 / 3;
     background: #fafafa;
-    overflow: hidden;
+    overflow-y: auto;
     padding: 1.5rem;
     min-height: 0; /* Allow grid child to shrink properly */
     display: flex;
@@ -80,7 +80,7 @@
 
 #calendar {
     flex: 1;
-    min-height: 0;
+    min-height: 600px;
     width: 100%;
 }
 
@@ -438,71 +438,19 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Remove all scrollbars from FullCalendar */
+/* Remove internal scrollbars from FullCalendar */
 .fc .fc-scroller {
-    overflow: hidden !important;
+    overflow: visible !important;
 }
 
 .fc .fc-scroller-liquid-absolute {
-    overflow: hidden !important;
+    overflow: visible !important;
+    position: relative !important;
 }
 
-.fc .fc-daygrid-body {
-    overflow: hidden !important;
-}
-
-/* Force FullCalendar to fit all content within available height */
-.fc .fc-view-harness {
-    height: 100% !important;
-}
-
-.fc .fc-view-harness-active {
-    height: 100% !important;
-}
-
-.fc-daygrid {
-    height: 100% !important;
-}
-
-.fc .fc-scrollgrid {
-    height: 100% !important;
-}
-
-.fc .fc-scrollgrid-sync-table {
-    height: 100% !important;
-}
-
-.fc .fc-daygrid-body {
-    height: 100% !important;
-}
-
-.fc .fc-scrollgrid-section-body > td,
-.fc .fc-scrollgrid-section-body table {
-    height: 100% !important;
-}
-
-/* Force table to use fixed layout for equal row distribution */
-.fc-daygrid-body table {
-    table-layout: fixed;
-    height: 100% !important;
-}
-
-.fc .fc-daygrid-body-unbalanced .fc-daygrid-day-frame {
-    min-height: 0 !important;
-}
-
-.fc-daygrid-day-frame {
-    min-height: 0 !important;
-}
-
-/* Ensure all week rows have equal height */
-.fc .fc-daygrid-body tr {
-    height: 16.666% !important; /* 100% / 6 weeks = equal distribution */
-}
-
-.fc-daygrid-body tbody {
-    height: 100% !important;
-    display: table-row-group;
+/* Minimum height for cells to display events properly */
+.fc .fc-daygrid-day-frame {
+    min-height: 100px;
 }
 
 /* Smooth calendar refresh transitions */
