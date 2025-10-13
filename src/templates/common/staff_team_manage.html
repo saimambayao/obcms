@@ -72,9 +72,9 @@
                                     {% endif %}
                                 {% endwith %}
                             </div>
-                            {% if team.tasks %}
+                            {% if team.work_items.all %}
                                 <div class="mt-4 space-y-3">
-                                    {% for task in team.tasks %}
+                                    {% for task in team.work_items.all %}
                                         <div class="border border-gray-200 rounded-xl p-3 bg-gray-50">
                                             <div class="flex items-center justify-between text-sm">
                                                 <span class="font-semibold text-gray-900">{{ task.title }}</span>

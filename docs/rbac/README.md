@@ -4,8 +4,15 @@ Complete documentation for the OBCMS RBAC system implementation.
 
 ## 📚 **Quick Navigation**
 
+### **System Overview**
+- **[Complete System Overview](RBAC_COMPLETE_SYSTEM_OVERVIEW.md)** 🎯 - Visual diagrams, feature matrix, and complete architecture
+
+### **User-Specific RBAC Documentation**
+- **[OOBC Staff & Executive RBAC](oobc/README.md)** ⭐ - Complete RBAC guide for OOBC users (Staff, Deputy Director, Executive Director)
+- **[MOA Focal Person RBAC](moa/README.md)** ⭐ - Complete RBAC guide for 44 MOA focal persons
+
 ### **Getting Started**
-- [RBAC Quick Reference](implementation/RBAC_QUICK_REFERENCE.md) - **START HERE** for quick access to all RBAC features
+- [RBAC Quick Reference](implementation/RBAC_QUICK_REFERENCE.md) - Quick access to all RBAC features
 - [OOBC Staff Implementation Summary](implementation/OOBC_STAFF_RBAC_IMPLEMENTATION_SUMMARY.md) - OOBC Staff restrictions and access levels
 
 ### **Architecture**
@@ -35,8 +42,8 @@ Complete documentation for the OBCMS RBAC system implementation.
 - [Phase 2: View Protection Complete](implementation/PHASE2_RBAC_VIEW_PROTECTION_COMPLETE.md) - Decorator implementation
 - [Phase 3: Template Tags Summary](implementation/PHASE3_RBAC_TEMPLATE_TAGS_SUMMARY.md) - Template-level protection
 
-### **Multi-Tenant (MOA) Documentation**
-- [MOA-Specific RBAC Docs](moa-specific/) - Documentation for 44 MOAs deployment
+### **Multi-Tenant (MOA) Documentation** _(Legacy - See User-Specific sections above)_
+- [MOA-Specific RBAC Docs](moa-specific/) - Legacy MOA documentation (migrated to `moa/` directory)
 
 ---
 
@@ -45,24 +52,47 @@ Complete documentation for the OBCMS RBAC system implementation.
 ### What is RBAC?
 Role-Based Access Control (RBAC) is a security framework that restricts system access based on user roles. In OBCMS:
 
-- **Features** → Groups of related permissions (e.g., "MANA Access")
+- **Features** → Groups of related permissions (e.g., "MANA Access", "Monitoring Access")
 - **Permissions** → Specific actions (e.g., "view", "edit", "delete")
-- **Roles** → Collections of permissions (e.g., "OOBC Staff", "Executive Director")
+- **Roles** → Collections of permissions (e.g., "OOBC Staff", "MOA Staff", "Executive Director")
 - **Users** → Assigned one or more roles
 
-### OOBC Staff Access Levels
+### User Types & Access Levels
 
-#### ✅ **OOBC Staff CAN Access:**
-- Communities Management
+#### **OOBC Users (Office Staff & Executives)**
+
+**✅ OOBC Staff CAN Access:**
+- OBC Data (Communities Management)
 - Coordination & Events
-- Calendar & Resources
+- M&E (Monitoring & Evaluation)
+- OOBC Management (Calendar, Work Items, Staff Profiles)
 
-#### ❌ **Executive-Only Modules:**
+**❌ Executive-Only Modules:**
 - MANA Assessments
 - Policy Recommendations
 - Planning & Budgeting
-- Project Management
+- Project Management Portal
 - User Approvals
+- RBAC Management
+
+**📚 Full Documentation:** [OOBC RBAC Guide](oobc/README.md)
+
+#### **MOA Users (Ministry/Office/Agency Focal Persons)**
+
+**✅ MOA Staff CAN Access:**
+- Their Own Organization Profile (full CRUD)
+- Their Own MOA PPAs (create, manage)
+- Their Own Work Items (manage tasks)
+- OBC Data (view-only)
+- M&E Module (filtered to own MOA)
+
+**❌ MOA Staff CANNOT Access:**
+- Other MOAs' data (complete isolation)
+- MANA Assessments
+- Policy Recommendations
+- Strategic planning modules
+
+**📚 Full Documentation:** [MOA RBAC Guide](moa/README.md)
 
 ---
 
@@ -79,7 +109,8 @@ Role-Based Access Control (RBAC) is a security framework that restricts system a
 | **Frontend UI** | ✅ Complete | `src/templates/common/rbac/` |
 | **HTMX Fixes** | ✅ Complete | OOB swaps, modal lifecycle, error handling |
 | **Performance** | ✅ Complete | Cache invalidation, rate limiting, N+1 fixes |
-| **OOBC Restrictions** | ⚠️ 70% | Migration created, navbar/views pending |
+| **OOBC RBAC** | ✅ Complete | 3 roles, 7 features, full navigation filtering |
+| **MOA RBAC** | ✅ Complete | 44 MOA accounts, data isolation, monitoring access |
 
 ---
 
@@ -185,6 +216,6 @@ For questions or issues:
 
 ---
 
-**Last Updated:** 2025-01-13
-**Version:** 1.0.0
-**Status:** Production-Ready (with Phase 1 fixes complete)
+**Last Updated:** October 13, 2025
+**Version:** 2.0.0
+**Status:** ✅ Production-Ready (OOBC & MOA RBAC Complete)

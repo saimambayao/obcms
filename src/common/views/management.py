@@ -2793,10 +2793,10 @@ def staff_team_manage(request):
         {
             "team": record,
             "member_count": record.memberships.filter(is_active=True).count(),
-            "active_tasks": record.tasks.exclude(
+            "active_tasks": record.work_items.exclude(
                 status=WorkItem.STATUS_COMPLETED
             ).count(),
-            "completion_rate": _completion_rate(record.tasks.all()),
+            "completion_rate": _completion_rate(record.work_items.all()),
         }
         for record in teams
     ]

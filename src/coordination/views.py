@@ -416,11 +416,11 @@ def _organization_form(request, organization_id=None):
             if is_edit:
                 messages.success(request, "Organization successfully updated.")
                 return redirect(
-                    "common:coordination_organization_detail",
+                    "coordination:organization_detail",
                     organization_id=saved_organization.pk,
                 )
             messages.success(request, "Organization successfully created.")
-            return redirect("common:coordination_organizations")
+            return redirect("coordination:organizations")
         messages.error(request, "Please correct the errors below before submitting.")
         if form.errors:
             logger.warning("Organization form errors: %s", form.errors)
@@ -441,7 +441,7 @@ def _organization_form(request, organization_id=None):
     context = {
         "form": form,
         "formset": formset,
-        "return_url": reverse("common:coordination_organizations"),
+        "return_url": reverse("coordination:organizations"),
         "is_edit": is_edit,
         "organization": organization,
     }
@@ -523,7 +523,7 @@ def organization_detail(request, organization_id):
         "contacts": contacts,
         "led_partnerships": led_partnerships,
         "member_partnerships": member_partnerships,
-        "return_url": reverse("common:coordination_organizations"),
+        "return_url": reverse("coordination:organizations"),
         "total_partnerships": total_partnerships,
         "moa_ppas_count": len(moa_ppas),
         "moa_ppas": moa_ppas,
@@ -583,15 +583,15 @@ def organization_delete(request, organization_id):
                 "Unable to delete this organization because it is referenced by other records.",
             )
             return redirect(
-                "common:coordination_organization_detail",
+                "coordination:organization_detail",
                 organization_id=organization.pk,
             )
         messages.success(request, "Organization successfully deleted.")
-        return redirect("common:coordination_organizations")
+        return redirect("coordination:organizations")
 
     context = {
         "organization": organization,
-        "return_url": reverse("common:coordination_organizations"),
+        "return_url": reverse("coordination:organizations"),
     }
     return render(request, "coordination/organization_confirm_delete.html", context)
 
