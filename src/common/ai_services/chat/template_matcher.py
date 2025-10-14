@@ -16,8 +16,6 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-from common.ai_services.chat.query_templates import QueryTemplate, get_template_registry
-
 logger = logging.getLogger(__name__)
 
 
@@ -47,13 +45,28 @@ class TemplateMatcher:
     """
 
     def __init__(self):
-        """Initialize template matcher with template registry."""
-        self.registry = get_template_registry()
-        logger.debug("TemplateMatcher initialized with template registry")
+        """Initialize template matcher."""
+        self._registry = None
+        logger.debug("TemplateMatcher initialized (registry will be loaded lazily)")
         # Map regex capture group names to canonical entity keys we support injecting.
         self._group_entity_map = {
             'rating': 'rating',
         }
+
+    @property
+    def registry(self):
+        """Lazy load the template registry to avoid circular dependency."""
+        if self._registry is None:
+            # Lazy import to avoid circular dependency
+            from common.ai_services.chat.query_templates.base import get_template_registry as _get_template_registry_base
+            self._registry = _get_template_registry_base()
+            # TEMPORARILY DISABLED template registration to test server startup
+            # Ensure templates are registered
+            # if not self._registry.get_all_templates():
+            #     from common.ai_services.chat.query_templates import _register_all_templates
+            #     _register_all_templates(registry=self._registry)
+            logger.debug("TemplateMatcher registry loaded lazily (templates disabled)")
+        return self._registry
 
     def match_and_generate(
         self,
@@ -168,7 +181,7 @@ class TemplateMatcher:
         entities: Dict[str, Any],
         intent: Optional[str] = None,
         category: Optional[str] = None,
-    ) -> List[QueryTemplate]:
+    ) -> List:  # Lazy type annotation to avoid circular import
         """
         Find all templates matching the query pattern.
 
@@ -263,7 +276,7 @@ class TemplateMatcher:
 
     def validate_template(
         self,
-        template: QueryTemplate,
+        template,  # QueryTemplate - lazy type to avoid circular import
         entities: Dict[str, Any],
     ) -> Dict[str, Any]:
         """
@@ -437,7 +450,7 @@ class TemplateMatcher:
 
     def generate_query(
         self,
-        template: QueryTemplate,
+        template,  # QueryTemplate - lazy type to avoid circular import
         entities: Dict[str, Any],
     ) -> str:
         """

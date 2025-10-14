@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+import warnings
 from pathlib import Path
 import environ
 
@@ -31,6 +32,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Take environment variables from .env file if it exists
 environ.Env.read_env(os.path.join(BASE_DIR.parent, ".env"))
+
+# ============================================================================
+# PYTORCH JIT WARNING SUPPRESSION
+# ============================================================================
+# Suppress PyTorch JIT warnings (cosmetic only - no functional impact)
+# These warnings appear when sentence-transformers loads PyTorch models
+# Source: torch/_jit_internal.py line 1001
+warnings.filterwarnings('ignore',
+    message='Unable to retrieve source for @torch.jit._overload function',
+    category=UserWarning,
+    module='torch._jit_internal'
+)
+
+# Alternative suppression via environment variable (if set)
+if env.bool("TORCH_JIT_WARNING_DISABLE", default=False):
+    os.environ["TORCH_JIT_WARNING_DISABLE"] = "1"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/

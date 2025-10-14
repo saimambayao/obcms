@@ -143,25 +143,32 @@ def register_auditlog_models():
     )
 
     # Register MonitoringEntry for PPA compliance tracking
-    from monitoring.models import MonitoringEntry
-    auditlog.register(
-        MonitoringEntry,
-        include_fields=[
-            'title',
-            'category',
-            'status',
-            'approval_status',
-            'budget_allocation',
-            'budget_obc_allocation',
-            'implementing_moa',
-            'lead_organization',
-            'fiscal_year',
-            'plan_year',
-            'funding_source',
-            'appropriation_class',
-        ],
-        serialize_data=True,
-    )
+    # Use lazy import to avoid circular dependency with monitoring app
+    try:
+        from django.apps import apps
+        MonitoringEntry = apps.get_model('monitoring', 'MonitoringEntry')
+        auditlog.register(
+            MonitoringEntry,
+            include_fields=[
+                'title',
+                'category',
+                'status',
+                'approval_status',
+                'budget_allocation',
+                'budget_obc_allocation',
+                'implementing_moa',
+                'lead_organization',
+                'fiscal_year',
+                'plan_year',
+                'funding_source',
+                'appropriation_class',
+            ],
+            serialize_data=True,
+        )
+    except LookupError:
+        # monitoring app not loaded yet, skip registration
+        # The monitoring app will register itself
+        pass
 
     # Register Budget Preparation models (Phase 2A)
     from budget_preparation.models import (

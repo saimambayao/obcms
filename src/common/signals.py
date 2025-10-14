@@ -13,8 +13,7 @@ from .models import (
     CalendarResourceBooking,
     WorkItem,
 )
-from .services.enhanced_geocoding import enhanced_ensure_location_coordinates
-from monitoring.models import MonitoringEntry
+from .services.deferred_geocoding import schedule_geocoding_if_needed
 
 # DEPRECATED: StaffTask and Event imports removed
 # Replaced by WorkItem system
@@ -41,30 +40,20 @@ def _invalidate_calendar_cache():
 def municipality_post_save(sender, instance, created, **kwargs):
     """
     Signal handler for when a Municipality is saved.
-    This will automatically geocode the municipality if it doesn't have coordinates.
+    This will schedule geocoding for the municipality if it doesn't have coordinates.
+
+    The geocoding is performed in the background to avoid blocking Django startup.
     """
     if not instance.center_coordinates:
-        logger.info(
-            f"Municipality {instance.name} has no coordinates. Triggering geocoding."
-        )
-        try:
-            lat, lng, updated, source = enhanced_ensure_location_coordinates(instance)
-            if updated:
-                logger.info(
-                    f"Successfully geocoded Municipality {instance.name} using {source}. New coordinates: [{lng}, {lat}]"
-                )
-            elif lat and lng:
-                logger.info(
-                    f"Municipality {instance.name} already had coordinates from {source}: [{lng}, {lat}]"
-                )
-            else:
-                logger.warning(
-                    f"Geocoding failed for Municipality {instance.name} from source {source}."
-                )
-        except Exception as e:
-            logger.error(
-                f"An error occurred during geocoding for Municipality {instance.name}: {e}",
-                exc_info=True,
+        # Schedule geocoding in the background (non-blocking)
+        scheduled = schedule_geocoding_if_needed(instance)
+        if scheduled:
+            logger.info(
+                f"Scheduled background geocoding for Municipality {instance.name}"
+            )
+        else:
+            logger.debug(
+                f"Geocoding not needed or already in progress for Municipality {instance.name}"
             )
 
 
@@ -72,37 +61,26 @@ def municipality_post_save(sender, instance, created, **kwargs):
 def barangay_post_save(sender, instance, created, **kwargs):
     """
     Signal handler for when a Barangay is saved.
-    This will automatically geocode the barangay if it doesn't have coordinates.
+    This will schedule geocoding for the barangay if it doesn't have coordinates.
+
+    The geocoding is performed in the background to avoid blocking Django startup.
     """
     if not instance.center_coordinates:
-        logger.info(
-            f"Barangay {instance.name} has no coordinates. Triggering geocoding."
-        )
-        try:
-            lat, lng, updated, source = enhanced_ensure_location_coordinates(instance)
-            if updated:
-                logger.info(
-                    f"Successfully geocoded Barangay {instance.name} using {source}. New coordinates: [{lng}, {lat}]"
-                )
-            elif lat and lng:
-                logger.info(
-                    f"Barangay {instance.name} already had coordinates from {source}: [{lng}, {lat}]"
-                )
-            else:
-                logger.warning(
-                    f"Geocoding failed for Barangay {instance.name} from source {source}."
-                )
-        except Exception as e:
-            logger.error(
-                f"An error occurred during geocoding for Barangay {instance.name}: {e}",
-                exc_info=True,
+        # Schedule geocoding in the background (non-blocking)
+        scheduled = schedule_geocoding_if_needed(instance)
+        if scheduled:
+            logger.info(
+                f"Scheduled background geocoding for Barangay {instance.name}"
+            )
+        else:
+            logger.debug(
+                f"Geocoding not needed or already in progress for Barangay {instance.name}"
             )
 
 
 # StaffTask and Event signals removed - models deleted
 # See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md
 
-@receiver([post_save, post_delete], sender=MonitoringEntry)
 @receiver([post_save, post_delete], sender=StaffLeave)
 @receiver([post_save, post_delete], sender=CalendarResourceBooking)
 @receiver([post_save, post_delete], sender=WorkItem)
@@ -110,3 +88,12 @@ def calendar_cache_invalidator(sender, **kwargs):
     """Clear cached calendar payloads when core calendar data changes."""
 
     _invalidate_calendar_cache()
+
+
+def connect_monitoring_signals():
+    """Connect MonitoringEntry signals to avoid circular dependency."""
+    from monitoring.models import MonitoringEntry
+    from django.db.models.signals import post_save, post_delete
+
+    post_save.connect(calendar_cache_invalidator, sender=MonitoringEntry)
+    post_delete.connect(calendar_cache_invalidator, sender=MonitoringEntry)

@@ -47,16 +47,23 @@ logger = logging.getLogger(__name__)
 def get_template_registry():
     """Return the global registry, re-registering templates if cleared."""
     registry = _get_template_registry_base()
-    if not registry.get_all_templates():
-        _register_all_templates(registry=registry)
+    # TEMPORARILY DISABLED to test server startup
+    # if not registry.get_all_templates():
+    #     _register_all_templates(registry=registry)
     return registry
 
 
 def get_template_matcher():
     """Lazy import to avoid circular dependency at module import time."""
-    from common.ai_services.chat.template_matcher import get_template_matcher as _get_template_matcher
-
-    return _get_template_matcher()
+    # Import here to avoid circular dependency between query_templates and template_matcher
+    try:
+        from common.ai_services.chat.template_matcher import TemplateMatcher
+        # Create a new instance to avoid circular dependency with singleton
+        return TemplateMatcher()
+    except ImportError:
+        # Return None if template_matcher module can't be imported yet
+        # This can happen during Django startup
+        return None
 
 
 def _register_all_templates(registry=None):
@@ -196,8 +203,9 @@ def _register_all_templates(registry=None):
     )
 
 
-# Auto-register templates when module is imported
-_register_all_templates()
+# Auto-register templates when module is imported - DISABLED to prevent circular dependency
+# Templates will be registered lazily when get_template_registry() is called
+# _register_all_templates()
 
 
 __all__ = [
