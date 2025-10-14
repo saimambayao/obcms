@@ -17,3 +17,12 @@ class CommonConfig(AppConfig):
         except Exception as e:
             # Don't fail app startup if auditlog registration fails
             print(f"⚠️  Warning: Auditlog registration failed: {e}")
+
+        # Mark Django startup as complete to enable background geocoding
+        # This prevents HTTP requests during startup which can cause 30-60s delays
+        try:
+            from common.services.deferred_geocoding import mark_django_startup_complete
+            mark_django_startup_complete()
+        except Exception as e:
+            # Log error but don't fail startup
+            print(f"⚠️  Warning: Failed to mark Django startup complete: {e}")

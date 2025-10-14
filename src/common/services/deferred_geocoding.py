@@ -7,6 +7,9 @@ from django.core.cache import cache
 from django.db import transaction
 from django.apps import apps
 
+# Import the actual geocoding function
+from .enhanced_geocoding import enhanced_ensure_location_coordinates
+
 logger = logging.getLogger(__name__)
 
 # Cache key to track geocoding tasks and prevent duplicates
@@ -53,12 +56,20 @@ def schedule_geocoding_if_needed(instance, timeout: int = 300) -> bool:
     )
 
     # Check if geocoding is already in progress
-    if cache.get(lock_key):
-        logger.debug(f"Geocoding already in progress for {instance.__class__.__name__} {instance.pk}")
-        return False
+    try:
+        if cache.get(lock_key):
+            logger.debug(f"Geocoding already in progress for {instance.__class__.__name__} {instance.pk}")
+            return False
+    except Exception as cache_error:
+        # Cache not available - proceed anyway (better to duplicate than to block)
+        logger.warning(f"Cache check failed for {instance.__class__.__name__} {instance.pk}: {cache_error}")
 
     # Set a lock to prevent duplicate tasks
-    cache.set(lock_key, True, timeout)
+    try:
+        cache.set(lock_key, True, timeout)
+    except Exception as cache_error:
+        # Cache not available - log warning but continue
+        logger.warning(f"Failed to set cache lock for {instance.__class__.__name__} {instance.pk}: {cache_error}")
 
     try:
         # Schedule the geocoding task in a background thread
@@ -89,11 +100,20 @@ def _schedule_post_startup_geocoding(instance, timeout: int) -> None:
     Schedule geocoding to run after Django startup is complete.
 
     This adds the instance to a queue that will be processed when Django startup finishes.
+
+    NOTE: During Django startup, the cache backend might not be ready yet.
+    This function handles cache unavailability gracefully.
     """
     try:
         # Add to a queue of instances that need geocoding after startup
         queue_key = "geocoding_startup_queue"
-        queue_data = cache.get(queue_key, [])
+
+        # Try to access cache, but don't block if cache isn't ready
+        try:
+            queue_data = cache.get(queue_key, [])
+        except Exception:
+            # Cache not ready during startup - use empty list
+            queue_data = []
 
         instance_info = {
             'app_label': instance._meta.app_label,
@@ -103,12 +123,21 @@ def _schedule_post_startup_geocoding(instance, timeout: int) -> None:
         }
 
         queue_data.append(instance_info)
-        cache.set(queue_key, queue_data, 3600)  # Store for 1 hour
 
-        logger.debug(f"Added {instance.__class__.__name__} {instance.pk} to post-startup geocoding queue")
+        # Try to set cache, but don't block if cache isn't ready
+        try:
+            cache.set(queue_key, queue_data, 3600)  # Store for 1 hour
+            logger.debug(f"Added {instance.__class__.__name__} {instance.pk} to post-startup geocoding queue")
+        except Exception as cache_error:
+            # Cache not available - log but don't fail
+            logger.warning(
+                f"Cache unavailable during startup - geocoding for {instance.__class__.__name__} "
+                f"{instance.pk} will not be queued: {cache_error}"
+            )
 
     except Exception as e:
-        logger.error(f"Failed to add {instance.__class__.__name__} {instance.pk} to geocoding queue: {e}")
+        # Log error but don't fail - geocoding is non-critical
+        logger.error(f"Failed to queue geocoding for {instance.__class__.__name__} {instance.pk}: {e}")
 
 
 def mark_django_startup_complete():
