@@ -1,0 +1,629 @@
+================================================================================
+PHASE 0: PRE-IMPLEMENTATION SETUP
+================================================================================
+
+Priority: CRITICAL
+Dependencies: None
+Prerequisites: Codebase must be in working state
+Estimated Complexity: Simple
+
+NOTE: This phase MUST be completed before any infrastructure work begins.
+
+================================================================================
+OVERVIEW
+================================================================================
+
+This phase prepares the development environment for BMMS embedded architecture
+implementation. It creates safety checkpoints and verifies the codebase is in
+a stable state before making changes.
+
+Key Goals:
+- Create isolated feature branch for BMMS work
+- Backup current database state
+- Verify all existing tests pass
+- Document baseline metrics
+
+================================================================================
+TASKS CHECKLIST
+================================================================================
+
+[ ] Task 1: Create Feature Branch
+    [ ] 1.1 Ensure main branch is up to date
+    [ ] 1.2 Create feature branch with descriptive name
+    [ ] 1.3 Verify branch creation
+    [ ] 1.4 Push branch to remote
+
+[ ] Task 2: Backup Database
+    [ ] 2.1 Verify database file location
+    [ ] 2.2 Create timestamped backup
+    [ ] 2.3 Verify backup file integrity
+    [ ] 2.4 Document backup location
+
+[ ] Task 3: Verify Current State
+    [ ] 3.1 Run Django system checks
+    [ ] 3.2 Run existing test suite
+    [ ] 3.3 Document baseline test results
+    [ ] 3.4 Check for pending migrations
+    [ ] 3.5 Verify development server starts
+
+[ ] Task 4: Document Baseline Metrics
+    [ ] 4.1 Record current test count
+    [ ] 4.2 Record current database size
+    [ ] 4.3 Record current model count
+    [ ] 4.4 Document current features
+
+================================================================================
+DETAILED IMPLEMENTATION
+================================================================================
+
+------------------------------------------------------------------------
+TASK 1: CREATE FEATURE BRANCH
+------------------------------------------------------------------------
+
+Step 1.1: Ensure Main Branch is Up to Date
+-------------------------------------------
+
+Commands:
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms
+git checkout main
+git pull origin main
+```
+
+Expected Result:
+- Currently on 'main'
+- Branch is up to date with 'origin/main'
+
+If Behind:
+```bash
+git fetch origin
+git merge origin/main
+```
+
+
+Step 1.2: Create Feature Branch
+--------------------------------
+
+Commands:
+```bash
+git checkout -b feature/bmms-embedded-architecture
+```
+
+Branch Naming Convention:
+- feature/bmms-embedded-architecture (recommended)
+- Alternative: feature/bmms-infrastructure
+- Alternative: feature/bmms-phase0-4
+
+Expected Result:
+- Switched to a new branch 'feature/bmms-embedded-architecture'
+
+
+Step 1.3: Verify Branch Creation
+---------------------------------
+
+Commands:
+```bash
+git branch
+git status
+```
+
+Expected Output:
+```
+* feature/bmms-embedded-architecture
+  main
+
+On branch feature/bmms-embedded-architecture
+nothing to commit, working tree clean
+```
+
+
+Step 1.4: Push Branch to Remote
+--------------------------------
+
+Commands:
+```bash
+git push -u origin feature/bmms-embedded-architecture
+```
+
+Expected Result:
+- Branch 'feature/bmms-embedded-architecture' set up to track remote branch
+
+Verification:
+```bash
+git branch -vv
+```
+
+Should show: [origin/feature/bmms-embedded-architecture]
+
+
+------------------------------------------------------------------------
+TASK 2: BACKUP DATABASE
+------------------------------------------------------------------------
+
+Step 2.1: Verify Database File Location
+----------------------------------------
+
+Commands:
+```bash
+cd src/
+ls -lh db.sqlite3
+```
+
+Expected Output:
+```
+-rw-r--r--  1 user  staff   XXM MMM DD HH:MM db.sqlite3
+```
+
+If Database Not Found:
+- Check if database exists at all
+- Verify working directory
+- Check settings/base.py for DATABASE location
+
+
+Step 2.2: Create Timestamped Backup
+------------------------------------
+
+Commands:
+```bash
+# Create backup with timestamp
+BACKUP_NAME="db.sqlite3.backup-$(date +%Y%m%d-%H%M%S)"
+cp db.sqlite3 "$BACKUP_NAME"
+echo "Backup created: $BACKUP_NAME"
+```
+
+Alternative (simple backup):
+```bash
+cp db.sqlite3 db.sqlite3.backup
+```
+
+Expected Result:
+- Backup file created with timestamp
+- Example: db.sqlite3.backup-20251014-143022
+
+
+Step 2.3: Verify Backup File Integrity
+---------------------------------------
+
+Commands:
+```bash
+# Check file sizes match
+ls -lh db.sqlite3*
+
+# Verify backup is readable
+sqlite3 "$BACKUP_NAME" "SELECT name FROM sqlite_master WHERE type='table' LIMIT 5;"
+```
+
+Expected Result:
+- Both files have same size
+- Can query backup database successfully
+- Tables are accessible
+
+
+Step 2.4: Document Backup Location
+-----------------------------------
+
+Create backup documentation:
+```bash
+cat > BACKUP_INFO.txt << 'EOF'
+BMMS Implementation - Database Backup
+=====================================
+
+Date: $(date)
+Original: db.sqlite3
+Backup: db.sqlite3.backup-YYYYMMDD-HHMMSS
+
+Backup Size: $(du -h db.sqlite3.backup-* | cut -f1)
+Original Size: $(du -h db.sqlite3 | cut -f1)
+
+Restore Command:
+cp db.sqlite3.backup-YYYYMMDD-HHMMSS db.sqlite3
+
+EOF
+```
+
+Location: /src/BACKUP_INFO.txt
+
+
+------------------------------------------------------------------------
+TASK 3: VERIFY CURRENT STATE
+------------------------------------------------------------------------
+
+Step 3.1: Run Django System Checks
+-----------------------------------
+
+Commands:
+```bash
+cd src/
+python manage.py check
+python manage.py check --deploy
+```
+
+Expected Output:
+```
+System check identified no issues (0 silenced).
+```
+
+If Warnings Appear:
+- Document warnings for reference
+- Determine if warnings are blocking
+- Plan to address in Phase -1 if critical
+
+Common Acceptable Warnings:
+- DEBUG=True in development
+- Insecure SECRET_KEY in development
+- Missing static files configuration
+
+
+Step 3.2: Run Existing Test Suite
+----------------------------------
+
+Commands:
+```bash
+cd src/
+python manage.py test --keepdb
+```
+
+Alternative (with pytest):
+```bash
+pytest --tb=short
+```
+
+Expected Result:
+- All tests pass
+- Test count: 254/256 passing (per documentation)
+- Some performance tests may fail (83% pass rate acceptable)
+
+Document Results:
+```
+Total Tests: XXX
+Passed: XXX
+Failed: XXX
+Skipped: XXX
+Time: XX.XXs
+```
+
+
+Step 3.3: Document Baseline Test Results
+-----------------------------------------
+
+Create test baseline documentation:
+```bash
+cd src/
+python manage.py test --keepdb > ../TEST_BASELINE.txt 2>&1
+
+# Add summary
+cat >> ../TEST_BASELINE.txt << 'EOF'
+
+BASELINE SUMMARY
+================
+Date: $(date)
+Total Tests: [COUNT]
+Pass Rate: [PERCENTAGE]
+Failed Tests: [LIST]
+
+Notes:
+- Unit tests: 99.2% passing (254/256)
+- Performance tests: 83% passing (10/12)
+EOF
+```
+
+Location: /TEST_BASELINE.txt
+
+
+Step 3.4: Check for Pending Migrations
+---------------------------------------
+
+Commands:
+```bash
+cd src/
+python manage.py showmigrations
+```
+
+Expected Result:
+- All migrations marked with [X] (applied)
+- No [ ] (unapplied) migrations
+
+Check for unmade migrations:
+```bash
+python manage.py makemigrations --dry-run
+```
+
+Expected Output:
+```
+No changes detected
+```
+
+If Changes Detected:
+- DO NOT create migrations yet
+- Document what models have changes
+- These will be addressed in Phase 5+
+
+
+Step 3.5: Verify Development Server Starts
+-------------------------------------------
+
+Commands:
+```bash
+cd src/
+python manage.py runserver &
+SERVER_PID=$!
+sleep 5
+curl -I http://localhost:8000/
+kill $SERVER_PID
+```
+
+Expected Result:
+- Server starts without errors
+- HTTP response received
+- Server shuts down cleanly
+
+Alternative Manual Test:
+```bash
+python manage.py runserver
+# Open browser to http://localhost:8000/
+# Verify dashboard loads
+# Press Ctrl+C to stop
+```
+
+
+------------------------------------------------------------------------
+TASK 4: DOCUMENT BASELINE METRICS
+------------------------------------------------------------------------
+
+Step 4.1: Record Current Test Count
+------------------------------------
+
+Commands:
+```bash
+cd src/
+python manage.py test --keepdb 2>&1 | grep "Ran"
+```
+
+Expected Output:
+```
+Ran 256 tests in XX.XXXs
+```
+
+Document in BASELINE_METRICS.txt
+
+
+Step 4.2: Record Current Database Size
+---------------------------------------
+
+Commands:
+```bash
+cd src/
+du -h db.sqlite3
+sqlite3 db.sqlite3 "SELECT COUNT(*) as tables FROM sqlite_master WHERE type='table';"
+```
+
+Document:
+- Database file size
+- Number of tables
+- Number of records per app (optional)
+
+
+Step 4.3: Record Current Model Count
+-------------------------------------
+
+Commands:
+```bash
+cd src/
+python manage.py shell << 'EOF'
+from django.apps import apps
+models = [m for m in apps.get_models()]
+print(f"Total Models: {len(models)}")
+
+# Count by app
+from collections import defaultdict
+app_counts = defaultdict(int)
+for model in models:
+    app_counts[model._meta.app_label] += 1
+
+for app, count in sorted(app_counts.items()):
+    print(f"  {app}: {count} models")
+EOF
+```
+
+Expected Output:
+- Total model count
+- Breakdown by app (communities, mana, coordination, etc.)
+
+
+Step 4.4: Document Current Features
+------------------------------------
+
+Create comprehensive baseline documentation:
+```bash
+cat > BASELINE_METRICS.txt << 'EOF'
+BMMS IMPLEMENTATION - BASELINE METRICS
+======================================
+
+Date: $(date)
+Branch: main
+Commit: $(git rev-parse HEAD)
+
+DATABASE
+--------
+File: src/db.sqlite3
+Size: $(du -h src/db.sqlite3 | cut -f1)
+Tables: [COUNT from Step 4.2]
+Backup: src/db.sqlite3.backup-YYYYMMDD-HHMMSS
+
+TESTS
+-----
+Total Tests: [COUNT from Step 4.1]
+Unit Tests Passing: 254/256 (99.2%)
+Performance Tests Passing: 10/12 (83%)
+
+MODELS
+------
+Total Models: [COUNT from Step 4.3]
+Communities App: [COUNT]
+MANA App: [COUNT]
+Coordination App: [COUNT]
+Policies App: [COUNT]
+Organizations App: [COUNT]
+
+APPS
+----
+Installed Apps:
+- common
+- communities
+- mana
+- coordination
+- recommendations (policies)
+- organizations
+
+CURRENT STATE
+-------------
+✓ All migrations applied
+✓ No pending model changes
+✓ Development server starts successfully
+✓ Dashboard accessible
+✓ All tests passing (within acceptable ranges)
+
+READY FOR: Phase 1 - Configuration Infrastructure
+EOF
+```
+
+Location: /BASELINE_METRICS.txt
+
+================================================================================
+VERIFICATION CHECKLIST
+================================================================================
+
+Before proceeding to Phase 1, verify:
+
+[ ] Feature branch created and pushed to remote
+[ ] Database backup exists and verified
+[ ] Backup documentation created (BACKUP_INFO.txt)
+[ ] All system checks pass (python manage.py check)
+[ ] All tests pass (or only acceptable failures)
+[ ] Test baseline documented (TEST_BASELINE.txt)
+[ ] No pending migrations
+[ ] Development server starts successfully
+[ ] Baseline metrics documented (BASELINE_METRICS.txt)
+[ ] Commit SHA recorded for rollback reference
+
+================================================================================
+EXPECTED RESULTS
+================================================================================
+
+After completing Phase 0:
+
+✅ Feature Branch Ready
+   - Branch: feature/bmms-embedded-architecture
+   - Clean working tree
+   - Pushed to remote
+
+✅ Database Backed Up
+   - Backup file: db.sqlite3.backup-YYYYMMDD-HHMMSS
+   - Verified readable and complete
+   - Restore procedure documented
+
+✅ Baseline Documented
+   - Test results captured
+   - Model counts recorded
+   - Database metrics documented
+   - Current features listed
+
+✅ System Verified Stable
+   - All checks passing
+   - Tests passing (within acceptable ranges)
+   - Server starts without errors
+   - Ready for infrastructure changes
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Issue: Tests Failing
+--------------------
+Resolution:
+- Document which tests are failing
+- Compare with known acceptable failure rate (83% for performance tests)
+- If critical tests failing, investigate before proceeding
+- Ensure failures are not related to database corruption
+
+Issue: Database Backup Fails
+-----------------------------
+Resolution:
+- Check disk space: df -h
+- Verify file permissions: ls -l src/db.sqlite3
+- Try copying to different location
+- Ensure SQLite is not corrupted: sqlite3 db.sqlite3 "PRAGMA integrity_check;"
+
+Issue: Migrations Pending
+--------------------------
+Resolution:
+- DO NOT apply migrations yet
+- Document what migrations are pending
+- Will be addressed in appropriate phase
+- If critical, consult Phase -1 reconciliation plan
+
+Issue: Server Won't Start
+--------------------------
+Resolution:
+- Check port 8000 not in use: lsof -i :8000
+- Verify virtual environment activated
+- Check for syntax errors: python manage.py check
+- Review server logs for specific error
+
+================================================================================
+NEXT PHASE
+================================================================================
+
+Upon successful completion of Phase 0:
+
+→ Proceed to: Phase 1 - Configuration Infrastructure
+→ File: phase1_configuration.txt
+→ Priority: CRITICAL
+
+Phase 1 will create:
+- BMMS configuration module (bmms_config.py)
+- Mode detection utilities
+- Environment configuration files
+- Settings updates for BMMS support
+
+================================================================================
+ROLLBACK PROCEDURE
+================================================================================
+
+If Phase 0 needs to be rolled back:
+
+1. Delete Feature Branch:
+   ```bash
+   git checkout main
+   git branch -D feature/bmms-embedded-architecture
+   git push origin --delete feature/bmms-embedded-architecture
+   ```
+
+2. Restore Database (if modified):
+   ```bash
+   cd src/
+   cp db.sqlite3.backup-YYYYMMDD-HHMMSS db.sqlite3
+   ```
+
+3. Clean Up Documentation Files:
+   ```bash
+   rm BASELINE_METRICS.txt TEST_BASELINE.txt BACKUP_INFO.txt
+   ```
+
+================================================================================
+NOTES
+================================================================================
+
+- This phase is non-destructive (read-only operations)
+- No code changes made
+- No database schema changes
+- Safe to run multiple times
+- Creates safety checkpoints for rollback
+
+- Keep BACKUP_INFO.txt for reference throughout implementation
+- Refer to TEST_BASELINE.txt to compare test results after changes
+- Use BASELINE_METRICS.txt to track impact of infrastructure changes
+
+================================================================================
+END OF PHASE 0: PRE-IMPLEMENTATION SETUP
+================================================================================

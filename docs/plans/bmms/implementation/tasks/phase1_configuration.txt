@@ -1,0 +1,1192 @@
+================================================================================
+PHASE 1: CONFIGURATION INFRASTRUCTURE
+================================================================================
+
+Priority: CRITICAL
+Dependencies: Phase 0 complete
+Prerequisites: Feature branch created, database backed up
+Estimated Complexity: Moderate
+
+NOTE: This phase establishes the foundation for dual-mode operation (OBCMS/BMMS).
+All subsequent phases depend on this configuration infrastructure.
+
+================================================================================
+OVERVIEW
+================================================================================
+
+This phase creates the configuration layer that enables the system to operate
+in two distinct modes:
+
+1. OBCMS Mode (Default): Single-tenant for OOBC only
+2. BMMS Mode: Multi-tenant for 44 MOAs
+
+The system will detect its operational mode from environment variables and
+adjust behavior accordingly—NO code changes required to switch modes.
+
+Key Deliverables:
+- bmms_config.py: Mode detection and configuration utilities
+- Updated settings/base.py: BMMS-aware settings
+- .env.obcms: OBCMS mode configuration template
+- .env.bmms: BMMS mode configuration template
+
+================================================================================
+TASKS CHECKLIST
+================================================================================
+
+[ ] Task 1: Create BMMS Configuration Module
+    [ ] 1.1 Create bmms_config.py file
+    [ ] 1.2 Implement BMMSMode class
+    [ ] 1.3 Implement mode detection functions
+    [ ] 1.4 Implement organization config functions
+    [ ] 1.5 Test configuration utilities
+
+[ ] Task 2: Update Django Settings
+    [ ] 2.1 Import bmms_config in base.py
+    [ ] 2.2 Add BMMS_MODE setting
+    [ ] 2.3 Add DEFAULT_ORGANIZATION_CODE setting
+    [ ] 2.4 Update RBAC_SETTINGS for mode awareness
+    [ ] 2.5 Update MIDDLEWARE configuration
+    [ ] 2.6 Verify settings load correctly
+
+[ ] Task 3: Create Environment Configuration Files
+    [ ] 3.1 Create .env.obcms template
+    [ ] 3.2 Create .env.bmms template
+    [ ] 3.3 Update .env with OBCMS mode settings
+    [ ] 3.4 Document environment variables
+    [ ] 3.5 Create .env.example with both modes
+
+[ ] Task 4: Validation and Testing
+    [ ] 4.1 Test OBCMS mode configuration
+    [ ] 4.2 Test BMMS mode configuration
+    [ ] 4.3 Test mode switching
+    [ ] 4.4 Verify backward compatibility
+    [ ] 4.5 Run Django checks
+    [ ] 4.6 Commit changes
+
+================================================================================
+DETAILED IMPLEMENTATION
+================================================================================
+
+------------------------------------------------------------------------
+TASK 1: CREATE BMMS CONFIGURATION MODULE
+------------------------------------------------------------------------
+
+Step 1.1: Create bmms_config.py File
+-------------------------------------
+
+Location: /src/obc_management/settings/bmms_config.py
+
+Commands:
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/obc_management/settings
+touch bmms_config.py
+```
+
+Verification:
+```bash
+ls -l bmms_config.py
+```
+
+Expected: File created with write permissions
+
+
+Step 1.2-1.4: Implement Configuration Module
+---------------------------------------------
+
+Full implementation of bmms_config.py:
+
+```python
+"""
+BMMS Configuration Module
+
+Provides configuration constants and utilities for BMMS multi-tenant mode.
+
+This module enables the system to operate in two distinct modes:
+- OBCMS Mode: Single-tenant for OOBC only (default)
+- BMMS Mode: Multi-tenant for 44 MOAs
+
+Mode switching requires ONLY environment variable changes—no code changes.
+"""
+from django.conf import settings
+
+
+class BMMSMode:
+    """
+    BMMS operational modes.
+
+    Attributes:
+        OBCMS: Single-tenant mode (OOBC only)
+        BMMS: Multi-tenant mode (44 MOAs)
+    """
+    OBCMS = 'obcms'  # Single-tenant mode (OOBC only)
+    BMMS = 'bmms'    # Multi-tenant mode (44 MOAs)
+
+
+def is_bmms_mode():
+    """
+    Check if system is running in BMMS mode.
+
+    Returns:
+        bool: True if BMMS mode, False otherwise
+
+    Example:
+        >>> is_bmms_mode()
+        False  # When BMMS_MODE=obcms
+
+        >>> # After setting BMMS_MODE=bmms
+        >>> is_bmms_mode()
+        True
+    """
+    return getattr(settings, 'BMMS_MODE', BMMSMode.OBCMS) == BMMSMode.BMMS
+
+
+def is_obcms_mode():
+    """
+    Check if system is running in OBCMS mode.
+
+    Returns:
+        bool: True if OBCMS mode, False otherwise
+
+    Example:
+        >>> is_obcms_mode()
+        True  # Default mode
+    """
+    return not is_bmms_mode()
+
+
+def get_default_organization_code():
+    """
+    Get the default organization code for OBCMS mode.
+
+    Returns:
+        str: Organization code (default: 'OOBC')
+
+    Example:
+        >>> get_default_organization_code()
+        'OOBC'
+    """
+    return getattr(settings, 'DEFAULT_ORGANIZATION_CODE', 'OOBC')
+
+
+def multi_tenant_enabled():
+    """
+    Check if multi-tenant features are enabled.
+
+    In OBCMS mode, always returns False.
+    In BMMS mode, returns value of ENABLE_MULTI_TENANT setting.
+
+    Returns:
+        bool: True if multi-tenant enabled, False otherwise
+
+    Example:
+        >>> # In OBCMS mode
+        >>> multi_tenant_enabled()
+        False
+
+        >>> # In BMMS mode
+        >>> multi_tenant_enabled()
+        True
+    """
+    if is_obcms_mode():
+        return False  # OBCMS always single-tenant
+    return getattr(settings, 'ENABLE_MULTI_TENANT', True)
+
+
+def organization_switching_enabled():
+    """
+    Check if organization switching is allowed.
+
+    In OBCMS mode, always returns False (users stay in OOBC).
+    In BMMS mode, users can switch between organizations they have access to.
+
+    Returns:
+        bool: True if switching enabled, False otherwise
+
+    Example:
+        >>> # In OBCMS mode
+        >>> organization_switching_enabled()
+        False
+
+        >>> # In BMMS mode
+        >>> organization_switching_enabled()
+        True
+    """
+    if is_obcms_mode():
+        return False  # No switching in OBCMS mode
+    return getattr(settings, 'ALLOW_ORGANIZATION_SWITCHING', True)
+```
+
+File: /src/obc_management/settings/bmms_config.py
+
+
+Step 1.5: Test Configuration Utilities
+---------------------------------------
+
+Commands:
+```bash
+cd src/
+python manage.py shell
+```
+
+Test Script:
+```python
+# Test mode detection (should be OBCMS by default)
+from obc_management.settings.bmms_config import *
+
+print("Testing BMMS Configuration Module")
+print("=" * 50)
+
+# Test 1: Default mode should be OBCMS
+print(f"is_obcms_mode(): {is_obcms_mode()}")
+assert is_obcms_mode() == True, "Default should be OBCMS mode"
+
+# Test 2: BMMS mode should be False by default
+print(f"is_bmms_mode(): {is_bmms_mode()}")
+assert is_bmms_mode() == False, "Default should not be BMMS mode"
+
+# Test 3: Default organization code
+print(f"get_default_organization_code(): {get_default_organization_code()}")
+assert get_default_organization_code() == 'OOBC', "Default org should be OOBC"
+
+# Test 4: Multi-tenant disabled in OBCMS
+print(f"multi_tenant_enabled(): {multi_tenant_enabled()}")
+assert multi_tenant_enabled() == False, "Multi-tenant should be disabled in OBCMS"
+
+# Test 5: Organization switching disabled in OBCMS
+print(f"organization_switching_enabled(): {organization_switching_enabled()}")
+assert organization_switching_enabled() == False, "Switching should be disabled in OBCMS"
+
+print("=" * 50)
+print("✓ All tests passed!")
+```
+
+Expected Output:
+```
+Testing BMMS Configuration Module
+==================================================
+is_obcms_mode(): True
+is_bmms_mode(): False
+get_default_organization_code(): OOBC
+multi_tenant_enabled(): False
+organization_switching_enabled(): False
+==================================================
+✓ All tests passed!
+```
+
+
+------------------------------------------------------------------------
+TASK 2: UPDATE DJANGO SETTINGS
+------------------------------------------------------------------------
+
+Step 2.1: Import bmms_config in base.py
+----------------------------------------
+
+Location: /src/obc_management/settings/base.py
+
+Add after existing imports (around line 10-20):
+
+```python
+# BMMS Configuration
+from obc_management.settings.bmms_config import BMMSMode
+```
+
+Verification:
+```bash
+cd src/
+python manage.py shell -c "from obc_management.settings.bmms_config import BMMSMode; print('Import successful')"
+```
+
+
+Step 2.2-2.3: Add BMMS Mode Settings
+-------------------------------------
+
+Add after RBAC_SETTINGS section (around line 640):
+
+```python
+# ========== BMMS MODE CONFIGURATION ==========
+# Operational mode: 'obcms' (single-tenant) or 'bmms' (multi-tenant)
+BMMS_MODE = env.str('BMMS_MODE', default=BMMSMode.OBCMS)
+
+# Default organization code for OBCMS mode
+# This organization is auto-injected for all requests in OBCMS mode
+DEFAULT_ORGANIZATION_CODE = env.str('DEFAULT_ORGANIZATION_CODE', default='OOBC')
+```
+
+Location: Insert after line ~640 in base.py
+
+
+Step 2.4: Update RBAC_SETTINGS
+-------------------------------
+
+FIND the existing RBAC_SETTINGS dictionary (around line 638).
+
+REPLACE with mode-aware version:
+
+```python
+# ========== RBAC SETTINGS ==========
+RBAC_SETTINGS = {
+    # Enable multi-tenant organization context
+    # In OBCMS mode, this is automatically set to False
+    # In BMMS mode, defaults to True
+    'ENABLE_MULTI_TENANT': env.bool(
+        'ENABLE_MULTI_TENANT',
+        default=(BMMS_MODE == BMMSMode.BMMS)  # Mode-dependent default
+    ),
+
+    # Office of Chief Minister (OCM) organization code
+    # OCM has read-only aggregated access across all MOAs
+    'OCM_ORGANIZATION_CODE': 'OCM',
+
+    # Permission cache timeout (seconds)
+    'CACHE_TIMEOUT': 300,  # 5 minutes
+
+    # Organization switching
+    # In OBCMS mode, this is automatically set to False
+    # In BMMS mode, allows users to switch between organizations
+    'ALLOW_ORGANIZATION_SWITCHING': env.bool(
+        'ALLOW_ORGANIZATION_SWITCHING',
+        default=(BMMS_MODE == BMMSMode.BMMS)  # Mode-dependent default
+    ),
+
+    # Session key for current organization
+    'SESSION_ORG_KEY': 'current_organization',
+}
+```
+
+CRITICAL: The key changes:
+1. ENABLE_MULTI_TENANT now defaults based on BMMS_MODE
+2. ALLOW_ORGANIZATION_SWITCHING now defaults based on BMMS_MODE
+3. Both can still be overridden via environment variables
+
+
+Step 2.5: Update MIDDLEWARE Configuration
+------------------------------------------
+
+FIND the MIDDLEWARE list (around line 133).
+
+NOTE: There is an existing OrganizationContextMiddleware that conflicts.
+For Phase 1, we will document this but NOT modify it yet.
+The conflict will be resolved in Phase 3.
+
+ADD documentation comment above MIDDLEWARE:
+
+```python
+# ========== MIDDLEWARE ==========
+# NOTE: Organization middleware will be enhanced in Phase 3
+# Current: common.middleware.organization_context.OrganizationContextMiddleware
+# Future: organizations.middleware.obcms_middleware.OBCMSOrganizationMiddleware
+#         organizations.middleware.OrganizationMiddleware
+MIDDLEWARE = [
+    # ... existing middleware unchanged for now
+]
+```
+
+Location: Before MIDDLEWARE definition (around line 130)
+
+
+Step 2.6: Verify Settings Load Correctly
+-----------------------------------------
+
+Commands:
+```bash
+cd src/
+python manage.py check
+```
+
+Expected Output:
+```
+System check identified no issues (0 silenced).
+```
+
+Test settings access:
+```bash
+python manage.py shell
+```
+
+Test Script:
+```python
+from django.conf import settings
+from obc_management.settings.bmms_config import *
+
+print("Testing Django Settings Integration")
+print("=" * 50)
+
+# Test 1: BMMS_MODE setting exists
+print(f"settings.BMMS_MODE: {settings.BMMS_MODE}")
+assert hasattr(settings, 'BMMS_MODE'), "BMMS_MODE setting missing"
+
+# Test 2: DEFAULT_ORGANIZATION_CODE exists
+print(f"settings.DEFAULT_ORGANIZATION_CODE: {settings.DEFAULT_ORGANIZATION_CODE}")
+assert hasattr(settings, 'DEFAULT_ORGANIZATION_CODE'), "DEFAULT_ORGANIZATION_CODE missing"
+
+# Test 3: RBAC_SETTINGS updated
+print(f"settings.RBAC_SETTINGS['ENABLE_MULTI_TENANT']: {settings.RBAC_SETTINGS['ENABLE_MULTI_TENANT']}")
+# In OBCMS mode, should be False
+assert settings.RBAC_SETTINGS['ENABLE_MULTI_TENANT'] == False, "Should be False in OBCMS mode"
+
+# Test 4: Organization switching disabled
+print(f"settings.RBAC_SETTINGS['ALLOW_ORGANIZATION_SWITCHING']: {settings.RBAC_SETTINGS['ALLOW_ORGANIZATION_SWITCHING']}")
+assert settings.RBAC_SETTINGS['ALLOW_ORGANIZATION_SWITCHING'] == False, "Should be False in OBCMS mode"
+
+print("=" * 50)
+print("✓ All settings tests passed!")
+```
+
+
+------------------------------------------------------------------------
+TASK 3: CREATE ENVIRONMENT CONFIGURATION FILES
+------------------------------------------------------------------------
+
+Step 3.1: Create .env.obcms Template
+-------------------------------------
+
+File: /.env.obcms
+
+Content:
+```bash
+# =============================================================================
+# OBCMS MODE CONFIGURATION
+# =============================================================================
+# Single-tenant configuration for Office for Other Bangsamoro Communities (OOBC)
+#
+# To activate: cp .env.obcms .env && restart application
+#
+# =============================================================================
+
+# ========== BMMS MODE SETTINGS ==========
+# Operational mode: 'obcms' (single-tenant) or 'bmms' (multi-tenant)
+BMMS_MODE=obcms
+
+# Default organization code (auto-injected for all requests in OBCMS mode)
+DEFAULT_ORGANIZATION_CODE=OOBC
+
+# ========== MULTI-TENANT SETTINGS ==========
+# Multi-tenant features (automatically disabled in OBCMS mode)
+ENABLE_MULTI_TENANT=False
+
+# Organization switching (automatically disabled in OBCMS mode)
+ALLOW_ORGANIZATION_SWITCHING=False
+
+# ========== DATABASE CONFIGURATION ==========
+# SQLite for development (PostgreSQL recommended for production)
+DATABASE_URL=sqlite:///db.sqlite3
+
+# ========== APPLICATION SETTINGS ==========
+# Debug mode (NEVER set to True in production)
+DEBUG=True
+
+# Security settings
+SECRET_KEY=your-secret-key-here-change-in-production
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# ========== SITE CONFIGURATION ==========
+SITE_NAME=OBCMS
+SITE_DESCRIPTION=Office for Other Bangsamoro Communities Management System
+
+# ========== CORS SETTINGS ==========
+CORS_ALLOWED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
+
+# ========== CELERY SETTINGS (if using background tasks) ==========
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
+
+# ========== RBAC SETTINGS ==========
+# OCM organization code (Office of Chief Minister)
+OCM_ORGANIZATION_CODE=OCM
+
+# Permission cache timeout (seconds)
+PERMISSION_CACHE_TIMEOUT=300
+
+# ========== NOTES ==========
+# - This configuration runs OBCMS in single-tenant mode
+# - All requests automatically assigned to OOBC organization
+# - No URL org prefix required (/communities/ works directly)
+# - To switch to BMMS mode, use .env.bmms instead
+#
+# =============================================================================
+```
+
+Commands:
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms
+cat > .env.obcms << 'EOF'
+[paste content above]
+EOF
+```
+
+
+Step 3.2: Create .env.bmms Template
+------------------------------------
+
+File: /.env.bmms
+
+Content:
+```bash
+# =============================================================================
+# BMMS MODE CONFIGURATION
+# =============================================================================
+# Multi-tenant configuration for Bangsamoro Ministerial Management System
+# Serves all 44 BARMM Ministries, Offices, and Agencies (MOAs)
+#
+# To activate: cp .env.bmms .env && restart application
+#
+# =============================================================================
+
+# ========== BMMS MODE SETTINGS ==========
+# Operational mode: 'obcms' (single-tenant) or 'bmms' (multi-tenant)
+BMMS_MODE=bmms
+
+# Default organization code (used as fallback)
+DEFAULT_ORGANIZATION_CODE=OOBC
+
+# ========== MULTI-TENANT SETTINGS ==========
+# Multi-tenant features (enabled in BMMS mode)
+ENABLE_MULTI_TENANT=True
+
+# Organization switching (users can switch between authorized organizations)
+ALLOW_ORGANIZATION_SWITCHING=True
+
+# ========== DATABASE CONFIGURATION ==========
+# PostgreSQL REQUIRED for production BMMS deployment
+# SQLite for development/testing only
+DATABASE_URL=postgresql://user:password@localhost:5432/bmms_db
+
+# ========== APPLICATION SETTINGS ==========
+# Debug mode (MUST be False in production)
+DEBUG=False
+
+# Security settings
+SECRET_KEY=generate-strong-secret-key-for-production-deployment
+ALLOWED_HOSTS=bmms.oobc.gov.ph,www.bmms.oobc.gov.ph
+
+# ========== SITE CONFIGURATION ==========
+SITE_NAME=BMMS
+SITE_DESCRIPTION=Bangsamoro Ministerial Management System
+
+# ========== CORS SETTINGS ==========
+CORS_ALLOWED_ORIGINS=https://bmms.oobc.gov.ph
+
+# ========== CELERY SETTINGS ==========
+CELERY_BROKER_URL=redis://localhost:6379/1
+CELERY_RESULT_BACKEND=redis://localhost:6379/1
+
+# ========== RBAC SETTINGS ==========
+# OCM organization code (Office of Chief Minister)
+# OCM has read-only aggregated access across all MOAs
+OCM_ORGANIZATION_CODE=OCM
+
+# Permission cache timeout (seconds)
+PERMISSION_CACHE_TIMEOUT=300
+
+# ========== SECURITY SETTINGS (Production) ==========
+# HTTPS enforcement
+SECURE_SSL_REDIRECT=True
+SECURE_HSTS_SECONDS=31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+SECURE_HSTS_PRELOAD=True
+
+# Cookie security
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
+
+# ========== NOTES ==========
+# - This configuration runs BMMS in multi-tenant mode
+# - Organization extracted from URL: /moa/<ORG_CODE>/
+# - Users must have OrganizationMembership for access
+# - OCM can view all organizations (read-only aggregation)
+# - PostgreSQL REQUIRED for production (data isolation)
+#
+# =============================================================================
+```
+
+Commands:
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms
+cat > .env.bmms << 'EOF'
+[paste content above]
+EOF
+```
+
+
+Step 3.3: Update .env with OBCMS Mode Settings
+-----------------------------------------------
+
+Commands:
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms
+
+# Backup existing .env if it exists
+if [ -f .env ]; then
+    cp .env .env.backup-$(date +%Y%m%d-%H%M%S)
+fi
+
+# Copy OBCMS template to .env
+cp .env.obcms .env
+
+# Update SECRET_KEY if needed
+echo ""
+echo "⚠️  IMPORTANT: Update SECRET_KEY in .env before deployment"
+```
+
+Verification:
+```bash
+grep "BMMS_MODE" .env
+grep "DEFAULT_ORGANIZATION_CODE" .env
+```
+
+Expected Output:
+```
+BMMS_MODE=obcms
+DEFAULT_ORGANIZATION_CODE=OOBC
+```
+
+
+Step 3.4: Document Environment Variables
+-----------------------------------------
+
+Create documentation file:
+
+File: /docs/deployment/ENVIRONMENT_VARIABLES.md
+
+Content:
+```markdown
+# OBCMS/BMMS Environment Variables
+
+## Mode Configuration
+
+### BMMS_MODE
+- **Type:** String
+- **Values:** `obcms` | `bmms`
+- **Default:** `obcms`
+- **Description:** Determines operational mode
+  - `obcms`: Single-tenant mode (OOBC only)
+  - `bmms`: Multi-tenant mode (44 MOAs)
+
+### DEFAULT_ORGANIZATION_CODE
+- **Type:** String
+- **Default:** `OOBC`
+- **Description:** Organization code for OBCMS mode auto-injection
+
+## Multi-Tenant Configuration
+
+### ENABLE_MULTI_TENANT
+- **Type:** Boolean
+- **Default:** Mode-dependent (`False` in OBCMS, `True` in BMMS)
+- **Description:** Enable multi-tenant features
+
+### ALLOW_ORGANIZATION_SWITCHING
+- **Type:** Boolean
+- **Default:** Mode-dependent (`False` in OBCMS, `True` in BMMS)
+- **Description:** Allow users to switch organizations
+
+## Configuration Templates
+
+### OBCMS Mode
+Use `.env.obcms` for single-tenant OOBC deployment:
+```bash
+cp .env.obcms .env
+```
+
+### BMMS Mode
+Use `.env.bmms` for multi-tenant MOA deployment:
+```bash
+cp .env.bmms .env
+```
+
+## Mode Switching
+
+To switch between modes:
+
+1. Copy appropriate template:
+   ```bash
+   cp .env.bmms .env  # Switch to BMMS
+   cp .env.obcms .env # Switch to OBCMS
+   ```
+
+2. Restart application:
+   ```bash
+   sudo systemctl restart obcms  # Production
+   python manage.py runserver    # Development
+   ```
+
+3. Verify mode:
+   ```bash
+   python manage.py shell -c "from obc_management.settings.bmms_config import is_bmms_mode; print(f'BMMS Mode: {is_bmms_mode()}')"
+   ```
+
+## Security Notes
+
+- Change `SECRET_KEY` in production
+- Set `DEBUG=False` in production
+- Use PostgreSQL for BMMS production deployment
+- Enable HTTPS enforcement in production
+```
+
+Commands:
+```bash
+mkdir -p docs/deployment
+cat > docs/deployment/ENVIRONMENT_VARIABLES.md << 'EOF'
+[paste content above]
+EOF
+```
+
+
+Step 3.5: Create .env.example
+------------------------------
+
+File: /.env.example
+
+Content:
+```bash
+# OBCMS/BMMS Environment Configuration Example
+# Copy to .env and configure for your environment
+
+# Mode: obcms (single-tenant) or bmms (multi-tenant)
+BMMS_MODE=obcms
+
+# Default organization code
+DEFAULT_ORGANIZATION_CODE=OOBC
+
+# Multi-tenant settings
+ENABLE_MULTI_TENANT=False
+ALLOW_ORGANIZATION_SWITCHING=False
+
+# Database
+DATABASE_URL=sqlite:///db.sqlite3
+
+# Security
+DEBUG=True
+SECRET_KEY=change-me-in-production
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Site
+SITE_NAME=OBCMS
+SITE_DESCRIPTION=Office for Other Bangsamoro Communities Management System
+```
+
+Commands:
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms
+cat > .env.example << 'EOF'
+[paste content above]
+EOF
+```
+
+
+------------------------------------------------------------------------
+TASK 4: VALIDATION AND TESTING
+------------------------------------------------------------------------
+
+Step 4.1: Test OBCMS Mode Configuration
+----------------------------------------
+
+Commands:
+```bash
+cd src/
+
+# Ensure .env has OBCMS settings
+grep "BMMS_MODE=obcms" ../.env || echo "⚠️  Update .env with BMMS_MODE=obcms"
+
+# Test configuration
+python manage.py shell << 'EOF'
+from django.conf import settings
+from obc_management.settings.bmms_config import *
+
+print("\nOBCMS Mode Configuration Test")
+print("=" * 60)
+
+# Mode tests
+assert is_obcms_mode() == True, "Should be OBCMS mode"
+assert is_bmms_mode() == False, "Should not be BMMS mode"
+print("✓ Mode: OBCMS")
+
+# Organization tests
+assert get_default_organization_code() == 'OOBC', "Default org should be OOBC"
+print(f"✓ Default Organization: {get_default_organization_code()}")
+
+# Multi-tenant tests
+assert multi_tenant_enabled() == False, "Multi-tenant should be disabled"
+print("✓ Multi-tenant: Disabled")
+
+# Organization switching tests
+assert organization_switching_enabled() == False, "Switching should be disabled"
+print("✓ Organization Switching: Disabled")
+
+# Settings tests
+assert settings.BMMS_MODE == 'obcms', "Settings BMMS_MODE should be 'obcms'"
+assert settings.DEFAULT_ORGANIZATION_CODE == 'OOBC', "Settings DEFAULT_ORGANIZATION_CODE should be 'OOBC'"
+assert settings.RBAC_SETTINGS['ENABLE_MULTI_TENANT'] == False, "RBAC multi-tenant should be False"
+print("✓ Django Settings: Correct")
+
+print("=" * 60)
+print("✅ OBCMS Mode Configuration: ALL TESTS PASSED\n")
+EOF
+```
+
+Expected Output:
+```
+OBCMS Mode Configuration Test
+============================================================
+✓ Mode: OBCMS
+✓ Default Organization: OOBC
+✓ Multi-tenant: Disabled
+✓ Organization Switching: Disabled
+✓ Django Settings: Correct
+============================================================
+✅ OBCMS Mode Configuration: ALL TESTS PASSED
+```
+
+
+Step 4.2: Test BMMS Mode Configuration
+---------------------------------------
+
+Commands:
+```bash
+cd src/
+
+# Temporarily switch to BMMS mode
+export BMMS_MODE=bmms
+export ENABLE_MULTI_TENANT=True
+export ALLOW_ORGANIZATION_SWITCHING=True
+
+# Test BMMS configuration
+python manage.py shell << 'EOF'
+from django.conf import settings
+from obc_management.settings.bmms_config import *
+
+print("\nBMMS Mode Configuration Test")
+print("=" * 60)
+
+# Mode tests
+assert is_bmms_mode() == True, "Should be BMMS mode"
+assert is_obcms_mode() == False, "Should not be OBCMS mode"
+print("✓ Mode: BMMS")
+
+# Multi-tenant tests
+assert multi_tenant_enabled() == True, "Multi-tenant should be enabled"
+print("✓ Multi-tenant: Enabled")
+
+# Organization switching tests
+assert organization_switching_enabled() == True, "Switching should be enabled"
+print("✓ Organization Switching: Enabled")
+
+print("=" * 60)
+print("✅ BMMS Mode Configuration: ALL TESTS PASSED\n")
+EOF
+
+# Revert to OBCMS mode
+unset BMMS_MODE ENABLE_MULTI_TENANT ALLOW_ORGANIZATION_SWITCHING
+```
+
+
+Step 4.3: Test Mode Switching
+------------------------------
+
+Test switching between modes:
+
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms
+
+echo "Testing Mode Switching..."
+echo "=" | head -c 60 | tr ' ' '='
+echo ""
+
+# Test 1: Start in OBCMS mode
+cp .env.obcms .env
+cd src && python manage.py shell -c "from obc_management.settings.bmms_config import is_obcms_mode; print(f'OBCMS Mode: {is_obcms_mode()}')"
+
+# Test 2: Switch to BMMS mode
+cd .. && cp .env.bmms .env
+cd src && python manage.py shell -c "from obc_management.settings.bmms_config import is_bmms_mode; print(f'BMMS Mode: {is_bmms_mode()}')"
+
+# Test 3: Switch back to OBCMS mode
+cd .. && cp .env.obcms .env
+cd src && python manage.py shell -c "from obc_management.settings.bmms_config import is_obcms_mode; print(f'OBCMS Mode (restored): {is_obcms_mode()}')"
+
+echo ""
+echo "=" | head -c 60 | tr ' ' '='
+echo "✅ Mode Switching: SUCCESS"
+```
+
+
+Step 4.4: Verify Backward Compatibility
+----------------------------------------
+
+Ensure existing functionality still works:
+
+```bash
+cd src/
+
+# Run existing tests
+python manage.py test --keepdb
+
+# Check system
+python manage.py check
+
+# Try starting server
+timeout 5 python manage.py runserver || echo "Server started successfully"
+```
+
+Expected:
+- All tests pass (same as Phase 0 baseline)
+- System checks pass
+- Server starts without errors
+
+
+Step 4.5: Run Django Checks
+----------------------------
+
+Commands:
+```bash
+cd src/
+
+# Standard checks
+python manage.py check
+
+# Deployment checks
+python manage.py check --deploy
+
+# Database checks
+python manage.py check --database default
+```
+
+Expected Output:
+```
+System check identified no issues (0 silenced).
+```
+
+
+Step 4.6: Commit Changes
+-------------------------
+
+Commands:
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms
+
+# Stage changes
+git add src/obc_management/settings/bmms_config.py
+git add src/obc_management/settings/base.py
+git add .env.obcms
+git add .env.bmms
+git add .env.example
+git add docs/deployment/ENVIRONMENT_VARIABLES.md
+
+# Commit with descriptive message
+git commit -m "Phase 1: Add BMMS configuration infrastructure
+
+- Create bmms_config.py with mode detection utilities
+- Update settings/base.py with BMMS_MODE configuration
+- Add mode-dependent RBAC_SETTINGS defaults
+- Create .env.obcms and .env.bmms templates
+- Document environment variables
+
+Enables dual-mode operation (OBCMS/BMMS) via configuration only.
+No code changes required to switch modes."
+
+# Push to remote
+git push origin feature/bmms-embedded-architecture
+```
+
+================================================================================
+VERIFICATION CHECKLIST
+================================================================================
+
+Before proceeding to Phase 2, verify:
+
+[ ] bmms_config.py created with all utility functions
+[ ] bmms_config.py imports successfully
+[ ] BMMSMode class accessible
+[ ] Mode detection functions work correctly
+[ ] settings/base.py imports bmms_config
+[ ] BMMS_MODE setting added to base.py
+[ ] DEFAULT_ORGANIZATION_CODE setting added
+[ ] RBAC_SETTINGS updated with mode-dependent defaults
+[ ] .env.obcms template created
+[ ] .env.bmms template created
+[ ] .env updated with OBCMS mode settings
+[ ] .env.example created
+[ ] Environment variables documented
+[ ] OBCMS mode configuration tests pass
+[ ] BMMS mode configuration tests pass
+[ ] Mode switching works correctly
+[ ] Django checks pass
+[ ] Existing tests still pass
+[ ] Server starts successfully
+[ ] Changes committed to feature branch
+
+================================================================================
+EXPECTED RESULTS
+================================================================================
+
+After completing Phase 1:
+
+✅ Configuration Infrastructure Ready
+   - bmms_config.py: Mode detection utilities
+   - BMMSMode.OBCMS and BMMSMode.BMMS constants
+   - is_obcms_mode(), is_bmms_mode() functions
+   - get_default_organization_code() function
+   - multi_tenant_enabled() function
+   - organization_switching_enabled() function
+
+✅ Settings Updated
+   - BMMS_MODE setting (default: 'obcms')
+   - DEFAULT_ORGANIZATION_CODE setting (default: 'OOBC')
+   - RBAC_SETTINGS mode-aware defaults
+   - Middleware documented (to be updated in Phase 3)
+
+✅ Environment Templates
+   - .env.obcms: OBCMS mode configuration
+   - .env.bmms: BMMS mode configuration
+   - .env: Active configuration (OBCMS mode)
+   - .env.example: Example configuration
+
+✅ Documentation
+   - ENVIRONMENT_VARIABLES.md: Complete variable reference
+   - Mode switching procedures documented
+   - Security notes included
+
+✅ System Validated
+   - OBCMS mode works correctly
+   - BMMS mode configuration tested
+   - Mode switching validated
+   - Backward compatibility maintained
+   - All checks passing
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Issue: Import Error for bmms_config
+------------------------------------
+Error: "ModuleNotFoundError: No module named 'obc_management.settings.bmms_config'"
+
+Resolution:
+1. Verify file location:
+   ```bash
+   ls -l src/obc_management/settings/bmms_config.py
+   ```
+
+2. Check __init__.py exists:
+   ```bash
+   ls -l src/obc_management/settings/__init__.py
+   ```
+
+3. Verify PYTHONPATH includes src/:
+   ```bash
+   cd src && python -c "import obc_management.settings.bmms_config; print('OK')"
+   ```
+
+Issue: BMMS_MODE Not Found in Settings
+---------------------------------------
+Error: "AttributeError: 'Settings' object has no attribute 'BMMS_MODE'"
+
+Resolution:
+1. Check .env file has BMMS_MODE:
+   ```bash
+   grep BMMS_MODE .env
+   ```
+
+2. Check base.py has setting:
+   ```bash
+   grep "BMMS_MODE" src/obc_management/settings/base.py
+   ```
+
+3. Restart Django shell/server to reload settings
+
+Issue: Mode Detection Returns Wrong Value
+------------------------------------------
+Problem: is_obcms_mode() returns False when should be True
+
+Resolution:
+1. Check environment variable:
+   ```bash
+   echo $BMMS_MODE
+   ```
+
+2. Check .env file:
+   ```bash
+   grep "BMMS_MODE" .env
+   ```
+
+3. Restart application to reload environment
+
+Issue: Tests Fail After Changes
+--------------------------------
+Problem: Existing tests failing after Phase 1 changes
+
+Resolution:
+1. Verify .env is set to OBCMS mode
+2. Check no syntax errors in bmms_config.py
+3. Ensure base.py imports are correct
+4. Run specific failing test for details:
+   ```bash
+   python manage.py test path.to.test --verbosity=2
+   ```
+
+================================================================================
+NEXT PHASE
+================================================================================
+
+Upon successful completion of Phase 1:
+
+→ Proceed to: Phase 2 - Organization Utilities
+→ File: phase2_organization_utilities.txt
+→ Priority: HIGH
+
+Phase 2 will create:
+- organizations/utils/__init__.py: Utility functions
+- Enhanced Organization model with class methods
+- Management commands for organization setup
+- Data population utilities
+
+================================================================================
+ROLLBACK PROCEDURE
+================================================================================
+
+If Phase 1 needs to be rolled back:
+
+1. Revert Settings Changes:
+   ```bash
+   cd src/obc_management/settings
+   git checkout main -- base.py
+   ```
+
+2. Remove Configuration Module:
+   ```bash
+   rm bmms_config.py
+   ```
+
+3. Restore Original .env:
+   ```bash
+   cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms
+   git checkout main -- .env
+   ```
+
+4. Remove Environment Templates:
+   ```bash
+   rm .env.obcms .env.bmms .env.example
+   ```
+
+5. Verify Rollback:
+   ```bash
+   cd src && python manage.py check
+   ```
+
+================================================================================
+NOTES
+================================================================================
+
+- Configuration module is foundation for all subsequent phases
+- Mode switching tested but NOT yet functional (needs middleware in Phase 3)
+- Middleware conflict noted but NOT resolved (Phase 3)
+- No database changes in this phase
+- No model changes in this phase
+- Safe to rollback if needed
+
+- Keep .env.obcms and .env.bmms as templates
+- Always use .env for active configuration
+- Document any customizations to environment variables
+
+================================================================================
+END OF PHASE 1: CONFIGURATION INFRASTRUCTURE
+================================================================================

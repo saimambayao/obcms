@@ -1,0 +1,707 @@
+================================================================================
+PHASE 2: ORGANIZATION UTILITIES
+================================================================================
+
+Priority: HIGH
+Dependencies: Phase 1 complete (Configuration Infrastructure)
+Prerequisites: bmms_config.py exists, settings updated
+Estimated Complexity: Moderate
+
+================================================================================
+OVERVIEW
+================================================================================
+
+This phase creates utility functions and management commands for organization
+management. These utilities will be used throughout the system for:
+- Getting/creating default OOBC organization
+- Ensuring organization exists during initialization
+- Populating organization field for existing records (migration Step 2)
+
+Key Deliverables:
+- organizations/utils/__init__.py: Utility functions
+- Enhanced Organization model with class methods
+- ensure_default_organization: Management command
+- populate_organization_field: Management command (migration Step 2)
+
+================================================================================
+TASKS CHECKLIST
+================================================================================
+
+[ ] Task 1: Create Organization Utilities Module
+    [ ] 1.1 Create utils directory structure
+    [ ] 1.2 Implement get_default_organization()
+    [ ] 1.3 Implement get_or_create_default_organization()
+    [ ] 1.4 Implement ensure_default_organization_exists()
+    [ ] 1.5 Test utility functions
+
+[ ] Task 2: Enhance Organization Model
+    [ ] 2.1 Add get_default_organization() class method
+    [ ] 2.2 Test model method
+    [ ] 2.3 Verify model integration
+
+[ ] Task 3: Create ensure_default_organization Command
+    [ ] 3.1 Create management command file
+    [ ] 3.2 Implement command logic
+    [ ] 3.3 Test command execution
+    [ ] 3.4 Verify OOBC organization created
+
+[ ] Task 4: Create populate_organization_field Command
+    [ ] 4.1 Create management command file
+    [ ] 4.2 Implement population logic
+    [ ] 4.3 Add dry-run support
+    [ ] 4.4 Add filtering options (--app, --model)
+    [ ] 4.5 Test command with dry-run
+    [ ] 4.6 Document command usage
+
+[ ] Task 5: Validation and Testing
+    [ ] 5.1 Test default organization creation
+    [ ] 5.2 Test utility function integration
+    [ ] 5.3 Test management commands
+    [ ] 5.4 Run Django checks
+    [ ] 5.5 Commit changes
+
+================================================================================
+DETAILED IMPLEMENTATION
+================================================================================
+
+------------------------------------------------------------------------
+TASK 1: CREATE ORGANIZATION UTILITIES MODULE
+------------------------------------------------------------------------
+
+Step 1.1: Create Utils Directory Structure
+-------------------------------------------
+
+Commands:
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/organizations
+mkdir -p utils
+touch utils/__init__.py
+```
+
+Verification:
+```bash
+ls -l utils/__init__.py
+```
+
+
+Step 1.2-1.4: Implement Utility Functions
+------------------------------------------
+
+File: /src/organizations/utils/__init__.py
+
+```python
+"""
+Organization utilities for BMMS multi-tenant support.
+
+Provides utility functions for managing organizations, particularly
+for OBCMS mode where a default OOBC organization is required.
+"""
+from django.conf import settings
+from organizations.models import Organization
+from obc_management.settings.bmms_config import (
+    is_obcms_mode,
+    get_default_organization_code,
+)
+
+
+def get_default_organization():
+    """
+    Get the default organization for OBCMS mode.
+
+    Returns:
+        Organization: OOBC organization instance
+
+    Raises:
+        Organization.DoesNotExist: If default org not found
+
+    Example:
+        >>> org = get_default_organization()
+        >>> print(org.code)
+        'OOBC'
+    """
+    code = get_default_organization_code()
+    return Organization.objects.get(code=code, is_active=True)
+
+
+def get_or_create_default_organization():
+    """
+    Get or create the default organization for OBCMS mode.
+
+    Creates OOBC organization with sensible defaults if it doesn't exist.
+
+    Returns:
+        tuple: (Organization, created) where created is boolean
+
+    Example:
+        >>> org, created = get_or_create_default_organization()
+        >>> if created:
+        ...     print(f"Created {org.name}")
+        ... else:
+        ...     print(f"Found existing {org.name}")
+    """
+    code = get_default_organization_code()
+    return Organization.objects.get_or_create(
+        code=code,
+        defaults={
+            'name': 'Office for Other Bangsamoro Communities',
+            'short_name': 'OOBC',
+            'organization_type': 'ministry',
+            'is_active': True,
+            'enabled_modules': [
+                'communities',
+                'mana',
+                'coordination',
+                'policies',
+                'monitoring',
+            ],
+        }
+    )
+
+
+def ensure_default_organization_exists():
+    """
+    Ensure default organization exists in OBCMS mode.
+
+    Called during system initialization to guarantee OOBC org exists.
+    Only operates in OBCMS mode - does nothing in BMMS mode.
+
+    Returns:
+        Organization: The default organization
+
+    Example:
+        >>> # In Django ready() method or management command
+        >>> from organizations.utils import ensure_default_organization_exists
+        >>> org = ensure_default_organization_exists()
+    """
+    if is_obcms_mode():
+        org, created = get_or_create_default_organization()
+        if created:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f'Created default organization: {org.code} - {org.name}')
+        return org
+    return None
+```
+
+
+Step 1.5: Test Utility Functions
+---------------------------------
+
+Commands:
+```bash
+cd src/
+python manage.py shell << 'EOF'
+print("\nTesting Organization Utilities")
+print("=" * 60)
+
+# Test 1: Import utilities
+try:
+    from organizations.utils import (
+        get_default_organization,
+        get_or_create_default_organization,
+        ensure_default_organization_exists
+    )
+    print("✓ Utilities imported successfully")
+except ImportError as e:
+    print(f"✗ Import failed: {e}")
+    exit(1)
+
+# Test 2: Get or create default organization
+org, created = get_or_create_default_organization()
+print(f"✓ Organization: {org.code} - {org.name}")
+print(f"  Created: {created}")
+print(f"  Active: {org.is_active}")
+print(f"  Modules: {', '.join(org.enabled_modules)}")
+
+# Test 3: Get default organization (should not create new)
+org2 = get_default_organization()
+assert org2.id == org.id, "Should return same organization"
+print(f"✓ get_default_organization() returns consistent result")
+
+# Test 4: Ensure default organization exists
+org3 = ensure_default_organization_exists()
+if org3:
+    assert org3.id == org.id, "Should return same organization"
+    print(f"✓ ensure_default_organization_exists() works")
+else:
+    print("  (Skipped in BMMS mode)")
+
+print("=" * 60)
+print("✅ All utility tests passed!\n")
+EOF
+```
+
+
+------------------------------------------------------------------------
+TASK 2: ENHANCE ORGANIZATION MODEL
+------------------------------------------------------------------------
+
+Step 2.1: Add Class Method to Organization Model
+-------------------------------------------------
+
+File: /src/organizations/models/organization.py
+
+FIND the Organization class definition.
+ADD this class method:
+
+```python
+@classmethod
+def get_default_organization(cls):
+    """
+    Get the default organization for OBCMS mode.
+
+    This is a convenience method that wraps the utility function.
+
+    Returns:
+        Organization: Default organization instance
+
+    Raises:
+        Organization.DoesNotExist: If default org not found
+
+    Example:
+        >>> from organizations.models import Organization
+        >>> org = Organization.get_default_organization()
+        >>> print(org.code)
+        'OOBC'
+    """
+    from obc_management.settings.bmms_config import get_default_organization_code
+    code = get_default_organization_code()
+    return cls.objects.get(code=code, is_active=True)
+```
+
+Location: Add inside Organization class (around line 50-60)
+
+
+Step 2.2-2.3: Test Model Method
+--------------------------------
+
+Commands:
+```bash
+cd src/
+python manage.py shell << 'EOF'
+from organizations.models import Organization
+
+print("\nTesting Organization Model Enhancement")
+print("=" * 60)
+
+# Test get_default_organization() class method
+org = Organization.get_default_organization()
+print(f"✓ Organization.get_default_organization(): {org.code}")
+assert org.code == 'OOBC', "Should return OOBC organization"
+
+print("=" * 60)
+print("✅ Model method test passed!\n")
+EOF
+```
+
+
+------------------------------------------------------------------------
+TASK 3: CREATE ensure_default_organization COMMAND
+------------------------------------------------------------------------
+
+Step 3.1-3.2: Create Management Command
+----------------------------------------
+
+Commands:
+```bash
+cd src/organizations
+mkdir -p management/commands
+touch management/__init__.py
+touch management/commands/__init__.py
+```
+
+File: /src/organizations/management/commands/ensure_default_organization.py
+
+```python
+"""
+Management command to ensure default OOBC organization exists for OBCMS mode.
+
+Usage:
+    python manage.py ensure_default_organization
+
+This command is idempotent - safe to run multiple times.
+"""
+from django.core.management.base import BaseCommand
+from organizations.utils import get_or_create_default_organization
+
+
+class Command(BaseCommand):
+    help = 'Ensure default OOBC organization exists for OBCMS mode'
+
+    def handle(self, *args, **options):
+        """Execute command."""
+        self.stdout.write('Checking for default organization...')
+
+        organization, created = get_or_create_default_organization()
+
+        if created:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f'✓ Created default organization: {organization.code} - {organization.name}'
+                )
+            )
+        else:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f'✓ Default organization already exists: {organization.code} - {organization.name}'
+                )
+            )
+
+        # Display organization details
+        self.stdout.write('\nOrganization Details:')
+        self.stdout.write(f'  ID: {organization.id}')
+        self.stdout.write(f'  Code: {organization.code}')
+        self.stdout.write(f'  Name: {organization.name}')
+        self.stdout.write(f'  Short Name: {organization.short_name}')
+        self.stdout.write(f'  Type: {organization.organization_type}')
+        self.stdout.write(f'  Active: {organization.is_active}')
+        self.stdout.write(f'  Enabled Modules: {", ".join(organization.enabled_modules)}')
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'\n✅ Default organization ready (ID: {organization.id})'
+            )
+        )
+```
+
+
+Step 3.3-3.4: Test Command
+---------------------------
+
+Commands:
+```bash
+cd src/
+python manage.py ensure_default_organization
+```
+
+Expected Output:
+```
+Checking for default organization...
+✓ Default organization already exists: OOBC - Office for Other Bangsamoro Communities
+
+Organization Details:
+  ID: 1
+  Code: OOBC
+  Name: Office for Other Bangsamoro Communities
+  Short Name: OOBC
+  Type: ministry
+  Active: True
+  Enabled Modules: communities, mana, coordination, policies, monitoring
+
+✅ Default organization ready (ID: 1)
+```
+
+
+------------------------------------------------------------------------
+TASK 4: CREATE populate_organization_field COMMAND
+------------------------------------------------------------------------
+
+Step 4.1-4.2: Create Management Command
+----------------------------------------
+
+File: /src/organizations/management/commands/populate_organization_field.py
+
+```python
+"""
+Management command to populate organization field for existing records.
+
+This is STEP 2 of the three-step migration:
+1. Add nullable organization field (migration)
+2. Populate organization field (this command) ✓
+3. Make organization field required (migration)
+
+Usage:
+    # Dry run (no changes)
+    python manage.py populate_organization_field --dry-run
+
+    # Populate all apps
+    python manage.py populate_organization_field
+
+    # Populate specific app
+    python manage.py populate_organization_field --app communities
+
+    # Populate specific model
+    python manage.py populate_organization_field --app communities --model OBCCommunity
+"""
+from django.core.management.base import BaseCommand
+from django.apps import apps
+from django.db import transaction
+from organizations.utils import get_default_organization
+from organizations.models.scoped import OrganizationScopedModel
+
+
+class Command(BaseCommand):
+    help = 'Populate organization field for existing records'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--app',
+            type=str,
+            help='Only populate models in this app (e.g., communities)',
+        )
+        parser.add_argument(
+            '--model',
+            type=str,
+            help='Only populate this specific model (e.g., OBCCommunity)',
+        )
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            help='Show what would be updated without making changes',
+        )
+
+    def handle(self, *args, **options):
+        app_label = options.get('app')
+        model_name = options.get('model')
+        dry_run = options.get('dry_run', False)
+
+        # Get default organization
+        try:
+            default_org = get_default_organization()
+        except Exception as e:
+            self.stdout.write(
+                self.style.ERROR(
+                    f'Error getting default organization: {e}\n'
+                    f'Run: python manage.py ensure_default_organization'
+                )
+            )
+            return
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'Using default organization: {default_org.code} (ID: {default_org.id})'
+            )
+        )
+
+        if dry_run:
+            self.stdout.write(self.style.WARNING('🔍 DRY RUN MODE - No changes will be made'))
+
+        # Get all models that inherit from OrganizationScopedModel
+        scoped_models = []
+
+        for app_config in apps.get_app_configs():
+            if app_label and app_config.label != app_label:
+                continue
+
+            for model in app_config.get_models():
+                if issubclass(model, OrganizationScopedModel) and not model._meta.abstract:
+                    if model_name and model.__name__ != model_name:
+                        continue
+                    scoped_models.append(model)
+
+        if not scoped_models:
+            self.stdout.write(self.style.WARNING('No organization-scoped models found'))
+            return
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'\nFound {len(scoped_models)} organization-scoped models\n'
+            )
+        )
+
+        total_updated = 0
+
+        for model in scoped_models:
+            self.stdout.write(f'Processing {model._meta.app_label}.{model.__name__}...')
+
+            # Count records without organization
+            records_without_org = model.all_objects.filter(organization__isnull=True).count()
+
+            if records_without_org == 0:
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f'  ✓ All records already have organization - skipping\n'
+                    )
+                )
+                continue
+
+            self.stdout.write(
+                self.style.WARNING(
+                    f'  Found {records_without_org} records without organization'
+                )
+            )
+
+            if not dry_run:
+                with transaction.atomic():
+                    updated = model.all_objects.filter(
+                        organization__isnull=True
+                    ).update(organization=default_org)
+
+                    self.stdout.write(
+                        self.style.SUCCESS(
+                            f'  ✓ Updated {updated} records\n'
+                        )
+                    )
+                    total_updated += updated
+            else:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f'  Would update {records_without_org} records (DRY RUN)\n'
+                    )
+                )
+                total_updated += records_without_org
+
+        if dry_run:
+            self.stdout.write(
+                self.style.WARNING(
+                    f'\n🔍 DRY RUN COMPLETE: Would have updated {total_updated} records total'
+                )
+            )
+        else:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f'\n✅ SUCCESS: Updated {total_updated} records total'
+                )
+            )
+```
+
+
+Step 4.3-4.6: Test and Document Command
+----------------------------------------
+
+Test dry-run:
+```bash
+cd src/
+python manage.py populate_organization_field --dry-run
+```
+
+Expected (before migrations):
+```
+Using default organization: OOBC (ID: 1)
+🔍 DRY RUN MODE - No changes will be made
+
+Found 0 organization-scoped models
+
+No organization-scoped models found
+```
+
+Document usage:
+```bash
+python manage.py populate_organization_field --help
+```
+
+
+------------------------------------------------------------------------
+TASK 5: VALIDATION AND TESTING
+------------------------------------------------------------------------
+
+Step 5.1: Test Default Organization Creation
+---------------------------------------------
+
+```bash
+cd src/
+
+# Delete organization if exists (for testing)
+python manage.py shell -c "from organizations.models import Organization; Organization.objects.filter(code='OOBC').delete()"
+
+# Create default organization
+python manage.py ensure_default_organization
+
+# Verify
+python manage.py shell << 'EOF'
+from organizations.models import Organization
+org = Organization.objects.get(code='OOBC')
+assert org.is_active == True
+assert org.code == 'OOBC'
+print(f"✓ Organization created: {org.name}")
+EOF
+```
+
+
+Step 5.2-5.3: Test Integration
+-------------------------------
+
+```bash
+cd src/
+python manage.py shell << 'EOF'
+print("\nIntegration Test: Organization Utilities")
+print("=" * 60)
+
+# Test 1: Utilities work
+from organizations.utils import get_default_organization
+org1 = get_default_organization()
+print(f"✓ Utility function: {org1.code}")
+
+# Test 2: Model method works
+from organizations.models import Organization
+org2 = Organization.get_default_organization()
+print(f"✓ Model method: {org2.code}")
+
+# Test 3: Both return same organization
+assert org1.id == org2.id
+print("✓ Consistent results across methods")
+
+# Test 4: Management command works
+import subprocess
+result = subprocess.run(
+    ['python', 'manage.py', 'ensure_default_organization'],
+    capture_output=True,
+    text=True
+)
+assert result.returncode == 0
+print("✓ Management command executes successfully")
+
+print("=" * 60)
+print("✅ All integration tests passed!\n")
+EOF
+```
+
+
+Step 5.4: Run Django Checks
+----------------------------
+
+```bash
+cd src/
+python manage.py check
+```
+
+
+Step 5.5: Commit Changes
+-------------------------
+
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms
+
+git add src/organizations/utils/
+git add src/organizations/models/organization.py
+git add src/organizations/management/
+
+git commit -m "Phase 2: Add organization utilities and management commands
+
+- Create organizations/utils with helper functions
+- Add get_default_organization() class method to Organization model
+- Create ensure_default_organization management command
+- Create populate_organization_field management command (migration step 2)
+- Add dry-run and filtering support to population command
+
+Utilities support OBCMS single-tenant mode and future migrations."
+
+git push origin feature/bmms-embedded-architecture
+```
+
+================================================================================
+VERIFICATION CHECKLIST
+================================================================================
+
+[ ] organizations/utils/__init__.py created
+[ ] All utility functions implemented and working
+[ ] Organization model enhanced with class method
+[ ] ensure_default_organization command created
+[ ] populate_organization_field command created
+[ ] Commands tested successfully
+[ ] Default OOBC organization exists
+[ ] Dry-run mode works correctly
+[ ] Django checks pass
+[ ] Changes committed
+
+================================================================================
+NEXT PHASE
+================================================================================
+
+→ Proceed to: Phase 3 - Middleware Enhancement
+→ File: phase3_middleware.txt
+→ Priority: CRITICAL
+
+================================================================================
+END OF PHASE 2: ORGANIZATION UTILITIES
+================================================================================

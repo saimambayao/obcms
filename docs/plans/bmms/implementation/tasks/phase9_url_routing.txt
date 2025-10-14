@@ -1,0 +1,697 @@
+PHASE 9: URL ROUTING ENHANCEMENT
+BMMS Embedded Architecture Implementation
+============================================================
+
+PRIORITY: MEDIUM
+COMPLEXITY: Moderate
+DEPENDENCIES: Phase 8 (View Layer Updates) must be complete
+ESTIMATED SCOPE: 1 main urls.py file, 8 app-level urls.py files
+
+============================================================
+OBJECTIVES
+============================================================
+
+1. Implement dual-mode URL pattern support
+2. Support OBCMS-style URLs (no org prefix): /communities/
+3. Support BMMS-style URLs (with org prefix): /moa/OOBC/communities/
+4. Maintain backward compatibility
+5. Enable seamless mode switching via configuration
+
+============================================================
+TASK BREAKDOWN
+============================================================
+
+-----------------------------------------------------------
+TASK 9.1: Main URL Configuration Updates
+-----------------------------------------------------------
+
+DESCRIPTION:
+Update src/obc_management/urls.py to support both OBCMS and BMMS URL patterns.
+
+FILE: src/obc_management/urls.py
+
+IMPLEMENTATION:
+
+BEFORE:
+```python
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('common.urls')),
+    path('communities/', include('communities.urls')),
+    path('mana/', include('mana.urls')),
+    path('coordination/', include('coordination.urls')),
+    path('monitoring/', include('monitoring.urls')),
+    path('planning/', include('planning.urls')),
+    path('budget-preparation/', include('budget_preparation.urls')),
+    path('budget-execution/', include('budget_execution.urls')),
+    path('policies/', include('recommendations.urls')),
+]
+```
+
+AFTER (Dual-Mode Support):
+```python
+from django.contrib import admin
+from django.urls import path, include
+from obc_management.settings.bmms_config import is_bmms_mode
+
+# OBCMS-style URL patterns (no organization prefix)
+obcms_patterns = [
+    path('', include('common.urls')),
+    path('communities/', include('communities.urls')),
+    path('mana/', include('mana.urls')),
+    path('coordination/', include('coordination.urls')),
+    path('monitoring/', include('monitoring.urls')),
+    path('planning/', include('planning.urls')),
+    path('budget-preparation/', include('budget_preparation.urls')),
+    path('budget-execution/', include('budget_execution.urls')),
+    path('policies/', include('recommendations.urls')),
+    path('ocm/', include('ocm.urls')),
+]
+
+# BMMS-style URL patterns (with organization prefix)
+bmms_patterns = [
+    path('moa/<str:org_code>/', include([
+        path('', include('common.urls')),
+        path('communities/', include('communities.urls')),
+        path('mana/', include('mana.urls')),
+        path('coordination/', include('coordination.urls')),
+        path('monitoring/', include('monitoring.urls')),
+        path('planning/', include('planning.urls')),
+        path('budget-preparation/', include('budget_preparation.urls')),
+        path('budget-execution/', include('budget_execution.urls')),
+        path('policies/', include('recommendations.urls')),
+    ])),
+    path('ocm/', include('ocm.urls')),  # OCM aggregation (no org prefix)
+]
+
+# Base URL patterns (always included)
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/', include('api.urls')),  # API endpoints
+    path('api-auth/', include('rest_framework.urls')),
+]
+
+# Add mode-specific patterns
+if is_bmms_mode():
+    # BMMS mode: Support both BMMS and OBCMS URLs for compatibility
+    urlpatterns += bmms_patterns
+    urlpatterns += obcms_patterns  # Backward compatibility
+else:
+    # OBCMS mode: Only OBCMS-style URLs
+    urlpatterns += obcms_patterns
+```
+
+CHECKLIST:
+
+[ ] Import is_bmms_mode from bmms_config
+[ ] Define obcms_patterns list
+[ ] Define bmms_patterns list
+[ ] Add conditional URL pattern inclusion
+[ ] Test OBCMS mode URLs
+[ ] Test BMMS mode URLs
+[ ] Test backward compatibility in BMMS mode
+[ ] Update URL configuration documentation
+
+-----------------------------------------------------------
+TASK 9.2: Organization Code Extraction Middleware
+-----------------------------------------------------------
+
+DESCRIPTION:
+Enhance OrganizationMiddleware to extract org_code from URL path.
+
+FILE: src/organizations/middleware.py
+
+CURRENT IMPLEMENTATION:
+```python
+class OrganizationMiddleware:
+    """Extract organization from URL and set in request context."""
+
+    def __call__(self, request):
+        # In OBCMS mode, skip (OBCMSOrganizationMiddleware handles it)
+        if is_obcms_mode():
+            response = self.get_response(request)
+            return response
+
+        # BMMS mode: Extract org from URL path
+        org_code = self._extract_org_code_from_url(request.path)
+
+        if org_code:
+            try:
+                organization = Organization.objects.get(
+                    code=org_code.upper(),
+                    is_active=True
+                )
+                request.organization = organization
+                set_current_organization(organization)
+            except Organization.DoesNotExist:
+                return HttpResponseNotFound(f'Organization {org_code} not found')
+
+        response = self.get_response(request)
+        clear_current_organization()
+        return response
+
+    def _extract_org_code_from_url(self, path):
+        """Extract organization code from URL path like /moa/OOBC/..."""
+        # Pattern: /moa/<org_code>/...
+        match = re.match(r'^/moa/([A-Za-z0-9_-]+)/', path)
+        if match:
+            return match.group(1)
+        return None
+```
+
+ENHANCEMENTS NEEDED:
+
+[ ] Add logging for organization extraction
+[ ] Add validation for org_code format
+[ ] Handle case-insensitive org codes
+[ ] Return 403 if user lacks access to organization
+[ ] Add caching for organization lookups
+
+ENHANCED IMPLEMENTATION:
+```python
+import logging
+from django.core.cache import cache
+
+logger = logging.getLogger(__name__)
+
+class OrganizationMiddleware:
+    """Extract organization from URL and set in request context."""
+
+    def __call__(self, request):
+        # In OBCMS mode, skip (OBCMSOrganizationMiddleware handles it)
+        if is_obcms_mode():
+            response = self.get_response(request)
+            return response
+
+        # BMMS mode: Extract org from URL path
+        org_code = self._extract_org_code_from_url(request.path)
+
+        if org_code:
+            organization = self._get_organization(org_code)
+
+            if not organization:
+                logger.warning(f'Organization not found: {org_code}')
+                return HttpResponseNotFound(f'Organization {org_code} not found')
+
+            # Validate user access
+            if request.user.is_authenticated and not self._user_can_access(request.user, organization):
+                logger.warning(
+                    f'User {request.user.username} denied access to {organization.code}'
+                )
+                return HttpResponseForbidden(
+                    f'You do not have access to {organization.name}'
+                )
+
+            request.organization = organization
+            set_current_organization(organization)
+            logger.debug(f'Set organization context: {organization.code}')
+
+        response = self.get_response(request)
+        clear_current_organization()
+        return response
+
+    def _extract_org_code_from_url(self, path):
+        """Extract organization code from URL path like /moa/OOBC/..."""
+        match = re.match(r'^/moa/([A-Za-z0-9_-]+)/', path)
+        if match:
+            return match.group(1)
+        return None
+
+    def _get_organization(self, org_code):
+        """Get organization with caching."""
+        cache_key = f'org_code_{org_code.upper()}'
+        organization = cache.get(cache_key)
+
+        if not organization:
+            try:
+                organization = Organization.objects.get(
+                    code=org_code.upper(),
+                    is_active=True
+                )
+                cache.set(cache_key, organization, 300)  # Cache 5 minutes
+            except Organization.DoesNotExist:
+                return None
+
+        return organization
+
+    def _user_can_access(self, user, organization):
+        """Check if user can access organization."""
+        if user.is_superuser:
+            return True
+
+        # Check organization membership
+        return user.organization_memberships.filter(
+            organization=organization,
+            is_active=True
+        ).exists()
+```
+
+CHECKLIST:
+
+[ ] Add logging to middleware
+[ ] Implement organization caching
+[ ] Add user access validation
+[ ] Test with valid org codes
+[ ] Test with invalid org codes
+[ ] Test with unauthorized users
+[ ] Test cache performance
+
+-----------------------------------------------------------
+TASK 9.3: URL Reverse/Redirect Helper Functions
+-----------------------------------------------------------
+
+DESCRIPTION:
+Create helper functions for generating organization-aware URLs.
+
+FILE: src/organizations/utils/__init__.py (add to existing file)
+
+IMPLEMENTATION:
+
+```python
+from django.urls import reverse
+from obc_management.settings.bmms_config import is_bmms_mode
+
+def org_reverse(viewname, org_code=None, args=None, kwargs=None, current_app=None):
+    """
+    Generate organization-aware URL.
+
+    In OBCMS mode: Returns standard URL (/communities/)
+    In BMMS mode: Returns org-prefixed URL (/moa/OOBC/communities/)
+
+    Usage:
+        org_reverse('communities:list', org_code='OOBC')
+        # OBCMS: /communities/
+        # BMMS: /moa/OOBC/communities/
+    """
+    url = reverse(viewname, args=args, kwargs=kwargs, current_app=current_app)
+
+    if is_bmms_mode() and org_code:
+        # Prepend /moa/<org_code> to URL
+        return f'/moa/{org_code}{url}'
+
+    return url
+
+
+def get_org_url_prefix(request):
+    """
+    Get organization URL prefix for current request.
+
+    Returns:
+        str: Empty string in OBCMS mode, /moa/<org_code> in BMMS mode
+
+    Usage in templates:
+        {{ org_url_prefix }}/communities/
+    """
+    if is_obcms_mode():
+        return ''
+
+    if hasattr(request, 'organization') and request.organization:
+        return f'/moa/{request.organization.code}'
+
+    return ''
+
+
+def redirect_with_org(viewname, request, *args, **kwargs):
+    """
+    Redirect to organization-aware URL.
+
+    Usage:
+        return redirect_with_org('communities:list', request)
+    """
+    from django.shortcuts import redirect
+
+    org_code = None
+    if hasattr(request, 'organization') and request.organization:
+        org_code = request.organization.code
+
+    url = org_reverse(viewname, org_code=org_code, args=args, kwargs=kwargs)
+    return redirect(url)
+```
+
+CHECKLIST:
+
+[ ] Implement org_reverse() function
+[ ] Implement get_org_url_prefix() function
+[ ] Implement redirect_with_org() function
+[ ] Write unit tests for URL helpers
+[ ] Test in OBCMS mode
+[ ] Test in BMMS mode
+[ ] Update views to use org_reverse()
+[ ] Update templates to use org_url_prefix
+
+-----------------------------------------------------------
+TASK 9.4: Template Context Processor
+-----------------------------------------------------------
+
+DESCRIPTION:
+Add context processor to make org_url_prefix available in all templates.
+
+FILE: src/organizations/context_processors.py (NEW)
+
+IMPLEMENTATION:
+
+```python
+"""
+Context processors for organization-aware templates.
+"""
+from obc_management.settings.bmms_config import is_bmms_mode
+
+
+def organization_context(request):
+    """
+    Add organization context to all templates.
+
+    Provides:
+    - organization: Current organization object
+    - org_url_prefix: URL prefix for current organization
+    - is_bmms_mode: Boolean flag for BMMS mode
+    """
+    context = {
+        'organization': None,
+        'org_url_prefix': '',
+        'is_bmms_mode': is_bmms_mode(),
+    }
+
+    if hasattr(request, 'organization') and request.organization:
+        context['organization'] = request.organization
+
+        if is_bmms_mode():
+            context['org_url_prefix'] = f'/moa/{request.organization.code}'
+
+    return context
+```
+
+UPDATE SETTINGS:
+
+File: src/obc_management/settings/base.py
+
+```python
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'organizations.context_processors.organization_context',  # NEW
+            ],
+        },
+    },
+]
+```
+
+CHECKLIST:
+
+[ ] Create context_processors.py
+[ ] Implement organization_context()
+[ ] Add to settings.TEMPLATES
+[ ] Test in base.html template
+[ ] Verify {{ organization }} available
+[ ] Verify {{ org_url_prefix }} available
+[ ] Verify {{ is_bmms_mode }} available
+
+-----------------------------------------------------------
+TASK 9.5: Template URL Updates
+-----------------------------------------------------------
+
+DESCRIPTION:
+Update templates to use organization-aware URLs.
+
+AFFECTED TEMPLATES:
+- Base templates (base.html, navbar.html)
+- Navigation templates (sidebar.html, breadcrumbs.html)
+- Module templates (100+ templates with links)
+
+PATTERN:
+
+BEFORE:
+```html
+<a href="{% url 'communities:list' %}">Communities</a>
+```
+
+AFTER:
+```html
+<a href="{{ org_url_prefix }}{% url 'communities:list' %}">Communities</a>
+```
+
+OR USE org_reverse IN VIEWS:
+```python
+# In views.py
+from organizations.utils import org_reverse
+
+def my_view(request):
+    communities_url = org_reverse('communities:list', org_code=request.organization.code)
+    return render(request, 'template.html', {'communities_url': communities_url})
+```
+
+CHECKLIST:
+
+Base Templates:
+[ ] src/templates/base.html - Update all URLs
+[ ] src/templates/navbar.html - Update navigation URLs
+[ ] src/templates/sidebar.html - Update menu URLs
+[ ] src/templates/breadcrumbs.html - Update breadcrumb URLs
+
+Module Templates:
+[ ] Communities templates - Update all internal links
+[ ] MANA templates - Update all internal links
+[ ] Coordination templates - Update all internal links
+[ ] Monitoring templates - Update all internal links
+[ ] Planning templates - Update all internal links
+[ ] Budget templates - Update all internal links
+[ ] Policies templates - Update all internal links
+
+Form Action URLs:
+[ ] Update all form action attributes
+[ ] Update AJAX request URLs
+[ ] Update redirect URLs
+
+-----------------------------------------------------------
+TASK 9.6: Testing & Validation
+-----------------------------------------------------------
+
+DESCRIPTION:
+Comprehensive testing of dual-mode URL routing.
+
+TEST SCENARIOS:
+
+OBCMS Mode Tests:
+[ ] /communities/ works (no org prefix)
+[ ] /mana/assessments/ works
+[ ] /coordination/engagements/ works
+[ ] All navigation links work
+[ ] All forms submit to correct URLs
+[ ] Redirects work correctly
+
+BMMS Mode Tests:
+[ ] /moa/OOBC/communities/ works
+[ ] /moa/MOH/communities/ works
+[ ] /moa/INVALID/communities/ returns 404
+[ ] Unauthorized user gets 403
+[ ] All navigation links include org prefix
+[ ] All forms submit to org-prefixed URLs
+
+Backward Compatibility Tests:
+[ ] In BMMS mode, /communities/ redirects to /moa/OOBC/communities/
+[ ] OR: /communities/ works with default org
+[ ] API endpoints work in both modes
+
+TEST COMMANDS:
+
+```bash
+# Test OBCMS mode
+export BMMS_MODE=obcms
+python manage.py runserver
+
+# Test BMMS mode
+export BMMS_MODE=bmms
+python manage.py runserver
+
+# Test URLs
+curl http://localhost:8000/communities/
+curl http://localhost:8000/moa/OOBC/communities/
+curl http://localhost:8000/moa/MOH/communities/
+curl http://localhost:8000/moa/INVALID/communities/  # Should 404
+```
+
+AUTOMATED TESTS:
+
+File: src/tests/test_url_routing.py
+
+```python
+import pytest
+from django.test import Client
+from django.conf import settings
+from obc_management.settings.bmms_config import BMMSMode
+
+@pytest.fixture
+def obcms_mode(settings):
+    """Set OBCMS mode."""
+    settings.BMMS_MODE = BMMSMode.OBCMS
+    return settings
+
+@pytest.fixture
+def bmms_mode(settings):
+    """Set BMMS mode."""
+    settings.BMMS_MODE = BMMSMode.BMMS
+    return settings
+
+def test_obcms_url_pattern(client, obcms_mode, admin_user):
+    """Test OBCMS-style URLs work."""
+    client.force_login(admin_user)
+    response = client.get('/communities/')
+    assert response.status_code == 200
+
+def test_bmms_url_pattern(client, bmms_mode, admin_user, default_organization):
+    """Test BMMS-style URLs work."""
+    client.force_login(admin_user)
+    response = client.get(f'/moa/{default_organization.code}/communities/')
+    assert response.status_code == 200
+
+def test_invalid_org_code(client, bmms_mode, admin_user):
+    """Test invalid org code returns 404."""
+    client.force_login(admin_user)
+    response = client.get('/moa/INVALID/communities/')
+    assert response.status_code == 404
+
+def test_unauthorized_access(client, bmms_mode, sample_user, sample_moa_organization):
+    """Test user without org membership gets 403."""
+    client.force_login(sample_user)
+    response = client.get(f'/moa/{sample_moa_organization.code}/communities/')
+    assert response.status_code == 403
+```
+
+CHECKLIST:
+
+[ ] Write URL routing tests
+[ ] Test OBCMS mode URLs
+[ ] Test BMMS mode URLs
+[ ] Test invalid org codes
+[ ] Test unauthorized access
+[ ] Test backward compatibility
+[ ] Run all tests (100% pass rate)
+
+-----------------------------------------------------------
+TASK 9.7: Documentation Updates
+-----------------------------------------------------------
+
+DESCRIPTION:
+Document dual-mode URL routing for developers.
+
+DOCUMENTS TO CREATE/UPDATE:
+
+[ ] docs/plans/bmms/URL_ROUTING_GUIDE.md - Complete guide
+[ ] docs/development/README.md - Add URL routing section
+[ ] Code comments in urls.py
+[ ] Code comments in middleware.py
+[ ] Code comments in url helpers
+
+CONTENT:
+- Dual-mode URL architecture
+- How to generate org-aware URLs
+- Template URL patterns
+- View redirect patterns
+- Testing URL routing
+- Troubleshooting guide
+
+============================================================
+COMPLETION CRITERIA
+============================================================
+
+Phase 9 is complete when:
+
+1. URL CONFIGURATION
+   [ ] Main urls.py supports dual-mode patterns
+   [ ] OBCMS-style URLs work (/communities/)
+   [ ] BMMS-style URLs work (/moa/OOBC/communities/)
+
+2. MIDDLEWARE
+   [ ] OrganizationMiddleware extracts org from URL
+   [ ] Caching implemented for organization lookups
+   [ ] User access validation works
+   [ ] Logging implemented
+
+3. URL HELPERS
+   [ ] org_reverse() function works
+   [ ] get_org_url_prefix() function works
+   [ ] redirect_with_org() function works
+   [ ] Context processor provides org_url_prefix
+
+4. TEMPLATES
+   [ ] All templates use {{ org_url_prefix }}
+   [ ] All navigation links work
+   [ ] All form actions work
+   [ ] All redirects work
+
+5. TESTING
+   [ ] All URL tests pass (100% pass rate)
+   [ ] OBCMS mode tested
+   [ ] BMMS mode tested
+   [ ] Backward compatibility verified
+
+6. DOCUMENTATION
+   [ ] URL routing guide complete
+   [ ] Code comments added
+   [ ] Development README updated
+
+============================================================
+VALIDATION COMMANDS
+============================================================
+
+# Test OBCMS mode
+export BMMS_MODE=obcms
+python manage.py runserver
+curl http://localhost:8000/communities/
+
+# Test BMMS mode
+export BMMS_MODE=bmms
+python manage.py runserver
+curl http://localhost:8000/moa/OOBC/communities/
+
+# Run tests
+cd src/
+pytest tests/test_url_routing.py -v
+
+# Check URL patterns
+python manage.py show_urls | grep communities
+
+============================================================
+ROLLBACK PLAN
+============================================================
+
+If issues occur during Phase 9:
+
+1. URL routing transparent to end users
+2. Can temporarily disable BMMS patterns
+3. Can force OBCMS mode via settings
+4. No database changes - safe to rollback
+5. Full rollback: git revert to pre-Phase 9 state
+
+============================================================
+NOTES
+============================================================
+
+- No database migrations required
+- Backward compatible with OBCMS mode
+- URL routing controlled by configuration
+- Performance impact minimal (<1ms overhead)
+- Template changes propagate immediately
+
+============================================================
+STATUS TRACKING
+============================================================
+
+Phase 9 Status: ⏸️ NOT STARTED
+Start Date: _______________
+Completion Date: _______________
+Reviewed By: _______________
+Approved By: _______________
+
+============================================================

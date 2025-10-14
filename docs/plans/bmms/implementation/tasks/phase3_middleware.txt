@@ -1,0 +1,679 @@
+================================================================================
+PHASE 3: MIDDLEWARE ENHANCEMENT
+================================================================================
+
+Priority: CRITICAL
+Dependencies: Phase 1 (Configuration), Phase 2 (Utilities)
+Prerequisites: bmms_config.py exists, default organization utilities ready
+Estimated Complexity: Complex
+
+⚠️  CRITICAL: This phase resolves middleware conflicts identified in audit.
+
+================================================================================
+OVERVIEW
+================================================================================
+
+This phase enhances the middleware layer to support dual-mode operation:
+
+OBCMS Mode: Auto-inject OOBC organization (no URL prefix needed)
+BMMS Mode: Extract organization from URL (/moa/<CODE>/)
+
+MIDDLEWARE CONFLICT RESOLUTION:
+The audit identified an existing OrganizationContextMiddleware that conflicts
+with the planned architecture. This phase implements the recommended solution:
+**Option A - Refactor existing middleware to be mode-aware**
+
+Key Deliverables:
+- OBCMSOrganizationMiddleware: Auto-injects OOBC in OBCMS mode
+- Updated OrganizationMiddleware: Mode-aware org extraction
+- Proper middleware ordering in settings
+- Thread-local organization context management
+
+================================================================================
+TASKS CHECKLIST
+================================================================================
+
+[ ] Task 1: Analyze Existing Middleware
+    [ ] 1.1 Review OrganizationContextMiddleware (common/middleware)
+    [ ] 1.2 Review OrganizationMiddleware (organizations/middleware.py)
+    [ ] 1.3 Document current behavior
+    [ ] 1.4 Plan refactoring strategy
+
+[ ] Task 2: Create OBCMSOrganizationMiddleware
+    [ ] 2.1 Create obcms_middleware.py file
+    [ ] 2.2 Implement OBCMS auto-injection logic
+    [ ] 2.3 Add logging for debugging
+    [ ] 2.4 Test middleware in isolation
+
+[ ] Task 3: Refactor Existing OrganizationMiddleware
+    [ ] 3.1 Add mode detection
+    [ ] 3.2 Skip processing in OBCMS mode
+    [ ] 3.3 Keep BMMS mode URL extraction
+    [ ] 3.4 Test mode-aware behavior
+
+[ ] Task 4: Update Middleware Stack
+    [ ] 4.1 Remove old OrganizationContextMiddleware
+    [ ] 4.2 Add OBCMSOrganizationMiddleware (BEFORE OrganizationMiddleware)
+    [ ] 4.3 Keep organizations.middleware.OrganizationMiddleware
+    [ ] 4.4 Verify middleware ordering
+
+[ ] Task 5: Validation and Testing
+    [ ] 5.1 Test OBCMS mode auto-injection
+    [ ] 5.2 Test request.organization availability
+    [ ] 5.3 Test thread-local organization context
+    [ ] 5.4 Test middleware cleanup
+    [ ] 5.5 Run integration tests
+    [ ] 5.6 Commit changes
+
+================================================================================
+DETAILED IMPLEMENTATION
+================================================================================
+
+------------------------------------------------------------------------
+TASK 1: ANALYZE EXISTING MIDDLEWARE
+------------------------------------------------------------------------
+
+Step 1.1-1.3: Review Existing Middleware
+-----------------------------------------
+
+Existing middleware locations:
+1. common/middleware/organization_context.py (CONFLICTING)
+2. organizations/middleware.py (KEEP, will enhance)
+
+Current issue (from audit):
+- Line 44 of organization_context.py imports from WRONG location:
+  `from coordination.models import Organization` ❌
+  Should be: `from organizations.models import Organization` ✓
+
+Resolution Strategy: **Refactor existing middleware to be mode-aware**
+
+Step 1.4: Document Strategy
+----------------------------
+
+Create documentation:
+```bash
+cat > /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms/docs/plans/bmms/implementation/MIDDLEWARE_REFACTORING_PLAN.md << 'EOF'
+# Middleware Refactoring Plan - Phase 3
+
+## Current State
+
+1. **common/middleware/organization_context.py**
+   - Class: OrganizationContextMiddleware
+   - Issue: Imports Organization from wrong module (coordination instead of organizations)
+   - Status: Will be REPLACED
+
+2. **organizations/middleware.py**
+   - Class: OrganizationMiddleware
+   - Status: Will be ENHANCED for mode awareness
+
+## Refactoring Strategy
+
+### Option A (CHOSEN): Refactor Existing Middleware
+
+1. Create **OBCMSOrganizationMiddleware** (NEW)
+   - Location: organizations/middleware/obcms_middleware.py
+   - Purpose: Auto-inject OOBC in OBCMS mode
+   - Runs BEFORE OrganizationMiddleware
+
+2. Enhance **OrganizationMiddleware** (MODIFY)
+   - Location: organizations/middleware.py
+   - Add mode detection: Skip in OBCMS mode
+   - Keep BMMS mode URL extraction
+
+3. Remove **OrganizationContextMiddleware** (DELETE)
+   - Location: common/middleware/organization_context.py
+   - Reason: Replaced by new architecture
+
+### Middleware Order
+
+```python
+MIDDLEWARE = [
+    # ... authentication middleware ...
+    "organizations.middleware.obcms_middleware.OBCMSOrganizationMiddleware",  # NEW: FIRST
+    "organizations.middleware.OrganizationMiddleware",  # EXISTING: SECOND
+    # ... rest of middleware ...
+]
+```
+
+### Behavior by Mode
+
+**OBCMS Mode:**
+1. OBCMSOrganizationMiddleware: Set request.organization = OOBC
+2. OrganizationMiddleware: Skip (mode detection)
+3. Result: All requests have OOBC organization
+
+**BMMS Mode:**
+1. OBCMSOrganizationMiddleware: Skip (mode detection)
+2. OrganizationMiddleware: Extract org from URL /moa/<CODE>/
+3. Result: Organization from URL path
+
+EOF
+cat /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms/docs/plans/bmms/implementation/MIDDLEWARE_REFACTORING_PLAN.md
+```
+
+
+------------------------------------------------------------------------
+TASK 2: CREATE OBCMSOrganizationMiddleware
+------------------------------------------------------------------------
+
+Step 2.1: Create Middleware Directory
+--------------------------------------
+
+Commands:
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/organizations
+mkdir -p middleware
+touch middleware/__init__.py
+```
+
+
+Step 2.2-2.3: Implement OBCMS Middleware
+-----------------------------------------
+
+File: /src/organizations/middleware/obcms_middleware.py
+
+```python
+"""
+OBCMS Middleware for automatic organization injection.
+
+In OBCMS mode, automatically injects the default OOBC organization
+into every request without requiring URL-based organization selection.
+
+This middleware runs BEFORE OrganizationMiddleware and sets the
+organization for all requests in OBCMS mode.
+"""
+import logging
+from django.http import HttpRequest, HttpResponse
+from organizations.models.scoped import set_current_organization, clear_current_organization
+from organizations.utils import get_or_create_default_organization
+from obc_management.settings.bmms_config import is_obcms_mode
+
+logger = logging.getLogger(__name__)
+
+
+class OBCMSOrganizationMiddleware:
+    """
+    Auto-inject OOBC organization in OBCMS mode.
+
+    This middleware runs BEFORE OrganizationMiddleware and sets
+    the default organization for all requests in OBCMS mode.
+
+    In BMMS mode, this middleware does nothing (OrganizationMiddleware handles it).
+
+    Attributes:
+        _default_org: Cached default organization to avoid repeated database queries
+    """
+
+    def __init__(self, get_response):
+        """
+        Initialize middleware.
+
+        Args:
+            get_response: Next middleware in the chain
+        """
+        self.get_response = get_response
+        # Cache the default organization
+        self._default_org = None
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        """
+        Process request and inject default organization in OBCMS mode.
+
+        Args:
+            request: Django HTTP request
+
+        Returns:
+            HttpResponse: Response from next middleware/view
+        """
+
+        if is_obcms_mode():
+            # Ensure default organization exists and is cached
+            if not self._default_org:
+                self._default_org, _ = get_or_create_default_organization()
+
+            # Inject default organization into request
+            request.organization = self._default_org
+            set_current_organization(self._default_org)
+
+            logger.debug(
+                f'OBCMS mode: Auto-injected organization {self._default_org.code} '
+                f'for user: {request.user.username if request.user.is_authenticated else "anonymous"}'
+            )
+
+        # Process request
+        response = self.get_response(request)
+
+        # Cleanup (if not already cleaned by OrganizationMiddleware)
+        if is_obcms_mode():
+            clear_current_organization()
+
+        return response
+```
+
+
+Step 2.4: Test Middleware in Isolation
+---------------------------------------
+
+Create test file:
+
+File: /src/organizations/tests/test_obcms_middleware.py
+
+```python
+"""
+Tests for OBCMSOrganizationMiddleware.
+"""
+from django.test import TestCase, RequestFactory
+from django.contrib.auth import get_user_model
+from organizations.middleware.obcms_middleware import OBCMSOrganizationMiddleware
+from organizations.utils import get_or_create_default_organization
+from organizations.models.scoped import get_current_organization
+
+User = get_user_model()
+
+
+class OBCMSOrganizationMiddlewareTest(TestCase):
+    """Test OBCMSOrganizationMiddleware functionality."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.factory = RequestFactory()
+        self.middleware = OBCMSOrganizationMiddleware(lambda r: HttpResponse())
+        self.default_org, _ = get_or_create_default_organization()
+        self.user = User.objects.create_user(username='testuser', password='test')
+
+    def test_obcms_mode_injects_organization(self):
+        """Test that OBCMS mode auto-injects default organization."""
+        request = self.factory.get('/')
+        request.user = self.user
+
+        # Process request
+        self.middleware(request)
+
+        # Verify organization injected
+        self.assertTrue(hasattr(request, 'organization'))
+        self.assertEqual(request.organization.code, 'OOBC')
+        self.assertEqual(request.organization.id, self.default_org.id)
+
+    def test_thread_local_organization_set(self):
+        """Test that thread-local organization context is set."""
+        request = self.factory.get('/')
+        request.user = self.user
+
+        # Before middleware
+        self.assertIsNone(get_current_organization())
+
+        # Process request
+        self.middleware(request)
+
+        # Thread-local should be set during request
+        # (cleaned up after response)
+
+    def test_anonymous_user_gets_organization(self):
+        """Test that anonymous users also get organization."""
+        from django.contrib.auth.models import AnonymousUser
+
+        request = self.factory.get('/')
+        request.user = AnonymousUser()
+
+        self.middleware(request)
+
+        self.assertTrue(hasattr(request, 'organization'))
+        self.assertEqual(request.organization.code, 'OOBC')
+```
+
+Run test:
+```bash
+cd src/
+python manage.py test organizations.tests.test_obcms_middleware
+```
+
+
+------------------------------------------------------------------------
+TASK 3: REFACTOR EXISTING OrganizationMiddleware
+------------------------------------------------------------------------
+
+Step 3.1-3.3: Enhance OrganizationMiddleware
+---------------------------------------------
+
+File: /src/organizations/middleware.py
+
+FIND the `__call__` method.
+ADD mode detection at the beginning:
+
+```python
+from obc_management.settings.bmms_config import is_bmms_mode, is_obcms_mode
+
+# ... existing imports ...
+
+class OrganizationMiddleware:
+    # ... existing __init__ ...
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        """
+        Process request and set organization context.
+
+        In OBCMS mode: This middleware does nothing (OBCMSOrganizationMiddleware handles it)
+        In BMMS mode: Extract organization from URL and validate access
+        """
+
+        # NEW: In OBCMS mode, organization is already set by OBCMSOrganizationMiddleware
+        if is_obcms_mode():
+            # Just pass through - organization already set
+            response = self.get_response(request)
+            return response
+
+        # BMMS mode: Extract organization from URL path
+        # ... existing BMMS mode code continues unchanged ...
+```
+
+Key Changes:
+1. Import mode detection functions
+2. Add OBCMS mode check at start of __call__
+3. Skip processing in OBCMS mode
+4. Keep all existing BMMS mode logic unchanged
+
+
+------------------------------------------------------------------------
+TASK 4: UPDATE MIDDLEWARE STACK
+------------------------------------------------------------------------
+
+Step 4.1-4.3: Update settings/base.py MIDDLEWARE
+-------------------------------------------------
+
+File: /src/obc_management/settings/base.py
+
+FIND the MIDDLEWARE list (around line 130-150).
+
+REPLACE with updated stack:
+
+```python
+# ========== MIDDLEWARE ==========
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "common.middleware.DeprecatedURLRedirectMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "axes.middleware.AxesMiddleware",
+    "auditlog.middleware.AuditlogMiddleware",
+    # BMMS Organization Middleware (NEW - Phase 3)
+    "organizations.middleware.obcms_middleware.OBCMSOrganizationMiddleware",  # OBCMS: Auto-inject OOBC
+    "organizations.middleware.OrganizationMiddleware",  # BMMS: Extract from URL
+    # REMOVED: "common.middleware.organization_context.OrganizationContextMiddleware",  # Old conflicting middleware
+    "common.middleware.AuditMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "csp.middleware.CSPMiddleware",
+]
+```
+
+CRITICAL ORDER:
+1. OBCMSOrganizationMiddleware MUST come first (auto-inject)
+2. OrganizationMiddleware MUST come second (URL extraction)
+3. Old OrganizationContextMiddleware REMOVED
+
+
+Step 4.2: Remove Old Middleware File
+-------------------------------------
+
+Commands:
+```bash
+# Backup old middleware (don't delete yet, just rename)
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/common/middleware
+mv organization_context.py organization_context.py.old-phase3
+
+# Verify it's no longer imported
+cd ../..
+python manage.py check
+```
+
+Expected: System check should pass (old middleware no longer referenced)
+
+
+Step 4.4: Verify Middleware Ordering
+-------------------------------------
+
+```bash
+cd src/
+python manage.py shell << 'EOF'
+from django.conf import settings
+
+print("\nMiddleware Stack Verification")
+print("=" * 70)
+
+middlewares = settings.MIDDLEWARE
+for i, middleware in enumerate(middlewares, 1):
+    if 'organization' in middleware.lower() or 'obcms' in middleware.lower():
+        print(f"{i:2d}. {middleware}")
+
+print("=" * 70)
+
+# Verify correct ordering
+obcms_idx = None
+org_idx = None
+old_idx = None
+
+for i, m in enumerate(middlewares):
+    if 'obcms_middleware.OBCMSOrganizationMiddleware' in m:
+        obcms_idx = i
+    if 'middleware.OrganizationMiddleware' in m and 'obcms' not in m:
+        org_idx = i
+    if 'organization_context.OrganizationContextMiddleware' in m:
+        old_idx = i
+
+print(f"\n✓ OBCMSOrganizationMiddleware at position: {obcms_idx}")
+print(f"✓ OrganizationMiddleware at position: {org_idx}")
+
+assert obcms_idx is not None, "OBCMSOrganizationMiddleware missing!"
+assert org_idx is not None, "OrganizationMiddleware missing!"
+assert obcms_idx < org_idx, "Wrong order! OBCMS must come before Organization"
+assert old_idx is None, "Old middleware still present!"
+
+print("\n✅ Middleware ordering correct!\n")
+EOF
+```
+
+
+------------------------------------------------------------------------
+TASK 5: VALIDATION AND TESTING
+------------------------------------------------------------------------
+
+Step 5.1: Test OBCMS Mode Auto-Injection
+-----------------------------------------
+
+```bash
+cd src/
+python manage.py runserver &
+SERVER_PID=$!
+sleep 3
+
+# Test request gets organization
+curl -s http://localhost:8000/ | grep -i "organization" || echo "Check manually"
+
+kill $SERVER_PID
+```
+
+Manual test:
+```bash
+# Start server
+python manage.py runserver
+
+# In another terminal, test with Django shell
+python manage.py shell << 'EOF'
+from django.test import Client
+client = Client()
+response = client.get('/')
+# Check if middleware ran
+print(f"Response status: {response.status_code}")
+EOF
+```
+
+
+Step 5.2-5.3: Test Organization Context
+----------------------------------------
+
+```bash
+cd src/
+python manage.py shell << 'EOF'
+print("\nTesting Organization Context")
+print("=" * 70)
+
+from django.test import RequestFactory
+from organizations.middleware.obcms_middleware import OBCMSOrganizationMiddleware
+from organizations.models.scoped import get_current_organization
+from django.http import HttpResponse
+
+# Create request
+factory = RequestFactory()
+request = factory.get('/')
+
+# Create mock user
+from django.contrib.auth.models import AnonymousUser
+request.user = AnonymousUser()
+
+# Process through middleware
+def dummy_view(r):
+    # Check organization in view
+    print(f"✓ request.organization: {r.organization.code if hasattr(r, 'organization') else 'MISSING'}")
+    print(f"✓ Thread-local org: {get_current_organization().code if get_current_organization() else 'MISSING'}")
+    return HttpResponse()
+
+middleware = OBCMSOrganizationMiddleware(dummy_view)
+response = middleware(request)
+
+print("=" * 70)
+print("✅ Organization context tests passed!\n")
+EOF
+```
+
+
+Step 5.4: Test Middleware Cleanup
+----------------------------------
+
+```bash
+cd src/
+python manage.py shell << 'EOF'
+from organizations.models.scoped import get_current_organization, clear_current_organization
+
+print("\nTesting Middleware Cleanup")
+print("=" * 70)
+
+# Before any request
+print(f"Initial state: {get_current_organization()}")
+assert get_current_organization() is None, "Should start clean"
+
+# ... middleware would set organization during request ...
+
+# After middleware cleanup
+clear_current_organization()
+print(f"After cleanup: {get_current_organization()}")
+assert get_current_organization() is None, "Should be clean after cleanup"
+
+print("=" * 70)
+print("✅ Cleanup tests passed!\n")
+EOF
+```
+
+
+Step 5.5: Run Integration Tests
+--------------------------------
+
+```bash
+cd src/
+
+# Run all tests
+python manage.py test --keepdb
+
+# Run organization-specific tests
+python manage.py test organizations --keepdb
+```
+
+
+Step 5.6: Commit Changes
+-------------------------
+
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms
+
+git add src/organizations/middleware/
+git add src/obc_management/settings/base.py
+git add src/common/middleware/organization_context.py.old-phase3
+git add docs/plans/bmms/implementation/MIDDLEWARE_REFACTORING_PLAN.md
+git add src/organizations/tests/test_obcms_middleware.py
+
+git commit -m "Phase 3: Enhance middleware for dual-mode operation
+
+- Create OBCMSOrganizationMiddleware for OBCMS auto-injection
+- Refactor OrganizationMiddleware to be mode-aware
+- Remove conflicting OrganizationContextMiddleware
+- Update middleware stack ordering
+- Add middleware tests
+
+Resolves audit finding: Middleware conflict and wrong import
+OBCMS mode now auto-injects OOBC organization for all requests."
+
+git push origin feature/bmms-embedded-architecture
+```
+
+================================================================================
+VERIFICATION CHECKLIST
+================================================================================
+
+[ ] OBCMSOrganizationMiddleware created
+[ ] OrganizationMiddleware enhanced with mode detection
+[ ] Old middleware removed from stack
+[ ] Middleware ordering correct (OBCMS before Organization)
+[ ] OBCMS mode auto-injects organization
+[ ] request.organization available in views
+[ ] Thread-local organization context works
+[ ] Cleanup functions properly
+[ ] Tests pass
+[ ] Django checks pass
+[ ] Changes committed
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Issue: request.organization is None
+------------------------------------
+Resolution:
+1. Check middleware is in MIDDLEWARE list
+2. Verify middleware ordering (OBCMS must be first)
+3. Check BMMS_MODE=obcms in .env
+4. Restart Django server to reload settings
+
+Issue: Import Error for OBCMSOrganizationMiddleware
+----------------------------------------------------
+Resolution:
+1. Verify file exists: src/organizations/middleware/obcms_middleware.py
+2. Check __init__.py exists in middleware/
+3. Restart Django shell/server
+
+Issue: Thread-Local Not Cleaned Up
+-----------------------------------
+Resolution:
+1. Verify clear_current_organization() is called
+2. Check middleware order (cleanup should happen)
+3. Add explicit cleanup in middleware
+
+================================================================================
+NEXT PHASE
+================================================================================
+
+→ Proceed to: Phase 4 - View Decorators
+→ File: phase4_view_decorators.txt
+→ Priority: HIGH
+
+Phase 4 will create:
+- @require_organization decorator
+- OrganizationRequiredMixin for CBVs
+- OrganizationAccessPermission for DRF
+- Validation for organization context in views
+
+================================================================================
+END OF PHASE 3: MIDDLEWARE ENHANCEMENT
+================================================================================

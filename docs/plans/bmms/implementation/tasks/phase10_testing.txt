@@ -1,0 +1,908 @@
+PHASE 10: TESTING INFRASTRUCTURE
+BMMS Embedded Architecture Implementation
+============================================================
+
+PRIORITY: HIGH
+COMPLEXITY: High
+DEPENDENCIES: Phase 9 (URL Routing) must be complete
+ESTIMATED SCOPE: Comprehensive test suite covering all phases
+
+============================================================
+OBJECTIVES
+============================================================
+
+1. Create dual-mode test infrastructure (OBCMS/BMMS)
+2. Achieve 99.2% test pass rate (maintain existing standard)
+3. Implement data isolation tests
+4. Implement performance tests
+5. Detect N+1 query problems
+6. Ensure backward compatibility
+
+============================================================
+TASK BREAKDOWN
+============================================================
+
+-----------------------------------------------------------
+TASK 10.1: Test Configuration & Fixtures
+-----------------------------------------------------------
+
+DESCRIPTION:
+Set up pytest configuration with OBCMS/BMMS mode fixtures.
+
+FILE: src/tests/conftest.py (CREATE)
+
+IMPLEMENTATION:
+
+```python
+"""
+Pytest configuration for OBCMS/BMMS dual-mode testing.
+"""
+import pytest
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from obc_management.settings.bmms_config import BMMSMode
+from organizations.models import Organization, OrganizationMembership
+from organizations.utils import get_or_create_default_organization
+
+User = get_user_model()
+
+
+@pytest.fixture(scope='session')
+def django_db_setup(django_db_setup, django_db_blocker):
+    """Setup database for tests."""
+    with django_db_blocker.unblock():
+        # Ensure default OOBC organization exists
+        get_or_create_default_organization()
+
+
+@pytest.fixture
+def obcms_mode(settings):
+    """Force OBCMS mode for this test."""
+    settings.BMMS_MODE = BMMSMode.OBCMS
+    settings.RBAC_SETTINGS['ENABLE_MULTI_TENANT'] = False
+    settings.RBAC_SETTINGS['ALLOW_ORGANIZATION_SWITCHING'] = False
+    return settings
+
+
+@pytest.fixture
+def bmms_mode(settings):
+    """Force BMMS mode for this test."""
+    settings.BMMS_MODE = BMMSMode.BMMS
+    settings.RBAC_SETTINGS['ENABLE_MULTI_TENANT'] = True
+    settings.RBAC_SETTINGS['ALLOW_ORGANIZATION_SWITCHING'] = True
+    return settings
+
+
+@pytest.fixture
+def default_organization(db):
+    """Get default OOBC organization."""
+    org, _ = Organization.objects.get_or_create(
+        code='OOBC',
+        defaults={
+            'name': 'Office for Other Bangsamoro Communities',
+            'short_name': 'OOBC',
+            'organization_type': 'office',
+            'is_active': True,
+            'enabled_modules': [
+                'communities',
+                'mana',
+                'coordination',
+                'policies',
+                'monitoring',
+            ],
+        }
+    )
+    return org
+
+
+@pytest.fixture
+def pilot_moh_organization(db):
+    """Get Ministry of Health organization."""
+    org, _ = Organization.objects.get_or_create(
+        code='MOH',
+        defaults={
+            'name': 'Ministry of Health',
+            'short_name': 'MOH',
+            'organization_type': 'ministry',
+            'is_active': True,
+            'is_pilot': True,
+            'enabled_modules': ['communities', 'mana', 'monitoring'],
+        }
+    )
+    return org
+
+
+@pytest.fixture
+def pilot_mole_organization(db):
+    """Get Ministry of Labor and Employment organization."""
+    org, _ = Organization.objects.get_or_create(
+        code='MOLE',
+        defaults={
+            'name': 'Ministry of Labor and Employment',
+            'short_name': 'MOLE',
+            'organization_type': 'ministry',
+            'is_active': True,
+            'is_pilot': True,
+            'enabled_modules': ['communities', 'coordination'],
+        }
+    )
+    return org
+
+
+@pytest.fixture
+def pilot_mafar_organization(db):
+    """Get Ministry of Agriculture organization."""
+    org, _ = Organization.objects.get_or_create(
+        code='MAFAR',
+        defaults={
+            'name': 'Ministry of Agriculture, Fisheries and Agrarian Reform',
+            'short_name': 'MAFAR',
+            'organization_type': 'ministry',
+            'is_active': True,
+            'is_pilot': True,
+            'enabled_modules': ['communities', 'planning'],
+        }
+    )
+    return org
+
+
+@pytest.fixture
+def oobc_admin_user(db, default_organization):
+    """Create OOBC admin user."""
+    user = User.objects.create_user(
+        username='oobc_admin',
+        email='admin@oobc.gov.ph',
+        password='testpass123',
+        user_type='oobc_executive',
+        is_staff=True,
+    )
+    OrganizationMembership.objects.create(
+        user=user,
+        organization=default_organization,
+        role='admin',
+        is_primary=True,
+        is_active=True,
+        can_manage_users=True,
+        can_approve_plans=True,
+        can_approve_budgets=True,
+    )
+    return user
+
+
+@pytest.fixture
+def moh_admin_user(db, pilot_moh_organization):
+    """Create MOH admin user."""
+    user = User.objects.create_user(
+        username='moh_admin',
+        email='admin@moh.barmm.gov.ph',
+        password='testpass123',
+        user_type='bmoa',
+        is_staff=True,
+    )
+    OrganizationMembership.objects.create(
+        user=user,
+        organization=pilot_moh_organization,
+        role='admin',
+        is_primary=True,
+        is_active=True,
+        can_manage_users=True,
+        can_approve_plans=True,
+        can_approve_budgets=True,
+    )
+    return user
+
+
+@pytest.fixture
+def mole_staff_user(db, pilot_mole_organization):
+    """Create MOLE staff user."""
+    user = User.objects.create_user(
+        username='mole_staff',
+        email='staff@mole.barmm.gov.ph',
+        password='testpass123',
+        user_type='bmoa',
+    )
+    OrganizationMembership.objects.create(
+        user=user,
+        organization=pilot_mole_organization,
+        role='staff',
+        is_primary=True,
+        is_active=True,
+        can_view_reports=True,
+    )
+    return user
+
+
+@pytest.fixture
+def ocm_user(db):
+    """Create OCM user with cross-organization access."""
+    user = User.objects.create_user(
+        username='ocm_admin',
+        email='admin@ocm.barmm.gov.ph',
+        password='testpass123',
+        user_type='cm_office',
+        is_staff=True,
+    )
+    # OCM users get read-only access to all organizations
+    return user
+```
+
+CHECKLIST:
+
+[ ] Create src/tests/conftest.py
+[ ] Implement mode fixtures (obcms_mode, bmms_mode)
+[ ] Implement organization fixtures
+[ ] Implement user fixtures
+[ ] Test fixtures load correctly
+[ ] Document fixture usage
+
+-----------------------------------------------------------
+TASK 10.2: Model Auto-Filtering Tests
+-----------------------------------------------------------
+
+DESCRIPTION:
+Test organization scoping and auto-filtering for all models.
+
+FILE: src/tests/test_organization_scoping.py (CREATE)
+
+IMPLEMENTATION:
+
+```python
+"""
+Tests for organization scoping and auto-filtering.
+"""
+import pytest
+from communities.models import OBCCommunity
+from mana.models import Assessment
+from coordination.models import StakeholderEngagement
+from monitoring.models import PPA
+from organizations.models.scoped import set_current_organization, clear_current_organization
+
+
+@pytest.mark.django_db
+class TestOrganizationScoping:
+    """Test organization-based data isolation."""
+
+    def test_obccommunity_auto_filters_by_organization(
+        self, default_organization, pilot_moh_organization
+    ):
+        """Test OBCCommunity filters by current organization."""
+        # Create communities for different orgs
+        set_current_organization(default_organization)
+        oobc_comm = OBCCommunity.objects.create(
+            name='OOBC Community',
+            barangay_id=1,
+        )
+
+        set_current_organization(pilot_moh_organization)
+        moh_comm = OBCCommunity.objects.create(
+            name='MOH Community',
+            barangay_id=2,
+        )
+
+        # Test OOBC context
+        set_current_organization(default_organization)
+        communities = OBCCommunity.objects.all()
+        assert communities.count() == 1
+        assert communities.first().name == 'OOBC Community'
+
+        # Test MOH context
+        set_current_organization(pilot_moh_organization)
+        communities = OBCCommunity.objects.all()
+        assert communities.count() == 1
+        assert communities.first().name == 'MOH Community'
+
+        # Test all_objects manager (no filter)
+        all_communities = OBCCommunity.all_objects.all()
+        assert all_communities.count() == 2
+
+        clear_current_organization()
+
+    def test_assessment_auto_filters_by_organization(
+        self, default_organization, pilot_moh_organization
+    ):
+        """Test Assessment filters by current organization."""
+        set_current_organization(default_organization)
+        oobc_assess = Assessment.objects.create(
+            title='OOBC Assessment',
+            assessment_type='needs',
+            status='draft',
+        )
+
+        set_current_organization(pilot_moh_organization)
+        moh_assess = Assessment.objects.create(
+            title='MOH Assessment',
+            assessment_type='needs',
+            status='draft',
+        )
+
+        # Test isolation
+        set_current_organization(default_organization)
+        assessments = Assessment.objects.all()
+        assert assessments.count() == 1
+        assert assessments.first().title == 'OOBC Assessment'
+
+        set_current_organization(pilot_moh_organization)
+        assessments = Assessment.objects.all()
+        assert assessments.count() == 1
+        assert assessments.first().title == 'MOH Assessment'
+
+        clear_current_organization()
+
+    def test_cross_organization_data_leak_prevented(
+        self, default_organization, pilot_moh_organization
+    ):
+        """Test that switching organizations doesn't leak data."""
+        # Create data for OOBC
+        set_current_organization(default_organization)
+        for i in range(10):
+            OBCCommunity.objects.create(
+                name=f'OOBC Community {i}',
+                barangay_id=i+1,
+            )
+
+        # Create data for MOH
+        set_current_organization(pilot_moh_organization)
+        for i in range(5):
+            OBCCommunity.objects.create(
+                name=f'MOH Community {i}',
+                barangay_id=i+11,
+            )
+
+        # Verify OOBC sees only 10
+        set_current_organization(default_organization)
+        assert OBCCommunity.objects.count() == 10
+
+        # Verify MOH sees only 5
+        set_current_organization(pilot_moh_organization)
+        assert OBCCommunity.objects.count() == 5
+
+        # Verify admin sees all 15
+        clear_current_organization()
+        assert OBCCommunity.all_objects.count() == 15
+```
+
+CHECKLIST:
+
+[ ] Test OBCCommunity auto-filtering
+[ ] Test Assessment auto-filtering
+[ ] Test PPA auto-filtering
+[ ] Test StakeholderEngagement auto-filtering
+[ ] Test cross-organization data isolation
+[ ] Test all_objects manager
+[ ] Run tests in both modes
+
+-----------------------------------------------------------
+TASK 10.3: View Layer Tests
+-----------------------------------------------------------
+
+DESCRIPTION:
+Test organization context in views and templates.
+
+FILE: src/tests/test_view_organization_context.py (CREATE)
+
+IMPLEMENTATION:
+
+```python
+"""
+Tests for organization context in views.
+"""
+import pytest
+from django.test import Client
+from django.urls import reverse
+
+
+@pytest.mark.django_db
+class TestViewOrganizationContext:
+    """Test organization context in views."""
+
+    def test_obcms_mode_community_list_view(
+        self, client, obcms_mode, default_organization, oobc_admin_user
+    ):
+        """Test community list view in OBCMS mode."""
+        client.force_login(oobc_admin_user)
+
+        # Create test data
+        from communities.models import OBCCommunity
+        from organizations.models.scoped import set_current_organization
+
+        set_current_organization(default_organization)
+        OBCCommunity.objects.create(name='Test Community', barangay_id=1)
+
+        # Access view
+        url = reverse('communities:list')
+        response = client.get(url)
+
+        assert response.status_code == 200
+        assert 'Test Community' in response.content.decode()
+        assert 'organization' in response.context
+        assert response.context['organization'] == default_organization
+
+    def test_bmms_mode_community_list_with_org_prefix(
+        self, client, bmms_mode, default_organization, oobc_admin_user
+    ):
+        """Test community list view in BMMS mode with org prefix."""
+        client.force_login(oobc_admin_user)
+
+        # Create test data
+        from communities.models import OBCCommunity
+        from organizations.models.scoped import set_current_organization
+
+        set_current_organization(default_organization)
+        OBCCommunity.objects.create(name='Test Community', barangay_id=1)
+
+        # Access with org prefix
+        url = f'/moa/{default_organization.code}/communities/'
+        response = client.get(url)
+
+        assert response.status_code == 200
+        assert 'Test Community' in response.content.decode()
+
+    def test_unauthorized_user_denied_access(
+        self, client, bmms_mode, pilot_moh_organization, mole_staff_user
+    ):
+        """Test user without org membership gets 403."""
+        client.force_login(mole_staff_user)
+
+        # Try to access MOH data
+        url = f'/moa/{pilot_moh_organization.code}/communities/'
+        response = client.get(url)
+
+        assert response.status_code == 403
+
+    def test_dashboard_shows_org_specific_data(
+        self, client, bmms_mode, default_organization, pilot_moh_organization,
+        oobc_admin_user, moh_admin_user
+    ):
+        """Test dashboard shows only org-specific data."""
+        from communities.models import OBCCommunity
+        from organizations.models.scoped import set_current_organization
+
+        # Create data for both orgs
+        set_current_organization(default_organization)
+        for i in range(10):
+            OBCCommunity.objects.create(name=f'OOBC Comm {i}', barangay_id=i+1)
+
+        set_current_organization(pilot_moh_organization)
+        for i in range(5):
+            OBCCommunity.objects.create(name=f'MOH Comm {i}', barangay_id=i+11)
+
+        # Test OOBC dashboard
+        client.force_login(oobc_admin_user)
+        response = client.get(f'/moa/{default_organization.code}/dashboard/')
+        assert response.status_code == 200
+        # Check dashboard shows 10 communities
+
+        # Test MOH dashboard
+        client.force_login(moh_admin_user)
+        response = client.get(f'/moa/{pilot_moh_organization.code}/dashboard/')
+        assert response.status_code == 200
+        # Check dashboard shows 5 communities
+```
+
+CHECKLIST:
+
+[ ] Test view organization context
+[ ] Test unauthorized access (403)
+[ ] Test invalid org code (404)
+[ ] Test dashboard data isolation
+[ ] Test form submissions with org context
+[ ] Run tests in both modes
+
+-----------------------------------------------------------
+TASK 10.4: API Tests
+-----------------------------------------------------------
+
+DESCRIPTION:
+Test organization filtering in API endpoints.
+
+FILE: src/tests/test_api_organization_filtering.py (CREATE)
+
+IMPLEMENTATION:
+
+```python
+"""
+Tests for organization filtering in API endpoints.
+"""
+import pytest
+from rest_framework.test import APIClient
+from rest_framework import status
+
+
+@pytest.mark.django_db
+class TestAPIOrganizationFiltering:
+    """Test API organization filtering."""
+
+    @pytest.fixture
+    def api_client(self):
+        return APIClient()
+
+    def test_api_filters_by_organization(
+        self, api_client, default_organization, pilot_moh_organization,
+        oobc_admin_user, moh_admin_user
+    ):
+        """Test API returns only org-specific data."""
+        from communities.models import OBCCommunity
+        from organizations.models.scoped import set_current_organization
+
+        # Create data
+        set_current_organization(default_organization)
+        for i in range(10):
+            OBCCommunity.objects.create(name=f'OOBC Comm {i}', barangay_id=i+1)
+
+        set_current_organization(pilot_moh_organization)
+        for i in range(5):
+            OBCCommunity.objects.create(name=f'MOH Comm {i}', barangay_id=i+11)
+
+        # Test OOBC API
+        api_client.force_authenticate(user=oobc_admin_user)
+        response = api_client.get('/api/communities/')
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data['results']) == 10
+
+        # Test MOH API
+        api_client.force_authenticate(user=moh_admin_user)
+        response = api_client.get('/api/communities/')
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data['results']) == 5
+
+    def test_api_create_sets_organization(
+        self, api_client, default_organization, oobc_admin_user
+    ):
+        """Test API create sets organization automatically."""
+        from organizations.models.scoped import set_current_organization
+
+        set_current_organization(default_organization)
+
+        api_client.force_authenticate(user=oobc_admin_user)
+        response = api_client.post('/api/communities/', {
+            'name': 'New Community',
+            'barangay': 1,
+        })
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data['organization'] == default_organization.id
+```
+
+CHECKLIST:
+
+[ ] Test API list filtering
+[ ] Test API create with org
+[ ] Test API update with org
+[ ] Test API delete with org
+[ ] Test unauthorized API access
+[ ] Run API tests
+
+-----------------------------------------------------------
+TASK 10.5: Performance Tests
+-----------------------------------------------------------
+
+DESCRIPTION:
+Test query performance and detect N+1 problems.
+
+FILE: src/tests/test_performance.py (CREATE)
+
+IMPLEMENTATION:
+
+```python
+"""
+Performance tests for organization-scoped queries.
+"""
+import pytest
+from django.test.utils import override_settings
+from django.db import connection, reset_queries
+
+
+@pytest.mark.django_db
+class TestPerformance:
+    """Test query performance."""
+
+    @override_settings(DEBUG=True)
+    def test_community_list_query_count(
+        self, client, default_organization, oobc_admin_user
+    ):
+        """Test community list has acceptable query count."""
+        from communities.models import OBCCommunity
+        from organizations.models.scoped import set_current_organization
+
+        # Create test data
+        set_current_organization(default_organization)
+        for i in range(50):
+            OBCCommunity.objects.create(name=f'Community {i}', barangay_id=1)
+
+        # Test query count
+        client.force_login(oobc_admin_user)
+
+        reset_queries()
+        response = client.get('/communities/')
+
+        assert response.status_code == 200
+
+        # Should be <10 queries (not 50+)
+        query_count = len(connection.queries)
+        assert query_count < 10, f"Too many queries: {query_count}"
+
+    @override_settings(DEBUG=True)
+    def test_no_n_plus_one_queries(
+        self, client, default_organization, oobc_admin_user
+    ):
+        """Test for N+1 query problems."""
+        from communities.models import OBCCommunity
+        from organizations.models.scoped import set_current_organization
+
+        set_current_organization(default_organization)
+
+        # Create 10 communities
+        for i in range(10):
+            OBCCommunity.objects.create(name=f'Community {i}', barangay_id=1)
+
+        reset_queries()
+        response = client.get('/communities/')
+        query_count_10 = len(connection.queries)
+
+        # Create 100 more communities
+        for i in range(100):
+            OBCCommunity.objects.create(name=f'Community {i+10}', barangay_id=1)
+
+        reset_queries()
+        response = client.get('/communities/')
+        query_count_110 = len(connection.queries)
+
+        # Query count should not increase proportionally
+        assert query_count_110 <= query_count_10 + 2, \
+            f"N+1 query problem detected: {query_count_10} vs {query_count_110}"
+
+    def test_response_time_acceptable(
+        self, client, default_organization, oobc_admin_user
+    ):
+        """Test response time is acceptable."""
+        import time
+        from communities.models import OBCCommunity
+        from organizations.models.scoped import set_current_organization
+
+        set_current_organization(default_organization)
+
+        # Create test data
+        for i in range(100):
+            OBCCommunity.objects.create(name=f'Community {i}', barangay_id=1)
+
+        client.force_login(oobc_admin_user)
+
+        start_time = time.time()
+        response = client.get('/communities/')
+        elapsed_time = time.time() - start_time
+
+        assert response.status_code == 200
+        assert elapsed_time < 0.5, f"Response too slow: {elapsed_time}s"
+```
+
+CHECKLIST:
+
+[ ] Test query counts (<10 per page)
+[ ] Test for N+1 query problems
+[ ] Test response times (<500ms)
+[ ] Test with large datasets (1000+ records)
+[ ] Profile slow queries
+[ ] Optimize identified bottlenecks
+
+-----------------------------------------------------------
+TASK 10.6: Backward Compatibility Tests
+-----------------------------------------------------------
+
+DESCRIPTION:
+Test that OBCMS continues to function normally.
+
+FILE: src/tests/test_backward_compatibility.py (CREATE)
+
+IMPLEMENTATION:
+
+```python
+"""
+Tests for backward compatibility with existing OBCMS functionality.
+"""
+import pytest
+
+
+@pytest.mark.django_db
+class TestBackwardCompatibility:
+    """Test OBCMS backward compatibility."""
+
+    def test_obcms_existing_tests_still_pass(self, obcms_mode):
+        """Test existing test suite passes in OBCMS mode."""
+        # This meta-test ensures existing tests still pass
+        # Run: pytest -k "not bmms" to test OBCMS-only functionality
+        pass
+
+    def test_oobc_data_accessible(
+        self, client, obcms_mode, default_organization, oobc_admin_user
+    ):
+        """Test OOBC data remains accessible in OBCMS mode."""
+        from communities.models import OBCCommunity
+        from organizations.models.scoped import set_current_organization
+
+        set_current_organization(default_organization)
+
+        # Create OOBC data
+        for i in range(10):
+            OBCCommunity.objects.create(name=f'OOBC Comm {i}', barangay_id=i+1)
+
+        # Test access
+        client.force_login(oobc_admin_user)
+        response = client.get('/communities/')
+
+        assert response.status_code == 200
+        assert 'OOBC Comm' in response.content.decode()
+
+    def test_all_oobc_views_work(
+        self, client, obcms_mode, oobc_admin_user
+    ):
+        """Test all OOBC views still work."""
+        client.force_login(oobc_admin_user)
+
+        # Test critical views
+        views = [
+            '/dashboard/',
+            '/communities/',
+            '/mana/assessments/',
+            '/coordination/engagements/',
+            '/monitoring/ppas/',
+        ]
+
+        for view_url in views:
+            response = client.get(view_url)
+            assert response.status_code in [200, 302], \
+                f"View {view_url} failed: {response.status_code}"
+```
+
+CHECKLIST:
+
+[ ] Test existing OOBC functionality
+[ ] Test all OOBC views work
+[ ] Test OOBC data accessible
+[ ] Test OOBC reports generate
+[ ] Verify 99.2% test pass rate maintained
+
+-----------------------------------------------------------
+TASK 10.7: Test Suite Execution & Reporting
+-----------------------------------------------------------
+
+DESCRIPTION:
+Run full test suite and generate reports.
+
+COMMANDS:
+
+```bash
+cd src/
+
+# Run all tests
+pytest --verbose --tb=short
+
+# Run with coverage
+pytest --cov=. --cov-report=html --cov-report=term-missing
+
+# Run OBCMS mode tests only
+BMMS_MODE=obcms pytest --verbose
+
+# Run BMMS mode tests only
+BMMS_MODE=bmms pytest --verbose
+
+# Run performance tests
+pytest tests/test_performance.py -v --durations=10
+
+# Generate HTML report
+pytest --html=test-report.html --self-contained-html
+```
+
+METRICS TO TRACK:
+
+[ ] Total tests: _____ (target: 300+)
+[ ] Pass rate: _____ (target: 99.2%)
+[ ] Code coverage: _____ (target: >90%)
+[ ] Performance tests pass: _____ (target: 100%)
+[ ] Slow tests: _____ (target: <5 tests >1s)
+
+CHECKLIST:
+
+[ ] All tests pass (99.2% pass rate)
+[ ] Code coverage >90%
+[ ] Performance tests pass
+[ ] No N+1 queries detected
+[ ] HTML report generated
+[ ] Coverage report reviewed
+
+============================================================
+COMPLETION CRITERIA
+============================================================
+
+Phase 10 is complete when:
+
+1. TEST INFRASTRUCTURE
+   [ ] conftest.py created with all fixtures
+   [ ] Mode fixtures work (obcms_mode, bmms_mode)
+   [ ] Organization fixtures work
+   [ ] User fixtures work
+
+2. MODEL TESTS
+   [ ] Auto-filtering tests pass
+   [ ] Data isolation tests pass
+   [ ] all_objects manager tests pass
+   [ ] Cross-organization leak tests pass
+
+3. VIEW TESTS
+   [ ] Organization context tests pass
+   [ ] Unauthorized access tests pass (403)
+   [ ] Invalid org code tests pass (404)
+   [ ] Dashboard isolation tests pass
+
+4. API TESTS
+   [ ] API filtering tests pass
+   [ ] API create/update tests pass
+   [ ] API unauthorized access tests pass
+
+5. PERFORMANCE TESTS
+   [ ] Query count tests pass (<10 queries)
+   [ ] N+1 query tests pass
+   [ ] Response time tests pass (<500ms)
+
+6. BACKWARD COMPATIBILITY
+   [ ] Existing OBCMS tests pass
+   [ ] 99.2% pass rate maintained
+   [ ] OOBC data accessible
+   [ ] All OOBC views work
+
+7. REPORTING
+   [ ] HTML test report generated
+   [ ] Coverage report >90%
+   [ ] Performance report reviewed
+
+============================================================
+VALIDATION COMMANDS
+============================================================
+
+# Run full test suite
+cd src/
+pytest --verbose --cov=. --cov-report=html
+
+# Check test count
+pytest --collect-only | grep "tests collected"
+
+# Check coverage
+pytest --cov=. --cov-report=term-missing
+
+# Performance profile
+pytest --durations=10
+
+============================================================
+ROLLBACK PLAN
+============================================================
+
+Tests are non-destructive - no rollback needed.
+
+If tests fail:
+1. Identify failing tests
+2. Fix underlying issues
+3. Re-run tests
+4. Do not proceed to next phase until 99.2% pass rate
+
+============================================================
+NOTES
+============================================================
+
+- Tests do not modify production code
+- Safe to run repeatedly
+- Use separate test database
+- Focus on data isolation testing
+- Performance testing is critical
+
+============================================================
+STATUS TRACKING
+============================================================
+
+Phase 10 Status: ⏸️ NOT STARTED
+Start Date: _______________
+Completion Date: _______________
+Test Pass Rate: _____ %
+Code Coverage: _____ %
+Reviewed By: _______________
+Approved By: _______________
+
+============================================================

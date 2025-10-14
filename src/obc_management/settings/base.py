@@ -14,6 +14,8 @@ import os
 from pathlib import Path
 import environ
 
+from obc_management.settings.bmms_config import BMMSMode
+
 # Initialize environment variables
 env = environ.Env(
     DEBUG=(bool, True),
@@ -629,23 +631,38 @@ WORKITEM_MIGRATION_STRICT_MODE = env.bool(
     "WORKITEM_MIGRATION_STRICT_MODE", default=False
 )
 
+# ========== BMMS MODE CONFIGURATION ==========
+# Operational mode: 'obcms' (single-tenant) or 'bmms' (multi-tenant)
+BMMS_MODE = env.str('BMMS_MODE', default=BMMSMode.OBCMS)
+
+# Default organization code for OBCMS mode
+DEFAULT_ORGANIZATION_CODE = env.str('DEFAULT_ORGANIZATION_CODE', default='OOBC')
+
 # ========== BMMS MULTI-TENANT RBAC CONFIGURATION ==========
 # Phase 5: Organization Context and Multi-Tenant Support
 # See: docs/plans/bmms/TRANSITION_PLAN.md
 
 RBAC_SETTINGS = {
     # Enable multi-tenant organization context
-    'ENABLE_MULTI_TENANT': env.bool('ENABLE_MULTI_TENANT', default=True),
+    # In OBCMS mode, this is automatically set to False
+    'ENABLE_MULTI_TENANT': env.bool(
+        'ENABLE_MULTI_TENANT',
+        default=(BMMS_MODE == BMMSMode.BMMS)
+    ),
 
     # Office of Chief Minister (OCM) organization code
     # OCM has special aggregation access (read-only across all MOAs)
-    'OCM_ORGANIZATION_CODE': 'ocm',
+    'OCM_ORGANIZATION_CODE': 'OCM',
 
     # Permission cache timeout (seconds)
     'CACHE_TIMEOUT': 300,  # 5 minutes
 
     # Organization switching
-    'ALLOW_ORGANIZATION_SWITCHING': True,  # OOBC staff and OCM can switch
+    # In OBCMS mode, this is automatically set to False
+    'ALLOW_ORGANIZATION_SWITCHING': env.bool(
+        'ALLOW_ORGANIZATION_SWITCHING',
+        default=(BMMS_MODE == BMMSMode.BMMS)
+    ),
 
     # Session key for current organization
     'SESSION_ORG_KEY': 'current_organization',

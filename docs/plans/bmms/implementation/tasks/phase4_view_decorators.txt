@@ -1,0 +1,844 @@
+================================================================================
+PHASE 4: VIEW DECORATORS
+================================================================================
+
+Priority: HIGH
+Dependencies: Phase 3 (Middleware Enhancement)
+Prerequisites: Middleware injects organization, request.organization available
+Estimated Complexity: Moderate
+
+================================================================================
+OVERVIEW
+================================================================================
+
+This phase creates view-layer decorators, mixins, and permissions for
+organization-aware access control. These components validate that:
+
+1. Organization context exists (set by middleware)
+2. Users have access to requested organization (BMMS mode)
+3. Cross-organization access is prevented
+
+Components:
+- Function-based view decorator: @require_organization
+- Class-based view mixin: OrganizationRequiredMixin
+- DRF permission class: OrganizationAccessPermission
+- URL parameter decorator: @organization_param()
+
+================================================================================
+TASKS CHECKLIST
+================================================================================
+
+[ ] Task 1: Create View Decorators Module
+    [ ] 1.1 Create decorators directory structure
+    [ ] 1.2 Implement @require_organization decorator
+    [ ] 1.3 Implement @organization_param() decorator
+    [ ] 1.4 Add validation logic
+    [ ] 1.5 Test decorators
+
+[ ] Task 2: Create Class-Based View Mixins
+    [ ] 2.1 Create mixins directory structure
+    [ ] 2.2 Implement OrganizationRequiredMixin
+    [ ] 2.3 Implement get_organization() method
+    [ ] 2.4 Test mixins with views
+
+[ ] Task 3: Create DRF Permissions
+    [ ] 3.1 Create permissions directory structure
+    [ ] 3.2 Implement OrganizationAccessPermission
+    [ ] 3.3 Add organization validation for API views
+    [ ] 3.4 Test permissions
+
+[ ] Task 4: Documentation and Examples
+    [ ] 4.1 Create usage examples
+    [ ] 4.2 Document decorator patterns
+    [ ] 4.3 Document mixin patterns
+    [ ] 4.4 Document permission patterns
+
+[ ] Task 5: Validation and Testing
+    [ ] 5.1 Test function-based view decorator
+    [ ] 5.2 Test class-based view mixin
+    [ ] 5.3 Test DRF permission
+    [ ] 5.4 Test OBCMS mode (transparent)
+    [ ] 5.5 Test BMMS mode (validation)
+    [ ] 5.6 Run integration tests
+    [ ] 5.7 Commit changes
+
+================================================================================
+DETAILED IMPLEMENTATION
+================================================================================
+
+------------------------------------------------------------------------
+TASK 1: CREATE VIEW DECORATORS MODULE
+------------------------------------------------------------------------
+
+Step 1.1: Create Directory Structure
+-------------------------------------
+
+Commands:
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/common
+mkdir -p decorators
+touch decorators/__init__.py
+```
+
+
+Step 1.2-1.4: Implement Decorators
+-----------------------------------
+
+File: /src/common/decorators/organization.py
+
+```python
+"""
+Organization-aware view decorators for BMMS multi-tenant support.
+
+Provides decorators for function-based views to ensure organization
+context exists and validate user access in BMMS mode.
+"""
+import logging
+from functools import wraps
+from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404
+from organizations.models import Organization, OrganizationMembership
+from obc_management.settings.bmms_config import is_bmms_mode, is_obcms_mode
+
+logger = logging.getLogger(__name__)
+
+
+def require_organization(view_func):
+    """
+    Decorator to ensure request has valid organization context.
+
+    In OBCMS mode: Transparent (organization auto-injected by middleware)
+    In BMMS mode: Validates user has access to requested organization
+
+    Usage:
+        @login_required
+        @require_organization
+        def my_view(request):
+            # request.organization is guaranteed to exist
+            communities = OBCCommunity.objects.all()  # Auto-filtered
+            return render(request, 'template.html')
+
+    Returns:
+        HttpResponseForbidden: If organization context missing or access denied
+    """
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        # Check if organization exists on request
+        if not hasattr(request, 'organization') or request.organization is None:
+            logger.error(
+                f'No organization context in request for view: {view_func.__name__}'
+            )
+            return HttpResponseForbidden(
+                'Organization context required but not found. '
+                'Please ensure middleware is properly configured.'
+            )
+
+        # In BMMS mode, validate user access
+        if is_bmms_mode() and request.user.is_authenticated:
+            # Superusers can access any organization
+            if request.user.is_superuser:
+                return view_func(request, *args, **kwargs)
+
+            # Check for active membership
+            has_access = OrganizationMembership.objects.filter(
+                user=request.user,
+                organization=request.organization,
+                is_active=True
+            ).exists()
+
+            if not has_access:
+                logger.warning(
+                    f'User {request.user.username} denied access to '
+                    f'organization {request.organization.code}'
+                )
+                return HttpResponseForbidden(
+                    f'You do not have access to {request.organization.name}. '
+                    f'Please contact your system administrator.'
+                )
+
+        # In OBCMS mode, access is automatically granted (single org)
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+
+def organization_param(param_name='org_code'):
+    """
+    Decorator to extract organization from URL parameters.
+
+    This decorator loads the organization from a URL parameter
+    and validates user access before calling the view.
+
+    Usage:
+        @login_required
+        @organization_param('org_code')
+        def my_view(request, org_code):
+            # request.organization is set and validated
+            return render(request, 'template.html')
+
+        # URL pattern: path('org/<str:org_code>/view/', my_view)
+
+    Args:
+        param_name: Name of URL parameter containing org code (default: 'org_code')
+
+    Returns:
+        HttpResponseForbidden: If org code invalid or access denied
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            # Extract org code from kwargs
+            org_code = kwargs.get(param_name)
+
+            if not org_code:
+                return HttpResponseForbidden(
+                    f'Organization parameter "{param_name}" is required.'
+                )
+
+            # Load organization
+            organization = get_object_or_404(
+                Organization,
+                code=org_code.upper(),
+                is_active=True
+            )
+
+            # Validate access in BMMS mode
+            if is_bmms_mode() and request.user.is_authenticated:
+                if not request.user.is_superuser:
+                    has_access = OrganizationMembership.objects.filter(
+                        user=request.user,
+                        organization=organization,
+                        is_active=True
+                    ).exists()
+
+                    if not has_access:
+                        logger.warning(
+                            f'User {request.user.username} denied access to '
+                            f'organization {organization.code} via URL parameter'
+                        )
+                        return HttpResponseForbidden(
+                            f'You do not have access to {organization.name}.'
+                        )
+
+            # Set organization on request
+            request.organization = organization
+
+            # Call view
+            return view_func(request, *args, **kwargs)
+
+        return wrapper
+    return decorator
+```
+
+
+Step 1.5: Test Decorators
+--------------------------
+
+File: /src/common/tests/test_organization_decorators.py
+
+```python
+"""
+Tests for organization decorators.
+"""
+from django.test import TestCase, RequestFactory
+from django.http import HttpResponse, HttpResponseForbidden
+from django.contrib.auth import get_user_model
+from common.decorators.organization import require_organization
+from organizations.utils import get_or_create_default_organization
+
+User = get_user_model()
+
+
+class RequireOrganizationDecoratorTest(TestCase):
+    """Test @require_organization decorator."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(username='test', password='test')
+        self.org, _ = get_or_create_default_organization()
+
+    def test_decorator_passes_with_organization(self):
+        """Test decorator allows request with organization."""
+        @require_organization
+        def test_view(request):
+            return HttpResponse('OK')
+
+        request = self.factory.get('/')
+        request.user = self.user
+        request.organization = self.org
+
+        response = test_view(request)
+        self.assertEqual(response.status_code, 200)
+
+    def test_decorator_blocks_without_organization(self):
+        """Test decorator blocks request without organization."""
+        @require_organization
+        def test_view(request):
+            return HttpResponse('OK')
+
+        request = self.factory.get('/')
+        request.user = self.user
+        # No organization set
+
+        response = test_view(request)
+        self.assertIsInstance(response, HttpResponseForbidden)
+```
+
+Run tests:
+```bash
+cd src/
+python manage.py test common.tests.test_organization_decorators
+```
+
+
+------------------------------------------------------------------------
+TASK 2: CREATE CLASS-BASED VIEW MIXINS
+------------------------------------------------------------------------
+
+Step 2.1: Create Mixins Directory
+----------------------------------
+
+Commands:
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/common
+mkdir -p mixins
+touch mixins/__init__.py
+```
+
+
+Step 2.2-2.3: Implement Mixins
+-------------------------------
+
+File: /src/common/mixins/organization.py
+
+```python
+"""
+Organization-aware mixins for class-based views.
+
+Provides mixins for CBVs to ensure organization context and
+validate user access in BMMS mode.
+"""
+import logging
+from django.http import HttpResponseForbidden
+from django.core.exceptions import ImproperlyConfigured
+from organizations.models import OrganizationMembership
+from obc_management.settings.bmms_config import is_bmms_mode
+
+logger = logging.getLogger(__name__)
+
+
+class OrganizationRequiredMixin:
+    """
+    Mixin to ensure request has organization context.
+
+    Must be placed FIRST in mixin/inheritance chain
+    (before LoginRequiredMixin, etc.)
+
+    Usage:
+        class MyView(OrganizationRequiredMixin, LoginRequiredMixin, ListView):
+            model = OBCCommunity
+            template_name = 'communities/list.html'
+
+    Attributes:
+        require_organization: If True, enforces organization requirement (default: True)
+    """
+
+    require_organization = True
+
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Validate organization context before dispatching view.
+
+        Args:
+            request: Django HTTP request
+            *args: Positional arguments
+            **kwargs: Keyword arguments
+
+        Returns:
+            HttpResponseForbidden: If organization invalid or access denied
+            HttpResponse: From parent dispatch if validation passes
+        """
+        # Check organization context
+        if self.require_organization:
+            if not hasattr(request, 'organization') or request.organization is None:
+                logger.error(
+                    f'No organization context for view: {self.__class__.__name__}'
+                )
+                return HttpResponseForbidden(
+                    'Organization context required but not found.'
+                )
+
+            # Validate access in BMMS mode
+            if is_bmms_mode() and request.user.is_authenticated:
+                if not request.user.is_superuser:
+                    has_access = OrganizationMembership.objects.filter(
+                        user=request.user,
+                        organization=request.organization,
+                        is_active=True
+                    ).exists()
+
+                    if not has_access:
+                        logger.warning(
+                            f'User {request.user.username} denied access to org '
+                            f'{request.organization.code} in {self.__class__.__name__}'
+                        )
+                        return HttpResponseForbidden(
+                            f'You do not have access to {request.organization.name}.'
+                        )
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_organization(self):
+        """
+        Get organization from request.
+
+        Returns:
+            Organization: Current organization or None
+
+        Raises:
+            ImproperlyConfigured: If called before dispatch
+        """
+        if not hasattr(self.request, 'organization'):
+            raise ImproperlyConfigured(
+                'Organization not available. Ensure OrganizationRequiredMixin '
+                'is used and dispatch() has been called.'
+            )
+        return self.request.organization
+
+    def get_context_data(self, **kwargs):
+        """
+        Add organization to context.
+
+        Returns:
+            dict: Context with 'organization' key added
+        """
+        context = super().get_context_data(**kwargs)
+        if hasattr(self.request, 'organization'):
+            context['organization'] = self.request.organization
+        return context
+```
+
+
+Step 2.4: Test Mixins
+----------------------
+
+File: /src/common/tests/test_organization_mixins.py
+
+```python
+"""
+Tests for organization mixins.
+"""
+from django.test import TestCase, RequestFactory
+from django.views.generic import ListView
+from django.contrib.auth import get_user_model
+from common.mixins.organization import OrganizationRequiredMixin
+from organizations.utils import get_or_create_default_organization
+
+User = get_user_model()
+
+
+class TestView(OrganizationRequiredMixin, ListView):
+    """Test view using mixin."""
+    model = User
+    template_name = 'test.html'
+
+
+class OrganizationRequiredMixinTest(TestCase):
+    """Test OrganizationRequiredMixin."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(username='test', password='test')
+        self.org, _ = get_or_create_default_organization()
+
+    def test_mixin_allows_request_with_organization(self):
+        """Test mixin allows request with organization."""
+        request = self.factory.get('/')
+        request.user = self.user
+        request.organization = self.org
+
+        view = TestView.as_view()
+        response = view(request)
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_mixin_blocks_request_without_organization(self):
+        """Test mixin blocks request without organization."""
+        request = self.factory.get('/')
+        request.user = self.user
+        # No organization
+
+        view = TestView.as_view()
+        response = view(request)
+
+        self.assertEqual(response.status_code, 403)
+```
+
+
+------------------------------------------------------------------------
+TASK 3: CREATE DRF PERMISSIONS
+------------------------------------------------------------------------
+
+Step 3.1: Create Permissions Directory
+---------------------------------------
+
+Commands:
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/common
+mkdir -p permissions
+touch permissions/__init__.py
+```
+
+
+Step 3.2-3.3: Implement Permissions
+------------------------------------
+
+File: /src/common/permissions/organization.py
+
+```python
+"""
+Organization-aware permissions for Django REST Framework.
+
+Provides permission classes for API views to validate organization
+context and user access in BMMS mode.
+"""
+import logging
+from rest_framework.permissions import BasePermission
+from organizations.models import OrganizationMembership
+from obc_management.settings.bmms_config import is_bmms_mode
+
+logger = logging.getLogger(__name__)
+
+
+class OrganizationAccessPermission(BasePermission):
+    """
+    Permission to validate organization context and user access.
+
+    Checks:
+    1. Request has organization context
+    2. User has active membership in organization (BMMS mode)
+    3. Superusers have access to all organizations
+
+    Usage:
+        class MyAPIView(APIView):
+            permission_classes = [IsAuthenticated, OrganizationAccessPermission]
+
+        class MyViewSet(ModelViewSet):
+            permission_classes = [IsAuthenticated, OrganizationAccessPermission]
+    """
+
+    def has_permission(self, request, view):
+        """
+        Check if user has permission to access organization.
+
+        Args:
+            request: DRF request object
+            view: View being accessed
+
+        Returns:
+            bool: True if access granted, False otherwise
+        """
+        # Check organization context exists
+        if not hasattr(request, 'organization') or request.organization is None:
+            logger.error(
+                f'No organization context for API view: {view.__class__.__name__}'
+            )
+            return False
+
+        # In OBCMS mode, access automatically granted
+        if not is_bmms_mode():
+            return True
+
+        # In BMMS mode, validate membership
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        # Superusers have access to all organizations
+        if request.user.is_superuser:
+            return True
+
+        # Check for active membership
+        has_access = OrganizationMembership.objects.filter(
+            user=request.user,
+            organization=request.organization,
+            is_active=True
+        ).exists()
+
+        if not has_access:
+            logger.warning(
+                f'User {request.user.username} denied API access to org '
+                f'{request.organization.code}'
+            )
+
+        return has_access
+
+    def has_object_permission(self, request, view, obj):
+        """
+        Check if user has permission to access specific object.
+
+        Args:
+            request: DRF request object
+            view: View being accessed
+            obj: Object being accessed
+
+        Returns:
+            bool: True if access granted, False otherwise
+        """
+        # If object has organization attribute, verify it matches request org
+        if hasattr(obj, 'organization'):
+            if obj.organization != request.organization:
+                logger.warning(
+                    f'User {request.user.username} attempted cross-org access: '
+                    f'request org={request.organization.code}, '
+                    f'object org={obj.organization.code}'
+                )
+                return False
+
+        return True
+```
+
+
+Step 3.4: Test Permissions
+---------------------------
+
+File: /src/common/tests/test_organization_permissions.py
+
+```python
+"""
+Tests for organization permissions.
+"""
+from django.test import TestCase, RequestFactory
+from rest_framework.test import APIRequestFactory
+from django.contrib.auth import get_user_model
+from common.permissions.organization import OrganizationAccessPermission
+from organizations.utils import get_or_create_default_organization
+
+User = get_user_model()
+
+
+class OrganizationAccessPermissionTest(TestCase):
+    """Test OrganizationAccessPermission."""
+
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.user = User.objects.create_user(username='test', password='test')
+        self.org, _ = get_or_create_default_organization()
+        self.permission = OrganizationAccessPermission()
+
+    def test_permission_granted_with_organization(self):
+        """Test permission granted with organization."""
+        request = self.factory.get('/')
+        request.user = self.user
+        request.organization = self.org
+
+        has_perm = self.permission.has_permission(request, None)
+        self.assertTrue(has_perm)
+
+    def test_permission_denied_without_organization(self):
+        """Test permission denied without organization."""
+        request = self.factory.get('/')
+        request.user = self.user
+        # No organization
+
+        has_perm = self.permission.has_permission(request, None)
+        self.assertFalse(has_perm)
+```
+
+
+------------------------------------------------------------------------
+TASK 4: DOCUMENTATION AND EXAMPLES
+------------------------------------------------------------------------
+
+Create usage documentation:
+
+File: /docs/development/ORGANIZATION_DECORATORS_GUIDE.md
+
+```markdown
+# Organization Decorators Usage Guide
+
+## Function-Based Views
+
+### @require_organization
+
+```python
+from django.contrib.auth.decorators import login_required
+from common.decorators.organization import require_organization
+
+@login_required
+@require_organization
+def community_list(request):
+    # request.organization guaranteed to exist
+    # In OBCMS: organization = OOBC (auto-injected)
+    # In BMMS: organization from URL path
+    communities = OBCCommunity.objects.all()  # Auto-filtered
+    return render(request, 'communities/list.html', {
+        'communities': communities,
+        'organization': request.organization,
+    })
+```
+
+## Class-Based Views
+
+### OrganizationRequiredMixin
+
+```python
+from django.views.generic import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from common.mixins.organization import OrganizationRequiredMixin
+
+class CommunityListView(OrganizationRequiredMixin, LoginRequiredMixin, ListView):
+    model = OBCCommunity
+    template_name = 'communities/list.html'
+    context_object_name = 'communities'
+
+    def get_queryset(self):
+        # Auto-filtered by OrganizationScopedManager
+        return super().get_queryset()
+```
+
+## API Views
+
+### OrganizationAccessPermission
+
+```python
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+from common.permissions.organization import OrganizationAccessPermission
+
+class CommunityViewSet(viewsets.ModelViewSet):
+    serializer_class = CommunitySerializer
+    permission_classes = [IsAuthenticated, OrganizationAccessPermission]
+
+    def get_queryset(self):
+        # Auto-filtered by OrganizationScopedManager
+        return OBCCommunity.objects.all()
+```
+```
+
+Commands:
+```bash
+mkdir -p docs/development
+cat > docs/development/ORGANIZATION_DECORATORS_GUIDE.md << 'EOF'
+[paste content above]
+EOF
+```
+
+
+------------------------------------------------------------------------
+TASK 5: VALIDATION AND TESTING
+------------------------------------------------------------------------
+
+Step 5.1-5.6: Run All Tests
+----------------------------
+
+```bash
+cd src/
+
+# Test decorators
+python manage.py test common.tests.test_organization_decorators
+
+# Test mixins
+python manage.py test common.tests.test_organization_mixins
+
+# Test permissions
+python manage.py test common.tests.test_organization_permissions
+
+# Run all common tests
+python manage.py test common
+
+# Run full test suite
+python manage.py test --keepdb
+```
+
+
+Step 5.7: Commit Changes
+-------------------------
+
+```bash
+cd /Users/saidamenmambayao/Library\ Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms
+
+git add src/common/decorators/
+git add src/common/mixins/
+git add src/common/permissions/
+git add src/common/tests/test_organization_*
+git add docs/development/ORGANIZATION_DECORATORS_GUIDE.md
+
+git commit -m "Phase 4: Add view decorators and organization access control
+
+- Create @require_organization decorator for function-based views
+- Create OrganizationRequiredMixin for class-based views
+- Create OrganizationAccessPermission for DRF API views
+- Add @organization_param() decorator for URL-based org extraction
+- Implement access validation for BMMS mode
+- Add comprehensive tests for all components
+- Document usage patterns and examples
+
+Views can now enforce organization context and validate user access.
+OBCMS mode: Transparent (no validation needed)
+BMMS mode: Validates OrganizationMembership for access control"
+
+git push origin feature/bmms-embedded-architecture
+```
+
+================================================================================
+VERIFICATION CHECKLIST
+================================================================================
+
+[ ] @require_organization decorator created
+[ ] @organization_param() decorator created
+[ ] OrganizationRequiredMixin created
+[ ] OrganizationAccessPermission created
+[ ] All tests pass
+[ ] Documentation created
+[ ] OBCMS mode transparent (no validation)
+[ ] BMMS mode validates access
+[ ] Decorator works with FBVs
+[ ] Mixin works with CBVs
+[ ] Permission works with DRF views
+[ ] Changes committed
+
+================================================================================
+EXPECTED RESULTS
+================================================================================
+
+After completing Phase 4:
+
+✅ Function-Based View Support
+   - @require_organization: Validates organization context
+   - @organization_param(): Extracts org from URL parameters
+   - Works transparently in OBCMS mode
+   - Validates membership in BMMS mode
+
+✅ Class-Based View Support
+   - OrganizationRequiredMixin: CBV organization validation
+   - get_organization(): Access current organization
+   - Auto-adds organization to template context
+   - Proper mixin ordering enforced
+
+✅ API View Support
+   - OrganizationAccessPermission: DRF permission class
+   - Validates organization context
+   - Checks OrganizationMembership
+   - Prevents cross-organization access
+
+✅ Documentation
+   - Usage guide with examples
+   - Pattern documentation
+   - Test examples included
+
+================================================================================
+NEXT PHASES
+================================================================================
+
+Infrastructure complete! Next phases:
+
+→ Phase 5: Model Migration - Communities (3-step migration)
+→ Phase 6: Model Migration - MANA (3-step migration)
+→ Phase 7: Model Migration - Remaining Apps
+→ Phase 8: View Layer Updates (add decorators to existing views)
+
+With Phases 0-4 complete, the BMMS infrastructure is ready for model migrations.
+
+================================================================================
+END OF PHASE 4: VIEW DECORATORS
+================================================================================

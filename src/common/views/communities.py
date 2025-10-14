@@ -103,7 +103,7 @@ def _sync_hierarchical_coverages(municipality):
     if municipality is None:
         return
 
-    from communities.models import MunicipalityCoverage, OBCCommunity, ProvinceCoverage
+    from communities.models import MunicipalityCoverage, ProvinceCoverage
 
     coverage = MunicipalityCoverage.sync_for_municipality(municipality)
     province = municipality.province
@@ -198,8 +198,15 @@ def _resolve_page_size(
     param_name: str,
     *,
     default: int = PAGE_SIZE_OPTIONS[0],
+    options: tuple[int, ...] = PAGE_SIZE_OPTIONS,
 ) -> int:
     """Validate requested page size against allowed options."""
+
+    if not options:
+        raise ValueError("At least one page size option is required.")
+
+    if default not in options:
+        options = (default,) + tuple(opt for opt in options if opt != default)
 
     raw_value = request.GET.get(param_name)
     if raw_value is None:
@@ -208,7 +215,7 @@ def _resolve_page_size(
         parsed = int(raw_value)
     except (TypeError, ValueError):
         return default
-    return parsed if parsed in PAGE_SIZE_OPTIONS else default
+    return parsed if parsed in options else default
 
 
 def _build_querystring(
@@ -235,6 +242,18 @@ def _build_querystring(
         filtered[key] = value
 
     return urlencode(filtered)
+
+
+def _build_paginated_url(
+    params: dict,
+    *,
+    overrides: dict | None = None,
+    exclude: tuple[str, ...] = (),
+) -> str:
+    """Compose a querystring with pagination overrides applied."""
+
+    query = _build_querystring(params, exclude=exclude, overrides=overrides or {})
+    return f"?{query}" if query else "?"
 
 
 def _format_stat_value(value, default: str = "N/A") -> str:
@@ -557,7 +576,7 @@ def communities_add_municipality(request):
     """Record a municipality or city with Bangsamoro communities."""
     _ensure_can_manage_communities(request.user)
 
-    from communities.models import MunicipalityCoverage, OBCCommunity, ProvinceCoverage
+    from communities.models import MunicipalityCoverage, ProvinceCoverage
 
     if request.method == "POST":
         form = MunicipalityCoverageForm(request.POST)
@@ -1995,11 +2014,55 @@ def communities_view_municipal(request, coverage_id):
     if coverage.is_deleted:
         delete_review_mode = False
 
-    related_communities = (
-        OBCCommunity.objects.select_related("barangay__municipality__province__region")
-        .filter(barangay__municipality=coverage.municipality)
-        .order_by("barangay__name")
+    request_params = request.GET.dict()
+    barangay_page_size_choices = (10, 20)
+    barangay_page_size = _resolve_page_size(
+        request,
+        "barangay_page_size",
+        default=barangay_page_size_choices[0],
+        options=barangay_page_size_choices,
     )
+    barangay_page_number = request.GET.get("barangay_page") or 1
+    barangay_paginator = Paginator(
+        OBCCommunity.objects.select_related(
+            "barangay__municipality__province__region"
+        )
+        .filter(barangay__municipality=coverage.municipality)
+        .order_by("barangay__name"),
+        barangay_page_size,
+    )
+    barangay_page = barangay_paginator.get_page(barangay_page_number)
+    barangay_pagination = {
+        "has_previous": barangay_page.has_previous(),
+        "previous_url": _build_paginated_url(
+            request_params,
+            overrides={"barangay_page": barangay_page.previous_page_number()},
+            exclude=("barangay_page",),
+        )
+        if barangay_page.has_previous()
+        else None,
+        "has_next": barangay_page.has_next(),
+        "next_url": _build_paginated_url(
+            request_params,
+            overrides={"barangay_page": barangay_page.next_page_number()},
+            exclude=("barangay_page",),
+        )
+        if barangay_page.has_next()
+        else None,
+        "total_pages": max(barangay_page.paginator.num_pages, 1),
+    }
+    barangay_page_size_controls = [
+        {
+            "label": option,
+            "url": _build_paginated_url(
+                request_params,
+                overrides={"barangay_page_size": option, "barangay_page": 1},
+                exclude=("barangay_page",),
+            ),
+            "active": barangay_page_size == option,
+        }
+        for option in barangay_page_size_choices
+    ]
 
     # Query MOA/PPAs attributed to this municipality
     moa_ppas = (
@@ -2047,7 +2110,11 @@ def communities_view_municipal(request, coverage_id):
 
     context = {
         "coverage": coverage,
-        "related_communities": related_communities,
+        "barangay_page": barangay_page,
+        "barangay_page_size": barangay_page_size,
+        "barangay_page_size_controls": barangay_page_size_controls,
+        "barangay_pagination": barangay_pagination,
+        "barangay_total_count": barangay_paginator.count,
         "moa_ppas": moa_ppas,
         "recommendations": recommendations,
         "delete_review_mode": delete_review_mode,
@@ -2112,17 +2179,56 @@ def communities_view_provincial(request, coverage_id):
     if coverage.is_deleted:
         delete_review_mode = False
 
-    related_municipal_coverages = (
-        MunicipalityCoverage.objects.select_related("municipality__province__region")
-        .filter(municipality__province=coverage.province)
-        .order_by("municipality__name")
+    related_municipal_coverages = MunicipalityCoverage.objects.select_related(
+        "municipality__province__region"
+    ).filter(municipality__province=coverage.province)
+    related_municipal_coverages = related_municipal_coverages.order_by(
+        "municipality__name"
     )
 
-    related_communities = (
-        OBCCommunity.objects.select_related("barangay__municipality__province__region")
-        .filter(barangay__municipality__province=coverage.province)
-        .order_by("barangay__name")
+    request_params = request.GET.dict()
+
+    municipal_page_size_choices = (10, 20)
+    municipal_page_size = _resolve_page_size(
+        request,
+        "municipal_page_size",
+        default=municipal_page_size_choices[0],
+        options=municipal_page_size_choices,
     )
+    municipal_page_number = request.GET.get("municipal_page") or 1
+    municipal_paginator = Paginator(related_municipal_coverages, municipal_page_size)
+    municipal_page = municipal_paginator.get_page(municipal_page_number)
+    municipal_pagination = {
+        "has_previous": municipal_page.has_previous(),
+        "previous_url": _build_paginated_url(
+            request_params,
+            overrides={"municipal_page": municipal_page.previous_page_number()},
+            exclude=("municipal_page",),
+        )
+        if municipal_page.has_previous()
+        else None,
+        "has_next": municipal_page.has_next(),
+        "next_url": _build_paginated_url(
+            request_params,
+            overrides={"municipal_page": municipal_page.next_page_number()},
+            exclude=("municipal_page",),
+        )
+        if municipal_page.has_next()
+        else None,
+        "total_pages": max(municipal_page.paginator.num_pages, 1),
+    }
+    municipal_page_size_controls = [
+        {
+            "label": option,
+            "url": _build_paginated_url(
+                request_params,
+                overrides={"municipal_page_size": option, "municipal_page": 1},
+                exclude=("municipal_page",),
+            ),
+            "active": municipal_page_size == option,
+        }
+        for option in municipal_page_size_choices
+    ]
 
     # Query MOA/PPAs attributed to this province
     from monitoring.models import MonitoringEntry
@@ -2168,8 +2274,12 @@ def communities_view_provincial(request, coverage_id):
 
     context = {
         "coverage": coverage,
-        "related_municipal_coverages": related_municipal_coverages,
-        "related_communities": related_communities,
+        "related_municipal_coverages": municipal_page,
+        "municipal_page": municipal_page,
+        "municipal_page_size": municipal_page_size,
+        "municipal_page_size_controls": municipal_page_size_controls,
+        "municipal_pagination": municipal_pagination,
+        "municipal_total_count": municipal_paginator.count,
         "moa_ppas": moa_ppas,
         "recommendations": recommendations,
         "delete_review_mode": delete_review_mode,

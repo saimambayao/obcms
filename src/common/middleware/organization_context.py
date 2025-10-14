@@ -27,21 +27,32 @@ from typing import Optional
 from django.http import HttpRequest
 from django.utils.functional import SimpleLazyObject
 
+from obc_management.settings.bmms_config import is_obcms_mode, is_bmms_mode
+from organizations.utils import get_or_create_default_organization
+
 
 def get_organization_from_request(request: HttpRequest):
     """
     Extract organization context from request.
 
-    Priority:
-    1. URL kwargs (org_id, organization_id)
-    2. Query params (?org=...)
-    3. User's default organization
-    4. Session stored organization
+    Mode-aware behavior:
+    - OBCMS mode: Always return default OOBC organization
+    - BMMS mode: Extract from URL/session/user
 
     Returns:
         Organization instance or None
     """
-    from coordination.models import Organization
+    from organizations.models import Organization
+
+    # ========== OBCMS MODE: Auto-inject default organization ==========
+    if is_obcms_mode():
+        if not hasattr(request, "_cached_default_org"):
+            request._cached_default_org, _ = get_or_create_default_organization()
+        return request._cached_default_org
+
+    # Fail-safe: if not explicitly in BMMS mode, do not resolve organization
+    if not is_bmms_mode():
+        return None
 
     # Early return if no authenticated user
     if not request.user.is_authenticated:
@@ -156,8 +167,12 @@ class OrganizationContextMiddleware:
     """
     Middleware to set organization context on request object.
 
-    Adds request.organization attribute with current organization context.
-    Enables organization-scoped queries and permission checks.
+    Mode-aware behavior:
+    - OBCMS mode: Auto-injects default OOBC organization
+    - BMMS mode: Extracts organization from URL/session/user
+
+    This is the ONLY middleware that sets request.organization.
+    Do NOT create additional organization middleware classes.
 
     Usage:
         # In views.py

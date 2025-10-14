@@ -1,0 +1,946 @@
+# PHASE 5: COMMUNITIES APP MODEL MIGRATION
+
+**Phase:** 5 of 12
+**Priority:** CRITICAL
+**Complexity:** MODERATE
+**Dependencies:** Phase 4 (View Decorators) complete
+**Estimated Effort:** 8-10 hours
+**Status:** [ ] Not Started  [ ] In Progress  [ ] Complete
+**Started:** ________________  **Completed:** ________________
+**Assignee:** ________________  **Reviewer:** ________________
+
+---
+
+## OVERVIEW
+
+Migrate Communities app models to multi-tenant architecture by inheriting from OrganizationScopedModel. This phase implements organization-based data isolation for all community-related data.
+
+**CRITICAL:** This is the first model migration - establishes pattern for all subsequent apps.
+
+### Models to Migrate (4 models)
+- OBCCommunity
+- MunicipalityCoverage
+- ProvinceCoverage
+- CommunityLivelihood
+
+### Three-Step Migration Pattern (MANDATORY)
+```
+Step 1: Add nullable organization field  (Migration 0001)
+Step 2: Populate organization field      (Management command)
+Step 3: Make organization required       (Migration 0002)
+```
+
+**⚠️ NEVER skip Step 2 - causes database errors!**
+
+---
+
+## PREREQUISITES
+
+### Required Completions
+- [ ] Phase -1 complete (reconciliation fixes applied)
+- [ ] Phase 1 complete (bmms_config.py exists)
+- [ ] Phase 2 complete (organization utilities exist)
+- [ ] Phase 3 complete (middleware configured)
+- [ ] Phase 4 complete (decorators available)
+
+### Verify Default Organization
+```bash
+python manage.py ensure_default_organization
+
+# Expected output:
+# Default organization already exists: OOBC - Office for Other Bangsamoro Communities
+# Organization ID: 1
+```
+
+---
+
+## TASK 5.1: BACKUP DATABASE
+
+**Priority:** CRITICAL
+**Time:** 2 minutes
+
+### Checklist
+- [ ] Navigate to project root
+- [ ] Create backup with timestamp
+- [ ] Verify backup exists
+- [ ] Document backup location
+
+### Commands
+```bash
+# Navigate to src directory
+cd src/
+
+# Create timestamped backup
+cp db.sqlite3 db.sqlite3.backup-phase5-$(date +%Y%m%d-%H%M%S)
+
+# Verify backup
+ls -lh db.sqlite3.backup-*
+
+# Expected: Backup file with current timestamp exists
+```
+
+---
+
+## TASK 5.2: UPDATE OBCCOMMUNITY MODEL
+
+**Priority:** CRITICAL
+**Time:** 15 minutes
+
+### Current Model (BEFORE)
+```python
+# File: src/communities/models.py
+
+class OBCCommunity(CommunityProfileBase):
+    """OBC Community profile."""
+
+    name = models.CharField(max_length=255)
+    barangay = models.ForeignKey(
+        Barangay,
+        on_delete=models.CASCADE,
+        related_name='obc_communities'
+    )
+    population = models.IntegerField(blank=True, null=True)
+    households = models.IntegerField(blank=True, null=True)
+    # ... other fields ...
+
+    class Meta:
+        db_table = "communities_obc_community"
+        ordering = ["name"]
+        verbose_name = "OBC Community"
+        verbose_name_plural = "OBC Communities"
+```
+
+### Updated Model (AFTER)
+```python
+# File: src/communities/models.py
+
+from organizations.models import OrganizationScopedModel  # ADD THIS IMPORT
+
+class OBCCommunity(OrganizationScopedModel, CommunityProfileBase):  # CHANGE BASE CLASS
+    """OBC Community profile with organization scoping."""
+
+    name = models.CharField(max_length=255)
+    barangay = models.ForeignKey(
+        Barangay,
+        on_delete=models.CASCADE,
+        related_name='obc_communities'
+    )
+    population = models.IntegerField(blank=True, null=True)
+    households = models.IntegerField(blank=True, null=True)
+    # ... other fields ...
+
+    # organization field inherited from OrganizationScopedModel
+    # objects = OrganizationScopedManager() (auto-filtering)
+    # all_objects = models.Manager() (unfiltered)
+
+    class Meta:
+        db_table = "communities_obc_community"
+        ordering = ["organization", "name"]  # ADD organization to ordering
+        verbose_name = "OBC Community"
+        verbose_name_plural = "OBC Communities"
+```
+
+### Checklist
+- [ ] Open src/communities/models.py
+- [ ] Add import: `from organizations.models import OrganizationScopedModel`
+- [ ] Change OBCCommunity base class (OrganizationScopedModel FIRST)
+- [ ] Add "organization" to Meta.ordering
+- [ ] Save file
+
+### Verification
+```bash
+python manage.py check
+
+# Expected: No errors
+```
+
+---
+
+## TASK 5.3: UPDATE MUNICIPALITYCOVERAGE MODEL
+
+**Priority:** HIGH
+**Time:** 10 minutes
+
+### Model Update
+```python
+# File: src/communities/models.py
+
+from organizations.models import OrganizationScopedModel
+
+class MunicipalityCoverage(OrganizationScopedModel):  # CHANGE BASE CLASS
+    """Municipality coverage data with organization scoping."""
+
+    obc_community = models.ForeignKey(
+        OBCCommunity,
+        on_delete=models.CASCADE,
+        related_name='municipality_coverages'
+    )
+    municipality = models.ForeignKey(
+        Municipality,
+        on_delete=models.CASCADE
+    )
+    coverage_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        db_table = "communities_municipality_coverage"
+        ordering = ["organization", "municipality"]  # ADD organization
+        unique_together = [['obc_community', 'municipality']]
+```
+
+### Checklist
+- [ ] Change MunicipalityCoverage base class to OrganizationScopedModel
+- [ ] Add "organization" to Meta.ordering
+- [ ] Save file
+- [ ] Run: `python manage.py check`
+
+---
+
+## TASK 5.4: UPDATE PROVINCECOVERAGE MODEL
+
+**Priority:** HIGH
+**Time:** 10 minutes
+
+### Model Update
+```python
+# File: src/communities/models.py
+
+from organizations.models import OrganizationScopedModel
+
+class ProvinceCoverage(OrganizationScopedModel):  # CHANGE BASE CLASS
+    """Province coverage data with organization scoping."""
+
+    obc_community = models.ForeignKey(
+        OBCCommunity,
+        on_delete=models.CASCADE,
+        related_name='province_coverages'
+    )
+    province = models.ForeignKey(
+        Province,
+        on_delete=models.CASCADE
+    )
+    coverage_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        db_table = "communities_province_coverage"
+        ordering = ["organization", "province"]  # ADD organization
+        unique_together = [['obc_community', 'province']]
+```
+
+### Checklist
+- [ ] Change ProvinceCoverage base class to OrganizationScopedModel
+- [ ] Add "organization" to Meta.ordering
+- [ ] Save file
+- [ ] Run: `python manage.py check`
+
+---
+
+## TASK 5.5: UPDATE COMMUNITYLIVELIHOOD MODEL
+
+**Priority:** MEDIUM
+**Time:** 10 minutes
+
+### Model Update
+```python
+# File: src/communities/models.py
+
+from organizations.models import OrganizationScopedModel
+
+class CommunityLivelihood(OrganizationScopedModel):  # CHANGE BASE CLASS
+    """Community livelihood data with organization scoping."""
+
+    obc_community = models.ForeignKey(
+        OBCCommunity,
+        on_delete=models.CASCADE,
+        related_name='livelihoods'
+    )
+    livelihood_type = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    households_involved = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        db_table = "communities_community_livelihood"
+        ordering = ["organization", "livelihood_type"]  # ADD organization
+```
+
+### Checklist
+- [ ] Change CommunityLivelihood base class to OrganizationScopedModel
+- [ ] Add "organization" to Meta.ordering
+- [ ] Save file
+- [ ] Run: `python manage.py check`
+
+---
+
+## TASK 5.6: GENERATE STEP 1 MIGRATION (NULLABLE)
+
+**Priority:** CRITICAL
+**Time:** 5 minutes
+
+### Commands
+```bash
+cd src/
+
+# Generate migration for nullable organization field
+python manage.py makemigrations communities --name add_organization_field_nullable
+
+# Expected output:
+# Migrations for 'communities':
+#   communities/migrations/000X_add_organization_field_nullable.py
+#     - Add field organization to obccommunity
+#     - Add field organization to municipalitycoverage
+#     - Add field organization to provincecoverage
+#     - Add field organization to communitylivelihood
+#     - Create index on obccommunity (organization)
+#     - Create index on municipalitycoverage (organization)
+#     - Create index on provincecoverage (organization)
+#     - Create index on communitylivelihood (organization)
+```
+
+### Checklist
+- [ ] Run makemigrations command
+- [ ] Verify migration file created in communities/migrations/
+- [ ] Review migration file (should add nullable FK + indexes)
+- [ ] Confirm 4 models included
+
+### Verification
+```bash
+# Check migration file exists
+ls -la src/communities/migrations/000*_add_organization_field_nullable.py
+
+# Expected: File exists with recent timestamp
+```
+
+---
+
+## TASK 5.7: APPLY STEP 1 MIGRATION
+
+**Priority:** CRITICAL
+**Time:** 2 minutes
+
+### Commands
+```bash
+cd src/
+
+# Apply migration (adds nullable organization field)
+python manage.py migrate communities
+
+# Expected output:
+# Running migrations:
+#   Applying communities.000X_add_organization_field_nullable... OK
+```
+
+### Checklist
+- [ ] Run migrate command
+- [ ] Verify migration applied successfully
+- [ ] Check database for organization column (nullable)
+
+### Verification
+```bash
+python manage.py shell
+
+>>> from communities.models import OBCCommunity
+>>> OBCCommunity._meta.get_field('organization')
+<django.db.models.fields.related.ForeignKey: organization>
+
+>>> OBCCommunity._meta.get_field('organization').null
+True  # ✓ Field is nullable (Step 1 complete)
+
+>>> exit()
+```
+
+---
+
+## TASK 5.8: POPULATE ORGANIZATION FIELD (STEP 2)
+
+**Priority:** CRITICAL
+**Time:** 10 minutes
+
+### Commands
+```bash
+cd src/
+
+# DRY RUN FIRST (verify what will be updated)
+python manage.py populate_organization_field --app communities --dry-run
+
+# Expected output:
+# Using default organization: OOBC (ID: 1)
+# DRY RUN MODE - No changes will be made
+#
+# Found 4 organization-scoped models
+#
+# Processing communities.OBCCommunity...
+#   Found 25 records without organization
+#   Would update 25 records (DRY RUN)
+#
+# Processing communities.MunicipalityCoverage...
+#   Found 50 records without organization
+#   Would update 50 records (DRY RUN)
+#
+# [etc...]
+#
+# DRY RUN COMPLETE: Would have updated 150 records total
+```
+
+### After Dry Run Review
+```bash
+# ACTUAL RUN (populate organization field)
+python manage.py populate_organization_field --app communities
+
+# Expected output:
+# Using default organization: OOBC (ID: 1)
+# Found 4 organization-scoped models
+#
+# Processing communities.OBCCommunity...
+#   Found 25 records without organization
+#   Updated 25 records
+#
+# Processing communities.MunicipalityCoverage...
+#   Found 50 records without organization
+#   Updated 50 records
+#
+# [etc...]
+#
+# SUCCESS: Updated 150 records total
+```
+
+### Checklist
+- [ ] Run dry-run command
+- [ ] Review dry-run output (verify record counts)
+- [ ] Run actual command
+- [ ] Verify success message
+
+---
+
+## TASK 5.9: VERIFY POPULATION (CRITICAL)
+
+**Priority:** CRITICAL
+**Time:** 5 minutes
+
+### Verification Commands
+```bash
+python manage.py shell
+
+>>> from communities.models import OBCCommunity, MunicipalityCoverage
+>>> from organizations.models import Organization
+
+# Get OOBC organization
+>>> oobc = Organization.objects.get(code='OOBC')
+
+# Verify NO records without organization
+>>> OBCCommunity.all_objects.filter(organization__isnull=True).count()
+0  # ✓ All records have organization
+
+>>> MunicipalityCoverage.all_objects.filter(organization__isnull=True).count()
+0  # ✓ All records have organization
+
+# Verify all records belong to OOBC
+>>> OBCCommunity.all_objects.filter(organization=oobc).count()
+25  # ✓ Should match total count
+
+>>> OBCCommunity.all_objects.count()
+25  # ✓ Should match above
+
+>>> exit()
+```
+
+### Checklist
+- [ ] No records with NULL organization
+- [ ] All records assigned to OOBC
+- [ ] Record counts match (before vs after)
+
+**⚠️ CRITICAL:** Do NOT proceed to Step 3 if ANY records have NULL organization!
+
+---
+
+## TASK 5.10: GENERATE STEP 3 MIGRATION (REQUIRED)
+
+**Priority:** CRITICAL
+**Time:** 5 minutes
+
+### Commands
+```bash
+cd src/
+
+# Generate migration to make organization field required
+python manage.py makemigrations communities --name make_organization_required
+
+# Expected output:
+# Migrations for 'communities':
+#   communities/migrations/000Y_make_organization_required.py
+#     - Alter field organization on obccommunity (remove null=True)
+#     - Alter field organization on municipalitycoverage
+#     - Alter field organization on provincecoverage
+#     - Alter field organization on communitylivelihood
+```
+
+### Checklist
+- [ ] Run makemigrations command
+- [ ] Verify migration file created
+- [ ] Review migration (should alter field to remove null=True)
+- [ ] Confirm 4 models included
+
+---
+
+## TASK 5.11: APPLY STEP 3 MIGRATION
+
+**Priority:** CRITICAL
+**Time:** 2 minutes
+
+### Commands
+```bash
+cd src/
+
+# Apply migration (makes organization required)
+python manage.py migrate communities
+
+# Expected output:
+# Running migrations:
+#   Applying communities.000Y_make_organization_required... OK
+```
+
+### Checklist
+- [ ] Run migrate command
+- [ ] Verify migration applied successfully
+- [ ] Check database for organization column (NOT NULL constraint)
+
+### Verification
+```bash
+python manage.py shell
+
+>>> from communities.models import OBCCommunity
+>>> OBCCommunity._meta.get_field('organization').null
+False  # ✓ Field is required (NOT NULL)
+
+>>> exit()
+```
+
+---
+
+## TASK 5.12: TEST AUTO-FILTERING
+
+**Priority:** CRITICAL
+**Time:** 15 minutes
+
+### Test Script
+```bash
+python manage.py shell
+
+>>> from organizations.models.scoped import set_current_organization
+>>> from organizations.utils import get_default_organization
+>>> from communities.models import OBCCommunity
+
+# Set organization context
+>>> org = get_default_organization()
+>>> set_current_organization(org)
+
+# Test auto-filtering (should only show OOBC communities)
+>>> communities = OBCCommunity.objects.all()
+>>> communities.count()
+25  # ✓ Shows OOBC communities
+
+>>> communities.first().organization.code
+'OOBC'  # ✓ Organization is OOBC
+
+# Test all_objects manager (no filter)
+>>> all_communities = OBCCommunity.all_objects.all()
+>>> all_communities.count()
+25  # ✓ Same count (only OOBC exists for now)
+
+# Test create (organization auto-assigned)
+>>> from common.models import Barangay
+>>> barangay = Barangay.objects.first()
+>>> new_community = OBCCommunity.objects.create(
+...     name='Test Community',
+...     barangay=barangay,
+...     population=100
+... )
+>>> new_community.organization.code
+'OOBC'  # ✓ Organization auto-assigned
+
+# Cleanup test data
+>>> new_community.delete()
+
+>>> exit()
+```
+
+### Checklist
+- [ ] Organization context set successfully
+- [ ] Auto-filtering works (objects.all() filtered by org)
+- [ ] all_objects returns unfiltered data
+- [ ] New records auto-assign organization
+- [ ] Test data cleaned up
+
+---
+
+## TASK 5.13: TEST DATA ISOLATION (FUTURE-PROOF)
+
+**Priority:** HIGH
+**Time:** 10 minutes
+
+### Test Multi-Tenant Isolation
+```bash
+python manage.py shell
+
+>>> from organizations.models import Organization
+>>> from organizations.models.scoped import set_current_organization
+>>> from communities.models import OBCCommunity
+>>> from common.models import Barangay
+
+# Create test MOA organization
+>>> moh = Organization.objects.create(
+...     code='MOH',
+...     name='Ministry of Health',
+...     short_name='MOH',
+...     organization_type='ministry',
+...     is_active=True
+... )
+
+# Create community for MOH
+>>> set_current_organization(moh)
+>>> barangay = Barangay.objects.first()
+>>> moh_community = OBCCommunity.objects.create(
+...     name='MOH Test Community',
+...     barangay=barangay,
+...     population=50
+... )
+
+# Switch to OOBC context
+>>> oobc = Organization.objects.get(code='OOBC')
+>>> set_current_organization(oobc)
+
+# Verify isolation: OOBC cannot see MOH community
+>>> OBCCommunity.objects.filter(name='MOH Test Community').count()
+0  # ✓ Data isolated
+
+>>> OBCCommunity.objects.count()
+25  # ✓ Only OOBC communities visible
+
+# Switch to MOH context
+>>> set_current_organization(moh)
+
+# Verify MOH sees only its community
+>>> OBCCommunity.objects.filter(name='MOH Test Community').count()
+1  # ✓ MOH sees its community
+
+>>> OBCCommunity.objects.count()
+1  # ✓ Only MOH community visible
+
+# Cleanup
+>>> moh_community.delete()
+>>> moh.delete()
+
+>>> exit()
+```
+
+### Checklist
+- [ ] Test organization created
+- [ ] Data isolation verified (Org A cannot see Org B data)
+- [ ] Context switching works correctly
+- [ ] Test data cleaned up
+
+---
+
+## TASK 5.14: UPDATE ADMIN INTERFACE
+
+**Priority:** HIGH
+**Time:** 20 minutes
+
+### Current Admin (BEFORE)
+```python
+# File: src/communities/admin.py
+
+from django.contrib import admin
+from .models import OBCCommunity
+
+@admin.register(OBCCommunity)
+class OBCCommunityAdmin(admin.ModelAdmin):
+    list_display = ['name', 'barangay', 'population', 'households']
+    search_fields = ['name', 'barangay__name']
+    list_filter = ['barangay__municipality__province']
+```
+
+### Updated Admin (AFTER)
+```python
+# File: src/communities/admin.py
+
+from django.contrib import admin
+from .models import OBCCommunity
+
+@admin.register(OBCCommunity)
+class OBCCommunityAdmin(admin.ModelAdmin):
+    list_display = ['name', 'organization', 'barangay', 'population', 'households']  # ADD organization
+    search_fields = ['name', 'barangay__name', 'organization__name']  # ADD org search
+    list_filter = ['organization', 'barangay__municipality__province']  # ADD org filter
+
+    def get_queryset(self, request):
+        """Filter queryset by user's organization."""
+        qs = super().get_queryset(request)
+
+        # Superusers see all
+        if request.user.is_superuser:
+            return qs
+
+        # OCM sees all (read-only)
+        if hasattr(request.user, 'organization') and request.user.organization.code == 'OCM':
+            return qs
+
+        # Regular users see only their organization
+        if hasattr(request.user, 'organization'):
+            return qs.filter(organization=request.user.organization)
+
+        return qs.none()
+
+    def save_model(self, request, obj, form, change):
+        """Auto-assign organization on create."""
+        if not change:  # Creating new object
+            if hasattr(request.user, 'organization'):
+                obj.organization = request.user.organization
+        super().save_model(request, obj, form, change)
+```
+
+### Checklist
+- [ ] Open src/communities/admin.py
+- [ ] Add 'organization' to list_display
+- [ ] Add 'organization__name' to search_fields
+- [ ] Add 'organization' to list_filter
+- [ ] Override get_queryset() method
+- [ ] Override save_model() method
+- [ ] Repeat for all 4 models (OBCCommunity, MunicipalityCoverage, etc.)
+- [ ] Save file
+
+---
+
+## TASK 5.15: RUN TEST SUITE
+
+**Priority:** CRITICAL
+**Time:** 10 minutes
+
+### Commands
+```bash
+cd src/
+
+# Run communities app tests
+pytest communities/tests/ -v
+
+# Expected: All tests pass
+# Target: 99.2% pass rate (allow 1-2 test updates needed)
+```
+
+### If Tests Fail
+```bash
+# Common issues:
+
+# Issue 1: Tests don't set organization context
+# Fix: Add to test setUp():
+# from organizations.models.scoped import set_current_organization
+# from organizations.utils import get_default_organization
+# set_current_organization(get_default_organization())
+
+# Issue 2: Tests use OBCCommunity.objects.create() without org
+# Fix: Organization auto-assigned if context set (see Issue 1 fix)
+
+# Issue 3: Tests check exact queryset counts
+# Fix: Update expected counts to match org-filtered results
+```
+
+### Checklist
+- [ ] Run test suite
+- [ ] All tests pass OR
+- [ ] Tests updated for organization scoping
+- [ ] Re-run tests after fixes
+- [ ] Document test changes
+
+---
+
+## TASK 5.16: VERIFY BACKWARD COMPATIBILITY
+
+**Priority:** CRITICAL
+**Time:** 15 minutes
+
+### Manual Testing
+```bash
+# Start development server
+cd src/
+python manage.py runserver
+
+# Test in browser:
+1. Log in as admin
+2. Navigate to /communities/
+3. Verify community list loads
+4. Create new community
+5. Edit existing community
+6. Delete test community
+7. Verify no errors in console
+```
+
+### Functional Checklist
+- [ ] Dashboard loads without errors
+- [ ] Community list displays correctly
+- [ ] Community detail view works
+- [ ] Create community form works
+- [ ] Edit community form works
+- [ ] Delete community works
+- [ ] Search/filter works
+- [ ] No JavaScript errors
+- [ ] No organization-related errors in logs
+
+---
+
+## TASK 5.17: PERFORMANCE VERIFICATION
+
+**Priority:** HIGH
+**Time:** 10 minutes
+
+### Test N+1 Query Prevention
+```bash
+python manage.py shell
+
+>>> from django.test.utils import override_settings
+>>> from django.db import connection
+>>> from communities.models import OBCCommunity
+>>> from organizations.models.scoped import set_current_organization
+>>> from organizations.utils import get_default_organization
+
+>>> set_current_organization(get_default_organization())
+
+# Enable query logging
+>>> with override_settings(DEBUG=True):
+...     connection.queries_log.clear()
+...     communities = list(OBCCommunity.objects.select_related('organization', 'barangay').all()[:10])
+...     query_count = len(connection.queries)
+...     print(f"Query count: {query_count}")
+
+# Expected: 2-3 queries (not N+1)
+# Query 1: SELECT communities with JOIN organization + barangay
+# Query 2: User session query (if needed)
+```
+
+### Checklist
+- [ ] Query count reasonable (< 5 queries for 10 records)
+- [ ] No N+1 queries detected
+- [ ] select_related('organization') recommended for list views
+
+---
+
+## VERIFICATION CHECKLIST
+
+### Model Migration Complete
+- [ ] All 4 models inherit from OrganizationScopedModel
+- [ ] Step 1 migration applied (nullable field)
+- [ ] Step 2 complete (all records populated)
+- [ ] Step 3 migration applied (required field)
+- [ ] No records with NULL organization
+
+### Auto-Filtering Works
+- [ ] OBCCommunity.objects.all() filters by current org
+- [ ] all_objects manager returns unfiltered data
+- [ ] New records auto-assign organization
+
+### Data Integrity
+- [ ] All existing records preserved
+- [ ] Record counts match before/after
+- [ ] Foreign key relationships intact
+
+### Admin Interface
+- [ ] Organization column visible in list view
+- [ ] Organization filtering works
+- [ ] get_queryset() respects organization
+- [ ] save_model() auto-assigns organization
+
+### Testing
+- [ ] Test suite passes (99.2%+ pass rate)
+- [ ] Backward compatibility verified
+- [ ] No performance degradation
+- [ ] No N+1 query issues
+
+### Documentation
+- [ ] Migration steps documented
+- [ ] Test changes noted
+- [ ] Performance notes recorded
+
+---
+
+## ROLLBACK PROCEDURE
+
+If critical issues occur:
+
+### Step 1: Stop Application
+```bash
+# Stop development server (Ctrl+C)
+```
+
+### Step 2: Rollback Migrations
+```bash
+cd src/
+
+# Rollback to before Step 3
+python manage.py migrate communities 000X_add_organization_field_nullable
+
+# Or rollback completely
+python manage.py migrate communities <previous_migration_number>
+```
+
+### Step 3: Restore Database
+```bash
+# Restore from backup
+cp db.sqlite3.backup-phase5-YYYYMMDD-HHMMSS db.sqlite3
+```
+
+### Step 4: Revert Code Changes
+```bash
+git checkout -- src/communities/models.py
+git checkout -- src/communities/admin.py
+```
+
+---
+
+## COMPLETION CRITERIA
+
+Phase 5 is complete when:
+
+✅ **All 4 models migrated** to OrganizationScopedModel
+✅ **Three-step migration complete** (nullable → populate → required)
+✅ **Zero NULL organizations** in database
+✅ **Auto-filtering verified** (objects.all() respects org)
+✅ **Data isolation tested** (Org A cannot see Org B)
+✅ **Admin interface updated** (get_queryset + save_model)
+✅ **Tests passing** (99.2%+ pass rate)
+✅ **Performance acceptable** (no N+1 queries)
+✅ **Backward compatibility** (existing functionality works)
+✅ **Documentation updated** (migration notes, test changes)
+
+---
+
+## NEXT PHASE
+
+**Proceed to:** Phase 6 - MANA App Model Migration
+
+**Prerequisites for Phase 6:**
+- Phase 5 complete (Communities migrated)
+- All Phase 5 verification checks passing
+- No rollback needed
+
+**File:** phase6_mana_migration.txt
+
+---
+
+## REFERENCES
+
+- BMMS_EMBEDDED_ARCHITECTURE_IMPLEMENTATION.md - Phase 5 section
+- OBCMS_ARCHITECTURAL_ANALYSIS.md - Communities app analysis
+- CLAUDE.md - Project guidelines
+- OrganizationScopedModel documentation - src/organizations/models/scoped.py
+
+---
+
+**Phase 5 Status:** [ ] Not Started  [ ] In Progress  [ ] Complete
+**Sign-off:** ________________  **Date:** ________________

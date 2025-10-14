@@ -1,0 +1,662 @@
+PHASE 11: DOCUMENTATION
+BMMS Embedded Architecture Implementation
+============================================================
+
+PRIORITY: MEDIUM
+COMPLEXITY: Low
+DEPENDENCIES: Phase 10 (Testing) must be complete
+ESTIMATED SCOPE: 10+ documentation files
+
+============================================================
+OBJECTIVES
+============================================================
+
+1. Create comprehensive migration guides
+2. Update development documentation
+3. Create deployment checklists
+4. Document mode switching procedures
+5. Create troubleshooting guides
+6. Document Parliament Bill No. 325 compliance
+
+============================================================
+TASK BREAKDOWN
+============================================================
+
+-----------------------------------------------------------
+TASK 11.1: Migration Guides
+-----------------------------------------------------------
+
+DESCRIPTION:
+Create step-by-step migration guides for different scenarios.
+
+DOCUMENTS TO CREATE:
+
+1. OBCMS_TO_BMMS_MIGRATION_GUIDE.md
+   Location: docs/plans/bmms/migration/
+
+   Content:
+   - Overview of migration process
+   - Pre-migration checklist
+   - Step-by-step migration instructions
+   - Rollback procedures
+   - Troubleshooting common issues
+
+2. ZERO_DOWNTIME_MIGRATION_STRATEGY.md
+   Location: docs/plans/bmms/migration/
+
+   Content:
+   - Zero-downtime deployment strategy
+   - Blue-green deployment approach
+   - Database migration with no downtime
+   - Testing during migration
+   - Monitoring and validation
+
+3. MODEL_MIGRATION_GUIDE.md
+   Location: docs/plans/bmms/migration/
+
+   Content:
+   - Three-step migration pattern (nullable → populate → required)
+   - Model-by-model migration instructions
+   - Data integrity validation
+   - Performance optimization
+   - Common pitfalls and solutions
+
+CHECKLIST:
+
+[ ] Create OBCMS_TO_BMMS_MIGRATION_GUIDE.md
+[ ] Create ZERO_DOWNTIME_MIGRATION_STRATEGY.md
+[ ] Create MODEL_MIGRATION_GUIDE.md
+[ ] Include code examples
+[ ] Include command sequences
+[ ] Include validation steps
+[ ] Review for accuracy
+[ ] Get technical review
+
+-----------------------------------------------------------
+TASK 11.2: Development Documentation
+-----------------------------------------------------------
+
+DESCRIPTION:
+Update development documentation with BMMS architecture details.
+
+DOCUMENTS TO UPDATE/CREATE:
+
+1. docs/development/README.md (UPDATE)
+
+   Add sections:
+   - BMMS Architecture Overview
+   - Organization-Scoped Models
+   - View Layer Patterns
+   - URL Routing
+   - Testing BMMS Features
+
+2. docs/development/BMMS_DEVELOPMENT_GUIDE.md (CREATE)
+
+   Content:
+   - Setting up development environment for BMMS
+   - Working with organizations
+   - Creating organization-scoped models
+   - Writing organization-aware views
+   - Testing multi-tenant features
+   - Common patterns and best practices
+
+3. docs/development/MODEL_PATTERNS.md (CREATE)
+
+   Content:
+   - OrganizationScopedModel pattern
+   - Manager customization
+   - Auto-filtering queries
+   - Cross-organization access
+   - Performance optimization
+
+4. docs/development/VIEW_PATTERNS.md (CREATE)
+
+   Content:
+   - Function-based view patterns
+   - Class-based view patterns
+   - API view patterns
+   - Organization context handling
+   - Permission checks
+
+CHECKLIST:
+
+[ ] Update docs/development/README.md
+[ ] Create BMMS_DEVELOPMENT_GUIDE.md
+[ ] Create MODEL_PATTERNS.md
+[ ] Create VIEW_PATTERNS.md
+[ ] Include code examples
+[ ] Include best practices
+[ ] Include anti-patterns to avoid
+[ ] Review for completeness
+
+-----------------------------------------------------------
+TASK 11.3: Deployment Documentation
+-----------------------------------------------------------
+
+DESCRIPTION:
+Create comprehensive deployment documentation.
+
+DOCUMENTS TO CREATE:
+
+1. BMMS_DEPLOYMENT_CHECKLIST.md
+   Location: docs/deployment/
+
+   Content:
+   - Pre-deployment checklist
+   - Environment configuration
+   - Database setup
+   - Security configuration
+   - Monitoring setup
+   - Post-deployment validation
+
+2. OBCMS_MODE_DEPLOYMENT.md
+   Location: docs/deployment/
+
+   Content:
+   - Deploying in OBCMS mode
+   - Environment variables
+   - Database configuration
+   - Testing OBCMS deployment
+   - Troubleshooting
+
+3. BMMS_MODE_DEPLOYMENT.md
+   Location: docs/deployment/
+
+   Content:
+   - Deploying in BMMS mode
+   - Multi-organization setup
+   - Creating pilot MOA organizations
+   - Testing BMMS deployment
+   - Scaling considerations
+
+4. MODE_SWITCHING_GUIDE.md
+   Location: docs/deployment/
+
+   Content:
+   - Switching from OBCMS to BMMS mode
+   - Configuration changes required
+   - Data migration requirements
+   - Testing mode switch
+   - Rollback procedures
+
+CHECKLIST:
+
+[ ] Create BMMS_DEPLOYMENT_CHECKLIST.md
+[ ] Create OBCMS_MODE_DEPLOYMENT.md
+[ ] Create BMMS_MODE_DEPLOYMENT.md
+[ ] Create MODE_SWITCHING_GUIDE.md
+[ ] Include environment variable tables
+[ ] Include command sequences
+[ ] Include validation steps
+[ ] Review for production readiness
+
+-----------------------------------------------------------
+TASK 11.4: Configuration Documentation
+-----------------------------------------------------------
+
+DESCRIPTION:
+Document all configuration options and settings.
+
+DOCUMENTS TO CREATE:
+
+1. BMMS_CONFIGURATION_REFERENCE.md
+   Location: docs/configuration/
+
+   Content:
+   - BMMS_MODE setting
+   - DEFAULT_ORGANIZATION_CODE setting
+   - ENABLE_MULTI_TENANT setting
+   - ALLOW_ORGANIZATION_SWITCHING setting
+   - OCM_ORGANIZATION_CODE setting
+   - Complete settings reference table
+
+2. ENVIRONMENT_VARIABLES.md
+   Location: docs/configuration/
+
+   Content:
+   - Required environment variables
+   - Optional environment variables
+   - OBCMS mode configuration
+   - BMMS mode configuration
+   - .env.example templates
+
+CHECKLIST:
+
+[ ] Create BMMS_CONFIGURATION_REFERENCE.md
+[ ] Create ENVIRONMENT_VARIABLES.md
+[ ] Document all BMMS-related settings
+[ ] Include .env templates
+[ ] Include validation commands
+[ ] Review for completeness
+
+-----------------------------------------------------------
+TASK 11.5: Troubleshooting Guides
+-----------------------------------------------------------
+
+DESCRIPTION:
+Create troubleshooting guides for common issues.
+
+DOCUMENTS TO CREATE:
+
+1. TROUBLESHOOTING_BMMS.md
+   Location: docs/troubleshooting/
+
+   Content:
+   - Common issues and solutions
+   - Organization context issues
+   - Permission issues
+   - Data isolation issues
+   - Performance issues
+   - Debug commands
+
+2. FAQ_BMMS.md
+   Location: docs/troubleshooting/
+
+   Content:
+   - Frequently asked questions
+   - How do I switch modes?
+   - How do I create a new organization?
+   - How do I grant user access to an organization?
+   - How do I test data isolation?
+   - How do I optimize queries?
+
+CHECKLIST:
+
+[ ] Create TROUBLESHOOTING_BMMS.md
+[ ] Create FAQ_BMMS.md
+[ ] Document common issues
+[ ] Include debug commands
+[ ] Include solution steps
+[ ] Review with development team
+
+-----------------------------------------------------------
+TASK 11.6: Compliance Documentation
+-----------------------------------------------------------
+
+DESCRIPTION:
+Document Parliament Bill No. 325 compliance for budgeting module.
+
+DOCUMENTS TO CREATE:
+
+1. PARLIAMENT_BILL_325_COMPLIANCE.md
+   Location: docs/compliance/
+
+   Content:
+   - Overview of Parliament Bill No. 325
+   - Budget preparation requirements
+   - Budget execution requirements
+   - Reporting requirements
+   - Audit trail requirements
+   - Implementation status
+
+2. BUDGET_MODULE_DOCUMENTATION.md
+   Location: docs/modules/budget/
+
+   Content:
+   - Budget preparation workflow
+   - Budget execution workflow
+   - Organization-scoped budget data
+   - Budget approval process
+   - Budget monitoring and reporting
+
+CHECKLIST:
+
+[ ] Create PARLIAMENT_BILL_325_COMPLIANCE.md
+[ ] Create BUDGET_MODULE_DOCUMENTATION.md
+[ ] Document compliance requirements
+[ ] Document implementation approach
+[ ] Include audit requirements
+[ ] Review with budget team
+
+-----------------------------------------------------------
+TASK 11.7: API Documentation
+-----------------------------------------------------------
+
+DESCRIPTION:
+Update API documentation for organization-aware endpoints.
+
+DOCUMENTS TO UPDATE:
+
+1. docs/api/README.md (UPDATE)
+
+   Add sections:
+   - Organization filtering in API endpoints
+   - Authentication and organization access
+   - API response format with organization data
+   - Error codes for org-related issues
+
+2. Create OpenAPI/Swagger documentation
+
+   - Auto-generate from DRF
+   - Include organization parameters
+   - Include organization-scoped examples
+   - Document authentication
+
+CHECKLIST:
+
+[ ] Update docs/api/README.md
+[ ] Generate OpenAPI/Swagger docs
+[ ] Document organization filtering
+[ ] Include request/response examples
+[ ] Document error codes
+[ ] Test API documentation
+
+-----------------------------------------------------------
+TASK 11.8: User Documentation
+-----------------------------------------------------------
+
+DESCRIPTION:
+Create user-facing documentation for MOA staff.
+
+DOCUMENTS TO CREATE:
+
+1. USER_GUIDE_MOA_STAFF.md
+   Location: docs/user-guides/
+
+   Content:
+   - Logging in to BMMS
+   - Understanding organization context
+   - Creating and managing data
+   - Working with other organizations
+   - Generating reports
+
+2. ADMIN_GUIDE_MOA_ADMINISTRATORS.md
+   Location: docs/user-guides/
+
+   Content:
+   - Managing organization users
+   - Configuring organization settings
+   - Managing permissions
+   - Monitoring organization data
+   - Best practices
+
+CHECKLIST:
+
+[ ] Create USER_GUIDE_MOA_STAFF.md
+[ ] Create ADMIN_GUIDE_MOA_ADMINISTRATORS.md
+[ ] Include screenshots
+[ ] Include step-by-step instructions
+[ ] Review with end users
+[ ] Create video tutorials (optional)
+
+-----------------------------------------------------------
+TASK 11.9: Code Documentation
+-----------------------------------------------------------
+
+DESCRIPTION:
+Add comprehensive code documentation.
+
+FILES TO UPDATE:
+
+1. Add docstrings to all BMMS-related modules
+   - organizations/models/organization.py
+   - organizations/models/scoped.py
+   - organizations/middleware.py
+   - organizations/utils/__init__.py
+   - common/decorators/organization.py
+   - common/mixins/organization.py
+   - common/permissions/organization.py
+
+2. Update inline comments
+
+3. Create module-level documentation
+
+DOCSTRING TEMPLATE:
+
+```python
+"""
+Module description.
+
+This module provides [functionality description].
+
+Usage:
+    from organizations.models import Organization
+
+    # Example usage
+    org = Organization.objects.get(code='OOBC')
+
+Classes:
+    OrganizationScopedModel: Base model for organization-scoped data
+    OrganizationScopedManager: Custom manager for auto-filtering
+
+Functions:
+    get_current_organization: Get organization from thread-local storage
+
+Notes:
+    - This module requires BMMS_MODE to be configured
+    - Organization context must be set before queries
+
+See Also:
+    docs/development/BMMS_DEVELOPMENT_GUIDE.md
+"""
+```
+
+CHECKLIST:
+
+[ ] Add docstrings to all BMMS modules
+[ ] Add inline comments to complex code
+[ ] Update module-level documentation
+[ ] Generate Sphinx documentation (optional)
+[ ] Review code documentation
+
+-----------------------------------------------------------
+TASK 11.10: Documentation Index
+-----------------------------------------------------------
+
+DESCRIPTION:
+Create central documentation index.
+
+FILE: docs/README.md (UPDATE)
+
+Add BMMS Documentation Section:
+
+```markdown
+## BMMS Documentation
+
+### Planning & Architecture
+- [BMMS Transition Plan](plans/bmms/TRANSITION_PLAN.md)
+- [BMMS Embedded Architecture](plans/bmms/implementation/BMMS_EMBEDDED_ARCHITECTURE_IMPLEMENTATION.md)
+- [OBCMS Architectural Analysis](plans/bmms/OBCMS_ARCHITECTURAL_ANALYSIS.md)
+
+### Migration Guides
+- [OBCMS to BMMS Migration Guide](plans/bmms/migration/OBCMS_TO_BMMS_MIGRATION_GUIDE.md)
+- [Zero Downtime Migration Strategy](plans/bmms/migration/ZERO_DOWNTIME_MIGRATION_STRATEGY.md)
+- [Model Migration Guide](plans/bmms/migration/MODEL_MIGRATION_GUIDE.md)
+
+### Development
+- [BMMS Development Guide](development/BMMS_DEVELOPMENT_GUIDE.md)
+- [Model Patterns](development/MODEL_PATTERNS.md)
+- [View Patterns](development/VIEW_PATTERNS.md)
+
+### Deployment
+- [BMMS Deployment Checklist](deployment/BMMS_DEPLOYMENT_CHECKLIST.md)
+- [OBCMS Mode Deployment](deployment/OBCMS_MODE_DEPLOYMENT.md)
+- [BMMS Mode Deployment](deployment/BMMS_MODE_DEPLOYMENT.md)
+- [Mode Switching Guide](deployment/MODE_SWITCHING_GUIDE.md)
+
+### Configuration
+- [BMMS Configuration Reference](configuration/BMMS_CONFIGURATION_REFERENCE.md)
+- [Environment Variables](configuration/ENVIRONMENT_VARIABLES.md)
+
+### Troubleshooting
+- [Troubleshooting BMMS](troubleshooting/TROUBLESHOOTING_BMMS.md)
+- [FAQ](troubleshooting/FAQ_BMMS.md)
+
+### Compliance
+- [Parliament Bill No. 325 Compliance](compliance/PARLIAMENT_BILL_325_COMPLIANCE.md)
+```
+
+CHECKLIST:
+
+[ ] Update docs/README.md
+[ ] Add BMMS documentation section
+[ ] Link all BMMS documents
+[ ] Organize by category
+[ ] Review for completeness
+
+-----------------------------------------------------------
+TASK 11.11: Documentation Review & Approval
+-----------------------------------------------------------
+
+DESCRIPTION:
+Review all documentation for accuracy and completeness.
+
+REVIEW PROCESS:
+
+1. Technical Review
+   - Review by development team
+   - Review by system architect
+   - Verify code examples work
+   - Verify commands are correct
+
+2. User Review
+   - Review by OOBC staff
+   - Review by pilot MOA staff
+   - Review by OCM staff
+   - Test user guides
+
+3. Final Approval
+   - Technical lead approval
+   - Project manager approval
+   - Stakeholder approval
+
+CHECKLIST:
+
+[ ] Technical review complete
+[ ] User review complete
+[ ] All feedback incorporated
+[ ] Final approval obtained
+[ ] Documentation published
+
+============================================================
+COMPLETION CRITERIA
+============================================================
+
+Phase 11 is complete when:
+
+1. MIGRATION GUIDES
+   [ ] OBCMS to BMMS migration guide complete
+   [ ] Zero downtime migration strategy documented
+   [ ] Model migration guide complete
+   [ ] All guides reviewed and approved
+
+2. DEVELOPMENT DOCUMENTATION
+   [ ] Development README updated
+   [ ] BMMS development guide complete
+   [ ] Model patterns documented
+   [ ] View patterns documented
+
+3. DEPLOYMENT DOCUMENTATION
+   [ ] Deployment checklist complete
+   [ ] OBCMS mode deployment guide complete
+   [ ] BMMS mode deployment guide complete
+   [ ] Mode switching guide complete
+
+4. CONFIGURATION DOCUMENTATION
+   [ ] Configuration reference complete
+   [ ] Environment variables documented
+   [ ] .env templates provided
+
+5. TROUBLESHOOTING GUIDES
+   [ ] Troubleshooting guide complete
+   [ ] FAQ complete
+   [ ] Debug commands documented
+
+6. COMPLIANCE DOCUMENTATION
+   [ ] Parliament Bill No. 325 compliance documented
+   [ ] Budget module documentation complete
+
+7. CODE DOCUMENTATION
+   [ ] All modules have docstrings
+   [ ] Inline comments added
+   [ ] Module documentation complete
+
+8. DOCUMENTATION INDEX
+   [ ] Central index updated
+   [ ] All documents linked
+   [ ] Documentation organized
+
+9. REVIEW & APPROVAL
+   [ ] Technical review complete
+   [ ] User review complete
+   [ ] Final approval obtained
+
+============================================================
+VALIDATION CHECKLIST
+============================================================
+
+Documentation Quality:
+
+[ ] All documents use correct markdown formatting
+[ ] All code examples tested and work
+[ ] All commands tested and work
+[ ] All links work (no broken links)
+[ ] Consistent terminology throughout
+[ ] Clear and concise writing
+[ ] Appropriate level of detail
+[ ] Screenshots included where helpful
+[ ] Table of contents in long documents
+
+Technical Accuracy:
+
+[ ] Code examples match actual implementation
+[ ] Commands produce expected results
+[ ] Configuration examples are correct
+[ ] Migration steps are accurate
+[ ] Troubleshooting steps work
+
+Completeness:
+
+[ ] All BMMS features documented
+[ ] All configuration options documented
+[ ] All common issues addressed
+[ ] All user scenarios covered
+[ ] All deployment scenarios covered
+
+============================================================
+DOCUMENTATION STANDARDS
+============================================================
+
+File Naming:
+- Use UPPERCASE_WITH_UNDERSCORES.md for guides
+- Use lowercase-with-hyphens.md for references
+- Use descriptive names
+
+Formatting:
+- Use ATX-style headers (# ## ###)
+- Use code fences for code blocks
+- Use tables for structured data
+- Use lists for procedures
+- Include table of contents for long documents
+
+Content:
+- Start with executive summary
+- Include prerequisites
+- Provide step-by-step instructions
+- Include validation steps
+- Provide troubleshooting tips
+- Include links to related documents
+
+============================================================
+NOTES
+============================================================
+
+- Documentation is critical for successful BMMS adoption
+- Keep documentation up-to-date with code changes
+- Version documentation alongside code
+- Use clear, non-technical language for user guides
+- Include plenty of examples
+
+============================================================
+STATUS TRACKING
+============================================================
+
+Phase 11 Status: ⏸️ NOT STARTED
+Start Date: _______________
+Completion Date: _______________
+Documents Created: _____ / _____
+Review Status: _______________
+Reviewed By: _______________
+Approved By: _______________
+
+============================================================

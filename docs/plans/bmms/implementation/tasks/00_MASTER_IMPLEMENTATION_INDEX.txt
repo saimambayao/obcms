@@ -1,0 +1,632 @@
+# BMMS EMBEDDED ARCHITECTURE IMPLEMENTATION - MASTER INDEX
+
+**Document Version:** 1.0
+**Created:** 2025-10-14
+**Status:** READY FOR EXECUTION
+**Implementation Approach:** Embedded Multi-Tenant Architecture
+
+================================================================================
+
+## OVERVIEW
+
+This master index provides a comprehensive, phase-by-phase execution plan for
+implementing BMMS (Bangsamoro Ministerial Management System) multi-tenant
+architecture within the existing OBCMS codebase.
+
+**Strategic Approach:**
+- Build BMMS multi-tenant infrastructure NOW
+- Hide it behind feature flags (OBCMS single-tenant by default)
+- Transition from OBCMS to BMMS via CONFIGURATION ONLY - no code changes
+
+**Key Principle:** Single codebase, dual modes (OBCMS + BMMS)
+
+================================================================================
+
+## CRITICAL PRE-IMPLEMENTATION NOTES
+
+⚠️  **MANDATORY:** Complete Phase -1 BEFORE Phase 0
+⚠️  **MANDATORY:** Use three-step migration pattern for ALL models:
+     1. Add nullable organization FK
+     2. Populate organization field (management command)
+     3. Make organization FK required
+⚠️  **MANDATORY:** Mode switching via configuration ONLY (no code changes)
+⚠️  **MANDATORY:** Zero code changes required to switch between modes
+
+**Reconciliation Required:**
+A comprehensive codebase audit has revealed 4 critical conflicts that MUST be
+resolved in Phase -1 before proceeding with implementation.
+
+See: RECONCILIATION_PLAN.md
+
+================================================================================
+
+## IMPLEMENTATION PHASES SUMMARY
+
+### Phase -1: Pre-Implementation Reconciliation (2 hours) - CRITICAL
+**Priority:** BLOCKING - MUST COMPLETE FIRST
+**Complexity:** Simple but critical
+**Dependencies:** None (prerequisite for all other phases)
+**File:** phase_minus1_reconciliation.txt
+**Status:** [ ] Not Started [ ] In Progress [ ] Complete
+
+### Phase 0: Pre-Implementation Setup (1 session) - CRITICAL
+**Priority:** CRITICAL
+**Complexity:** Simple
+**Dependencies:** Phase -1 COMPLETE
+**Status:** [ ] Not Started [ ] In Progress [ ] Complete
+
+### Phase 1: Configuration Infrastructure (1 session) - CRITICAL
+**Priority:** CRITICAL
+**Complexity:** Simple
+**Dependencies:** Phase 0 COMPLETE
+**Status:** [ ] Not Started [ ] In Progress [ ] Complete
+
+### Phase 2: Organization Utilities (1 session) - HIGH
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** Phase 1 COMPLETE
+**Status:** [ ] Not Started [ ] In Progress [ ] Complete
+
+### Phase 3: Middleware Enhancement (1 session) - CRITICAL
+**Priority:** CRITICAL
+**Complexity:** Moderate
+**Dependencies:** Phase 2 COMPLETE
+**Status:** [ ] Not Started [ ] In Progress [ ] Complete
+
+### Phase 4: View Decorators (1 session) - HIGH
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** Phase 3 COMPLETE
+**Status:** [ ] Not Started [ ] In Progress [ ] Complete
+
+### Phase 5: Model Migration - Communities App (2 sessions) - CRITICAL
+**Priority:** CRITICAL (SECURITY RISK if not isolated)
+**Complexity:** Complex
+**Dependencies:** Phase 4 COMPLETE
+**Estimated Effort:** 8 hours (critical path)
+**Status:** [ ] Not Started [ ] In Progress [ ] Complete
+
+### Phase 6: Model Migration - MANA App (2 sessions) - HIGH
+**Priority:** HIGH (Data Privacy Act compliance)
+**Complexity:** Complex
+**Dependencies:** Phase 5 COMPLETE
+**Estimated Effort:** 8 hours (critical path)
+**Status:** [ ] Not Started [ ] In Progress [ ] Complete
+
+### Phase 7: Model Migration - Remaining Apps (3-4 sessions) - MEDIUM
+**Priority:** MEDIUM
+**Complexity:** Complex
+**Dependencies:** Phase 6 COMPLETE
+**Estimated Effort:** 15 hours
+**Apps:** Coordination, Policies, Monitoring, Planning, Budget Prep, Budget Exec
+**Status:** [ ] Not Started [ ] In Progress [ ] Complete
+
+### Phase 8: View Layer Updates (2-3 sessions) - HIGH
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** Phase 7 COMPLETE
+**Estimated Effort:** 10 hours
+**Status:** [ ] Not Started [ ] In Progress [ ] Complete
+
+### Phase 9: URL Routing Enhancement (1 session) - MEDIUM
+**Priority:** MEDIUM
+**Complexity:** Simple
+**Dependencies:** Phase 8 COMPLETE
+**Estimated Effort:** 3 hours
+**Status:** [ ] Not Started [ ] In Progress [ ] Complete
+
+### Phase 10: Testing Infrastructure (2 sessions) - HIGH
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** Phase 9 COMPLETE
+**Estimated Effort:** 8 hours
+**Status:** [ ] Not Started [ ] In Progress [ ] Complete
+
+### Phase 11: Documentation (1 session) - MEDIUM
+**Priority:** MEDIUM
+**Complexity:** Simple
+**Dependencies:** Phase 10 COMPLETE
+**Estimated Effort:** 3 hours
+**Status:** [ ] Not Started [ ] In Progress [ ] Complete
+
+### Phase 12: Final Validation (1 session) - CRITICAL
+**Priority:** CRITICAL
+**Complexity:** Moderate
+**Dependencies:** Phase 11 COMPLETE
+**Estimated Effort:** 3 hours
+**Status:** [ ] Not Started [ ] In Progress [ ] Complete
+
+================================================================================
+
+## DEPENDENCY GRAPH
+
+```
+Phase -1 (PRE-IMPLEMENTATION RECONCILIATION) ← START HERE (CRITICAL)
+   ↓
+Phase 0 (PRE-IMPLEMENTATION SETUP)
+   ↓
+Phase 1 (CONFIGURATION INFRASTRUCTURE)
+   ↓
+Phase 2 (ORGANIZATION UTILITIES)
+   ↓
+Phase 3 (MIDDLEWARE ENHANCEMENT)
+   ↓
+Phase 4 (VIEW DECORATORS)
+   ↓
+Phase 5 (MODEL MIGRATION: COMMUNITIES) ← SECURITY CRITICAL
+   ↓
+Phase 6 (MODEL MIGRATION: MANA) ← DATA PRIVACY ACT
+   ↓
+Phase 7 (MODEL MIGRATION: REMAINING APPS)
+   ↓
+Phase 8 (VIEW LAYER UPDATES)
+   ↓
+Phase 9 (URL ROUTING ENHANCEMENT)
+   ↓
+Phase 10 (TESTING INFRASTRUCTURE)
+   ↓
+Phase 11 (DOCUMENTATION)
+   ↓
+Phase 12 (FINAL VALIDATION) → MERGE TO MAIN
+```
+
+**Parallel Execution:** None - all phases are sequential due to dependencies
+
+================================================================================
+
+## CRITICAL PATH ANALYSIS
+
+**Total Estimated Time:** 63 hours (actual implementation time)
+
+### Critical Path Breakdown:
+
+**Pre-Implementation (Phase -1):** 2 hours (BLOCKING)
+- Fix 1: Organization import path - 5 min (CRITICAL)
+- Fix 2: Add BMMS_MODE configuration - 15 min (CRITICAL)
+- Fix 3: Audit ENABLE_MULTI_TENANT - 30 min (HIGH)
+- Fix 4: Middleware strategy decision - 1 hour (CRITICAL)
+
+**Infrastructure Setup (Phases 0-4):** 6 hours
+- Phase 0: Pre-implementation setup - 1 hour
+- Phase 1: Configuration infrastructure - 1 hour
+- Phase 2: Organization utilities - 1 hour
+- Phase 3: Middleware enhancement - 1 hour
+- Phase 4: View decorators - 1 hour
+- Buffer: 1 hour
+
+**Model Migrations (Phases 5-7):** 31 hours (CRITICAL PATH)
+- Phase 5: Communities (SECURITY RISK) - 8 hours
+- Phase 6: MANA (Data Privacy Act) - 8 hours
+- Phase 7: Remaining apps - 15 hours
+
+**Finalization (Phases 8-12):** 24 hours
+- Phase 8: View layer updates - 10 hours
+- Phase 9: URL routing - 3 hours
+- Phase 10: Testing infrastructure - 8 hours
+- Phase 11: Documentation - 3 hours
+- Phase 12: Final validation - 3 hours
+- Buffer: 3 hours
+
+================================================================================
+
+## KEY FINDINGS FROM ARCHITECTURAL ANALYSIS
+
+### Current State Assessment (from OBCMS_ARCHITECTURAL_ANALYSIS.md):
+
+**✅ Strong Foundation:**
+1. Organizations app fully implemented (Organization + OrganizationMembership)
+2. OrganizationContextMiddleware provides request-level isolation
+3. OrganizationScopedModel abstract base class ready
+4. RBAC system comprehensive and organization-aware
+5. Settings already support multi-tenancy flags
+
+**⚠️ Moderate Risk Areas:**
+1. 40+ models need organization FK with data migrations
+2. User model references coordination.Organization (wrong model) - CRITICAL
+3. RBAC models reference coordination.Organization (wrong model) - CRITICAL
+4. WorkItem model references coordination.Organization (wrong model)
+5. All views need organization filtering in queries
+
+**✅ Low Risk Areas:**
+1. Geographic hierarchy (Region/Province/Municipality/Barangay) - no changes
+2. Settings already configured for multi-tenancy
+3. Middleware stack properly ordered
+4. No PostGIS dependency (JSONField for geographic data)
+
+### Critical Dependencies & Coupling (HIGH RISK):
+
+**A. User Model → Organization Relationship (CRITICAL)**
+- Current: User.moa_organization → coordination.Organization
+- Required: User → organizations.Organization (via OrganizationMembership)
+- Impact: All authentication breaks if wrong
+- Solution: Dual FKs during transition, deprecation warnings
+
+**B. Coordination.Organization vs Organizations.Organization (MEDIUM)**
+- Two separate Organization models serving different purposes
+- coordination.Organization = External stakeholders (NGOs, donors, etc.)
+- organizations.Organization = Internal BARMM MOAs (44 ministries)
+- Strategy: Keep both during transition (2-5 years), clear documentation
+
+**C. WorkItem Dependencies (MEDIUM)**
+- WorkItem.organization → coordination.Organization (wrong)
+- Required: Update FK to organizations.Organization
+- Impact: All work hierarchy tied to wrong model
+
+### Models Requiring Organization Scoping:
+
+**Priority 1 (CRITICAL - Phase 5-6):** 10 models
+- OBCCommunity, ProvinceCoverage, MunicipalityCoverage
+- Assessment, AssessmentResponse
+- StakeholderEngagement, Partnership
+- PPA, Indicator
+- StrategicPlan
+
+**Priority 2 (HIGH - Phase 7):** 7 models
+- ConsultationFeedback, Communication, WorkItem
+- CoordinationNote, ProgressReport
+- BudgetProposal, Disbursement
+
+**Priority 3 (MEDIUM - Phase 7):** 6 models
+- OrganizationContact, CommunicationTemplate
+- StaffProfile, StaffTeam
+- Role, Feature (RBAC)
+
+**Reference Data (NO SCOPING):** 7 models
+- Region, Province, Municipality, Barangay
+- AssessmentCategory, StakeholderEngagementType, Permission
+
+================================================================================
+
+## RECONCILIATION PLAN KEY POINTS (Phase -1)
+
+**From RECONCILIATION_PLAN.md - MUST COMPLETE FIRST**
+
+### Finding 1: Middleware Conflict (CRITICAL)
+**Issue:** Duplicate middleware classes attempting to set request.organization
+**Current:** OrganizationContextMiddleware (line 133 in base.py)
+**Planned:** OBCMSOrganizationMiddleware + OrganizationMiddleware
+**Conflict:** Both will try to set request.organization (race conditions)
+**Solution:** Refactor existing OrganizationContextMiddleware to be mode-aware
+
+### Finding 2: Wrong Organization Import (CRITICAL)
+**Issue:** Existing middleware imports from coordination.models
+**File:** src/common/middleware/organization_context.py (line 44)
+**Current:** from coordination.models import Organization (WRONG)
+**Required:** from organizations.models import Organization (CORRECT)
+**Impact:** Middleware will fail to load Organization, breaking all requests
+
+### Finding 3: ENABLE_MULTI_TENANT Already True (HIGH)
+**Issue:** Multi-tenant flag already enabled in base settings
+**File:** src/obc_management/settings/base.py (line 638)
+**Current:** 'ENABLE_MULTI_TENANT': default=True
+**Required:** default=(BMMS_MODE == BMMSMode.BMMS)
+**Impact:** OBCMS may already have unintended multi-tenant behavior
+
+### Finding 4: BMMS_MODE Not Configured (HIGH)
+**Issue:** No BMMS_MODE setting exists
+**Current:** No BMMS_MODE in base.py, no .env files
+**Required:** BMMS_MODE = env.str('BMMS_MODE', default='obcms')
+**Impact:** Cannot determine operational mode; all mode-based logic fails
+
+================================================================================
+
+## SUCCESS METRICS
+
+### Technical Metrics:
+- [ ] All tests pass in BOTH OBCMS and BMMS modes
+- [ ] Code coverage above 90%
+- [ ] No linting errors
+- [ ] No security vulnerabilities
+- [ ] Performance degradation <5% overhead
+- [ ] Page load times under 2 seconds
+- [ ] Database queries optimized (no N+1 problems)
+
+### Functional Requirements:
+- [ ] OBCMS operates in single-tenant mode (configuration only)
+- [ ] BMMS can be enabled via configuration (no code changes)
+- [ ] Organization switching works in BMMS mode
+- [ ] Data isolation enforced at database level (100%)
+- [ ] OCM read-only access to all organizations
+
+### Data Integrity:
+- [ ] Zero data loss during migration
+- [ ] All foreign key relationships intact
+- [ ] Record counts match before/after migration
+- [ ] No orphaned records (organization=NULL)
+
+### Documentation:
+- [ ] Implementation guide complete
+- [ ] Migration guide complete
+- [ ] Configuration guide complete
+- [ ] Deployment checklist complete
+
+================================================================================
+
+## VALIDATION CHECKPOINTS
+
+**After Each Phase:**
+
+1. **Code Quality:**
+   - [ ] python manage.py check passes
+   - [ ] No import errors
+   - [ ] No linting warnings
+   - [ ] All tests pass
+
+2. **Functional Validation:**
+   - [ ] OBCMS functionality preserved
+   - [ ] Dashboard loads correctly
+   - [ ] Community list displays
+   - [ ] MANA assessments accessible
+   - [ ] No permission errors
+
+3. **Performance:**
+   - [ ] Query time acceptable (<300ms)
+   - [ ] Page load time acceptable (<2s)
+   - [ ] Memory usage acceptable (<2GB)
+   - [ ] No N+1 query problems
+
+4. **Security:**
+   - [ ] Organization isolation verified
+   - [ ] No cross-organization data leaks
+   - [ ] Permission checks working
+   - [ ] Audit logs functional
+
+================================================================================
+
+## ROLLBACK PLAN
+
+### Immediate Rollback (Within Same Session):
+1. Stop application (Ctrl+C or systemctl stop)
+2. git reset --hard <previous-commit>
+3. Restore database from backup: cp db.sqlite3.backup db.sqlite3
+4. Restart application
+
+### Phase-Level Rollback:
+1. Identify problematic phase
+2. Review phase-specific rollback steps in phase task file
+3. Revert migrations: python manage.py migrate <app> <previous-migration>
+4. Restore backup if necessary
+5. Test OBCMS functionality
+6. Analyze failure cause
+7. Fix issues and retry
+
+### Production Rollback:
+1. Switch to maintenance mode
+2. Stop production services
+3. Restore database from pre-deployment backup
+4. Revert code to previous stable version
+5. Verify OBCMS functionality
+6. Resume normal operations
+7. Post-mortem analysis
+
+================================================================================
+
+## FILE GENERATION PLAN SUMMARY
+
+**New Files to Create:**
+
+1. Configuration Management:
+   - src/obc_management/settings/bmms_config.py (Mode detection)
+   - .env.obcms (OBCMS mode configuration)
+   - .env.bmms (BMMS mode configuration - future)
+
+2. Organization Utilities:
+   - src/organizations/utils/__init__.py (Helper functions)
+
+3. Middleware:
+   - src/organizations/middleware/obcms_middleware.py (OBCMS auto-inject)
+
+4. View Decorators:
+   - src/common/decorators/organization.py (@require_organization)
+   - src/common/mixins/organization.py (OrganizationRequiredMixin)
+   - src/common/permissions/organization.py (OrganizationAccessPermission)
+
+5. Management Commands:
+   - src/organizations/management/commands/ensure_default_organization.py
+   - src/organizations/management/commands/populate_organization_field.py
+
+6. Model Mixins:
+   - src/organizations/models/mixins.py (Validation + Audit)
+
+7. Testing:
+   - src/tests/conftest.py (Pytest fixtures for dual-mode testing)
+
+**Files to Modify:**
+
+1. Settings:
+   - src/obc_management/settings/base.py (BMMS_MODE, RBAC_SETTINGS, MIDDLEWARE)
+
+2. Middleware:
+   - src/organizations/middleware.py (Add mode-aware behavior)
+   - src/common/middleware/organization_context.py (Fix import, mode logic)
+
+3. Models:
+   - src/organizations/models/organization.py (Add get_default_organization method)
+   - src/communities/models.py (Inherit OrganizationScopedModel)
+   - src/mana/models.py (Inherit OrganizationScopedModel)
+   - [40+ other models across 8 apps]
+
+4. URLs:
+   - src/obc_management/urls.py (Dual URL pattern support)
+
+================================================================================
+
+## MIGRATION STRATEGY SUMMARY
+
+**Three-Step Pattern (MANDATORY for ALL models):**
+
+### Step 1: Add Nullable Organization FK
+```python
+# Migration: Add nullable field
+organization = models.ForeignKey(
+    'organizations.Organization',
+    null=True,  # Nullable during migration
+    blank=True,
+    on_delete=models.PROTECT,
+    related_name='%(app_label)s_%(class)s_set',
+)
+```
+
+### Step 2: Populate Organization Field
+```bash
+# Management command
+python manage.py ensure_default_organization
+python manage.py populate_organization_field --app <app_name>
+```
+
+### Step 3: Make Organization FK Required
+```python
+# Migration: Remove null=True, blank=True
+organization = models.ForeignKey(
+    'organizations.Organization',
+    on_delete=models.PROTECT,  # Now required
+    related_name='%(app_label)s_%(class)s_set',
+)
+```
+
+**Model Conversion Example:**
+```python
+# BEFORE (single-tenant)
+class OBCCommunity(models.Model):
+    name = models.CharField(max_length=255)
+
+# AFTER (multi-tenant)
+from organizations.models import OrganizationScopedModel
+
+class OBCCommunity(OrganizationScopedModel):
+    name = models.CharField(max_length=255)
+    # organization FK inherited from OrganizationScopedModel
+    # objects = OrganizationScopedManager() (auto-filters)
+    # all_objects = models.Manager() (unfiltered)
+```
+
+================================================================================
+
+## MODE SWITCHING PROCEDURE
+
+**From OBCMS to BMMS (Configuration Only - No Code Changes):**
+
+### Step 1: Update .env
+```bash
+# Change from:
+BMMS_MODE=obcms
+ENABLE_MULTI_TENANT=False
+
+# To:
+BMMS_MODE=bmms
+ENABLE_MULTI_TENANT=True
+```
+
+### Step 2: Restart Application
+```bash
+# Development
+python manage.py runserver
+
+# Production
+sudo systemctl restart obcms
+```
+
+### Step 3: Verify Mode Change
+```bash
+python manage.py shell
+>>> from obc_management.settings.bmms_config import is_bmms_mode
+>>> is_bmms_mode()
+True
+```
+
+**Result:** System now operates in BMMS mode, supporting 44 MOAs
+
+================================================================================
+
+## TASK FILE REFERENCES
+
+**Detailed task breakdowns available in:**
+
+- phase_minus1_reconciliation.txt (PRE-IMPLEMENTATION FIXES)
+- phase_00_pre_implementation_setup.txt
+- phase_01_configuration_infrastructure.txt
+- phase_02_organization_utilities.txt
+- phase_03_middleware_enhancement.txt
+- phase_04_view_decorators.txt
+- phase_05_model_migration_communities.txt (CRITICAL PATH)
+- phase_06_model_migration_mana.txt (CRITICAL PATH)
+- phase_07_model_migration_remaining.txt
+- phase_08_view_layer_updates.txt
+- phase_09_url_routing_enhancement.txt
+- phase_10_testing_infrastructure.txt
+- phase_11_documentation.txt
+- phase_12_final_validation.txt
+
+================================================================================
+
+## REFERENCE DOCUMENTATION
+
+**Primary Implementation Documents:**
+- BMMS_EMBEDDED_ARCHITECTURE_IMPLEMENTATION.md (Complete plan)
+- RECONCILIATION_PLAN.md (Pre-implementation fixes)
+- OBCMS_ARCHITECTURAL_ANALYSIS.md (Codebase analysis)
+- BMMS_MIGRATION_CHECKLIST.md (Validation checklist)
+
+**Supporting Documentation:**
+- docs/plans/bmms/TRANSITION_PLAN.md (BMMS transition strategy)
+- docs/plans/bmms/README.md (BMMS planning overview)
+- CLAUDE.md (Development guidelines)
+
+**Deployment Guides:**
+- docs/deployment/POSTGRESQL_MIGRATION_SUMMARY.md
+- docs/deployment/POSTGRESQL_MIGRATION_REVIEW.md
+- docs/deployment/CASE_SENSITIVE_QUERY_AUDIT.md
+
+**UI Standards:**
+- docs/ui/OBCMS_UI_STANDARDS_MASTER.md
+
+================================================================================
+
+## EXECUTION SEQUENCE
+
+1. **Read this master index thoroughly**
+2. **Review Phase -1 (RECONCILIATION_PLAN.md)** - MANDATORY
+3. **Execute Phase -1 fixes** - DO NOT SKIP
+4. **Validate Phase -1 completion** - All 4 fixes must pass
+5. **Proceed to Phase 0** - Feature branch setup
+6. **Execute phases sequentially** - Follow dependency graph
+7. **Validate after each phase** - Run validation checklist
+8. **Complete Phase 12** - Final validation and merge
+
+================================================================================
+
+## CRITICAL REMINDERS
+
+⚠️  **NEVER use temporary fixes or workarounds**
+⚠️  **ALWAYS implement proper, complete solutions**
+⚠️  **NEVER make assumptions - research when unsure**
+⚠️  **NEVER provide time estimates** (AI can do 1 year of work in 1 day)
+⚠️  **ALWAYS use:** Bangsamoro Ministerial Management System (BMMS)
+⚠️  **NEVER use:** Bangsamoro Management & Monitoring System
+⚠️  **ALWAYS verify:** Organization imports from organizations.models
+⚠️  **NEVER skip:** Three-step migration pattern for models
+
+================================================================================
+
+## NOTES
+
+**Implementation Complexity:**
+- Low: Phases 0, 1, 2, 9, 11
+- Moderate: Phases 3, 4, 8, 10, 12
+- Complex: Phases 5, 6, 7 (Model migrations)
+
+**Parallel Work:** Not recommended - phases have strong dependencies
+
+**Buffer Time:** Built into estimates (3-5 hours total buffer)
+
+**Testing:** Dual-mode testing required (OBCMS + BMMS modes)
+
+**Deployment:** Staging → Production (never direct to production)
+
+================================================================================
+
+**Document Status:** ✅ READY FOR USE
+**Last Updated:** 2025-10-14
+**Next Action:** Review RECONCILIATION_PLAN.md and begin Phase -1
+
+================================================================================

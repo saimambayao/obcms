@@ -1,0 +1,1181 @@
+================================================================================
+BMMS PHASE -1: PRE-IMPLEMENTATION RECONCILIATION
+================================================================================
+
+PRIORITY: CRITICAL - MANDATORY BEFORE PHASE 0
+COMPLEXITY: Low (Surgical Fixes)
+DEPENDENCIES: None (pre-requisite for all phases)
+BLOCKS: All BMMS implementation phases (0-8)
+ESTIMATED TIME: 2 hours total
+
+This phase resolves critical conflicts between the existing OBCMS codebase and
+the planned BMMS implementation. A comprehensive codebase audit revealed 4
+critical issues that MUST be fixed before proceeding with implementation.
+
+⚠️ DO NOT PROCEED WITH IMPLEMENTATION UNTIL ALL RECONCILIATION TASKS COMPLETE ⚠️
+
+WORKING DIRECTORY: /Users/saidamenmambayao/Library/Mobile Documents/com~apple~CloudDocs/BTA/OOBC/obcms
+
+================================================================================
+SECTION 1: OVERVIEW & CRITICAL FINDINGS
+================================================================================
+
+Critical Conflicts Detected
+----------------------------
+□ Finding 1: Wrong Organization import path (CRITICAL)
+□ Finding 2: Missing BMMS_MODE configuration (CRITICAL)
+□ Finding 3: ENABLE_MULTI_TENANT already True (needs audit)
+□ Finding 4: Middleware strategy needs decision (CRITICAL)
+
+Impact Assessment
+-----------------
+□ Read and understand all 4 findings
+□ Review risk levels for each conflict
+□ Note blocking dependencies
+□ Confirm ready to proceed
+
+Expected Result:
+- Clear understanding of all reconciliation tasks
+- Awareness of critical vs high priority fixes
+- Ready to execute fixes in sequence
+
+
+================================================================================
+SECTION 2: FIX 1 - CORRECT ORGANIZATION IMPORT PATH
+================================================================================
+
+PRIORITY: CRITICAL - FIX FIRST
+ESTIMATED TIME: 5 minutes
+RISK: Application breaks without this fix
+
+Background
+----------
+Current middleware imports Organization from wrong location:
+
+File: src/common/middleware/organization_context.py (line 44)
+WRONG: from coordination.models import Organization
+RIGHT: from organizations.models import Organization
+
+The organizations app is the correct location (Phase 1 foundation). Using
+coordination.models will cause ImportError or incorrect model usage.
+
+
+Task 1.1: Locate Middleware File
+---------------------------------
+□ Navigate to src/common/middleware/
+□ Open file: organization_context.py
+□ Locate line 44 (import statement)
+□ Confirm current import:
+  from coordination.models import Organization
+
+Commands:
+```bash
+cd src/common/middleware/
+cat organization_context.py | grep -n "from coordination.models import"
+# Should show line 44
+```
+
+Expected Result:
+- File opened in editor
+- Line 44 visible
+- Import statement confirmed
+
+
+Task 1.2: Fix Import Path
+--------------------------
+□ Change line 44 from:
+  from coordination.models import Organization
+
+□ To:
+  from organizations.models import Organization
+
+□ Save file
+□ Close editor
+
+File: src/common/middleware/organization_context.py
+```python
+# Line 44 - AFTER FIX:
+from organizations.models import Organization
+```
+
+Expected Result:
+- Import path corrected
+- File saved
+- No syntax errors
+
+
+Task 1.3: Verify Import Works
+------------------------------
+□ Open Django shell
+□ Test import
+□ Check Organization model accessible
+□ Count organizations
+
+Commands:
+```bash
+cd src
+python manage.py shell
+```
+
+Shell commands:
+```python
+>>> from organizations.models import Organization
+>>> Organization.objects.count()
+# Should return 44 (44 BARMM MOAs)
+>>> Organization.objects.get(code='OOBC')
+# Should return OOBC organization
+>>> exit()
+```
+
+Expected Result:
+- Import succeeds without ImportError
+- Organization.objects accessible
+- 44 MOAs in database
+- OOBC organization exists (ID=1)
+
+
+Task 1.4: Test Middleware Loads
+--------------------------------
+□ Run Django check command
+□ Verify no import errors
+□ Check middleware loads successfully
+□ Confirm no warnings
+
+Commands:
+```bash
+cd src
+python manage.py check
+```
+
+Expected Output:
+```
+System check identified no issues (0 silenced).
+```
+
+Expected Result:
+- ✅ Check passes without errors
+- ✅ No ImportError warnings
+- ✅ Middleware loads successfully
+- ✅ No organization-related errors
+
+
+Fix 1 Verification
+-------------------
+□ Import error resolved
+□ Middleware loads without errors
+□ Organization model accessible
+□ Django check passes
+□ No warnings in console
+
+Status: _____ (Complete/Incomplete)
+
+
+================================================================================
+SECTION 3: FIX 2 - ADD BMMS_MODE CONFIGURATION
+================================================================================
+
+PRIORITY: CRITICAL
+ESTIMATED TIME: 15 minutes
+DEPENDENCIES: None
+
+Background
+----------
+No BMMS_MODE setting exists in configuration. This prevents mode detection
+(OBCMS vs BMMS) and breaks all mode-based logic. Must add BMMS_MODE setting,
+mode detection functions, and update RBAC_SETTINGS to be mode-aware.
+
+
+Task 2.1: Create bmms_config.py Module
+---------------------------------------
+□ Navigate to src/obc_management/settings/
+□ Create new file: bmms_config.py
+□ Add module docstring
+□ Define BMMSMode class
+□ Add mode detection functions
+
+File: src/obc_management/settings/bmms_config.py
+```python
+"""
+BMMS Configuration Module
+
+Provides configuration constants and utilities for BMMS multi-tenant mode.
+"""
+from django.conf import settings
+
+
+class BMMSMode:
+    """BMMS operational modes."""
+    OBCMS = 'obcms'  # Single-tenant mode (OOBC only)
+    BMMS = 'bmms'    # Multi-tenant mode (44 MOAs)
+
+
+def is_bmms_mode():
+    """Check if system is running in BMMS mode."""
+    return getattr(settings, 'BMMS_MODE', BMMSMode.OBCMS) == BMMSMode.BMMS
+
+
+def is_obcms_mode():
+    """Check if system is running in OBCMS mode."""
+    return not is_bmms_mode()
+
+
+def get_default_organization_code():
+    """Get the default organization code for OBCMS mode."""
+    return getattr(settings, 'DEFAULT_ORGANIZATION_CODE', 'OOBC')
+
+
+def multi_tenant_enabled():
+    """Check if multi-tenant features are enabled."""
+    if is_obcms_mode():
+        return False  # OBCMS always single-tenant
+    return getattr(settings, 'ENABLE_MULTI_TENANT', True)
+
+
+def organization_switching_enabled():
+    """Check if organization switching is allowed."""
+    if is_obcms_mode():
+        return False  # No switching in OBCMS mode
+    return getattr(settings, 'ALLOW_ORGANIZATION_SWITCHING', True)
+```
+
+Commands:
+```bash
+cd src/obc_management/settings/
+touch bmms_config.py
+# Copy content above into file
+```
+
+Expected Result:
+- bmms_config.py file created
+- BMMSMode class defined
+- 5 utility functions added
+- Module ready for import
+
+
+Task 2.2: Update settings/base.py - Add BMMS_MODE
+--------------------------------------------------
+□ Open src/obc_management/settings/base.py
+□ Locate line 631 (after imports section)
+□ Add import statement
+□ Add BMMS MODE CONFIGURATION section
+□ Add BMMS_MODE setting
+□ Add DEFAULT_ORGANIZATION_CODE setting
+
+File: src/obc_management/settings/base.py (add after line 631)
+```python
+from obc_management.settings.bmms_config import BMMSMode
+
+# ========== BMMS MODE CONFIGURATION ==========
+# Operational mode: 'obcms' (single-tenant) or 'bmms' (multi-tenant)
+BMMS_MODE = env.str('BMMS_MODE', default=BMMSMode.OBCMS)
+
+# Default organization code for OBCMS mode
+DEFAULT_ORGANIZATION_CODE = env.str('DEFAULT_ORGANIZATION_CODE', default='OOBC')
+```
+
+Expected Result:
+- Import added after line 631
+- BMMS_MODE setting added
+- DEFAULT_ORGANIZATION_CODE setting added
+- Proper comments included
+
+
+Task 2.3: Update settings/base.py - Modify RBAC_SETTINGS
+---------------------------------------------------------
+□ Locate RBAC_SETTINGS (currently at line 636-652)
+□ Change ENABLE_MULTI_TENANT default
+□ Change OCM_ORGANIZATION_CODE from 'ocm' to 'OCM'
+□ Change ALLOW_ORGANIZATION_SWITCHING default
+□ Add clarifying comments
+
+File: src/obc_management/settings/base.py (lines 636-652)
+```python
+RBAC_SETTINGS = {
+    # Enable multi-tenant organization context
+    # In OBCMS mode, this is automatically set to False
+    'ENABLE_MULTI_TENANT': env.bool(
+        'ENABLE_MULTI_TENANT',
+        default=(BMMS_MODE == BMMSMode.BMMS)  # ← CHANGED from default=True
+    ),
+
+    # Office of Chief Minister (OCM) organization code
+    'OCM_ORGANIZATION_CODE': 'OCM',  # ← CHANGED from 'ocm' to 'OCM'
+
+    # Permission cache timeout (seconds)
+    'CACHE_TIMEOUT': 300,
+
+    # Organization switching
+    # In OBCMS mode, this is automatically set to False
+    'ALLOW_ORGANIZATION_SWITCHING': env.bool(
+        'ALLOW_ORGANIZATION_SWITCHING',
+        default=(BMMS_MODE == BMMSMode.BMMS)  # ← CHANGED from default=True
+    ),
+
+    # Session key for current organization
+    'SESSION_ORG_KEY': 'current_organization',
+}
+```
+
+Changes Made:
+1. ENABLE_MULTI_TENANT: default=True → default=(BMMS_MODE == BMMSMode.BMMS)
+2. OCM_ORGANIZATION_CODE: 'ocm' → 'OCM' (uppercase)
+3. ALLOW_ORGANIZATION_SWITCHING: default=True → default=(BMMS_MODE == BMMSMode.BMMS)
+4. Added clarifying comments
+
+Expected Result:
+- RBAC_SETTINGS now mode-aware
+- OBCMS mode: multi-tenant disabled
+- BMMS mode: multi-tenant enabled
+- OCM code standardized to uppercase
+
+
+Task 2.4: Create .env.obcms File
+---------------------------------
+□ Navigate to project root
+□ Create file: .env.obcms
+□ Add OBCMS mode configuration
+□ Document all settings
+
+File: .env.obcms (in project root)
+```bash
+# OBCMS Mode - Single-tenant for OOBC only
+
+# Core Configuration
+BMMS_MODE=obcms
+DEFAULT_ORGANIZATION_CODE=OOBC
+
+# Multi-tenant Settings (automatically disabled in OBCMS mode)
+ENABLE_MULTI_TENANT=False
+ALLOW_ORGANIZATION_SWITCHING=False
+
+# Database
+DATABASE_URL=sqlite:///db.sqlite3
+
+# Debug
+DEBUG=True
+
+# Security
+SECRET_KEY=your-secret-key-here-change-in-production
+ALLOWED_HOSTS=localhost,127.0.0.1
+```
+
+Commands:
+```bash
+cd /Users/saidamenmambayao/Library/Mobile\ Documents/com~apple~CloudDocs/BTA/OOBC/obcms
+touch .env.obcms
+# Copy content above into file
+```
+
+Expected Result:
+- .env.obcms file created
+- BMMS_MODE=obcms set
+- Multi-tenant flags explicitly disabled
+- Database and debug settings configured
+
+
+Task 2.5: Test Configuration
+-----------------------------
+□ Open Django shell
+□ Import mode detection functions
+□ Test is_obcms_mode()
+□ Test multi_tenant_enabled()
+□ Test organization_switching_enabled()
+□ Verify all return expected values
+
+Commands:
+```bash
+cd src
+python manage.py shell
+```
+
+Shell commands:
+```python
+>>> from obc_management.settings.bmms_config import *
+>>> is_obcms_mode()
+True  # ✅ Should be True (default mode)
+>>> is_bmms_mode()
+False  # ✅ Should be False
+>>> multi_tenant_enabled()
+False  # ✅ Should be False in OBCMS mode
+>>> organization_switching_enabled()
+False  # ✅ Should be False in OBCMS mode
+>>> get_default_organization_code()
+'OOBC'  # ✅ Should return OOBC
+>>> exit()
+```
+
+Expected Result:
+- All functions work without errors
+- is_obcms_mode() returns True
+- Multi-tenant flags return False
+- Default org code is OOBC
+
+
+Fix 2 Verification
+-------------------
+□ bmms_config.py created
+□ BMMS_MODE setting added to base.py
+□ DEFAULT_ORGANIZATION_CODE setting added
+□ RBAC_SETTINGS updated with mode-based defaults
+□ .env.obcms file created
+□ Mode detection functions work correctly
+□ Django shell tests pass
+
+Status: _____ (Complete/Incomplete)
+
+
+================================================================================
+SECTION 4: FIX 3 - AUDIT ENABLE_MULTI_TENANT USAGE
+================================================================================
+
+PRIORITY: HIGH
+ESTIMATED TIME: 30 minutes
+DEPENDENCIES: Fix 2 complete
+
+Background
+----------
+ENABLE_MULTI_TENANT is currently hardcoded to True in base settings. Need to
+audit current usage, document behavior, and verify OBCMS mode works correctly
+with multi-tenant disabled.
+
+
+Task 3.1: Check Current Multi-Tenant Behavior
+----------------------------------------------
+□ Open Django shell
+□ Check RBAC_SETTINGS
+□ Verify current ENABLE_MULTI_TENANT value
+□ Document current state
+
+Commands:
+```bash
+cd src
+python manage.py shell
+```
+
+Shell commands:
+```python
+>>> from django.conf import settings
+>>> settings.RBAC_SETTINGS['ENABLE_MULTI_TENANT']
+# Document the result (should be True or False based on mode)
+>>> settings.RBAC_SETTINGS['ALLOW_ORGANIZATION_SWITCHING']
+# Document the result
+>>> exit()
+```
+
+Expected Result:
+- Current multi-tenant flag value documented
+- Current switching flag value documented
+- Baseline behavior understood
+
+
+Task 3.2: Search for Code Using ENABLE_MULTI_TENANT
+----------------------------------------------------
+□ Navigate to src/ directory
+□ Search for ENABLE_MULTI_TENANT references
+□ List all files using this flag
+□ Document usage patterns
+
+Commands:
+```bash
+cd src
+grep -r "ENABLE_MULTI_TENANT" --include="*.py" .
+```
+
+Expected Output:
+- List of files using ENABLE_MULTI_TENANT
+- Usage patterns identified
+- Dependencies documented
+
+Document Findings:
+File: _________________________
+Usage: _________________________
+
+File: _________________________
+Usage: _________________________
+
+
+Task 3.3: Test OBCMS Mode
+--------------------------
+□ Set BMMS_MODE=obcms in environment
+□ Start development server
+□ Navigate to key views
+□ Verify functionality works
+□ Document any issues
+
+Commands:
+```bash
+cd src
+export BMMS_MODE=obcms
+python manage.py runserver
+```
+
+Browser Testing:
+□ Navigate to http://localhost:8000/
+□ Check dashboard loads
+□ Check community list works
+□ Check MANA assessments accessible
+□ Verify no organization-related errors
+□ Check console for warnings
+
+Expected Result:
+- Dashboard loads successfully
+- Community features work
+- MANA features accessible
+- No errors in browser console
+- No organization context errors
+
+
+Task 3.4: Verify No Regressions
+--------------------------------
+□ Dashboard functionality intact
+□ Community list displays correctly
+□ MANA assessments accessible
+□ No organization-related errors in console
+□ All existing features work as expected
+
+Checklist:
+□ Dashboard: _____ (Working/Broken)
+□ Communities: _____ (Working/Broken)
+□ MANA: _____ (Working/Broken)
+□ Coordination: _____ (Working/Broken)
+□ Console errors: _____ (None/Present)
+
+Expected Result:
+- All features working in OBCMS mode
+- No functionality broken
+- Multi-tenant disabled as expected
+- Organization switching not available
+
+
+Fix 3 Verification
+-------------------
+□ Current behavior documented
+□ Code dependencies identified
+□ OBCMS mode tested
+□ No functionality broken
+□ Audit report complete
+
+Status: _____ (Complete/Incomplete)
+
+
+================================================================================
+SECTION 5: FIX 4 - RESOLVE MIDDLEWARE STRATEGY
+================================================================================
+
+PRIORITY: CRITICAL
+ESTIMATED TIME: 1 hour (decision + implementation)
+DEPENDENCIES: Fix 1, Fix 2 complete
+
+Background
+----------
+Middleware conflict detected: existing OrganizationContextMiddleware and
+planned OBCMSOrganizationMiddleware will both try to set request.organization,
+causing race conditions and unpredictable behavior.
+
+DECISION: Use Option A (Refactor Existing Middleware) ✅ RECOMMENDED
+
+
+Task 4.1: Review Middleware Strategy Options
+---------------------------------------------
+□ Read Option A: Refactor existing middleware (RECOMMENDED)
+□ Read Option B: Remove existing, create new stack (NOT recommended)
+□ Understand advantages/disadvantages
+□ Confirm Option A as strategy
+
+Decision: _____ (Option A / Option B)
+
+Rationale:
+_____________________________________________________________________________
+_____________________________________________________________________________
+
+
+Task 4.2: Update organization_context.py - Add Imports
+-------------------------------------------------------
+□ Open src/common/middleware/organization_context.py
+□ Locate import section at top of file
+□ Add new imports after existing imports
+□ Save file
+
+File: src/common/middleware/organization_context.py (add at top)
+```python
+# Add after existing imports:
+from obc_management.settings.bmms_config import is_obcms_mode, is_bmms_mode
+from organizations.utils import get_or_create_default_organization
+```
+
+Expected Result:
+- New imports added
+- No import errors
+- File saved
+
+
+Task 4.3: Refactor get_organization_from_request Function
+----------------------------------------------------------
+□ Locate get_organization_from_request() function
+□ Add mode-aware behavior at beginning
+□ Add OBCMS mode handling
+□ Add organization caching
+□ Keep existing BMMS mode logic
+
+File: src/common/middleware/organization_context.py
+```python
+def get_organization_from_request(request: HttpRequest):
+    """
+    Extract organization context from request.
+
+    Mode-aware behavior:
+    - OBCMS mode: Always return default OOBC organization
+    - BMMS mode: Extract from URL/session/user
+    """
+    from organizations.models import Organization  # ← Fixed import (from Fix 1)
+
+    # ========== OBCMS MODE: Auto-inject default organization ==========
+    if is_obcms_mode():
+        # Cache default org to avoid repeated database hits
+        if not hasattr(request, '_cached_default_org'):
+            request._cached_default_org, _ = get_or_create_default_organization()
+        return request._cached_default_org
+
+    # ========== BMMS MODE: Extract from request ==========
+    # (Keep all existing code below unchanged)
+    if not request.user.is_authenticated:
+        return None
+
+    organization = None
+    org_id = None
+
+    # [Rest of existing code continues unchanged...]
+    # ...
+```
+
+Key Changes:
+1. Added OBCMS mode check at beginning
+2. Auto-inject default organization in OBCMS mode
+3. Cache default org on request object (performance optimization)
+4. All existing BMMS mode logic unchanged
+
+Expected Result:
+- Function now mode-aware
+- OBCMS mode: Returns default OOBC org
+- BMMS mode: Uses existing logic
+- Performance optimized with caching
+
+
+Task 4.4: Update Middleware Class Docstring
+--------------------------------------------
+□ Locate OrganizationContextMiddleware class definition
+□ Update class docstring
+□ Add mode-aware behavior documentation
+□ Add warning about single middleware
+
+File: src/common/middleware/organization_context.py
+```python
+class OrganizationContextMiddleware:
+    """
+    Middleware to set organization context on request object.
+
+    Mode-aware behavior:
+    - OBCMS mode: Auto-injects default OOBC organization
+    - BMMS mode: Extracts organization from URL/session/user
+
+    This is the ONLY middleware that sets request.organization.
+    Do NOT create additional organization middleware classes.
+    """
+```
+
+Expected Result:
+- Docstring updated with mode awareness
+- Clear warning about single middleware
+- Documentation complete
+
+
+Task 4.5: Create organizations/utils.py Helper
+-----------------------------------------------
+□ Navigate to src/organizations/
+□ Create new file: utils.py
+□ Add get_or_create_default_organization function
+□ Add error handling
+
+File: src/organizations/utils.py
+```python
+"""
+Utility functions for organizations app.
+"""
+from django.conf import settings
+
+
+def get_or_create_default_organization():
+    """
+    Get or create the default organization for OBCMS mode.
+
+    Returns:
+        tuple: (Organization, created) similar to get_or_create()
+    """
+    from organizations.models import Organization
+
+    # Get default organization code from settings
+    default_code = getattr(settings, 'DEFAULT_ORGANIZATION_CODE', 'OOBC')
+
+    # Get or create organization
+    organization, created = Organization.objects.get_or_create(
+        code=default_code,
+        defaults={
+            'name': 'Office for Other Bangsamoro Communities',
+            'org_type': 'office',
+            'is_active': True,
+        }
+    )
+
+    return organization, created
+```
+
+Commands:
+```bash
+cd src/organizations/
+touch utils.py
+# Copy content above into file
+```
+
+Expected Result:
+- utils.py created
+- get_or_create_default_organization() defined
+- Error handling included
+- Default OOBC creation logic ready
+
+
+Task 4.6: Test Middleware in OBCMS Mode
+----------------------------------------
+□ Set BMMS_MODE=obcms
+□ Start development server
+□ Check organization context
+□ Verify auto-injection works
+
+Commands:
+```bash
+cd src
+export BMMS_MODE=obcms
+python manage.py runserver
+```
+
+Browser Test:
+□ Navigate to http://localhost:8000/dashboard/
+□ Open browser console
+□ Check for errors
+□ Verify organization context present
+
+Shell Test:
+```bash
+python manage.py shell
+```
+
+Shell commands:
+```python
+>>> from django.test import RequestFactory
+>>> from common.middleware.organization_context import OrganizationContextMiddleware
+>>> from django.contrib.auth.models import AnonymousUser
+>>>
+>>> factory = RequestFactory()
+>>> request = factory.get('/')
+>>> request.user = AnonymousUser()
+>>>
+>>> middleware = OrganizationContextMiddleware(lambda r: None)
+>>> # Middleware should set request.organization
+>>> # In OBCMS mode, should be OOBC
+>>> exit()
+```
+
+Expected Result:
+- Middleware loads without errors
+- Organization auto-injected in OBCMS mode
+- Default OOBC organization assigned
+- No errors in console
+
+
+Task 4.7: Test Middleware in BMMS Mode
+---------------------------------------
+□ Set BMMS_MODE=bmms
+□ Restart development server
+□ Test URL-based organization extraction
+□ Verify existing logic works
+
+Commands:
+```bash
+cd src
+export BMMS_MODE=bmms
+python manage.py runserver
+```
+
+Browser Test (if MOA URLs configured):
+□ Navigate to http://localhost:8000/moa/MOH/dashboard/
+□ Verify MOH organization context
+□ Check no errors in console
+
+Note: This is preliminary test. Full BMMS mode testing happens in Phase 1-8.
+
+Expected Result:
+- Middleware loads in BMMS mode
+- Existing URL extraction logic works
+- No regressions in BMMS functionality
+
+
+Fix 4 Verification
+-------------------
+□ Option A (refactor) chosen and documented
+□ Imports added to organization_context.py
+□ get_organization_from_request() refactored
+□ Middleware class docstring updated
+□ organizations/utils.py created
+□ OBCMS mode tested successfully
+□ BMMS mode basic test passed
+□ No middleware conflicts
+□ Single middleware handles both modes
+
+Status: _____ (Complete/Incomplete)
+
+
+================================================================================
+SECTION 6: COMPREHENSIVE VERIFICATION
+================================================================================
+
+Task 6.1: Run Django Check Command
+-----------------------------------
+□ Run Django system check
+□ Verify no errors
+□ Check for warnings
+□ Review any deprecation notices
+
+Commands:
+```bash
+cd src
+python manage.py check
+```
+
+Expected Output:
+```
+System check identified no issues (0 silenced).
+```
+
+Expected Result:
+- Check passes without errors
+- No critical warnings
+- All middleware loads correctly
+
+
+Task 6.2: Run Test Suite
+-------------------------
+□ Run existing test suite
+□ Verify no new failures
+□ Check test coverage
+□ Document any issues
+
+Commands:
+```bash
+cd src
+python manage.py test --keepdb
+```
+
+Expected Result:
+- All existing tests pass
+- No new test failures introduced
+- Test database preserved for speed
+
+
+Task 6.3: Manual Functional Testing
+------------------------------------
+□ Start development server
+□ Test key features
+□ Verify organization context
+□ Check for console errors
+
+Commands:
+```bash
+cd src
+export BMMS_MODE=obcms
+python manage.py runserver
+```
+
+Test Checklist:
+□ Dashboard loads: _____ (Pass/Fail)
+□ Community list works: _____ (Pass/Fail)
+□ MANA assessments accessible: _____ (Pass/Fail)
+□ Coordination features work: _____ (Pass/Fail)
+□ No organization errors: _____ (Pass/Fail)
+□ Console clean: _____ (Pass/Fail)
+
+Expected Result:
+- All features functional
+- No regressions detected
+- Organization context correct
+- No errors in console
+
+
+Task 6.4: Verify Mode Switching
+--------------------------------
+□ Test OBCMS mode
+□ Switch to BMMS mode
+□ Verify settings change
+□ Test mode detection functions
+
+Commands:
+```bash
+# Test OBCMS mode
+cd src
+export BMMS_MODE=obcms
+python manage.py shell
+```
+
+Shell commands:
+```python
+>>> from obc_management.settings.bmms_config import *
+>>> is_obcms_mode()
+True  # ✅ Should be True
+>>> exit()
+```
+
+```bash
+# Test BMMS mode
+export BMMS_MODE=bmms
+python manage.py shell
+```
+
+Shell commands:
+```python
+>>> from obc_management.settings.bmms_config import *
+>>> is_bmms_mode()
+True  # ✅ Should be True
+>>> exit()
+```
+
+Expected Result:
+- Mode switching works correctly
+- Settings adjust based on mode
+- No errors during mode changes
+
+
+Task 6.5: Document All Changes
+-------------------------------
+□ List all files modified
+□ Document configuration changes
+□ Note any unexpected behavior
+□ Update reconciliation status
+
+Files Modified:
+1. src/common/middleware/organization_context.py
+   - Fixed import path (coordination → organizations)
+   - Added mode detection imports
+   - Refactored get_organization_from_request()
+   - Updated class docstring
+
+2. src/obc_management/settings/bmms_config.py
+   - NEW FILE: Mode detection module
+
+3. src/obc_management/settings/base.py
+   - Added BMMS_MODE import and setting
+   - Added DEFAULT_ORGANIZATION_CODE setting
+   - Modified RBAC_SETTINGS (3 changes)
+
+4. src/organizations/utils.py
+   - NEW FILE: Helper functions
+
+5. .env.obcms
+   - NEW FILE: OBCMS mode configuration
+
+Expected Result:
+- All changes documented
+- No unexpected modifications
+- Clear audit trail
+
+
+================================================================================
+SECTION 7: FINAL VALIDATION CHECKLIST
+================================================================================
+
+Pre-Implementation Validation (After Phase -1)
+-----------------------------------------------
+
+Organization Import:
+□ Import path corrected to organizations.models.Organization
+□ No ImportError when loading middleware
+□ Organization model accessible in shell
+□ 44 MOAs present in database
+
+BMMS Mode Configuration:
+□ bmms_config.py file exists
+□ BMMSMode class defined
+□ is_obcms_mode() returns True when BMMS_MODE=obcms
+□ is_bmms_mode() returns True when BMMS_MODE=bmms
+□ ENABLE_MULTI_TENANT = False in OBCMS mode
+□ ALLOW_ORGANIZATION_SWITCHING = False in OBCMS mode
+
+Middleware Configuration:
+□ Only ONE middleware sets request.organization
+□ Middleware is mode-aware
+□ OBCMS mode: Auto-injects OOBC organization
+□ BMMS mode: Extracts from URL/session
+□ Thread-local functions work correctly
+
+Environment Files:
+□ .env.obcms file exists with correct settings
+□ BMMS_MODE variable present
+□ DEFAULT_ORGANIZATION_CODE variable present
+
+Backward Compatibility:
+□ Existing views still work
+□ Dashboard loads without errors
+□ Community list displays correctly
+□ MANA assessments accessible
+□ No organization-related errors in console
+
+Test Suite:
+□ All existing tests pass
+□ No new test failures introduced
+□ python manage.py check passes
+□ No middleware warnings
+
+Expected Result:
+- ✅ All validation checks pass
+- ✅ Phase -1 complete
+- ✅ Ready for Phase 0 implementation
+
+
+================================================================================
+SECTION 8: SUCCESS CRITERIA & NEXT STEPS
+================================================================================
+
+Phase -1 Completion Criteria
+-----------------------------
+□ Fix 1 Complete: Organization import path corrected
+□ Fix 2 Complete: BMMS_MODE configuration added
+□ Fix 3 Complete: ENABLE_MULTI_TENANT audit done
+□ Fix 4 Complete: Middleware strategy implemented
+□ Validation Complete: All checks pass
+□ Documentation Complete: All changes documented
+
+Overall Status: _____ (Complete/Incomplete)
+
+
+Critical Conflicts Resolved
+----------------------------
+□ ✅ Middleware conflict resolved (single middleware)
+□ ✅ Wrong import path fixed (organizations.models)
+□ ✅ BMMS_MODE configuration added
+□ ✅ Mode-aware settings implemented
+□ ✅ Backward compatibility maintained
+□ ✅ No regressions introduced
+
+
+Next Steps After Phase -1
+--------------------------
+□ Create feature branch: feature/bmms-embedded-architecture
+□ Backup database: cp src/db.sqlite3 src/db.sqlite3.backup
+□ Verify Phase -1 fixes: Run comprehensive tests
+□ Proceed to Phase 0: Pre-Implementation Setup
+□ Continue with Phases 1-8: Main BMMS implementation
+
+
+Troubleshooting Notes
+----------------------
+If issues encountered:
+
+Issue: "Cannot import name 'Organization'"
+Solution: Verify Fix 1 complete (import path from organizations.models)
+
+Issue: "BMMS_MODE not defined"
+Solution: Verify Fix 2 complete (bmms_config.py and base.py settings)
+
+Issue: Middleware conflict errors
+Solution: Verify Fix 4 complete (only one middleware in MIDDLEWARE list)
+
+Issue: Multi-tenant enabled in OBCMS mode
+Solution: Set BMMS_MODE=obcms in .env, restart application
+
+
+References
+----------
+□ Main Implementation Plan: BMMS_EMBEDDED_ARCHITECTURE_IMPLEMENTATION.md
+□ Reconciliation Plan: RECONCILIATION_PLAN.md
+□ BMMS Readiness Audit: BMMS_CODEBASE_READINESS_AUDIT.md
+□ BMMS Master Readiness: BMMS_MASTER_READINESS.md
+□ Project Standards: CLAUDE.md
+
+
+================================================================================
+FINAL VERIFICATION CHECKLIST
+================================================================================
+
+Before Proceeding to Phase 0:
+□ All 4 fixes complete (Fix 1-4)
+□ All validation checks pass
+□ No middleware conflicts
+□ Mode detection works
+□ Organization context correct
+□ Existing functionality preserved
+□ Django check passes
+□ Tests passing
+□ Documentation updated
+
+PHASE -1 STATUS: _____ (COMPLETE / INCOMPLETE)
+
+If COMPLETE:
+✅ Proceed to Phase 0: Pre-Implementation Setup
+✅ Create feature branch
+✅ Begin main BMMS implementation
+
+If INCOMPLETE:
+⚠️ DO NOT PROCEED - Review failed tasks
+⚠️ Fix all issues before continuing
+⚠️ Re-run verification checklist
+
+
+================================================================================
+NOTES & CONSIDERATIONS
+================================================================================
+
+Critical Implementation Notes:
+- Only ONE middleware should set request.organization
+- OBCMS mode must default to OOBC organization
+- All mode-based logic depends on BMMS_MODE setting
+- Middleware position matters: runs on every request
+- Import paths critical: organizations.models (not coordination.models)
+
+Performance Considerations:
+- Organization caching on request object (avoid repeated DB hits)
+- Mode detection functions lightweight
+- Thread-local storage minimal overhead
+- Default org get_or_create pattern efficient
+
+Common Issues:
+- If middleware not loading: Check import paths
+- If mode detection fails: Verify BMMS_MODE in settings
+- If organization context missing: Check middleware order
+- If tests fail: Verify OBCMS mode compatibility
+
+Rollback Plan:
+- Git reset if needed: git checkout -- <file>
+- Database backup preserved: db.sqlite3.backup
+- .env.obcms can be renamed/removed
+- bmms_config.py can be deleted if issues arise
+
+Key Success Indicators:
+- Django check passes without errors
+- Mode switching works correctly
+- No middleware conflicts
+- Organization context present
+- All existing features work
+- Tests passing
+
+
+================================================================================
+END OF PHASE -1 TASK BREAKDOWN
+================================================================================
+
+ESTIMATED COMPLETION TIME: 2 hours total
+ACTUAL COMPLETION TIME: _____ hours
+
+PHASE -1 SIGN-OFF:
+Technical Lead: _________________ Date: _____________
+QA Verification: _________________ Date: _____________
+Ready for Phase 0: _____ (YES / NO)
+
+NEXT PHASE: Phase 0 - Pre-Implementation Setup
+DOCUMENT: BMMS_EMBEDDED_ARCHITECTURE_IMPLEMENTATION.md

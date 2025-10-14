@@ -1,0 +1,986 @@
+# PHASE 6: MANA APP MODEL MIGRATION
+
+**Phase:** 6 of 12
+**Priority:** CRITICAL - DATA PRIVACY ACT COMPLIANCE
+**Complexity:** MODERATE
+**Dependencies:** Phase 5 (Communities Migration) complete
+**Estimated Effort:** 8 hours
+**Status:** [ ] Not Started  [ ] In Progress  [ ] Complete
+**Started:** ________________  **Completed:** ________________
+**Assignee:** ________________  **Reviewer:** ________________
+
+---
+
+## OVERVIEW
+
+Migrate MANA (Multi-sectoral Approach to Needs Assessment) app models to multi-tenant architecture. This phase is **CRITICAL** as Assessment model contains beneficiary data subject to Data Privacy Act 2012 compliance.
+
+**⚠️ CRITICAL SECURITY RISK:** Currently, ALL MOAs can see each other's beneficiary assessment data. This violates Data Privacy Act 2012.
+
+### Models to Migrate
+- Assessment (CRITICAL - beneficiary data)
+- AssessmentResponse
+- ManaWorkshop
+- NeedsCategory (reference data - may not need organization)
+
+### Data Privacy Considerations
+- Assessment contains personal beneficiary information
+- Must enforce strict organization-based isolation
+- No cross-organization data leaks permitted
+- Audit logging recommended for compliance
+
+---
+
+## PREREQUISITES
+
+### Required Completions
+- [ ] Phase 5 complete (Communities migrated)
+- [ ] Three-step migration pattern understood
+- [ ] populate_organization_field command tested
+- [ ] Default OOBC organization exists
+
+### Verify Phase 5
+```bash
+python manage.py shell
+
+>>> from communities.models import OBCCommunity
+>>> OBCCommunity.all_objects.filter(organization__isnull=True).count()
+0  # ✓ Phase 5 complete
+
+>>> exit()
+```
+
+---
+
+## TASK 6.1: BACKUP DATABASE
+
+**Priority:** CRITICAL
+**Time:** 2 minutes
+
+### Commands
+```bash
+cd src/
+
+# Create timestamped backup
+cp db.sqlite3 db.sqlite3.backup-phase6-$(date +%Y%m%d-%H%M%S)
+
+# Verify backup
+ls -lh db.sqlite3.backup-phase6-*
+
+# Expected: Backup file with current timestamp exists
+```
+
+### Checklist
+- [ ] Backup created
+- [ ] Backup verified
+- [ ] Backup location documented
+
+---
+
+## TASK 6.2: UPDATE ASSESSMENT MODEL
+
+**Priority:** CRITICAL - DATA PRIVACY ACT
+**Time:** 20 minutes
+
+### Current Model (BEFORE)
+```python
+# File: src/mana/models.py
+
+class Assessment(models.Model):
+    """MANA Assessment model."""
+
+    title = models.CharField(max_length=200)
+    assessment_type = models.CharField(max_length=50, choices=[
+        ('needs', 'Needs Assessment'),
+        ('impact', 'Impact Assessment'),
+        ('baseline', 'Baseline Study'),
+    ])
+    status = models.CharField(max_length=20, choices=[
+        ('draft', 'Draft'),
+        ('ongoing', 'Ongoing'),
+        ('completed', 'Completed'),
+    ])
+    date_started = models.DateField()
+    date_completed = models.DateField(blank=True, null=True)
+
+    # Beneficiary information (SENSITIVE DATA)
+    target_beneficiaries = models.IntegerField()
+    actual_beneficiaries = models.IntegerField(blank=True, null=True)
+    beneficiary_profile = models.TextField(blank=True)
+
+    # Assessment details
+    assessment_team = models.TextField(blank=True)
+    methodology = models.TextField(blank=True)
+    findings = models.TextField(blank=True)
+    recommendations = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "mana_assessment"
+        ordering = ["-created_at"]
+        verbose_name = "Assessment"
+        verbose_name_plural = "Assessments"
+```
+
+### Updated Model (AFTER)
+```python
+# File: src/mana/models.py
+
+from organizations.models import OrganizationScopedModel  # ADD IMPORT
+
+class Assessment(OrganizationScopedModel):  # CHANGE BASE CLASS
+    """MANA Assessment model with organization scoping.
+
+    Contains sensitive beneficiary data - strict organization isolation required
+    for Data Privacy Act 2012 compliance.
+    """
+
+    title = models.CharField(max_length=200)
+    assessment_type = models.CharField(max_length=50, choices=[
+        ('needs', 'Needs Assessment'),
+        ('impact', 'Impact Assessment'),
+        ('baseline', 'Baseline Study'),
+    ])
+    status = models.CharField(max_length=20, choices=[
+        ('draft', 'Draft'),
+        ('ongoing', 'Ongoing'),
+        ('completed', 'Completed'),
+    ])
+    date_started = models.DateField()
+    date_completed = models.DateField(blank=True, null=True)
+
+    # Beneficiary information (SENSITIVE DATA - PROTECTED BY ORG SCOPING)
+    target_beneficiaries = models.IntegerField()
+    actual_beneficiaries = models.IntegerField(blank=True, null=True)
+    beneficiary_profile = models.TextField(blank=True)
+
+    # Assessment details
+    assessment_team = models.TextField(blank=True)
+    methodology = models.TextField(blank=True)
+    findings = models.TextField(blank=True)
+    recommendations = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # organization field inherited from OrganizationScopedModel
+    # objects = OrganizationScopedManager() (auto-filtering for data privacy)
+    # all_objects = models.Manager() (OCM/admin only)
+
+    class Meta:
+        db_table = "mana_assessment"
+        ordering = ["organization", "-created_at"]  # ADD organization
+        verbose_name = "Assessment"
+        verbose_name_plural = "Assessments"
+        # Data Privacy Act 2012 compliance via organization-based isolation
+```
+
+### Checklist
+- [ ] Open src/mana/models.py
+- [ ] Add import: `from organizations.models import OrganizationScopedModel`
+- [ ] Change Assessment base class to OrganizationScopedModel
+- [ ] Add "organization" to Meta.ordering
+- [ ] Add docstring note about Data Privacy Act compliance
+- [ ] Save file
+- [ ] Run: `python manage.py check`
+
+---
+
+## TASK 6.3: UPDATE ASSESSMENTRESPONSE MODEL
+
+**Priority:** HIGH
+**Time:** 15 minutes
+
+### Model Update
+```python
+# File: src/mana/models.py
+
+from organizations.models import OrganizationScopedModel
+
+class AssessmentResponse(OrganizationScopedModel):  # CHANGE BASE CLASS
+    """Assessment response data with organization scoping."""
+
+    assessment = models.ForeignKey(
+        Assessment,
+        on_delete=models.CASCADE,
+        related_name='responses'
+    )
+    respondent_name = models.CharField(max_length=200, blank=True)
+    respondent_role = models.CharField(max_length=100, blank=True)
+    response_date = models.DateField()
+
+    # Response data
+    question = models.TextField()
+    answer = models.TextField()
+    notes = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "mana_assessment_response"
+        ordering = ["organization", "assessment", "response_date"]  # ADD organization
+        verbose_name = "Assessment Response"
+        verbose_name_plural = "Assessment Responses"
+```
+
+### Checklist
+- [ ] Change AssessmentResponse base class to OrganizationScopedModel
+- [ ] Add "organization" to Meta.ordering
+- [ ] Save file
+- [ ] Run: `python manage.py check`
+
+---
+
+## TASK 6.4: UPDATE MANAWORKSHOP MODEL
+
+**Priority:** MEDIUM
+**Time:** 10 minutes
+
+### Model Update
+```python
+# File: src/mana/models.py
+
+from organizations.models import OrganizationScopedModel
+
+class ManaWorkshop(OrganizationScopedModel):  # CHANGE BASE CLASS
+    """MANA workshop/training event with organization scoping."""
+
+    title = models.CharField(max_length=200)
+    workshop_type = models.CharField(max_length=50)
+    date = models.DateField()
+    venue = models.CharField(max_length=200)
+
+    participants_count = models.IntegerField(default=0)
+    facilitators = models.TextField(blank=True)
+    objectives = models.TextField(blank=True)
+    outcomes = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "mana_workshop"
+        ordering = ["organization", "-date"]  # ADD organization
+        verbose_name = "MANA Workshop"
+        verbose_name_plural = "MANA Workshops"
+```
+
+### Checklist
+- [ ] Change ManaWorkshop base class to OrganizationScopedModel
+- [ ] Add "organization" to Meta.ordering
+- [ ] Save file
+- [ ] Run: `python manage.py check`
+
+---
+
+## TASK 6.5: REVIEW NEEDSCATEGORY MODEL
+
+**Priority:** LOW
+**Time:** 5 minutes
+
+### Determine if Organization Scoping Needed
+
+**NeedsCategory** may be **reference data** shared across all organizations (e.g., "Health", "Education", "Infrastructure").
+
+### Decision Criteria
+```python
+# If NeedsCategory is reference data (shared):
+class NeedsCategory(models.Model):  # Keep as-is (no org scoping)
+    """Needs category reference data (shared across all organizations)."""
+    name = models.CharField(max_length=100)
+    # No organization field needed
+
+# If NeedsCategory is organization-specific:
+class NeedsCategory(OrganizationScopedModel):  # Add org scoping
+    """Organization-specific needs categories."""
+    name = models.CharField(max_length=100)
+    # organization field inherited
+```
+
+### Checklist
+- [ ] Review NeedsCategory usage in codebase
+- [ ] Determine if shared or org-specific
+- [ ] If shared: Leave as-is (no migration)
+- [ ] If org-specific: Add OrganizationScopedModel inheritance
+- [ ] Document decision in comments
+
+**Recommendation:** Leave as shared reference data (no org field).
+
+---
+
+## TASK 6.6: GENERATE STEP 1 MIGRATION (NULLABLE)
+
+**Priority:** CRITICAL
+**Time:** 5 minutes
+
+### Commands
+```bash
+cd src/
+
+# Generate migration for nullable organization field
+python manage.py makemigrations mana --name add_organization_field_nullable
+
+# Expected output:
+# Migrations for 'mana':
+#   mana/migrations/000X_add_organization_field_nullable.py
+#     - Add field organization to assessment
+#     - Add field organization to assessmentresponse
+#     - Add field organization to manaworkshop
+#     - Create index on assessment (organization)
+#     - Create index on assessmentresponse (organization)
+#     - Create index on manaworkshop (organization)
+```
+
+### Checklist
+- [ ] Run makemigrations command
+- [ ] Verify migration file created
+- [ ] Review migration (3 models if NeedsCategory unchanged)
+- [ ] Confirm nullable FK + indexes added
+
+---
+
+## TASK 6.7: APPLY STEP 1 MIGRATION
+
+**Priority:** CRITICAL
+**Time:** 2 minutes
+
+### Commands
+```bash
+cd src/
+
+# Apply migration
+python manage.py migrate mana
+
+# Expected output:
+# Running migrations:
+#   Applying mana.000X_add_organization_field_nullable... OK
+```
+
+### Verification
+```bash
+python manage.py shell
+
+>>> from mana.models import Assessment
+>>> Assessment._meta.get_field('organization').null
+True  # ✓ Field is nullable
+
+>>> exit()
+```
+
+### Checklist
+- [ ] Migration applied successfully
+- [ ] Organization field exists (nullable)
+
+---
+
+## TASK 6.8: POPULATE ORGANIZATION FIELD (STEP 2)
+
+**Priority:** CRITICAL - DATA PRIVACY
+**Time:** 10 minutes
+
+### Commands
+```bash
+cd src/
+
+# DRY RUN FIRST
+python manage.py populate_organization_field --app mana --dry-run
+
+# Expected output:
+# Using default organization: OOBC (ID: 1)
+# DRY RUN MODE - No changes will be made
+#
+# Found 3 organization-scoped models
+#
+# Processing mana.Assessment...
+#   Found 15 records without organization
+#   Would update 15 records (DRY RUN)
+#
+# Processing mana.AssessmentResponse...
+#   Found 120 records without organization
+#   Would update 120 records (DRY RUN)
+#
+# Processing mana.ManaWorkshop...
+#   Found 8 records without organization
+#   Would update 8 records (DRY RUN)
+#
+# DRY RUN COMPLETE: Would have updated 143 records total
+```
+
+### After Dry Run Review
+```bash
+# ACTUAL RUN
+python manage.py populate_organization_field --app mana
+
+# Expected output:
+# Using default organization: OOBC (ID: 1)
+# Found 3 organization-scoped models
+#
+# Processing mana.Assessment...
+#   Found 15 records without organization
+#   Updated 15 records
+#
+# [etc...]
+#
+# SUCCESS: Updated 143 records total
+```
+
+### Checklist
+- [ ] Dry-run completed
+- [ ] Record counts reviewed
+- [ ] Actual command executed
+- [ ] Success message confirmed
+
+---
+
+## TASK 6.9: VERIFY POPULATION (CRITICAL)
+
+**Priority:** CRITICAL - DATA PRIVACY
+**Time:** 10 minutes
+
+### Verification Commands
+```bash
+python manage.py shell
+
+>>> from mana.models import Assessment, AssessmentResponse
+>>> from organizations.models import Organization
+
+# Get OOBC organization
+>>> oobc = Organization.objects.get(code='OOBC')
+
+# CRITICAL: Verify NO records without organization
+>>> Assessment.all_objects.filter(organization__isnull=True).count()
+0  # ✓ All assessments have organization (Data Privacy compliant)
+
+>>> AssessmentResponse.all_objects.filter(organization__isnull=True).count()
+0  # ✓ All responses have organization
+
+# Verify all belong to OOBC
+>>> Assessment.all_objects.filter(organization=oobc).count()
+15  # ✓ Should match total
+
+>>> Assessment.all_objects.count()
+15  # ✓ Should match above
+
+# Check sensitive data access
+>>> assessment = Assessment.objects.first()
+>>> assessment.beneficiary_profile
+'[beneficiary data]'  # ✓ Sensitive data accessible only to OOBC
+
+>>> exit()
+```
+
+### Checklist
+- [ ] Zero NULL organizations (Data Privacy requirement)
+- [ ] All records assigned to OOBC
+- [ ] Record counts match
+- [ ] Sensitive data protected by org scoping
+
+**⚠️ STOP:** Do NOT proceed to Step 3 if ANY NULL organizations exist!
+
+---
+
+## TASK 6.10: GENERATE STEP 3 MIGRATION (REQUIRED)
+
+**Priority:** CRITICAL
+**Time:** 5 minutes
+
+### Commands
+```bash
+cd src/
+
+# Generate migration to make organization required
+python manage.py makemigrations mana --name make_organization_required
+
+# Expected output:
+# Migrations for 'mana':
+#   mana/migrations/000Y_make_organization_required.py
+#     - Alter field organization on assessment (NOT NULL)
+#     - Alter field organization on assessmentresponse
+#     - Alter field organization on manaworkshop
+```
+
+### Checklist
+- [ ] Migration file created
+- [ ] Review migration (removes null=True)
+- [ ] 3 models included
+
+---
+
+## TASK 6.11: APPLY STEP 3 MIGRATION
+
+**Priority:** CRITICAL
+**Time:** 2 minutes
+
+### Commands
+```bash
+cd src/
+
+# Apply migration
+python manage.py migrate mana
+
+# Expected output:
+# Running migrations:
+#   Applying mana.000Y_make_organization_required... OK
+```
+
+### Verification
+```bash
+python manage.py shell
+
+>>> from mana.models import Assessment
+>>> Assessment._meta.get_field('organization').null
+False  # ✓ Field is required (Data Privacy enforced at DB level)
+
+>>> exit()
+```
+
+### Checklist
+- [ ] Migration applied successfully
+- [ ] Organization field required (NOT NULL constraint)
+- [ ] Database-level enforcement active
+
+---
+
+## TASK 6.12: TEST DATA PRIVACY ISOLATION
+
+**Priority:** CRITICAL - DATA PRIVACY ACT
+**Time:** 20 minutes
+
+### Test Multi-Tenant Data Privacy
+```bash
+python manage.py shell
+
+>>> from organizations.models import Organization
+>>> from organizations.models.scoped import set_current_organization
+>>> from mana.models import Assessment
+
+# Create test MOA organization
+>>> moh = Organization.objects.create(
+...     code='MOH',
+...     name='Ministry of Health',
+...     short_name='MOH',
+...     organization_type='ministry',
+...     is_active=True
+... )
+
+# Create assessment with MOH beneficiary data
+>>> set_current_organization(moh)
+>>> moh_assessment = Assessment.objects.create(
+...     title='MOH Health Assessment',
+...     assessment_type='needs',
+...     status='ongoing',
+...     date_started='2025-01-01',
+...     target_beneficiaries=100,
+...     beneficiary_profile='MOH beneficiary data (SENSITIVE)',
+... )
+
+# CRITICAL TEST: Switch to OOBC - should NOT see MOH beneficiary data
+>>> oobc = Organization.objects.get(code='OOBC')
+>>> set_current_organization(oobc)
+
+# Verify data isolation (Data Privacy Act compliance)
+>>> Assessment.objects.filter(title='MOH Health Assessment').count()
+0  # ✓ OOBC cannot see MOH assessment data
+
+>>> Assessment.objects.filter(beneficiary_profile__icontains='MOH').count()
+0  # ✓ OOBC cannot search MOH beneficiary data
+
+# Verify OOBC sees only its own assessments
+>>> Assessment.objects.count()
+15  # ✓ Only OOBC assessments visible
+
+# Switch to MOH - should see only its data
+>>> set_current_organization(moh)
+>>> Assessment.objects.filter(title='MOH Health Assessment').count()
+1  # ✓ MOH sees its assessment
+
+>>> Assessment.objects.count()
+1  # ✓ Only MOH assessment visible
+
+# CRITICAL: Test direct access attempt (should fail)
+>>> set_current_organization(oobc)
+>>> try:
+...     # Attempt direct access to MOH assessment
+...     Assessment.objects.get(id=moh_assessment.id)
+...     print("FAIL: Cross-org access succeeded!")
+... except Assessment.DoesNotExist:
+...     print("PASS: Cross-org access blocked by auto-filtering")
+PASS: Cross-org access blocked by auto-filtering  # ✓ Data Privacy enforced
+
+# Cleanup
+>>> set_current_organization(moh)
+>>> moh_assessment.delete()
+>>> moh.delete()
+
+>>> exit()
+```
+
+### Data Privacy Checklist
+- [ ] MOH organization created
+- [ ] MOH assessment with sensitive data created
+- [ ] OOBC cannot see MOH assessment (filter query)
+- [ ] OOBC cannot search MOH beneficiary data (search query)
+- [ ] OOBC cannot access MOH assessment by ID (direct access)
+- [ ] MOH sees only its assessment
+- [ ] Data Privacy Act compliance verified
+- [ ] Test data cleaned up
+
+**✅ DATA PRIVACY ACT 2012 COMPLIANCE VERIFIED**
+
+---
+
+## TASK 6.13: UPDATE ADMIN INTERFACE
+
+**Priority:** HIGH
+**Time:** 25 minutes
+
+### Updated Admin with Data Privacy Considerations
+```python
+# File: src/mana/admin.py
+
+from django.contrib import admin
+from django.utils.html import format_html
+from .models import Assessment
+
+@admin.register(Assessment)
+class AssessmentAdmin(admin.ModelAdmin):
+    list_display = [
+        'title',
+        'organization',  # ADD
+        'assessment_type',
+        'status',
+        'target_beneficiaries',
+        'date_started',
+        'data_privacy_indicator',  # ADD
+    ]
+    list_filter = [
+        'organization',  # ADD - Filter by org first
+        'assessment_type',
+        'status',
+        'date_started',
+    ]
+    search_fields = [
+        'title',
+        'organization__name',  # ADD
+        'assessment_team',
+    ]
+    readonly_fields = ['created_at', 'updated_at']
+
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'organization', 'assessment_type', 'status')
+        }),
+        ('Schedule', {
+            'fields': ('date_started', 'date_completed')
+        }),
+        ('Beneficiary Data (SENSITIVE)', {
+            'fields': (
+                'target_beneficiaries',
+                'actual_beneficiaries',
+                'beneficiary_profile',
+            ),
+            'classes': ('collapse',),  # Collapsed by default
+            'description': 'Protected by Data Privacy Act 2012. Access restricted to organization members only.'
+        }),
+        ('Assessment Details', {
+            'fields': ('assessment_team', 'methodology', 'findings', 'recommendations'),
+            'classes': ('collapse',),
+        }),
+        ('Audit', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',),
+        }),
+    )
+
+    def data_privacy_indicator(self, obj):
+        """Visual indicator for data privacy protection."""
+        return format_html(
+            '<span style="color: green;">🔒 Protected</span>'
+        )
+    data_privacy_indicator.short_description = 'Privacy Status'
+
+    def get_queryset(self, request):
+        """Filter by organization (Data Privacy Act compliance)."""
+        qs = super().get_queryset(request)
+
+        # Superusers see all (audit purposes)
+        if request.user.is_superuser:
+            return qs
+
+        # OCM sees all (read-only aggregation)
+        if hasattr(request.user, 'organization') and request.user.organization.code == 'OCM':
+            return qs
+
+        # Regular users see only their organization (Data Privacy Act)
+        if hasattr(request.user, 'organization'):
+            return qs.filter(organization=request.user.organization)
+
+        # No organization = no access
+        return qs.none()
+
+    def save_model(self, request, obj, form, change):
+        """Auto-assign organization on create."""
+        if not change:  # Creating new
+            if hasattr(request.user, 'organization'):
+                obj.organization = request.user.organization
+        super().save_model(request, obj, form, change)
+
+    def has_view_permission(self, request, obj=None):
+        """Check view permission (Data Privacy)."""
+        if obj is None:
+            return super().has_view_permission(request)
+
+        # Superuser and OCM can view all
+        if request.user.is_superuser:
+            return True
+        if hasattr(request.user, 'organization') and request.user.organization.code == 'OCM':
+            return True
+
+        # Regular users can only view their organization's data
+        if hasattr(request.user, 'organization'):
+            return obj.organization == request.user.organization
+
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        """Check edit permission (Data Privacy)."""
+        if obj is None:
+            return super().has_change_permission(request)
+
+        # Superusers can edit all
+        if request.user.is_superuser:
+            return True
+
+        # OCM is read-only (cannot edit)
+        if hasattr(request.user, 'organization') and request.user.organization.code == 'OCM':
+            return False
+
+        # Regular users can only edit their organization's data
+        if hasattr(request.user, 'organization'):
+            return obj.organization == request.user.organization
+
+        return False
+```
+
+### Checklist
+- [ ] Add 'organization' to list_display
+- [ ] Add 'organization' to list_filter (FIRST filter)
+- [ ] Add 'organization__name' to search_fields
+- [ ] Add data_privacy_indicator method
+- [ ] Update fieldsets with Data Privacy Act note
+- [ ] Override get_queryset() for org filtering
+- [ ] Override save_model() for auto-assignment
+- [ ] Override has_view_permission() for Data Privacy
+- [ ] Override has_change_permission() for Data Privacy
+- [ ] Save file
+- [ ] Repeat for AssessmentResponse and ManaWorkshop admins
+
+---
+
+## TASK 6.14: RUN TEST SUITE
+
+**Priority:** CRITICAL
+**Time:** 15 minutes
+
+### Commands
+```bash
+cd src/
+
+# Run MANA app tests
+pytest mana/tests/ -v
+
+# Expected: All tests pass (or minimal updates needed)
+```
+
+### Common Test Fixes
+```python
+# Fix: Tests need organization context
+from organizations.models.scoped import set_current_organization
+from organizations.utils import get_default_organization
+
+class TestAssessment:
+    def setUp(self):
+        set_current_organization(get_default_organization())
+
+    def test_create_assessment(self):
+        # Organization auto-assigned from context
+        assessment = Assessment.objects.create(
+            title='Test',
+            assessment_type='needs',
+            status='draft',
+            date_started='2025-01-01',
+            target_beneficiaries=50
+        )
+        assert assessment.organization.code == 'OOBC'
+```
+
+### Checklist
+- [ ] Test suite executed
+- [ ] Tests pass OR
+- [ ] Tests updated for organization scoping
+- [ ] Data privacy tests added
+- [ ] Re-run tests after fixes
+
+---
+
+## TASK 6.15: VERIFY BACKWARD COMPATIBILITY
+
+**Priority:** CRITICAL
+**Time:** 20 minutes
+
+### Manual Testing
+```bash
+cd src/
+python manage.py runserver
+
+# Test in browser:
+1. Log in as admin
+2. Navigate to /mana/assessments/
+3. Verify assessment list loads
+4. Create new assessment
+5. View assessment detail (check beneficiary data visible)
+6. Edit assessment
+7. Delete test assessment
+8. Check admin interface
+9. Verify no errors in console
+```
+
+### Functional Checklist
+- [ ] Assessment list displays
+- [ ] Assessment detail view works
+- [ ] Create assessment form works
+- [ ] Beneficiary data visible (same org only)
+- [ ] Edit assessment works
+- [ ] Delete assessment works
+- [ ] Admin filtering by org works
+- [ ] No errors in logs
+
+---
+
+## TASK 6.16: DATA PRIVACY ACT COMPLIANCE AUDIT
+
+**Priority:** CRITICAL
+**Time:** 15 minutes
+
+### Compliance Checklist
+
+#### Data Access Controls
+- [ ] Organization-based isolation enforced at database level
+- [ ] Auto-filtering prevents cross-org queries
+- [ ] Direct ID access blocked by OrganizationScopedManager
+- [ ] Admin interface enforces org filtering
+
+#### Beneficiary Data Protection
+- [ ] beneficiary_profile field protected by org scoping
+- [ ] Search queries respect org boundaries
+- [ ] No cross-org data leakage in list views
+- [ ] No cross-org data leakage in detail views
+
+#### Audit Requirements
+- [ ] created_at and updated_at fields present
+- [ ] Organization assignment logged
+- [ ] Admin actions logged (via Django admin log)
+- [ ] Superuser access logged
+
+#### OCM Access
+- [ ] OCM has read-only access (aggregation)
+- [ ] OCM cannot edit beneficiary data
+- [ ] OCM access clearly documented
+
+### Documentation
+```python
+# Add to Assessment model docstring:
+"""
+Data Privacy Act 2012 Compliance:
+- Beneficiary data isolated by organization
+- Auto-filtering enforces access control
+- OCM has read-only aggregation access
+- Superuser access for audit purposes only
+- Admin actions logged via Django admin
+"""
+```
+
+### Checklist
+- [ ] All access controls verified
+- [ ] Beneficiary data protected
+- [ ] Audit trail complete
+- [ ] OCM access documented
+- [ ] Compliance notes added to model
+
+**✅ DATA PRIVACY ACT 2012 COMPLIANCE CERTIFIED**
+
+---
+
+## VERIFICATION CHECKLIST
+
+### Model Migration Complete
+- [ ] All 3 models inherit from OrganizationScopedModel
+- [ ] Three-step migration complete
+- [ ] Zero NULL organizations
+- [ ] NeedsCategory decision documented
+
+### Data Privacy Compliance
+- [ ] Organization-based isolation enforced
+- [ ] Beneficiary data protected
+- [ ] Cross-org access prevented
+- [ ] OCM read-only access configured
+- [ ] Audit trail complete
+
+### Admin Interface
+- [ ] Organization filtering works
+- [ ] Data privacy indicator visible
+- [ ] get_queryset() enforces org isolation
+- [ ] has_view_permission() checks org access
+- [ ] has_change_permission() prevents unauthorized edits
+
+### Testing
+- [ ] Test suite passes (99.2%+)
+- [ ] Data privacy tests pass
+- [ ] Backward compatibility verified
+
+---
+
+## ROLLBACK PROCEDURE
+
+Same as Phase 5 - see phase5_communities_migration.txt
+
+---
+
+## COMPLETION CRITERIA
+
+Phase 6 is complete when:
+
+✅ **All 3 models migrated** (Assessment, AssessmentResponse, ManaWorkshop)
+✅ **Data Privacy Act compliance verified**
+✅ **Zero NULL organizations**
+✅ **Cross-org access prevented**
+✅ **Beneficiary data protected**
+✅ **Admin interface secured**
+✅ **Tests passing** (99.2%+)
+✅ **Backward compatibility** verified
+
+---
+
+## NEXT PHASE
+
+**Proceed to:** Phase 7 - Remaining Apps Migration
+
+**File:** phase7_remaining_apps_migration.txt
+
+---
+
+## REFERENCES
+
+- Data Privacy Act of 2012 (Republic Act No. 10173)
+- BMMS_EMBEDDED_ARCHITECTURE_IMPLEMENTATION.md - Phase 6
+- OBCMS_ARCHITECTURAL_ANALYSIS.md - MANA module (0% multi-tenant)
+- CLAUDE.md - Data Privacy guidelines
+
+---
+
+**Phase 6 Status:** [ ] Not Started  [ ] In Progress  [ ] Complete
+**Data Privacy Compliance:** [ ] Verified  **Date:** ________________
+**Sign-off:** ________________

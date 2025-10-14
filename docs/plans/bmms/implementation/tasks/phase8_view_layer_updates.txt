@@ -1,0 +1,612 @@
+PHASE 8: VIEW LAYER UPDATES
+BMMS Embedded Architecture Implementation
+============================================================
+
+PRIORITY: HIGH
+COMPLEXITY: Moderate
+DEPENDENCIES: Phase 7 (Model Migration) must be complete
+ESTIMATED SCOPE: 50+ views, 30+ API endpoints, 20+ admin files
+
+============================================================
+OBJECTIVES
+============================================================
+
+1. Add organization awareness to all function-based views
+2. Add organization awareness to all class-based views
+3. Add organization awareness to all API views
+4. Ensure organization context available in templates
+5. Maintain backward compatibility with OBCMS mode
+
+============================================================
+TASK BREAKDOWN
+============================================================
+
+-----------------------------------------------------------
+TASK 8.1: Function-Based View Updates
+-----------------------------------------------------------
+
+DESCRIPTION:
+Add @require_organization decorator to all function-based views across all apps.
+
+AFFECTED APPS:
+- communities/ (10+ views)
+- mana/ (8+ views)
+- coordination/ (12+ views)
+- monitoring/ (8+ views)
+- planning/ (6+ views)
+- budget_preparation/ (5+ views)
+- budget_execution/ (5+ views)
+- policies/ (4+ views)
+
+IMPLEMENTATION PATTERN:
+
+BEFORE:
+```python
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def community_list(request):
+    """List all OBC communities."""
+    communities = OBCCommunity.objects.all()
+    return render(request, 'communities/list.html', {
+        'communities': communities
+    })
+```
+
+AFTER:
+```python
+from django.contrib.auth.decorators import login_required
+from common.decorators.organization import require_organization
+
+@login_required
+@require_organization  # NEW: Ensures organization context exists
+def community_list(request):
+    """List all OBC communities (organization-scoped)."""
+    # Auto-filtered by OrganizationScopedManager
+    communities = OBCCommunity.objects.all()
+
+    return render(request, 'communities/list.html', {
+        'communities': communities,
+        'organization': request.organization,  # Available in template
+    })
+```
+
+CHECKLIST:
+
+Communities Views (src/communities/views.py):
+[ ] community_list - Add @require_organization
+[ ] community_detail - Add @require_organization
+[ ] community_create - Add @require_organization
+[ ] community_edit - Add @require_organization
+[ ] community_delete - Add @require_organization
+[ ] Add request.organization to all contexts
+
+Common Views (src/common/views/communities.py):
+[ ] provincial_view - Add @require_organization
+[ ] municipal_view - Add @require_organization
+[ ] regional_dashboard - Add @require_organization
+[ ] Add request.organization to all contexts
+
+MANA Views (src/mana/views.py):
+[ ] assessment_list - Add @require_organization
+[ ] assessment_detail - Add @require_organization
+[ ] assessment_create - Add @require_organization
+[ ] assessment_edit - Add @require_organization
+[ ] assessment_response_create - Add @require_organization
+[ ] assessment_report - Add @require_organization
+[ ] regional_overview - Add @require_organization
+[ ] Add request.organization to all contexts
+
+Coordination Views (src/coordination/views.py):
+[ ] engagement_list - Add @require_organization
+[ ] engagement_detail - Add @require_organization
+[ ] engagement_create - Add @require_organization
+[ ] partnership_list - Add @require_organization
+[ ] partnership_detail - Add @require_organization
+[ ] partnership_create - Add @require_organization
+[ ] activity_list - Add @require_organization
+[ ] activity_detail - Add @require_organization
+[ ] activity_create - Add @require_organization
+[ ] communication_list - Add @require_organization
+[ ] communication_send - Add @require_organization
+[ ] Add request.organization to all contexts
+
+Monitoring Views (src/monitoring/views.py):
+[ ] ppa_list - Add @require_organization
+[ ] ppa_detail - Add @require_organization
+[ ] ppa_create - Add @require_organization
+[ ] indicator_tracking - Add @require_organization
+[ ] progress_report_create - Add @require_organization
+[ ] progress_report_list - Add @require_organization
+[ ] performance_dashboard - Add @require_organization
+[ ] Add request.organization to all contexts
+
+Planning Views (src/planning/views.py):
+[ ] strategic_plan_list - Add @require_organization
+[ ] strategic_plan_detail - Add @require_organization
+[ ] strategic_plan_create - Add @require_organization
+[ ] objective_create - Add @require_organization
+[ ] annual_plan_create - Add @require_organization
+[ ] Add request.organization to all contexts
+
+Budget Preparation Views (src/budget_preparation/views.py):
+[ ] proposal_list - Add @require_organization
+[ ] proposal_detail - Add @require_organization
+[ ] proposal_create - Add @require_organization
+[ ] proposal_submit - Add @require_organization
+[ ] Add request.organization to all contexts
+
+Budget Execution Views (src/budget_execution/views.py):
+[ ] obligation_list - Add @require_organization
+[ ] obligation_create - Add @require_organization
+[ ] disbursement_list - Add @require_organization
+[ ] disbursement_create - Add @require_organization
+[ ] Add request.organization to all contexts
+
+Policies Views (src/recommendations/views.py):
+[ ] policy_recommendation_list - Add @require_organization
+[ ] policy_recommendation_create - Add @require_organization
+[ ] policy_tracking_dashboard - Add @require_organization
+[ ] Add request.organization to all contexts
+
+-----------------------------------------------------------
+TASK 8.2: Class-Based View Updates
+-----------------------------------------------------------
+
+DESCRIPTION:
+Add OrganizationRequiredMixin to all class-based views.
+
+AFFECTED VIEWS:
+- ListView (20+ views)
+- DetailView (15+ views)
+- CreateView (10+ views)
+- UpdateView (10+ views)
+- DeleteView (5+ views)
+
+IMPLEMENTATION PATTERN:
+
+BEFORE:
+```python
+from django.views.generic import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class AssessmentListView(LoginRequiredMixin, ListView):
+    model = Assessment
+    template_name = 'mana/assessment_list.html'
+    context_object_name = 'assessments'
+    paginate_by = 20
+```
+
+AFTER:
+```python
+from django.views.generic import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from common.mixins.organization import OrganizationRequiredMixin
+
+class AssessmentListView(OrganizationRequiredMixin, LoginRequiredMixin, ListView):
+    model = Assessment
+    template_name = 'mana/assessment_list.html'
+    context_object_name = 'assessments'
+    paginate_by = 20
+
+    def get_queryset(self):
+        """Get assessments for current organization (auto-filtered)."""
+        return super().get_queryset()  # Already filtered by OrganizationScopedManager
+
+    def get_context_data(self, **kwargs):
+        """Add organization to context."""
+        context = super().get_context_data(**kwargs)
+        context['organization'] = self.request.organization
+        return context
+```
+
+CHECKLIST:
+
+Communities CBVs:
+[ ] OBCCommunityListView - Add OrganizationRequiredMixin
+[ ] OBCCommunityDetailView - Add OrganizationRequiredMixin
+[ ] OBCCommunityCreateView - Add OrganizationRequiredMixin
+[ ] OBCCommunityUpdateView - Add OrganizationRequiredMixin
+[ ] Add organization to context_data
+
+MANA CBVs:
+[ ] AssessmentListView - Add OrganizationRequiredMixin
+[ ] AssessmentDetailView - Add OrganizationRequiredMixin
+[ ] AssessmentCreateView - Add OrganizationRequiredMixin
+[ ] AssessmentUpdateView - Add OrganizationRequiredMixin
+[ ] Add organization to context_data
+
+Coordination CBVs:
+[ ] EngagementListView - Add OrganizationRequiredMixin
+[ ] PartnershipListView - Add OrganizationRequiredMixin
+[ ] ActivityListView - Add OrganizationRequiredMixin
+[ ] Add organization to context_data
+
+Monitoring CBVs:
+[ ] PPAListView - Add OrganizationRequiredMixin
+[ ] PPADetailView - Add OrganizationRequiredMixin
+[ ] IndicatorListView - Add OrganizationRequiredMixin
+[ ] Add organization to context_data
+
+Planning CBVs:
+[ ] StrategicPlanListView - Add OrganizationRequiredMixin
+[ ] StrategicPlanDetailView - Add OrganizationRequiredMixin
+[ ] Add organization to context_data
+
+-----------------------------------------------------------
+TASK 8.3: API View Updates (Django REST Framework)
+-----------------------------------------------------------
+
+DESCRIPTION:
+Add OrganizationAccessPermission to all API views and ensure proper filtering.
+
+AFFECTED VIEWSETS:
+- communities/ (3 viewsets)
+- mana/ (4 viewsets)
+- coordination/ (5 viewsets)
+- monitoring/ (4 viewsets)
+- planning/ (3 viewsets)
+- budget_preparation/ (2 viewsets)
+- budget_execution/ (2 viewsets)
+
+IMPLEMENTATION PATTERN:
+
+BEFORE:
+```python
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+
+class OBCCommunityViewSet(viewsets.ModelViewSet):
+    queryset = OBCCommunity.objects.all()
+    serializer_class = OBCCommunitySerializer
+    permission_classes = [IsAuthenticated]
+```
+
+AFTER:
+```python
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+from common.permissions.organization import OrganizationAccessPermission
+
+class OBCCommunityViewSet(viewsets.ModelViewSet):
+    serializer_class = OBCCommunitySerializer
+    permission_classes = [IsAuthenticated, OrganizationAccessPermission]
+
+    def get_queryset(self):
+        """Get communities for current organization (auto-filtered)."""
+        return OBCCommunity.objects.all()  # Auto-filtered by OrganizationScopedManager
+
+    def perform_create(self, serializer):
+        """Set organization when creating."""
+        # Organization auto-set by OrganizationScopedModel.save()
+        serializer.save()
+```
+
+CHECKLIST:
+
+Communities API (src/communities/api/views.py):
+[ ] OBCCommunityViewSet - Add OrganizationAccessPermission
+[ ] ProvinceCoverageViewSet - Add OrganizationAccessPermission
+[ ] MunicipalityCoverageViewSet - Add OrganizationAccessPermission
+[ ] Use get_queryset() instead of queryset attribute
+
+MANA API (src/mana/api/views.py):
+[ ] AssessmentViewSet - Add OrganizationAccessPermission
+[ ] AssessmentResponseViewSet - Add OrganizationAccessPermission
+[ ] AssessmentCategoryViewSet - No org filtering (reference data)
+[ ] MANAWorkshopViewSet - Add OrganizationAccessPermission
+[ ] Use get_queryset() for organization-scoped models
+
+Coordination API (src/coordination/api/views.py):
+[ ] EngagementViewSet - Add OrganizationAccessPermission
+[ ] PartnershipViewSet - Add OrganizationAccessPermission
+[ ] ActivityViewSet - Add OrganizationAccessPermission
+[ ] StakeholderViewSet - Add OrganizationAccessPermission
+[ ] CommunicationViewSet - Add OrganizationAccessPermission
+[ ] Use get_queryset() for organization-scoped models
+
+Monitoring API (src/monitoring/api/views.py):
+[ ] PPAViewSet - Add OrganizationAccessPermission
+[ ] IndicatorViewSet - Add OrganizationAccessPermission
+[ ] ProgressReportViewSet - Add OrganizationAccessPermission
+[ ] PerformanceDashboardView - Add OrganizationAccessPermission
+[ ] Use get_queryset() for organization-scoped models
+
+Planning API (src/planning/api/views.py):
+[ ] StrategicPlanViewSet - Add OrganizationAccessPermission
+[ ] ObjectiveViewSet - Add OrganizationAccessPermission
+[ ] AnnualPlanViewSet - Add OrganizationAccessPermission
+[ ] Use get_queryset() for organization-scoped models
+
+-----------------------------------------------------------
+TASK 8.4: Admin Interface Updates
+-----------------------------------------------------------
+
+DESCRIPTION:
+Override get_queryset() in admin classes to respect organization scoping.
+
+AFFECTED FILES:
+- communities/admin.py
+- mana/admin.py
+- coordination/admin.py
+- monitoring/admin.py
+- planning/admin.py
+- budget_preparation/admin.py
+- budget_execution/admin.py
+
+IMPLEMENTATION PATTERN:
+
+BEFORE:
+```python
+from django.contrib import admin
+from .models import OBCCommunity
+
+@admin.register(OBCCommunity)
+class OBCCommunityAdmin(admin.ModelAdmin):
+    list_display = ['name', 'barangay', 'province', 'created_at']
+    search_fields = ['name']
+```
+
+AFTER:
+```python
+from django.contrib import admin
+from .models import OBCCommunity
+
+@admin.register(OBCCommunity)
+class OBCCommunityAdmin(admin.ModelAdmin):
+    list_display = ['name', 'organization', 'barangay', 'province', 'created_at']
+    list_filter = ['organization']
+    search_fields = ['name']
+
+    def get_queryset(self, request):
+        """Filter by organization for non-superusers."""
+        qs = super().get_queryset(request)
+
+        if request.user.is_superuser:
+            return qs  # Superusers see all
+
+        # Filter by user's organization(s)
+        user_orgs = request.user.organization_memberships.values_list('organization', flat=True)
+        return qs.filter(organization__in=user_orgs)
+```
+
+CHECKLIST:
+
+[ ] Communities Admin - Override get_queryset()
+[ ] MANA Admin - Override get_queryset()
+[ ] Coordination Admin - Override get_queryset()
+[ ] Monitoring Admin - Override get_queryset()
+[ ] Planning Admin - Override get_queryset()
+[ ] Budget Preparation Admin - Override get_queryset()
+[ ] Budget Execution Admin - Override get_queryset()
+[ ] Policies Admin - Override get_queryset()
+
+[ ] Add 'organization' to list_display
+[ ] Add 'organization' to list_filter
+[ ] Test admin filtering for non-superusers
+[ ] Test admin full access for superusers
+
+-----------------------------------------------------------
+TASK 8.5: Query Optimization with select_related()
+-----------------------------------------------------------
+
+DESCRIPTION:
+Add select_related('organization') to all list views to prevent N+1 queries.
+
+AFFECTED VIEWS:
+50+ list views across all apps
+
+IMPLEMENTATION PATTERN:
+
+```python
+# In list views, add select_related('organization')
+def get_queryset(self):
+    """Get queryset with organization pre-fetched."""
+    return OBCCommunity.objects.select_related(
+        'organization',
+        'barangay__municipality__province__region'
+    )
+```
+
+CHECKLIST:
+
+[ ] Review all ListView querysets
+[ ] Add select_related('organization') where missing
+[ ] Add select_related() for related FKs (barangay, province, etc.)
+[ ] Use prefetch_related() for M2M relationships
+[ ] Test query counts (django-debug-toolbar)
+[ ] Verify <10 queries per list page
+
+-----------------------------------------------------------
+TASK 8.6: Template Context Updates
+-----------------------------------------------------------
+
+DESCRIPTION:
+Ensure all templates have access to {{ organization }} context variable.
+
+AFFECTED TEMPLATES:
+- Base templates (base.html, dashboard_base.html)
+- All module templates (100+ templates)
+
+CHANGES REQUIRED:
+
+Base Template (src/templates/base.html):
+```html
+<!-- Add organization context to navbar -->
+<div class="navbar-org">
+    <span class="org-name">{{ organization.name }}</span>
+    <span class="org-code">({{ organization.code }})</span>
+</div>
+```
+
+Dashboard Template (src/templates/dashboard.html):
+```html
+<!-- Show organization-specific stats -->
+<h1>{{ organization.name }} Dashboard</h1>
+<p class="text-muted">Organization Code: {{ organization.code }}</p>
+```
+
+CHECKLIST:
+
+[ ] Update base.html with organization display
+[ ] Update dashboard_base.html with organization context
+[ ] Update all module templates to use {{ organization }}
+[ ] Add organization name to page headers
+[ ] Add organization code to breadcrumbs
+[ ] Test template rendering with different organizations
+
+-----------------------------------------------------------
+TASK 8.7: Testing & Validation
+-----------------------------------------------------------
+
+DESCRIPTION:
+Comprehensive testing of all updated views.
+
+TEST COVERAGE:
+
+Unit Tests:
+[ ] Test @require_organization decorator (allow with org, deny without)
+[ ] Test OrganizationRequiredMixin (allow with org, deny without)
+[ ] Test OrganizationAccessPermission (allow member, deny non-member)
+[ ] Test admin get_queryset() filtering
+
+Integration Tests:
+[ ] Test community_list view with OOBC organization
+[ ] Test community_list view with MOH organization
+[ ] Test data isolation (MOH cannot see MOLE data)
+[ ] Test OCM read-only access (can view, cannot edit)
+[ ] Test API endpoints with organization filtering
+
+Performance Tests:
+[ ] Verify <10 queries per list page
+[ ] Verify <300ms response time for list views
+[ ] Verify <200ms response time for API endpoints
+[ ] Test with 1000+ records per organization
+
+CHECKLIST:
+
+[ ] Write unit tests for decorators/mixins/permissions
+[ ] Write integration tests for view layer
+[ ] Run full test suite (pytest)
+[ ] Verify 100% pass rate
+[ ] Performance test with debug toolbar
+[ ] Load test with locust/artillery
+
+-----------------------------------------------------------
+TASK 8.8: Documentation Updates
+-----------------------------------------------------------
+
+DESCRIPTION:
+Update development documentation for organization-aware views.
+
+DOCUMENTS TO UPDATE:
+
+[ ] docs/development/README.md - Add view layer patterns
+[ ] docs/plans/bmms/VIEW_LAYER_GUIDE.md - Create comprehensive guide
+[ ] Code comments in decorator files
+[ ] Code comments in mixin files
+[ ] Code comments in permission files
+[ ] Inline documentation in view files
+
+CONTENT:
+- When to use @require_organization vs OrganizationRequiredMixin
+- How to add organization context to templates
+- How to test organization-scoped views
+- Common patterns and best practices
+- Troubleshooting guide
+
+============================================================
+COMPLETION CRITERIA
+============================================================
+
+Phase 8 is complete when:
+
+1. DECORATOR COVERAGE
+   [ ] All function-based views have @require_organization
+   [ ] All class-based views have OrganizationRequiredMixin
+   [ ] All API views have OrganizationAccessPermission
+
+2. QUERY OPTIMIZATION
+   [ ] All list views use select_related('organization')
+   [ ] No N+1 query problems detected
+   [ ] Query count <10 per list page
+
+3. ADMIN INTERFACE
+   [ ] All admin classes override get_queryset()
+   [ ] Organization shown in list_display
+   [ ] Organization filtering works for non-superusers
+
+4. TEMPLATE CONTEXT
+   [ ] All templates have {{ organization }} available
+   [ ] Organization displayed in navbar/header
+   [ ] Organization-specific content shown correctly
+
+5. TESTING
+   [ ] All tests pass (100% pass rate)
+   [ ] Integration tests verify data isolation
+   [ ] Performance tests verify <300ms response time
+
+6. DOCUMENTATION
+   [ ] View layer guide complete
+   [ ] Code comments added
+   [ ] Development README updated
+
+============================================================
+VALIDATION COMMANDS
+============================================================
+
+# Check decorator usage
+grep -r "@require_organization" src/*/views.py | wc -l
+# Expected: 50+ matches
+
+# Check mixin usage
+grep -r "OrganizationRequiredMixin" src/*/views.py | wc -l
+# Expected: 30+ matches
+
+# Check permission usage
+grep -r "OrganizationAccessPermission" src/*/api/views.py | wc -l
+# Expected: 20+ matches
+
+# Run tests
+cd src/
+pytest --cov=. --cov-report=term-missing
+
+# Check query counts
+python manage.py runserver
+# Use django-debug-toolbar to verify <10 queries per page
+
+============================================================
+ROLLBACK PLAN
+============================================================
+
+If issues occur during Phase 8:
+
+1. Views still render but without organization filtering
+2. Decorators can be temporarily commented out
+3. Mixins can be removed from inheritance chain
+4. Permissions can be temporarily disabled
+5. Full rollback: git revert to pre-Phase 8 state
+
+No database changes in this phase - safe to rollback.
+
+============================================================
+NOTES
+============================================================
+
+- This phase requires NO database migrations
+- Backward compatible with OBCMS mode
+- Organization filtering transparent to end users
+- Focus on code quality and test coverage
+- Performance optimization is critical
+
+============================================================
+STATUS TRACKING
+============================================================
+
+Phase 8 Status: ⏸️ NOT STARTED
+Start Date: _______________
+Completion Date: _______________
+Reviewed By: _______________
+Approved By: _______________
+
+============================================================

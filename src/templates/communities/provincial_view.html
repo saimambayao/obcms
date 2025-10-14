@@ -254,8 +254,32 @@
                 Municipal OBC Coverage in {{ coverage.province.name }}
             </h2>
         </div>
+        {% if municipal_total_count %}
+        <div class="px-6 py-4 border-b border-gray-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div class="text-sm text-gray-600">
+                Showing {{ municipal_page.start_index }}&ndash;{{ municipal_page.end_index }} of {{ municipal_total_count }} municipal OBCs
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Show</span>
+                <div class="inline-flex overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                    {% for control in municipal_page_size_controls %}
+                        <a href="{{ control.url }}"
+                           class="px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition-colors
+                                {% if control.active %}
+                                    bg-indigo-500 text-white
+                                {% else %}
+                                    text-gray-600 hover:bg-gray-50
+                                {% endif %}">
+                            {{ control.label }}
+                        </a>
+                    {% endfor %}
+                </div>
+                <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">per page</span>
+            </div>
+        </div>
+        {% endif %}
         <div class="overflow-x-auto">
-            {% if related_municipal_coverages %}
+            {% if municipal_total_count %}
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
@@ -269,7 +293,7 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    {% for municipal in related_municipal_coverages %}
+                    {% for municipal in municipal_page %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ municipal.municipality.name }}</td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ municipal.total_obc_communities|default:0 }}</td>
@@ -301,73 +325,41 @@
                     {% endfor %}
                 </tbody>
             </table>
+            <div class="px-6 py-4 border-t border-gray-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between text-sm text-gray-600">
+                <div>
+                    Page {{ municipal_page.number }} of {{ municipal_pagination.total_pages }}
+                </div>
+                <div class="flex items-center gap-2">
+                    {% if municipal_pagination.has_previous %}
+                        <a href="{{ municipal_pagination.previous_url }}"
+                           class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-700 hover:bg-gray-100 transition">
+                            <i class="fas fa-chevron-left text-xs"></i>
+                            Previous
+                        </a>
+                    {% else %}
+                        <span class="inline-flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-3 py-1.5 font-medium text-gray-300 cursor-not-allowed">
+                            <i class="fas fa-chevron-left text-xs"></i>
+                            Previous
+                        </span>
+                    {% endif %}
+
+                    {% if municipal_pagination.has_next %}
+                        <a href="{{ municipal_pagination.next_url }}"
+                           class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-700 hover:bg-gray-100 transition">
+                            Next
+                            <i class="fas fa-chevron-right text-xs"></i>
+                        </a>
+                    {% else %}
+                        <span class="inline-flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-3 py-1.5 font-medium text-gray-300 cursor-not-allowed">
+                            Next
+                            <i class="fas fa-chevron-right text-xs"></i>
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
             {% else %}
             <div class="px-6 py-10 text-center text-sm text-gray-600">
                 No municipal coverages linked to this province yet.
-            </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
-        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <i class="fas fa-map-marker-alt text-emerald-500"></i>
-                Barangay OBCs within {{ coverage.province.name }}
-            </h2>
-        </div>
-        <div class="overflow-x-auto">
-            {% if related_communities %}
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Barangay</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Municipality</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Est. OBC Population</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Population</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Households</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Primary Group</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Updated On</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for community in related_communities %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ community.barangay.name }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">{{ community.barangay.municipality.name }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">{{ community.estimated_obc_population|default:0 }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">{{ community.barangay.population_total|default:"N/A" }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">{{ community.households|default:0 }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">
-                            {% if community.primary_ethnolinguistic_group %}
-                                {{ community.get_primary_ethnolinguistic_group_display }}
-                            {% else %}
-                                <span class="text-gray-400">Not specified</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-600">{{ community.updated_at|date:"M d, Y" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex gap-2">
-                                <a href="{% url 'communities:communities_view' community.id %}"
-                                   class="text-indigo-600 hover:text-indigo-900">View</a>
-                                <a href="{% url 'communities:communities_edit' community.id %}"
-                                   class="text-emerald-600 hover:text-emerald-900">Edit</a>
-                                <a href="{% url 'communities:communities_delete' community.id %}?review_delete=1"
-                                   class="inline-flex items-center justify-center text-red-600 hover:text-red-900"
-                                   aria-label="Delete community">
-                                    <i class="fas fa-trash"></i>
-                                    <span class="sr-only">Delete</span>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="px-6 py-10 text-center text-sm text-gray-600">
-                No barangay OBC profiles recorded under this province yet.
             </div>
             {% endif %}
         </div>

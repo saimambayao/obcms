@@ -1,0 +1,976 @@
+# PHASE 7: REMAINING APPS MODEL MIGRATION
+
+**Phase:** 7 of 12
+**Priority:** HIGH
+**Complexity:** COMPLEX (Multiple apps, 40+ models)
+**Dependencies:** Phase 6 (MANA Migration) complete
+**Estimated Effort:** 30-40 hours
+**Status:** [ ] Not Started  [ ] In Progress  [ ] Complete
+**Started:** ________________  **Completed:** ________________
+**Assignee:** ________________  **Reviewer:** ________________
+
+---
+
+## OVERVIEW
+
+Migrate remaining apps to multi-tenant architecture. This phase covers multiple apps with varying priorities based on architectural analysis findings.
+
+### Apps to Migrate (In Priority Order)
+
+#### 1. Planning Module - CRITICAL SECURITY RISK 🔴
+**Status:** 0% multi-tenant (ALL data exposed)
+**Models:** 4 models
+**Priority:** CRITICAL
+**Estimated Time:** 12 hours
+**Security Impact:** Currently ALL MOAs see each other's strategic plans
+
+#### 2. Budget Preparation - PARLIAMENT BILL NO. 325 🔴
+**Status:** 58% BMMS ready (14 views hardcode OOBC)
+**Models:** 6 models (+ 2 missing models to add)
+**Priority:** CRITICAL (Compliance blocker)
+**Estimated Time:** 11 hours
+**Compliance:** Parliament Bill No. 325 Section 45, 78 requirements
+
+#### 3. Budget Execution - MODERATE RISK 🟡
+**Status:** 75% ready (implicit filtering via FK chain)
+**Models:** 4 models (+ 2 models to add)
+**Priority:** HIGH
+**Estimated Time:** 7 hours
+
+#### 4. Coordination - LEGACY CLEANUP 🟡
+**Status:** 80% ready (Inter-MOA models exist, legacy models need scoping)
+**Models:** 8 models (4 legacy, 4 new)
+**Priority:** MEDIUM
+**Estimated Time:** 12 hours
+
+#### 5. Policies - MEDIUM PRIORITY 🟡
+**Status:** 40% ready
+**Models:** 3 models
+**Priority:** MEDIUM
+**Estimated Time:** 6 hours
+
+#### 6. Monitoring - IF EXISTS 🟢
+**Status:** Unknown (check if models exist)
+**Models:** TBD
+**Priority:** LOW
+**Estimated Time:** Variable
+
+**Total:** 48-54 hours for all apps
+
+---
+
+## PREREQUISITES
+
+### Required Completions
+- [ ] Phase 6 complete (MANA migrated)
+- [ ] Three-step migration pattern mastered
+- [ ] populate_organization_field command validated
+- [ ] Test suite execution successful
+
+### Verify Previous Phases
+```bash
+python manage.py shell
+
+>>> from communities.models import OBCCommunity
+>>> from mana.models import Assessment
+>>> OBCCommunity.all_objects.filter(organization__isnull=True).count()
+0  # ✓ Phase 5 complete
+>>> Assessment.all_objects.filter(organization__isnull=True).count()
+0  # ✓ Phase 6 complete
+
+>>> exit()
+```
+
+---
+
+## SUB-PHASE 7.1: PLANNING MODULE MIGRATION
+
+**Priority:** CRITICAL - SECURITY RISK
+**Time:** 12 hours
+
+### 🔴 CRITICAL SECURITY FINDING
+
+**Issue:** ALL 4 models lack organization FK. ALL 19 views have NO organization filtering.
+
+**Security Impact:**
+- Any authenticated user can view/edit/delete ANY MOA's strategic plans
+- User from MOA A can access MOA B's data by guessing primary keys
+- HTMX endpoints have NO organization security
+- **100% data leakage vulnerability**
+
+### Models to Migrate
+- StrategicPlan
+- StrategicGoal
+- AnnualWorkPlan
+- WorkPlanObjective
+
+---
+
+### TASK 7.1.1: BACKUP DATABASE
+
+```bash
+cd src/
+cp db.sqlite3 db.sqlite3.backup-phase7-1-$(date +%Y%m%d-%H%M%S)
+```
+
+### Checklist
+- [ ] Backup created
+
+---
+
+### TASK 7.1.2: UPDATE PLANNING MODELS
+
+**File:** src/planning/models.py
+
+#### StrategicPlan Model
+```python
+from organizations.models import OrganizationScopedModel
+
+class StrategicPlan(OrganizationScopedModel):  # CHANGE BASE CLASS
+    """Strategic plan with organization scoping.
+
+    CRITICAL: Previously had NO organization isolation - all MOAs could see each other's plans.
+    Now enforces strict organization-based access control.
+    """
+
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    status = models.CharField(max_length=20, choices=[
+        ('draft', 'Draft'),
+        ('active', 'Active'),
+        ('completed', 'Completed'),
+    ])
+
+    # organization field inherited from OrganizationScopedModel
+    # Prevents cross-organization data access
+
+    class Meta:
+        db_table = "planning_strategic_plan"
+        ordering = ["organization", "-start_date"]  # ADD organization
+```
+
+#### StrategicGoal Model
+```python
+from organizations.models import OrganizationScopedModel
+
+class StrategicGoal(OrganizationScopedModel):  # CHANGE BASE CLASS
+    """Strategic goal with organization scoping."""
+
+    strategic_plan = models.ForeignKey(
+        StrategicPlan,
+        on_delete=models.CASCADE,
+        related_name='goals'
+    )
+    goal_statement = models.TextField()
+    target_date = models.DateField()
+    progress_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+
+    class Meta:
+        db_table = "planning_strategic_goal"
+        ordering = ["organization", "strategic_plan", "target_date"]  # ADD organization
+```
+
+#### AnnualWorkPlan Model
+```python
+from organizations.models import OrganizationScopedModel
+
+class AnnualWorkPlan(OrganizationScopedModel):  # CHANGE BASE CLASS
+    """Annual work plan with organization scoping."""
+
+    strategic_plan = models.ForeignKey(
+        StrategicPlan,
+        on_delete=models.CASCADE,
+        related_name='work_plans'
+    )
+    year = models.IntegerField()
+    title = models.CharField(max_length=200)
+    objectives = models.TextField()
+
+    class Meta:
+        db_table = "planning_annual_work_plan"
+        ordering = ["organization", "-year"]  # ADD organization
+```
+
+#### WorkPlanObjective Model
+```python
+from organizations.models import OrganizationScopedModel
+
+class WorkPlanObjective(OrganizationScopedModel):  # CHANGE BASE CLASS
+    """Work plan objective with organization scoping."""
+
+    annual_work_plan = models.ForeignKey(
+        AnnualWorkPlan,
+        on_delete=models.CASCADE,
+        related_name='objectives'
+    )
+    objective_statement = models.TextField()
+    target_output = models.TextField()
+    quarter = models.IntegerField(choices=[
+        (1, 'Q1'), (2, 'Q2'), (3, 'Q3'), (4, 'Q4')
+    ])
+
+    class Meta:
+        db_table = "planning_work_plan_objective"
+        ordering = ["organization", "annual_work_plan", "quarter"]  # ADD organization
+```
+
+### Checklist
+- [ ] Import OrganizationScopedModel
+- [ ] Update all 4 models to inherit from OrganizationScopedModel
+- [ ] Add "organization" to all Meta.ordering
+- [ ] Add security note to docstrings
+- [ ] Save file
+- [ ] Run: `python manage.py check`
+
+---
+
+### TASK 7.1.3: THREE-STEP MIGRATION (Planning)
+
+```bash
+cd src/
+
+# Step 1: Add nullable organization field
+python manage.py makemigrations planning --name add_organization_field_nullable
+python manage.py migrate planning
+
+# Step 2: Populate organization field
+python manage.py populate_organization_field --app planning --dry-run
+python manage.py populate_organization_field --app planning
+
+# Step 3: Make organization required
+python manage.py makemigrations planning --name make_organization_required
+python manage.py migrate planning
+```
+
+### Verification
+```bash
+python manage.py shell
+
+>>> from planning.models import StrategicPlan
+>>> StrategicPlan.all_objects.filter(organization__isnull=True).count()
+0  # ✓ All plans have organization
+
+>>> exit()
+```
+
+### Checklist
+- [ ] Step 1 complete (nullable added)
+- [ ] Step 2 complete (data populated)
+- [ ] Step 3 complete (required enforced)
+- [ ] Verification passed
+
+---
+
+### TASK 7.1.4: UPDATE PLANNING VIEWS (19 views to fix)
+
+**Priority:** CRITICAL - SECURITY PATCHES
+
+**File:** src/planning/views.py
+
+#### Add RBAC Decorators (ALL 19 views)
+```python
+from common.decorators.rbac import require_permission
+from common.decorators.organization import require_organization
+
+# BEFORE (INSECURE):
+@login_required
+def strategic_plan_list(request):
+    plans = StrategicPlan.objects.all()  # ❌ Shows ALL MOAs plans!
+    return render(request, 'planning/plan_list.html', {'plans': plans})
+
+# AFTER (SECURE):
+@login_required
+@require_permission('planning.view_strategic_plan')  # ADD
+@require_organization  # ADD
+def strategic_plan_list(request):
+    # Auto-filtered to request.organization only
+    plans = StrategicPlan.objects.all()  # ✓ Shows only current org's plans
+    return render(request, 'planning/plan_list.html', {
+        'plans': plans,
+        'organization': request.organization,
+    })
+```
+
+### Security Checklist
+- [ ] Add @require_permission to all 19 views
+- [ ] Add @require_organization to all 19 views
+- [ ] Verify no hardcoded organization filters
+- [ ] Test HTMX endpoints for security
+- [ ] Add organization to all template contexts
+
+**Views to update:** plan_list, plan_detail, plan_create, plan_edit, plan_delete, goal_list, goal_create, etc. (19 total)
+
+---
+
+### TASK 7.1.5: SECURITY AUDIT (Planning)
+
+**Verify Data Isolation:**
+```bash
+python manage.py shell
+
+>>> from organizations.models import Organization
+>>> from organizations.models.scoped import set_current_organization
+>>> from planning.models import StrategicPlan
+
+# Create test MOA
+>>> moh = Organization.objects.create(code='MOH', name='Ministry of Health', organization_type='ministry', is_active=True)
+
+# Create MOH plan
+>>> set_current_organization(moh)
+>>> moh_plan = StrategicPlan.objects.create(
+...     title='MOH Strategic Plan',
+...     start_date='2025-01-01',
+...     end_date='2025-12-31',
+...     status='active'
+... )
+
+# Switch to OOBC
+>>> oobc = Organization.objects.get(code='OOBC')
+>>> set_current_organization(oobc)
+
+# CRITICAL TEST: OOBC should NOT see MOH plan
+>>> StrategicPlan.objects.filter(title='MOH Strategic Plan').count()
+0  # ✓ PASS: Data isolated
+
+>>> StrategicPlan.objects.all().count()
+5  # ✓ PASS: Only OOBC plans visible
+
+# Cleanup
+>>> set_current_organization(moh)
+>>> moh_plan.delete()
+>>> moh.delete()
+
+>>> exit()
+```
+
+### Security Checklist
+- [ ] Cross-org filter query blocked
+- [ ] Cross-org search query blocked
+- [ ] Cross-org direct ID access blocked
+- [ ] HTMX endpoints secured
+- [ ] Test data cleaned up
+
+**✅ SECURITY VULNERABILITY FIXED**
+
+---
+
+## SUB-PHASE 7.2: BUDGET PREPARATION MIGRATION
+
+**Priority:** CRITICAL - PARLIAMENT BILL NO. 325 COMPLIANCE
+**Time:** 11 hours
+
+### 🔴 CRITICAL COMPLIANCE FINDING
+
+**Issue:** ALL 14 views hardcode OOBC organization: `Organization.objects.filter(name__icontains='OOBC').first()`
+
+**Lines affected:** 35, 84, 138, 188, 230, 289, 325, 366, 408, 455, 525, 586, 625, 648
+
+**Missing Models:**
+- WorkItem (Parliament Bill No. 325 Section 45 requirement)
+- BudgetAllocation (pre-allotment tracking)
+
+### Models to Migrate
+- BudgetProposal
+- Program
+- BudgetLineItem
+- WorkFinancialPlan
+- ProgramActivity
+- ActivityBudget
+
+### Models to CREATE
+- WorkItem (NEW - Parliament Bill No. 325)
+- BudgetAllocation (NEW)
+
+---
+
+### TASK 7.2.1: BACKUP DATABASE
+
+```bash
+cd src/
+cp db.sqlite3 db.sqlite3.backup-phase7-2-$(date +%Y%m%d-%H%M%S)
+```
+
+---
+
+### TASK 7.2.2: UPDATE BUDGET_PREPARATION MODELS
+
+**File:** src/budget_preparation/models.py
+
+#### Add OrganizationScopedModel to existing 6 models
+
+```python
+from organizations.models import OrganizationScopedModel
+
+class BudgetProposal(OrganizationScopedModel):  # CHANGE BASE CLASS
+    # ... existing fields ...
+    class Meta:
+        ordering = ["organization", "-year"]  # ADD organization
+
+class Program(OrganizationScopedModel):  # CHANGE BASE CLASS
+    # ... existing fields ...
+    class Meta:
+        ordering = ["organization", "name"]  # ADD organization
+
+# Repeat for: BudgetLineItem, WorkFinancialPlan, ProgramActivity, ActivityBudget
+```
+
+---
+
+### TASK 7.2.3: CREATE WORKITEM MODEL (NEW)
+
+**Parliament Bill No. 325 Section 45, 78 Compliance**
+
+```python
+# File: src/budget_preparation/models.py
+
+from organizations.models import OrganizationScopedModel
+
+class WorkItem(OrganizationScopedModel):
+    """Work and Financial Plan Items (Parliament Bill No. 325 Section 45).
+
+    Parliament Bill No. 325 requires detailed work items for each budget line:
+    - Section 45: Work and Financial Plan Requirements
+    - Section 78: Budget Execution Monitoring
+
+    Each work item represents a specific deliverable or output tied to budget allocation.
+    """
+
+    work_financial_plan = models.ForeignKey(
+        'WorkFinancialPlan',
+        on_delete=models.CASCADE,
+        related_name='work_items'
+    )
+
+    item_code = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text='Unique identifier for work item (e.g., WI-2025-001)'
+    )
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    target_output = models.TextField(
+        help_text='Specific, measurable output expected from this work item'
+    )
+
+    budget_requirement = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        help_text='Total budget required for this work item'
+    )
+
+    quarter = models.IntegerField(choices=[
+        (1, 'Q1 (Jan-Mar)'),
+        (2, 'Q2 (Apr-Jun)'),
+        (3, 'Q3 (Jul-Sep)'),
+        (4, 'Q4 (Oct-Dec)'),
+    ])
+
+    status = models.CharField(max_length=20, choices=[
+        ('planned', 'Planned'),
+        ('ongoing', 'Ongoing'),
+        ('completed', 'Completed'),
+        ('delayed', 'Delayed'),
+        ('cancelled', 'Cancelled'),
+    ], default='planned')
+
+    # Compliance tracking
+    compliance_notes = models.TextField(
+        blank=True,
+        help_text='Parliament Bill No. 325 compliance notes'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "budget_preparation_work_item"
+        ordering = ["organization", "work_financial_plan", "quarter", "item_code"]
+        unique_together = [['work_financial_plan', 'item_code']]
+        verbose_name = "Work Item"
+        verbose_name_plural = "Work Items"
+
+    def __str__(self):
+        return f"{self.item_code}: {self.title}"
+```
+
+---
+
+### TASK 7.2.4: CREATE BUDGETALLOCATION MODEL (NEW)
+
+```python
+# File: src/budget_preparation/models.py
+
+from organizations.models import OrganizationScopedModel
+
+class BudgetAllocation(OrganizationScopedModel):
+    """Budget allocation tracking before allotment release.
+
+    Tracks budget allocations from Parliament approval to allotment release.
+    Bridges budget preparation (Parliament Bill No. 325) and budget execution (Allotments).
+    """
+
+    program = models.ForeignKey(
+        'Program',
+        on_delete=models.CASCADE,
+        related_name='allocations'
+    )
+
+    allocated_amount = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        help_text='Amount allocated from approved budget'
+    )
+
+    allocation_date = models.DateField(
+        help_text='Date allocation was approved'
+    )
+
+    allocation_reference = models.CharField(
+        max_length=100,
+        help_text='Reference number (e.g., SARO number, NCA number)'
+    )
+
+    allocation_type = models.CharField(max_length=50, choices=[
+        ('saro', 'Special Allotment Release Order (SARO)'),
+        ('nca', 'Notice of Cash Allocation (NCA)'),
+        ('subsidy', 'Subsidy'),
+        ('other', 'Other'),
+    ])
+
+    remarks = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "budget_preparation_budget_allocation"
+        ordering = ["organization", "-allocation_date"]
+        verbose_name = "Budget Allocation"
+        verbose_name_plural = "Budget Allocations"
+
+    def __str__(self):
+        return f"{self.allocation_reference}: {self.allocated_amount}"
+```
+
+### Checklist
+- [ ] Update 6 existing models to OrganizationScopedModel
+- [ ] Create WorkItem model (Parliament Bill No. 325)
+- [ ] Create BudgetAllocation model
+- [ ] Add compliance notes to docstrings
+- [ ] Save file
+- [ ] Run: `python manage.py check`
+
+---
+
+### TASK 7.2.5: THREE-STEP MIGRATION (Budget Preparation)
+
+```bash
+cd src/
+
+# Step 1: Nullable
+python manage.py makemigrations budget_preparation --name add_organization_and_new_models
+python manage.py migrate budget_preparation
+
+# Step 2: Populate
+python manage.py populate_organization_field --app budget_preparation
+
+# Step 3: Required
+python manage.py makemigrations budget_preparation --name make_organization_required
+python manage.py migrate budget_preparation
+```
+
+### Checklist
+- [ ] 8 models migrated (6 existing + 2 new)
+- [ ] All data populated
+- [ ] Organization required
+
+---
+
+### TASK 7.2.6: REFACTOR 14 HARDCODED VIEWS
+
+**File:** src/budget_preparation/views.py
+
+**Find and replace across ALL 14 views:**
+
+```python
+# FIND (Lines 35, 84, 138, 188, 230, 289, 325, 366, 408, 455, 525, 586, 625, 648):
+organization = Organization.objects.filter(name__icontains='OOBC').first()
+
+# REPLACE WITH:
+organization = request.user.organization  # Use current user's organization
+```
+
+**OR use @require_organization decorator (BETTER):**
+```python
+@login_required
+@require_permission('budget_preparation.view_budget')
+@require_organization
+def budget_dashboard(request):
+    # request.organization already set by decorator
+    proposals = BudgetProposal.objects.all()  # Auto-filtered by org
+    return render(request, 'budget_preparation/dashboard.html', {
+        'proposals': proposals,
+        'organization': request.organization,
+    })
+```
+
+### Refactoring Checklist
+- [ ] Line 35: budget_dashboard view
+- [ ] Line 84: program_list view
+- [ ] Line 138: budget_proposal_create view
+- [ ] Line 188: budget_line_item_list view
+- [ ] Line 230: work_financial_plan_list view
+- [ ] Line 289: program_activity_list view
+- [ ] Line 325: activity_budget_list view
+- [ ] Line 366: budget_summary view
+- [ ] Line 408: budget_report view
+- [ ] Line 455: quarterly_report view
+- [ ] Line 525: annual_report view
+- [ ] Line 586: budget_analysis view
+- [ ] Line 625: budget_comparison view
+- [ ] Line 648: budget_variance view
+
+**Total:** 14 views refactored
+
+---
+
+### TASK 7.2.7: PARLIAMENT BILL NO. 325 COMPLIANCE VERIFICATION
+
+```bash
+python manage.py shell
+
+>>> from budget_preparation.models import WorkItem, BudgetAllocation
+
+# Verify WorkItem model exists
+>>> WorkItem._meta.get_field('item_code')
+<django.db.models.fields.CharField: item_code>
+
+>>> WorkItem._meta.get_field('target_output')
+<django.db.models.fields.TextField: target_output>
+
+# Verify BudgetAllocation model exists
+>>> BudgetAllocation._meta.get_field('allocation_reference')
+<django.db.models.fields.CharField: allocation_reference>
+
+>>> exit()
+```
+
+### Compliance Checklist
+- [ ] WorkItem model created (Section 45 requirement)
+- [ ] Target output tracking implemented
+- [ ] Quarterly breakdown supported
+- [ ] BudgetAllocation model created
+- [ ] SARO/NCA reference tracking enabled
+- [ ] Compliance notes field available
+
+**✅ PARLIAMENT BILL NO. 325 COMPLIANCE ACHIEVED**
+
+---
+
+## SUB-PHASE 7.3: BUDGET EXECUTION MIGRATION
+
+**Priority:** HIGH
+**Time:** 7 hours
+
+### Models to Migrate
+- Allotment
+- Obligation
+- Disbursement
+- BudgetUtilization
+
+### Models to ADD (if not exist)
+- WorkItemProgress (tracks WorkItem execution)
+- VarianceReport (budget vs actual analysis)
+
+**Note:** Budget execution models currently use implicit org scoping via FK chain (allotment → program → organization). Need explicit organization field for direct queries.
+
+---
+
+### TASK 7.3.1: UPDATE BUDGET_EXECUTION MODELS
+
+```python
+# File: src/budget_execution/models.py
+
+from organizations.models import OrganizationScopedModel
+
+class Allotment(OrganizationScopedModel):  # CHANGE BASE CLASS
+    """Budget allotment with explicit organization scoping."""
+
+    program = models.ForeignKey('budget_preparation.Program', on_delete=models.CASCADE)
+    # organization field inherited (explicit for direct queries)
+
+    class Meta:
+        ordering = ["organization", "-allotment_date"]
+
+# Repeat for: Obligation, Disbursement, BudgetUtilization
+```
+
+### Three-Step Migration
+```bash
+cd src/
+python manage.py makemigrations budget_execution --name add_organization_explicit
+python manage.py populate_organization_field --app budget_execution
+python manage.py makemigrations budget_execution --name make_organization_required
+python manage.py migrate budget_execution
+```
+
+### Checklist
+- [ ] 4 models updated
+- [ ] Explicit organization field added (even though FK chain exists)
+- [ ] Direct queries now possible without JOIN
+- [ ] Performance improved
+
+---
+
+## SUB-PHASE 7.4: COORDINATION APP MIGRATION
+
+**Priority:** MEDIUM
+**Time:** 12 hours
+
+### Background
+Coordination app has **2 organization models** (legacy and new):
+- `coordination.models.Organization` (LEGACY - wrong location)
+- `organizations.models.Organization` (CORRECT - Phase 1)
+
+### Models Status
+**New (Inter-MOA):** Already organization-aware
+- Partnership (inter-MOA partnerships)
+- PartnershipActivity
+- StakeholderEngagement
+- MeetingSchedule
+
+**Legacy:** Need organization scoping
+- Activity
+- Stakeholder
+- EngagementLog
+- CoordinationReport
+
+---
+
+### TASK 7.4.1: MIGRATE LEGACY COORDINATION MODELS
+
+```python
+# File: src/coordination/models.py
+
+from organizations.models import OrganizationScopedModel
+
+class Activity(OrganizationScopedModel):  # CHANGE BASE CLASS
+    """Coordination activity with organization scoping."""
+
+    title = models.CharField(max_length=200)
+    # ... existing fields ...
+
+    class Meta:
+        ordering = ["organization", "-date"]
+
+# Repeat for: Stakeholder, EngagementLog, CoordinationReport
+```
+
+### Three-Step Migration
+```bash
+cd src/
+python manage.py makemigrations coordination --name add_organization_to_legacy_models
+python manage.py populate_organization_field --app coordination
+python manage.py makemigrations coordination --name make_organization_required
+python manage.py migrate coordination
+```
+
+### Checklist
+- [ ] 4 legacy models migrated
+- [ ] Inter-MOA models (Partnership, etc.) already work
+- [ ] No conflicts with coordination.Organization (mark deprecated)
+
+---
+
+## SUB-PHASE 7.5: POLICIES APP MIGRATION
+
+**Priority:** MEDIUM
+**Time:** 6 hours
+
+### Models to Migrate
+- PolicyRecommendation
+- PolicyDocument
+- PolicyTracking
+
+### Three-Step Migration
+```bash
+cd src/
+
+# Update models
+# Apply migrations
+python manage.py makemigrations policies --name add_organization_field_nullable
+python manage.py migrate policies
+python manage.py populate_organization_field --app policies
+python manage.py makemigrations policies --name make_organization_required
+python manage.py migrate policies
+```
+
+---
+
+## SUB-PHASE 7.6: MONITORING APP (IF EXISTS)
+
+**Priority:** LOW
+**Time:** Variable
+
+### Check if Monitoring App Exists
+```bash
+ls -la src/monitoring/
+
+# If exists:
+# - Review models
+# - Apply three-step migration
+# - Similar to other apps
+
+# If not exist:
+# - Skip this sub-phase
+# - Note in documentation
+```
+
+---
+
+## COMPREHENSIVE VERIFICATION
+
+### All Apps Migrated
+```bash
+python manage.py shell
+
+>>> from planning.models import StrategicPlan
+>>> from budget_preparation.models import BudgetProposal, WorkItem
+>>> from budget_execution.models import Allotment
+>>> from coordination.models import Activity
+>>> from policies.models import PolicyRecommendation
+
+# Verify NO NULL organizations across ALL apps
+>>> StrategicPlan.all_objects.filter(organization__isnull=True).count()
+0  # ✓
+
+>>> BudgetProposal.all_objects.filter(organization__isnull=True).count()
+0  # ✓
+
+>>> WorkItem.all_objects.filter(organization__isnull=True).count()
+0  # ✓
+
+>>> Allotment.all_objects.filter(organization__isnull=True).count()
+0  # ✓
+
+>>> Activity.all_objects.filter(organization__isnull=True).count()
+0  # ✓
+
+>>> PolicyRecommendation.all_objects.filter(organization__isnull=True).count()
+0  # ✓
+
+>>> exit()
+```
+
+### Checklist
+- [ ] Planning: 0 NULL organizations
+- [ ] Budget Preparation: 0 NULL organizations
+- [ ] Budget Execution: 0 NULL organizations
+- [ ] Coordination: 0 NULL organizations
+- [ ] Policies: 0 NULL organizations
+- [ ] Monitoring: 0 NULL organizations (if exists)
+
+---
+
+## RUN COMPLETE TEST SUITE
+
+```bash
+cd src/
+
+# Run all tests
+pytest --cov=. --cov-report=term-missing
+
+# Target: 99.2% pass rate (254/256 tests)
+```
+
+### Test Updates Needed
+- Organization context in test setUp methods
+- RBAC permission fixtures
+- Multi-tenant isolation tests
+- Performance tests (N+1 queries)
+
+---
+
+## VERIFICATION CHECKLIST
+
+### Model Migrations
+- [ ] 40+ models migrated to OrganizationScopedModel
+- [ ] All three-step migrations complete
+- [ ] Zero NULL organizations across all apps
+- [ ] New models created (WorkItem, BudgetAllocation)
+
+### Security & Compliance
+- [ ] Planning module security vulnerability fixed
+- [ ] Parliament Bill No. 325 compliance achieved
+- [ ] Data Privacy Act compliance verified (MANA)
+- [ ] RBAC decorators added to all views
+
+### View Layer
+- [ ] 14 budget_preparation views refactored
+- [ ] 19 planning views secured
+- [ ] All views have @require_organization
+- [ ] Template contexts include organization
+
+### Admin Interface
+- [ ] get_queryset() overrides for all admins
+- [ ] save_model() auto-assignment for all admins
+- [ ] Organization filtering in list views
+- [ ] Organization search enabled
+
+### Testing
+- [ ] Test suite passes (99.2%+)
+- [ ] Multi-tenant isolation verified
+- [ ] Performance acceptable (<500ms)
+- [ ] No N+1 query issues
+
+---
+
+## ROLLBACK PROCEDURE
+
+Same as previous phases - restore from phase7-X backups.
+
+---
+
+## COMPLETION CRITERIA
+
+Phase 7 is complete when:
+
+✅ **All 6 apps migrated** (Planning, Budget Prep, Budget Exec, Coordination, Policies, Monitoring)
+✅ **40+ models** inherit from OrganizationScopedModel
+✅ **Zero NULL organizations** across all models
+✅ **Security vulnerabilities fixed** (Planning 0% → 100%)
+✅ **Compliance achieved** (Parliament Bill No. 325)
+✅ **New models added** (WorkItem, BudgetAllocation)
+✅ **All views secured** (RBAC + @require_organization)
+✅ **Admin interfaces updated**
+✅ **Tests passing** (99.2%+)
+
+---
+
+## NEXT PHASE
+
+**Proceed to:** Phase 8 - View Layer Updates
+
+**Prerequisites for Phase 8:**
+- Phase 7 complete (all apps migrated)
+- Test suite passing
+- No regressions detected
+
+**File:** phase8_view_layer_updates.txt
+
+---
+
+## REFERENCES
+
+- Parliament Bill No. 325 (BARMM Budget Process)
+- OBCMS_ARCHITECTURAL_ANALYSIS.md - Critical findings
+- BMMS_EMBEDDED_ARCHITECTURE_IMPLEMENTATION.md - Phase 7
+- CLAUDE.md - Implementation guidelines
+
+---
+
+**Phase 7 Status:** [ ] Not Started  [ ] In Progress  [ ] Complete
+**Security Audit:** [ ] Complete  **Compliance:** [ ] Verified
+**Sign-off:** ________________  **Date:** ________________
