@@ -9,6 +9,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import ProtectedError, Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -16,7 +17,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from django.http import Http404
+from django.http import Http404, HttpResponseForbidden
 
 from common.utils.moa_permissions import moa_can_edit_organization
 from common.services.locations import build_location_data, get_object_centroid
@@ -29,6 +30,7 @@ from communities.models import OBCCommunity
 
 from .forms import (
     CoordinationNoteForm,
+    InterMOAPartnershipForm,
     OrganizationContactFormSet,
     OrganizationForm,
     PartnershipDocumentFormSet,
@@ -39,7 +41,7 @@ from .forms import (
     StakeholderEngagementForm,
 )
 # Event model removed - use WorkItem with work_type='activity' instead
-from .models import Organization, Partnership, StakeholderEngagement
+from .models import InterMOAPartnership, Organization, Partnership, StakeholderEngagement
 from .utils.organizations import get_organization_or_404, get_organization
 
 
@@ -808,6 +810,312 @@ def partnership_delete(request, partnership_id):
 
     messages.success(request, f'Partnership "{title}" has been removed.')
     return redirect("common:coordination_partnerships")
+
+
+@login_required
+def inter_moa_partnership_list(request):
+    """Display inter-MOA partnerships visible to the current user."""
+
+    user = request.user
+
+    if user.is_superuser:
+        partnerships = InterMOAPartnership.objects.all()
+    else:
+        memberships = []
+        if hasattr(user, "organization_memberships"):
+            memberships = list(
+                user.organization_memberships.filter(is_active=True).select_related(
+                    "organization"
+                )
+            )
+
+        user_moa_codes = [
+            membership.organization.code
+            for membership in memberships
+            if membership.organization
+        ]
+
+        # Get partnerships where user is lead organization
+        base_filter = Q(lead_moa_code__in=user_moa_codes)
+
+        public_filter = Q()
+        if getattr(user, "is_ocm_staff", False):
+            public_filter = Q(is_public=True)
+
+        # Get all partnerships that match base or public filter
+        partnerships = InterMOAPartnership.objects.filter(base_filter | public_filter).distinct()
+
+        # Add partnerships where user is participant (post-filtering for SQLite compatibility)
+        if user_moa_codes and not user.is_superuser and not public_filter:
+            # Get additional partnerships where user is a participant
+            participant_partnerships = InterMOAPartnership.objects.exclude(
+                id__in=partnerships.values_list('id', flat=True)
+            ).all()
+
+            # Filter in Python since SQLite doesn't support contains on JSON
+            additional_ids = []
+            for p in participant_partnerships:
+                if p.participating_moa_codes and any(
+                    code in p.participating_moa_codes for code in user_moa_codes
+                ):
+                    additional_ids.append(p.id)
+
+            if additional_ids:
+                partnerships = (partnerships | InterMOAPartnership.objects.filter(id__in=additional_ids)).distinct()
+
+        if not user_moa_codes and not public_filter:
+            partnerships = InterMOAPartnership.objects.none()
+
+    status_filter = request.GET.get("status")
+    if status_filter:
+        partnerships = partnerships.filter(status=status_filter)
+
+    priority_filter = request.GET.get("priority")
+    if priority_filter:
+        partnerships = partnerships.filter(priority=priority_filter)
+
+    partnership_type_filter = request.GET.get("partnership_type")
+    if partnership_type_filter:
+        partnerships = partnerships.filter(partnership_type=partnership_type_filter)
+
+    sort_param = request.GET.get("sort", "-created_at")
+    allowed_sorts = {
+        "title": "title",
+        "-title": "-title",
+        "created_at": "created_at",
+        "-created_at": "-created_at",
+        "start_date": "start_date",
+        "-start_date": "-start_date",
+        "progress": "progress_percentage",
+        "-progress": "-progress_percentage",
+    }
+    order_by = allowed_sorts.get(sort_param, "-created_at")
+    partnerships = partnerships.order_by(order_by)
+
+    paginator = Paginator(partnerships, 20)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    stats_queryset = partnerships
+    stats = {
+        "total": stats_queryset.count(),
+        "active": stats_queryset.filter(status="active").count(),
+        "draft": stats_queryset.filter(status="draft").count(),
+        "completed": stats_queryset.filter(status="completed").count(),
+    }
+
+    context = {
+        "partnerships": page_obj,
+        "stats": stats,
+        "status_choices": InterMOAPartnership.STATUS_CHOICES,
+        "priority_choices": InterMOAPartnership.PRIORITY_LEVELS,
+        "type_choices": InterMOAPartnership.PARTNERSHIP_TYPES,
+        "current_filters": {
+            "status": status_filter,
+            "priority": priority_filter,
+            "partnership_type": partnership_type_filter,
+            "sort": sort_param,
+        },
+    }
+
+    return render(
+        request,
+        "coordination/inter_moa_partnership_list.html",
+        context,
+    )
+
+
+@login_required
+def inter_moa_partnership_detail(request, partnership_id):
+    """Show the details of an inter-MOA partnership."""
+
+    partnership = get_object_or_404(InterMOAPartnership, id=partnership_id)
+
+    if not partnership.can_view(request.user):
+        messages.error(
+            request,
+            "You do not have permission to view this partnership.",
+        )
+        return HttpResponseForbidden("Permission denied")
+
+    user_role = None
+    user_moa_codes = []
+    if hasattr(request.user, "organization_memberships"):
+        user_moa_codes = [
+            membership.organization.code
+            for membership in request.user.organization_memberships.filter(
+                is_active=True
+            ).select_related("organization")
+            if membership.organization
+        ]
+
+    if partnership.lead_moa_code in user_moa_codes:
+        user_role = "lead"
+    elif partnership.participating_moa_codes:
+        for code in partnership.participating_moa_codes:
+            if code in user_moa_codes:
+                user_role = "participant"
+                break
+
+    context = {
+        "partnership": partnership,
+        "lead_org": partnership.lead_organization,
+        "participating_orgs": partnership.participating_organizations,
+        "user_role": user_role,
+        "can_edit": partnership.can_edit(request.user),
+        "related_activities": [],
+    }
+
+    return render(
+        request,
+        "coordination/inter_moa_partnership_detail.html",
+        context,
+    )
+
+
+@login_required
+def inter_moa_partnership_create(request):
+    """Create a new inter-MOA partnership."""
+
+    user_org = None
+    memberships = []
+    if hasattr(request.user, "organization_memberships"):
+        memberships = list(
+            request.user.organization_memberships.filter(is_active=True).select_related(
+                "organization"
+            )
+        )
+
+    primary_membership = next((m for m in memberships if m.is_primary), None)
+    if primary_membership and primary_membership.organization:
+        user_org = primary_membership.organization
+    elif memberships:
+        membership = memberships[0]
+        user_org = membership.organization
+
+    if not user_org:
+        messages.error(
+            request,
+            "You must belong to an organization to create partnerships.",
+        )
+        return redirect("coordination:inter-moa-partnership-list")
+
+    if request.method == "POST":
+        form = InterMOAPartnershipForm(request.POST, user=request.user)
+        if form.is_valid():
+            partnership = form.save(commit=False)
+            partnership.lead_moa_code = user_org.code
+            partnership.created_by = request.user
+            partnership.full_clean()
+            partnership.save()
+            form.save_m2m()
+            messages.success(
+                request,
+                f"Partnership '{partnership.title}' created successfully.",
+            )
+            return redirect(
+                "coordination:inter-moa-partnership-detail",
+                partnership_id=partnership.id,
+            )
+        messages.error(
+            request, "Please correct the errors below to continue."
+        )
+    else:
+        form = InterMOAPartnershipForm(user=request.user)
+
+    context = {
+        "form": form,
+        "user_org": user_org,
+    }
+
+    return render(
+        request,
+        "coordination/inter_moa_partnership_form.html",
+        context,
+    )
+
+
+@login_required
+def inter_moa_partnership_edit(request, partnership_id):
+    """Edit an existing inter-MOA partnership."""
+
+    partnership = get_object_or_404(InterMOAPartnership, id=partnership_id)
+
+    if not partnership.can_edit(request.user):
+        messages.error(
+            request,
+            "Only the lead organization can edit this partnership.",
+        )
+        return HttpResponseForbidden("Permission denied")
+
+    if request.method == "POST":
+        form = InterMOAPartnershipForm(
+            request.POST,
+            instance=partnership,
+            user=request.user,
+        )
+        if form.is_valid():
+            partnership = form.save(commit=False)
+            partnership.full_clean()
+            partnership.save()
+            form.save_m2m()
+            messages.success(request, "Partnership updated successfully.")
+            return redirect(
+                "coordination:inter-moa-partnership-detail",
+                partnership_id=partnership.id,
+            )
+        messages.error(
+            request, "Please correct the errors below to continue."
+        )
+    else:
+        form = InterMOAPartnershipForm(instance=partnership, user=request.user)
+
+    context = {
+        "form": form,
+        "partnership": partnership,
+        "is_edit": True,
+    }
+
+    return render(
+        request,
+        "coordination/inter_moa_partnership_form.html",
+        context,
+    )
+
+
+@login_required
+def inter_moa_partnership_delete(request, partnership_id):
+    """Delete an existing inter-MOA partnership (lead organization only)."""
+
+    partnership = get_object_or_404(InterMOAPartnership, id=partnership_id)
+
+    if not partnership.can_edit(request.user):
+        messages.error(
+            request,
+            "Only the lead organization can delete this partnership.",
+        )
+        return HttpResponseForbidden("Permission denied")
+
+    if request.method == "POST":
+        partnership_title = partnership.title
+        with transaction.atomic():
+            partnership.delete()
+
+        messages.success(
+            request,
+            f'Partnership "{partnership_title}" has been deleted successfully.',
+        )
+        return redirect("coordination:inter-moa-partnership-list")
+
+    context = {
+        "partnership": partnership,
+    }
+
+    return render(
+        request,
+        "coordination/inter_moa_partnership_confirm_delete.html",
+        context,
+    )
 
 
 # event_create function removed - use WorkItem create view with work_type='activity' instead

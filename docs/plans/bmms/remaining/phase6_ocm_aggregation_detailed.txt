@@ -1,0 +1,2825 @@
+================================================================================
+BMMS PHASE 6: OCM AGGREGATION - DETAILED TASK BREAKDOWN
+================================================================================
+
+Priority: HIGH
+Complexity: Moderate
+Dependencies: Phase 1 (Organizations), Phase 3 (Budget System), Phase 4 (Coordination)
+
+Overview:
+---------
+Build the Office of the Chief Minister (OCM) aggregation layer providing
+read-only consolidated views across all 44 BARMM MOAs. Enables government-wide
+oversight, budget monitoring, strategic planning tracking, and inter-ministerial
+coordination analytics.
+
+Target Users:
+- Office of the Chief Minister staff
+- OCM analysts and data officers
+- Government executives and policy makers
+- Parliament oversight committees
+
+Key Deliverables:
+- OCM Django app with read-only enforcement
+- Cross-MOA aggregation service layer
+- Government-wide dashboard with key statistics
+- Consolidated budget view and analytics
+- Strategic planning status across all MOAs
+- Inter-MOA coordination visualization
+- Performance metrics and reports
+- Export functionality (PDF, Excel, CSV)
+
+Critical Requirement: All OCM access MUST be read-only - no write operations.
+
+================================================================================
+SECTION 1: PRE-IMPLEMENTATION CHECKLIST
+================================================================================
+
+Prerequisites (MUST be complete before starting):
+-------------------------------------------------
+[ ] Phase 1: Organizations app fully operational
+    [ ] organizations.Organization model with 44 MOAs + OOBC + OCM
+    [ ] Organization.objects.count() >= 46
+    [ ] OCM organization exists: Organization.objects.get(code='OCM')
+    [ ] OrganizationScopedModel base class available
+
+[ ] Phase 3: Budget system operational
+    [ ] budget_preparation app in INSTALLED_APPS
+    [ ] budget_execution app in INSTALLED_APPS
+    [ ] BudgetProposal model with organization FK
+    [ ] BudgetAllotment model operational
+    [ ] At least 1 test budget proposal exists
+
+[ ] Phase 4: Coordination enhancement complete
+    [ ] Partnership model with lead_organization FK
+    [ ] InterMOAPartnership model (or participating_moas M2M)
+    [ ] Cross-MOA coordination features functional
+
+[ ] Phase 2: Planning module operational (optional but recommended)
+    [ ] StrategicPlan model with organization FK
+    [ ] AnnualWorkPlan model with organization FK
+    [ ] Planning data exists for testing
+
+Verify prerequisites:
+[ ] Run: python manage.py shell
+[ ] Execute:
+    from organizations.models import Organization
+    from budget_preparation.models import BudgetProposal
+    from coordination.models import Partnership
+    from planning.models import StrategicPlan
+
+    print(f"Organizations: {Organization.objects.count()}")
+    print(f"Budget Proposals: {BudgetProposal.objects.count()}")
+    print(f"Partnerships: {Partnership.objects.count()}")
+    print(f"Strategic Plans: {StrategicPlan.objects.count()}")
+
+    ocm = Organization.objects.get(code='OCM')
+    print(f"OCM: {ocm.name} (ID: {ocm.id})")
+
+[ ] Expected: Organizations >= 46, OCM exists, test data available
+
+Environment Setup:
+[ ] Working directory: src/
+[ ] Virtual environment activated (venv/bin/activate)
+[ ] Database backup: cp db.sqlite3 db.sqlite3.backup.phase6
+[ ] Git branch: git checkout -b feature/bmms-phase6-ocm-aggregation
+[ ] Clean working tree: git status shows no uncommitted changes
+
+================================================================================
+SECTION 2: STEP 1 - CREATE OCM DJANGO APP
+================================================================================
+
+[TASKID: P6-001]
+Priority: CRITICAL
+Complexity: Simple
+Estimated Effort: 30 minutes
+Dependencies: None (can start immediately)
+
+Objective: Create dedicated Django app for OCM aggregation layer with proper
+          structure for models, views, services, and templates.
+
+Task 2.1: Create OCM App Structure
+-----------------------------------
+[ ] Navigate to: cd src/
+[ ] Create app: python manage.py startapp ocm
+[ ] Verify directory created: ls -la src/ocm/
+
+Expected directory structure:
+src/ocm/
+├── __init__.py
+├── admin.py
+├── apps.py
+├── models.py
+├── tests.py
+├── views.py
+├── migrations/
+│   └── __init__.py
+
+Task 2.2: Configure OCM AppConfig
+----------------------------------
+[ ] Open: src/ocm/apps.py
+[ ] Update OcmConfig class:
+
+```python
+from django.apps import AppConfig
+
+
+class OcmConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'ocm'
+    verbose_name = 'OCM (Office of the Chief Minister)'
+
+    def ready(self):
+        """Import signal handlers when app is ready"""
+        # Import signals here if needed in future
+        pass
+```
+
+[ ] Save file
+
+Task 2.3: Register OCM in INSTALLED_APPS
+-----------------------------------------
+[ ] Open: src/obc_management/settings/base.py
+[ ] Locate: LOCAL_APPS list (around line 95)
+[ ] Add 'ocm' to LOCAL_APPS:
+
+```python
+LOCAL_APPS = [
+    "common",
+    "organizations",
+    "communities",
+    "mana",
+    "coordination",
+    "recommendations",
+    "planning",
+    "budget_preparation",
+    "budget_execution",
+    "ocm",  # ADD THIS LINE
+]
+```
+
+[ ] Save file
+
+Task 2.4: Create OCM Directory Structure
+-----------------------------------------
+[ ] Create services directory: mkdir -p src/ocm/services
+[ ] Create services __init__.py: touch src/ocm/services/__init__.py
+[ ] Create aggregation.py: touch src/ocm/services/aggregation.py
+[ ] Create permissions.py: touch src/ocm/permissions.py
+[ ] Create decorators.py: touch src/ocm/decorators.py
+[ ] Create middleware.py: touch src/ocm/middleware.py
+
+[ ] Create templates directory: mkdir -p src/templates/ocm
+[ ] Create subdirectories:
+    mkdir -p src/templates/ocm/dashboard
+    mkdir -p src/templates/ocm/budget
+    mkdir -p src/templates/ocm/planning
+    mkdir -p src/templates/ocm/coordination
+    mkdir -p src/templates/ocm/reports
+    mkdir -p src/templates/ocm/partials
+
+[ ] Create URL config: touch src/ocm/urls.py
+
+Task 2.5: Verify App Registration
+----------------------------------
+[ ] Run: python manage.py check
+[ ] Expected: "System check identified no issues (0 silenced)."
+[ ] Run: python manage.py shell
+[ ] Execute: from django.apps import apps; print(apps.get_app_config('ocm'))
+[ ] Expected: <OcmConfig: ocm>
+
+Verification Checklist:
+-----------------------
+[ ] OCM app directory exists: src/ocm/
+[ ] OCM in INSTALLED_APPS
+[ ] Services directory created with __init__.py
+[ ] Templates directory structure created
+[ ] python manage.py check passes
+[ ] Can import ocm in Django shell
+
+================================================================================
+SECTION 3: STEP 2 - CREATE OCM PERMISSIONS & READ-ONLY ENFORCEMENT
+================================================================================
+
+[TASKID: P6-002]
+Priority: CRITICAL
+Complexity: Simple
+Estimated Effort: 1 hour
+Dependencies: P6-001 (OCM app created)
+
+Objective: Implement strict read-only access for OCM users - no create, update,
+          or delete operations allowed on MOA data. This is a CRITICAL security
+          requirement.
+
+Task 3.1: Create OCM Permissions Model
+---------------------------------------
+[ ] Open: src/ocm/models.py
+[ ] Create OCMAccess model:
+
+```python
+from django.db import models
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+User = get_user_model()
+
+
+class OCMAccess(models.Model):
+    """
+    Track OCM user access and permissions.
+
+    OCM users have read-only access to aggregated data across all MOAs.
+    They cannot create, update, or delete any MOA data.
+    """
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='ocm_access',
+        help_text="User with OCM access privileges"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether OCM access is currently active"
+    )
+    access_level = models.CharField(
+        max_length=50,
+        choices=[
+            ('viewer', 'Viewer (Read-Only)'),
+            ('analyst', 'Analyst (Read-Only + Reports)'),
+            ('executive', 'Executive (Full OCM Access)'),
+        ],
+        default='viewer',
+        help_text="Level of OCM access"
+    )
+    granted_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="When OCM access was granted"
+    )
+    granted_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ocm_accesses_granted',
+        help_text="Admin who granted OCM access"
+    )
+    last_accessed = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Last time user accessed OCM dashboard"
+    )
+
+    class Meta:
+        verbose_name = "OCM Access"
+        verbose_name_plural = "OCM Access Records"
+        permissions = [
+            ('view_ocm_dashboard', 'Can view OCM dashboard'),
+            ('view_consolidated_budget', 'Can view consolidated budget'),
+            ('view_planning_overview', 'Can view planning overview'),
+            ('view_coordination_matrix', 'Can view coordination matrix'),
+            ('generate_ocm_reports', 'Can generate OCM reports'),
+            ('export_ocm_data', 'Can export OCM data'),
+        ]
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} - OCM {self.access_level}"
+
+    def update_last_accessed(self):
+        """Update last accessed timestamp"""
+        self.last_accessed = timezone.now()
+        self.save(update_fields=['last_accessed'])
+```
+
+[ ] Save file
+
+Task 3.2: Create Read-Only Permission Class
+--------------------------------------------
+[ ] Open: src/ocm/permissions.py
+[ ] Create OCMReadOnlyPermission class:
+
+```python
+from rest_framework.permissions import BasePermission
+
+
+class OCMReadOnlyPermission(BasePermission):
+    """
+    Enforce read-only access for OCM users.
+
+    OCM users can only use GET, HEAD, OPTIONS methods.
+    All write operations (POST, PUT, PATCH, DELETE) are blocked.
+    """
+
+    def has_permission(self, request, view):
+        # Allow read-only methods
+        if request.method in ['GET', 'HEAD', 'OPTIONS']:
+            # Check if user has OCM access
+            if hasattr(request.user, 'ocm_access') and request.user.ocm_access.is_active:
+                return True
+            return False
+
+        # Block all write methods
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        # Same logic for object-level permissions
+        return request.method in ['GET', 'HEAD', 'OPTIONS']
+
+
+class IsOCMUser(BasePermission):
+    """
+    Check if user has active OCM access.
+    """
+
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            hasattr(request.user, 'ocm_access') and
+            request.user.ocm_access.is_active
+        )
+```
+
+[ ] Save file
+
+Task 3.3: Create Read-Only Decorators
+--------------------------------------
+[ ] Open: src/ocm/decorators.py
+[ ] Create decorator functions:
+
+```python
+from functools import wraps
+from django.http import HttpResponseForbidden
+from django.contrib.auth.decorators import login_required
+
+
+def require_ocm_access(view_func):
+    """
+    Decorator to require OCM access for a view.
+
+    Usage:
+        @require_ocm_access
+        def ocm_dashboard(request):
+            pass
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        # Check if user has OCM access
+        if not hasattr(request.user, 'ocm_access'):
+            return HttpResponseForbidden(
+                "You do not have OCM access. Contact your administrator."
+            )
+
+        if not request.user.ocm_access.is_active:
+            return HttpResponseForbidden(
+                "Your OCM access has been deactivated. Contact your administrator."
+            )
+
+        # Update last accessed timestamp
+        request.user.ocm_access.update_last_accessed()
+
+        return view_func(request, *args, **kwargs)
+
+    return login_required(_wrapped_view)
+
+
+def enforce_readonly(view_func):
+    """
+    Decorator to enforce read-only access.
+
+    Blocks POST, PUT, PATCH, DELETE requests.
+
+    Usage:
+        @enforce_readonly
+        def some_view(request):
+            pass
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        # Block write methods
+        if request.method not in ['GET', 'HEAD', 'OPTIONS']:
+            return HttpResponseForbidden(
+                "OCM users have read-only access. Write operations are not permitted."
+            )
+
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped_view
+
+
+def ocm_readonly_view(view_func):
+    """
+    Combined decorator: require OCM access + enforce read-only.
+
+    Usage:
+        @ocm_readonly_view
+        def ocm_dashboard(request):
+            pass
+    """
+    return enforce_readonly(require_ocm_access(view_func))
+```
+
+[ ] Save file
+
+Task 3.4: Create OCM Middleware
+--------------------------------
+[ ] Open: src/ocm/middleware.py
+[ ] Create OCMAccessMiddleware:
+
+```python
+from django.utils.deprecation import MiddlewareMixin
+from django.http import HttpResponseForbidden
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class OCMAccessMiddleware(MiddlewareMixin):
+    """
+    Middleware to track OCM access and enforce read-only operations.
+    """
+
+    def process_request(self, request):
+        # Check if this is an OCM view
+        if request.path.startswith('/ocm/'):
+            # Set flag for OCM context
+            request.is_ocm_view = True
+
+            # Verify user has OCM access
+            if request.user.is_authenticated:
+                if not hasattr(request.user, 'ocm_access'):
+                    logger.warning(
+                        f"User {request.user.username} attempted to access OCM without access: {request.path}"
+                    )
+                    return HttpResponseForbidden(
+                        "You do not have OCM access. Contact your administrator."
+                    )
+
+                if not request.user.ocm_access.is_active:
+                    logger.warning(
+                        f"User {request.user.username} attempted to access OCM with inactive access: {request.path}"
+                    )
+                    return HttpResponseForbidden(
+                        "Your OCM access has been deactivated."
+                    )
+        else:
+            request.is_ocm_view = False
+
+        return None
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        # Enforce read-only for OCM views
+        if getattr(request, 'is_ocm_view', False):
+            if request.method not in ['GET', 'HEAD', 'OPTIONS']:
+                logger.error(
+                    f"OCM user {request.user.username} attempted write operation: "
+                    f"{request.method} {request.path}"
+                )
+                return HttpResponseForbidden(
+                    "OCM users have read-only access. Write operations are not permitted."
+                )
+
+        return None
+```
+
+[ ] Save file
+
+Task 3.5: Register OCM Middleware
+----------------------------------
+[ ] Open: src/obc_management/settings/base.py
+[ ] Locate: MIDDLEWARE list (around line 131)
+[ ] Add OCM middleware AFTER OrganizationContextMiddleware:
+
+```python
+MIDDLEWARE = [
+    # ... existing middleware ...
+    'organizations.middleware.OrganizationContextMiddleware',
+    'ocm.middleware.OCMAccessMiddleware',  # ADD THIS LINE
+    # ... rest of middleware ...
+]
+```
+
+[ ] Save file
+
+Task 3.6: Create Initial Migration
+-----------------------------------
+[ ] Run: python manage.py makemigrations ocm
+[ ] Expected: Migration file created: ocm/migrations/0001_initial.py
+[ ] Review migration file
+[ ] Apply migration: python manage.py migrate ocm
+[ ] Verify: OCMAccess table created
+
+Task 3.7: Register OCMAccess in Admin
+--------------------------------------
+[ ] Open: src/ocm/admin.py
+[ ] Register OCMAccess model:
+
+```python
+from django.contrib import admin
+from .models import OCMAccess
+
+
+@admin.register(OCMAccess)
+class OCMAccessAdmin(admin.ModelAdmin):
+    list_display = [
+        'user',
+        'access_level',
+        'is_active',
+        'granted_at',
+        'granted_by',
+        'last_accessed',
+    ]
+    list_filter = ['access_level', 'is_active', 'granted_at']
+    search_fields = ['user__username', 'user__email', 'user__first_name', 'user__last_name']
+    readonly_fields = ['granted_at', 'last_accessed']
+
+    fieldsets = (
+        ('User Information', {
+            'fields': ('user', 'access_level', 'is_active')
+        }),
+        ('Access Tracking', {
+            'fields': ('granted_at', 'granted_by', 'last_accessed')
+        }),
+    )
+
+    def save_model(self, request, obj, form, change):
+        # Set granted_by if this is a new record
+        if not change:
+            obj.granted_by = request.user
+        super().save_model(request, obj, form, change)
+```
+
+[ ] Save file
+
+Verification Checklist:
+-----------------------
+[ ] OCMAccess model created successfully
+[ ] Migrations applied without errors
+[ ] OCMAccess visible in Django admin
+[ ] Permissions created (view_ocm_dashboard, etc.)
+[ ] Read-only decorators defined
+[ ] OCM middleware registered
+[ ] python manage.py check passes
+
+Testing:
+[ ] Can create OCMAccess record in admin
+[ ] OCM middleware blocks write operations to /ocm/
+[ ] Decorators enforce read-only access
+[ ] Users without OCM access are denied
+
+================================================================================
+SECTION 4: STEP 3 - CREATE OCM AGGREGATION SERVICE
+================================================================================
+
+[TASKID: P6-003]
+Priority: HIGH
+Complexity: Moderate
+Estimated Effort: 3 hours
+Dependencies: P6-001, P6-002
+
+Objective: Create service layer for aggregating data across all 44 MOAs with
+          efficient queries and caching strategy.
+
+Task 4.1: Create Base Aggregation Service
+------------------------------------------
+[ ] Open: src/ocm/services/aggregation.py
+[ ] Create OCMAggregationService class:
+
+```python
+from django.db.models import Count, Sum, Avg, Q, F
+from django.core.cache import cache
+from django.utils import timezone
+from datetime import timedelta
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class OCMAggregationService:
+    """
+    Service for aggregating data across all MOAs for OCM oversight.
+
+    All methods return aggregated data with caching for performance.
+    Cache TTL: 15 minutes (900 seconds) for most queries.
+    """
+
+    CACHE_TTL = 900  # 15 minutes
+
+    @staticmethod
+    def get_organization_count():
+        """Get total count of active MOAs (excluding OOBC and OCM)"""
+        cache_key = 'ocm:org_count'
+        count = cache.get(cache_key)
+
+        if count is None:
+            from organizations.models import Organization
+            count = Organization.objects.filter(
+                is_active=True
+            ).exclude(
+                code__in=['OOBC', 'OCM']
+            ).count()
+            cache.set(cache_key, count, OCMAggregationService.CACHE_TTL)
+
+        return count
+
+    @staticmethod
+    def get_all_organizations():
+        """Get all active MOAs for filtering"""
+        cache_key = 'ocm:all_orgs'
+        orgs = cache.get(cache_key)
+
+        if orgs is None:
+            from organizations.models import Organization
+            orgs = list(Organization.objects.filter(
+                is_active=True
+            ).exclude(
+                code__in=['OOBC', 'OCM']
+            ).values('id', 'code', 'name', 'org_type').order_by('name'))
+            cache.set(cache_key, orgs, OCMAggregationService.CACHE_TTL)
+
+        return orgs
+
+    @staticmethod
+    def get_government_stats():
+        """Get high-level government-wide statistics"""
+        cache_key = 'ocm:gov_stats'
+        stats = cache.get(cache_key)
+
+        if stats is None:
+            from organizations.models import Organization
+            from budget_preparation.models import BudgetProposal
+            from planning.models import StrategicPlan
+            from coordination.models import Partnership
+
+            stats = {
+                'total_moas': Organization.objects.filter(
+                    is_active=True
+                ).exclude(code__in=['OOBC', 'OCM']).count(),
+
+                'total_budget': BudgetProposal.objects.aggregate(
+                    total=Sum('total_amount')
+                )['total'] or 0,
+
+                'total_plans': StrategicPlan.objects.count(),
+
+                'total_partnerships': Partnership.objects.count(),
+
+                'total_users': Organization.objects.filter(
+                    is_active=True
+                ).exclude(code__in=['OOBC', 'OCM']).aggregate(
+                    total_users=Count('memberships__user', distinct=True)
+                )['total_users'] or 0,
+            }
+
+            cache.set(cache_key, stats, OCMAggregationService.CACHE_TTL)
+
+        return stats
+
+    @staticmethod
+    def clear_cache():
+        """Clear all OCM aggregation caches"""
+        cache.delete_pattern('ocm:*')
+        logger.info("OCM aggregation cache cleared")
+```
+
+[ ] Save file
+
+Task 4.2: Add Budget Aggregation Methods
+-----------------------------------------
+[ ] Open: src/ocm/services/aggregation.py
+[ ] Add budget methods to OCMAggregationService:
+
+```python
+    @staticmethod
+    def get_consolidated_budget(fiscal_year=None):
+        """
+        Get consolidated budget across all MOAs.
+
+        Args:
+            fiscal_year: Filter by fiscal year (optional)
+
+        Returns:
+            List of dicts with MOA budget data
+        """
+        from budget_preparation.models import BudgetProposal
+        from budget_execution.models import BudgetAllotment, Disbursement
+
+        cache_key = f'ocm:budget:consolidated:{fiscal_year or "all"}'
+        data = cache.get(cache_key)
+
+        if data is None:
+            queryset = BudgetProposal.objects.select_related('organization')
+
+            if fiscal_year:
+                queryset = queryset.filter(fiscal_year=fiscal_year)
+
+            data = list(queryset.values(
+                'organization__name',
+                'organization__code',
+            ).annotate(
+                total_proposed=Sum('total_amount'),
+                total_approved=Sum('total_amount', filter=Q(status='approved')),
+                proposal_count=Count('id'),
+                approved_count=Count('id', filter=Q(status='approved')),
+            ).order_by('-total_proposed'))
+
+            # Add utilization data
+            for item in data:
+                org_name = item['organization__name']
+                org_code = item['organization__code']
+
+                # Get allotment and disbursement data
+                allotments = BudgetAllotment.objects.filter(
+                    budget_proposal__organization__code=org_code
+                ).aggregate(
+                    total_allocated=Sum('amount_allocated')
+                )
+
+                disbursements = Disbursement.objects.filter(
+                    budget_allotment__budget_proposal__organization__code=org_code
+                ).aggregate(
+                    total_disbursed=Sum('amount')
+                )
+
+                item['total_allocated'] = allotments['total_allocated'] or 0
+                item['total_disbursed'] = disbursements['total_disbursed'] or 0
+
+                # Calculate utilization rate
+                if item['total_allocated'] > 0:
+                    item['utilization_rate'] = (
+                        item['total_disbursed'] / item['total_allocated'] * 100
+                    )
+                else:
+                    item['utilization_rate'] = 0
+
+            cache.set(cache_key, data, OCMAggregationService.CACHE_TTL)
+
+        return data
+
+    @staticmethod
+    def get_budget_summary(fiscal_year=None):
+        """Get government-wide budget summary"""
+        from budget_preparation.models import BudgetProposal
+
+        cache_key = f'ocm:budget:summary:{fiscal_year or "all"}'
+        summary = cache.get(cache_key)
+
+        if summary is None:
+            queryset = BudgetProposal.objects.all()
+
+            if fiscal_year:
+                queryset = queryset.filter(fiscal_year=fiscal_year)
+
+            summary = queryset.aggregate(
+                total_proposed=Sum('total_amount'),
+                total_approved=Sum('total_amount', filter=Q(status='approved')),
+                total_proposals=Count('id'),
+                approved_proposals=Count('id', filter=Q(status='approved')),
+                avg_budget=Avg('total_amount'),
+            )
+
+            # Calculate approval rate
+            if summary['total_proposals'] > 0:
+                summary['approval_rate'] = (
+                    summary['approved_proposals'] / summary['total_proposals'] * 100
+                )
+            else:
+                summary['approval_rate'] = 0
+
+            cache.set(cache_key, summary, OCMAggregationService.CACHE_TTL)
+
+        return summary
+```
+
+[ ] Save file
+
+Task 4.3: Add Planning Aggregation Methods
+-------------------------------------------
+[ ] Add to OCMAggregationService:
+
+```python
+    @staticmethod
+    def get_strategic_planning_status():
+        """Get strategic planning status across all MOAs"""
+        from planning.models import StrategicPlan
+
+        cache_key = 'ocm:planning:status'
+        data = cache.get(cache_key)
+
+        if data is None:
+            data = list(StrategicPlan.objects.select_related(
+                'organization'
+            ).values(
+                'organization__name',
+                'organization__code',
+                'status'
+            ).annotate(
+                plan_count=Count('id')
+            ).order_by('organization__name', 'status'))
+
+            cache.set(cache_key, data, OCMAggregationService.CACHE_TTL)
+
+        return data
+
+    @staticmethod
+    def get_planning_summary():
+        """Get government-wide planning summary"""
+        from planning.models import StrategicPlan, AnnualWorkPlan
+
+        cache_key = 'ocm:planning:summary'
+        summary = cache.get(cache_key)
+
+        if summary is None:
+            summary = {
+                'total_strategic_plans': StrategicPlan.objects.count(),
+                'active_plans': StrategicPlan.objects.filter(
+                    status='active'
+                ).count(),
+                'total_work_plans': AnnualWorkPlan.objects.count(),
+                'current_year_plans': AnnualWorkPlan.objects.filter(
+                    year=timezone.now().year
+                ).count(),
+                'moas_with_plans': StrategicPlan.objects.values(
+                    'organization'
+                ).distinct().count(),
+            }
+
+            cache.set(cache_key, summary, OCMAggregationService.CACHE_TTL)
+
+        return summary
+```
+
+[ ] Save file
+
+Task 4.4: Add Coordination Aggregation Methods
+-----------------------------------------------
+[ ] Add to OCMAggregationService:
+
+```python
+    @staticmethod
+    def get_inter_moa_partnerships():
+        """Get inter-MOA partnerships across government"""
+        from coordination.models import Partnership
+
+        cache_key = 'ocm:coord:partnerships'
+        data = cache.get(cache_key)
+
+        if data is None:
+            # Get partnerships with multiple MOAs
+            data = list(Partnership.objects.select_related(
+                'organization'
+            ).prefetch_related(
+                'participating_moas'
+            ).filter(
+                # Filter for partnerships with at least 1 participating MOA
+                participating_moas__isnull=False
+            ).distinct().values(
+                'id',
+                'name',
+                'organization__name',
+                'status',
+                'start_date',
+                'end_date',
+            )[:20])  # Limit to 20 most recent
+
+            # Add participating MOAs count
+            for item in data:
+                partnership = Partnership.objects.get(id=item['id'])
+                item['participating_count'] = partnership.participating_moas.count()
+
+            cache.set(cache_key, data, OCMAggregationService.CACHE_TTL)
+
+        return data
+
+    @staticmethod
+    def get_coordination_summary():
+        """Get government-wide coordination summary"""
+        from coordination.models import Partnership
+
+        cache_key = 'ocm:coord:summary'
+        summary = cache.get(cache_key)
+
+        if summary is None:
+            summary = {
+                'total_partnerships': Partnership.objects.count(),
+                'active_partnerships': Partnership.objects.filter(
+                    status='active'
+                ).count(),
+                'inter_moa_partnerships': Partnership.objects.filter(
+                    participating_moas__isnull=False
+                ).distinct().count(),
+                'most_collaborative_moas': list(
+                    Partnership.objects.values(
+                        'organization__name'
+                    ).annotate(
+                        partnership_count=Count('id')
+                    ).order_by('-partnership_count')[:5]
+                ),
+            }
+
+            cache.set(cache_key, summary, OCMAggregationService.CACHE_TTL)
+
+        return summary
+```
+
+[ ] Save file
+
+Task 4.5: Add Performance Metrics Methods
+------------------------------------------
+[ ] Add to OCMAggregationService:
+
+```python
+    @staticmethod
+    def get_performance_metrics():
+        """Get government-wide performance metrics"""
+        cache_key = 'ocm:performance:metrics'
+        metrics = cache.get(cache_key)
+
+        if metrics is None:
+            from budget_preparation.models import BudgetProposal
+            from planning.models import StrategicPlan
+            from coordination.models import Partnership
+
+            metrics = {
+                'budget_approval_rate': OCMAggregationService._calculate_budget_approval_rate(),
+                'planning_completion_rate': OCMAggregationService._calculate_planning_completion(),
+                'partnership_success_rate': OCMAggregationService._calculate_partnership_success(),
+                'overall_score': 0,  # Calculated below
+            }
+
+            # Calculate overall performance score (weighted average)
+            metrics['overall_score'] = (
+                metrics['budget_approval_rate'] * 0.4 +
+                metrics['planning_completion_rate'] * 0.3 +
+                metrics['partnership_success_rate'] * 0.3
+            )
+
+            cache.set(cache_key, metrics, OCMAggregationService.CACHE_TTL)
+
+        return metrics
+
+    @staticmethod
+    def _calculate_budget_approval_rate():
+        """Calculate budget approval rate"""
+        from budget_preparation.models import BudgetProposal
+
+        total = BudgetProposal.objects.count()
+        if total == 0:
+            return 0
+
+        approved = BudgetProposal.objects.filter(status='approved').count()
+        return (approved / total) * 100
+
+    @staticmethod
+    def _calculate_planning_completion():
+        """Calculate strategic planning completion rate"""
+        from planning.models import StrategicPlan
+        from organizations.models import Organization
+
+        total_moas = Organization.objects.filter(
+            is_active=True
+        ).exclude(code__in=['OOBC', 'OCM']).count()
+
+        if total_moas == 0:
+            return 0
+
+        moas_with_plans = StrategicPlan.objects.filter(
+            status='active'
+        ).values('organization').distinct().count()
+
+        return (moas_with_plans / total_moas) * 100
+
+    @staticmethod
+    def _calculate_partnership_success():
+        """Calculate partnership success rate"""
+        from coordination.models import Partnership
+
+        total = Partnership.objects.count()
+        if total == 0:
+            return 0
+
+        successful = Partnership.objects.filter(
+            status__in=['active', 'completed']
+        ).count()
+
+        return (successful / total) * 100
+```
+
+[ ] Save file
+
+Verification Checklist:
+-----------------------
+[ ] OCMAggregationService class created
+[ ] All aggregation methods defined
+[ ] Caching implemented (15-minute TTL)
+[ ] Budget aggregation methods complete
+[ ] Planning aggregation methods complete
+[ ] Coordination aggregation methods complete
+[ ] Performance metrics methods complete
+[ ] No syntax errors: python manage.py check
+
+Testing:
+[ ] Test in Django shell:
+    from ocm.services.aggregation import OCMAggregationService
+    stats = OCMAggregationService.get_government_stats()
+    print(stats)
+[ ] Verify: Returns dictionary with expected keys
+[ ] Verify: Budget aggregation returns MOA data
+[ ] Verify: Caching works (second call is faster)
+
+================================================================================
+SECTION 5: STEP 4 - CREATE OCM DASHBOARD VIEWS
+================================================================================
+
+[TASKID: P6-004]
+Priority: HIGH
+Complexity: Moderate
+Estimated Effort: 3 hours
+Dependencies: P6-001, P6-002, P6-003
+
+Objective: Create main OCM dashboard and related views for government-wide
+          oversight with filtering and drill-down capabilities.
+
+Task 5.1: Create OCM URL Configuration
+---------------------------------------
+[ ] Open: src/ocm/urls.py
+[ ] Create URL patterns:
+
+```python
+from django.urls import path
+from . import views
+
+app_name = 'ocm'
+
+urlpatterns = [
+    # Main dashboard
+    path('dashboard/', views.ocm_dashboard, name='dashboard'),
+
+    # Budget views
+    path('budget/consolidated/', views.consolidated_budget, name='budget-consolidated'),
+    path('budget/moa/<str:org_code>/', views.moa_budget_detail, name='budget-moa-detail'),
+
+    # Planning views
+    path('planning/overview/', views.planning_overview, name='planning-overview'),
+    path('planning/moa/<str:org_code>/', views.moa_planning_detail, name='planning-moa-detail'),
+
+    # Coordination views
+    path('coordination/matrix/', views.coordination_matrix, name='coordination-matrix'),
+    path('coordination/partnership/<int:pk>/', views.partnership_detail, name='partnership-detail'),
+
+    # Performance views
+    path('performance/overview/', views.performance_overview, name='performance-overview'),
+    path('performance/moa/<str:org_code>/', views.moa_performance_detail, name='performance-moa-detail'),
+
+    # Reports
+    path('reports/', views.reports_list, name='reports-list'),
+    path('reports/generate/', views.generate_report, name='generate-report'),
+
+    # API endpoints for AJAX/HTMX
+    path('api/stats/', views.api_government_stats, name='api-stats'),
+    path('api/filter/', views.api_filter_data, name='api-filter'),
+]
+```
+
+[ ] Save file
+
+Task 5.2: Include OCM URLs in Main URL Config
+----------------------------------------------
+[ ] Open: src/obc_management/urls.py
+[ ] Add OCM URLs:
+
+```python
+# Around line with other app includes
+path('ocm/', include('ocm.urls', namespace='ocm')),
+```
+
+[ ] Save file
+
+Task 5.3: Create Main Dashboard View
+-------------------------------------
+[ ] Open: src/ocm/views.py
+[ ] Create dashboard view:
+
+```python
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.db.models import Q
+
+from .decorators import ocm_readonly_view
+from .services.aggregation import OCMAggregationService
+from organizations.models import Organization
+
+
+@ocm_readonly_view
+def ocm_dashboard(request):
+    """
+    Main OCM dashboard showing government-wide statistics.
+
+    Displays:
+    - Total MOAs count
+    - Consolidated budget summary
+    - Strategic planning status
+    - Inter-MOA partnerships
+    - Performance metrics
+    """
+    context = {
+        'gov_stats': OCMAggregationService.get_government_stats(),
+        'budget_summary': OCMAggregationService.get_budget_summary(),
+        'planning_summary': OCMAggregationService.get_planning_summary(),
+        'coordination_summary': OCMAggregationService.get_coordination_summary(),
+        'performance_metrics': OCMAggregationService.get_performance_metrics(),
+        'all_organizations': OCMAggregationService.get_all_organizations(),
+    }
+
+    return render(request, 'ocm/dashboard/main.html', context)
+```
+
+[ ] Save file
+
+Task 5.4: Create Budget Views
+------------------------------
+[ ] Add to src/ocm/views.py:
+
+```python
+@ocm_readonly_view
+def consolidated_budget(request):
+    """
+    Consolidated budget view across all MOAs.
+
+    Shows:
+    - Total government budget
+    - Budget by MOA
+    - Utilization rates
+    - Budget trends
+    """
+    fiscal_year = request.GET.get('fiscal_year')
+
+    context = {
+        'budget_data': OCMAggregationService.get_consolidated_budget(fiscal_year),
+        'budget_summary': OCMAggregationService.get_budget_summary(fiscal_year),
+        'fiscal_year': fiscal_year,
+        'available_years': range(2020, 2031),  # 2020-2030
+    }
+
+    return render(request, 'ocm/budget/consolidated.html', context)
+
+
+@ocm_readonly_view
+def moa_budget_detail(request, org_code):
+    """
+    Detailed budget view for a specific MOA.
+    """
+    from budget_preparation.models import BudgetProposal
+
+    organization = get_object_or_404(Organization, code=org_code)
+    fiscal_year = request.GET.get('fiscal_year')
+
+    proposals = BudgetProposal.objects.filter(
+        organization=organization
+    )
+
+    if fiscal_year:
+        proposals = proposals.filter(fiscal_year=fiscal_year)
+
+    context = {
+        'organization': organization,
+        'proposals': proposals.select_related('created_by'),
+        'fiscal_year': fiscal_year,
+    }
+
+    return render(request, 'ocm/budget/moa_detail.html', context)
+```
+
+[ ] Save file
+
+Task 5.5: Create Planning Views
+--------------------------------
+[ ] Add to src/ocm/views.py:
+
+```python
+@ocm_readonly_view
+def planning_overview(request):
+    """
+    Strategic planning overview across all MOAs.
+
+    Shows:
+    - MOAs with active plans
+    - Planning completion status
+    - Strategic goals summary
+    """
+    context = {
+        'planning_status': OCMAggregationService.get_strategic_planning_status(),
+        'planning_summary': OCMAggregationService.get_planning_summary(),
+        'all_organizations': OCMAggregationService.get_all_organizations(),
+    }
+
+    return render(request, 'ocm/planning/overview.html', context)
+
+
+@ocm_readonly_view
+def moa_planning_detail(request, org_code):
+    """
+    Detailed planning view for a specific MOA.
+    """
+    from planning.models import StrategicPlan, AnnualWorkPlan
+
+    organization = get_object_or_404(Organization, code=org_code)
+
+    strategic_plans = StrategicPlan.objects.filter(
+        organization=organization
+    ).prefetch_related('goals')
+
+    work_plans = AnnualWorkPlan.objects.filter(
+        organization=organization
+    ).prefetch_related('objectives')
+
+    context = {
+        'organization': organization,
+        'strategic_plans': strategic_plans,
+        'work_plans': work_plans,
+    }
+
+    return render(request, 'ocm/planning/moa_detail.html', context)
+```
+
+[ ] Save file
+
+Task 5.6: Create Coordination Views
+------------------------------------
+[ ] Add to src/ocm/views.py:
+
+```python
+@ocm_readonly_view
+def coordination_matrix(request):
+    """
+    Inter-MOA coordination matrix showing all partnerships.
+    """
+    context = {
+        'inter_moa_partnerships': OCMAggregationService.get_inter_moa_partnerships(),
+        'coordination_summary': OCMAggregationService.get_coordination_summary(),
+        'all_organizations': OCMAggregationService.get_all_organizations(),
+    }
+
+    return render(request, 'ocm/coordination/matrix.html', context)
+
+
+@ocm_readonly_view
+def partnership_detail(request, pk):
+    """
+    Detailed view of a specific partnership.
+    """
+    from coordination.models import Partnership
+
+    partnership = get_object_or_404(
+        Partnership.objects.select_related('organization').prefetch_related('participating_moas'),
+        pk=pk
+    )
+
+    context = {
+        'partnership': partnership,
+    }
+
+    return render(request, 'ocm/coordination/partnership_detail.html', context)
+```
+
+[ ] Save file
+
+Task 5.7: Create Performance Views
+-----------------------------------
+[ ] Add to src/ocm/views.py:
+
+```python
+@ocm_readonly_view
+def performance_overview(request):
+    """
+    Government-wide performance metrics overview.
+    """
+    context = {
+        'performance_metrics': OCMAggregationService.get_performance_metrics(),
+        'all_organizations': OCMAggregationService.get_all_organizations(),
+    }
+
+    return render(request, 'ocm/performance/overview.html', context)
+
+
+@ocm_readonly_view
+def moa_performance_detail(request, org_code):
+    """
+    Detailed performance view for a specific MOA.
+    """
+    organization = get_object_or_404(Organization, code=org_code)
+
+    # Calculate MOA-specific metrics
+    # (Implementation details depend on available data)
+
+    context = {
+        'organization': organization,
+    }
+
+    return render(request, 'ocm/performance/moa_detail.html', context)
+```
+
+[ ] Save file
+
+Task 5.8: Create Report Views
+------------------------------
+[ ] Add to src/ocm/views.py:
+
+```python
+@ocm_readonly_view
+def reports_list(request):
+    """
+    List available OCM reports.
+    """
+    context = {
+        'report_types': [
+            {
+                'id': 'budget_summary',
+                'name': 'Consolidated Budget Summary',
+                'description': 'Government-wide budget aggregation',
+            },
+            {
+                'id': 'planning_status',
+                'name': 'Strategic Planning Status',
+                'description': 'Planning completion across all MOAs',
+            },
+            {
+                'id': 'coordination_report',
+                'name': 'Inter-MOA Coordination Report',
+                'description': 'Cross-ministerial partnerships and collaboration',
+            },
+            {
+                'id': 'performance_dashboard',
+                'name': 'Performance Dashboard',
+                'description': 'Government-wide performance metrics',
+            },
+        ],
+    }
+
+    return render(request, 'ocm/reports/list.html', context)
+
+
+@ocm_readonly_view
+def generate_report(request):
+    """
+    Generate custom OCM report.
+    """
+    if request.method == 'GET':
+        # Show report generation form
+        context = {
+            'all_organizations': OCMAggregationService.get_all_organizations(),
+        }
+        return render(request, 'ocm/reports/generate.html', context)
+
+
+@ocm_readonly_view
+def api_government_stats(request):
+    """
+    API endpoint for real-time government statistics.
+    """
+    stats = OCMAggregationService.get_government_stats()
+    return JsonResponse(stats)
+
+
+@ocm_readonly_view
+def api_filter_data(request):
+    """
+    API endpoint for filtering OCM data.
+    """
+    org_codes = request.GET.getlist('organizations')
+    fiscal_year = request.GET.get('fiscal_year')
+
+    # Filter data based on parameters
+    data = {
+        'filtered': True,
+        'organizations': org_codes,
+        'fiscal_year': fiscal_year,
+    }
+
+    return JsonResponse(data)
+```
+
+[ ] Save file
+
+Verification Checklist:
+-----------------------
+[ ] All OCM views created
+[ ] URLs configured correctly
+[ ] OCM URLs included in main urls.py
+[ ] @ocm_readonly_view decorator applied to all views
+[ ] No syntax errors: python manage.py check
+[ ] URLs resolve: python manage.py show_urls | grep ocm
+
+Testing:
+[ ] Access /ocm/dashboard/ (should require OCM access)
+[ ] Verify: Dashboard loads without errors
+[ ] Verify: Government stats display correctly
+[ ] Verify: All navigation links work
+
+================================================================================
+SECTION 6: STEP 5 - CREATE OCM TEMPLATES
+================================================================================
+
+[TASKID: P6-005]
+Priority: HIGH
+Complexity: Moderate
+Estimated Effort: 4 hours
+Dependencies: P6-004
+
+Objective: Create responsive, accessible templates for OCM dashboards with
+          proper UI components and visualization support.
+
+Task 6.1: Create Base OCM Template
+-----------------------------------
+[ ] Create: src/templates/ocm/base.html
+
+```django
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+  /* OCM-specific styles */
+  .ocm-readonly-banner {
+    background-color: #f59e0b;
+    color: #1f2937;
+    padding: 0.75rem;
+    text-align: center;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+
+  .ocm-nav {
+    background-color: #1e3a8a;
+    color: white;
+    padding: 1rem;
+  }
+
+  .ocm-nav a {
+    color: #93c5fd;
+    margin-right: 1.5rem;
+  }
+
+  .ocm-nav a:hover {
+    color: white;
+  }
+
+  .ocm-stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .ocm-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Read-Only Mode Banner -->
+<div class="ocm-readonly-banner">
+  <i class="fas fa-eye mr-2"></i>
+  OCM Read-Only View - Government-Wide Oversight Dashboard
+</div>
+
+<!-- OCM Navigation -->
+<nav class="ocm-nav">
+  <div class="container mx-auto">
+    <a href="{% url 'ocm:dashboard' %}">
+      <i class="fas fa-home mr-1"></i> Dashboard
+    </a>
+    <a href="{% url 'ocm:budget-consolidated' %}">
+      <i class="fas fa-money-bill-wave mr-1"></i> Budget
+    </a>
+    <a href="{% url 'ocm:planning-overview' %}">
+      <i class="fas fa-tasks mr-1"></i> Planning
+    </a>
+    <a href="{% url 'ocm:coordination-matrix' %}">
+      <i class="fas fa-network-wired mr-1"></i> Coordination
+    </a>
+    <a href="{% url 'ocm:performance-overview' %}">
+      <i class="fas fa-chart-line mr-1"></i> Performance
+    </a>
+    <a href="{% url 'ocm:reports-list' %}">
+      <i class="fas fa-file-alt mr-1"></i> Reports
+    </a>
+  </div>
+</nav>
+
+<!-- OCM Content -->
+<div class="ocm-content">
+  {% block ocm_content %}
+  {% endblock %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js for visualizations -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% block ocm_js %}
+{% endblock %}
+{% endblock %}
+```
+
+[ ] Save file
+
+Task 6.2: Create Main Dashboard Template
+-----------------------------------------
+[ ] Create: src/templates/ocm/dashboard/main.html
+
+```django
+{% extends "ocm/base.html" %}
+{% load humanize %}
+
+{% block title %}OCM Dashboard - Government-Wide Overview{% endblock %}
+
+{% block ocm_content %}
+<h1 class="text-3xl font-bold mb-6">Government-Wide Overview</h1>
+
+<!-- High-Level Statistics -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+  <!-- Total MOAs -->
+  <div class="ocm-stat-card">
+    <div class="text-5xl font-bold mb-2">{{ gov_stats.total_moas }}</div>
+    <div class="text-sm opacity-90">Active Ministries, Offices & Agencies</div>
+  </div>
+
+  <!-- Total Budget -->
+  <div class="ocm-stat-card">
+    <div class="text-5xl font-bold mb-2">₱{{ gov_stats.total_budget|intcomma }}</div>
+    <div class="text-sm opacity-90">Total Government Budget</div>
+  </div>
+
+  <!-- Strategic Plans -->
+  <div class="ocm-stat-card">
+    <div class="text-5xl font-bold mb-2">{{ gov_stats.total_plans }}</div>
+    <div class="text-sm opacity-90">Strategic Plans</div>
+  </div>
+
+  <!-- Partnerships -->
+  <div class="ocm-stat-card">
+    <div class="text-5xl font-bold mb-2">{{ gov_stats.total_partnerships }}</div>
+    <div class="text-sm opacity-90">Inter-MOA Partnerships</div>
+  </div>
+</div>
+
+<!-- Quick Links -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <a href="{% url 'ocm:budget-consolidated' %}"
+     class="block p-6 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
+    <h3 class="text-xl font-semibold mb-2">
+      <i class="fas fa-money-bill-wave text-blue-600 mr-2"></i>
+      Consolidated Budget
+    </h3>
+    <p class="text-gray-600">View government-wide budget aggregation</p>
+  </a>
+
+  <a href="{% url 'ocm:planning-overview' %}"
+     class="block p-6 bg-green-50 hover:bg-green-100 rounded-lg transition">
+    <h3 class="text-xl font-semibold mb-2">
+      <i class="fas fa-tasks text-green-600 mr-2"></i>
+      Strategic Planning
+    </h3>
+    <p class="text-gray-600">Monitor planning status across MOAs</p>
+  </a>
+
+  <a href="{% url 'ocm:coordination-matrix' %}"
+     class="block p-6 bg-purple-50 hover:bg-purple-100 rounded-lg transition">
+    <h3 class="text-xl font-semibold mb-2">
+      <i class="fas fa-network-wired text-purple-600 mr-2"></i>
+      Coordination Matrix
+    </h3>
+    <p class="text-gray-600">Track inter-MOA collaboration</p>
+  </a>
+</div>
+
+<!-- Performance Metrics Summary -->
+<div class="bg-white rounded-lg shadow p-6 mb-8">
+  <h2 class="text-2xl font-semibold mb-4">Performance Overview</h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div>
+      <div class="text-sm text-gray-600 mb-1">Budget Approval Rate</div>
+      <div class="text-3xl font-bold text-blue-600">
+        {{ performance_metrics.budget_approval_rate|floatformat:1 }}%
+      </div>
+    </div>
+
+    <div>
+      <div class="text-sm text-gray-600 mb-1">Planning Completion</div>
+      <div class="text-3xl font-bold text-green-600">
+        {{ performance_metrics.planning_completion_rate|floatformat:1 }}%
+      </div>
+    </div>
+
+    <div>
+      <div class="text-sm text-gray-600 mb-1">Partnership Success</div>
+      <div class="text-3xl font-bold text-purple-600">
+        {{ performance_metrics.partnership_success_rate|floatformat:1 }}%
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Organization Filter -->
+<div class="bg-white rounded-lg shadow p-6">
+  <h2 class="text-2xl font-semibold mb-4">Filter by Organization</h2>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+    {% for org in all_organizations %}
+    <a href="{% url 'ocm:performance-moa-detail' org.code %}"
+       class="text-center p-3 bg-gray-100 hover:bg-blue-100 rounded transition">
+      <div class="font-semibold text-sm">{{ org.code }}</div>
+      <div class="text-xs text-gray-600">{{ org.org_type }}</div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+```
+
+[ ] Save file
+
+Task 6.3: Create Consolidated Budget Template
+----------------------------------------------
+[ ] Create: src/templates/ocm/budget/consolidated.html
+
+```django
+{% extends "ocm/base.html" %}
+{% load humanize %}
+
+{% block title %}Consolidated Budget - OCM{% endblock %}
+
+{% block ocm_content %}
+<h1 class="text-3xl font-bold mb-6">Consolidated Budget</h1>
+
+<!-- Budget Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="text-sm text-gray-600 mb-2">Total Proposed</div>
+    <div class="text-3xl font-bold text-blue-600">
+      ₱{{ budget_summary.total_proposed|intcomma|default:"0" }}
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="text-sm text-gray-600 mb-2">Total Approved</div>
+    <div class="text-3xl font-bold text-green-600">
+      ₱{{ budget_summary.total_approved|intcomma|default:"0" }}
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="text-sm text-gray-600 mb-2">Approval Rate</div>
+    <div class="text-3xl font-bold text-purple-600">
+      {{ budget_summary.approval_rate|floatformat:1 }}%
+    </div>
+  </div>
+</div>
+
+<!-- Fiscal Year Filter -->
+<div class="bg-white rounded-lg shadow p-4 mb-6">
+  <form method="get" class="flex items-center gap-4">
+    <label class="font-semibold">Fiscal Year:</label>
+    <select name="fiscal_year" class="border rounded px-3 py-2" onchange="this.form.submit()">
+      <option value="">All Years</option>
+      {% for year in available_years %}
+      <option value="{{ year }}" {% if fiscal_year|stringformat:"s" == year|stringformat:"s" %}selected{% endif %}>
+        {{ year }}
+      </option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+<!-- Budget by MOA Table -->
+<div class="bg-white rounded-lg shadow overflow-hidden">
+  <table class="min-w-full divide-y divide-gray-200">
+    <thead class="bg-gradient-to-r from-blue-600 to-teal-500 text-white">
+      <tr>
+        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+          Organization
+        </th>
+        <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
+          Proposed
+        </th>
+        <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
+          Approved
+        </th>
+        <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
+          Allocated
+        </th>
+        <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
+          Disbursed
+        </th>
+        <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
+          Utilization
+        </th>
+        <th class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">
+          Actions
+        </th>
+      </tr>
+    </thead>
+    <tbody class="bg-white divide-y divide-gray-200">
+      {% for item in budget_data %}
+      <tr class="hover:bg-gray-50">
+        <td class="px-6 py-4 whitespace-nowrap font-semibold">
+          {{ item.organization__name }}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right">
+          ₱{{ item.total_proposed|intcomma }}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right">
+          ₱{{ item.total_approved|intcomma }}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right">
+          ₱{{ item.total_allocated|intcomma }}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right">
+          ₱{{ item.total_disbursed|intcomma }}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right">
+          <span class="px-2 py-1 rounded text-sm font-semibold
+            {% if item.utilization_rate >= 80 %}bg-green-100 text-green-800
+            {% elif item.utilization_rate >= 50 %}bg-yellow-100 text-yellow-800
+            {% else %}bg-red-100 text-red-800{% endif %}">
+            {{ item.utilization_rate|floatformat:1 }}%
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-center">
+          <a href="{% url 'ocm:budget-moa-detail' item.organization__code %}"
+             class="text-blue-600 hover:text-blue-800">
+            View Details
+          </a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+          No budget data available for this fiscal year.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Export Options -->
+<div class="mt-6 flex gap-4">
+  <button class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+    <i class="fas fa-file-excel mr-2"></i>
+    Export to Excel
+  </button>
+  <button class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+    <i class="fas fa-file-pdf mr-2"></i>
+    Export to PDF
+  </button>
+</div>
+{% endblock %}
+```
+
+[ ] Save file
+
+Task 6.4: Create Planning Overview Template
+--------------------------------------------
+[ ] Create: src/templates/ocm/planning/overview.html
+
+```django
+{% extends "ocm/base.html" %}
+
+{% block title %}Strategic Planning Overview - OCM{% endblock %}
+
+{% block ocm_content %}
+<h1 class="text-3xl font-bold mb-6">Strategic Planning Overview</h1>
+
+<!-- Planning Summary -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="text-sm text-gray-600 mb-2">Total Strategic Plans</div>
+    <div class="text-3xl font-bold text-blue-600">
+      {{ planning_summary.total_strategic_plans }}
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="text-sm text-gray-600 mb-2">Active Plans</div>
+    <div class="text-3xl font-bold text-green-600">
+      {{ planning_summary.active_plans }}
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="text-sm text-gray-600 mb-2">Work Plans (Current Year)</div>
+    <div class="text-3xl font-bold text-purple-600">
+      {{ planning_summary.current_year_plans }}
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="text-sm text-gray-600 mb-2">MOAs with Plans</div>
+    <div class="text-3xl font-bold text-orange-600">
+      {{ planning_summary.moas_with_plans }} / {{ all_organizations|length }}
+    </div>
+  </div>
+</div>
+
+<!-- Planning Status by MOA -->
+<div class="bg-white rounded-lg shadow p-6">
+  <h2 class="text-2xl font-semibold mb-4">Planning Status by Organization</h2>
+
+  <div class="space-y-4">
+    {% regroup planning_status by organization__name as org_list %}
+    {% for org in org_list %}
+    <div class="border rounded-lg p-4">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-lg font-semibold">{{ org.grouper }}</h3>
+        <a href="{% url 'ocm:planning-moa-detail' org.list.0.organization__code %}"
+           class="text-blue-600 hover:text-blue-800 text-sm">
+          View Details →
+        </a>
+      </div>
+
+      <div class="grid grid-cols-4 gap-4 text-sm">
+        {% for status in org.list %}
+        <div class="text-center">
+          <div class="font-semibold text-2xl">{{ status.plan_count }}</div>
+          <div class="text-gray-600">{{ status.status|title }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="text-center text-gray-500 py-8">
+      No strategic planning data available.
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+```
+
+[ ] Save file
+
+Task 6.5: Create Coordination Matrix Template
+----------------------------------------------
+[ ] Create: src/templates/ocm/coordination/matrix.html
+
+```django
+{% extends "ocm/base.html" %}
+
+{% block title %}Coordination Matrix - OCM{% endblock %}
+
+{% block ocm_content %}
+<h1 class="text-3xl font-bold mb-6">Inter-MOA Coordination Matrix</h1>
+
+<!-- Coordination Summary -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="text-sm text-gray-600 mb-2">Total Partnerships</div>
+    <div class="text-3xl font-bold text-blue-600">
+      {{ coordination_summary.total_partnerships }}
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="text-sm text-gray-600 mb-2">Active Partnerships</div>
+    <div class="text-3xl font-bold text-green-600">
+      {{ coordination_summary.active_partnerships }}
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="text-sm text-gray-600 mb-2">Inter-MOA Partnerships</div>
+    <div class="text-3xl font-bold text-purple-600">
+      {{ coordination_summary.inter_moa_partnerships }}
+    </div>
+  </div>
+</div>
+
+<!-- Inter-MOA Partnerships List -->
+<div class="bg-white rounded-lg shadow overflow-hidden">
+  <table class="min-w-full divide-y divide-gray-200">
+    <thead class="bg-gradient-to-r from-blue-600 to-teal-500 text-white">
+      <tr>
+        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+          Partnership Name
+        </th>
+        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+          Lead Organization
+        </th>
+        <th class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">
+          Participating MOAs
+        </th>
+        <th class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">
+          Status
+        </th>
+        <th class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">
+          Actions
+        </th>
+      </tr>
+    </thead>
+    <tbody class="bg-white divide-y divide-gray-200">
+      {% for partnership in inter_moa_partnerships %}
+      <tr class="hover:bg-gray-50">
+        <td class="px-6 py-4">
+          <div class="font-semibold">{{ partnership.name }}</div>
+          <div class="text-sm text-gray-600">
+            {{ partnership.start_date }} - {{ partnership.end_date|default:"Ongoing" }}
+          </div>
+        </td>
+        <td class="px-6 py-4">
+          {{ partnership.organization__name }}
+        </td>
+        <td class="px-6 py-4 text-center">
+          <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+            {{ partnership.participating_count }} MOAs
+          </span>
+        </td>
+        <td class="px-6 py-4 text-center">
+          <span class="px-3 py-1 rounded-full text-sm font-semibold
+            {% if partnership.status == 'active' %}bg-green-100 text-green-800
+            {% elif partnership.status == 'pending' %}bg-yellow-100 text-yellow-800
+            {% else %}bg-gray-100 text-gray-800{% endif %}">
+            {{ partnership.status|title }}
+          </span>
+        </td>
+        <td class="px-6 py-4 text-center">
+          <a href="{% url 'ocm:partnership-detail' partnership.id %}"
+             class="text-blue-600 hover:text-blue-800">
+            View Details
+          </a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+          No inter-MOA partnerships found.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Most Collaborative MOAs -->
+<div class="mt-8 bg-white rounded-lg shadow p-6">
+  <h2 class="text-2xl font-semibold mb-4">Most Collaborative Organizations</h2>
+
+  <div class="space-y-3">
+    {% for moa in coordination_summary.most_collaborative_moas %}
+    <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+      <span class="font-semibold">{{ moa.organization__name }}</span>
+      <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+        {{ moa.partnership_count }} partnerships
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+```
+
+[ ] Save file
+
+Verification Checklist:
+-----------------------
+[ ] All template files created
+[ ] Base template with OCM navigation
+[ ] Dashboard template with stat cards
+[ ] Budget template with table and filters
+[ ] Planning template with status overview
+[ ] Coordination template with matrix view
+[ ] No syntax errors in templates
+[ ] Templates extend ocm/base.html correctly
+
+Testing:
+[ ] Access /ocm/dashboard/ and verify template renders
+[ ] Check: Read-only banner is visible
+[ ] Check: Navigation menu works
+[ ] Check: Stat cards display correctly
+[ ] Check: All links resolve without 404 errors
+
+================================================================================
+SECTION 7: STEP 6 - IMPLEMENT OCM VISUALIZATIONS
+================================================================================
+
+[TASKID: P6-006]
+Priority: MEDIUM
+Complexity: Moderate
+Estimated Effort: 2 hours
+Dependencies: P6-005
+
+Objective: Add Chart.js visualizations for budget charts, planning progress,
+          and coordination network diagrams.
+
+Task 7.1: Add Chart.js Budget Visualization
+--------------------------------------------
+[ ] Open: src/templates/ocm/budget/consolidated.html
+[ ] Add canvas elements before table:
+
+```django
+<!-- Budget Visualizations -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+  <div class="bg-white rounded-lg shadow p-6">
+    <h3 class="text-lg font-semibold mb-4">Budget by MOA (Top 10)</h3>
+    <canvas id="budgetByMOAChart"></canvas>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <h3 class="text-lg font-semibold mb-4">Budget Utilization Rate</h3>
+    <canvas id="utilizationRateChart"></canvas>
+  </div>
+</div>
+```
+
+[ ] Add JavaScript at end of template:
+
+```django
+{% block ocm_js %}
+<script>
+// Budget by MOA Bar Chart
+const budgetCtx = document.getElementById('budgetByMOAChart');
+if (budgetCtx) {
+  new Chart(budgetCtx, {
+    type: 'bar',
+    data: {
+      labels: [
+        {% for item in budget_data|slice:":10" %}
+        '{{ item.organization__code }}',
+        {% endfor %}
+      ],
+      datasets: [{
+        label: 'Proposed Budget (₱)',
+        data: [
+          {% for item in budget_data|slice:":10" %}
+          {{ item.total_proposed|default:0 }},
+          {% endfor %}
+        ],
+        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return '₱' + value.toLocaleString();
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Utilization Rate Pie Chart
+const utilCtx = document.getElementById('utilizationRateChart');
+if (utilCtx) {
+  // Calculate average utilization
+  const utilizationData = [
+    {% for item in budget_data %}
+    {{ item.utilization_rate|default:0 }},
+    {% endfor %}
+  ];
+
+  const avgUtilization = utilizationData.reduce((a, b) => a + b, 0) / utilizationData.length || 0;
+
+  new Chart(utilCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Utilized', 'Remaining'],
+      datasets: [{
+        data: [avgUtilization, 100 - avgUtilization],
+        backgroundColor: [
+          'rgba(34, 197, 94, 0.5)',
+          'rgba(239, 68, 68, 0.5)'
+        ],
+        borderColor: [
+          'rgba(34, 197, 94, 1)',
+          'rgba(239, 68, 68, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  });
+}
+</script>
+{% endblock %}
+```
+
+[ ] Save file
+
+Task 7.2: Add Planning Progress Visualization
+----------------------------------------------
+[ ] Open: src/templates/ocm/planning/overview.html
+[ ] Add canvas element:
+
+```django
+<!-- Planning Progress Chart -->
+<div class="bg-white rounded-lg shadow p-6 mb-8">
+  <h2 class="text-2xl font-semibold mb-4">Planning Completion Progress</h2>
+  <canvas id="planningProgressChart"></canvas>
+</div>
+```
+
+[ ] Add JavaScript:
+
+```django
+{% block ocm_js %}
+<script>
+const planningCtx = document.getElementById('planningProgressChart');
+if (planningCtx) {
+  // Count MOAs by planning status
+  const moas_with_plans = {{ planning_summary.moas_with_plans }};
+  const total_moas = {{ all_organizations|length }};
+  const moas_without_plans = total_moas - moas_with_plans;
+
+  new Chart(planningCtx, {
+    type: 'bar',
+    data: {
+      labels: ['MOAs with Plans', 'MOAs without Plans'],
+      datasets: [{
+        label: 'Number of MOAs',
+        data: [moas_with_plans, moas_without_plans],
+        backgroundColor: [
+          'rgba(34, 197, 94, 0.5)',
+          'rgba(239, 68, 68, 0.5)'
+        ],
+        borderColor: [
+          'rgba(34, 197, 94, 1)',
+          'rgba(239, 68, 68, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1
+          }
+        }
+      }
+    }
+  });
+}
+</script>
+{% endblock %}
+```
+
+[ ] Save file
+
+Verification Checklist:
+-----------------------
+[ ] Chart.js library loaded in base template
+[ ] Budget bar chart displays correctly
+[ ] Utilization pie chart displays correctly
+[ ] Planning progress chart displays correctly
+[ ] Charts are responsive (resize with window)
+[ ] No JavaScript errors in browser console
+
+Testing:
+[ ] Access /ocm/budget/consolidated/
+[ ] Verify: Charts render without errors
+[ ] Verify: Chart data matches table data
+[ ] Verify: Charts are responsive
+[ ] Test: Resize browser window, charts adjust
+
+================================================================================
+SECTION 8: STEP 7 - CREATE OCM TESTS
+================================================================================
+
+[TASKID: P6-007]
+Priority: CRITICAL
+Complexity: Moderate
+Estimated Effort: 3 hours
+Dependencies: P6-002, P6-003, P6-004
+
+Objective: Create comprehensive tests for OCM aggregation service, views,
+          permissions, and read-only enforcement.
+
+Task 8.1: Create OCM Test Directory Structure
+----------------------------------------------
+[ ] Create: src/ocm/tests/ directory
+[ ] Create: src/ocm/tests/__init__.py
+[ ] Create: src/ocm/tests/test_models.py
+[ ] Create: src/ocm/tests/test_permissions.py
+[ ] Create: src/ocm/tests/test_views.py
+[ ] Create: src/ocm/tests/test_aggregation.py
+[ ] Create: src/ocm/tests/test_readonly.py
+
+Task 8.2: Create Permission Tests
+----------------------------------
+[ ] Open: src/ocm/tests/test_permissions.py
+
+```python
+from django.test import TestCase, RequestFactory
+from django.contrib.auth import get_user_model
+from django.http import HttpResponseForbidden
+
+from ocm.models import OCMAccess
+from ocm.decorators import require_ocm_access, enforce_readonly
+from organizations.models import Organization
+
+User = get_user_model()
+
+
+class OCMPermissionTest(TestCase):
+    """Test OCM permission enforcement"""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(
+            username='ocm_user',
+            password='testpass123'
+        )
+        self.user_without_access = User.objects.create_user(
+            username='regular_user',
+            password='testpass123'
+        )
+
+        # Grant OCM access to ocm_user
+        OCMAccess.objects.create(
+            user=self.user,
+            access_level='viewer',
+            is_active=True
+        )
+
+    def test_user_with_ocm_access_can_access_views(self):
+        """User with OCM access can access OCM views"""
+        @require_ocm_access
+        def test_view(request):
+            return "OK"
+
+        request = self.factory.get('/ocm/dashboard/')
+        request.user = self.user
+
+        response = test_view(request)
+        self.assertEqual(response, "OK")
+
+    def test_user_without_ocm_access_is_denied(self):
+        """User without OCM access is denied"""
+        @require_ocm_access
+        def test_view(request):
+            return "OK"
+
+        request = self.factory.get('/ocm/dashboard/')
+        request.user = self.user_without_access
+
+        response = test_view(request)
+        self.assertIsInstance(response, HttpResponseForbidden)
+
+    def test_write_operations_are_blocked(self):
+        """POST requests are blocked by enforce_readonly"""
+        @enforce_readonly
+        def test_view(request):
+            return "OK"
+
+        # GET should work
+        request = self.factory.get('/ocm/dashboard/')
+        request.user = self.user
+        response = test_view(request)
+        self.assertEqual(response, "OK")
+
+        # POST should be blocked
+        request = self.factory.post('/ocm/dashboard/')
+        request.user = self.user
+        response = test_view(request)
+        self.assertIsInstance(response, HttpResponseForbidden)
+
+    def test_inactive_ocm_access_is_denied(self):
+        """Inactive OCM access is denied"""
+        # Deactivate OCM access
+        self.user.ocm_access.is_active = False
+        self.user.ocm_access.save()
+
+        @require_ocm_access
+        def test_view(request):
+            return "OK"
+
+        request = self.factory.get('/ocm/dashboard/')
+        request.user = self.user
+
+        response = test_view(request)
+        self.assertIsInstance(response, HttpResponseForbidden)
+```
+
+[ ] Save file
+
+Task 8.3: Create Aggregation Service Tests
+-------------------------------------------
+[ ] Open: src/ocm/tests/test_aggregation.py
+
+```python
+from django.test import TestCase
+from django.contrib.auth import get_user_model
+
+from ocm.services.aggregation import OCMAggregationService
+from organizations.models import Organization
+from budget_preparation.models import BudgetProposal
+from planning.models import StrategicPlan
+from coordination.models import Partnership
+
+User = get_user_model()
+
+
+class OCMAggregationServiceTest(TestCase):
+    """Test OCM aggregation service methods"""
+
+    def setUp(self):
+        # Create test organizations
+        self.org1 = Organization.objects.create(
+            code='TEST1',
+            name='Test Ministry 1',
+            org_type='ministry',
+            is_active=True
+        )
+        self.org2 = Organization.objects.create(
+            code='TEST2',
+            name='Test Ministry 2',
+            org_type='ministry',
+            is_active=True
+        )
+
+        # Create test user
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+
+    def test_get_organization_count(self):
+        """get_organization_count returns active MOAs count"""
+        count = OCMAggregationService.get_organization_count()
+        # Should count TEST1 and TEST2 (excluding OOBC, OCM if they exist)
+        self.assertGreaterEqual(count, 2)
+
+    def test_get_government_stats(self):
+        """get_government_stats returns complete statistics"""
+        # Create test data
+        BudgetProposal.objects.create(
+            organization=self.org1,
+            fiscal_year=2024,
+            total_amount=1000000,
+            status='approved',
+            created_by=self.user
+        )
+
+        StrategicPlan.objects.create(
+            organization=self.org1,
+            title='Test Plan',
+            status='active',
+            created_by=self.user
+        )
+
+        stats = OCMAggregationService.get_government_stats()
+
+        self.assertIn('total_moas', stats)
+        self.assertIn('total_budget', stats)
+        self.assertIn('total_plans', stats)
+        self.assertIn('total_partnerships', stats)
+        self.assertGreaterEqual(stats['total_moas'], 2)
+        self.assertGreater(stats['total_budget'], 0)
+
+    def test_get_consolidated_budget(self):
+        """get_consolidated_budget aggregates budget across MOAs"""
+        # Create test budgets
+        BudgetProposal.objects.create(
+            organization=self.org1,
+            fiscal_year=2024,
+            total_amount=1000000,
+            status='approved',
+            created_by=self.user
+        )
+        BudgetProposal.objects.create(
+            organization=self.org2,
+            fiscal_year=2024,
+            total_amount=2000000,
+            status='approved',
+            created_by=self.user
+        )
+
+        budget_data = OCMAggregationService.get_consolidated_budget(2024)
+
+        self.assertIsInstance(budget_data, list)
+        self.assertGreater(len(budget_data), 0)
+
+        # Verify org1 budget
+        org1_budget = next((b for b in budget_data if b['organization__code'] == 'TEST1'), None)
+        self.assertIsNotNone(org1_budget)
+        self.assertEqual(org1_budget['total_proposed'], 1000000)
+
+    def test_budget_aggregation_filters_by_fiscal_year(self):
+        """Budget aggregation filters by fiscal year"""
+        # Create budgets for different years
+        BudgetProposal.objects.create(
+            organization=self.org1,
+            fiscal_year=2023,
+            total_amount=1000000,
+            status='approved',
+            created_by=self.user
+        )
+        BudgetProposal.objects.create(
+            organization=self.org1,
+            fiscal_year=2024,
+            total_amount=2000000,
+            status='approved',
+            created_by=self.user
+        )
+
+        # Get 2024 data only
+        budget_data = OCMAggregationService.get_consolidated_budget(2024)
+        org1_budget = next((b for b in budget_data if b['organization__code'] == 'TEST1'), None)
+
+        # Should only include 2024 budget
+        self.assertEqual(org1_budget['total_proposed'], 2000000)
+
+    def test_caching_works(self):
+        """Aggregation results are cached"""
+        from django.core.cache import cache
+
+        # Clear cache
+        OCMAggregationService.clear_cache()
+
+        # First call (cache miss)
+        stats1 = OCMAggregationService.get_government_stats()
+
+        # Second call (cache hit)
+        stats2 = OCMAggregationService.get_government_stats()
+
+        # Should return same data
+        self.assertEqual(stats1, stats2)
+
+        # Verify cache exists
+        cached_stats = cache.get('ocm:gov_stats')
+        self.assertIsNotNone(cached_stats)
+
+    def test_clear_cache_works(self):
+        """clear_cache removes all OCM caches"""
+        from django.core.cache import cache
+
+        # Populate cache
+        OCMAggregationService.get_government_stats()
+
+        # Verify cache exists
+        self.assertIsNotNone(cache.get('ocm:gov_stats'))
+
+        # Clear cache
+        OCMAggregationService.clear_cache()
+
+        # Verify cache cleared
+        self.assertIsNone(cache.get('ocm:gov_stats'))
+```
+
+[ ] Save file
+
+Task 8.4: Create View Tests
+----------------------------
+[ ] Open: src/ocm/tests/test_views.py
+
+```python
+from django.test import TestCase, Client
+from django.urls import reverse
+from django.contrib.auth import get_user_model
+
+from ocm.models import OCMAccess
+from organizations.models import Organization
+
+User = get_user_model()
+
+
+class OCMViewTest(TestCase):
+    """Test OCM views"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='ocm_user',
+            password='testpass123'
+        )
+
+        # Grant OCM access
+        OCMAccess.objects.create(
+            user=self.user,
+            access_level='viewer',
+            is_active=True
+        )
+
+        # Create test organization
+        self.org = Organization.objects.create(
+            code='TEST',
+            name='Test Ministry',
+            org_type='ministry',
+            is_active=True
+        )
+
+    def test_dashboard_requires_login(self):
+        """Dashboard requires login"""
+        response = self.client.get(reverse('ocm:dashboard'))
+        self.assertEqual(response.status_code, 302)  # Redirect to login
+
+    def test_dashboard_requires_ocm_access(self):
+        """Dashboard requires OCM access"""
+        # Create user without OCM access
+        user_no_access = User.objects.create_user(
+            username='regular_user',
+            password='testpass123'
+        )
+
+        self.client.login(username='regular_user', password='testpass123')
+        response = self.client.get(reverse('ocm:dashboard'))
+        self.assertEqual(response.status_code, 403)  # Forbidden
+
+    def test_dashboard_loads_for_ocm_user(self):
+        """Dashboard loads for user with OCM access"""
+        self.client.login(username='ocm_user', password='testpass123')
+        response = self.client.get(reverse('ocm:dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Government-Wide Overview')
+
+    def test_consolidated_budget_loads(self):
+        """Consolidated budget view loads"""
+        self.client.login(username='ocm_user', password='testpass123')
+        response = self.client.get(reverse('ocm:budget-consolidated'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Consolidated Budget')
+
+    def test_planning_overview_loads(self):
+        """Planning overview loads"""
+        self.client.login(username='ocm_user', password='testpass123')
+        response = self.client.get(reverse('ocm:planning-overview'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Strategic Planning Overview')
+
+    def test_coordination_matrix_loads(self):
+        """Coordination matrix loads"""
+        self.client.login(username='ocm_user', password='testpass123')
+        response = self.client.get(reverse('ocm:coordination-matrix'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Coordination Matrix')
+
+    def test_post_requests_are_blocked(self):
+        """POST requests to OCM views are blocked"""
+        self.client.login(username='ocm_user', password='testpass123')
+        response = self.client.post(reverse('ocm:dashboard'), {})
+        self.assertEqual(response.status_code, 403)  # Forbidden
+```
+
+[ ] Save file
+
+Task 8.5: Create Read-Only Enforcement Tests
+---------------------------------------------
+[ ] Open: src/ocm/tests/test_readonly.py
+
+```python
+from django.test import TestCase, Client
+from django.contrib.auth import get_user_model
+
+from ocm.models import OCMAccess
+
+User = get_user_model()
+
+
+class ReadOnlyEnforcementTest(TestCase):
+    """Test read-only access enforcement"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='ocm_user',
+            password='testpass123'
+        )
+
+        OCMAccess.objects.create(
+            user=self.user,
+            access_level='viewer',
+            is_active=True
+        )
+
+        self.client.login(username='ocm_user', password='testpass123')
+
+    def test_get_requests_allowed(self):
+        """GET requests are allowed"""
+        response = self.client.get('/ocm/dashboard/')
+        self.assertIn(response.status_code, [200, 302])  # 200 or redirect
+
+    def test_head_requests_allowed(self):
+        """HEAD requests are allowed"""
+        response = self.client.head('/ocm/dashboard/')
+        self.assertIn(response.status_code, [200, 302])
+
+    def test_post_requests_blocked(self):
+        """POST requests are blocked"""
+        response = self.client.post('/ocm/dashboard/', {})
+        self.assertEqual(response.status_code, 403)
+
+    def test_put_requests_blocked(self):
+        """PUT requests are blocked"""
+        response = self.client.put('/ocm/dashboard/', {})
+        self.assertEqual(response.status_code, 403)
+
+    def test_delete_requests_blocked(self):
+        """DELETE requests are blocked"""
+        response = self.client.delete('/ocm/dashboard/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_patch_requests_blocked(self):
+        """PATCH requests are blocked"""
+        response = self.client.patch('/ocm/dashboard/', {})
+        self.assertEqual(response.status_code, 403)
+```
+
+[ ] Save file
+
+Task 8.6: Run All OCM Tests
+----------------------------
+[ ] Run OCM tests: pytest src/ocm/tests/ -v
+[ ] Expected: All tests pass
+[ ] Fix any failing tests
+[ ] Verify test coverage: pytest src/ocm/tests/ --cov=ocm --cov-report=term-missing
+[ ] Expected: >80% coverage for OCM app
+
+Verification Checklist:
+-----------------------
+[ ] All test files created
+[ ] Permission tests pass
+[ ] Aggregation service tests pass
+[ ] View tests pass
+[ ] Read-only enforcement tests pass
+[ ] Test coverage >80%
+[ ] No test failures or errors
+
+================================================================================
+SECTION 9: DEPLOYMENT CHECKLIST
+================================================================================
+
+Pre-Deployment:
+---------------
+[ ] All tasks in Sections 1-8 complete
+[ ] All unit tests pass: pytest src/ocm/tests/
+[ ] All integration tests pass
+[ ] Code review completed
+[ ] Migration files committed to git
+
+Deployment Steps:
+-----------------
+[ ] Merge feature/bmms-phase6-ocm-aggregation to feature/bmms
+[ ] Pull latest code on staging server
+[ ] Activate virtual environment
+[ ] Install dependencies: pip install -r requirements/base.txt
+[ ] Run migrations: python manage.py migrate ocm
+[ ] Collect static files: python manage.py collectstatic --noinput
+[ ] Create OCM user accounts (if needed)
+[ ] Grant OCM access to designated users
+[ ] Restart application server
+[ ] Monitor logs: tail -f logs/django.log
+
+Post-Deployment Verification:
+------------------------------
+[ ] OCM dashboard loads: /ocm/dashboard/
+[ ] Budget aggregation works
+[ ] Planning overview works
+[ ] Coordination matrix works
+[ ] Read-only enforcement works (test POST request)
+[ ] Charts render correctly
+[ ] No errors in logs
+[ ] Performance acceptable (dashboard <3 seconds)
+
+Rollback Plan:
+--------------
+[ ] Stop application server
+[ ] Restore database from backup
+[ ] Revert code: git checkout main
+[ ] Restart application server
+
+================================================================================
+SECTION 10: COMPLETION CHECKLIST
+================================================================================
+
+Code Changes:
+-------------
+[ ] OCM Django app created
+[ ] OCMAccess model with permissions
+[ ] Read-only permission classes and decorators
+[ ] OCM middleware for access control
+[ ] OCMAggregationService with caching
+[ ] All OCM views (dashboard, budget, planning, coordination)
+[ ] All OCM templates with visualizations
+[ ] OCM URL configuration
+[ ] Chart.js integrations
+
+Database Changes:
+-----------------
+[ ] OCMAccess table created
+[ ] OCM permissions registered
+[ ] Migrations applied successfully
+
+Testing:
+--------
+[ ] All unit tests pass (100%)
+[ ] All integration tests pass
+[ ] Manual functional tests completed
+[ ] Performance tests pass (dashboard <3s)
+[ ] Read-only enforcement verified
+
+Documentation:
+--------------
+[ ] Code documentation complete
+[ ] User guide created
+[ ] API documentation (if needed)
+[ ] Phase 6 marked complete in BMMS plan
+
+Deployment:
+-----------
+[ ] Migrations applied in production
+[ ] No errors in production logs
+[ ] OCM users created and granted access
+[ ] OCM dashboard accessible
+[ ] Read-only enforcement verified in production
+
+Sign-Off:
+---------
+[ ] Development complete: __________ (Date)
+[ ] Testing complete: __________ (Date)
+[ ] Code review complete: __________ (Date)
+[ ] Documentation complete: __________ (Date)
+[ ] Deployment complete: __________ (Date)
+[ ] Phase 6 COMPLETE: __________ (Date)
+
+================================================================================
+END OF PHASE 6: OCM AGGREGATION - DETAILED TASK BREAKDOWN
+================================================================================
+
+Next Phase: Phase 7 - Pilot MOA Onboarding (3 MOAs)
+Dependencies: Phase 6 (OCM Aggregation) MUST be complete
+Priority: CRITICAL (gate before production rollout)
+Estimated Effort: 182 hours (pilot setup, training, UAT)
+
+================================================================================
+NOTES & FUTURE ENHANCEMENTS
+================================================================================
+
+Important Considerations:
+- OCM access is READ-ONLY (critical security requirement)
+- All aggregation queries use caching (15-minute TTL)
+- Performance is critical (dashboard must load <3 seconds)
+- Data accuracy must match MOA-level views exactly
+- UI must be intuitive for non-technical executives
+
+Future Enhancements:
+- Real-time dashboard updates via WebSocket
+- AI-powered insights and trend analysis
+- Predictive analytics for budget forecasting
+- Automated alert system for performance anomalies
+- Mobile app for OCM executives
+- Advanced filtering and custom report builder
+- Scheduled report emails (daily/weekly/monthly)
+- Export to PowerPoint for presentations
+- Integration with Parliament reporting systems
+
+Performance Optimization Tips:
+- Use select_related() and prefetch_related() aggressively
+- Implement database indexes on frequently queried fields
+- Consider materialized views for complex aggregations
+- Use Redis for caching aggregated results
+- Implement pagination for large datasets
+- Optimize Chart.js rendering with data sampling
+
+Security Best Practices:
+- Always use @ocm_readonly_view decorator
+- Log all OCM access attempts
+- Monitor for unauthorized write attempts
+- Regular audit of OCM access grants
+- Implement session timeout for OCM users
+- Use HTTPS only for OCM access
+
+================================================================================

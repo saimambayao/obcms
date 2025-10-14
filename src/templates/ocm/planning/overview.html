@@ -1,0 +1,217 @@
+{% extends "ocm/base.html" %}
+{% load static %}
+
+{% block title %}Planning Overview - OCM Dashboard - {{ block.super }}{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'ocm:dashboard' %}" class="text-purple-600 hover:text-purple-800">
+        <i class="fas fa-shield-alt"></i>
+    </a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'ocm:planning_overview' %}" class="text-gray-700">Planning</a>
+</li>
+{% endblock %}
+
+{% block ocm_content %}
+<!-- Page Header -->
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Strategic Planning Overview</h1>
+    <p class="text-gray-600">Consolidated planning data across all MOAs</p>
+</div>
+
+<!-- Planning Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <!-- Total Plans -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total Plans</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ planning.total|default:0 }}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-clipboard-list text-2xl text-amber-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Plans -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Active Plans</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ planning.active|default:0 }}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-play-circle text-2xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Plans -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Completed</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ planning.completed|default:0 }}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-check-circle text-2xl text-emerald-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completion Rate -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Completion Rate</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ planning.completion_rate|default:0 }}%</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-chart-line text-2xl text-purple-600"></i>
+                </div>
+            </div>
+            <div class="flex-grow"></div>
+            <div class="mt-auto">
+                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div class="bg-purple-500 h-2 rounded-full transition-all duration-300" style="width: {{ planning.completion_rate|default:0 }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Planning Completion Chart -->
+<div class="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-8">
+    <h2 class="text-xl font-bold text-gray-900 mb-6">Planning Completion Progress</h2>
+    <div class="chart-container">
+        <canvas id="planningCompletionChart"></canvas>
+    </div>
+</div>
+
+<!-- Status by Organization -->
+<div class="bg-white shadow-md rounded-xl overflow-hidden border border-gray-200">
+    <div class="px-6 py-4 bg-gradient-to-r from-blue-800 to-emerald-600">
+        <h2 class="text-xl font-bold text-white">Planning Status by Organization</h2>
+    </div>
+
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for moa in planning_by_moa %}
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h3 class="font-bold text-gray-900">{{ moa.organization.code }}</h3>
+                        <p class="text-xs text-gray-600 truncate">{{ moa.organization.name }}</p>
+                    </div>
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                 {% if moa.completion_rate >= 80 %}bg-emerald-100 text-emerald-800
+                                 {% elif moa.completion_rate >= 50 %}bg-blue-100 text-blue-800
+                                 {% else %}bg-amber-100 text-amber-800{% endif %}">
+                        {{ moa.completion_rate }}%
+                    </span>
+                </div>
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Active:</span>
+                        <span class="font-medium text-blue-600">{{ moa.active }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Completed:</span>
+                        <span class="font-medium text-emerald-600">{{ moa.completed }}</span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-8">
+                <i class="fas fa-clipboard-list text-gray-300 text-4xl mb-2"></i>
+                <p class="text-gray-500">No planning data available</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    // Planning Completion Chart (Horizontal Bar)
+    const planningCompletionCtx = document.getElementById('planningCompletionChart');
+    if (planningCompletionCtx) {
+        new Chart(planningCompletionCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ chart_data.moa_labels|safe }},
+                datasets: [{
+                    label: 'Completion Rate (%)',
+                    data: {{ chart_data.completion_rates|safe }},
+                    backgroundColor: function(context) {
+                        const value = context.parsed.y;
+                        if (value >= 80) return 'rgba(16, 185, 129, 0.8)';
+                        if (value >= 50) return 'rgba(59, 130, 246, 0.8)';
+                        return 'rgba(245, 158, 11, 0.8)';
+                    },
+                    borderColor: function(context) {
+                        const value = context.parsed.y;
+                        if (value >= 80) return 'rgb(16, 185, 129)';
+                        if (value >= 50) return 'rgb(59, 130, 246)';
+                        return 'rgb(245, 158, 11)';
+                    },
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Completion: ' + context.parsed.x + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

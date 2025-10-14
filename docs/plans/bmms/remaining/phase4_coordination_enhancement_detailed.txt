@@ -1,0 +1,1506 @@
+================================================================================
+BMMS PHASE 4: COORDINATION ENHANCEMENT - DETAILED TASK BREAKDOWN
+================================================================================
+
+**Document Version:** 1.0
+**Created:** October 13, 2025
+**Priority:** MEDIUM
+**Complexity:** Moderate
+**Dependencies:** Phase 1 (Organizations App MUST be activated and operational)
+
+**Overview:**
+This phase enhances the existing coordination module to support inter-MOA (Ministry/Office/Agency)
+partnerships while maintaining backward compatibility with OOBC's existing coordination data.
+
+**CRITICAL NOTE:** This phase does NOT yet add organization FKs to existing coordination models.
+That will come later during full BMMS migration. This phase focuses on ADDING new inter-MOA
+partnership features without breaking existing OOBC workflows.
+
+**Key Objectives:**
+1. Create InterMOAPartnership model for cross-ministry collaboration
+2. Implement partnership invitation and acceptance workflows
+3. Add permission-based access control (lead org vs participant orgs)
+4. Build UI for multi-MOA partnership management
+5. Maintain 100% backward compatibility with existing OOBC coordination features
+
+**Target Branch:** feature/bmms-phase4-coordination
+**Base Branch:** main (after Phase 1 is merged)
+**Estimated Total Time:** 10-14 hours
+
+
+================================================================================
+SECTION 1: PRE-IMPLEMENTATION CHECKLIST
+================================================================================
+
+Prerequisites (MUST be complete before starting):
+-------------------------------------------------
+[ ] Phase 1: Organizations app is fully activated
+    [ ] organizations app in INSTALLED_APPS
+    [ ] Organization model exists with 44+ MOAs
+    [ ] OOBC organization (code='OOBC') exists and is operational
+    [ ] OrganizationMiddleware is active in MIDDLEWARE list
+
+[ ] Coordination module is operational
+    [ ] coordination app in INSTALLED_APPS
+    [ ] Existing Partnership, Organization (external partners) models work
+    [ ] Can create and view partnerships in OOBC context
+
+[ ] Development environment ready
+    [ ] Virtual environment activated: source venv/bin/activate
+    [ ] Database backup: cp db.sqlite3 db.sqlite3.backup.phase4
+    [ ] Git status clean: git status
+    [ ] On main branch with latest code: git pull origin main
+
+Verification Commands:
+```bash
+cd src
+python manage.py shell
+
+# Verify Organizations app
+from organizations.models import Organization
+print(f"MOAs loaded: {Organization.objects.count()}")  # Should be 44+
+oobc = Organization.objects.get(code='OOBC')
+print(f"OOBC: {oobc.name}")
+
+# Verify Coordination module
+from coordination.models import Partnership, Organization as PartnerOrganization
+print(f"Partnerships: {Partnership.objects.count()}")
+print(f"External Partners: {PartnerOrganization.objects.count()}")
+```
+
+Expected Output:
+- MOAs loaded: 44+
+- OOBC: Office for Other Bangsamoro Communities
+- Partnerships: [current count]
+- External Partners: [current count]
+
+Git Branch Setup:
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/bmms-phase4-coordination
+```
+
+
+================================================================================
+SECTION 2: INTER-MOA PARTNERSHIP MODEL DESIGN
+================================================================================
+
+**Objective:** Create a new InterMOAPartnership model for cross-MOA collaborations
+**WITHOUT** modifying existing coordination models (backward compatibility).
+
+**Priority:** HIGH
+**Complexity:** MODERATE
+**Time Estimate:** 2-3 hours
+
+
+Task 2.1: Design InterMOAPartnership Model
+-------------------------------------------
+**Priority:** HIGH
+**Complexity:** MODERATE
+**Estimated Time:** 1.5 hours
+**Dependencies:** None
+
+**Description:**
+Create a new model to represent partnerships between multiple BARMM MOAs. This model
+is separate from the existing Partnership model (which is for OOBC partnerships with
+external organizations). In the future, these may be unified, but for Phase 4 we
+keep them separate for safety.
+
+**Implementation Details:**
+
+File: /Users/saidamenmambayao/Library/Mobile Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/coordination/models.py
+
+Add new model at the end of the file (before BACKWARD COMPATIBILITY PROXIES):
+
+```python
+class InterMOAPartnership(models.Model):
+    """
+    Partnership involving multiple BARMM Ministries, Offices, or Agencies.
+
+    This model enables inter-MOA collaboration and coordination on shared
+    initiatives, programs, and projects. Lead organization manages the
+    partnership while participant organizations contribute resources.
+
+    Separate from Partnership model (external partners) for Phase 4 safety.
+    Future phases may unify these models.
+    """
+
+    PARTNERSHIP_TYPES = [
+        ('bilateral', 'Bilateral Partnership (2 MOAs)'),
+        ('multilateral', 'Multilateral Partnership (3+ MOAs)'),
+        ('joint_program', 'Joint Program Implementation'),
+        ('resource_sharing', 'Resource Sharing Agreement'),
+        ('capacity_building', 'Capacity Building Initiative'),
+        ('policy_coordination', 'Policy Coordination'),
+        ('service_delivery', 'Joint Service Delivery'),
+        ('other', 'Other'),
+    ]
+
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('pending_approval', 'Pending Approval'),
+        ('active', 'Active'),
+        ('on_hold', 'On Hold'),
+        ('completed', 'Completed'),
+        ('terminated', 'Terminated'),
+    ]
+
+    PRIORITY_LEVELS = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('critical', 'Critical'),
+    ]
+
+    # Basic Information
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    title = models.CharField(
+        max_length=255,
+        help_text="Title of the inter-MOA partnership"
+    )
+
+    partnership_type = models.CharField(
+        max_length=30,
+        choices=PARTNERSHIP_TYPES,
+        help_text="Type of partnership between MOAs"
+    )
+
+    description = models.TextField(
+        help_text="Detailed description of the partnership objectives and scope"
+    )
+
+    objectives = models.TextField(
+        help_text="Specific objectives and goals of this partnership"
+    )
+
+    # Organizations (NO FK to organizations.Organization yet - Phase 4 limitation)
+    # We use JSONField to store MOA codes for now
+    lead_moa_code = models.CharField(
+        max_length=20,
+        help_text="Code of the lead MOA (e.g., 'OOBC', 'MOH', 'MAFAR')"
+    )
+
+    participating_moa_codes = models.JSONField(
+        default=list,
+        help_text="List of participating MOA codes (e.g., ['MOH', 'MOLE'])"
+    )
+
+    # Status and Progress
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='draft',
+        help_text="Current status of the partnership"
+    )
+
+    priority = models.CharField(
+        max_length=10,
+        choices=PRIORITY_LEVELS,
+        default='medium',
+        help_text="Priority level of this partnership"
+    )
+
+    progress_percentage = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Overall progress (0-100%)"
+    )
+
+    # Timeline
+    start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Partnership start date"
+    )
+
+    end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Partnership end date (if applicable)"
+    )
+
+    # Management
+    focal_person_name = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Name of the focal person managing this partnership"
+    )
+
+    focal_person_email = models.EmailField(
+        blank=True,
+        help_text="Email of the focal person"
+    )
+
+    focal_person_phone = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Phone number of the focal person"
+    )
+
+    # Expected Outcomes and Deliverables
+    expected_outcomes = models.TextField(
+        blank=True,
+        help_text="Expected outcomes and impact of the partnership"
+    )
+
+    deliverables = models.TextField(
+        blank=True,
+        help_text="Key deliverables and milestones"
+    )
+
+    # Resources
+    total_budget = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Total budget for the partnership (in PHP)"
+    )
+
+    resource_commitments = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Resource commitments by each MOA (JSON: {moa_code: resources})"
+    )
+
+    # Visibility and Access Control
+    is_public = models.BooleanField(
+        default=False,
+        help_text="Whether this partnership is publicly visible (for OCM oversight)"
+    )
+
+    requires_ocm_approval = models.BooleanField(
+        default=False,
+        help_text="Whether this partnership requires OCM (Office of the Chief Minister) approval"
+    )
+
+    # Notes and Metadata
+    notes = models.TextField(
+        blank=True,
+        help_text="Additional notes and observations"
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='created_inter_moa_partnerships',
+        help_text="User who created this partnership"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Inter-MOA Partnership'
+        verbose_name_plural = 'Inter-MOA Partnerships'
+        indexes = [
+            models.Index(fields=['lead_moa_code', 'status']),
+            models.Index(fields=['status', 'priority']),
+            models.Index(fields=['start_date', 'end_date']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} (Lead: {self.lead_moa_code})"
+
+    @property
+    def lead_organization(self):
+        """Get lead Organization object from code (helper property)"""
+        try:
+            from organizations.models import Organization
+            return Organization.objects.get(code=self.lead_moa_code)
+        except Exception:
+            return None
+
+    @property
+    def participating_organizations(self):
+        """Get list of participating Organization objects from codes"""
+        try:
+            from organizations.models import Organization
+            return Organization.objects.filter(code__in=self.participating_moa_codes)
+        except Exception:
+            return Organization.objects.none()
+
+    @property
+    def all_participating_moas(self):
+        """Get all MOA codes (lead + participants)"""
+        moas = [self.lead_moa_code]
+        if self.participating_moa_codes:
+            moas.extend(self.participating_moa_codes)
+        return list(set(moas))  # Remove duplicates
+
+    @property
+    def is_active(self):
+        """Check if partnership is currently active"""
+        return self.status == 'active'
+
+    @property
+    def is_expired(self):
+        """Check if partnership has expired"""
+        if self.end_date:
+            from django.utils import timezone
+            return timezone.now().date() > self.end_date
+        return False
+
+    def can_view(self, user):
+        """
+        Check if user can view this partnership.
+
+        Rules:
+        - Superusers can view all
+        - Lead org members can view
+        - Participant org members can view
+        - OCM staff can view all (if is_public=True)
+        """
+        if user.is_superuser:
+            return True
+
+        # Check if user belongs to lead or participant organizations
+        if hasattr(user, 'organization_memberships'):
+            user_moa_codes = [
+                membership.organization.code
+                for membership in user.organization_memberships.all()
+            ]
+
+            if self.lead_moa_code in user_moa_codes:
+                return True
+
+            if self.participating_moa_codes:
+                for moa_code in self.participating_moa_codes:
+                    if moa_code in user_moa_codes:
+                        return True
+
+        # OCM staff can view public partnerships
+        if self.is_public and hasattr(user, 'is_ocm_staff') and user.is_ocm_staff:
+            return True
+
+        return False
+
+    def can_edit(self, user):
+        """
+        Check if user can edit this partnership.
+
+        Rules:
+        - Only lead organization members can edit
+        - Superusers can edit all
+        """
+        if user.is_superuser:
+            return True
+
+        # Only lead org members can edit
+        if hasattr(user, 'organization_memberships'):
+            user_moa_codes = [
+                membership.organization.code
+                for membership in user.organization_memberships.all()
+            ]
+
+            if self.lead_moa_code in user_moa_codes:
+                return True
+
+        return False
+
+    def clean(self):
+        """Validate model data"""
+        from django.core.exceptions import ValidationError
+
+        errors = {}
+
+        # Validate dates
+        if self.start_date and self.end_date:
+            if self.end_date <= self.start_date:
+                errors['end_date'] = "End date must be after start date"
+
+        # Validate progress percentage
+        if self.progress_percentage < 0 or self.progress_percentage > 100:
+            errors['progress_percentage'] = "Progress must be between 0 and 100"
+
+        # Validate lead_moa_code is not in participating_moa_codes
+        if self.participating_moa_codes and self.lead_moa_code in self.participating_moa_codes:
+            errors['participating_moa_codes'] = "Lead MOA cannot also be a participant MOA"
+
+        if errors:
+            raise ValidationError(errors)
+```
+
+**Verification:**
+```bash
+cd src
+python manage.py makemigrations coordination --dry-run
+# Should show CreateModel operation for InterMOAPartnership
+```
+
+**Expected Result:**
+- InterMOAPartnership model defined with all fields
+- Permission methods (can_view, can_edit) implemented
+- Helper properties for organization lookups
+- Data validation in clean() method
+
+---
+
+Task 2.2: Create Migration for InterMOAPartnership
+---------------------------------------------------
+**Priority:** HIGH
+**Complexity:** SIMPLE
+**Estimated Time:** 0.5 hours
+**Dependencies:** Task 2.1
+
+**Description:**
+Generate and apply the database migration to create the inter_moa_partnership table.
+
+**Implementation Details:**
+
+Commands:
+```bash
+cd src
+python manage.py makemigrations coordination
+python manage.py migrate coordination
+```
+
+**Verification:**
+```bash
+python manage.py shell
+
+from coordination.models import InterMOAPartnership
+print(f"Model exists: {InterMOAPartnership}")
+
+# Try creating a test partnership
+test_partnership = InterMOAPartnership.objects.create(
+    title="Test Inter-MOA Partnership",
+    partnership_type="bilateral",
+    description="Test partnership between OOBC and MOH",
+    objectives="Testing Phase 4 implementation",
+    lead_moa_code="OOBC",
+    participating_moa_codes=["MOH"],
+    created_by_id=1  # Adjust to valid user ID
+)
+
+print(f"Created: {test_partnership}")
+print(f"Lead org: {test_partnership.lead_organization}")
+print(f"All MOAs: {test_partnership.all_participating_moas}")
+
+# Clean up test data
+test_partnership.delete()
+```
+
+**Expected Result:**
+- Migration file created: coordination/migrations/00XX_intermoapartnership.py
+- Migration applied successfully
+- Table created: coordination_intermoapartnership
+- Can create InterMOAPartnership objects
+
+---
+
+Task 2.3: Add InterMOAPartnership to Admin Interface
+-----------------------------------------------------
+**Priority:** MEDIUM
+**Complexity:** SIMPLE
+**Estimated Time:** 0.5 hours
+**Dependencies:** Task 2.2
+
+**Description:**
+Register InterMOAPartnership in Django admin for easy management and testing.
+
+**Implementation Details:**
+
+File: /Users/saidamenmambayao/Library/Mobile Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/coordination/admin.py
+
+Add at the end of the file:
+
+```python
+@admin.register(InterMOAPartnership)
+class InterMOAPartnershipAdmin(admin.ModelAdmin):
+    """Admin interface for Inter-MOA Partnerships"""
+
+    list_display = [
+        'title',
+        'lead_moa_code',
+        'partnership_type',
+        'status',
+        'priority',
+        'progress_percentage',
+        'start_date',
+        'created_at',
+    ]
+
+    list_filter = [
+        'status',
+        'priority',
+        'partnership_type',
+        'is_public',
+        'requires_ocm_approval',
+        'start_date',
+    ]
+
+    search_fields = [
+        'title',
+        'description',
+        'objectives',
+        'lead_moa_code',
+        'focal_person_name',
+    ]
+
+    readonly_fields = [
+        'id',
+        'created_at',
+        'updated_at',
+        'created_by',
+    ]
+
+    fieldsets = [
+        ('Basic Information', {
+            'fields': [
+                'title',
+                'partnership_type',
+                'description',
+                'objectives',
+            ]
+        }),
+        ('Organizations', {
+            'fields': [
+                'lead_moa_code',
+                'participating_moa_codes',
+            ],
+            'description': 'Use MOA codes (e.g., OOBC, MOH, MAFAR)'
+        }),
+        ('Status & Progress', {
+            'fields': [
+                'status',
+                'priority',
+                'progress_percentage',
+            ]
+        }),
+        ('Timeline', {
+            'fields': [
+                'start_date',
+                'end_date',
+            ]
+        }),
+        ('Management', {
+            'fields': [
+                'focal_person_name',
+                'focal_person_email',
+                'focal_person_phone',
+            ]
+        }),
+        ('Outcomes & Resources', {
+            'fields': [
+                'expected_outcomes',
+                'deliverables',
+                'total_budget',
+                'resource_commitments',
+            ]
+        }),
+        ('Visibility & Approval', {
+            'fields': [
+                'is_public',
+                'requires_ocm_approval',
+            ]
+        }),
+        ('Notes', {
+            'fields': [
+                'notes',
+            ]
+        }),
+        ('Metadata', {
+            'fields': [
+                'id',
+                'created_by',
+                'created_at',
+                'updated_at',
+            ]
+        }),
+    ]
+
+    ordering = ['-created_at']
+
+    def save_model(self, request, obj, form, change):
+        """Set created_by on new objects"""
+        if not change:  # New object
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+```
+
+**Verification:**
+1. Start development server: `python manage.py runserver`
+2. Login to admin: http://localhost:8000/admin/
+3. Navigate to: Coordination > Inter-MOA Partnerships
+4. Create a test partnership
+5. Verify all fields display correctly
+6. Verify filtering and search work
+7. Delete test partnership
+
+**Expected Result:**
+- InterMOAPartnership visible in Django admin
+- Can create, edit, view, and delete partnerships
+- List display shows key fields
+- Filters and search functional
+
+
+================================================================================
+SECTION 3: PARTNERSHIP VIEWS IMPLEMENTATION
+================================================================================
+
+**Objective:** Create views for listing, viewing, creating, and managing inter-MOA partnerships
+**Priority:** HIGH
+**Complexity:** MODERATE
+**Time Estimate:** 3-4 hours
+
+
+Task 3.1: Create InterMOAPartnership List View
+-----------------------------------------------
+**Priority:** HIGH
+**Complexity:** MODERATE
+**Estimated Time:** 1 hour
+**Dependencies:** Task 2.2
+
+**Description:**
+Create a view to list all inter-MOA partnerships visible to the current user.
+Users should see partnerships where their organization is either lead or participant.
+
+**Implementation Details:**
+
+File: /Users/saidamenmambayao/Library/Mobile Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/coordination/views.py
+
+Add at the end of the file:
+
+```python
+@login_required
+def inter_moa_partnership_list(request):
+    """
+    List all inter-MOA partnerships visible to current user.
+
+    Shows:
+    - Partnerships where user's org is lead
+    - Partnerships where user's org is participant
+    - All partnerships for superusers and OCM staff
+    """
+    user = request.user
+
+    if user.is_superuser:
+        # Superusers see all partnerships
+        partnerships = InterMOAPartnership.objects.all()
+    else:
+        # Get user's MOA codes
+        user_moa_codes = []
+        if hasattr(user, 'organization_memberships'):
+            user_moa_codes = [
+                membership.organization.code
+                for membership in user.organization_memberships.all()
+            ]
+
+        # Filter partnerships where user's org is lead or participant
+        partnerships = InterMOAPartnership.objects.filter(
+            models.Q(lead_moa_code__in=user_moa_codes) |
+            models.Q(participating_moa_codes__overlap=user_moa_codes)
+        )
+
+    # Apply filters from request
+    status_filter = request.GET.get('status')
+    if status_filter:
+        partnerships = partnerships.filter(status=status_filter)
+
+    priority_filter = request.GET.get('priority')
+    if priority_filter:
+        partnerships = partnerships.filter(priority=priority_filter)
+
+    partnership_type_filter = request.GET.get('partnership_type')
+    if partnership_type_filter:
+        partnerships = partnerships.filter(partnership_type=partnership_type_filter)
+
+    # Sorting
+    sort_by = request.GET.get('sort', '-created_at')
+    partnerships = partnerships.order_by(sort_by)
+
+    # Pagination
+    paginator = Paginator(partnerships, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Statistics
+    stats = {
+        'total': partnerships.count(),
+        'active': partnerships.filter(status='active').count(),
+        'draft': partnerships.filter(status='draft').count(),
+        'completed': partnerships.filter(status='completed').count(),
+    }
+
+    context = {
+        'partnerships': page_obj,
+        'stats': stats,
+        'status_choices': InterMOAPartnership.STATUS_CHOICES,
+        'priority_choices': InterMOAPartnership.PRIORITY_LEVELS,
+        'type_choices': InterMOAPartnership.PARTNERSHIP_TYPES,
+        'current_filters': {
+            'status': status_filter,
+            'priority': priority_filter,
+            'partnership_type': partnership_type_filter,
+        },
+    }
+
+    return render(request, 'coordination/inter_moa_partnership_list.html', context)
+```
+
+**Verification:**
+```bash
+# Add URL pattern (temporary for testing)
+# In src/coordination/urls.py
+path('inter-moa-partnerships/', inter_moa_partnership_list, name='inter-moa-partnership-list'),
+
+# Test
+python manage.py runserver
+# Navigate to: http://localhost:8000/coordination/inter-moa-partnerships/
+```
+
+**Expected Result:**
+- View function created and working
+- Filters by user's organization membership
+- Pagination works (20 per page)
+- Filter by status, priority, type
+- Statistics calculated correctly
+
+---
+
+Task 3.2: Create InterMOAPartnership Detail View
+-------------------------------------------------
+**Priority:** HIGH
+**Complexity:** MODERATE
+**Estimated Time:** 1 hour
+**Dependencies:** Task 3.1
+
+**Description:**
+Create a view to display full details of a specific inter-MOA partnership with
+permission checking.
+
+**Implementation Details:**
+
+File: /Users/saidamenmambayao/Library/Mobile Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/coordination/views.py
+
+Add:
+
+```python
+@login_required
+def inter_moa_partnership_detail(request, partnership_id):
+    """
+    Display detailed information about an inter-MOA partnership.
+
+    Checks can_view() permission before displaying.
+    """
+    partnership = get_object_or_404(InterMOAPartnership, id=partnership_id)
+
+    # Permission check
+    if not partnership.can_view(request.user):
+        messages.error(request, "You do not have permission to view this partnership.")
+        return HttpResponseForbidden("Permission denied")
+
+    # Determine user's role in this partnership
+    user_role = None
+    if hasattr(request.user, 'organization_memberships'):
+        user_moa_codes = [
+            membership.organization.code
+            for membership in request.user.organization_memberships.all()
+        ]
+
+        if partnership.lead_moa_code in user_moa_codes:
+            user_role = 'lead'
+        elif partnership.participating_moa_codes:
+            for moa_code in partnership.participating_moa_codes:
+                if moa_code in user_moa_codes:
+                    user_role = 'participant'
+                    break
+
+    # Get organization objects
+    lead_org = partnership.lead_organization
+    participating_orgs = partnership.participating_organizations
+
+    # Get related activities (if WorkItem exists)
+    related_activities = []
+    # TODO: Link to WorkItem activities when coordination notes are updated
+
+    context = {
+        'partnership': partnership,
+        'lead_org': lead_org,
+        'participating_orgs': participating_orgs,
+        'user_role': user_role,
+        'can_edit': partnership.can_edit(request.user),
+        'related_activities': related_activities,
+    }
+
+    return render(request, 'coordination/inter_moa_partnership_detail.html', context)
+```
+
+**Verification:**
+```bash
+# Add URL pattern
+path('inter-moa-partnerships/<uuid:partnership_id>/', inter_moa_partnership_detail, name='inter-moa-partnership-detail'),
+
+# Test with a partnership ID
+```
+
+**Expected Result:**
+- Detail view displays partnership information
+- Permission checking works (can_view)
+- User role displayed (lead/participant/none)
+- Edit button shown only for lead org members
+- 403 error for unauthorized users
+
+---
+
+Task 3.3: Create InterMOAPartnership Create View
+-------------------------------------------------
+**Priority:** HIGH
+**Complexity:** MODERATE
+**Estimated Time:** 1.5 hours
+**Dependencies:** Task 3.2
+
+**Description:**
+Create a view and form for creating new inter-MOA partnerships. Automatically
+set lead_moa_code to current user's organization.
+
+**Implementation Details:**
+
+File: /Users/saidamenmambayao/Library/Mobile Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/coordination/forms.py (create if not exists)
+
+```python
+from django import forms
+from django.contrib.auth import get_user_model
+from organizations.models import Organization
+from .models import InterMOAPartnership
+
+User = get_user_model()
+
+
+class InterMOAPartnershipForm(forms.ModelForm):
+    """Form for creating/editing inter-MOA partnerships"""
+
+    participating_organizations = forms.ModelMultipleChoiceField(
+        queryset=Organization.objects.filter(is_active=True).exclude(code='OCM'),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Select other MOAs to participate in this partnership"
+    )
+
+    class Meta:
+        model = InterMOAPartnership
+        fields = [
+            'title',
+            'partnership_type',
+            'description',
+            'objectives',
+            'status',
+            'priority',
+            'start_date',
+            'end_date',
+            'focal_person_name',
+            'focal_person_email',
+            'focal_person_phone',
+            'expected_outcomes',
+            'deliverables',
+            'total_budget',
+            'is_public',
+            'requires_ocm_approval',
+            'notes',
+        ]
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'objectives': forms.Textarea(attrs={'rows': 4}),
+            'expected_outcomes': forms.Textarea(attrs={'rows': 3}),
+            'deliverables': forms.Textarea(attrs={'rows': 3}),
+            'notes': forms.Textarea(attrs={'rows': 3}),
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        # If editing existing partnership, populate participating_organizations
+        if self.instance.pk and self.instance.participating_moa_codes:
+            self.fields['participating_organizations'].initial = (
+                Organization.objects.filter(code__in=self.instance.participating_moa_codes)
+            )
+
+        # Exclude user's own organization from participating_organizations
+        if self.user and hasattr(self.user, 'organization_memberships'):
+            user_org_codes = [
+                membership.organization.code
+                for membership in self.user.organization_memberships.all()
+            ]
+            self.fields['participating_organizations'].queryset = (
+                self.fields['participating_organizations'].queryset.exclude(
+                    code__in=user_org_codes
+                )
+            )
+
+    def save(self, commit=True):
+        """Save partnership and convert participating_organizations to codes"""
+        partnership = super().save(commit=False)
+
+        # Convert selected organizations to list of codes
+        participating_orgs = self.cleaned_data.get('participating_organizations', [])
+        partnership.participating_moa_codes = [org.code for org in participating_orgs]
+
+        if commit:
+            partnership.save()
+
+        return partnership
+```
+
+File: /Users/saidamenmambayao/Library/Mobile Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/coordination/views.py
+
+Add:
+
+```python
+@login_required
+def inter_moa_partnership_create(request):
+    """
+    Create a new inter-MOA partnership.
+
+    Lead MOA is automatically set to user's primary organization.
+    """
+    # Get user's primary organization
+    user_org = None
+    if hasattr(request.user, 'organization_memberships'):
+        primary_membership = request.user.organization_memberships.filter(
+            is_primary=True
+        ).first()
+        if primary_membership:
+            user_org = primary_membership.organization
+
+    if not user_org:
+        messages.error(request, "You must belong to an organization to create partnerships.")
+        return redirect('coordination:inter-moa-partnership-list')
+
+    if request.method == 'POST':
+        form = InterMOAPartnershipForm(request.POST, user=request.user)
+        if form.is_valid():
+            partnership = form.save(commit=False)
+            partnership.lead_moa_code = user_org.code
+            partnership.created_by = request.user
+            partnership.save()
+
+            messages.success(
+                request,
+                f"Partnership '{partnership.title}' created successfully!"
+            )
+            return redirect('coordination:inter-moa-partnership-detail', partnership_id=partnership.id)
+    else:
+        form = InterMOAPartnershipForm(user=request.user)
+
+    context = {
+        'form': form,
+        'user_org': user_org,
+    }
+
+    return render(request, 'coordination/inter_moa_partnership_form.html', context)
+```
+
+**Verification:**
+```bash
+# Add URL pattern
+path('inter-moa-partnerships/new/', inter_moa_partnership_create, name='inter-moa-partnership-create'),
+
+# Test form
+```
+
+**Expected Result:**
+- Form displays with all fields
+- participating_organizations excludes user's org
+- lead_moa_code set automatically
+- Form validation works
+- Creates partnership successfully
+
+---
+
+Task 3.4: Create InterMOAPartnership Edit View
+-----------------------------------------------
+**Priority:** MEDIUM
+**Complexity:** SIMPLE
+**Estimated Time:** 0.5 hours
+**Dependencies:** Task 3.3
+
+**Description:**
+Create a view for editing existing inter-MOA partnerships. Only lead organization
+members can edit.
+
+**Implementation Details:**
+
+File: /Users/saidamenmambayao/Library/Mobile Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/coordination/views.py
+
+Add:
+
+```python
+@login_required
+def inter_moa_partnership_edit(request, partnership_id):
+    """
+    Edit an existing inter-MOA partnership.
+
+    Only lead organization members can edit.
+    """
+    partnership = get_object_or_404(InterMOAPartnership, id=partnership_id)
+
+    # Permission check
+    if not partnership.can_edit(request.user):
+        messages.error(request, "Only the lead organization can edit this partnership.")
+        return HttpResponseForbidden("Permission denied")
+
+    if request.method == 'POST':
+        form = InterMOAPartnershipForm(request.POST, instance=partnership, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Partnership updated successfully!")
+            return redirect('coordination:inter-moa-partnership-detail', partnership_id=partnership.id)
+    else:
+        form = InterMOAPartnershipForm(instance=partnership, user=request.user)
+
+    context = {
+        'form': form,
+        'partnership': partnership,
+        'is_edit': True,
+    }
+
+    return render(request, 'coordination/inter_moa_partnership_form.html', context)
+```
+
+**Verification:**
+```bash
+# Add URL pattern
+path('inter-moa-partnerships/<uuid:partnership_id>/edit/', inter_moa_partnership_edit, name='inter-moa-partnership-edit'),
+```
+
+**Expected Result:**
+- Edit form pre-populated with existing data
+- Permission checking works (only lead org can edit)
+- Updates partnership successfully
+- 403 error for non-lead org users
+
+
+================================================================================
+SECTION 4: PARTNERSHIP TEMPLATES
+================================================================================
+
+**Objective:** Create UI templates for listing, viewing, and managing inter-MOA partnerships
+**Priority:** HIGH
+**Complexity:** MODERATE
+**Time Estimate:** 3-4 hours
+
+
+Task 4.1: Create Partnership List Template
+-------------------------------------------
+**Priority:** HIGH
+**Complexity:** MODERATE
+**Estimated Time:** 1.5 hours
+**Dependencies:** Task 3.1
+
+**Description:**
+Create a responsive template for listing inter-MOA partnerships with filters,
+search, and status indicators.
+
+**Implementation Details:**
+
+File: /Users/saidamenmambayao/Library/Mobile Documents/com~apple~CloudDocs/BTA/OOBC/obcms/src/templates/coordination/inter_moa_partnership_list.html
+
+```html
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Inter-MOA Partnerships - Coordination{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Inter-MOA Partnerships</h1>
+            <p class="text-gray-600 mt-1">Collaborative partnerships between BARMM ministries, offices, and agencies</p>
+        </div>
+        <a href="{% url 'coordination:inter-moa-partnership-create' %}"
+           class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 flex items-center space-x-2">
+            <i class="fas fa-plus"></i>
+            <span>New Partnership</span>
+        </a>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Total Partnerships</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1">{{ stats.total }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-handshake text-blue-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Active</p>
+                    <p class="text-3xl font-bold text-emerald-600 mt-1">{{ stats.active }}</p>
+                </div>
+                <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-emerald-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Draft</p>
+                    <p class="text-3xl font-bold text-amber-600 mt-1">{{ stats.draft }}</p>
+                </div>
+                <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-file-alt text-amber-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Completed</p>
+                    <p class="text-3xl font-bold text-gray-600 mt-1">{{ stats.completed }}</p>
+                </div>
+                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-double text-gray-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Statuses</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if current_filters.status == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                <select name="priority" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Priorities</option>
+                    {% for value, label in priority_choices %}
+                    <option value="{{ value }}" {% if current_filters.priority == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Partnership Type</label>
+                <select name="partnership_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Types</option>
+                    {% for value, label in type_choices %}
+                    <option value="{{ value }}" {% if current_filters.partnership_type == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-end">
+                <button type="submit"
+                        class="w-full px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition duration-200">
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Partnerships Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gradient-to-r from-blue-500 to-teal-500">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        Partnership
+                    </th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        Lead MOA
+                    </th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        Participants
+                    </th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        Type
+                    </th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        Status
+                    </th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        Priority
+                    </th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        Progress
+                    </th>
+                    <th class="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for partnership in partnerships %}
+                <tr class="hover:bg-gray-50 transition duration-150">
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900">
+                            {{ partnership.title }}
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            {{ partnership.partnership_type|title }}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">
+                            {{ partnership.lead_moa_code }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex flex-wrap gap-1">
+                            {% for moa_code in partnership.participating_moa_codes %}
+                            <span class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
+                                {{ moa_code }}
+                            </span>
+                            {% empty %}
+                            <span class="text-sm text-gray-400">None</span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm text-gray-600">
+                            {{ partnership.get_partnership_type_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if partnership.status == 'active' %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full">
+                            Active
+                        </span>
+                        {% elif partnership.status == 'draft' %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-amber-100 text-amber-800 rounded-full">
+                            Draft
+                        </span>
+                        {% elif partnership.status == 'completed' %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded-full">
+                            Completed
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-600 rounded-full">
+                            {{ partnership.get_status_display }}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if partnership.priority == 'critical' %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">
+                            Critical
+                        </span>
+                        {% elif partnership.priority == 'high' %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-orange-100 text-orange-800 rounded-full">
+                            High
+                        </span>
+                        {% elif partnership.priority == 'medium' %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full">
+                            Medium
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-600 rounded-full">
+                            Low
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center space-x-2">
+                            <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: {{ partnership.progress_percentage }}%"></div>
+                            </div>
+                            <span class="text-sm text-gray-600">{{ partnership.progress_percentage }}%</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <a href="{% url 'coordination:inter-moa-partnership-detail' partnership.id %}"
+                           class="text-blue-600 hover:text-blue-800 transition duration-200">
+                            <i class="fas fa-eye"></i>
+                            View
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="px-6 py-12 text-center">
+                        <div class="text-gray-400">
+                            <i class="fas fa-handshake text-6xl mb-4"></i>
+                            <p class="text-lg">No inter-MOA partnerships found</p>
+                            <p class="text-sm mt-2">Create your first partnership to get started</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if partnerships.has_other_pages %}
+    <div class="flex justify-center mt-6">
+        <nav class="flex space-x-2">
+            {% if partnerships.has_previous %}
+            <a href="?page={{ partnerships.previous_page_number }}"
+               class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-200">
+                <i class="fas fa-chevron-left"></i>
+                Previous
+            </a>
+            {% endif %}
+
+            <span class="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                Page {{ partnerships.number }} of {{ partnerships.paginator.num_pages }}
+            </span>
+
+            {% if partnerships.has_next %}
+            <a href="?page={{ partnerships.next_page_number }}"
+               class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-200">
+                Next
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+```
+
+**Verification:**
+- Template renders without errors
+- Statistics cards display correctly
+- Filters work and update results
+- Table shows partnerships with proper styling
+- Pagination functional
+- Status/priority badges have correct colors
+- Progress bars display correctly
+
+**Expected Result:**
+- Professional, responsive list page
+- OBCMS UI standards followed (milk white cards, blue-to-teal gradient headers)
+- Touch targets meet WCAG 2.1 AA (48px minimum)
+- Mobile-friendly layout
+
+---
+
+[CONTINUES IN NEXT SECTION DUE TO LENGTH...]
+
+Task 4.2: Create Partnership Detail Template
+Task 4.3: Create Partnership Form Template
+Task 4.4: Add Partnership List to Navigation Menu
+
+
+================================================================================
+SECTION 5: PARTNERSHIP PERMISSIONS & WORKFLOWS
+================================================================================
+
+Task 5.1: Implement Partnership Invitation System
+Task 5.2: Add Partnership Acceptance Workflow
+Task 5.3: Create Partnership Activity Tracking
+
+
+================================================================================
+SECTION 6: PARTNERSHIP NOTIFICATIONS
+================================================================================
+
+Task 6.1: Email Notifications for Invitations
+Task 6.2: Activity Update Notifications
+Task 6.3: Partnership Status Change Notifications
+
+
+================================================================================
+SECTION 7: PARTNERSHIP API ENDPOINTS
+================================================================================
+
+Task 7.1: Create RESTful API for Partnerships
+Task 7.2: Add Filtering and Search Endpoints
+Task 7.3: Implement Participant Management API
+
+
+================================================================================
+SECTION 8: PARTNERSHIP TESTS
+================================================================================
+
+Task 8.1: Model Tests
+Task 8.2: View Tests
+Task 8.3: Permission Tests
+Task 8.4: Integration Tests
+
+
+================================================================================
+SECTION 9: DEPLOYMENT & VERIFICATION
+================================================================================
+
+Task 9.1: Final Testing Checklist
+Task 9.2: Documentation Updates
+Task 9.3: Git Commit & Merge
+
+
+================================================================================
+COMPLETION CHECKLIST
+================================================================================
+
+Core Implementation:
+[ ] InterMOAPartnership model created
+[ ] Partnership views implemented (list, detail, create, edit)
+[ ] Templates created with OBCMS UI standards
+[ ] Permission checking (can_view, can_edit) functional
+[ ] Admin interface configured
+
+Database:
+[ ] Migration created and applied
+[ ] Table coordination_intermoapartnership exists
+[ ] Can create partnerships via admin and views
+
+Testing:
+[ ] Model tests pass (100%)
+[ ] View tests pass (100%)
+[ ] Permission tests pass (100%)
+[ ] Integration tests pass (100%)
+
+Documentation:
+[ ] Code documentation complete
+[ ] User guide updated
+[ ] Technical documentation complete
+
+Sign-Off:
+[ ] Development complete: __________ (Date)
+[ ] Testing complete: __________ (Date)
+[ ] Code review complete: __________ (Date)
+[ ] Documentation complete: __________ (Date)
+[ ] Phase 4 COMPLETE: __________ (Date)
+
+
+================================================================================
+NEXT PHASE: PHASE 5 - MODULE MIGRATION (MANA/M&E/POLICIES)
+================================================================================
+
+After Phase 4 is complete, proceed to Phase 5 for adding organization FKs to
+existing OBCMS modules (MANA, M&E, Policies).
+
+Refer to: docs/plans/bmms/tasks/phase5_module_migration.txt
+
+
+================================================================================
+END OF PHASE 4: COORDINATION ENHANCEMENT - DETAILED TASK BREAKDOWN
+================================================================================

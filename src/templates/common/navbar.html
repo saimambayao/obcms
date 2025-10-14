@@ -249,6 +249,15 @@
                                 <span class="block text-xs text-gray-500">Community proposals and assistance requests.</span>
                             </span>
                         </a>
+                        {% if user.is_staff or user.is_superuser %}
+                            <a href="{% url 'ocm:dashboard' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
+                                <i class="fas fa-shield-alt text-purple-500 mt-1"></i>
+                                <span>
+                                    <span class="block font-semibold text-gray-900">OCM Dashboard</span>
+                                    <span class="block text-xs text-gray-500">Government-wide aggregated oversight and analytics.</span>
+                                </span>
+                            </a>
+                        {% endif %}
                         {% if user|can_access_me_analytics %}
                             <a href="{% url 'project_central:me_analytics_dashboard' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
                                 <i class="fas fa-chart-bar text-emerald-500 mt-1"></i>
@@ -586,6 +595,12 @@
                         OBC Requests
                         <span class="block text-xs text-white text-opacity-70">Community proposals and assistance requests</span>
                     </a>
+                    {% if user.is_staff or user.is_superuser %}
+                        <a href="{% url 'ocm:dashboard' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                            OCM Dashboard
+                            <span class="block text-xs text-white text-opacity-70">Government-wide oversight and analytics</span>
+                        </a>
+                    {% endif %}
                     {% if user|can_access_me_analytics %}
                         <a href="{% url 'project_central:me_analytics_dashboard' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                             M&amp;E Analytics

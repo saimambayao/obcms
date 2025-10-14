@@ -2498,6 +2498,280 @@ class PartnershipDocument(models.Model):
         super().save(*args, **kwargs)
 
 
+class InterMOAPartnership(models.Model):
+    """Inter-ministry partnership enabling collaboration between BARMM MOAs."""
+
+    PARTNERSHIP_TYPES = [
+        ("bilateral", "Bilateral Partnership (2 MOAs)"),
+        ("multilateral", "Multilateral Partnership (3+ MOAs)"),
+        ("joint_program", "Joint Program Implementation"),
+        ("resource_sharing", "Resource Sharing Agreement"),
+        ("capacity_building", "Capacity Building Initiative"),
+        ("policy_coordination", "Policy Coordination"),
+        ("service_delivery", "Joint Service Delivery"),
+        ("other", "Other"),
+    ]
+
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("pending_approval", "Pending Approval"),
+        ("active", "Active"),
+        ("on_hold", "On Hold"),
+        ("completed", "Completed"),
+        ("terminated", "Terminated"),
+    ]
+
+    PRIORITY_LEVELS = [
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+        ("critical", "Critical"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    title = models.CharField(
+        max_length=255,
+        help_text="Title of the inter-MOA partnership",
+    )
+
+    partnership_type = models.CharField(
+        max_length=30,
+        choices=PARTNERSHIP_TYPES,
+        help_text="Type of partnership between MOAs",
+    )
+
+    description = models.TextField(
+        help_text="Detailed description of the partnership objectives and scope",
+    )
+
+    objectives = models.TextField(
+        help_text="Specific objectives and goals of this partnership",
+    )
+
+    lead_moa_code = models.CharField(
+        max_length=20,
+        help_text="Code of the lead MOA (e.g., 'OOBC', 'MOH', 'MAFAR')",
+    )
+
+    participating_moa_codes = models.JSONField(
+        default=list,
+        help_text="List of participating MOA codes (e.g., ['MOH', 'MOLE'])",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="draft",
+        help_text="Current status of the partnership",
+    )
+
+    priority = models.CharField(
+        max_length=10,
+        choices=PRIORITY_LEVELS,
+        default="medium",
+        help_text="Priority level of this partnership",
+    )
+
+    progress_percentage = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Overall progress (0-100%)",
+    )
+
+    start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Partnership start date",
+    )
+
+    end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Partnership end date (if applicable)",
+    )
+
+    focal_person_name = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Name of the focal person managing this partnership",
+    )
+
+    focal_person_email = models.EmailField(
+        blank=True,
+        help_text="Email of the focal person",
+    )
+
+    focal_person_phone = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Phone number of the focal person",
+    )
+
+    expected_outcomes = models.TextField(
+        blank=True,
+        help_text="Expected outcomes and impact of the partnership",
+    )
+
+    deliverables = models.TextField(
+        blank=True,
+        help_text="Key deliverables and milestones",
+    )
+
+    total_budget = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Total budget for the partnership (in PHP)",
+    )
+
+    resource_commitments = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Resource commitments by each MOA (JSON: {moa_code: resources})",
+    )
+
+    is_public = models.BooleanField(
+        default=False,
+        help_text="Whether this partnership is publicly visible (for OCM oversight)",
+    )
+
+    requires_ocm_approval = models.BooleanField(
+        default=False,
+        help_text="Whether this partnership requires OCM (Office of the Chief Minister) approval",
+    )
+
+    notes = models.TextField(
+        blank=True,
+        help_text="Additional notes and observations",
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="created_inter_moa_partnerships",
+        help_text="User who created this partnership",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Inter-MOA Partnership"
+        verbose_name_plural = "Inter-MOA Partnerships"
+        indexes = [
+            models.Index(fields=["lead_moa_code", "status"]),
+            models.Index(fields=["status", "priority"]),
+            models.Index(fields=["start_date", "end_date"]),
+        ]
+
+    def __str__(self):
+        return f"{self.title} (Lead: {self.lead_moa_code})"
+
+    @property
+    def lead_organization(self):
+        """Return the lead Organization object when available."""
+        try:
+            from organizations.models import Organization as MOAOrganization
+
+            return MOAOrganization.objects.get(code=self.lead_moa_code)
+        except Exception:
+            return None
+
+    @property
+    def participating_organizations(self):
+        """Return queryset of participating organizations."""
+        try:
+            from organizations.models import Organization as MOAOrganization
+        except Exception:
+            return []
+
+        if not self.participating_moa_codes:
+            return MOAOrganization.objects.none()
+
+        return MOAOrganization.objects.filter(code__in=self.participating_moa_codes)
+
+    @property
+    def all_participating_moas(self):
+        """Return unique list of participating MOA codes including the lead."""
+        codes = [self.lead_moa_code]
+        if self.participating_moa_codes:
+            codes.extend(self.participating_moa_codes)
+        return list({code for code in codes if code})
+
+    @property
+    def is_active(self):
+        """Return True when partnership status is active."""
+        return self.status == "active"
+
+    @property
+    def is_expired(self):
+        """Return True if the partnership has passed its end date."""
+        if self.end_date:
+            return timezone.now().date() > self.end_date
+        return False
+
+    def can_view(self, user):
+        """Determine if the given user can view this partnership."""
+        if user.is_superuser:
+            return True
+
+        user_moa_codes = []
+        if hasattr(user, "organization_memberships"):
+            user_moa_codes = [
+                membership.organization.code
+                for membership in user.organization_memberships.all()
+                if membership.organization
+            ]
+
+        if self.lead_moa_code in user_moa_codes:
+            return True
+
+        if self.participating_moa_codes:
+            for code in self.participating_moa_codes:
+                if code in user_moa_codes:
+                    return True
+
+        if self.is_public and getattr(user, "is_ocm_staff", False):
+            return True
+
+        return False
+
+    def can_edit(self, user):
+        """Determine if the given user can edit this partnership."""
+        if user.is_superuser:
+            return True
+
+        if hasattr(user, "organization_memberships"):
+            user_moa_codes = [
+                membership.organization.code
+                for membership in user.organization_memberships.all()
+                if membership.organization
+            ]
+            if self.lead_moa_code in user_moa_codes:
+                return True
+
+        return False
+
+    def clean(self):
+        """Validate model fields before saving."""
+        errors = {}
+
+        if self.start_date and self.end_date and self.end_date <= self.start_date:
+            errors["end_date"] = "End date must be after start date"
+
+        if not 0 <= self.progress_percentage <= 100:
+            errors["progress_percentage"] = "Progress must be between 0 and 100"
+
+        if self.participating_moa_codes and self.lead_moa_code in self.participating_moa_codes:
+            errors["participating_moa_codes"] = "Lead MOA cannot also be a participant MOA"
+
+        if errors:
+            raise ValidationError(errors)
+
+
 # ========== BACKWARD COMPATIBILITY PROXIES ==========
 # Import Event proxy to access legacy database table.
 # See: docs/refactor/WORKITEM_MIGRATION_COMPLETE.md

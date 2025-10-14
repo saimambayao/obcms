@@ -1,0 +1,197 @@
+{% extends "ocm/base.html" %}
+{% load static %}
+
+{% block title %}Performance Overview - OCM Dashboard - {{ block.super }}{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'ocm:dashboard' %}" class="text-purple-600 hover:text-purple-800">
+        <i class="fas fa-shield-alt"></i>
+    </a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <a href="{% url 'ocm:performance_overview' %}" class="text-gray-700">Performance</a>
+</li>
+{% endblock %}
+
+{% block ocm_content %}
+<!-- Page Header with Organization Selector -->
+<div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Performance Metrics Overview</h1>
+        <p class="text-gray-600">Government-wide performance indicators and KPIs</p>
+    </div>
+    <div class="mt-4 sm:mt-0">
+        <div class="flex items-center space-x-3">
+            <label for="moa-selector" class="text-sm font-medium text-gray-700">Organization:</label>
+            <div class="relative">
+                <select id="moa-selector"
+                        class="block w-full py-2 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-purple-500 focus:border-purple-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200"
+                        onchange="handleMOAChange(this.value)">
+                    <option value="all" selected>All MOAs</option>
+                    {% for moa in moas %}
+                    <option value="{{ moa.code }}">{{ moa.code }} - {{ moa.short_name }}</option>
+                    {% endfor %}
+                </select>
+                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Performance Indicators -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Overall Performance Score -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Overall Score</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ performance.overall_score|default:0 }}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-chart-bar text-2xl text-amber-600"></i>
+                </div>
+            </div>
+            <div class="flex-grow"></div>
+            <div class="mt-auto pt-3 border-t border-gray-200/60">
+                <p class="text-xs text-gray-500">Out of 100</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Efficiency -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Budget Efficiency</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ performance.budget_efficiency|default:0 }}%</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-coins text-2xl text-emerald-600"></i>
+                </div>
+            </div>
+            <div class="flex-grow"></div>
+            <div class="mt-auto">
+                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div class="bg-emerald-500 h-2 rounded-full transition-all duration-300" style="width: {{ performance.budget_efficiency|default:0 }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Program Delivery -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Program Delivery</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ performance.program_delivery|default:0 }}%</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-tasks text-2xl text-blue-600"></i>
+                </div>
+            </div>
+            <div class="flex-grow"></div>
+            <div class="mt-auto">
+                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: {{ performance.program_delivery|default:0 }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stakeholder Satisfaction -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Stakeholder Rating</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ performance.stakeholder_satisfaction|default:0 }}%</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-star text-2xl text-purple-600"></i>
+                </div>
+            </div>
+            <div class="flex-grow"></div>
+            <div class="mt-auto">
+                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div class="bg-purple-500 h-2 rounded-full transition-all duration-300" style="width: {{ performance.stakeholder_satisfaction|default:0 }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Charts (Placeholder for future implementation) -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">Performance Trends</h2>
+        <div class="flex items-center justify-center h-64 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+            <div class="text-center">
+                <i class="fas fa-chart-line text-gray-400 text-5xl mb-3"></i>
+                <p class="text-gray-600 font-medium">Performance trend charts</p>
+                <p class="text-gray-500 text-sm">Coming soon</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">Comparative Analysis</h2>
+        <div class="flex items-center justify-center h-64 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+            <div class="text-center">
+                <i class="fas fa-chart-pie text-gray-400 text-5xl mb-3"></i>
+                <p class="text-gray-600 font-medium">Comparative performance analysis</p>
+                <p class="text-gray-500 text-sm">Coming soon</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Indicators Table -->
+<div class="bg-white shadow-md rounded-xl overflow-hidden border border-gray-200">
+    <div class="px-6 py-4 bg-gradient-to-r from-blue-800 to-emerald-600">
+        <h2 class="text-xl font-bold text-white">Detailed Performance Indicators</h2>
+    </div>
+
+    <div class="p-6">
+        <div class="text-center py-12">
+            <i class="fas fa-clipboard-check text-gray-300 text-5xl mb-4"></i>
+            <p class="text-gray-600 font-medium mb-2">Performance tracking system</p>
+            <p class="text-gray-500 text-sm">Detailed KPIs and metrics will be displayed here</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    function handleMOAChange(moaCode) {
+        console.log('MOA changed to:', moaCode);
+
+        if (typeof window.showToast === 'function') {
+            window.showToast({
+                message: moaCode === 'all' ? 'Showing all MOAs' : `Filtering by ${moaCode}`,
+                level: 'info'
+            });
+        }
+    }
+</script>
+{% endblock %}

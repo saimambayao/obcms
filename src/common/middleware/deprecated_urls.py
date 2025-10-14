@@ -206,6 +206,10 @@ class DeprecatedURLRedirectMiddleware:
         # Skip URLs that are already in their new namespace locations
         # These phases are complete and URLs are no longer deprecated:
 
+        # Phase 6: OCM aggregation layer (never deprecated)
+        if path.startswith('/ocm/'):
+            return None
+
         # Phase 0.5: Coordination (complete)
         if path.startswith('/coordination/'):
             return None

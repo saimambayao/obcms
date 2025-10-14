@@ -13,6 +13,7 @@ from .models import (
     MAOFocalPerson,
     Organization,
     OrganizationContact,
+    InterMOAPartnership,
     Partnership,
     PartnershipDocument,
     PartnershipMilestone,
@@ -1016,6 +1017,136 @@ class PartnershipDocumentAdmin(admin.ModelAdmin):
             )
 
     access_level_display.short_description = "Access Level"
+
+
+@admin.register(InterMOAPartnership)
+class InterMOAPartnershipAdmin(admin.ModelAdmin):
+    """Admin interface for Inter-MOA partnerships."""
+
+    list_display = (
+        "title",
+        "lead_moa_code",
+        "partnership_type",
+        "status",
+        "priority",
+        "progress_percentage",
+        "start_date",
+        "created_at",
+    )
+
+    list_filter = (
+        "status",
+        "priority",
+        "partnership_type",
+        "is_public",
+        "requires_ocm_approval",
+        "start_date",
+    )
+
+    search_fields = (
+        "title",
+        "description",
+        "objectives",
+        "lead_moa_code",
+        "focal_person_name",
+    )
+
+    readonly_fields = (
+        "id",
+        "created_by",
+        "created_at",
+        "updated_at",
+    )
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {
+                "fields": (
+                    "title",
+                    "partnership_type",
+                    "description",
+                    "objectives",
+                )
+            },
+        ),
+        (
+            "Organizations",
+            {
+                "fields": (
+                    "lead_moa_code",
+                    "participating_moa_codes",
+                ),
+                "description": "Use BARMM MOA codes (e.g., OOBC, MOH, MAFAR)",
+            },
+        ),
+        (
+            "Status & Progress",
+            {
+                "fields": (
+                    "status",
+                    "priority",
+                    "progress_percentage",
+                )
+            },
+        ),
+        (
+            "Timeline",
+            {"fields": ("start_date", "end_date")},
+        ),
+        (
+            "Management",
+            {
+                "fields": (
+                    "focal_person_name",
+                    "focal_person_email",
+                    "focal_person_phone",
+                )
+            },
+        ),
+        (
+            "Outcomes & Resources",
+            {
+                "fields": (
+                    "expected_outcomes",
+                    "deliverables",
+                    "total_budget",
+                    "resource_commitments",
+                )
+            },
+        ),
+        (
+            "Visibility & Approval",
+            {
+                "fields": (
+                    "is_public",
+                    "requires_ocm_approval",
+                )
+            },
+        ),
+        (
+            "Notes",
+            {"fields": ("notes",)},
+        ),
+        (
+            "Metadata",
+            {
+                "fields": (
+                    "id",
+                    "created_by",
+                    "created_at",
+                    "updated_at",
+                )
+            },
+        ),
+    )
+
+    ordering = ("-created_at",)
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(CommunicationSchedule)

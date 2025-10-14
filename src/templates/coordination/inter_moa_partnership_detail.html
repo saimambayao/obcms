@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}{{ partnership.title }} · Inter-MOA Partnership{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
+        <div>
+            <p class="text-sm uppercase tracking-wide text-gray-500 font-semibold">Inter-MOA Partnership</p>
+            <h1 class="text-3xl font-bold text-gray-900">{{ partnership.title }}</h1>
+            <div class="flex flex-wrap items-center gap-3 mt-3 text-sm">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+                             {% if partnership.status == 'active' %}bg-emerald-100 text-emerald-700
+                             {% elif partnership.status == 'draft' %}bg-amber-100 text-amber-700
+                             {% elif partnership.status == 'completed' %}bg-indigo-100 text-indigo-700
+                             {% else %}bg-gray-100 text-gray-700{% endif %}">
+                    {{ partnership.get_status_display }}
+                </span>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+                             {% if partnership.priority == 'critical' %}bg-red-100 text-red-700
+                             {% elif partnership.priority == 'high' %}bg-orange-100 text-orange-700
+                             {% elif partnership.priority == 'medium' %}bg-amber-100 text-amber-700
+                             {% else %}bg-gray-100 text-gray-700{% endif %}">
+                    Priority: {{ partnership.get_priority_display }}
+                </span>
+                {% if partnership.is_public %}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
+                        Public for OCM oversight
+                    </span>
+                {% endif %}
+                {% if partnership.requires_ocm_approval %}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold">
+                        Requires OCM approval
+                    </span>
+                {% endif %}
+            </div>
+            {% if user_role %}
+                <p class="mt-2 text-sm text-gray-600">You are viewing this partnership as the
+                    <span class="font-semibold">{{ user_role|title }} organization</span>.</p>
+            {% endif %}
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'coordination:inter-moa-partnership-list' %}"
+               class="inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">
+                Back to list
+            </a>
+            {% if can_edit %}
+                <a href="{% url 'coordination:inter-moa-partnership-edit' partnership.id %}"
+                   class="inline-flex items-center px-5 py-2 rounded-lg bg-blue-600 text-white font-semibold shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Edit partnership
+                </a>
+                <a href="{% url 'coordination:inter-moa-partnership-delete' partnership.id %}"
+                   class="inline-flex items-center px-4 py-2 rounded-lg border border-red-300 text-red-700 font-semibold hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Delete
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <p class="text-sm text-gray-500">Lead MOA</p>
+            <p class="text-xl font-semibold text-gray-900 mt-1">
+                {% if lead_org %}
+                    {{ lead_org.code }} · {{ lead_org.name }}
+                {% else %}
+                    {{ partnership.lead_moa_code }}
+                {% endif %}
+            </p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <p class="text-sm text-gray-500">Participating MOAs</p>
+            <p class="text-xl font-semibold text-gray-900 mt-1">
+                {% if participating_orgs %}
+                    {{ partnership.participating_moa_codes|length }}
+                {% else %}
+                    0
+                {% endif %}
+            </p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <p class="text-sm text-gray-500">Partnership Type</p>
+            <p class="text-xl font-semibold text-gray-900 mt-1">{{ partnership.get_partnership_type_display }}</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <p class="text-sm text-gray-500">Progress</p>
+            <div class="flex items-center gap-3 mt-2">
+                <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="h-2 bg-blue-500" style="width: {{ partnership.progress_percentage }}%"></div>
+                </div>
+                <span class="text-lg font-semibold text-gray-900">{{ partnership.progress_percentage }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <section class="lg:col-span-2 bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Objectives & Scope</h2>
+            <div class="space-y-6 text-sm text-gray-700 leading-relaxed">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">Description</h3>
+                    <p>{{ partnership.description|linebreaks }}</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">Objectives</h3>
+                    <p>{{ partnership.objectives|linebreaks }}</p>
+                </div>
+                {% if partnership.expected_outcomes %}
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">Expected Outcomes</h3>
+                        <p>{{ partnership.expected_outcomes|linebreaks }}</p>
+                    </div>
+                {% endif %}
+                {% if partnership.deliverables %}
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">Key Deliverables</h3>
+                        <p>{{ partnership.deliverables|linebreaks }}</p>
+                    </div>
+                {% endif %}
+                {% if partnership.notes %}
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">Additional Notes</h3>
+                        <p>{{ partnership.notes|linebreaks }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+        <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Timeline & Governance</h2>
+            <dl class="space-y-4 text-sm text-gray-700">
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Start date</dt>
+                    <dd>{{ partnership.start_date|date:"F j, Y"|default:"Not set" }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">End date</dt>
+                    <dd>{{ partnership.end_date|date:"F j, Y"|default:"Not set" }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Created</dt>
+                    <dd>{{ partnership.created_at|date:"F j, Y" }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Last updated</dt>
+                    <dd>{{ partnership.updated_at|date:"F j, Y" }}</dd>
+                </div>
+                {% if partnership.focal_person_name or partnership.focal_person_email or partnership.focal_person_phone %}
+                    <div class="pt-4 border-t border-gray-200">
+                        <dt class="font-medium text-gray-900">Partnership focal person</dt>
+                        <dd class="mt-2 space-y-1">
+                            {% if partnership.focal_person_name %}<p>{{ partnership.focal_person_name }}</p>{% endif %}
+                            {% if partnership.focal_person_email %}<p class="text-blue-600">{{ partnership.focal_person_email }}</p>{% endif %}
+                            {% if partnership.focal_person_phone %}<p>{{ partnership.focal_person_phone }}</p>{% endif %}
+                        </dd>
+                    </div>
+                {% endif %}
+            </dl>
+        </section>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Participating MOAs</h2>
+            {% if participating_orgs %}
+                <ul class="space-y-3">
+                    {% for org in participating_orgs %}
+                        <li class="p-4 border border-gray-200 rounded-lg">
+                            <p class="font-semibold text-gray-900">{{ org.code }} · {{ org.name }}</p>
+                            {% if org.org_type %}
+                                <p class="text-sm text-gray-500">{{ org.get_org_type_display }}</p>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% elif partnership.participating_moa_codes %}
+                <p class="text-sm text-gray-600">{{ partnership.participating_moa_codes|join:", " }}</p>
+            {% else %}
+                <p class="text-sm text-gray-500">No participating MOAs have been added yet.</p>
+            {% endif %}
+        </section>
+        <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Resources & Budget</h2>
+            <dl class="space-y-4 text-sm text-gray-700">
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Total budget</dt>
+                    <dd>
+                        {% if partnership.total_budget %}
+                            ₱{{ partnership.total_budget|floatformat:2 }}
+                        {% else %}
+                            Not specified
+                        {% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt class="font-medium text-gray-600">Resource commitments</dt>
+                    <dd class="mt-2">
+                        {% if partnership.resource_commitments %}
+                            <pre class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-700 overflow-x-auto">{{ partnership.resource_commitments|json_script:"resource-commitments-json" }}</pre>
+                            <script>
+                                (function(){
+                                    const raw = document.getElementById('resource-commitments-json');
+                                    if (!raw) { return; }
+                                    try {
+                                        const data = JSON.parse(raw.textContent);
+                                        const formatted = JSON.stringify(data, null, 2);
+                                        raw.insertAdjacentText('afterend', formatted);
+                                        raw.remove();
+                                    } catch (error) {
+                                        raw.parentElement.textContent = raw.textContent;
+                                    }
+                                })();
+                            </script>
+                        {% else %}
+                            <p class="text-sm text-gray-500">No resource commitments documented.</p>
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+        </section>
+    </div>
+
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Next steps</h2>
+        {% if related_activities %}
+            <ul class="space-y-3">
+                {% for activity in related_activities %}
+                    <li class="p-4 border border-gray-200 rounded-lg flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold text-gray-900">{{ activity.title }}</p>
+                            <p class="text-sm text-gray-500">{{ activity.summary }}</p>
+                        </div>
+                        <a href="{{ activity.url }}" class="text-blue-600 hover:text-blue-800 text-sm font-semibold">View activity</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-sm text-gray-500">Partnership activities will appear here once linked to the coordination calendar.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

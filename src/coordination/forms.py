@@ -18,9 +18,11 @@ from common.models import (
     RecurringEventPattern,
 )
 from common.work_item_model import WorkItem
+from organizations.models import Organization as MOAOrganization
 
 from .models import (
     CoordinationNote,
+    InterMOAPartnership,
     Organization,
     OrganizationContact,
     Partnership,
@@ -420,6 +422,108 @@ class PartnershipForm(forms.ModelForm):
             "end_date": DATE_WIDGET,
             "renewal_date": DATE_WIDGET,
         }
+
+
+class InterMOAPartnershipForm(forms.ModelForm):
+    """Form for creating and editing inter-MOA partnerships."""
+
+    participating_organizations = forms.ModelMultipleChoiceField(
+        queryset=MOAOrganization.objects.filter(is_active=True)
+        .exclude(code="OCM")
+        .order_by("name"),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Select other MOAs to include in this partnership",
+        label="Participating MOAs",
+    )
+
+    class Meta:
+        model = InterMOAPartnership
+        fields = [
+            "title",
+            "partnership_type",
+            "description",
+            "objectives",
+            "status",
+            "priority",
+            "progress_percentage",
+            "start_date",
+            "end_date",
+            "focal_person_name",
+            "focal_person_email",
+            "focal_person_phone",
+            "expected_outcomes",
+            "deliverables",
+            "total_budget",
+            "resource_commitments",
+            "is_public",
+            "requires_ocm_approval",
+            "notes",
+        ]
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 4}),
+            "objectives": forms.Textarea(attrs={"rows": 4}),
+            "expected_outcomes": forms.Textarea(attrs={"rows": 3}),
+            "deliverables": forms.Textarea(attrs={"rows": 3}),
+            "notes": forms.Textarea(attrs={"rows": 3}),
+            "resource_commitments": forms.Textarea(
+                attrs={
+                    "rows": 3,
+                    "placeholder": '{"MOH": {"staff": 2, "budget": 500000}}',
+                }
+            ),
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+
+        participating_field = self.fields["participating_organizations"]
+        if self.instance.pk and self.instance.participating_moa_codes:
+            participating_field.initial = MOAOrganization.objects.filter(
+                code__in=self.instance.participating_moa_codes
+            )
+
+        if self.user and hasattr(self.user, "organization_memberships"):
+            user_org_codes = [
+                membership.organization.code
+                for membership in self.user.organization_memberships.all()
+                if membership.organization
+            ]
+            if user_org_codes:
+                participating_field.queryset = participating_field.queryset.exclude(
+                    code__in=user_org_codes
+                )
+
+        for field in self.fields.values():
+            widget = field.widget
+            if isinstance(widget, forms.CheckboxSelectMultiple):
+                widget.attrs.setdefault("class", CHECKBOX_CLASS)
+            elif isinstance(widget, forms.Textarea):
+                widget.attrs.setdefault("class", COORDINATION_TEXTAREA_CLASS)
+            elif isinstance(widget, (forms.Select, forms.SelectMultiple)):
+                widget.attrs.setdefault("class", COORDINATION_SELECT_CLASS)
+            else:
+                widget.attrs.setdefault("class", COORDINATION_INPUT_CLASS)
+
+        if "progress_percentage" in self.fields:
+            self.fields["progress_percentage"].widget.attrs.setdefault("min", "0")
+            self.fields["progress_percentage"].widget.attrs.setdefault("max", "100")
+
+    def save(self, commit=True):
+        partnership = super().save(commit=False)
+
+        participating_orgs = self.cleaned_data.get("participating_organizations") or []
+        partnership.participating_moa_codes = [org.code for org in participating_orgs]
+
+        if commit:
+            partnership.full_clean()
+            partnership.save()
+            self.save_m2m()
+
+        return partnership
 
 
 class CoordinationNoteForm(forms.ModelForm):

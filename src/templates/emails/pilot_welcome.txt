@@ -1,0 +1,18 @@
+Assalamu alaikum {{ user.get_full_name|default:user.username }},
+
+Welcome to the Bangsamoro Ministerial Management System (BMMS) pilot environment.
+
+Your access credentials:
+- Username: {{ user.username }}
+- Temporary password: {{ raw_password }}
+- Login URL: {{ login_url }}
+
+Please sign in and change your password on first login. The pilot mirrors our production
+data safeguards: all activity is audited and access is isolated by organization.
+
+If you need help, contact the BMMS Pilot Support Desk at {{ support_email }}.
+
+Thank you for partnering with the Office of the Chief Minister in delivering services
+to Other Bangsamoro Communities.
+
+BMMS Pilot Support Team

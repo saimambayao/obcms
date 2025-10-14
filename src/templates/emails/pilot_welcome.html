@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Welcome to the BMMS Pilot</title>
+    <style>
+      body {
+        font-family: "Helvetica Neue", Arial, sans-serif;
+        color: #1f2937;
+        background-color: #f9fafb;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 24px;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+      }
+      .header {
+        border-bottom: 4px solid #2563eb;
+        margin-bottom: 24px;
+        padding-bottom: 12px;
+      }
+      .cta {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #2563eb;
+        color: #ffffff;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .footer {
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 32px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Assalamu alaikum {{ user.get_full_name|default:user.username }}!</h1>
+        <p>Welcome to the Bangsamoro Ministerial Management System (BMMS) Pilot.</p>
+      </div>
+      <p>
+        Your account for the BMMS pilot environment has been created. Use the
+        credentials below to sign in and explore the pilot modules prepared for your
+        Ministry, Office, or Agency.
+      </p>
+      <ul>
+        <li><strong>Username:</strong> {{ user.username }}</li>
+        <li><strong>Temporary Password:</strong> {{ raw_password }}</li>
+        <li><strong>Login URL:</strong> <a href="{{ login_url }}">{{ login_url }}</a></li>
+      </ul>
+      <p>
+        For security, please sign in and change your password immediately. The pilot
+        environment mirrors production safeguards: all activity is audited and data is
+        isolated by organization.
+      </p>
+      <p>
+        Need help? Contact the BMMS Pilot Support Desk at
+        <a href="mailto:{{ support_email }}">{{ support_email }}</a>.
+      </p>
+      <p style="margin-top: 24px">
+        <a class="cta" href="{{ login_url }}">Access BMMS Pilot</a>
+      </p>
+      <div class="footer">
+        <p>
+          BMMS Pilot Environment · Office of the Chief Minister · Bangsamoro
+          Autonomous Region in Muslim Mindanao
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

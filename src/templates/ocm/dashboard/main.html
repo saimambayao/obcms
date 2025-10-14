@@ -1,0 +1,294 @@
+{% extends "ocm/base.html" %}
+{% load static %}
+
+{% block title %}OCM Dashboard - {{ block.super }}{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'ocm:dashboard' %}" class="text-blue-600 hover:text-blue-800">
+        <i class="fas fa-shield-alt"></i>
+    </a>
+</li>
+<li class="flex items-center">
+    <i class="fas fa-chevron-right text-gray-400 mx-2 text-xs"></i>
+    <span class="text-gray-700">Dashboard</span>
+</li>
+{% endblock %}
+
+{% block ocm_content %}
+<!-- Page Header -->
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Government-Wide Overview</h1>
+    <p class="text-gray-600">Aggregated data from all 44 BARMM Ministries, Offices, and Agencies (MOAs)</p>
+</div>
+
+<!-- Executive Summary Stats - Blue-to-Teal Gradient (Bangsamoro Brand) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total MOAs -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-blue-800 to-emerald-600 rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(30, 64, 175, 0.3), 0 2px 8px rgba(30, 64, 175, 0.2);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/90 text-sm font-semibold uppercase tracking-wide">Total MOAs</p>
+                    <p class="text-4xl font-extrabold text-white mt-1">{{ stats.total_moas|default:44 }}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.2), inset 0 -2px 4px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.3);">
+                    <i class="fas fa-building text-2xl text-white"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Budget -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-blue-800 to-emerald-600 rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(30, 64, 175, 0.3), 0 2px 8px rgba(30, 64, 175, 0.2);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/90 text-sm font-semibold uppercase tracking-wide">Total Budget</p>
+                    <p class="text-4xl font-extrabold text-white mt-1">₱{{ stats.total_budget|default:"0.00"|floatformat:2 }}B</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.2), inset 0 -2px 4px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.3);">
+                    <i class="fas fa-coins text-2xl text-white"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Strategic Plans -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-blue-800 to-emerald-600 rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(30, 64, 175, 0.3), 0 2px 8px rgba(30, 64, 175, 0.2);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/90 text-sm font-semibold uppercase tracking-wide">Strategic Plans</p>
+                    <p class="text-4xl font-extrabold text-white mt-1">{{ stats.strategic_plans|default:0 }}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.2), inset 0 -2px 4px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.3);">
+                    <i class="fas fa-clipboard-list text-2xl text-white"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Partnerships -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-blue-800 to-emerald-600 rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(30, 64, 175, 0.3), 0 2px 8px rgba(30, 64, 175, 0.2);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/90 text-sm font-semibold uppercase tracking-wide">Inter-MOA Partnerships</p>
+                    <p class="text-4xl font-extrabold text-white mt-1">{{ stats.partnerships|default:0 }}</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.2), inset 0 -2px 4px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.3);">
+                    <i class="fas fa-handshake text-2xl text-white"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Metrics - 3D Milk White (Standard) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Budget Approval Rate -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Budget Approval Rate</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ metrics.budget_approval_rate|default:85.2 }}%</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-check-circle text-2xl text-emerald-600"></i>
+                </div>
+            </div>
+            <!-- Progress Bar -->
+            <div class="mt-4">
+                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div class="bg-emerald-500 h-2 rounded-full transition-all duration-300" style="width: {{ metrics.budget_approval_rate|default:85.2 }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Planning Completion -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Planning Completion</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ metrics.planning_completion|default:72.4 }}%</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-tasks text-2xl text-blue-600"></i>
+                </div>
+            </div>
+            <!-- Progress Bar -->
+            <div class="mt-4">
+                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: {{ metrics.planning_completion|default:72.4 }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Partnership Success Rate -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-[#FEFDFB] to-[#FBF9F5] rounded-2xl transform hover:-translate-y-2 transition-all duration-300"
+         style="box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06), inset 0 -2px 4px rgba(0,0,0,0.02), inset 0 2px 4px rgba(255,255,255,0.9);">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-gray-100/20"></div>
+        <div class="relative p-6">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold uppercase tracking-wide">Partnership Success</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ metrics.partnership_success|default:91.6 }}%</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F3F0 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.8);">
+                    <i class="fas fa-handshake text-2xl text-purple-600"></i>
+                </div>
+            </div>
+            <!-- Progress Bar -->
+            <div class="mt-4">
+                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div class="bg-purple-500 h-2 rounded-full transition-all duration-300" style="width: {{ metrics.partnership_success|default:91.6 }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Links -->
+<div class="mb-8">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Access</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Budget -->
+        <a href="{% url 'ocm:consolidated_budget' %}"
+           class="block bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+            <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                    <i class="fas fa-coins text-white text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1 group-hover:text-emerald-600 transition-colors">
+                        View Budget Dashboard
+                    </h3>
+                    <p class="text-sm text-gray-600">
+                        Consolidated budget data from all MOAs
+                    </p>
+                </div>
+                <div class="flex-shrink-0">
+                    <i class="fas fa-arrow-right text-gray-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all"></i>
+                </div>
+            </div>
+        </a>
+
+        <!-- Planning -->
+        <a href="{% url 'ocm:planning_overview' %}"
+           class="block bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+            <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
+                    <i class="fas fa-clipboard-list text-white text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
+                        View Planning Overview
+                    </h3>
+                    <p class="text-sm text-gray-600">
+                        Strategic plans and implementation status
+                    </p>
+                </div>
+                <div class="flex-shrink-0">
+                    <i class="fas fa-arrow-right text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"></i>
+                </div>
+            </div>
+        </a>
+
+        <!-- Coordination -->
+        <a href="{% url 'ocm:coordination_matrix' %}"
+           class="block bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+            <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                    <i class="fas fa-handshake text-white text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1 group-hover:text-purple-600 transition-colors">
+                        View Coordination Matrix
+                    </h3>
+                    <p class="text-sm text-gray-600">
+                        Inter-MOA partnerships and collaboration
+                    </p>
+                </div>
+                <div class="flex-shrink-0">
+                    <i class="fas fa-arrow-right text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all"></i>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Organization Filter Grid -->
+<div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">MOA Quick Filter</h2>
+        <span class="text-sm text-gray-500">Click organization code to view detailed data</span>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        {% for moa in moas %}
+        <button onclick="filterByMOA('{{ moa.code }}')"
+                class="min-h-[48px] p-3 bg-gradient-to-br from-blue-50 to-emerald-50 hover:from-blue-100 hover:to-emerald-100 rounded-lg border border-blue-200 hover:border-blue-400 transition-all duration-200 hover:shadow-md group"
+                aria-label="Filter by {{ moa.name }}">
+            <div class="text-center">
+                <p class="text-sm font-bold text-blue-700 group-hover:text-blue-900">{{ moa.code }}</p>
+                <p class="text-xs text-gray-600 truncate">{{ moa.short_name }}</p>
+            </div>
+        </button>
+        {% empty %}
+        <div class="col-span-full text-center py-8">
+            <i class="fas fa-building text-gray-300 text-4xl mb-2"></i>
+            <p class="text-gray-500">No MOAs configured yet</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    function filterByMOA(moaCode) {
+        // TODO: Implement HTMX-based MOA filtering
+        // This will dynamically update all dashboard metrics for the selected MOA
+        console.log('Filter by MOA:', moaCode);
+
+        // Example HTMX implementation:
+        // htmx.ajax('GET', `/ocm/filter/?moa=${moaCode}`, {
+        //     target: '#dashboard-metrics',
+        //     swap: 'innerHTML'
+        // });
+
+        // For now, show a toast notification
+        if (typeof window.showToast === 'function') {
+            window.showToast({
+                message: `Filtering by ${moaCode}`,
+                level: 'info'
+            });
+        }
+    }
+</script>
+{% endblock %}

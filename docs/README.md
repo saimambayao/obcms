@@ -44,6 +44,16 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [Pre-Deployment Implementation Summary](deployment/pre-deployment-implementation-summary.md)
   - [Pre-Staging Complete](deployment/PRE_STAGING_COMPLETE.md) ✅ **NEW - Ready for Staging**
 
+- **Pilot Staging (Phase 7):**
+  - [Staging Server Setup](deployment/STAGING_SETUP.md)
+  - [Pilot Database Setup](deployment/PILOT_DATABASE_SETUP.md)
+  - [Pilot SSL Configuration](deployment/SSL_SETUP.md)
+  - [Pilot Environment Variables](deployment/ENVIRONMENT_VARIABLES.md)
+  - [Pilot User Management](deployment/USER_MANAGEMENT.md)
+  - [Pilot Role Assignment](deployment/ROLE_ASSIGNMENT.md)
+  - [Pilot User CSV Format](deployment/USER_IMPORT_CSV_FORMAT.md)
+  - [Pilot Email Templates](deployment/EMAIL_TEMPLATES.md)
+
 - **Platform-Specific Guides:**
   - [Coolify Deployment Plan](deployment/coolify-deployment-plan.md)
   - [Coolify Deployment Checklist](deployment/deployment-coolify.md)
@@ -130,6 +140,7 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 - [Staging Environment](env/staging.md)
 - [Production Environment](env/production.md)
 - [Testing Environment](env/testing.md)
+- [Pilot Environment Variables](deployment/ENVIRONMENT_VARIABLES.md)
 
 ### 🧪 Testing & Verification
 - **Core Documentation:**
@@ -158,8 +169,9 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 - **AI Agent Configuration** (in project root):
   - [AI Agents Overview](../AGENTS.md)
   - [Claude Configuration](../CLAUDE.md) ⚙️
-  - [Gemini Configuration](../GEMINI.md)
-  - [Constitutional Workflow Agent Integration](ai/agents/CONSTITUTIONAL_WORKFLOW_AGENT.md)
+- [Gemini Configuration](../GEMINI.md)
+- [Constitutional Workflow Agent Integration](ai/agents/CONSTITUTIONAL_WORKFLOW_AGENT.md)
+- [Pilot Test Data Generation](development/TEST_DATA_GENERATION.md)
 - [Development README](development/README.md) - Setup guide
 - [HTMX Response Utilities](development/HTMX_RESPONSE_UTILITIES.md) ⭐ **NEW - Standardized Error Handling**
 - [Task Template Automation Service Guide](development/task_template_automation.md) ⭐ **NEW - Automation Contract & Examples**

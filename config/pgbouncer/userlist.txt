@@ -1,0 +1,36 @@
+;; PgBouncer User List
+;; Format: "username" "password_hash"
+;; Generate password hash: echo -n "passwordusername" | md5sum
+;;
+;; SECURITY WARNING: Replace these with actual credentials
+;; Generate strong passwords and proper MD5 hashes
+;;
+;; Example to generate hash:
+;; echo -n "mypasswordobcms_user" | md5sum
+;; Result: md5a1b2c3d4e5f6...
+;;
+;; Replace placeholders below with actual hashed passwords
+
+;; Application database user (Django connections)
+"obcms_user" "md5REPLACE_WITH_ACTUAL_PASSWORD_HASH"
+
+;; Admin user (for PgBouncer management)
+"obcms_admin" "md5REPLACE_WITH_ACTUAL_ADMIN_PASSWORD_HASH"
+
+;; Stats user (for monitoring)
+"obcms_stats" "md5REPLACE_WITH_ACTUAL_STATS_PASSWORD_HASH"
+
+;; IMPORTANT: To generate proper MD5 hash:
+;; 1. Concatenate password + username (e.g., "mypasswordobcms_user")
+;; 2. Calculate MD5 hash: echo -n "mypasswordobcms_user" | md5sum
+;; 3. Prefix with "md5": md5a1b2c3d4...
+;; 4. Replace the placeholder above with the full hash
+;;
+;; Example:
+;; Password: SecurePass123
+;; Username: obcms_user
+;; Concatenate: SecurePass123obcms_user
+;; MD5: echo -n "SecurePass123obcms_user" | md5sum
+;; Result: md5f4a5b6c7d8e9...
+;;
+;; Final entry: "obcms_user" "md5f4a5b6c7d8e9..."

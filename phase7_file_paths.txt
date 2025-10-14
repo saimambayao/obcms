@@ -1,0 +1,38 @@
+# Phase 7 Related Files
+
+The following table lists the 34 files introduced or modified during the Phase 7 pilot onboarding implementation, using repository-relative paths:
+
+1. .env.staging.example
+2. data/examples/pilot_users_template.csv
+3. docs/README.md
+4. docs/deployment/EMAIL_TEMPLATES.md
+5. docs/deployment/ENVIRONMENT_VARIABLES.md
+6. docs/deployment/PILOT_DATABASE_SETUP.md
+7. docs/deployment/ROLE_ASSIGNMENT.md
+8. docs/deployment/SSL_SETUP.md
+9. docs/deployment/STAGING_SETUP.md
+10. docs/deployment/USER_IMPORT_CSV_FORMAT.md
+11. docs/deployment/USER_MANAGEMENT.md
+12. docs/development/TEST_DATA_GENERATION.md
+13. scripts/backup_pilot_db.sh
+14. scripts/restore_pilot_db.sh
+15. scripts/validate_env.py
+16. src/budget_execution/management/__init__.py
+17. src/budget_execution/management/commands/__init__.py
+18. src/budget_execution/management/commands/generate_sample_budgets.py
+19. src/obc_management/settings/staging.py
+20. src/organizations/management/commands/__init__.py
+21. src/organizations/management/commands/assign_role.py
+22. src/organizations/management/commands/create_pilot_user.py
+23. src/organizations/management/commands/generate_pilot_data.py
+24. src/organizations/management/commands/import_pilot_users.py
+25. src/organizations/management/commands/load_pilot_moas.py
+26. src/organizations/services/__init__.py
+27. src/organizations/services/role_service.py
+28. src/organizations/services/user_service.py
+29. src/organizations/tasks.py
+30. src/planning/management/__init__.py
+31. src/planning/management/commands/__init__.py
+32. src/planning/management/commands/generate_sample_programs.py
+33. src/templates/emails/pilot_welcome.html
+34. src/templates/emails/pilot_welcome.txt

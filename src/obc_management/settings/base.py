@@ -80,6 +80,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "common",
+    "organizations",  # Phase 1: BMMS multi-tenant foundation (44 MOAs)
     "communities",
     "municipal_profiles",
     "monitoring",
@@ -96,6 +97,7 @@ LOCAL_APPS = [
     "planning",  # Phase 1: Strategic planning module (BMMS)
     "budget_preparation",  # Phase 2A: Budget Preparation (Parliament Bill No. 325)
     "budget_execution",  # Phase 2B: Budget Execution (Parliament Bill No. 325 Section 78)
+    "ocm",  # Phase 6: OCM aggregation layer
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -130,6 +132,7 @@ MIDDLEWARE = [
     "auditlog.middleware.AuditlogMiddleware",  # Audit logging (after AuthenticationMiddleware)
     "common.middleware.organization_context.OrganizationContextMiddleware",  # Phase 5: BMMS multi-tenant organization context (after AuthenticationMiddleware)
     "common.middleware.AuditMiddleware",  # Budget system audit logging (Parliament Bill No. 325 Section 78)
+    "ocm.middleware.OCMAccessMiddleware",  # Enforce OCM read-only access
     "common.middleware.APILoggingMiddleware",  # API request/response logging for security audit
     "common.middleware.DeprecationLoggingMiddleware",  # Track deprecated URL usage for migration planning
     "common.middleware.MANAAccessControlMiddleware",  # Restrict MANA user access to authorized pages only

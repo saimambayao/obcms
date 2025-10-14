@@ -58,6 +58,35 @@ urlpatterns = [
     ),
 
     # ============================================================================
+    # PHASE 4: INTER-MOA PARTNERSHIPS (5 URLs)
+    # ============================================================================
+    path(
+        "inter-moa-partnerships/",
+        views.inter_moa_partnership_list,
+        name="inter-moa-partnership-list",
+    ),
+    path(
+        "inter-moa-partnerships/new/",
+        views.inter_moa_partnership_create,
+        name="inter-moa-partnership-create",
+    ),
+    path(
+        "inter-moa-partnerships/<uuid:partnership_id>/",
+        views.inter_moa_partnership_detail,
+        name="inter-moa-partnership-detail",
+    ),
+    path(
+        "inter-moa-partnerships/<uuid:partnership_id>/edit/",
+        views.inter_moa_partnership_edit,
+        name="inter-moa-partnership-edit",
+    ),
+    path(
+        "inter-moa-partnerships/<uuid:partnership_id>/delete/",
+        views.inter_moa_partnership_delete,
+        name="inter-moa-partnership-delete",
+    ),
+
+    # ============================================================================
     # PHASE 0.5b: ORGANIZATIONS (6 URLs) - Migrated 2025-10-13
     # ============================================================================
     path(

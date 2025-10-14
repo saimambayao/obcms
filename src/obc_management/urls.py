@@ -56,6 +56,8 @@ urlpatterns = [
     path("budget/preparation/", include("budget_preparation.urls")),
     # Budget Execution Module (Phase 2B: Budget Execution - Parliament Bill No. 325)
     path("budget/execution/", include("budget_execution.urls")),
+    # OCM Aggregation Layer (Phase 6: Office of the Chief Minister - BMMS)
+    path("ocm/", include(("ocm.urls", "ocm"), namespace="ocm")),
     # =========================================================================
     # PROJECT MANAGEMENT PORTAL URL MIGRATION
     # =========================================================================

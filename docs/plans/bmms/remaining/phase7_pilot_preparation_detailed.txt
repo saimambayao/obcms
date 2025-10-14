@@ -1,0 +1,2710 @@
+# BMMS Phase 7: Pilot MOA Onboarding Infrastructure - Detailed Task Breakdown
+
+**Phase Priority:** HIGH
+**Phase Complexity:** Complex
+**Phase Dependencies:**
+- Phase 1 (Organizations App) - COMPLETE
+- Phase 2 (Planning Module) - COMPLETE
+- Phase 3 (Budgeting Module) - COMPLETE
+- Phase 6 (OCM Aggregation) - COMPLETE
+- Staging environment operational
+
+**Pilot MOAs:**
+- Ministry of Health (MOH)
+- Ministry of Labor and Employment (MOLE)
+- Ministry of Agriculture, Fisheries and Agrarian Reform (MAFAR)
+
+**Phase Overview:**
+This phase builds ALL infrastructure needed for pilot MOA onboarding. It does NOT include the actual training or UAT execution - only the systems and processes needed to support them.
+
+---
+
+## Section 1: Pilot Environment Setup
+
+### [P7-ENV-001] Staging Server Configuration
+**Priority:** CRITICAL
+**Complexity:** Moderate
+**Dependencies:** None
+**Estimated Complexity Points:** 5
+
+**Description:**
+Configure dedicated staging server for pilot MOAs with production-like environment.
+
+**Acceptance Criteria:**
+- Staging server provisioned with same specs as production
+- Separate database instance for pilot data
+- All Django apps deployed and verified
+- Celery workers running for background tasks
+- Redis configured for caching and queues
+- Staging URL configured (staging.bmms.gov.ph or similar)
+- Environment variables properly set
+- Debug=False in staging (production-like)
+- All BMMS modules accessible (Planning, Budgeting, M&E, etc.)
+
+**Technical Notes:**
+- Use same deployment process as production (Coolify or Docker Compose)
+- Document any differences from production setup
+- Create staging-specific settings.py if needed
+- Ensure connection pooling configured (CONN_MAX_AGE=600)
+
+**Files to Create/Modify:**
+- `docs/deployment/STAGING_SETUP.md` - Step-by-step guide
+- `src/obc_management/settings/staging.py` - Staging-specific settings
+- `.env.staging.example` - Template for staging environment variables
+
+---
+
+### [P7-ENV-002] Pilot Database Setup and Configuration
+**Priority:** CRITICAL
+**Complexity:** Moderate
+**Dependencies:** P7-ENV-001
+**Estimated Complexity Points:** 5
+
+**Description:**
+Set up isolated database for pilot MOAs with proper backup/restore procedures.
+
+**Acceptance Criteria:**
+- PostgreSQL database created for staging
+- All migrations applied successfully
+- Database user with appropriate permissions
+- Automated daily backups configured
+- Backup retention policy defined (30 days)
+- Restore procedure documented and tested
+- Database connection pooling verified
+- Query performance acceptable (< 200ms for common queries)
+- Case-insensitive text search verified
+
+**Technical Notes:**
+- Use JSONField for geographic data (NO PostGIS)
+- Configure pg_dump for automated backups
+- Test restore from backup on separate instance
+- Monitor connection pool usage
+
+**Files to Create/Modify:**
+- `scripts/backup_pilot_db.sh` - Automated backup script
+- `scripts/restore_pilot_db.sh` - Restore script
+- `docs/deployment/PILOT_DATABASE_SETUP.md` - Database setup guide
+
+---
+
+### [P7-ENV-003] Test Data Generation Scripts
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** P7-ENV-002
+**Estimated Complexity Points:** 8
+
+**Description:**
+Create comprehensive scripts to generate realistic test data for pilot MOAs.
+
+**Acceptance Criteria:**
+- Management command to generate MOA organizations
+- Script to create organizational hierarchy (divisions, sections)
+- Generate sample programs with realistic data
+- Create sample activities with proper linkages
+- Generate budget entries with Parliament Bill No. 325 structure
+- Create sample M&E indicators with targets
+- Generate sample users with appropriate roles
+- Create sample beneficiary records (anonymized/synthetic)
+- All generated data follows proper relationships
+- Script is idempotent (can run multiple times safely)
+
+**Technical Notes:**
+- Use Faker library for realistic synthetic data
+- Respect organization-based data isolation
+- Generate data that reflects actual use cases
+- Include edge cases (cancelled programs, multi-year budgets, etc.)
+- Use transaction.atomic() for data integrity
+
+**Files to Create/Modify:**
+- `src/organizations/management/commands/generate_pilot_data.py` - Main script
+- `src/organizations/management/commands/load_pilot_moas.py` - Load MOH, MOLE, MAFAR
+- `src/planning/management/commands/generate_sample_programs.py` - Sample programs
+- `src/budgeting/management/commands/generate_sample_budgets.py` - Sample budgets
+- `docs/development/TEST_DATA_GENERATION.md` - Documentation
+
+**Example Usage:**
+```bash
+python manage.py load_pilot_moas
+python manage.py generate_pilot_data --moa MOH --users 50 --programs 20 --activities 100
+```
+
+---
+
+### [P7-ENV-004] Environment Variable Management
+**Priority:** HIGH
+**Complexity:** Simple
+**Dependencies:** P7-ENV-001
+**Estimated Complexity Points:** 3
+
+**Description:**
+Create comprehensive environment variable templates and validation for pilot staging.
+
+**Acceptance Criteria:**
+- `.env.staging.example` with all required variables
+- Environment variable validation in settings
+- Documentation for each variable
+- Secrets management strategy documented
+- Environment-specific feature flags
+- No hardcoded credentials in codebase
+- All sensitive data in environment variables
+- Validation script to check required variables
+
+**Technical Notes:**
+- Use django-environ for environment variable parsing
+- Document required vs optional variables
+- Use feature flags for pilot-specific behavior
+
+**Files to Create/Modify:**
+- `.env.staging.example` - Template file
+- `src/obc_management/settings/staging.py` - Staging settings
+- `scripts/validate_env.py` - Environment validation script
+- `docs/deployment/ENVIRONMENT_VARIABLES.md` - Documentation
+
+---
+
+### [P7-ENV-005] SSL Certificate and Domain Setup
+**Priority:** HIGH
+**Complexity:** Simple
+**Dependencies:** P7-ENV-001
+**Estimated Complexity Points:** 3
+
+**Description:**
+Configure SSL certificates and domain name for staging environment.
+
+**Acceptance Criteria:**
+- Domain name configured (staging.bmms.gov.ph or similar)
+- SSL certificate installed and valid
+- HTTPS enforced (HTTP redirects to HTTPS)
+- HSTS header configured
+- Certificate auto-renewal configured (Let's Encrypt)
+- Mixed content issues resolved
+- All static assets served over HTTPS
+- Staging domain documented for pilot users
+
+**Technical Notes:**
+- Use Let's Encrypt for free SSL certificates
+- Configure Nginx/Apache for SSL termination
+- Test certificate renewal process
+- Update ALLOWED_HOSTS in settings
+
+**Files to Create/Modify:**
+- `docs/deployment/SSL_SETUP.md` - SSL configuration guide
+- `nginx/staging.conf` - Nginx configuration (if applicable)
+
+---
+
+## Section 2: Pilot User Account System
+
+### [P7-USER-001] User Creation Management Command
+**Priority:** CRITICAL
+**Complexity:** Moderate
+**Dependencies:** P7-ENV-002
+**Estimated Complexity Points:** 5
+
+**Description:**
+Create Django management command to create pilot users with proper organization assignment.
+
+**Acceptance Criteria:**
+- Management command: `create_pilot_user`
+- Required arguments: username, email, organization, role
+- Optional arguments: first_name, last_name, phone
+- Automatically assigns user to correct organization
+- Assigns specified role with permissions
+- Generates secure random password if not provided
+- Sends welcome email with credentials
+- Validates email format and uniqueness
+- Validates organization exists
+- Validates role is valid for organization
+- Logs all user creation for audit trail
+
+**Technical Notes:**
+- Use Django's User model or custom user model
+- Use make_password() for password hashing
+- Send email asynchronously via Celery
+- Follow RBAC permission structure
+
+**Files to Create/Modify:**
+- `src/organizations/management/commands/create_pilot_user.py` - Command
+- `src/organizations/services/user_service.py` - User creation logic
+- `docs/deployment/USER_MANAGEMENT.md` - Documentation
+
+**Example Usage:**
+```bash
+python manage.py create_pilot_user \
+  --username jdoe \
+  --email jdoe@moh.gov.ph \
+  --organization MOH \
+  --role planner \
+  --first-name John \
+  --last-name Doe
+```
+
+---
+
+### [P7-USER-002] Role Assignment Automation
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** P7-USER-001
+**Estimated Complexity Points:** 5
+
+**Description:**
+Implement automated role assignment system for pilot users based on organization structure.
+
+**Acceptance Criteria:**
+- Predefined role templates per MOA type
+- Automatic permission assignment based on role
+- Role hierarchy respected (Manager > Staff > Viewer)
+- Organization-scoped permissions enforced
+- Role change workflow with approval (optional for pilots)
+- Audit log for role assignments
+- Role validation before assignment
+- Support for multiple roles per user (if needed)
+
+**Technical Notes:**
+- Use Django's Group model for roles
+- Use Permission model for granular permissions
+- Document standard roles: Admin, Planner, Budget Officer, M&E Officer, Viewer
+- Follow RBAC structure from docs/product/RBAC_FRAMEWORK.md
+
+**Files to Create/Modify:**
+- `src/organizations/services/role_service.py` - Role assignment logic
+- `src/organizations/management/commands/assign_role.py` - Command
+- `src/organizations/fixtures/pilot_roles.json` - Role definitions
+- `docs/deployment/ROLE_ASSIGNMENT.md` - Documentation
+
+---
+
+### [P7-USER-003] Bulk User Import from CSV
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** P7-USER-001, P7-USER-002
+**Estimated Complexity Points:** 6
+
+**Description:**
+Create CSV import system for bulk user creation for pilot MOAs.
+
+**Acceptance Criteria:**
+- Management command: `import_pilot_users`
+- CSV format documented with example
+- Required columns: email, first_name, last_name, organization, role
+- Optional columns: phone, department, position
+- CSV validation before import (check all emails valid, orgs exist, etc.)
+- Dry-run mode to preview without creating users
+- Error reporting for invalid rows
+- Success/failure summary after import
+- Emails sent to all created users
+- Import logged for audit trail
+- Support for updating existing users (optional)
+
+**Technical Notes:**
+- Use Python's csv module or pandas
+- Validate email addresses with Django validators
+- Handle duplicate emails gracefully
+- Use transaction.atomic() for all-or-nothing import
+- Provide detailed error messages for debugging
+
+**Files to Create/Modify:**
+- `src/organizations/management/commands/import_pilot_users.py` - Command
+- `docs/deployment/USER_IMPORT_CSV_FORMAT.md` - CSV format guide
+- `data/examples/pilot_users_template.csv` - Example CSV
+
+**Example CSV Format:**
+```csv
+email,first_name,last_name,organization,role,phone,department
+jdoe@moh.gov.ph,John,Doe,MOH,planner,+639171234567,Planning Division
+asmith@moh.gov.ph,Alice,Smith,MOH,budget_officer,+639187654321,Budget Office
+```
+
+**Example Usage:**
+```bash
+python manage.py import_pilot_users data/moh_users.csv --dry-run
+python manage.py import_pilot_users data/moh_users.csv --send-emails
+```
+
+---
+
+### [P7-USER-004] Welcome Email Templates
+**Priority:** HIGH
+**Complexity:** Simple
+**Dependencies:** P7-USER-001
+**Estimated Complexity Points:** 3
+
+**Description:**
+Create professional welcome email templates for pilot users with login instructions.
+
+**Acceptance Criteria:**
+- HTML email template with BMMS branding
+- Plain text fallback for email clients
+- Includes: username, temporary password, login URL, support contact
+- Instructions for first login and password change
+- Links to training materials (when available)
+- Contact information for help desk
+- Email sent asynchronously via Celery
+- Email sending failures logged and retried
+- Customizable per organization (MOH, MOLE, MAFAR)
+
+**Technical Notes:**
+- Use Django's email templates
+- Use django-templated-email or similar
+- Store templates in src/templates/emails/
+- Test email rendering across clients (Gmail, Outlook, etc.)
+
+**Files to Create/Modify:**
+- `src/templates/emails/pilot_welcome.html` - HTML template
+- `src/templates/emails/pilot_welcome.txt` - Plain text template
+- `src/organizations/tasks.py` - Celery task for email sending
+- `docs/deployment/EMAIL_TEMPLATES.md` - Documentation
+
+---
+
+### [P7-USER-005] Password Reset Mechanism
+**Priority:** HIGH
+**Complexity:** Simple
+**Dependencies:** P7-USER-001
+**Estimated Complexity Points:** 3
+
+**Description:**
+Implement secure password reset workflow for pilot users.
+
+**Acceptance Criteria:**
+- Password reset request page
+- Email with secure reset token (expires in 24 hours)
+- Reset password page with token validation
+- Password strength requirements enforced
+- Success message after reset
+- Email confirmation of password change
+- Rate limiting on reset requests (prevent abuse)
+- Audit log for password resets
+- Works for both active and inactive accounts
+
+**Technical Notes:**
+- Use Django's built-in PasswordResetView
+- Customize templates to match BMMS UI
+- Use token generator with expiration
+- Log all password reset attempts
+
+**Files to Create/Modify:**
+- `src/templates/registration/password_reset_form.html` - Request form
+- `src/templates/registration/password_reset_email.html` - Email template
+- `src/templates/registration/password_reset_confirm.html` - Reset form
+- `src/templates/registration/password_reset_complete.html` - Success page
+- `src/obc_management/urls.py` - URL configuration
+
+---
+
+### [P7-USER-006] User Onboarding Workflow
+**Priority:** MEDIUM
+**Complexity:** Moderate
+**Dependencies:** P7-USER-001, P7-USER-004
+**Estimated Complexity Points:** 5
+
+**Description:**
+Create guided onboarding workflow for new pilot users on first login.
+
+**Acceptance Criteria:**
+- First-login detection (flag in user model)
+- Forced password change on first login
+- Profile completion form (phone, department, etc.)
+- Interactive tour of key features (optional)
+- Checklist of getting started tasks
+- Links to training materials
+- Option to skip tour (dismissible)
+- Onboarding completion tracked
+- Onboarding analytics (how many completed, where they dropped off)
+
+**Technical Notes:**
+- Use session flag or user profile field for first login
+- Consider using intro.js or shepherd.js for interactive tour
+- Make onboarding optional after initial dismissal
+- Track onboarding metrics for improvement
+
+**Files to Create/Modify:**
+- `src/organizations/views/onboarding.py` - Onboarding views
+- `src/templates/onboarding/welcome.html` - Welcome page
+- `src/templates/onboarding/profile_setup.html` - Profile form
+- `src/templates/onboarding/tour.html` - Feature tour
+- `docs/deployment/USER_ONBOARDING.md` - Documentation
+
+---
+
+## Section 3: Training Material Infrastructure
+
+### [P7-TRAIN-001] Documentation Site Setup
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** P7-ENV-001
+**Estimated Complexity Points:** 5
+
+**Description:**
+Set up dedicated documentation site for BMMS user guides and training materials.
+
+**Acceptance Criteria:**
+- Documentation site hosted and accessible
+- Search functionality works
+- Mobile-responsive design
+- Multiple versions supported (if needed)
+- Organized by module (Planning, Budgeting, M&E, etc.)
+- User role-specific documentation
+- PDF export capability
+- Print-friendly formatting
+- Accessible to pilot users without login (or with SSO)
+
+**Technical Notes:**
+- Consider: MkDocs, Docusaurus, GitBook, or Django-based solution
+- Host on subdomain: docs.bmms.gov.ph or help.bmms.gov.ph
+- Use Markdown for easy maintenance
+- Version control in Git
+
+**Files to Create/Modify:**
+- `docs/training/` - Source documentation files
+- `mkdocs.yml` or `docusaurus.config.js` - Configuration
+- `docs/deployment/DOCUMENTATION_SITE_SETUP.md` - Setup guide
+
+**Example Structure:**
+```
+docs/training/
+├── index.md
+├── getting-started/
+│   ├── login.md
+│   ├── navigation.md
+│   └── profile.md
+├── planning/
+│   ├── overview.md
+│   ├── create-program.md
+│   └── manage-activities.md
+├── budgeting/
+│   ├── overview.md
+│   ├── budget-entry.md
+│   └── bill-325.md
+└── faq.md
+```
+
+---
+
+### [P7-TRAIN-002] Video Hosting Setup
+**Priority:** MEDIUM
+**Complexity:** Simple
+**Dependencies:** None
+**Estimated Complexity Points:** 3
+
+**Description:**
+Set up infrastructure for hosting training videos (tutorials, walkthroughs).
+
+**Acceptance Criteria:**
+- Video hosting platform selected and configured
+- Upload workflow documented
+- Video player embedded in documentation site
+- Videos organized by topic/module
+- Transcripts/captions available (accessibility)
+- Downloadable for offline viewing
+- Bandwidth/storage monitoring
+- Video analytics (views, completion rate)
+
+**Technical Notes:**
+- Options: YouTube (private/unlisted), Vimeo, self-hosted (Mux, MediaServer)
+- Prefer platform with privacy controls
+- Ensure WCAG 2.1 AA compliance (captions required)
+- Consider bandwidth costs for self-hosted
+
+**Files to Create/Modify:**
+- `docs/training/VIDEO_HOSTING_SETUP.md` - Setup guide
+- `docs/training/VIDEO_UPLOAD_WORKFLOW.md` - Upload process
+- Video embed templates for documentation site
+
+---
+
+### [P7-TRAIN-003] Screenshot and Screencast Tools
+**Priority:** MEDIUM
+**Complexity:** Simple
+**Dependencies:** None
+**Estimated Complexity Points:** 2
+
+**Description:**
+Document tools and workflows for creating training screenshots and screencasts.
+
+**Acceptance Criteria:**
+- Recommended screenshot tools documented (OS-specific)
+- Recommended screencast tools documented
+- Annotation tools for screenshots
+- Video editing tools for screencasts
+- Style guide for screenshots (highlight buttons, blur sensitive data)
+- Workflow for creating and uploading media
+- Naming convention for media files
+- Storage location for source files
+
+**Technical Notes:**
+- macOS: Screenshot.app, CleanShot X, ScreenFlow
+- Windows: Snagit, Camtasia, OBS Studio
+- Cross-platform: OBS Studio, ShareX, Flameshot
+- Annotation: Skitch, Snagit, Greenshot
+
+**Files to Create/Modify:**
+- `docs/training/MEDIA_CREATION_GUIDE.md` - Tool recommendations and workflow
+- `docs/training/SCREENSHOT_STYLE_GUIDE.md` - Style guidelines
+
+---
+
+### [P7-TRAIN-004] Knowledge Base Structure
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** P7-TRAIN-001
+**Estimated Complexity Points:** 5
+
+**Description:**
+Design and implement knowledge base structure for organizing training content.
+
+**Acceptance Criteria:**
+- Hierarchical category structure (Module > Topic > Article)
+- Article templates for consistency
+- Tagging system for cross-referencing
+- Related articles suggestions
+- "Was this helpful?" feedback mechanism
+- Search optimization (keywords, synonyms)
+- Article versioning (track updates)
+- Author attribution and last updated date
+- Print and PDF export for each article
+
+**Technical Notes:**
+- Use documentation site's native structure
+- Plan for growth (more modules, more articles)
+- Consider multi-language support (future: Tagalog, Maguindanao)
+- Implement breadcrumb navigation
+
+**Files to Create/Modify:**
+- `docs/training/KNOWLEDGE_BASE_STRUCTURE.md` - Structure design
+- `docs/training/templates/article_template.md` - Article template
+- Documentation site configuration for categories/tags
+
+**Example Structure:**
+```
+Planning Module
+├── Programs
+│   ├── Creating a New Program
+│   ├── Editing Program Details
+│   └── Closing a Program
+├── Activities
+│   ├── Adding Activities to Programs
+│   ├── Scheduling Activities
+│   └── Recording Activity Outcomes
+└── Reporting
+    ├── Generating Program Reports
+    └── Exporting Data
+```
+
+---
+
+### [P7-TRAIN-005] FAQ Database Schema
+**Priority:** MEDIUM
+**Complexity:** Simple
+**Dependencies:** P7-ENV-002
+**Estimated Complexity Points:** 3
+
+**Description:**
+Create database schema and admin interface for managing FAQs.
+
+**Acceptance Criteria:**
+- FAQ model with fields: question, answer, category, module, tags
+- Admin interface for CRUD operations
+- FAQ display page (searchable, filterable)
+- Category-based browsing
+- Tag-based filtering
+- "Was this helpful?" voting mechanism
+- Most viewed FAQs tracking
+- FAQ suggestions based on user behavior (future)
+
+**Technical Notes:**
+- Create new app or add to existing (organizations or common)
+- Use rich text editor for answers (markdown or WYSIWYG)
+- Index questions for full-text search
+
+**Files to Create/Modify:**
+- `src/common/models.py` - FAQ model
+- `src/common/admin.py` - Admin interface
+- `src/common/views/faq.py` - FAQ views
+- `src/templates/faq/list.html` - FAQ list page
+- `src/templates/faq/detail.html` - FAQ detail page
+- `docs/training/FAQ_MANAGEMENT.md` - Documentation
+
+**Model Example:**
+```python
+class FAQ(models.Model):
+    question = models.CharField(max_length=500)
+    answer = models.TextField()
+    category = models.CharField(max_length=100)
+    module = models.CharField(max_length=50, choices=MODULE_CHOICES)
+    tags = models.JSONField(default=list)
+    view_count = models.IntegerField(default=0)
+    helpful_count = models.IntegerField(default=0)
+    not_helpful_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+```
+
+---
+
+### [P7-TRAIN-006] Training Progress Tracking
+**Priority:** MEDIUM
+**Complexity:** Moderate
+**Dependencies:** P7-ENV-002, P7-TRAIN-001
+**Estimated Complexity Points:** 5
+
+**Description:**
+Implement system to track user progress through training materials.
+
+**Acceptance Criteria:**
+- Track which articles/videos users have viewed
+- Completion tracking for modules
+- Progress dashboard for users
+- Progress dashboard for administrators
+- Certificates of completion (optional)
+- Reminder emails for incomplete training
+- Training analytics (completion rates, time spent, etc.)
+- Export training reports for management
+
+**Technical Notes:**
+- Create TrainingProgress model
+- Track article views, video completions
+- Use signals or middleware to record progress
+- Gamification optional (badges, points)
+
+**Files to Create/Modify:**
+- `src/common/models.py` - TrainingProgress model
+- `src/common/services/training_service.py` - Progress tracking logic
+- `src/templates/training/progress.html` - User progress page
+- `src/templates/training/admin_dashboard.html` - Admin dashboard
+- `docs/training/PROGRESS_TRACKING.md` - Documentation
+
+**Model Example:**
+```python
+class TrainingProgress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content_type = models.CharField(max_length=20, choices=[('article', 'Article'), ('video', 'Video')])
+    content_id = models.CharField(max_length=200)  # Article slug or video ID
+    completed = models.BooleanField(default=False)
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+```
+
+---
+
+## Section 4: Training Content Templates
+
+### [P7-CONTENT-001] User Manual Template (Markdown)
+**Priority:** HIGH
+**Complexity:** Simple
+**Dependencies:** P7-TRAIN-001
+**Estimated Complexity Points:** 3
+
+**Description:**
+Create comprehensive user manual template in Markdown for easy maintenance.
+
+**Acceptance Criteria:**
+- Markdown template with standard sections
+- Screenshots placeholders
+- Step-by-step instruction format
+- Troubleshooting section template
+- Related links section
+- Front matter for metadata (title, author, date, module)
+- Consistent formatting (headers, lists, code blocks)
+- Example content for reference
+
+**Technical Notes:**
+- Use consistent header levels (H1 for title, H2 for main sections)
+- Use numbered lists for procedures
+- Use admonitions for warnings/tips (if supported)
+- Include alt text for images (accessibility)
+
+**Files to Create/Modify:**
+- `docs/training/templates/user_manual_template.md` - Template
+- `docs/training/examples/example_user_manual.md` - Example
+- `docs/training/CONTENT_CREATION_GUIDE.md` - Guidelines
+
+**Template Example:**
+```markdown
+---
+title: "Module Name - Feature Title"
+module: "Planning"
+author: "BMMS Team"
+date: "2025-01-15"
+tags: ["programs", "activities", "planning"]
+---
+
+# Module Name - Feature Title
+
+## Overview
+Brief description of the feature and when to use it.
+
+## Prerequisites
+- Required permission: `planning.add_program`
+- Required data: Organization setup complete
+
+## Step-by-Step Instructions
+
+### Step 1: Navigate to Programs
+1. Click **Planning** in the main navigation
+2. Select **Programs** from the dropdown
+3. Click the **Add Program** button
+
+[Screenshot: Programs list page]
+
+### Step 2: Fill Program Details
+...
+
+## Troubleshooting
+
+### Problem: Cannot see Add Program button
+**Solution:** Ensure you have the `planning.add_program` permission...
+
+## Related Articles
+- [Creating Activities](./create-activity.md)
+- [Program Budgeting](./program-budgets.md)
+```
+
+---
+
+### [P7-CONTENT-002] Video Script Templates
+**Priority:** MEDIUM
+**Complexity:** Simple
+**Dependencies:** None
+**Estimated Complexity Points:** 2
+
+**Description:**
+Create script templates for training videos to ensure consistency.
+
+**Acceptance Criteria:**
+- Video script template document
+- Sections: Introduction, Demonstration, Summary, Next Steps
+- Timing guidelines (target 3-5 minutes per video)
+- Narration script format
+- On-screen text guidelines
+- Call-to-action template
+- Example scripts for reference
+
+**Technical Notes:**
+- Keep videos short and focused (one topic per video)
+- Use clear, simple language (avoid jargon)
+- Include visual cues in script (e.g., "Click the green button")
+
+**Files to Create/Modify:**
+- `docs/training/templates/video_script_template.md` - Template
+- `docs/training/examples/example_video_script.md` - Example
+
+**Template Example:**
+```markdown
+# Video Script: [Feature Name]
+
+**Target Duration:** 4 minutes
+**Module:** Planning
+**Prerequisites:** User account created, logged in
+
+---
+
+## Introduction (30 seconds)
+**Narration:**
+"Welcome to this tutorial on creating programs in BMMS. By the end of this video, you'll know how to create a new program, add details, and link it to your organization's strategic goals."
+
+**On-screen:**
+- Title: "Creating Programs in BMMS"
+- Duration: "4 minutes"
+
+---
+
+## Demonstration (3 minutes)
+
+### Scene 1: Navigation
+**Narration:**
+"First, click on Planning in the main navigation, then select Programs."
+
+**Action:**
+- Click Planning → Programs
+- Show programs list page
+
+### Scene 2: Add Program
+**Narration:**
+"Click the Add Program button in the top right..."
+
+---
+
+## Summary (30 seconds)
+**Narration:**
+"Great! You've learned how to create programs in BMMS..."
+
+**On-screen:**
+- Key points recap
+- Next steps: "Learn how to add activities to programs"
+```
+
+---
+
+### [P7-CONTENT-003] Quick Reference Card Template
+**Priority:** MEDIUM
+**Complexity:** Simple
+**Dependencies:** None
+**Estimated Complexity Points:** 2
+
+**Description:**
+Create printable quick reference card templates (cheat sheets) for common tasks.
+
+**Acceptance Criteria:**
+- PDF template (single page, printable)
+- One-page format for common tasks
+- Visual icons for actions
+- Step-by-step shortcuts
+- Keyboard shortcuts included
+- Module-specific reference cards
+- Print-friendly design (black and white)
+
+**Technical Notes:**
+- Design in Figma, Canva, or LaTeX
+- Export as PDF
+- Keep text concise (bullet points)
+- Use visual hierarchy
+
+**Files to Create/Modify:**
+- `docs/training/templates/quick_reference_template.pdf` - Template
+- `docs/training/quick-reference/planning_module.pdf` - Example
+- `docs/training/quick-reference/budgeting_module.pdf` - Example
+
+**Content Example:**
+```
+==============================================
+BMMS Quick Reference: Planning Module
+==============================================
+
+CREATE A PROGRAM
+1. Planning → Programs → Add Program
+2. Fill: Name, Description, Start/End Date
+3. Select Strategic Goal
+4. Click Save
+
+ADD ACTIVITIES
+1. Open Program → Activities Tab
+2. Click Add Activity
+3. Fill: Name, Description, Budget
+4. Set Timeline
+5. Click Save
+
+KEYBOARD SHORTCUTS
+Ctrl+S: Save form
+Ctrl+N: New item
+Esc: Close modal
+
+NEED HELP?
+Email: support@bmms.gov.ph
+Phone: +63 123 456 7890
+```
+
+---
+
+### [P7-CONTENT-004] FAQ Template
+**Priority:** MEDIUM
+**Complexity:** Simple
+**Dependencies:** P7-TRAIN-005
+**Estimated Complexity Points:** 2
+
+**Description:**
+Create standardized template for writing FAQs.
+
+**Acceptance Criteria:**
+- Question format guidelines
+- Answer structure template
+- Related questions linking
+- Screenshot guidelines for FAQs
+- Troubleshooting steps format
+- Example FAQs for reference
+
+**Technical Notes:**
+- Keep questions user-focused ("How do I..." not "Can I...")
+- Keep answers concise (2-3 paragraphs max)
+- Link to full articles for detailed topics
+
+**Files to Create/Modify:**
+- `docs/training/templates/faq_template.md` - Template
+- `docs/training/examples/example_faqs.md` - Examples
+
+**Template Example:**
+```markdown
+# FAQ Entry Template
+
+## Question
+How do I [user goal]?
+
+## Answer
+Brief answer (1-2 sentences).
+
+**Step-by-step:**
+1. Step one
+2. Step two
+3. Step three
+
+[Screenshot if helpful]
+
+**Note:** Additional context or warning if needed.
+
+## Related Questions
+- [How do I related task?](link)
+- [What is related concept?](link)
+
+## Tags
+- module_name
+- feature_name
+- action_type
+```
+
+---
+
+### [P7-CONTENT-005] Tutorial Template
+**Priority:** MEDIUM
+**Complexity:** Simple
+**Dependencies:** P7-TRAIN-001
+**Estimated Complexity Points:** 2
+
+**Description:**
+Create interactive tutorial template for end-to-end workflows.
+
+**Acceptance Criteria:**
+- Tutorial structure template
+- Learning objectives section
+- Prerequisites checklist
+- Step-by-step instructions with screenshots
+- Practice exercises included
+- Quiz/assessment section (optional)
+- Completion certificate placeholder
+
+**Technical Notes:**
+- Tutorials should be more comprehensive than articles (15-30 minutes)
+- Include real-world scenarios
+- Provide sample data to practice with
+
+**Files to Create/Modify:**
+- `docs/training/templates/tutorial_template.md` - Template
+- `docs/training/examples/example_tutorial.md` - Example
+
+**Template Example:**
+```markdown
+# Tutorial: [End-to-End Workflow Name]
+
+## Learning Objectives
+By the end of this tutorial, you will be able to:
+- [ ] Objective 1
+- [ ] Objective 2
+- [ ] Objective 3
+
+**Estimated Time:** 20 minutes
+
+## Prerequisites
+- [ ] User account with [role] permissions
+- [ ] [Module] setup complete
+- [ ] [Required data] available
+
+## Scenario
+You are a planner at [MOA]. You need to create a new program for [purpose], add activities, and allocate a budget...
+
+## Part 1: Creating the Program
+...
+
+## Part 2: Adding Activities
+...
+
+## Practice Exercise
+Now try creating your own program...
+
+## Assessment
+1. Question 1?
+2. Question 2?
+
+## Next Steps
+- [Advanced Tutorial](link)
+- [Related Feature](link)
+```
+
+---
+
+### [P7-CONTENT-006] Module-Specific Guides Structure
+**Priority:** HIGH
+**Complexity:** Simple
+**Dependencies:** P7-TRAIN-004
+**Estimated Complexity Points:** 3
+
+**Description:**
+Define structure and outline for module-specific user guides.
+
+**Acceptance Criteria:**
+- Outline for each module (Planning, Budgeting, M&E, Coordination, Policies)
+- Standard sections for all modules
+- Module-specific sections identified
+- Content inventory (what needs to be written)
+- Content writing assignments (if applicable)
+- Prioritized list (must-have vs nice-to-have)
+
+**Technical Notes:**
+- Start with core modules (Planning, Budgeting)
+- Defer advanced topics to post-pilot
+- Get feedback from SMEs on outline
+
+**Files to Create/Modify:**
+- `docs/training/planning/outline.md` - Planning module outline
+- `docs/training/budgeting/outline.md` - Budgeting module outline
+- `docs/training/monitoring/outline.md` - M&E module outline
+- `docs/training/coordination/outline.md` - Coordination module outline
+- `docs/training/policies/outline.md` - Policies module outline
+- `docs/training/CONTENT_INVENTORY.md` - Content inventory checklist
+
+**Example Outline (Planning Module):**
+```markdown
+# Planning Module User Guide - Outline
+
+## 1. Introduction to Planning Module
+   - Overview
+   - Key concepts
+   - User roles and permissions
+
+## 2. Strategic Goals
+   - 2.1 Viewing strategic goals
+   - 2.2 Creating strategic goals
+   - 2.3 Editing strategic goals
+   - 2.4 Linking to programs
+
+## 3. Programs
+   - 3.1 Understanding programs
+   - 3.2 Creating programs
+   - 3.3 Program details
+   - 3.4 Program lifecycle
+   - 3.5 Program reports
+
+## 4. Activities
+   - 4.1 Understanding activities
+   - 4.2 Adding activities to programs
+   - 4.3 Scheduling activities
+   - 4.4 Recording outcomes
+   - 4.5 Activity reports
+
+## 5. Reporting
+   - 5.1 Program reports
+   - 5.2 Activity reports
+   - 5.3 Exporting data
+   - 5.4 Custom reports
+
+## 6. Tips and Best Practices
+## 7. Troubleshooting
+## 8. FAQ
+```
+
+---
+
+## Section 5: UAT Infrastructure
+
+### [P7-UAT-001] Test Scenario Tracking System
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** P7-ENV-002
+**Estimated Complexity Points:** 6
+
+**Description:**
+Create system to track UAT test scenarios, execution, and results.
+
+**Acceptance Criteria:**
+- Test scenario model (module, scenario, steps, expected result)
+- Test execution model (scenario, user, status, actual result)
+- Admin interface for managing scenarios
+- User interface for executing tests
+- Test assignment to pilot users
+- Progress tracking (% completed)
+- Results dashboard (pass/fail/blocked)
+- Export test results to Excel/PDF
+- Integration with bug tracking
+
+**Technical Notes:**
+- Create new app: `uat_tracking` or add to `common`
+- Use Django models for scenarios and executions
+- Consider using existing tools (TestRail, Zephyr) vs custom
+
+**Files to Create/Modify:**
+- `src/common/models.py` - TestScenario, TestExecution models
+- `src/common/admin.py` - Admin interface
+- `src/common/views/uat.py` - UAT tracking views
+- `src/templates/uat/scenario_list.html` - Scenario list
+- `src/templates/uat/execute_test.html` - Test execution page
+- `src/templates/uat/dashboard.html` - Results dashboard
+- `docs/testing/UAT_TRACKING_SYSTEM.md` - Documentation
+
+**Model Example:**
+```python
+class TestScenario(models.Model):
+    module = models.CharField(max_length=50, choices=MODULE_CHOICES)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    steps = models.JSONField()  # List of steps
+    expected_result = models.TextField()
+    priority = models.CharField(max_length=20, choices=[('high', 'High'), ('medium', 'Medium'), ('low', 'Low')])
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class TestExecution(models.Model):
+    scenario = models.ForeignKey(TestScenario, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=[('pass', 'Pass'), ('fail', 'Fail'), ('blocked', 'Blocked')])
+    actual_result = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
+    bug_report = models.ForeignKey('BugReport', null=True, blank=True, on_delete=models.SET_NULL)
+    executed_at = models.DateTimeField(auto_now_add=True)
+```
+
+---
+
+### [P7-UAT-002] Bug Reporting Workflow
+**Priority:** CRITICAL
+**Complexity:** Moderate
+**Dependencies:** P7-ENV-002, P7-UAT-001
+**Estimated Complexity Points:** 6
+
+**Description:**
+Implement bug reporting system for pilot UAT phase.
+
+**Acceptance Criteria:**
+- Bug report form (title, description, steps to reproduce, severity)
+- Screenshot upload capability
+- Automatic environment info capture (browser, OS, BMMS version)
+- Bug status tracking (new, in progress, resolved, closed)
+- Assignment to developers
+- Comment/discussion thread on bugs
+- Email notifications for bug updates
+- Bug list with filtering/sorting
+- Integration with GitHub Issues (optional)
+- Bug metrics dashboard (total, by severity, by status)
+
+**Technical Notes:**
+- Create BugReport model
+- Use Django's FileField for screenshots
+- Capture environment info with middleware or JavaScript
+- Consider integration with external tools (GitHub, Jira, Linear)
+
+**Files to Create/Modify:**
+- `src/common/models.py` - BugReport model
+- `src/common/forms.py` - BugReportForm
+- `src/common/views/bug_tracking.py` - Bug reporting views
+- `src/templates/bugs/report.html` - Bug report form
+- `src/templates/bugs/list.html` - Bug list
+- `src/templates/bugs/detail.html` - Bug detail page
+- `src/templates/emails/bug_notification.html` - Email template
+- `docs/testing/BUG_REPORTING_WORKFLOW.md` - Documentation
+
+**Model Example:**
+```python
+class BugReport(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    steps_to_reproduce = models.TextField()
+    expected_behavior = models.TextField()
+    actual_behavior = models.TextField()
+    severity = models.CharField(max_length=20, choices=[
+        ('critical', 'Critical'),
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low')
+    ])
+    status = models.CharField(max_length=20, choices=[
+        ('new', 'New'),
+        ('in_progress', 'In Progress'),
+        ('resolved', 'Resolved'),
+        ('closed', 'Closed')
+    ])
+    module = models.CharField(max_length=50, choices=MODULE_CHOICES)
+    screenshot = models.ImageField(upload_to='bug_screenshots/', null=True, blank=True)
+    browser = models.CharField(max_length=100)
+    os = models.CharField(max_length=100)
+    reported_by = models.ForeignKey(User, related_name='bug_reports', on_delete=models.CASCADE)
+    assigned_to = models.ForeignKey(User, related_name='assigned_bugs', null=True, blank=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+```
+
+---
+
+### [P7-UAT-003] Feedback Collection Forms
+**Priority:** HIGH
+**Complexity:** Simple
+**Dependencies:** P7-ENV-002
+**Estimated Complexity Points:** 4
+
+**Description:**
+Create feedback collection forms for pilot users to provide input.
+
+**Acceptance Criteria:**
+- General feedback form (what works, what doesn't, suggestions)
+- Feature-specific feedback forms
+- Rating scale questions (1-5 or 1-10)
+- Open-ended questions
+- Anonymous submission option
+- Feedback dashboard for review
+- Export feedback to Excel/PDF
+- Email notifications for critical feedback
+
+**Technical Notes:**
+- Create Feedback model
+- Use Django forms or consider external tools (Google Forms, Typeform)
+- If external, provide iframe embed or links
+
+**Files to Create/Modify:**
+- `src/common/models.py` - Feedback model
+- `src/common/forms.py` - FeedbackForm
+- `src/common/views/feedback.py` - Feedback views
+- `src/templates/feedback/form.html` - Feedback form
+- `src/templates/feedback/dashboard.html` - Admin dashboard
+- `docs/testing/FEEDBACK_COLLECTION.md` - Documentation
+
+**Model Example:**
+```python
+class Feedback(models.Model):
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)  # Null for anonymous
+    category = models.CharField(max_length=50, choices=[
+        ('usability', 'Usability'),
+        ('performance', 'Performance'),
+        ('features', 'Features'),
+        ('documentation', 'Documentation'),
+        ('other', 'Other')
+    ])
+    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+    what_works = models.TextField(blank=True)
+    what_doesnt = models.TextField(blank=True)
+    suggestions = models.TextField(blank=True)
+    module = models.CharField(max_length=50, choices=MODULE_CHOICES, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+```
+
+---
+
+### [P7-UAT-004] User Satisfaction Survey
+**Priority:** MEDIUM
+**Complexity:** Simple
+**Dependencies:** P7-UAT-003
+**Estimated Complexity Points:** 3
+
+**Description:**
+Create comprehensive user satisfaction survey for end of UAT phase.
+
+**Acceptance Criteria:**
+- Survey questions covering: ease of use, performance, features, training, support
+- Likert scale questions (strongly disagree to strongly agree)
+- Net Promoter Score (NPS) question
+- Open-ended questions for detailed feedback
+- Survey link sent via email
+- Anonymous or identified responses
+- Results dashboard with charts
+- Export results to Excel/PDF
+- Benchmark against target satisfaction scores
+
+**Technical Notes:**
+- Can use external survey tools (Google Forms, SurveyMonkey, Typeform)
+- Or build custom with Django forms
+- Plan survey timing (end of UAT, after 2 weeks of use, etc.)
+
+**Files to Create/Modify:**
+- `docs/testing/USER_SATISFACTION_SURVEY.md` - Survey questions
+- `src/templates/emails/survey_invitation.html` - Email template
+- Survey platform setup (if external)
+
+**Survey Questions Example:**
+```
+1. Overall, how satisfied are you with BMMS? (1-5)
+2. BMMS is easy to navigate. (Strongly Disagree - Strongly Agree)
+3. BMMS helps me complete my tasks efficiently. (Strongly Disagree - Strongly Agree)
+4. The training materials were helpful. (Strongly Disagree - Strongly Agree)
+5. How likely are you to recommend BMMS to colleagues? (0-10, NPS)
+6. What features do you use most frequently?
+7. What improvements would you suggest?
+8. What challenges did you face during UAT?
+```
+
+---
+
+### [P7-UAT-005] UAT Progress Dashboard
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** P7-UAT-001, P7-UAT-002, P7-UAT-003
+**Estimated Complexity Points:** 5
+
+**Description:**
+Create dashboard to monitor UAT progress across all pilot MOAs.
+
+**Acceptance Criteria:**
+- Real-time metrics: test scenarios executed, pass/fail rate, bugs reported
+- User participation metrics (who has logged in, who has completed tests)
+- Module coverage (which modules tested, which not)
+- Bugs by severity and status
+- Feedback summary
+- Charts and visualizations (pie charts, bar charts, trend lines)
+- Filterable by MOA, module, date range
+- Exportable report (PDF or Excel)
+- Accessible to BMMS team (not pilot users)
+
+**Technical Notes:**
+- Use Django views with aggregation queries
+- Use Chart.js or Plotly for visualizations
+- Cache dashboard data (refresh every 15 minutes)
+- Consider real-time updates with WebSockets (optional)
+
+**Files to Create/Modify:**
+- `src/common/views/uat_dashboard.py` - Dashboard view
+- `src/templates/uat/admin_dashboard.html` - Dashboard template
+- `src/static/js/uat_dashboard.js` - Chart rendering
+- `docs/testing/UAT_DASHBOARD.md` - Documentation
+
+**Dashboard Metrics:**
+- Total test scenarios: 150
+- Executed: 120 (80%)
+- Passed: 90 (75%)
+- Failed: 20 (17%)
+- Blocked: 10 (8%)
+- Bugs reported: 35 (15 critical, 10 high, 10 medium)
+- User participation: 45/50 (90%)
+- Average satisfaction: 4.2/5
+
+---
+
+### [P7-UAT-006] Bug Triage Process
+**Priority:** HIGH
+**Complexity:** Simple
+**Dependencies:** P7-UAT-002
+**Estimated Complexity Points:** 3
+
+**Description:**
+Define and document bug triage process for UAT phase.
+
+**Acceptance Criteria:**
+- Bug severity definitions (critical, high, medium, low)
+- Triage schedule (daily, twice-daily, etc.)
+- Triage team defined (who reviews bugs)
+- Triage workflow (new → triaged → assigned → in progress → resolved → closed)
+- SLA for each severity level
+- Escalation process for critical bugs
+- Communication plan (how to notify reporters of status)
+- Bug resolution criteria
+
+**Technical Notes:**
+- Document process, not code
+- May require custom workflow in bug tracking system
+- Plan for daily triage meetings during UAT
+
+**Files to Create/Modify:**
+- `docs/testing/BUG_TRIAGE_PROCESS.md` - Process documentation
+- `docs/testing/BUG_SEVERITY_DEFINITIONS.md` - Severity criteria
+
+**Severity Definitions Example:**
+```
+CRITICAL: System crash, data loss, security vulnerability, blocker for all users
+- SLA: Fix within 4 hours
+- Escalation: Immediate to Tech Lead
+
+HIGH: Major feature broken, affects multiple users, workaround difficult
+- SLA: Fix within 24 hours
+- Escalation: Within 2 hours if not triaged
+
+MEDIUM: Feature partially broken, affects some users, workaround available
+- SLA: Fix within 3 days
+- Escalation: Within 8 hours if not triaged
+
+LOW: Minor issue, cosmetic, affects few users, easy workaround
+- SLA: Fix within 1 week
+- Escalation: None
+```
+
+---
+
+## Section 6: Help Desk Preparation
+
+### [P7-HELP-001] Ticketing System Setup
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** P7-ENV-001
+**Estimated Complexity Points:** 5
+
+**Description:**
+Set up ticketing system for pilot user support requests.
+
+**Acceptance Criteria:**
+- Ticketing platform selected and configured (Zendesk, Freshdesk, osTicket, or custom)
+- Ticket categories defined (technical, training, feature request, bug)
+- Priority levels configured (urgent, high, normal, low)
+- Ticket routing rules (assign based on category)
+- Email-to-ticket integration
+- User portal for submitting tickets
+- Agent interface for managing tickets
+- SLA tracking and alerts
+- Knowledge base integration (link to articles)
+- Ticket metrics dashboard
+
+**Technical Notes:**
+- Evaluate: Custom Django app vs third-party tool
+- If custom, create Ticket model similar to BugReport
+- If third-party, integrate via API or iframe
+
+**Files to Create/Modify:**
+- `docs/support/TICKETING_SYSTEM_SETUP.md` - Setup guide
+- `src/common/models.py` - Ticket model (if custom)
+- `src/common/views/support.py` - Support views (if custom)
+- `src/templates/support/create_ticket.html` - Ticket form
+
+**Model Example (if custom):**
+```python
+class SupportTicket(models.Model):
+    ticket_number = models.CharField(max_length=20, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    category = models.CharField(max_length=50, choices=[
+        ('technical', 'Technical Issue'),
+        ('training', 'Training Question'),
+        ('feature', 'Feature Request'),
+        ('bug', 'Bug Report')
+    ])
+    priority = models.CharField(max_length=20, choices=[
+        ('urgent', 'Urgent'),
+        ('high', 'High'),
+        ('normal', 'Normal'),
+        ('low', 'Low')
+    ])
+    subject = models.CharField(max_length=200)
+    description = models.TextField()
+    status = models.CharField(max_length=20, choices=[
+        ('open', 'Open'),
+        ('in_progress', 'In Progress'),
+        ('resolved', 'Resolved'),
+        ('closed', 'Closed')
+    ])
+    assigned_to = models.ForeignKey(User, related_name='assigned_tickets', null=True, blank=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+```
+
+---
+
+### [P7-HELP-002] Support Email Configuration
+**Priority:** HIGH
+**Complexity:** Simple
+**Dependencies:** P7-ENV-001
+**Estimated Complexity Points:** 3
+
+**Description:**
+Configure dedicated support email address for pilot phase.
+
+**Acceptance Criteria:**
+- Support email address created (support@bmms.gov.ph or similar)
+- Email forwarding to ticketing system (if applicable)
+- Auto-reply email template
+- Email signature template
+- Spam filtering configured
+- Email retention policy defined
+- Access granted to support team
+- Documentation for email management
+
+**Technical Notes:**
+- Use organization's email infrastructure (Google Workspace, Microsoft 365)
+- Configure email-to-ticket if using ticketing system
+- Auto-reply should include: ticket number, estimated response time, alternative channels
+
+**Files to Create/Modify:**
+- `docs/support/SUPPORT_EMAIL_SETUP.md` - Setup guide
+- `docs/support/email_templates/auto_reply.html` - Auto-reply template
+- `docs/support/email_templates/signature.html` - Email signature
+
+**Auto-Reply Example:**
+```
+Subject: Support Request Received - Ticket #12345
+
+Dear [User Name],
+
+Thank you for contacting BMMS Support. We have received your support request and assigned it ticket number #12345.
+
+Our team will respond within 24 hours during business hours (Monday-Friday, 8:00 AM - 5:00 PM PHT).
+
+For urgent issues, please call our support hotline: +63 123 456 7890
+
+You can also:
+- Check our Knowledge Base: https://help.bmms.gov.ph
+- Chat with us in-app (click Help icon)
+
+Thank you for your patience.
+
+BMMS Support Team
+Email: support@bmms.gov.ph
+Phone: +63 123 456 7890
+```
+
+---
+
+### [P7-HELP-003] Phone Hotline Setup
+**Priority:** MEDIUM
+**Complexity:** Simple
+**Dependencies:** None
+**Estimated Complexity Points:** 2
+
+**Description:**
+Set up phone hotline for pilot phase support.
+
+**Acceptance Criteria:**
+- Phone number acquired (landline or mobile)
+- Phone service configured (voicemail, call forwarding)
+- Operating hours defined
+- Call answering script documented
+- Voicemail greeting recorded
+- Call logging process defined
+- Escalation process for urgent calls
+- Phone support team trained
+
+**Technical Notes:**
+- Consider VoIP service (Twilio, Vonage) for flexibility
+- Record calls for quality assurance (with consent)
+- Integrate with ticketing system if possible
+
+**Files to Create/Modify:**
+- `docs/support/PHONE_HOTLINE_SETUP.md` - Setup guide
+- `docs/support/CALL_ANSWERING_SCRIPT.md` - Call script
+- `docs/support/PHONE_SUPPORT_PROCEDURES.md` - Procedures
+
+**Call Answering Script Example:**
+```
+"Thank you for calling BMMS Support. My name is [Name]. How may I assist you today?"
+
+[Listen to issue]
+
+"I understand. Let me help you with that. May I have your name and email address for our records?"
+
+[Log details]
+
+"Thank you, [Name]. I'm creating a support ticket for you. Your ticket number is [Number]. [Provide solution or next steps]."
+
+"Is there anything else I can help you with today?"
+
+"Thank you for calling BMMS Support. Have a great day!"
+```
+
+---
+
+### [P7-HELP-004] In-App Chat Widget
+**Priority:** MEDIUM
+**Complexity:** Moderate
+**Dependencies:** P7-ENV-001
+**Estimated Complexity Points:** 4
+
+**Description:**
+Integrate in-app chat widget for real-time support.
+
+**Acceptance Criteria:**
+- Chat widget visible on all pages (bottom-right corner)
+- Real-time messaging (WebSocket or polling)
+- Chat history saved
+- Unread message indicators
+- Support agent interface
+- Canned responses for common questions
+- File sharing capability (screenshots)
+- Offline message collection (when no agents available)
+- Chat-to-ticket conversion
+- Chat metrics (response time, satisfaction)
+
+**Technical Notes:**
+- Evaluate: Custom Django Channels solution vs third-party (Intercom, Drift, Crisp)
+- If custom, use Django Channels for WebSockets
+- If third-party, integrate via JavaScript embed
+
+**Files to Create/Modify:**
+- `docs/support/CHAT_WIDGET_SETUP.md` - Setup guide
+- `src/templates/base.html` - Add chat widget script
+- `src/static/js/chat_widget.js` - Chat widget initialization (if custom)
+- Chat platform configuration (if third-party)
+
+---
+
+### [P7-HELP-005] SLA Definitions
+**Priority:** HIGH
+**Complexity:** Simple
+**Dependencies:** None
+**Estimated Complexity Points:** 2
+
+**Description:**
+Define Service Level Agreements (SLAs) for pilot support.
+
+**Acceptance Criteria:**
+- Response time SLA by priority level
+- Resolution time SLA by priority level
+- Availability SLA (uptime percentage)
+- Support hours defined
+- Escalation criteria defined
+- SLA tracking mechanism
+- SLA breach notifications
+- Monthly SLA reports
+
+**Technical Notes:**
+- SLAs should be realistic for pilot phase (may be tighter in production)
+- Track SLA metrics in ticketing system
+- Review and adjust SLAs based on pilot experience
+
+**Files to Create/Modify:**
+- `docs/support/SERVICE_LEVEL_AGREEMENTS.md` - SLA definitions
+
+**SLA Example:**
+```markdown
+# BMMS Pilot Phase - Service Level Agreements
+
+## Support Hours
+- Monday - Friday: 8:00 AM - 5:00 PM (PHT)
+- Saturday - Sunday: Closed (email/tickets only)
+
+## Response Time SLA
+- **Urgent:** 2 hours
+- **High:** 4 hours
+- **Normal:** 8 hours (same business day)
+- **Low:** 24 hours (next business day)
+
+## Resolution Time SLA
+- **Urgent:** 4 hours
+- **High:** 8 hours (same business day)
+- **Normal:** 3 business days
+- **Low:** 5 business days
+
+## System Availability SLA
+- **Target Uptime:** 99.5% (excluding planned maintenance)
+- **Planned Maintenance Windows:** Sundays 2:00 AM - 6:00 AM PHT
+
+## Escalation Criteria
+- SLA breach imminent (e.g., urgent ticket approaching 2-hour mark)
+- Critical system outage
+- Security incident
+- Data loss or corruption
+
+## SLA Exclusions
+- Issues caused by user error (training provided)
+- Issues caused by third-party services
+- Force majeure events
+```
+
+---
+
+### [P7-HELP-006] Escalation Procedures
+**Priority:** HIGH
+**Complexity:** Simple
+**Dependencies:** P7-HELP-005
+**Estimated Complexity Points:** 2
+
+**Description:**
+Document escalation procedures for critical issues during pilot.
+
+**Acceptance Criteria:**
+- Escalation triggers defined (when to escalate)
+- Escalation levels defined (L1 → L2 → L3)
+- Contact list for each level
+- Escalation workflow documented
+- Communication templates for escalations
+- After-hours escalation procedure
+- Post-incident review process
+
+**Technical Notes:**
+- Ensure all stakeholders know escalation process
+- Test escalation process before pilot starts
+- Review escalations weekly during pilot
+
+**Files to Create/Modify:**
+- `docs/support/ESCALATION_PROCEDURES.md` - Procedures
+- `docs/support/ESCALATION_CONTACTS.md` - Contact list (internal document)
+
+**Escalation Levels Example:**
+```markdown
+# BMMS Pilot Phase - Escalation Procedures
+
+## Escalation Levels
+
+### Level 1 (L1): Support Agent
+- Handles routine tickets
+- Escalates to L2 if unable to resolve within SLA
+
+### Level 2 (L2): Senior Support Engineer
+- Handles complex technical issues
+- Escalates to L3 for critical bugs or architecture issues
+
+### Level 3 (L3): System Architect / Lead Developer
+- Handles critical system issues
+- Makes architectural decisions
+- Involves external vendors if needed
+
+## Escalation Triggers
+- **Critical System Outage:** Immediate escalation to L3
+- **Data Loss/Corruption:** Immediate escalation to L3
+- **Security Incident:** Immediate escalation to L3
+- **SLA Breach Imminent:** Escalate to next level
+- **Unresolved Issue (L1 > 2 hours):** Escalate to L2
+- **Unresolved Issue (L2 > 4 hours):** Escalate to L3
+
+## After-Hours Escalation
+- On-call rotation: [Schedule]
+- On-call phone: +63 XXX XXX XXXX
+- Emergency email: emergency@bmms.gov.ph
+```
+
+---
+
+### [P7-HELP-007] Support Team Training Materials
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** P7-TRAIN-001, P7-CONTENT-006
+**Estimated Complexity Points:** 5
+
+**Description:**
+Create comprehensive training materials for support team.
+
+**Acceptance Criteria:**
+- Support team onboarding guide
+- System overview training
+- Common issues and solutions knowledge base
+- Troubleshooting flowcharts
+- Customer service best practices
+- Ticketing system training
+- Escalation procedure training
+- Practice scenarios for role-playing
+- Training assessment/quiz
+
+**Technical Notes:**
+- Support team should have deep product knowledge
+- Provide access to staging environment for practice
+- Train on all modules (Planning, Budgeting, M&E, etc.)
+
+**Files to Create/Modify:**
+- `docs/support/SUPPORT_TEAM_ONBOARDING.md` - Onboarding guide
+- `docs/support/COMMON_ISSUES.md` - Common issues and solutions
+- `docs/support/TROUBLESHOOTING_FLOWCHARTS.md` - Flowcharts
+- `docs/support/CUSTOMER_SERVICE_GUIDE.md` - Best practices
+- `docs/support/training/` - Training materials directory
+
+**Common Issues Example:**
+```markdown
+# Common Issues and Solutions
+
+## Issue: User Cannot Login
+
+**Symptoms:**
+- "Invalid username or password" error
+- Account locked message
+
+**Troubleshooting Steps:**
+1. Verify username (usually email address)
+2. Check Caps Lock is off
+3. Try password reset
+4. Check account status (active/inactive)
+5. Check organization assignment
+
+**Solution:**
+- Reset password: [Instructions]
+- Unlock account: [Admin instructions]
+- Activate account: [Admin instructions]
+
+**Related Articles:**
+- [Password Reset Guide](link)
+- [Account Management](link)
+
+---
+
+## Issue: Program Not Saving
+
+**Symptoms:**
+- "An error occurred" message
+- Page reloads without saving
+
+**Troubleshooting Steps:**
+1. Check required fields are filled
+2. Check date range (end date must be after start date)
+3. Check browser console for errors
+4. Try different browser
+5. Check permissions
+
+**Solution:**
+- Guide user through form validation
+- If bug, create bug report
+- If permissions issue, escalate to admin
+
+**Related Articles:**
+- [Creating Programs](link)
+- [Permission Issues](link)
+```
+
+---
+
+## Section 7: Monitoring & Analytics
+
+### [P7-MONITOR-001] User Activity Tracking
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** P7-ENV-001
+**Estimated Complexity Points:** 5
+
+**Description:**
+Implement user activity tracking for pilot phase analytics.
+
+**Acceptance Criteria:**
+- Track page views (which pages visited, how often)
+- Track feature usage (which features used, frequency)
+- Track user sessions (login, logout, session duration)
+- Track user actions (create, update, delete operations)
+- Privacy-compliant tracking (no PII in analytics)
+- Activity data stored in database or analytics platform
+- Real-time activity dashboard
+- Historical activity reports
+- Export activity data to CSV/Excel
+
+**Technical Notes:**
+- Use Django middleware for page view tracking
+- Use Django signals for action tracking
+- Consider external analytics: Google Analytics, Mixpanel, Plausible
+- Respect privacy: anonymize IPs, no tracking of sensitive data
+
+**Files to Create/Modify:**
+- `src/common/middleware/activity_tracking.py` - Tracking middleware
+- `src/common/models.py` - ActivityLog model
+- `src/common/signals.py` - Signal handlers for action tracking
+- `src/common/views/analytics.py` - Analytics views
+- `src/templates/analytics/activity_dashboard.html` - Dashboard
+- `docs/monitoring/USER_ACTIVITY_TRACKING.md` - Documentation
+
+**Model Example:**
+```python
+class ActivityLog(models.Model):
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    organization = models.ForeignKey(Organization, null=True, blank=True, on_delete=models.SET_NULL)
+    action_type = models.CharField(max_length=50, choices=[
+        ('page_view', 'Page View'),
+        ('create', 'Create'),
+        ('update', 'Update'),
+        ('delete', 'Delete'),
+        ('login', 'Login'),
+        ('logout', 'Logout')
+    ])
+    module = models.CharField(max_length=50, choices=MODULE_CHOICES, blank=True)
+    object_type = models.CharField(max_length=100, blank=True)  # e.g., "Program", "Activity"
+    object_id = models.CharField(max_length=50, blank=True)
+    page_url = models.CharField(max_length=500, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)  # Anonymized
+    user_agent = models.CharField(max_length=500, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+```
+
+---
+
+### [P7-MONITOR-002] Feature Usage Analytics
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** P7-MONITOR-001
+**Estimated Complexity Points:** 5
+
+**Description:**
+Create analytics dashboard to track feature usage across pilot MOAs.
+
+**Acceptance Criteria:**
+- Identify most/least used features
+- Track feature adoption over time
+- Compare usage across MOAs
+- Track module usage (Planning, Budgeting, M&E, etc.)
+- Identify unused features (candidates for improvement or removal)
+- User journey analysis (common paths through the system)
+- Funnel analysis (where do users drop off)
+- Dashboard with charts and visualizations
+- Export usage reports
+
+**Technical Notes:**
+- Aggregate data from ActivityLog model
+- Use Django ORM aggregation or raw SQL for complex queries
+- Cache dashboard data for performance
+- Use Chart.js or Plotly for visualizations
+
+**Files to Create/Modify:**
+- `src/common/views/analytics.py` - Feature usage views
+- `src/templates/analytics/feature_usage_dashboard.html` - Dashboard
+- `src/static/js/feature_usage_charts.js` - Chart rendering
+- `docs/monitoring/FEATURE_USAGE_ANALYTICS.md` - Documentation
+
+**Dashboard Metrics:**
+- Most Used Features (Top 10):
+  1. View Programs (5,432 views)
+  2. Create Activity (3,210 actions)
+  3. Budget Entry (2,987 actions)
+  4. View Dashboard (2,654 views)
+  5. ...
+
+- Module Usage:
+  - Planning: 45% of activity
+  - Budgeting: 30% of activity
+  - M&E: 15% of activity
+  - Coordination: 7% of activity
+  - Policies: 3% of activity
+
+- Adoption Over Time:
+  - Week 1: 20% of users active
+  - Week 2: 60% of users active
+  - Week 3: 80% of users active
+  - Week 4: 90% of users active
+
+---
+
+### [P7-MONITOR-003] Performance Monitoring
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** P7-ENV-001
+**Estimated Complexity Points:** 5
+
+**Description:**
+Implement performance monitoring for staging environment.
+
+**Acceptance Criteria:**
+- Server resource monitoring (CPU, memory, disk, network)
+- Database performance monitoring (query times, slow queries)
+- Application response times (page load times)
+- API endpoint performance
+- Celery task monitoring (task queue length, task execution time)
+- Performance alerts for degradation
+- Performance dashboard
+- Historical performance reports
+
+**Technical Notes:**
+- Use Django Debug Toolbar in staging (DEBUG=True mode)
+- Use APM tools: New Relic, DataDog, Sentry Performance, or Prometheus + Grafana
+- Monitor PostgreSQL with pg_stat_statements
+- Set thresholds for alerts (e.g., response time > 2 seconds)
+
+**Files to Create/Modify:**
+- `docs/monitoring/PERFORMANCE_MONITORING_SETUP.md` - Setup guide
+- APM tool configuration (if using external service)
+- `src/obc_management/settings/staging.py` - Monitoring settings
+
+**Monitoring Targets:**
+- Page Load Time: < 2 seconds (p95)
+- API Response Time: < 500ms (p95)
+- Database Query Time: < 100ms (p95)
+- CPU Usage: < 70%
+- Memory Usage: < 80%
+- Disk Usage: < 80%
+
+---
+
+### [P7-MONITOR-004] Error Tracking Setup
+**Priority:** CRITICAL
+**Complexity:** Simple
+**Dependencies:** P7-ENV-001
+**Estimated Complexity Points:** 3
+
+**Description:**
+Set up error tracking for staging environment to catch production-like issues.
+
+**Acceptance Criteria:**
+- Error tracking service configured (Sentry, Rollbar, or similar)
+- All Python exceptions captured
+- JavaScript errors captured
+- Error context included (user, URL, request data)
+- Error grouping and deduplication
+- Email/Slack alerts for new errors
+- Error dashboard with trends
+- Integration with bug tracking (optional)
+
+**Technical Notes:**
+- Sentry is recommended (open-source, Django integration)
+- Configure error sampling if needed (capture 100% during pilot)
+- Exclude sensitive data from error reports (passwords, tokens)
+
+**Files to Create/Modify:**
+- `src/obc_management/settings/staging.py` - Sentry configuration
+- `requirements/base.txt` - Add sentry-sdk
+- `docs/monitoring/ERROR_TRACKING_SETUP.md` - Setup guide
+
+**Sentry Configuration Example:**
+```python
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN"),
+    integrations=[DjangoIntegration()],
+    environment="staging",
+    traces_sample_rate=1.0,  # 100% performance monitoring during pilot
+    send_default_pii=False,  # Don't send PII
+)
+```
+
+---
+
+### [P7-MONITOR-005] Pilot Metrics Dashboard
+**Priority:** HIGH
+**Complexity:** Moderate
+**Dependencies:** P7-MONITOR-001, P7-MONITOR-002, P7-UAT-001
+**Estimated Complexity Points:** 6
+
+**Description:**
+Create comprehensive dashboard for monitoring pilot phase metrics.
+
+**Acceptance Criteria:**
+- User metrics: Total users, active users (DAU, WAU), login frequency
+- Feature usage metrics: Most/least used features, module usage
+- UAT metrics: Test scenarios completed, bugs reported, feedback received
+- Performance metrics: Page load times, error rates, uptime
+- Support metrics: Tickets opened/closed, response times, satisfaction
+- Organization comparison (MOH vs MOLE vs MAFAR)
+- Time-series charts (trends over pilot duration)
+- Exportable reports (PDF, Excel)
+- Accessible to project stakeholders
+
+**Technical Notes:**
+- Aggregate data from multiple sources (ActivityLog, TestExecution, BugReport, SupportTicket)
+- Use Django ORM with aggregations
+- Cache dashboard data (refresh every 15-30 minutes)
+- Provide date range filters
+
+**Files to Create/Modify:**
+- `src/common/views/pilot_dashboard.py` - Dashboard view
+- `src/templates/pilot/dashboard.html` - Dashboard template
+- `src/static/js/pilot_dashboard_charts.js` - Chart rendering
+- `docs/monitoring/PILOT_METRICS_DASHBOARD.md` - Documentation
+
+**Dashboard Sections:**
+1. **Overview**
+   - Total users: 50
+   - Active users (last 7 days): 42 (84%)
+   - Total logins: 1,234
+   - Average session duration: 23 minutes
+
+2. **Feature Usage**
+   - Most used module: Planning (45%)
+   - Programs created: 87
+   - Activities created: 312
+   - Budget entries: 156
+
+3. **UAT Progress**
+   - Test scenarios: 120/150 (80%)
+   - Pass rate: 75%
+   - Bugs reported: 35 (15 critical, 10 high, 10 medium)
+
+4. **Support Metrics**
+   - Tickets opened: 67
+   - Tickets closed: 52
+   - Average response time: 3.2 hours
+   - Average resolution time: 1.5 days
+
+5. **Performance**
+   - Average page load: 1.8s
+   - Error rate: 0.5%
+   - Uptime: 99.8%
+
+---
+
+### [P7-MONITOR-006] Alerting Configuration
+**Priority:** HIGH
+**Complexity:** Simple
+**Dependencies:** P7-MONITOR-003, P7-MONITOR-004
+**Estimated Complexity Points:** 3
+
+**Description:**
+Configure alerting for critical issues during pilot phase.
+
+**Acceptance Criteria:**
+- Alerts for system downtime
+- Alerts for high error rates (> 1%)
+- Alerts for performance degradation (response time > 3s)
+- Alerts for critical bugs reported
+- Alerts for SLA breaches
+- Multiple notification channels (email, Slack, SMS)
+- Alert escalation (if not acknowledged in X minutes)
+- Alert management dashboard
+- On-call rotation schedule
+
+**Technical Notes:**
+- Use monitoring tools' built-in alerting (Sentry, DataDog, etc.)
+- Configure email alerts via Django
+- Consider PagerDuty or Opsgenie for on-call management
+- Test alerts before pilot starts
+
+**Files to Create/Modify:**
+- `docs/monitoring/ALERTING_CONFIGURATION.md` - Alert rules and setup
+- `docs/monitoring/ON_CALL_ROTATION.md` - On-call schedule
+- Monitoring platform alert configuration
+
+**Alert Rules Example:**
+```markdown
+# Alert Rules
+
+## Critical Alerts (Immediate)
+- System downtime (staging.bmms.gov.ph unreachable)
+- Database connection failure
+- Critical bug reported
+- Data loss/corruption detected
+
+**Notification:** Email + Slack + SMS
+**Escalation:** If not acknowledged in 15 minutes, escalate to L3
+
+## High Alerts (Within 30 minutes)
+- Error rate > 1%
+- Response time > 3s (p95)
+- High severity bug reported
+- Disk usage > 90%
+
+**Notification:** Email + Slack
+**Escalation:** If not acknowledged in 30 minutes, escalate to L2
+
+## Medium Alerts (Within 2 hours)
+- Memory usage > 80%
+- CPU usage > 80% for 5 minutes
+- Slow database queries (> 500ms)
+
+**Notification:** Email
+**Escalation:** None
+```
+
+---
+
+## Section 8: Pilot Data Isolation
+
+### [P7-ISOLATION-001] Pilot Organization Flags
+**Priority:** HIGH
+**Complexity:** Simple
+**Dependencies:** P7-ENV-002
+**Estimated Complexity Points:** 3
+
+**Description:**
+Add flags to Organization model to identify and isolate pilot MOAs.
+
+**Acceptance Criteria:**
+- `is_pilot` boolean field on Organization model
+- Migration to add field
+- Admin interface to manage pilot flag
+- Filter pilot organizations in queries (if needed)
+- Pilot-specific behavior based on flag (if needed)
+- Documentation of pilot flag usage
+
+**Technical Notes:**
+- Add field to Organization model
+- Set is_pilot=True for MOH, MOLE, MAFAR
+- Use flag for analytics, reporting, data cleanup
+
+**Files to Create/Modify:**
+- `src/organizations/models.py` - Add is_pilot field
+- `src/organizations/migrations/XXXX_add_is_pilot_field.py` - Migration
+- `src/organizations/admin.py` - Admin interface
+- `docs/deployment/PILOT_ORGANIZATION_FLAGS.md` - Documentation
+
+**Model Change:**
+```python
+class Organization(models.Model):
+    # Existing fields...
+    is_pilot = models.BooleanField(default=False, help_text="Indicates if this is a pilot organization")
+    pilot_start_date = models.DateField(null=True, blank=True)
+    pilot_end_date = models.DateField(null=True, blank=True)
+```
+
+**Usage Example:**
+```python
+# Query pilot organizations
+pilot_orgs = Organization.objects.filter(is_pilot=True)
+
+# Exclude pilot data from production reports (if needed)
+production_orgs = Organization.objects.filter(is_pilot=False)
+
+# Analytics for pilot only
+pilot_users = User.objects.filter(organization__is_pilot=True)
+```
+
+---
+
+### [P7-ISOLATION-002] Pilot-Specific Configuration
+**Priority:** MEDIUM
+**Complexity:** Simple
+**Dependencies:** P7-ISOLATION-001
+**Estimated Complexity Points:** 3
+
+**Description:**
+Create configuration system for pilot-specific settings and feature flags.
+
+**Acceptance Criteria:**
+- Pilot-specific settings in Django settings
+- Feature flags for pilot-only features
+- Configuration overrides for pilot MOAs
+- Settings accessible in views/templates
+- Documentation of pilot settings
+
+**Technical Notes:**
+- Use Django settings or environment variables
+- Consider django-flags or django-waffle for feature flags
+- Pilot settings should not affect production
+
+**Files to Create/Modify:**
+- `src/obc_management/settings/staging.py` - Pilot settings
+- `src/common/feature_flags.py` - Feature flag definitions
+- `docs/deployment/PILOT_CONFIGURATION.md` - Documentation
+
+**Settings Example:**
+```python
+# src/obc_management/settings/staging.py
+
+PILOT_MODE = True
+PILOT_START_DATE = "2025-01-15"
+PILOT_END_DATE = "2025-02-15"
+
+PILOT_FEATURES = {
+    "advanced_reporting": False,  # Disabled for pilot
+    "data_export": True,  # Enabled for pilot
+    "email_notifications": True,  # Enabled for pilot
+    "in_app_chat": True,  # Enabled for pilot
+}
+
+PILOT_LIMITS = {
+    "max_programs": 100,  # Per organization
+    "max_activities": 1000,  # Per organization
+    "max_users": 50,  # Per organization
+}
+```
+
+**Usage Example:**
+```python
+from django.conf import settings
+
+if settings.PILOT_MODE:
+    # Pilot-specific logic
+    pass
+
+if settings.PILOT_FEATURES.get("in_app_chat"):
+    # Show chat widget
+    pass
+```
+
+---
+
+### [P7-ISOLATION-003] Data Backup Procedures
+**Priority:** CRITICAL
+**Complexity:** Moderate
+**Dependencies:** P7-ENV-002
+**Estimated Complexity Points:** 5
+
+**Description:**
+Implement robust backup procedures for pilot data.
+
+**Acceptance Criteria:**
+- Automated daily backups of staging database
+- Automated weekly backups of media files
+- Backup retention policy (30 days for daily, 90 days for weekly)
+- Backup verification (test restore monthly)
+- Off-site backup storage (S3, Google Cloud, etc.)
+- Backup monitoring and alerts
+- Documentation of backup procedures
+- Documented restore procedures
+
+**Technical Notes:**
+- Use pg_dump for PostgreSQL backups
+- Use cron or Celery Beat for scheduling
+- Encrypt backups before off-site storage
+- Test restore process before pilot starts
+
+**Files to Create/Modify:**
+- `scripts/backup_staging_db.sh` - Backup script
+- `scripts/backup_media_files.sh` - Media backup script
+- `scripts/restore_staging_db.sh` - Restore script
+- `scripts/verify_backup.sh` - Backup verification script
+- `docs/deployment/PILOT_BACKUP_PROCEDURES.md` - Documentation
+
+**Backup Script Example:**
+```bash
+#!/bin/bash
+# scripts/backup_staging_db.sh
+
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="/var/backups/bmms/staging"
+DB_NAME="bmms_staging"
+DB_USER="bmms_user"
+BACKUP_FILE="$BACKUP_DIR/bmms_staging_$DATE.sql.gz"
+
+# Create backup directory if not exists
+mkdir -p $BACKUP_DIR
+
+# Create backup
+pg_dump -U $DB_USER -d $DB_NAME | gzip > $BACKUP_FILE
+
+# Upload to S3 (if configured)
+aws s3 cp $BACKUP_FILE s3://bmms-backups/staging/
+
+# Delete backups older than 30 days
+find $BACKUP_DIR -name "bmms_staging_*.sql.gz" -mtime +30 -delete
+
+echo "Backup completed: $BACKUP_FILE"
+```
+
+**Cron Schedule:**
+```
+# Daily backup at 2 AM
+0 2 * * * /path/to/scripts/backup_staging_db.sh >> /var/log/bmms/backup.log 2>&1
+
+# Weekly media backup (Sundays at 3 AM)
+0 3 * * 0 /path/to/scripts/backup_media_files.sh >> /var/log/bmms/backup.log 2>&1
+```
+
+---
+
+### [P7-ISOLATION-004] Rollback Procedures
+**Priority:** CRITICAL
+**Complexity:** Moderate
+**Dependencies:** P7-ISOLATION-003
+**Estimated Complexity Points:** 5
+
+**Description:**
+Document and test rollback procedures for pilot phase.
+
+**Acceptance Criteria:**
+- Database rollback procedure (restore from backup)
+- Code rollback procedure (git revert or redeploy previous version)
+- Configuration rollback procedure
+- Rollback testing (test before pilot)
+- Rollback decision criteria (when to rollback)
+- Communication plan during rollback
+- Post-rollback verification checklist
+- Rollback documentation
+
+**Technical Notes:**
+- Rollback should be quick (< 30 minutes)
+- Practice rollback on staging before pilot
+- Document all steps clearly
+- Have rollback plan ready before deployments
+
+**Files to Create/Modify:**
+- `docs/deployment/ROLLBACK_PROCEDURES.md` - Rollback guide
+- `scripts/rollback_deployment.sh` - Rollback script
+- `docs/deployment/ROLLBACK_DECISION_TREE.md` - When to rollback
+
+**Rollback Procedure Example:**
+```markdown
+# Rollback Procedures
+
+## When to Rollback
+- Critical bug causing data loss
+- System unusable for all users
+- Security vulnerability discovered
+- Database corruption detected
+- Cannot fix issue within SLA
+
+## Database Rollback
+
+**Prerequisites:**
+- Backup available from before issue
+- Downtime window approved
+
+**Steps:**
+1. Announce downtime to all users (email, Slack, in-app banner)
+2. Stop application server: `sudo systemctl stop gunicorn`
+3. Stop Celery workers: `sudo systemctl stop celery`
+4. Restore database:
+   ```bash
+   psql -U bmms_user -d bmms_staging < /var/backups/bmms/staging/backup.sql
+   ```
+5. Verify database integrity: `python manage.py check`
+6. Restart services:
+   ```bash
+   sudo systemctl start gunicorn
+   sudo systemctl start celery
+   ```
+7. Verify system is operational (smoke tests)
+8. Announce system restored
+
+**Time Estimate:** 15-30 minutes
+
+## Code Rollback
+
+**Steps:**
+1. Identify last working commit: `git log`
+2. Revert to previous version:
+   ```bash
+   git revert HEAD  # or
+   git reset --hard <commit-hash>
+   git push --force origin staging  # Use with caution
+   ```
+3. Redeploy:
+   ```bash
+   cd /path/to/bmms
+   git pull
+   pip install -r requirements/base.txt
+   python manage.py migrate  # Check if migrations need reversal
+   python manage.py collectstatic --noinput
+   sudo systemctl restart gunicorn
+   ```
+4. Verify deployment
+
+**Time Estimate:** 10-15 minutes
+
+## Verification Checklist
+- [ ] Application accessible (homepage loads)
+- [ ] Login works
+- [ ] Core features functional (create program, view dashboard)
+- [ ] No errors in logs
+- [ ] Database queries working
+- [ ] Background tasks processing
+```
+
+---
+
+### [P7-ISOLATION-005] Pilot Data Cleanup Scripts
+**Priority:** MEDIUM
+**Complexity:** Moderate
+**Dependencies:** P7-ENV-002, P7-ISOLATION-001
+**Estimated Complexity Points:** 5
+
+**Description:**
+Create scripts to clean up pilot data after pilot phase ends.
+
+**Acceptance Criteria:**
+- Management command to delete pilot data
+- Safety checks (require --confirm flag)
+- Dry-run mode to preview deletions
+- Delete user accounts for pilot MOAs
+- Delete organization data (programs, activities, budgets, etc.)
+- Optionally anonymize data instead of delete (for analytics)
+- Export pilot data before deletion (backup)
+- Audit log of deletion
+- Documentation of cleanup process
+
+**Technical Notes:**
+- Use transaction.atomic() for all-or-nothing deletion
+- Respect foreign key constraints (cascade deletes)
+- Export data to JSON/CSV before deletion
+- Consider soft-delete (is_deleted flag) instead of hard delete
+
+**Files to Create/Modify:**
+- `src/organizations/management/commands/cleanup_pilot_data.py` - Cleanup command
+- `src/organizations/management/commands/export_pilot_data.py` - Export command
+- `docs/deployment/PILOT_DATA_CLEANUP.md` - Documentation
+
+**Cleanup Command Example:**
+```python
+# src/organizations/management/commands/cleanup_pilot_data.py
+
+from django.core.management.base import BaseCommand
+from django.db import transaction
+from organizations.models import Organization
+from planning.models import Program, Activity
+from budgeting.models import BudgetEntry
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class Command(BaseCommand):
+    help = "Clean up pilot data after pilot phase ends"
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            help='Preview deletions without executing',
+        )
+        parser.add_argument(
+            '--confirm',
+            action='store_true',
+            help='Confirm deletion (required for actual deletion)',
+        )
+        parser.add_argument(
+            '--export-first',
+            action='store_true',
+            help='Export data before deletion',
+        )
+
+    def handle(self, *args, **options):
+        dry_run = options['dry_run']
+        confirm = options['confirm']
+        export_first = options['export_first']
+
+        if not confirm and not dry_run:
+            self.stdout.write(self.style.ERROR(
+                "Must use --confirm flag to delete data or --dry-run to preview"
+            ))
+            return
+
+        # Get pilot organizations
+        pilot_orgs = Organization.objects.filter(is_pilot=True)
+
+        if not pilot_orgs.exists():
+            self.stdout.write(self.style.WARNING("No pilot organizations found"))
+            return
+
+        # Export data first if requested
+        if export_first and not dry_run:
+            self.stdout.write("Exporting pilot data...")
+            # Call export command
+            from django.core.management import call_command
+            call_command('export_pilot_data', output='pilot_data_export.json')
+            self.stdout.write(self.style.SUCCESS("Export completed"))
+
+        # Count what will be deleted
+        user_count = User.objects.filter(organization__is_pilot=True).count()
+        program_count = Program.objects.filter(organization__is_pilot=True).count()
+        activity_count = Activity.objects.filter(program__organization__is_pilot=True).count()
+        budget_count = BudgetEntry.objects.filter(organization__is_pilot=True).count()
+
+        self.stdout.write(f"\nPilot Organizations: {pilot_orgs.count()}")
+        for org in pilot_orgs:
+            self.stdout.write(f"  - {org.name} ({org.code})")
+
+        self.stdout.write(f"\nData to be deleted:")
+        self.stdout.write(f"  - Users: {user_count}")
+        self.stdout.write(f"  - Programs: {program_count}")
+        self.stdout.write(f"  - Activities: {activity_count}")
+        self.stdout.write(f"  - Budget Entries: {budget_count}")
+
+        if dry_run:
+            self.stdout.write(self.style.WARNING("\nDRY RUN: No data deleted"))
+            return
+
+        # Confirm deletion
+        self.stdout.write(self.style.WARNING("\nAbout to delete pilot data. This cannot be undone."))
+        confirm_input = input("Type 'DELETE PILOT DATA' to confirm: ")
+
+        if confirm_input != "DELETE PILOT DATA":
+            self.stdout.write(self.style.ERROR("Deletion cancelled"))
+            return
+
+        # Delete data
+        with transaction.atomic():
+            self.stdout.write("Deleting pilot data...")
+
+            # Delete cascades should handle related objects
+            User.objects.filter(organization__is_pilot=True).delete()
+            pilot_orgs.delete()
+
+            self.stdout.write(self.style.SUCCESS("Pilot data deleted successfully"))
+```
+
+**Usage Example:**
+```bash
+# Preview what will be deleted
+python manage.py cleanup_pilot_data --dry-run
+
+# Export and delete
+python manage.py cleanup_pilot_data --export-first --confirm
+
+# Delete only (already exported)
+python manage.py cleanup_pilot_data --confirm
+```
+
+---
+
+## Summary of Task IDs
+
+### Section 1: Pilot Environment Setup (5 tasks)
+- P7-ENV-001: Staging Server Configuration
+- P7-ENV-002: Pilot Database Setup and Configuration
+- P7-ENV-003: Test Data Generation Scripts
+- P7-ENV-004: Environment Variable Management
+- P7-ENV-005: SSL Certificate and Domain Setup
+
+### Section 2: Pilot User Account System (6 tasks)
+- P7-USER-001: User Creation Management Command
+- P7-USER-002: Role Assignment Automation
+- P7-USER-003: Bulk User Import from CSV
+- P7-USER-004: Welcome Email Templates
+- P7-USER-005: Password Reset Mechanism
+- P7-USER-006: User Onboarding Workflow
+
+### Section 3: Training Material Infrastructure (6 tasks)
+- P7-TRAIN-001: Documentation Site Setup
+- P7-TRAIN-002: Video Hosting Setup
+- P7-TRAIN-003: Screenshot and Screencast Tools
+- P7-TRAIN-004: Knowledge Base Structure
+- P7-TRAIN-005: FAQ Database Schema
+- P7-TRAIN-006: Training Progress Tracking
+
+### Section 4: Training Content Templates (6 tasks)
+- P7-CONTENT-001: User Manual Template (Markdown)
+- P7-CONTENT-002: Video Script Templates
+- P7-CONTENT-003: Quick Reference Card Template
+- P7-CONTENT-004: FAQ Template
+- P7-CONTENT-005: Tutorial Template
+- P7-CONTENT-006: Module-Specific Guides Structure
+
+### Section 5: UAT Infrastructure (6 tasks)
+- P7-UAT-001: Test Scenario Tracking System
+- P7-UAT-002: Bug Reporting Workflow
+- P7-UAT-003: Feedback Collection Forms
+- P7-UAT-004: User Satisfaction Survey
+- P7-UAT-005: UAT Progress Dashboard
+- P7-UAT-006: Bug Triage Process
+
+### Section 6: Help Desk Preparation (7 tasks)
+- P7-HELP-001: Ticketing System Setup
+- P7-HELP-002: Support Email Configuration
+- P7-HELP-003: Phone Hotline Setup
+- P7-HELP-004: In-App Chat Widget
+- P7-HELP-005: SLA Definitions
+- P7-HELP-006: Escalation Procedures
+- P7-HELP-007: Support Team Training Materials
+
+### Section 7: Monitoring & Analytics (6 tasks)
+- P7-MONITOR-001: User Activity Tracking
+- P7-MONITOR-002: Feature Usage Analytics
+- P7-MONITOR-003: Performance Monitoring
+- P7-MONITOR-004: Error Tracking Setup
+- P7-MONITOR-005: Pilot Metrics Dashboard
+- P7-MONITOR-006: Alerting Configuration
+
+### Section 8: Pilot Data Isolation (5 tasks)
+- P7-ISOLATION-001: Pilot Organization Flags
+- P7-ISOLATION-002: Pilot-Specific Configuration
+- P7-ISOLATION-003: Data Backup Procedures
+- P7-ISOLATION-004: Rollback Procedures
+- P7-ISOLATION-005: Pilot Data Cleanup Scripts
+
+---
+
+## Total: 47 tasks across 8 sections
+
+## Estimated Total Complexity Points: 191
+
+**Critical Tasks (Must Complete):** 8
+- P7-ENV-001: Staging Server Configuration
+- P7-ENV-002: Pilot Database Setup and Configuration
+- P7-USER-001: User Creation Management Command
+- P7-UAT-002: Bug Reporting Workflow
+- P7-MONITOR-004: Error Tracking Setup
+- P7-ISOLATION-003: Data Backup Procedures
+- P7-ISOLATION-004: Rollback Procedures
+
+**High Priority Tasks (Should Complete):** 23
+
+**Medium Priority Tasks (Nice to Have):** 16
+
+---
+
+## Notes
+
+1. **This phase prepares infrastructure ONLY** - Actual training content creation, user training, and UAT execution are separate phases.
+
+2. **Parallel Execution** - Many tasks can be executed in parallel:
+   - Environment setup (Section 1) is prerequisite for most other tasks
+   - Training infrastructure (Section 3) and content templates (Section 4) can run parallel
+   - Monitoring (Section 7) can run parallel with UAT infrastructure (Section 5)
+
+3. **External Dependencies** - Some tasks may require:
+   - Domain name acquisition (P7-ENV-005)
+   - Third-party service accounts (Sentry, video hosting, ticketing system)
+   - SSL certificates
+   - Email/phone service setup
+
+4. **Testing Before Pilot** - All infrastructure must be tested before pilot starts:
+   - Test user creation process
+   - Test backup/restore procedures
+   - Test rollback procedures
+   - Test monitoring and alerting
+   - Test support workflows
+
+5. **Documentation Priority** - Comprehensive documentation is critical:
+   - Operations team needs setup/deployment docs
+   - Support team needs troubleshooting docs
+   - Pilot users need training materials
+   - Developers need API/architecture docs
+
+6. **Security Considerations** - Staging must mirror production security:
+   - HTTPS enforced
+   - Environment variables for secrets
+   - No sensitive data in logs
+   - Proper authentication/authorization
+
+7. **Scalability Planning** - Infrastructure should scale for full rollout (Phase 8):
+   - Database connection pooling
+   - Caching strategy
+   - Background task processing
+   - CDN for static files (future)
+
+---
+
+**End of Phase 7 Preparation Task Breakdown**

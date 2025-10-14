@@ -19,6 +19,7 @@ from organizations.models.scoped import (
     get_current_organization,
     set_current_organization,
     clear_current_organization,
+    _thread_locals,
 )
 
 __all__ = [
@@ -29,4 +30,5 @@ __all__ = [
     "get_current_organization",
     "set_current_organization",
     "clear_current_organization",
+    "_thread_locals",
 ]
