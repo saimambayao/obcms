@@ -130,9 +130,9 @@ fi
 echo "Collecting static files..."
 python manage.py collectstatic --noinput --verbosity 1 --skip-checks || { echo "ERROR: Static collection failed"; sleep 5; exit 1; }
 
-# Create cache tables (non-critical)
+# Create cache tables (non-critical - skip if hangs)
 echo "Creating cache tables..."
-python manage.py createcachetable 2>&1 || echo "Warning: Cache table creation failed (non-critical)"
+timeout 10 python manage.py createcachetable 2>&1 || echo "Warning: Cache table creation skipped (non-critical)"
 
 echo "============================================"
 echo "OBCMS is ready! Starting Gunicorn..."
