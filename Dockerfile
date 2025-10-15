@@ -110,13 +110,28 @@ python -c "import django; print('Django version:', django.VERSION)" || { echo "E
 if [ "$RUN_MIGRATIONS" = "true" ]; then
     echo "Running database migrations..."
     echo "DATABASE_URL is set: ${DATABASE_URL:0:30}..." # Show first 30 chars
-    python manage.py migrate --noinput --skip-checks 2>&1 || {
-        echo "ERROR: Migrations failed with exit code $?"
-        echo "Attempting to show more details..."
-        python manage.py check --database default 2>&1 || true
-        sleep 10
+
+    # Test database connection first
+    echo "Testing database connection..."
+    python manage.py check --database default 2>&1 || {
+        echo "ERROR: Database connection check failed!"
         exit 1
     }
+    echo "✓ Database connection successful"
+
+    # Run migrations with verbose output
+    echo "Starting migrations with verbose output..."
+    python manage.py migrate --noinput --skip-checks --verbosity 2 2>&1
+    MIGRATION_EXIT_CODE=$?
+
+    if [ $MIGRATION_EXIT_CODE -ne 0 ]; then
+        echo "ERROR: Migrations failed with exit code $MIGRATION_EXIT_CODE"
+        echo "Attempting to show migration status..."
+        python manage.py showmigrations 2>&1 || true
+        sleep 10
+        exit 1
+    fi
+    echo "✓ Migrations completed successfully"
 else
     echo "Skipping migrations (RUN_MIGRATIONS not set to 'true')"
 fi
@@ -168,8 +183,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
     CMD /app/healthcheck.sh || exit 1
 
-# Use startup script
+# Use startup script as entrypoint
 ENTRYPOINT ["/app/startup.sh"]
-
-# Use gunicorn with production configuration
-CMD ["gunicorn", "--chdir", "src", "--config", "/app/gunicorn.conf.py", "obc_management.wsgi:application"]
