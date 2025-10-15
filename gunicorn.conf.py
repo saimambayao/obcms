@@ -11,7 +11,10 @@ import multiprocessing
 import os
 
 # Server Socket
-bind = "0.0.0.0:8000"
+# Use PORT environment variable if set (for PaaS platforms like Sevalla)
+# Otherwise default to 8000
+port = os.getenv('PORT', '8000')
+bind = f"0.0.0.0:{port}"
 backlog = 2048
 
 # Worker Processes
