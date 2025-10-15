@@ -1,0 +1,12 @@
+# AI and Machine Learning Dependencies (Optional - Heavy packages)
+# Install separately only if AI features are needed
+
+# Google AI Platform
+google-generativeai>=0.3.0,<1.0
+google-cloud-aiplatform>=1.38.0,<2.0
+
+# Machine Learning Core
+sentence-transformers>=2.2.0,<3.0
+torch>=2.0.0,<3.0
+numpy>=1.24.0,<2.0
+faiss-cpu>=1.7.4,<2.0

@@ -57,9 +57,7 @@ WORKDIR /app
 # Install Python dependencies with optimizations
 COPY requirements/ requirements/
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install -r requirements/base.txt && \
-    pip install gunicorn psycopg[binary] django-storages boto3 && \
-    pip cache purge
+    pip install -r requirements/production.txt
 
 # Stage 3: Development (keeps existing functionality)
 FROM base as development

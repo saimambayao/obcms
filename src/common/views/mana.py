@@ -2496,7 +2496,7 @@ def mana_desk_review(request):
             "title": "Data Handling Guide",
             "description": "Review sourcing, citation, and validation standards for desk work.",
             "icon": "fas fa-book-open",
-            "url": reverse("common:data_guidelines"),
+            "url": reverse("communities:data_guidelines"),
             "cta": "Read Guide",
             "icon_bg": "from-purple-500 to-purple-600",
             "cta_class": "text-purple-600",
