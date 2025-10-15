@@ -67,14 +67,16 @@
 
 ## Platform-Specific Guides
 
-### 🌟 Sevilla Deployment (Recommended)
+### 🌟 Sevalla Deployment (Recommended)
 
 | Document | Purpose | Status |
 |----------|---------|--------|
-| **[Sevalla Deployment Guide](./SEVALLA_DEPLOYMENT_GUIDE.md)** ⭐ | Complete step-by-step deployment | ✅ **NEW** |
-| **[Sevalla Environment Config](./SEVALLA_ENVIRONMENT_CONFIG.md)** | Environment variable configuration | ✅ **NEW** |
-| **[Sevalla Cost Analysis](./SEVALLA_COST_ANALYSIS.md)** | Cost breakdown and optimization | ✅ **NEW** |
-| **[Sevalla Troubleshooting](./SEVALLA_TROUBLESHOOTING.md)** | Support and maintenance guide | ✅ **NEW** |
+| **[Sevalla Deployment Index](./sevalla/README.md)** ⭐ | Complete deployment overview and quick start | ✅ **NEW** |
+| **[Sevalla Deployment Guide](./sevalla/SEVALLA_DEPLOYMENT_GUIDE.md)** | Complete step-by-step deployment | ✅ **NEW** |
+| **[Sevalla Environment Config](./sevalla/SEVALLA_ENVIRONMENT_CONFIG.md)** | Environment variable configuration | ✅ **NEW** |
+| **[Sevalla Settings Config](./sevalla/SEVALLA_SETTINGS_CONFIG.md)** | Django settings configuration | ✅ **NEW** |
+| **[Sevalla Cost Analysis](./sevalla/SEVALLA_COST_ANALYSIS.md)** | Cost breakdown and optimization | ✅ **NEW** |
+| **[Sevalla Troubleshooting](./sevalla/SEVALLA_TROUBLESHOOTING.md)** | Support and maintenance guide | ✅ **NEW** |
 
 ### 🐳 Docker Deployment
 

@@ -1,0 +1,282 @@
+#!/bin/bash
+
+# OBCMS Sevalla Backup Cleanup Script
+# Maintains optimal backup storage usage on Sevalla
+# Usage: ./scripts/cleanup-sevalla-backups.sh [OPTIONS]
+
+set -e
+
+# Configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+RETENTION_DAYS=${1:-30}
+DRY_RUN=${2:-false}
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Helper functions
+log() {
+    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
+}
+
+warn() {
+    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARNING: $1${NC}"
+}
+
+error() {
+    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"
+}
+
+success() {
+    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] SUCCESS: $1${NC}"
+}
+
+# Cleanup database backups
+cleanup_database_backups() {
+    log "Cleaning database backups older than $RETENTION_DAYS days..."
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "DRY RUN: Would clean database backups older than $RETENTION_DAYS days"
+        return 0
+    fi
+    
+    # Sevalla maintains automatic backups
+    # This function is for manual backup cleanup if needed
+    log "Database backups are automatically managed by Sevalla"
+    
+    # If you have custom backup processes, add cleanup here
+    # Example for custom backup directory:
+    if [[ -d "/app/backups" ]]; then
+        local old_backups=$(find /app/backups -name "*.sql" -mtime +$RETENTION_DAYS 2>/dev/null || true)
+        if [[ -n "$old_backups" ]]; then
+            echo "$old_backups" | xargs rm -f
+            success "Cleaned up $(echo "$old_backups" | wc -l) database backup files"
+        else
+            log "No old database backups to clean"
+        fi
+    fi
+}
+
+# Cleanup log files
+cleanup_logs() {
+    log "Cleaning log files older than $RETENTION_DAYS days..."
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "DRY RUN: Would clean log files older than $RETENTION_DAYS days"
+        return 0
+    fi
+    
+    # Clean Django logs
+    if [[ -f "/app/logs/django.log" ]]; then
+        # Rotate and compress old logs
+        find /app/logs -name "*.log" -mtime +$RETENTION_DAYS -delete 2>/dev/null || true
+        # Compress large log files older than 1 day
+        find /app/logs -name "*.log" -mtime +1 -size +10M -exec gzip {} \; 2>/dev/null || true
+        success "Cleaned up old log files"
+    fi
+    
+    # Clean Sevalla application logs (if accessible)
+    log "Sevalla-managed logs are handled automatically"
+}
+
+# Cleanup Celery logs
+cleanup_celery_logs() {
+    log "Cleaning Celery logs..."
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "DRY RUN: Would clean Celery logs"
+        return 0
+    fi
+    
+    # Clean Celery beat schedule files
+    if [[ -f "/app/celerybeat-schedule" ]]; then
+        # Backup current schedule
+        cp /app/celerybeat-schedule "/app/celerybeat-schedule.backup.$(date +%Y%m%d)"
+        log "Backed up Celery beat schedule"
+    fi
+    
+    # Clean old Celery logs
+    find /app -name "celery*.log" -mtime +$RETENTION_DAYS -delete 2>/dev/null || true
+}
+
+# Cleanup temporary files
+cleanup_temp_files() {
+    log "Cleaning temporary files..."
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "DRY RUN: Would clean temporary files"
+        return 0
+    fi
+    
+    # Clean Python cache
+    find /app -name "*.pyc" -delete 2>/dev/null || true
+    find /app -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+    
+    # Clean temporary upload files
+    find /tmp -name "django_*" -mtime +1 -delete 2>/dev/null || true
+    
+    success "Cleaned up temporary files"
+}
+
+# Cleanup Django session data
+cleanup_sessions() {
+    log "Cleaning expired Django sessions..."
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "DRY RUN: Would clean expired Django sessions"
+        return 0
+    fi
+    
+    # Django stores sessions in Redis on Sevalla
+    # Sessions expire automatically based on SESSION_COOKIE_AGE setting
+    log "Django sessions are automatically cleaned by Redis TTL"
+}
+
+# Generate cleanup report
+generate_report() {
+    log "Generating backup cleanup report..."
+    
+    local report_file="/tmp/sevalla-cleanup-report-$(date +%Y%m%d-%H%M%S).txt"
+    
+    cat > "$report_file" << EOF
+OBCMS Sevalla Backup Cleanup Report
+=====================================
+
+Timestamp: $(date)
+Retention Period: $RETENTION_DAYS days
+Dry Run: $DRY_RUN
+
+Storage Usage:
+$({du -sh /app/logs 2>/dev/null || echo "Logs: N/A"})
+$({du -sh /tmp 2>/dev/null || echo "Temp: N/A"})
+
+Django Information:
+$(python src/manage.py check --deploy --verbosity=0 2>/dev/null || echo "Django check failed")
+
+Database Information:
+$(python src/manage.py dbshell --command "SELECT 'Database Size: ' || pg_size_pretty(pg_database_size(current_database()));" 2>/dev/null || echo "Database size check failed")
+
+Next Scheduled Cleanup:
+$(date -d "+$RETENTION_DAYS days" "+%Y-%m-%d %H:%M:%S")
+
+=====================================
+Report generated by cleanup-sevalla-backups.sh
+EOF
+
+    success "Cleanup report generated: $report_file"
+    
+    echo ""
+    cat "$report_file"
+}
+
+# Show help
+show_help() {
+    cat << EOF
+OBCMS Sevalla Backup Cleanup Script
+
+Usage: $0 [RETENTION_DAYS] [DRY_RUN]
+
+ARGUMENTS:
+  RETENTION_DAYS  Number of days to retain backups (default: 30)
+  DRY_RUN        "true" to simulate cleanup without deleting files
+
+OPTIONS:
+  --help         Show this help message
+
+EXAMPLES:
+  $0                               # Clean backups older than 30 days
+  $0 14                            # Clean backups older than 14 days
+  $0 30 true                       # Dry run for 30-day retention
+  $0 7 false                       # Clean backups older than 7 weeks
+
+CLEANUP TARGETS:
+  ✓ Database backup files
+  ✓ Application log files
+  ✓ Celery schedule files
+  ✓ Python cache files
+  ✓ Temporary files
+  ✓ Expired sessions
+
+NOTES:
+  - Sevalla handles most backup management automatically
+  - This script supplements Sevalla's built-in cleanup
+  - Always test with DRY_RUN=true first
+  - Monitor storage usage after cleanup
+
+For more information, see:
+docs/deployment/sevalla/SEVALLA_TROUBLESHOOTING.md
+
+EOF
+}
+
+# Main cleanup function
+main() {
+    log "Starting OBCMS Sevalla backup cleanup..."
+    
+    # Parse arguments
+    case "${1:-}" in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+    esac
+    
+    RETENTION_DAYS=${1:-30}
+    DRY_RUN=${2:-false}
+    
+    # Validate retention days
+    if ! [[ "$RETENTION_DAYS" =~ ^[0-9]+$ ]] || [[ "$RETENTION_DAYS" -lt 1 ]]; then
+        error "RETENTION_DAYS must be a positive integer"
+        exit 1
+    fi
+    
+    # Validate dry run parameter
+    if [[ "$DRY_RUN" != "true" && "$DRY_RUN" != "false" ]]; then
+        error "DRY_RUN must be 'true' or 'false'"
+        exit 1
+    fi
+    
+    echo ""
+    log "Configuration:"
+    log "  Retention Days: $RETENTION_DAYS"
+    log "  Dry Run: $DRY_RUN"
+    log "  Timestamp: $(date)"
+    echo ""
+    
+    # Safety check for production
+    if [[ "$DRY_RUN" != "true" ]]; then
+        warn "This will permanently delete files older than $RETENTION_DAYS days"
+        read -p "Are you sure you want to continue? (yes/no): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^yes$ ]]; then
+            log "Cleanup cancelled by user"
+            exit 0
+        fi
+    fi
+    
+    # Execute cleanup functions
+    cleanup_database_backups
+    cleanup_logs
+    cleanup_celery_logs
+    cleanup_temp_files
+    cleanup_sessions
+    generate_report
+    
+    if [[ "$DRY_RUN" != "true" ]]; then
+        success "Backup cleanup completed successfully!"
+    else
+        success "Dry run completed. No files were deleted."
+        log "To perform actual cleanup, run: $0 $RETENTION_DAYS false"
+    fi
+    
+    echo ""
+    log "Next scheduled cleanup can be run with: $0 $RETENTION_DAYS"
+}
+
+# Execute main function with all arguments
+main "$@"
