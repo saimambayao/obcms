@@ -1,0 +1,86 @@
+# OBCMS/BMMS Base Requirements
+# Core dependencies for the Other Bangsamoro Communities Management System
+
+# Django Core
+django>=5.2.0
+django-crispy-forms>=2.0
+django-extensions>=3.2.0
+django-filter>=23.0
+django-cors-headers>=4.2.0
+
+# Database and ORM
+psycopg2-binary>=2.9.0
+django-auditlog>=2.2.0
+
+# Authentication and Security
+djangorestframework>=3.14.0
+djangorestframework-simplejwt>=5.2.0
+django-axes>=6.0.0
+
+# Background Tasks
+celery>=5.3.0
+redis>=5.0.0
+
+# Static Files
+whitenoise>=6.5.0
+
+# Development and Testing
+django-debug-toolbar>=4.2.0
+pytest-django>=4.5.0
+pytest-cov>=4.1.0
+
+# Utility Libraries
+python-decouple>=3.8
+Pillow>=10.0.0
+python-dateutil>=2.8.0
+
+# Geographic and Mapping
+django-mptt>=0.14.0
+geopy>=2.3.0
+
+# File Handling
+openpyxl>=3.1.0
+xlrd>=2.0.0
+
+# Monitoring and Logging
+sentry-sdk>=1.25.0
+
+# Performance
+django-silk>=5.0.0
+
+# Additional Utilities
+beautifulsoup4>=4.11.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Template Engine
+Jinja2>=3.1.0
+
+# Image Processing
+Pillow>=10.0.0
+
+# File Upload
+django-storages>=1.14.0
+
+# Timezone Support
+pytz>=2023.3
+
+# JSON Processing
+orjson>=3.9.0
+
+# Caching
+django-redis>=5.3.0
+
+# API Documentation
+drf-spectacular>=0.26.0
+
+# Email
+django-anymail>=2.1.0
+
+# Security
+django-environ>=0.11.0
+cryptography>=41.0.0
+
+# Development Tools
+django-shell-plus>=1.12.0
+ipython>=8.14.0

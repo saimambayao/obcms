@@ -1,0 +1,265 @@
+# Docker Compose for Sevalla Deployment Configuration
+# This file is for local testing before deployment to Sevalla
+# Production services will be managed by Sevalla platform
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database (mirroring Sevalla's managed database)
+  sevalla-db:
+    image: postgres:17-alpine
+    container_name: obcms-sevalla-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-obcms_prod}
+      POSTGRES_USER: ${DB_USER:-obcms_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-test-sevalla-password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_sevalla_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-obcms_user} -d ${DB_NAME:-obcms_prod}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - obcms-sevalla
+
+  # Redis Cache (mirroring Sevalla's managed Redis)
+  sevalla-redis:
+    image: redis:7-alpine
+    container_name: obcms-sevalla-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_sevalla_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-test-redis-password}
+    networks:
+      - obcms-sevalla
+
+  # Main Application (Production build)
+  sevalla-web:
+    build:
+      context: .
+      target: production
+      dockerfile: Dockerfile
+    container_name: obcms-sevalla-web
+    ports:
+      - "8000:8000"
+    volumes:
+      - static_sevalla_volume:/app/src/staticfiles
+      - media_sevalla_volume:/app/src/media
+      - logs_sevalla_volume:/app/logs
+    environment:
+      # Django Configuration
+      DJANGO_SETTINGS_MODULE: obc_management.settings.production
+      SECRET_KEY: ${SECRET_KEY:-test-sevalla-secret-key-for-development-only}
+      DEBUG: ${DEBUG:-False}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
+      
+      # Database Configuration (testing before Sevalla)
+      DATABASE_URL: postgres://${DB_USER:-obcms_user}:${DB_PASSWORD:-test-sevalla-password}@sevalla-db:5432/${DB_NAME:-obcms_prod}
+      CONN_MAX_AGE: 600
+      
+      # Redis Configuration
+      REDIS_URL: redis://:${REDIS_PASSWORD:-test-redis-password}@sevalla-redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-test-redis-password}@sevalla-redis:6379/0
+      
+      # Storage Configuration (local for testing)
+      USE_S3: False
+      STATIC_URL: /static/
+      STATIC_ROOT: /app/src/staticfiles
+      MEDIA_URL: /media/
+      MEDIA_ROOT: /app/src/media
+      
+      # BMMS Configuration
+      BMMS_ORGANIZATION_NAME: Office of the Chief Minister
+      BMMS_ORGANIZATION_TYPE: central
+      BMMS_ORGANIZATION_CODE: OCM
+      ENABLE_MULTI_TENANT: true
+      ENABLE_AI_FEATURES: true
+      
+      # Performance Settings
+      CONN_MAX_AGE: 600
+      CACHE_TTL: 3600
+      
+      # Migration Control
+      RUN_MIGRATIONS: "true"
+      
+      # AI Services (test configuration)
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-test-key}
+      GOOGLE_CLOUD_PROJECT_ID: ${GOOGLE_CLOUD_PROJECT_ID:-obcms-test}
+      
+      # Email Configuration (console for testing)
+      EMAIL_BACKEND: django.core.mail.backends.console.EmailBackend
+      
+    depends_on:
+      sevalla-db:
+        condition: service_healthy
+      sevalla-redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/app/healthcheck.sh"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 60s
+    networks:
+      - obcms-sevalla
+
+  # Celery Worker (Background tasks)
+  sevalla-celery:
+    build:
+      context: .
+      target: production
+      dockerfile: Dockerfile
+    container_name: obcms-sevalla-celery
+    volumes:
+      - static_sevalla_volume:/app/src/staticfiles
+      - media_sevalla_volume:/app/src/media
+      - logs_sevalla_volume:/app/logs
+    environment:
+      # Same as web service
+      DJANGO_SETTINGS_MODULE: obc_management.settings.production
+      SECRET_KEY: ${SECRET_KEY:-test-sevalla-secret-key-for-development-only}
+      DEBUG: ${DEBUG:-False}
+      DATABASE_URL: postgres://${DB_USER:-obcms_user}:${DB_PASSWORD:-test-sevalla-password}@sevalla-db:5432/${DB_NAME:-obcms_prod}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-test-redis-password}@sevalla-redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-test-redis-password}@sevalla-redis:6379/0
+      ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0
+      BMMS_ORGANIZATION_NAME: Office of the Chief Minister
+      ENABLE_MULTI_TENANT: true
+    depends_on:
+      sevalla-db:
+        condition: service_healthy
+      sevalla-redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "cd /app/src &&
+             celery -A obc_management worker 
+             -l info 
+             --loglevel=info 
+             --concurrency=4 
+             --prefetch-multiplier=1
+             -Q celery,django_celery_beat"
+    healthcheck:
+      test: ["CMD", "celery", "inspect", "ping", "-A", "obc_management"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - obcms-sevalla
+
+  # Celery Beat (Scheduled tasks)
+  sevalla-celery-beat:
+    build:
+      context: .
+      target: production
+      dockerfile: Dockerfile
+    container_name: obcms-sevalla-celery-beat
+    volumes:
+      - celerybeat_sevalla_data:/app/celerybeat-schedule
+      - static_sevalla_volume:/app/src/staticfiles
+      - media_sevalla_volume:/app/src/media
+      - logs_sevalla_volume:/app/logs
+    environment:
+      # Same as web service
+      DJANGO_SETTINGS_MODULE: obc_management.settings.production
+      SECRET_KEY: ${SECRET_KEY:-test-sevalla-secret-key-for-development-only}
+      DEBUG: ${DEBUG:-False}
+      DATABASE_URL: postgres://${DB_USER:-obcms_user}:${DB_PASSWORD:-test-sevalla-password}@sevalla-db:5432/${DB_NAME:-obcms_prod}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-test-redis-password}@sevalla-redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-test-redis-password}@sevalla-redis:6379/0
+      ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0
+      BMMS_ORGANIZATION_NAME: Office of the Chief Minister
+      ENABLE_MULTI_TENANT: true
+    depends_on:
+      sevalla-db:
+        condition: service_healthy
+      sevalla-redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "cd /app/src &&
+             celery -A obc_management beat 
+             -l info 
+             --loglevel=info
+             --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    healthcheck:
+      test: ["CMD", "celery", "inspect", "ping", "-A", "obc_management"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    networks:
+      - obcms-sevalla
+
+  # Flower (Celery monitoring)
+  sevalla-flower:
+    build:
+      context: .
+      target: production
+      dockerfile: Dockerfile
+    container_name: obcms-sevalla-flower
+    ports:
+      - "5555:5555"
+    environment:
+      DJANGO_SETTINGS_MODULE: obc_management.settings.production
+      SECRET_KEY: ${SECRET_KEY:-test-sevalla-secret-key-for-development-only}
+      DATABASE_URL: postgres://${DB_USER:-obcms_user}:${DB_PASSWORD:-test-sevalla-password}@sevalla-db:5432/${DB_NAME:-obcms_prod}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-test-redis-password}@sevalla-redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-test-redis-password}@sevalla-redis:6379/0
+      FLOWER_BASIC_AUTH: ${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
+    depends_on:
+      sevalla-redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "cd /app/src &&
+             celery -A obc_management flower 
+             --port=5555 
+             --basic_auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
+             --broker=redis://:${REDIS_PASSWORD:-test-redis-password}@sevalla-redis:6379/0"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - obcms-sevalla
+
+# Networks
+networks:
+  obcms-sevalla:
+    driver: bridge
+    name: obcms-sevalla-network
+
+# Volumes
+volumes:
+  postgres_sevalla_data:
+    name: obcms_sevalla_postgres_data
+  redis_sevalla_data:
+    name: obcms_sevalla_redis_data
+  static_sevalla_volume:
+    name: obcms_sevalla_static_files
+  media_sevalla_volume:
+    name: obcms_sevalla_media_files
+  logs_sevalla_volume:
+    name: obcms_sevalla_logs
+  celerybeat_sevalla_data:
+    name: obcms_sevalla_celerybeat

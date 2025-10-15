@@ -14,7 +14,7 @@ if [ ! -f "manage.py" ]; then
 fi
 
 # Check Python version
-PYTHON_VERSION=$(python --version 2>&1 | grep -o '[0-9]\+\.[0-9]\+' | head -n1)
+PYTHON_VERSION=$(python3 --version 2>&1 | grep -o '[0-9]\+\.[0-9]\+' | head -n1)
 REQUIRED_VERSION="3.10"
 
 if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$PYTHON_VERSION" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]; then
@@ -31,7 +31,7 @@ if [ -z "$VIRTUAL_ENV" ]; then
     # Create virtual environment
     if [ ! -d "../venv" ]; then
         echo "📦 Creating virtual environment..."
-        python -m venv ../venv
+        python3 -m venv ../venv
     fi
 
     # Activate virtual environment
@@ -105,7 +105,7 @@ if grep -q "django-insecure" ../.env; then
     echo "⚠️  WARNING: Insecure SECRET_KEY detected. Generating new one..."
 
     # Generate new SECRET_KEY
-    NEW_SECRET_KEY=$(python -c "
+    NEW_SECRET_KEY=$(python3 -c "
 import secrets
 chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)'
 secret = ''.join(secrets.choice(chars) for _ in range(50))
