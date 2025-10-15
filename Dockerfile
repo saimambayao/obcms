@@ -104,14 +104,14 @@ cd /app/src || error_exit "Failed to change to /app/src directory"
 # Run migrations if requested
 if [ "$RUN_MIGRATIONS" = "true" ]; then
     echo "Running database migrations..."
-    python manage.py migrate --noinput || error_exit "Database migrations failed"
+    python manage.py migrate --noinput --skip-checks || error_exit "Database migrations failed"
 else
     echo "Skipping migrations (RUN_MIGRATIONS not set to 'true')"
 fi
 
 # Collect static files
 echo "Collecting static files..."
-python manage.py collectstatic --noinput --verbosity 1 || error_exit "Static file collection failed"
+python manage.py collectstatic --noinput --verbosity 1 --skip-checks || error_exit "Static file collection failed"
 
 # Create cache tables (non-critical)
 echo "Creating cache tables..."
