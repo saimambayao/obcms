@@ -66,6 +66,9 @@ USER app
 # Stage 4: Production - Optimized for Sevalla deployment
 FROM base as production
 
+# Set Django settings module for production
+ENV DJANGO_SETTINGS_MODULE=obc_management.settings.production
+
 # Add production-specific labels for Sevalla
 LABEL maintainer="BMMS Team" \
       version="1.0.0" \
