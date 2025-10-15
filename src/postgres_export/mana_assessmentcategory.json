@@ -1,0 +1,28 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108cdd5d0>",
+    "<sqlite3.Row object at 0x108cdd420>",
+    "<sqlite3.Row object at 0x108cdc2b0>",
+    "<sqlite3.Row object at 0x108cdc400>",
+    "<sqlite3.Row object at 0x108cdc3d0>",
+    "<sqlite3.Row object at 0x108cdc520>",
+    "<sqlite3.Row object at 0x108cdc760>",
+    "<sqlite3.Row object at 0x108cdc970>",
+    "<sqlite3.Row object at 0x108cdc910>",
+    "<sqlite3.Row object at 0x108cdc9a0>"
+  ],
+  "data": [
+    {
+      "id": 1,
+      "name": "OBC-MANA Workshop",
+      "category_type": "needs_assessment",
+      "description": "Other Bangsamoro Communities Mapping and Needs Assessment",
+      "icon": "fas fa-users",
+      "color": "#3B82F6",
+      "is_active": 1,
+      "created_at": "2025-09-25 16:46:34.468490",
+      "updated_at": "2025-09-25 16:46:34.468700",
+      "organization_id": 1
+    }
+  ]
+}

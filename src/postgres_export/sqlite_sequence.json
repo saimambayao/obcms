@@ -1,0 +1,232 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108cddc00>",
+    "<sqlite3.Row object at 0x108cddcc0>"
+  ],
+  "data": [
+    {
+      "name": "django_migrations",
+      "seq": 458
+    },
+    {
+      "name": "django_content_type",
+      "seq": 173
+    },
+    {
+      "name": "auth_permission",
+      "seq": 702
+    },
+    {
+      "name": "auth_group",
+      "seq": 4
+    },
+    {
+      "name": "django_admin_log",
+      "seq": 0
+    },
+    {
+      "name": "common_barangay",
+      "seq": 6621
+    },
+    {
+      "name": "common_municipality",
+      "seq": 291
+    },
+    {
+      "name": "common_province",
+      "seq": 29
+    },
+    {
+      "name": "coordination_engagementfacilitator",
+      "seq": 0
+    },
+    {
+      "name": "documents_access",
+      "seq": 0
+    },
+    {
+      "name": "documents_document",
+      "seq": 0
+    },
+    {
+      "name": "mana_workshopactivity",
+      "seq": 54
+    },
+    {
+      "name": "django_site",
+      "seq": 1
+    },
+    {
+      "name": "common_region",
+      "seq": 9
+    },
+    {
+      "name": "municipal_profiles_municipalobcprofile",
+      "seq": 286
+    },
+    {
+      "name": "municipal_profiles_municipalobcprofilehistory",
+      "seq": 6640
+    },
+    {
+      "name": "auth_user_user_permissions",
+      "seq": 23
+    },
+    {
+      "name": "communities_municipalitycoverage",
+      "seq": 287
+    },
+    {
+      "name": "communities_obc_community",
+      "seq": 6615
+    },
+    {
+      "name": "mana_assessmentcategory",
+      "seq": 1
+    },
+    {
+      "name": "common_staffteam",
+      "seq": 6
+    },
+    {
+      "name": "common_staffteammembership",
+      "seq": 22
+    },
+    {
+      "name": "common_performancetarget",
+      "seq": 0
+    },
+    {
+      "name": "common_staffdevelopmentplan",
+      "seq": 0
+    },
+    {
+      "name": "common_staffprofile",
+      "seq": 118
+    },
+    {
+      "name": "common_trainingenrollment",
+      "seq": 0
+    },
+    {
+      "name": "common_trainingprogram",
+      "seq": 0
+    },
+    {
+      "name": "mana_workshopquestiondefinition",
+      "seq": 51
+    },
+    {
+      "name": "auth_group_permissions",
+      "seq": 12
+    },
+    {
+      "name": "auth_user_groups",
+      "seq": 1
+    },
+    {
+      "name": "mana_workshopaccesslog",
+      "seq": 74
+    },
+    {
+      "name": "mana_workshopresponse",
+      "seq": 10
+    },
+    {
+      "name": "communities_provincecoverage",
+      "seq": 28
+    },
+    {
+      "name": "mana_workshopparticipantaccount",
+      "seq": 3
+    },
+    {
+      "name": "mana_need",
+      "seq": 0
+    },
+    {
+      "name": "common_calendar_notification",
+      "seq": 0
+    },
+    {
+      "name": "common_calendar_resource_booking",
+      "seq": 65
+    },
+    {
+      "name": "common_user_calendar_preferences",
+      "seq": 2
+    },
+    {
+      "name": "common_calendar_resource",
+      "seq": 5
+    },
+    {
+      "name": "axes_accessattempt",
+      "seq": 10
+    },
+    {
+      "name": "axes_accesslog",
+      "seq": 242
+    },
+    {
+      "name": "auditlog_logentry",
+      "seq": 10102
+    },
+    {
+      "name": "token_blacklist_blacklistedtoken",
+      "seq": 0
+    },
+    {
+      "name": "token_blacklist_outstandingtoken",
+      "seq": 0
+    },
+    {
+      "name": "common_work_item_assignees",
+      "seq": 54
+    },
+    {
+      "name": "municipal_profiles_obccommunityhistory",
+      "seq": 6637
+    },
+    {
+      "name": "common_chat_message",
+      "seq": 574
+    },
+    {
+      "name": "common_work_item_related_items",
+      "seq": 32
+    },
+    {
+      "name": "common_work_item_teams",
+      "seq": 4
+    },
+    {
+      "name": "coordination_organizationcontact",
+      "seq": 3
+    },
+    {
+      "name": "auth_user",
+      "seq": 264
+    },
+    {
+      "name": "coordination_partnership_organizations",
+      "seq": 1
+    },
+    {
+      "name": "coordination_partnershipmilestone",
+      "seq": 1
+    },
+    {
+      "name": "monitoring_monitoringentry_communities",
+      "seq": 2
+    },
+    {
+      "name": "organizations_organization",
+      "seq": 60
+    },
+    {
+      "name": "mana_workshopoutput",
+      "seq": 0
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108cddb10>",
+    "<sqlite3.Row object at 0x108cde140>",
+    "<sqlite3.Row object at 0x108cdd660>"
+  ],
+  "data": [
+    {
+      "id": 1,
+      "name": "example.com",
+      "domain": "example.com"
+    }
+  ]
+}

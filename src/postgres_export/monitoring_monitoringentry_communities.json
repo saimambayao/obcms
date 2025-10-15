@@ -1,0 +1,19 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108d0b8e0>",
+    "<sqlite3.Row object at 0x108d0b1c0>",
+    "<sqlite3.Row object at 0x108d0b160>"
+  ],
+  "data": [
+    {
+      "id": 1,
+      "monitoringentry_id": "7ca9859055ef4eb0af4f442e1350e2a1",
+      "obccommunity_id": 1
+    },
+    {
+      "id": 2,
+      "monitoringentry_id": "34abeac82aba46caada7574889500507",
+      "obccommunity_id": 1
+    }
+  ]
+}

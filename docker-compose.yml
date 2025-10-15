@@ -44,6 +44,7 @@ services:
       - media_volume:/app/src/media
     environment:
       - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=obc_management.settings.development
       - DATABASE_URL=postgres://obcms:obcms_dev_password@db:5432/obcms
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/0
@@ -75,6 +76,7 @@ services:
       - .:/app
     environment:
       - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=obc_management.settings.development
       - DATABASE_URL=postgres://obcms:obcms_dev_password@db:5432/obcms
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/0
@@ -105,6 +107,7 @@ services:
       - celerybeat_data:/app/celerybeat-schedule
     environment:
       - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=obc_management.settings.development
       - DATABASE_URL=postgres://obcms:obcms_dev_password@db:5432/obcms
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/0

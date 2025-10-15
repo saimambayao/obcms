@@ -1,0 +1,4222 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108cd16c0>",
+    "<sqlite3.Row object at 0x108cd18a0>",
+    "<sqlite3.Row object at 0x108cd1a20>",
+    "<sqlite3.Row object at 0x108cd1180>"
+  ],
+  "data": [
+    {
+      "id": 1,
+      "content_type_id": 1,
+      "codename": "add_logentry",
+      "name": "Can add log entry"
+    },
+    {
+      "id": 2,
+      "content_type_id": 1,
+      "codename": "change_logentry",
+      "name": "Can change log entry"
+    },
+    {
+      "id": 3,
+      "content_type_id": 1,
+      "codename": "delete_logentry",
+      "name": "Can delete log entry"
+    },
+    {
+      "id": 4,
+      "content_type_id": 1,
+      "codename": "view_logentry",
+      "name": "Can view log entry"
+    },
+    {
+      "id": 5,
+      "content_type_id": 2,
+      "codename": "add_permission",
+      "name": "Can add permission"
+    },
+    {
+      "id": 6,
+      "content_type_id": 2,
+      "codename": "change_permission",
+      "name": "Can change permission"
+    },
+    {
+      "id": 7,
+      "content_type_id": 2,
+      "codename": "delete_permission",
+      "name": "Can delete permission"
+    },
+    {
+      "id": 8,
+      "content_type_id": 2,
+      "codename": "view_permission",
+      "name": "Can view permission"
+    },
+    {
+      "id": 9,
+      "content_type_id": 3,
+      "codename": "add_group",
+      "name": "Can add group"
+    },
+    {
+      "id": 10,
+      "content_type_id": 3,
+      "codename": "change_group",
+      "name": "Can change group"
+    },
+    {
+      "id": 11,
+      "content_type_id": 3,
+      "codename": "delete_group",
+      "name": "Can delete group"
+    },
+    {
+      "id": 12,
+      "content_type_id": 3,
+      "codename": "view_group",
+      "name": "Can view group"
+    },
+    {
+      "id": 13,
+      "content_type_id": 4,
+      "codename": "add_contenttype",
+      "name": "Can add content type"
+    },
+    {
+      "id": 14,
+      "content_type_id": 4,
+      "codename": "change_contenttype",
+      "name": "Can change content type"
+    },
+    {
+      "id": 15,
+      "content_type_id": 4,
+      "codename": "delete_contenttype",
+      "name": "Can delete content type"
+    },
+    {
+      "id": 16,
+      "content_type_id": 4,
+      "codename": "view_contenttype",
+      "name": "Can view content type"
+    },
+    {
+      "id": 17,
+      "content_type_id": 5,
+      "codename": "add_session",
+      "name": "Can add session"
+    },
+    {
+      "id": 18,
+      "content_type_id": 5,
+      "codename": "change_session",
+      "name": "Can change session"
+    },
+    {
+      "id": 19,
+      "content_type_id": 5,
+      "codename": "delete_session",
+      "name": "Can delete session"
+    },
+    {
+      "id": 20,
+      "content_type_id": 5,
+      "codename": "view_session",
+      "name": "Can view session"
+    },
+    {
+      "id": 21,
+      "content_type_id": 6,
+      "codename": "add_site",
+      "name": "Can add site"
+    },
+    {
+      "id": 22,
+      "content_type_id": 6,
+      "codename": "change_site",
+      "name": "Can change site"
+    },
+    {
+      "id": 23,
+      "content_type_id": 6,
+      "codename": "delete_site",
+      "name": "Can delete site"
+    },
+    {
+      "id": 24,
+      "content_type_id": 6,
+      "codename": "view_site",
+      "name": "Can view site"
+    },
+    {
+      "id": 25,
+      "content_type_id": 7,
+      "codename": "add_user",
+      "name": "Can add User"
+    },
+    {
+      "id": 26,
+      "content_type_id": 7,
+      "codename": "change_user",
+      "name": "Can change User"
+    },
+    {
+      "id": 27,
+      "content_type_id": 7,
+      "codename": "delete_user",
+      "name": "Can delete User"
+    },
+    {
+      "id": 28,
+      "content_type_id": 7,
+      "codename": "view_user",
+      "name": "Can view User"
+    },
+    {
+      "id": 29,
+      "content_type_id": 8,
+      "codename": "add_region",
+      "name": "Can add Region"
+    },
+    {
+      "id": 30,
+      "content_type_id": 8,
+      "codename": "change_region",
+      "name": "Can change Region"
+    },
+    {
+      "id": 31,
+      "content_type_id": 8,
+      "codename": "delete_region",
+      "name": "Can delete Region"
+    },
+    {
+      "id": 32,
+      "content_type_id": 8,
+      "codename": "view_region",
+      "name": "Can view Region"
+    },
+    {
+      "id": 33,
+      "content_type_id": 9,
+      "codename": "add_province",
+      "name": "Can add Province"
+    },
+    {
+      "id": 34,
+      "content_type_id": 9,
+      "codename": "change_province",
+      "name": "Can change Province"
+    },
+    {
+      "id": 35,
+      "content_type_id": 9,
+      "codename": "delete_province",
+      "name": "Can delete Province"
+    },
+    {
+      "id": 36,
+      "content_type_id": 9,
+      "codename": "view_province",
+      "name": "Can view Province"
+    },
+    {
+      "id": 37,
+      "content_type_id": 10,
+      "codename": "add_municipality",
+      "name": "Can add Municipality"
+    },
+    {
+      "id": 38,
+      "content_type_id": 10,
+      "codename": "change_municipality",
+      "name": "Can change Municipality"
+    },
+    {
+      "id": 39,
+      "content_type_id": 10,
+      "codename": "delete_municipality",
+      "name": "Can delete Municipality"
+    },
+    {
+      "id": 40,
+      "content_type_id": 10,
+      "codename": "view_municipality",
+      "name": "Can view Municipality"
+    },
+    {
+      "id": 41,
+      "content_type_id": 11,
+      "codename": "add_barangay",
+      "name": "Can add Barangay"
+    },
+    {
+      "id": 42,
+      "content_type_id": 11,
+      "codename": "change_barangay",
+      "name": "Can change Barangay"
+    },
+    {
+      "id": 43,
+      "content_type_id": 11,
+      "codename": "delete_barangay",
+      "name": "Can delete Barangay"
+    },
+    {
+      "id": 44,
+      "content_type_id": 11,
+      "codename": "view_barangay",
+      "name": "Can view Barangay"
+    },
+    {
+      "id": 45,
+      "content_type_id": 12,
+      "codename": "add_obccommunity",
+      "name": "Can add OBC Community"
+    },
+    {
+      "id": 46,
+      "content_type_id": 12,
+      "codename": "change_obccommunity",
+      "name": "Can change OBC Community"
+    },
+    {
+      "id": 47,
+      "content_type_id": 12,
+      "codename": "delete_obccommunity",
+      "name": "Can delete OBC Community"
+    },
+    {
+      "id": 48,
+      "content_type_id": 12,
+      "codename": "view_obccommunity",
+      "name": "Can view OBC Community"
+    },
+    {
+      "id": 49,
+      "content_type_id": 13,
+      "codename": "add_communitylivelihood",
+      "name": "Can add Community Livelihood"
+    },
+    {
+      "id": 50,
+      "content_type_id": 13,
+      "codename": "change_communitylivelihood",
+      "name": "Can change Community Livelihood"
+    },
+    {
+      "id": 51,
+      "content_type_id": 13,
+      "codename": "delete_communitylivelihood",
+      "name": "Can delete Community Livelihood"
+    },
+    {
+      "id": 52,
+      "content_type_id": 13,
+      "codename": "view_communitylivelihood",
+      "name": "Can view Community Livelihood"
+    },
+    {
+      "id": 53,
+      "content_type_id": 14,
+      "codename": "add_communityinfrastructure",
+      "name": "Can add Community Infrastructure"
+    },
+    {
+      "id": 54,
+      "content_type_id": 14,
+      "codename": "change_communityinfrastructure",
+      "name": "Can change Community Infrastructure"
+    },
+    {
+      "id": 55,
+      "content_type_id": 14,
+      "codename": "delete_communityinfrastructure",
+      "name": "Can delete Community Infrastructure"
+    },
+    {
+      "id": 56,
+      "content_type_id": 14,
+      "codename": "view_communityinfrastructure",
+      "name": "Can view Community Infrastructure"
+    },
+    {
+      "id": 57,
+      "content_type_id": 15,
+      "codename": "add_stakeholder",
+      "name": "Can add Community Stakeholder"
+    },
+    {
+      "id": 58,
+      "content_type_id": 15,
+      "codename": "change_stakeholder",
+      "name": "Can change Community Stakeholder"
+    },
+    {
+      "id": 59,
+      "content_type_id": 15,
+      "codename": "delete_stakeholder",
+      "name": "Can delete Community Stakeholder"
+    },
+    {
+      "id": 60,
+      "content_type_id": 15,
+      "codename": "view_stakeholder",
+      "name": "Can view Community Stakeholder"
+    },
+    {
+      "id": 61,
+      "content_type_id": 16,
+      "codename": "add_stakeholderengagement",
+      "name": "Can add Stakeholder Engagement"
+    },
+    {
+      "id": 62,
+      "content_type_id": 16,
+      "codename": "change_stakeholderengagement",
+      "name": "Can change Stakeholder Engagement"
+    },
+    {
+      "id": 63,
+      "content_type_id": 16,
+      "codename": "delete_stakeholderengagement",
+      "name": "Can delete Stakeholder Engagement"
+    },
+    {
+      "id": 64,
+      "content_type_id": 16,
+      "codename": "view_stakeholderengagement",
+      "name": "Can view Stakeholder Engagement"
+    },
+    {
+      "id": 65,
+      "content_type_id": 17,
+      "codename": "add_municipalitycoverage",
+      "name": "Can add Bangsamoro Municipality OBC"
+    },
+    {
+      "id": 66,
+      "content_type_id": 17,
+      "codename": "change_municipalitycoverage",
+      "name": "Can change Bangsamoro Municipality OBC"
+    },
+    {
+      "id": 67,
+      "content_type_id": 17,
+      "codename": "delete_municipalitycoverage",
+      "name": "Can delete Bangsamoro Municipality OBC"
+    },
+    {
+      "id": 68,
+      "content_type_id": 17,
+      "codename": "view_municipalitycoverage",
+      "name": "Can view Bangsamoro Municipality OBC"
+    },
+    {
+      "id": 69,
+      "content_type_id": 18,
+      "codename": "add_municipalobcprofile",
+      "name": "Can add Municipal OBC Profile"
+    },
+    {
+      "id": 70,
+      "content_type_id": 18,
+      "codename": "change_municipalobcprofile",
+      "name": "Can change Municipal OBC Profile"
+    },
+    {
+      "id": 71,
+      "content_type_id": 18,
+      "codename": "delete_municipalobcprofile",
+      "name": "Can delete Municipal OBC Profile"
+    },
+    {
+      "id": 72,
+      "content_type_id": 18,
+      "codename": "view_municipalobcprofile",
+      "name": "Can view Municipal OBC Profile"
+    },
+    {
+      "id": 73,
+      "content_type_id": 19,
+      "codename": "add_municipalobcprofilehistory",
+      "name": "Can add Municipal OBC Profile History"
+    },
+    {
+      "id": 74,
+      "content_type_id": 19,
+      "codename": "change_municipalobcprofilehistory",
+      "name": "Can change Municipal OBC Profile History"
+    },
+    {
+      "id": 75,
+      "content_type_id": 19,
+      "codename": "delete_municipalobcprofilehistory",
+      "name": "Can delete Municipal OBC Profile History"
+    },
+    {
+      "id": 76,
+      "content_type_id": 19,
+      "codename": "view_municipalobcprofilehistory",
+      "name": "Can view Municipal OBC Profile History"
+    },
+    {
+      "id": 77,
+      "content_type_id": 20,
+      "codename": "add_obccommunityhistory",
+      "name": "Can add OBC Community History"
+    },
+    {
+      "id": 78,
+      "content_type_id": 20,
+      "codename": "change_obccommunityhistory",
+      "name": "Can change OBC Community History"
+    },
+    {
+      "id": 79,
+      "content_type_id": 20,
+      "codename": "delete_obccommunityhistory",
+      "name": "Can delete OBC Community History"
+    },
+    {
+      "id": 80,
+      "content_type_id": 20,
+      "codename": "view_obccommunityhistory",
+      "name": "Can view OBC Community History"
+    },
+    {
+      "id": 81,
+      "content_type_id": 21,
+      "codename": "add_assessment",
+      "name": "Can add assessment"
+    },
+    {
+      "id": 82,
+      "content_type_id": 21,
+      "codename": "change_assessment",
+      "name": "Can change assessment"
+    },
+    {
+      "id": 83,
+      "content_type_id": 21,
+      "codename": "delete_assessment",
+      "name": "Can delete assessment"
+    },
+    {
+      "id": 84,
+      "content_type_id": 21,
+      "codename": "view_assessment",
+      "name": "Can view assessment"
+    },
+    {
+      "id": 85,
+      "content_type_id": 22,
+      "codename": "add_assessmentcategory",
+      "name": "Can add assessment category"
+    },
+    {
+      "id": 86,
+      "content_type_id": 22,
+      "codename": "change_assessmentcategory",
+      "name": "Can change assessment category"
+    },
+    {
+      "id": 87,
+      "content_type_id": 22,
+      "codename": "delete_assessmentcategory",
+      "name": "Can delete assessment category"
+    },
+    {
+      "id": 88,
+      "content_type_id": 22,
+      "codename": "view_assessmentcategory",
+      "name": "Can view assessment category"
+    },
+    {
+      "id": 89,
+      "content_type_id": 23,
+      "codename": "add_survey",
+      "name": "Can add survey"
+    },
+    {
+      "id": 90,
+      "content_type_id": 23,
+      "codename": "change_survey",
+      "name": "Can change survey"
+    },
+    {
+      "id": 91,
+      "content_type_id": 23,
+      "codename": "delete_survey",
+      "name": "Can delete survey"
+    },
+    {
+      "id": 92,
+      "content_type_id": 23,
+      "codename": "view_survey",
+      "name": "Can view survey"
+    },
+    {
+      "id": 93,
+      "content_type_id": 24,
+      "codename": "add_surveyresponse",
+      "name": "Can add survey response"
+    },
+    {
+      "id": 94,
+      "content_type_id": 24,
+      "codename": "change_surveyresponse",
+      "name": "Can change survey response"
+    },
+    {
+      "id": 95,
+      "content_type_id": 24,
+      "codename": "delete_surveyresponse",
+      "name": "Can delete survey response"
+    },
+    {
+      "id": 96,
+      "content_type_id": 24,
+      "codename": "view_surveyresponse",
+      "name": "Can view survey response"
+    },
+    {
+      "id": 97,
+      "content_type_id": 25,
+      "codename": "add_mappingactivity",
+      "name": "Can add mapping activity"
+    },
+    {
+      "id": 98,
+      "content_type_id": 25,
+      "codename": "change_mappingactivity",
+      "name": "Can change mapping activity"
+    },
+    {
+      "id": 99,
+      "content_type_id": 25,
+      "codename": "delete_mappingactivity",
+      "name": "Can delete mapping activity"
+    },
+    {
+      "id": 100,
+      "content_type_id": 25,
+      "codename": "view_mappingactivity",
+      "name": "Can view mapping activity"
+    },
+    {
+      "id": 101,
+      "content_type_id": 26,
+      "codename": "add_assessmentteammember",
+      "name": "Can add assessment team member"
+    },
+    {
+      "id": 102,
+      "content_type_id": 26,
+      "codename": "change_assessmentteammember",
+      "name": "Can change assessment team member"
+    },
+    {
+      "id": 103,
+      "content_type_id": 26,
+      "codename": "delete_assessmentteammember",
+      "name": "Can delete assessment team member"
+    },
+    {
+      "id": 104,
+      "content_type_id": 26,
+      "codename": "view_assessmentteammember",
+      "name": "Can view assessment team member"
+    },
+    {
+      "id": 105,
+      "content_type_id": 27,
+      "codename": "add_surveyquestion",
+      "name": "Can add survey question"
+    },
+    {
+      "id": 106,
+      "content_type_id": 27,
+      "codename": "change_surveyquestion",
+      "name": "Can change survey question"
+    },
+    {
+      "id": 107,
+      "content_type_id": 27,
+      "codename": "delete_surveyquestion",
+      "name": "Can delete survey question"
+    },
+    {
+      "id": 108,
+      "content_type_id": 27,
+      "codename": "view_surveyquestion",
+      "name": "Can view survey question"
+    },
+    {
+      "id": 109,
+      "content_type_id": 28,
+      "codename": "add_needscategory",
+      "name": "Can add needs category"
+    },
+    {
+      "id": 110,
+      "content_type_id": 28,
+      "codename": "change_needscategory",
+      "name": "Can change needs category"
+    },
+    {
+      "id": 111,
+      "content_type_id": 28,
+      "codename": "delete_needscategory",
+      "name": "Can delete needs category"
+    },
+    {
+      "id": 112,
+      "content_type_id": 28,
+      "codename": "view_needscategory",
+      "name": "Can view needs category"
+    },
+    {
+      "id": 113,
+      "content_type_id": 29,
+      "codename": "add_needsprioritization",
+      "name": "Can add needs prioritization"
+    },
+    {
+      "id": 114,
+      "content_type_id": 29,
+      "codename": "change_needsprioritization",
+      "name": "Can change needs prioritization"
+    },
+    {
+      "id": 115,
+      "content_type_id": 29,
+      "codename": "delete_needsprioritization",
+      "name": "Can delete needs prioritization"
+    },
+    {
+      "id": 116,
+      "content_type_id": 29,
+      "codename": "view_needsprioritization",
+      "name": "Can view needs prioritization"
+    },
+    {
+      "id": 117,
+      "content_type_id": 30,
+      "codename": "add_need",
+      "name": "Can add need"
+    },
+    {
+      "id": 118,
+      "content_type_id": 30,
+      "codename": "change_need",
+      "name": "Can change need"
+    },
+    {
+      "id": 119,
+      "content_type_id": 30,
+      "codename": "delete_need",
+      "name": "Can delete need"
+    },
+    {
+      "id": 120,
+      "content_type_id": 30,
+      "codename": "view_need",
+      "name": "Can view need"
+    },
+    {
+      "id": 121,
+      "content_type_id": 31,
+      "codename": "add_needsprioritizationitem",
+      "name": "Can add needs prioritization item"
+    },
+    {
+      "id": 122,
+      "content_type_id": 31,
+      "codename": "change_needsprioritizationitem",
+      "name": "Can change needs prioritization item"
+    },
+    {
+      "id": 123,
+      "content_type_id": 31,
+      "codename": "delete_needsprioritizationitem",
+      "name": "Can delete needs prioritization item"
+    },
+    {
+      "id": 124,
+      "content_type_id": 31,
+      "codename": "view_needsprioritizationitem",
+      "name": "Can view needs prioritization item"
+    },
+    {
+      "id": 125,
+      "content_type_id": 32,
+      "codename": "add_geographicdatalayer",
+      "name": "Can add geographic data layer"
+    },
+    {
+      "id": 126,
+      "content_type_id": 32,
+      "codename": "change_geographicdatalayer",
+      "name": "Can change geographic data layer"
+    },
+    {
+      "id": 127,
+      "content_type_id": 32,
+      "codename": "delete_geographicdatalayer",
+      "name": "Can delete geographic data layer"
+    },
+    {
+      "id": 128,
+      "content_type_id": 32,
+      "codename": "view_geographicdatalayer",
+      "name": "Can view geographic data layer"
+    },
+    {
+      "id": 129,
+      "content_type_id": 33,
+      "codename": "add_mapvisualization",
+      "name": "Can add map visualization"
+    },
+    {
+      "id": 130,
+      "content_type_id": 33,
+      "codename": "change_mapvisualization",
+      "name": "Can change map visualization"
+    },
+    {
+      "id": 131,
+      "content_type_id": 33,
+      "codename": "delete_mapvisualization",
+      "name": "Can delete map visualization"
+    },
+    {
+      "id": 132,
+      "content_type_id": 33,
+      "codename": "view_mapvisualization",
+      "name": "Can view map visualization"
+    },
+    {
+      "id": 133,
+      "content_type_id": 34,
+      "codename": "add_spatialdatapoint",
+      "name": "Can add spatial data point"
+    },
+    {
+      "id": 134,
+      "content_type_id": 34,
+      "codename": "change_spatialdatapoint",
+      "name": "Can change spatial data point"
+    },
+    {
+      "id": 135,
+      "content_type_id": 34,
+      "codename": "delete_spatialdatapoint",
+      "name": "Can delete spatial data point"
+    },
+    {
+      "id": 136,
+      "content_type_id": 34,
+      "codename": "view_spatialdatapoint",
+      "name": "Can view spatial data point"
+    },
+    {
+      "id": 137,
+      "content_type_id": 35,
+      "codename": "add_baselinestudy",
+      "name": "Can add baseline study"
+    },
+    {
+      "id": 138,
+      "content_type_id": 35,
+      "codename": "change_baselinestudy",
+      "name": "Can change baseline study"
+    },
+    {
+      "id": 139,
+      "content_type_id": 35,
+      "codename": "delete_baselinestudy",
+      "name": "Can delete baseline study"
+    },
+    {
+      "id": 140,
+      "content_type_id": 35,
+      "codename": "view_baselinestudy",
+      "name": "Can view baseline study"
+    },
+    {
+      "id": 141,
+      "content_type_id": 36,
+      "codename": "add_baselinestudyteammember",
+      "name": "Can add baseline study team member"
+    },
+    {
+      "id": 142,
+      "content_type_id": 36,
+      "codename": "change_baselinestudyteammember",
+      "name": "Can change baseline study team member"
+    },
+    {
+      "id": 143,
+      "content_type_id": 36,
+      "codename": "delete_baselinestudyteammember",
+      "name": "Can delete baseline study team member"
+    },
+    {
+      "id": 144,
+      "content_type_id": 36,
+      "codename": "view_baselinestudyteammember",
+      "name": "Can view baseline study team member"
+    },
+    {
+      "id": 145,
+      "content_type_id": 37,
+      "codename": "add_baselineindicator",
+      "name": "Can add baseline indicator"
+    },
+    {
+      "id": 146,
+      "content_type_id": 37,
+      "codename": "change_baselineindicator",
+      "name": "Can change baseline indicator"
+    },
+    {
+      "id": 147,
+      "content_type_id": 37,
+      "codename": "delete_baselineindicator",
+      "name": "Can delete baseline indicator"
+    },
+    {
+      "id": 148,
+      "content_type_id": 37,
+      "codename": "view_baselineindicator",
+      "name": "Can view baseline indicator"
+    },
+    {
+      "id": 149,
+      "content_type_id": 38,
+      "codename": "add_baselinedatacollection",
+      "name": "Can add baseline data collection"
+    },
+    {
+      "id": 150,
+      "content_type_id": 38,
+      "codename": "change_baselinedatacollection",
+      "name": "Can change baseline data collection"
+    },
+    {
+      "id": 151,
+      "content_type_id": 38,
+      "codename": "delete_baselinedatacollection",
+      "name": "Can delete baseline data collection"
+    },
+    {
+      "id": 152,
+      "content_type_id": 38,
+      "codename": "view_baselinedatacollection",
+      "name": "Can view baseline data collection"
+    },
+    {
+      "id": 153,
+      "content_type_id": 39,
+      "codename": "add_communityprofile",
+      "name": "Can add Community Cultural Profile"
+    },
+    {
+      "id": 154,
+      "content_type_id": 39,
+      "codename": "change_communityprofile",
+      "name": "Can change Community Cultural Profile"
+    },
+    {
+      "id": 155,
+      "content_type_id": 39,
+      "codename": "delete_communityprofile",
+      "name": "Can delete Community Cultural Profile"
+    },
+    {
+      "id": 156,
+      "content_type_id": 39,
+      "codename": "view_communityprofile",
+      "name": "Can view Community Cultural Profile"
+    },
+    {
+      "id": 157,
+      "content_type_id": 40,
+      "codename": "add_communitygovernance",
+      "name": "Can add Community Governance Profile"
+    },
+    {
+      "id": 158,
+      "content_type_id": 40,
+      "codename": "change_communitygovernance",
+      "name": "Can change Community Governance Profile"
+    },
+    {
+      "id": 159,
+      "content_type_id": 40,
+      "codename": "delete_communitygovernance",
+      "name": "Can delete Community Governance Profile"
+    },
+    {
+      "id": 160,
+      "content_type_id": 40,
+      "codename": "view_communitygovernance",
+      "name": "Can view Community Governance Profile"
+    },
+    {
+      "id": 161,
+      "content_type_id": 41,
+      "codename": "add_communitychallenges",
+      "name": "Can add Community Challenge"
+    },
+    {
+      "id": 162,
+      "content_type_id": 41,
+      "codename": "change_communitychallenges",
+      "name": "Can change Community Challenge"
+    },
+    {
+      "id": 163,
+      "content_type_id": 41,
+      "codename": "delete_communitychallenges",
+      "name": "Can delete Community Challenge"
+    },
+    {
+      "id": 164,
+      "content_type_id": 41,
+      "codename": "view_communitychallenges",
+      "name": "Can view Community Challenge"
+    },
+    {
+      "id": 165,
+      "content_type_id": 42,
+      "codename": "add_communityaspirations",
+      "name": "Can add Community Aspiration"
+    },
+    {
+      "id": 166,
+      "content_type_id": 42,
+      "codename": "change_communityaspirations",
+      "name": "Can change Community Aspiration"
+    },
+    {
+      "id": 167,
+      "content_type_id": 42,
+      "codename": "delete_communityaspirations",
+      "name": "Can delete Community Aspiration"
+    },
+    {
+      "id": 168,
+      "content_type_id": 42,
+      "codename": "view_communityaspirations",
+      "name": "Can view Community Aspiration"
+    },
+    {
+      "id": 169,
+      "content_type_id": 43,
+      "codename": "add_workshopactivity",
+      "name": "Can add workshop activity"
+    },
+    {
+      "id": 170,
+      "content_type_id": 43,
+      "codename": "change_workshopactivity",
+      "name": "Can change workshop activity"
+    },
+    {
+      "id": 171,
+      "content_type_id": 43,
+      "codename": "delete_workshopactivity",
+      "name": "Can delete workshop activity"
+    },
+    {
+      "id": 172,
+      "content_type_id": 43,
+      "codename": "view_workshopactivity",
+      "name": "Can view workshop activity"
+    },
+    {
+      "id": 173,
+      "content_type_id": 44,
+      "codename": "add_workshopsession",
+      "name": "Can add workshop session"
+    },
+    {
+      "id": 174,
+      "content_type_id": 44,
+      "codename": "change_workshopsession",
+      "name": "Can change workshop session"
+    },
+    {
+      "id": 175,
+      "content_type_id": 44,
+      "codename": "delete_workshopsession",
+      "name": "Can delete workshop session"
+    },
+    {
+      "id": 176,
+      "content_type_id": 44,
+      "codename": "view_workshopsession",
+      "name": "Can view workshop session"
+    },
+    {
+      "id": 177,
+      "content_type_id": 45,
+      "codename": "add_workshopoutput",
+      "name": "Can add workshop output"
+    },
+    {
+      "id": 178,
+      "content_type_id": 45,
+      "codename": "change_workshopoutput",
+      "name": "Can change workshop output"
+    },
+    {
+      "id": 179,
+      "content_type_id": 45,
+      "codename": "delete_workshopoutput",
+      "name": "Can delete workshop output"
+    },
+    {
+      "id": 180,
+      "content_type_id": 45,
+      "codename": "view_workshopoutput",
+      "name": "Can view workshop output"
+    },
+    {
+      "id": 181,
+      "content_type_id": 46,
+      "codename": "add_manareport",
+      "name": "Can add MANA Report"
+    },
+    {
+      "id": 182,
+      "content_type_id": 46,
+      "codename": "change_manareport",
+      "name": "Can change MANA Report"
+    },
+    {
+      "id": 183,
+      "content_type_id": 46,
+      "codename": "delete_manareport",
+      "name": "Can delete MANA Report"
+    },
+    {
+      "id": 184,
+      "content_type_id": 46,
+      "codename": "view_manareport",
+      "name": "Can view MANA Report"
+    },
+    {
+      "id": 185,
+      "content_type_id": 47,
+      "codename": "add_workshopparticipant",
+      "name": "Can add workshop participant"
+    },
+    {
+      "id": 186,
+      "content_type_id": 47,
+      "codename": "change_workshopparticipant",
+      "name": "Can change workshop participant"
+    },
+    {
+      "id": 187,
+      "content_type_id": 47,
+      "codename": "delete_workshopparticipant",
+      "name": "Can delete workshop participant"
+    },
+    {
+      "id": 188,
+      "content_type_id": 47,
+      "codename": "view_workshopparticipant",
+      "name": "Can view workshop participant"
+    },
+    {
+      "id": 189,
+      "content_type_id": 48,
+      "codename": "add_engagementfacilitator",
+      "name": "Can add engagement facilitator"
+    },
+    {
+      "id": 190,
+      "content_type_id": 48,
+      "codename": "change_engagementfacilitator",
+      "name": "Can change engagement facilitator"
+    },
+    {
+      "id": 191,
+      "content_type_id": 48,
+      "codename": "delete_engagementfacilitator",
+      "name": "Can delete engagement facilitator"
+    },
+    {
+      "id": 192,
+      "content_type_id": 48,
+      "codename": "view_engagementfacilitator",
+      "name": "Can view engagement facilitator"
+    },
+    {
+      "id": 193,
+      "content_type_id": 49,
+      "codename": "add_stakeholderengagementtype",
+      "name": "Can add stakeholder engagement type"
+    },
+    {
+      "id": 194,
+      "content_type_id": 49,
+      "codename": "change_stakeholderengagementtype",
+      "name": "Can change stakeholder engagement type"
+    },
+    {
+      "id": 195,
+      "content_type_id": 49,
+      "codename": "delete_stakeholderengagementtype",
+      "name": "Can delete stakeholder engagement type"
+    },
+    {
+      "id": 196,
+      "content_type_id": 49,
+      "codename": "view_stakeholderengagementtype",
+      "name": "Can view stakeholder engagement type"
+    },
+    {
+      "id": 197,
+      "content_type_id": 50,
+      "codename": "add_stakeholderengagement",
+      "name": "Can add stakeholder engagement"
+    },
+    {
+      "id": 198,
+      "content_type_id": 50,
+      "codename": "change_stakeholderengagement",
+      "name": "Can change stakeholder engagement"
+    },
+    {
+      "id": 199,
+      "content_type_id": 50,
+      "codename": "delete_stakeholderengagement",
+      "name": "Can delete stakeholder engagement"
+    },
+    {
+      "id": 200,
+      "content_type_id": 50,
+      "codename": "view_stakeholderengagement",
+      "name": "Can view stakeholder engagement"
+    },
+    {
+      "id": 201,
+      "content_type_id": 51,
+      "codename": "add_engagementtracking",
+      "name": "Can add engagement tracking"
+    },
+    {
+      "id": 202,
+      "content_type_id": 51,
+      "codename": "change_engagementtracking",
+      "name": "Can change engagement tracking"
+    },
+    {
+      "id": 203,
+      "content_type_id": 51,
+      "codename": "delete_engagementtracking",
+      "name": "Can delete engagement tracking"
+    },
+    {
+      "id": 204,
+      "content_type_id": 51,
+      "codename": "view_engagementtracking",
+      "name": "Can view engagement tracking"
+    },
+    {
+      "id": 205,
+      "content_type_id": 52,
+      "codename": "add_consultationfeedback",
+      "name": "Can add consultation feedback"
+    },
+    {
+      "id": 206,
+      "content_type_id": 52,
+      "codename": "change_consultationfeedback",
+      "name": "Can change consultation feedback"
+    },
+    {
+      "id": 207,
+      "content_type_id": 52,
+      "codename": "delete_consultationfeedback",
+      "name": "Can delete consultation feedback"
+    },
+    {
+      "id": 208,
+      "content_type_id": 52,
+      "codename": "view_consultationfeedback",
+      "name": "Can view consultation feedback"
+    },
+    {
+      "id": 209,
+      "content_type_id": 53,
+      "codename": "add_organization",
+      "name": "Can add organization"
+    },
+    {
+      "id": 210,
+      "content_type_id": 53,
+      "codename": "change_organization",
+      "name": "Can change organization"
+    },
+    {
+      "id": 211,
+      "content_type_id": 53,
+      "codename": "delete_organization",
+      "name": "Can delete organization"
+    },
+    {
+      "id": 212,
+      "content_type_id": 53,
+      "codename": "view_organization",
+      "name": "Can view organization"
+    },
+    {
+      "id": 213,
+      "content_type_id": 54,
+      "codename": "add_organizationcontact",
+      "name": "Can add organization contact"
+    },
+    {
+      "id": 214,
+      "content_type_id": 54,
+      "codename": "change_organizationcontact",
+      "name": "Can change organization contact"
+    },
+    {
+      "id": 215,
+      "content_type_id": 54,
+      "codename": "delete_organizationcontact",
+      "name": "Can delete organization contact"
+    },
+    {
+      "id": 216,
+      "content_type_id": 54,
+      "codename": "view_organizationcontact",
+      "name": "Can view organization contact"
+    },
+    {
+      "id": 217,
+      "content_type_id": 55,
+      "codename": "add_communicationtemplate",
+      "name": "Can add communication template"
+    },
+    {
+      "id": 218,
+      "content_type_id": 55,
+      "codename": "change_communicationtemplate",
+      "name": "Can change communication template"
+    },
+    {
+      "id": 219,
+      "content_type_id": 55,
+      "codename": "delete_communicationtemplate",
+      "name": "Can delete communication template"
+    },
+    {
+      "id": 220,
+      "content_type_id": 55,
+      "codename": "view_communicationtemplate",
+      "name": "Can view communication template"
+    },
+    {
+      "id": 221,
+      "content_type_id": 56,
+      "codename": "add_communicationschedule",
+      "name": "Can add communication schedule"
+    },
+    {
+      "id": 222,
+      "content_type_id": 56,
+      "codename": "change_communicationschedule",
+      "name": "Can change communication schedule"
+    },
+    {
+      "id": 223,
+      "content_type_id": 56,
+      "codename": "delete_communicationschedule",
+      "name": "Can delete communication schedule"
+    },
+    {
+      "id": 224,
+      "content_type_id": 56,
+      "codename": "view_communicationschedule",
+      "name": "Can view communication schedule"
+    },
+    {
+      "id": 225,
+      "content_type_id": 57,
+      "codename": "add_communication",
+      "name": "Can add communication"
+    },
+    {
+      "id": 226,
+      "content_type_id": 57,
+      "codename": "change_communication",
+      "name": "Can change communication"
+    },
+    {
+      "id": 227,
+      "content_type_id": 57,
+      "codename": "delete_communication",
+      "name": "Can delete communication"
+    },
+    {
+      "id": 228,
+      "content_type_id": 57,
+      "codename": "view_communication",
+      "name": "Can view communication"
+    },
+    {
+      "id": 229,
+      "content_type_id": 58,
+      "codename": "add_event",
+      "name": "Can add event"
+    },
+    {
+      "id": 230,
+      "content_type_id": 58,
+      "codename": "change_event",
+      "name": "Can change event"
+    },
+    {
+      "id": 231,
+      "content_type_id": 58,
+      "codename": "delete_event",
+      "name": "Can delete event"
+    },
+    {
+      "id": 232,
+      "content_type_id": 58,
+      "codename": "view_event",
+      "name": "Can view event"
+    },
+    {
+      "id": 233,
+      "content_type_id": 59,
+      "codename": "add_actionitem",
+      "name": "Can add action item"
+    },
+    {
+      "id": 234,
+      "content_type_id": 59,
+      "codename": "change_actionitem",
+      "name": "Can change action item"
+    },
+    {
+      "id": 235,
+      "content_type_id": 59,
+      "codename": "delete_actionitem",
+      "name": "Can delete action item"
+    },
+    {
+      "id": 236,
+      "content_type_id": 59,
+      "codename": "view_actionitem",
+      "name": "Can view action item"
+    },
+    {
+      "id": 237,
+      "content_type_id": 60,
+      "codename": "add_eventparticipant",
+      "name": "Can add event participant"
+    },
+    {
+      "id": 238,
+      "content_type_id": 60,
+      "codename": "change_eventparticipant",
+      "name": "Can change event participant"
+    },
+    {
+      "id": 239,
+      "content_type_id": 60,
+      "codename": "delete_eventparticipant",
+      "name": "Can delete event participant"
+    },
+    {
+      "id": 240,
+      "content_type_id": 60,
+      "codename": "view_eventparticipant",
+      "name": "Can view event participant"
+    },
+    {
+      "id": 241,
+      "content_type_id": 61,
+      "codename": "add_eventdocument",
+      "name": "Can add event document"
+    },
+    {
+      "id": 242,
+      "content_type_id": 61,
+      "codename": "change_eventdocument",
+      "name": "Can change event document"
+    },
+    {
+      "id": 243,
+      "content_type_id": 61,
+      "codename": "delete_eventdocument",
+      "name": "Can delete event document"
+    },
+    {
+      "id": 244,
+      "content_type_id": 61,
+      "codename": "view_eventdocument",
+      "name": "Can view event document"
+    },
+    {
+      "id": 245,
+      "content_type_id": 62,
+      "codename": "add_partnership",
+      "name": "Can add partnership"
+    },
+    {
+      "id": 246,
+      "content_type_id": 62,
+      "codename": "change_partnership",
+      "name": "Can change partnership"
+    },
+    {
+      "id": 247,
+      "content_type_id": 62,
+      "codename": "delete_partnership",
+      "name": "Can delete partnership"
+    },
+    {
+      "id": 248,
+      "content_type_id": 62,
+      "codename": "view_partnership",
+      "name": "Can view partnership"
+    },
+    {
+      "id": 249,
+      "content_type_id": 63,
+      "codename": "add_partnershipsignatory",
+      "name": "Can add partnership signatory"
+    },
+    {
+      "id": 250,
+      "content_type_id": 63,
+      "codename": "change_partnershipsignatory",
+      "name": "Can change partnership signatory"
+    },
+    {
+      "id": 251,
+      "content_type_id": 63,
+      "codename": "delete_partnershipsignatory",
+      "name": "Can delete partnership signatory"
+    },
+    {
+      "id": 252,
+      "content_type_id": 63,
+      "codename": "view_partnershipsignatory",
+      "name": "Can view partnership signatory"
+    },
+    {
+      "id": 253,
+      "content_type_id": 64,
+      "codename": "add_partnershipmilestone",
+      "name": "Can add partnership milestone"
+    },
+    {
+      "id": 254,
+      "content_type_id": 64,
+      "codename": "change_partnershipmilestone",
+      "name": "Can change partnership milestone"
+    },
+    {
+      "id": 255,
+      "content_type_id": 64,
+      "codename": "delete_partnershipmilestone",
+      "name": "Can delete partnership milestone"
+    },
+    {
+      "id": 256,
+      "content_type_id": 64,
+      "codename": "view_partnershipmilestone",
+      "name": "Can view partnership milestone"
+    },
+    {
+      "id": 257,
+      "content_type_id": 65,
+      "codename": "add_partnershipdocument",
+      "name": "Can add partnership document"
+    },
+    {
+      "id": 258,
+      "content_type_id": 65,
+      "codename": "change_partnershipdocument",
+      "name": "Can change partnership document"
+    },
+    {
+      "id": 259,
+      "content_type_id": 65,
+      "codename": "delete_partnershipdocument",
+      "name": "Can delete partnership document"
+    },
+    {
+      "id": 260,
+      "content_type_id": 65,
+      "codename": "view_partnershipdocument",
+      "name": "Can view partnership document"
+    },
+    {
+      "id": 261,
+      "content_type_id": 66,
+      "codename": "add_document",
+      "name": "Can add Document"
+    },
+    {
+      "id": 262,
+      "content_type_id": 66,
+      "codename": "change_document",
+      "name": "Can change Document"
+    },
+    {
+      "id": 263,
+      "content_type_id": 66,
+      "codename": "delete_document",
+      "name": "Can delete Document"
+    },
+    {
+      "id": 264,
+      "content_type_id": 66,
+      "codename": "view_document",
+      "name": "Can view Document"
+    },
+    {
+      "id": 265,
+      "content_type_id": 67,
+      "codename": "add_documentcategory",
+      "name": "Can add Document Category"
+    },
+    {
+      "id": 266,
+      "content_type_id": 67,
+      "codename": "change_documentcategory",
+      "name": "Can change Document Category"
+    },
+    {
+      "id": 267,
+      "content_type_id": 67,
+      "codename": "delete_documentcategory",
+      "name": "Can delete Document Category"
+    },
+    {
+      "id": 268,
+      "content_type_id": 67,
+      "codename": "view_documentcategory",
+      "name": "Can view Document Category"
+    },
+    {
+      "id": 269,
+      "content_type_id": 68,
+      "codename": "add_documentcomment",
+      "name": "Can add Document Comment"
+    },
+    {
+      "id": 270,
+      "content_type_id": 68,
+      "codename": "change_documentcomment",
+      "name": "Can change Document Comment"
+    },
+    {
+      "id": 271,
+      "content_type_id": 68,
+      "codename": "delete_documentcomment",
+      "name": "Can delete Document Comment"
+    },
+    {
+      "id": 272,
+      "content_type_id": 68,
+      "codename": "view_documentcomment",
+      "name": "Can view Document Comment"
+    },
+    {
+      "id": 273,
+      "content_type_id": 69,
+      "codename": "add_documentaccess",
+      "name": "Can add Document Access"
+    },
+    {
+      "id": 274,
+      "content_type_id": 69,
+      "codename": "change_documentaccess",
+      "name": "Can change Document Access"
+    },
+    {
+      "id": 275,
+      "content_type_id": 69,
+      "codename": "delete_documentaccess",
+      "name": "Can delete Document Access"
+    },
+    {
+      "id": 276,
+      "content_type_id": 69,
+      "codename": "view_documentaccess",
+      "name": "Can view Document Access"
+    },
+    {
+      "id": 277,
+      "content_type_id": 70,
+      "codename": "add_policyrecommendation",
+      "name": "Can add policy recommendation"
+    },
+    {
+      "id": 278,
+      "content_type_id": 70,
+      "codename": "change_policyrecommendation",
+      "name": "Can change policy recommendation"
+    },
+    {
+      "id": 279,
+      "content_type_id": 70,
+      "codename": "delete_policyrecommendation",
+      "name": "Can delete policy recommendation"
+    },
+    {
+      "id": 280,
+      "content_type_id": 70,
+      "codename": "view_policyrecommendation",
+      "name": "Can view policy recommendation"
+    },
+    {
+      "id": 281,
+      "content_type_id": 71,
+      "codename": "add_policyimpact",
+      "name": "Can add policy impact"
+    },
+    {
+      "id": 282,
+      "content_type_id": 71,
+      "codename": "change_policyimpact",
+      "name": "Can change policy impact"
+    },
+    {
+      "id": 283,
+      "content_type_id": 71,
+      "codename": "delete_policyimpact",
+      "name": "Can delete policy impact"
+    },
+    {
+      "id": 284,
+      "content_type_id": 71,
+      "codename": "view_policyimpact",
+      "name": "Can view policy impact"
+    },
+    {
+      "id": 285,
+      "content_type_id": 72,
+      "codename": "add_policyevidence",
+      "name": "Can add policy evidence"
+    },
+    {
+      "id": 286,
+      "content_type_id": 72,
+      "codename": "change_policyevidence",
+      "name": "Can change policy evidence"
+    },
+    {
+      "id": 287,
+      "content_type_id": 72,
+      "codename": "delete_policyevidence",
+      "name": "Can delete policy evidence"
+    },
+    {
+      "id": 288,
+      "content_type_id": 72,
+      "codename": "view_policyevidence",
+      "name": "Can view policy evidence"
+    },
+    {
+      "id": 289,
+      "content_type_id": 73,
+      "codename": "add_policydocument",
+      "name": "Can add policy document"
+    },
+    {
+      "id": 290,
+      "content_type_id": 73,
+      "codename": "change_policydocument",
+      "name": "Can change policy document"
+    },
+    {
+      "id": 291,
+      "content_type_id": 73,
+      "codename": "delete_policydocument",
+      "name": "Can delete policy document"
+    },
+    {
+      "id": 292,
+      "content_type_id": 73,
+      "codename": "view_policydocument",
+      "name": "Can view policy document"
+    },
+    {
+      "id": 293,
+      "content_type_id": 74,
+      "codename": "add_dataimport",
+      "name": "Can add Data Import"
+    },
+    {
+      "id": 294,
+      "content_type_id": 74,
+      "codename": "change_dataimport",
+      "name": "Can change Data Import"
+    },
+    {
+      "id": 295,
+      "content_type_id": 74,
+      "codename": "delete_dataimport",
+      "name": "Can delete Data Import"
+    },
+    {
+      "id": 296,
+      "content_type_id": 74,
+      "codename": "view_dataimport",
+      "name": "Can view Data Import"
+    },
+    {
+      "id": 297,
+      "content_type_id": 75,
+      "codename": "add_importtemplate",
+      "name": "Can add Import Template"
+    },
+    {
+      "id": 298,
+      "content_type_id": 75,
+      "codename": "change_importtemplate",
+      "name": "Can change Import Template"
+    },
+    {
+      "id": 299,
+      "content_type_id": 75,
+      "codename": "delete_importtemplate",
+      "name": "Can delete Import Template"
+    },
+    {
+      "id": 300,
+      "content_type_id": 75,
+      "codename": "view_importtemplate",
+      "name": "Can view Import Template"
+    },
+    {
+      "id": 301,
+      "content_type_id": 76,
+      "codename": "add_importlog",
+      "name": "Can add Import Log"
+    },
+    {
+      "id": 302,
+      "content_type_id": 76,
+      "codename": "change_importlog",
+      "name": "Can change Import Log"
+    },
+    {
+      "id": 303,
+      "content_type_id": 76,
+      "codename": "delete_importlog",
+      "name": "Can delete Import Log"
+    },
+    {
+      "id": 304,
+      "content_type_id": 76,
+      "codename": "view_importlog",
+      "name": "Can view Import Log"
+    },
+    {
+      "id": 305,
+      "content_type_id": 77,
+      "codename": "add_fieldmapping",
+      "name": "Can add Field Mapping"
+    },
+    {
+      "id": 306,
+      "content_type_id": 77,
+      "codename": "change_fieldmapping",
+      "name": "Can change Field Mapping"
+    },
+    {
+      "id": 307,
+      "content_type_id": 77,
+      "codename": "delete_fieldmapping",
+      "name": "Can delete Field Mapping"
+    },
+    {
+      "id": 308,
+      "content_type_id": 77,
+      "codename": "view_fieldmapping",
+      "name": "Can view Field Mapping"
+    },
+    {
+      "id": 309,
+      "content_type_id": 78,
+      "codename": "add_monitoringentry",
+      "name": "Can add Monitoring Entry"
+    },
+    {
+      "id": 310,
+      "content_type_id": 78,
+      "codename": "change_monitoringentry",
+      "name": "Can change Monitoring Entry"
+    },
+    {
+      "id": 311,
+      "content_type_id": 78,
+      "codename": "delete_monitoringentry",
+      "name": "Can delete Monitoring Entry"
+    },
+    {
+      "id": 312,
+      "content_type_id": 78,
+      "codename": "view_monitoringentry",
+      "name": "Can view Monitoring Entry"
+    },
+    {
+      "id": 313,
+      "content_type_id": 79,
+      "codename": "add_monitoringupdate",
+      "name": "Can add Monitoring Update"
+    },
+    {
+      "id": 314,
+      "content_type_id": 79,
+      "codename": "change_monitoringupdate",
+      "name": "Can change Monitoring Update"
+    },
+    {
+      "id": 315,
+      "content_type_id": 79,
+      "codename": "delete_monitoringupdate",
+      "name": "Can delete Monitoring Update"
+    },
+    {
+      "id": 316,
+      "content_type_id": 79,
+      "codename": "view_monitoringupdate",
+      "name": "Can view Monitoring Update"
+    },
+    {
+      "id": 317,
+      "content_type_id": 80,
+      "codename": "add_geographicdatalayer",
+      "name": "Can add geographic data layer"
+    },
+    {
+      "id": 318,
+      "content_type_id": 80,
+      "codename": "change_geographicdatalayer",
+      "name": "Can change geographic data layer"
+    },
+    {
+      "id": 319,
+      "content_type_id": 80,
+      "codename": "delete_geographicdatalayer",
+      "name": "Can delete geographic data layer"
+    },
+    {
+      "id": 320,
+      "content_type_id": 80,
+      "codename": "view_geographicdatalayer",
+      "name": "Can view geographic data layer"
+    },
+    {
+      "id": 321,
+      "content_type_id": 81,
+      "codename": "add_mapvisualization",
+      "name": "Can add map visualization"
+    },
+    {
+      "id": 322,
+      "content_type_id": 81,
+      "codename": "change_mapvisualization",
+      "name": "Can change map visualization"
+    },
+    {
+      "id": 323,
+      "content_type_id": 81,
+      "codename": "delete_mapvisualization",
+      "name": "Can delete map visualization"
+    },
+    {
+      "id": 324,
+      "content_type_id": 81,
+      "codename": "view_mapvisualization",
+      "name": "Can view map visualization"
+    },
+    {
+      "id": 325,
+      "content_type_id": 82,
+      "codename": "add_spatialdatapoint",
+      "name": "Can add spatial data point"
+    },
+    {
+      "id": 326,
+      "content_type_id": 82,
+      "codename": "change_spatialdatapoint",
+      "name": "Can change spatial data point"
+    },
+    {
+      "id": 327,
+      "content_type_id": 82,
+      "codename": "delete_spatialdatapoint",
+      "name": "Can delete spatial data point"
+    },
+    {
+      "id": 328,
+      "content_type_id": 82,
+      "codename": "view_spatialdatapoint",
+      "name": "Can view spatial data point"
+    },
+    {
+      "id": 329,
+      "content_type_id": 83,
+      "codename": "add_stafftask",
+      "name": "Can add staff task"
+    },
+    {
+      "id": 330,
+      "content_type_id": 83,
+      "codename": "change_stafftask",
+      "name": "Can change staff task"
+    },
+    {
+      "id": 331,
+      "content_type_id": 83,
+      "codename": "delete_stafftask",
+      "name": "Can delete staff task"
+    },
+    {
+      "id": 332,
+      "content_type_id": 83,
+      "codename": "view_stafftask",
+      "name": "Can view staff task"
+    },
+    {
+      "id": 333,
+      "content_type_id": 84,
+      "codename": "add_staffteam",
+      "name": "Can add staff team"
+    },
+    {
+      "id": 334,
+      "content_type_id": 84,
+      "codename": "change_staffteam",
+      "name": "Can change staff team"
+    },
+    {
+      "id": 335,
+      "content_type_id": 84,
+      "codename": "delete_staffteam",
+      "name": "Can delete staff team"
+    },
+    {
+      "id": 336,
+      "content_type_id": 84,
+      "codename": "view_staffteam",
+      "name": "Can view staff team"
+    },
+    {
+      "id": 337,
+      "content_type_id": 85,
+      "codename": "add_staffteammembership",
+      "name": "Can add staff team membership"
+    },
+    {
+      "id": 338,
+      "content_type_id": 85,
+      "codename": "change_staffteammembership",
+      "name": "Can change staff team membership"
+    },
+    {
+      "id": 339,
+      "content_type_id": 85,
+      "codename": "delete_staffteammembership",
+      "name": "Can delete staff team membership"
+    },
+    {
+      "id": 340,
+      "content_type_id": 85,
+      "codename": "view_staffteammembership",
+      "name": "Can view staff team membership"
+    },
+    {
+      "id": 341,
+      "content_type_id": 86,
+      "codename": "add_staffdevelopmentplan",
+      "name": "Can add staff development plan"
+    },
+    {
+      "id": 342,
+      "content_type_id": 86,
+      "codename": "change_staffdevelopmentplan",
+      "name": "Can change staff development plan"
+    },
+    {
+      "id": 343,
+      "content_type_id": 86,
+      "codename": "delete_staffdevelopmentplan",
+      "name": "Can delete staff development plan"
+    },
+    {
+      "id": 344,
+      "content_type_id": 86,
+      "codename": "view_staffdevelopmentplan",
+      "name": "Can view staff development plan"
+    },
+    {
+      "id": 345,
+      "content_type_id": 87,
+      "codename": "add_trainingprogram",
+      "name": "Can add training program"
+    },
+    {
+      "id": 346,
+      "content_type_id": 87,
+      "codename": "change_trainingprogram",
+      "name": "Can change training program"
+    },
+    {
+      "id": 347,
+      "content_type_id": 87,
+      "codename": "delete_trainingprogram",
+      "name": "Can delete training program"
+    },
+    {
+      "id": 348,
+      "content_type_id": 87,
+      "codename": "view_trainingprogram",
+      "name": "Can view training program"
+    },
+    {
+      "id": 349,
+      "content_type_id": 88,
+      "codename": "add_trainingenrollment",
+      "name": "Can add training enrollment"
+    },
+    {
+      "id": 350,
+      "content_type_id": 88,
+      "codename": "change_trainingenrollment",
+      "name": "Can change training enrollment"
+    },
+    {
+      "id": 351,
+      "content_type_id": 88,
+      "codename": "delete_trainingenrollment",
+      "name": "Can delete training enrollment"
+    },
+    {
+      "id": 352,
+      "content_type_id": 88,
+      "codename": "view_trainingenrollment",
+      "name": "Can view training enrollment"
+    },
+    {
+      "id": 353,
+      "content_type_id": 89,
+      "codename": "add_staffprofile",
+      "name": "Can add staff profile"
+    },
+    {
+      "id": 354,
+      "content_type_id": 89,
+      "codename": "change_staffprofile",
+      "name": "Can change staff profile"
+    },
+    {
+      "id": 355,
+      "content_type_id": 89,
+      "codename": "delete_staffprofile",
+      "name": "Can delete staff profile"
+    },
+    {
+      "id": 356,
+      "content_type_id": 89,
+      "codename": "view_staffprofile",
+      "name": "Can view staff profile"
+    },
+    {
+      "id": 357,
+      "content_type_id": 90,
+      "codename": "add_performancetarget",
+      "name": "Can add performance target"
+    },
+    {
+      "id": 358,
+      "content_type_id": 90,
+      "codename": "change_performancetarget",
+      "name": "Can change performance target"
+    },
+    {
+      "id": 359,
+      "content_type_id": 90,
+      "codename": "delete_performancetarget",
+      "name": "Can delete performance target"
+    },
+    {
+      "id": 360,
+      "content_type_id": 90,
+      "codename": "view_performancetarget",
+      "name": "Can view performance target"
+    },
+    {
+      "id": 361,
+      "content_type_id": 91,
+      "codename": "add_monitoringentryfunding",
+      "name": "Can add Funding Flow"
+    },
+    {
+      "id": 362,
+      "content_type_id": 91,
+      "codename": "change_monitoringentryfunding",
+      "name": "Can change Funding Flow"
+    },
+    {
+      "id": 363,
+      "content_type_id": 91,
+      "codename": "delete_monitoringentryfunding",
+      "name": "Can delete Funding Flow"
+    },
+    {
+      "id": 364,
+      "content_type_id": 91,
+      "codename": "view_monitoringentryfunding",
+      "name": "Can view Funding Flow"
+    },
+    {
+      "id": 365,
+      "content_type_id": 92,
+      "codename": "add_monitoringentryworkflowstage",
+      "name": "Can add Budget Workflow Stage"
+    },
+    {
+      "id": 366,
+      "content_type_id": 92,
+      "codename": "change_monitoringentryworkflowstage",
+      "name": "Can change Budget Workflow Stage"
+    },
+    {
+      "id": 367,
+      "content_type_id": 92,
+      "codename": "delete_monitoringentryworkflowstage",
+      "name": "Can delete Budget Workflow Stage"
+    },
+    {
+      "id": 368,
+      "content_type_id": 92,
+      "codename": "view_monitoringentryworkflowstage",
+      "name": "Can view Budget Workflow Stage"
+    },
+    {
+      "id": 369,
+      "content_type_id": 93,
+      "codename": "add_provincecoverage",
+      "name": "Can add Bangsamoro Province OBC"
+    },
+    {
+      "id": 370,
+      "content_type_id": 93,
+      "codename": "change_provincecoverage",
+      "name": "Can change Bangsamoro Province OBC"
+    },
+    {
+      "id": 371,
+      "content_type_id": 93,
+      "codename": "delete_provincecoverage",
+      "name": "Can delete Bangsamoro Province OBC"
+    },
+    {
+      "id": 372,
+      "content_type_id": 93,
+      "codename": "view_provincecoverage",
+      "name": "Can view Bangsamoro Province OBC"
+    },
+    {
+      "id": 373,
+      "content_type_id": 94,
+      "codename": "add_workshopsynthesis",
+      "name": "Can add Workshop Synthesis"
+    },
+    {
+      "id": 374,
+      "content_type_id": 94,
+      "codename": "change_workshopsynthesis",
+      "name": "Can change Workshop Synthesis"
+    },
+    {
+      "id": 375,
+      "content_type_id": 94,
+      "codename": "delete_workshopsynthesis",
+      "name": "Can delete Workshop Synthesis"
+    },
+    {
+      "id": 376,
+      "content_type_id": 94,
+      "codename": "view_workshopsynthesis",
+      "name": "Can view Workshop Synthesis"
+    },
+    {
+      "id": 377,
+      "content_type_id": 95,
+      "codename": "add_workshopresponse",
+      "name": "Can add workshop response"
+    },
+    {
+      "id": 378,
+      "content_type_id": 95,
+      "codename": "change_workshopresponse",
+      "name": "Can change workshop response"
+    },
+    {
+      "id": 379,
+      "content_type_id": 95,
+      "codename": "delete_workshopresponse",
+      "name": "Can delete workshop response"
+    },
+    {
+      "id": 380,
+      "content_type_id": 95,
+      "codename": "view_workshopresponse",
+      "name": "Can view workshop response"
+    },
+    {
+      "id": 381,
+      "content_type_id": 96,
+      "codename": "add_workshopparticipantaccount",
+      "name": "Can add Workshop Participant Account"
+    },
+    {
+      "id": 382,
+      "content_type_id": 96,
+      "codename": "change_workshopparticipantaccount",
+      "name": "Can change Workshop Participant Account"
+    },
+    {
+      "id": 383,
+      "content_type_id": 96,
+      "codename": "delete_workshopparticipantaccount",
+      "name": "Can delete Workshop Participant Account"
+    },
+    {
+      "id": 384,
+      "content_type_id": 96,
+      "codename": "view_workshopparticipantaccount",
+      "name": "Can view Workshop Participant Account"
+    },
+    {
+      "id": 385,
+      "content_type_id": 96,
+      "codename": "can_access_regional_mana",
+      "name": "Can access regional MANA workshops"
+    },
+    {
+      "id": 386,
+      "content_type_id": 96,
+      "codename": "can_view_provincial_obc",
+      "name": "Can view provincial OBC data"
+    },
+    {
+      "id": 387,
+      "content_type_id": 97,
+      "codename": "add_workshopaccesslog",
+      "name": "Can add workshop access log"
+    },
+    {
+      "id": 388,
+      "content_type_id": 97,
+      "codename": "change_workshopaccesslog",
+      "name": "Can change workshop access log"
+    },
+    {
+      "id": 389,
+      "content_type_id": 97,
+      "codename": "delete_workshopaccesslog",
+      "name": "Can delete workshop access log"
+    },
+    {
+      "id": 390,
+      "content_type_id": 97,
+      "codename": "view_workshopaccesslog",
+      "name": "Can view workshop access log"
+    },
+    {
+      "id": 391,
+      "content_type_id": 98,
+      "codename": "add_workshopquestiondefinition",
+      "name": "Can add Workshop Question Definition"
+    },
+    {
+      "id": 392,
+      "content_type_id": 98,
+      "codename": "change_workshopquestiondefinition",
+      "name": "Can change Workshop Question Definition"
+    },
+    {
+      "id": 393,
+      "content_type_id": 98,
+      "codename": "delete_workshopquestiondefinition",
+      "name": "Can delete Workshop Question Definition"
+    },
+    {
+      "id": 394,
+      "content_type_id": 98,
+      "codename": "view_workshopquestiondefinition",
+      "name": "Can view Workshop Question Definition"
+    },
+    {
+      "id": 395,
+      "content_type_id": 96,
+      "codename": "can_facilitate_workshop",
+      "name": "Can Facilitate Workshop"
+    },
+    {
+      "id": 396,
+      "content_type_id": 99,
+      "codename": "add_facilitatorassessmentassignment",
+      "name": "Can add Facilitator Assessment Assignment"
+    },
+    {
+      "id": 397,
+      "content_type_id": 99,
+      "codename": "change_facilitatorassessmentassignment",
+      "name": "Can change Facilitator Assessment Assignment"
+    },
+    {
+      "id": 398,
+      "content_type_id": 99,
+      "codename": "delete_facilitatorassessmentassignment",
+      "name": "Can delete Facilitator Assessment Assignment"
+    },
+    {
+      "id": 399,
+      "content_type_id": 99,
+      "codename": "view_facilitatorassessmentassignment",
+      "name": "Can view Facilitator Assessment Assignment"
+    },
+    {
+      "id": 400,
+      "content_type_id": 100,
+      "codename": "add_workshopnotification",
+      "name": "Can add Workshop Notification"
+    },
+    {
+      "id": 401,
+      "content_type_id": 100,
+      "codename": "change_workshopnotification",
+      "name": "Can change Workshop Notification"
+    },
+    {
+      "id": 402,
+      "content_type_id": 100,
+      "codename": "delete_workshopnotification",
+      "name": "Can delete Workshop Notification"
+    },
+    {
+      "id": 403,
+      "content_type_id": 100,
+      "codename": "view_workshopnotification",
+      "name": "Can view Workshop Notification"
+    },
+    {
+      "id": 404,
+      "content_type_id": 101,
+      "codename": "add_monitoringentryworkflowdocument",
+      "name": "Can add Workflow Document"
+    },
+    {
+      "id": 405,
+      "content_type_id": 101,
+      "codename": "change_monitoringentryworkflowdocument",
+      "name": "Can change Workflow Document"
+    },
+    {
+      "id": 406,
+      "content_type_id": 101,
+      "codename": "delete_monitoringentryworkflowdocument",
+      "name": "Can delete Workflow Document"
+    },
+    {
+      "id": 407,
+      "content_type_id": 101,
+      "codename": "view_monitoringentryworkflowdocument",
+      "name": "Can view Workflow Document"
+    },
+    {
+      "id": 408,
+      "content_type_id": 102,
+      "codename": "add_monitoringentrytaskassignment",
+      "name": "Can add Task Assignment"
+    },
+    {
+      "id": 409,
+      "content_type_id": 102,
+      "codename": "change_monitoringentrytaskassignment",
+      "name": "Can change Task Assignment"
+    },
+    {
+      "id": 410,
+      "content_type_id": 102,
+      "codename": "delete_monitoringentrytaskassignment",
+      "name": "Can delete Task Assignment"
+    },
+    {
+      "id": 411,
+      "content_type_id": 102,
+      "codename": "view_monitoringentrytaskassignment",
+      "name": "Can view Task Assignment"
+    },
+    {
+      "id": 412,
+      "content_type_id": 103,
+      "codename": "add_maofocalperson",
+      "name": "Can add MAO Focal Person"
+    },
+    {
+      "id": 413,
+      "content_type_id": 103,
+      "codename": "change_maofocalperson",
+      "name": "Can change MAO Focal Person"
+    },
+    {
+      "id": 414,
+      "content_type_id": 103,
+      "codename": "delete_maofocalperson",
+      "name": "Can delete MAO Focal Person"
+    },
+    {
+      "id": 415,
+      "content_type_id": 103,
+      "codename": "view_maofocalperson",
+      "name": "Can view MAO Focal Person"
+    },
+    {
+      "id": 416,
+      "content_type_id": 104,
+      "codename": "add_policyimplementationmilestone",
+      "name": "Can add Policy Implementation Milestone"
+    },
+    {
+      "id": 417,
+      "content_type_id": 104,
+      "codename": "change_policyimplementationmilestone",
+      "name": "Can change Policy Implementation Milestone"
+    },
+    {
+      "id": 418,
+      "content_type_id": 104,
+      "codename": "delete_policyimplementationmilestone",
+      "name": "Can delete Policy Implementation Milestone"
+    },
+    {
+      "id": 419,
+      "content_type_id": 104,
+      "codename": "view_policyimplementationmilestone",
+      "name": "Can view Policy Implementation Milestone"
+    },
+    {
+      "id": 420,
+      "content_type_id": 105,
+      "codename": "add_serviceoffering",
+      "name": "Can add Service Offering"
+    },
+    {
+      "id": 421,
+      "content_type_id": 105,
+      "codename": "change_serviceoffering",
+      "name": "Can change Service Offering"
+    },
+    {
+      "id": 422,
+      "content_type_id": 105,
+      "codename": "delete_serviceoffering",
+      "name": "Can delete Service Offering"
+    },
+    {
+      "id": 423,
+      "content_type_id": 105,
+      "codename": "view_serviceoffering",
+      "name": "Can view Service Offering"
+    },
+    {
+      "id": 424,
+      "content_type_id": 106,
+      "codename": "add_serviceapplication",
+      "name": "Can add Service Application"
+    },
+    {
+      "id": 425,
+      "content_type_id": 106,
+      "codename": "change_serviceapplication",
+      "name": "Can change Service Application"
+    },
+    {
+      "id": 426,
+      "content_type_id": 106,
+      "codename": "delete_serviceapplication",
+      "name": "Can delete Service Application"
+    },
+    {
+      "id": 427,
+      "content_type_id": 106,
+      "codename": "view_serviceapplication",
+      "name": "Can view Service Application"
+    },
+    {
+      "id": 428,
+      "content_type_id": 107,
+      "codename": "add_needvote",
+      "name": "Can add Need Vote"
+    },
+    {
+      "id": 429,
+      "content_type_id": 107,
+      "codename": "change_needvote",
+      "name": "Can change Need Vote"
+    },
+    {
+      "id": 430,
+      "content_type_id": 107,
+      "codename": "delete_needvote",
+      "name": "Can delete Need Vote"
+    },
+    {
+      "id": 431,
+      "content_type_id": 107,
+      "codename": "view_needvote",
+      "name": "Can view Need Vote"
+    },
+    {
+      "id": 432,
+      "content_type_id": 108,
+      "codename": "add_strategicgoal",
+      "name": "Can add Strategic Goal"
+    },
+    {
+      "id": 433,
+      "content_type_id": 108,
+      "codename": "change_strategicgoal",
+      "name": "Can change Strategic Goal"
+    },
+    {
+      "id": 434,
+      "content_type_id": 108,
+      "codename": "delete_strategicgoal",
+      "name": "Can delete Strategic Goal"
+    },
+    {
+      "id": 435,
+      "content_type_id": 108,
+      "codename": "view_strategicgoal",
+      "name": "Can view Strategic Goal"
+    },
+    {
+      "id": 436,
+      "content_type_id": 109,
+      "codename": "add_annualplanningcycle",
+      "name": "Can add Annual Planning Cycle"
+    },
+    {
+      "id": 437,
+      "content_type_id": 109,
+      "codename": "change_annualplanningcycle",
+      "name": "Can change Annual Planning Cycle"
+    },
+    {
+      "id": 438,
+      "content_type_id": 109,
+      "codename": "delete_annualplanningcycle",
+      "name": "Can delete Annual Planning Cycle"
+    },
+    {
+      "id": 439,
+      "content_type_id": 109,
+      "codename": "view_annualplanningcycle",
+      "name": "Can view Annual Planning Cycle"
+    },
+    {
+      "id": 440,
+      "content_type_id": 110,
+      "codename": "add_budgetscenario",
+      "name": "Can add Budget Scenario"
+    },
+    {
+      "id": 441,
+      "content_type_id": 110,
+      "codename": "change_budgetscenario",
+      "name": "Can change Budget Scenario"
+    },
+    {
+      "id": 442,
+      "content_type_id": 110,
+      "codename": "delete_budgetscenario",
+      "name": "Can delete Budget Scenario"
+    },
+    {
+      "id": 443,
+      "content_type_id": 110,
+      "codename": "view_budgetscenario",
+      "name": "Can view Budget Scenario"
+    },
+    {
+      "id": 444,
+      "content_type_id": 111,
+      "codename": "add_scenarioallocation",
+      "name": "Can add Scenario Allocation"
+    },
+    {
+      "id": 445,
+      "content_type_id": 111,
+      "codename": "change_scenarioallocation",
+      "name": "Can change Scenario Allocation"
+    },
+    {
+      "id": 446,
+      "content_type_id": 111,
+      "codename": "delete_scenarioallocation",
+      "name": "Can delete Scenario Allocation"
+    },
+    {
+      "id": 447,
+      "content_type_id": 111,
+      "codename": "view_scenarioallocation",
+      "name": "Can view Scenario Allocation"
+    },
+    {
+      "id": 448,
+      "content_type_id": 112,
+      "codename": "add_outcomeindicator",
+      "name": "Can add outcome indicator"
+    },
+    {
+      "id": 449,
+      "content_type_id": 112,
+      "codename": "change_outcomeindicator",
+      "name": "Can change outcome indicator"
+    },
+    {
+      "id": 450,
+      "content_type_id": 112,
+      "codename": "delete_outcomeindicator",
+      "name": "Can delete outcome indicator"
+    },
+    {
+      "id": 451,
+      "content_type_id": 112,
+      "codename": "view_outcomeindicator",
+      "name": "Can view outcome indicator"
+    },
+    {
+      "id": 452,
+      "content_type_id": 113,
+      "codename": "add_ceilingmanagement",
+      "name": "Can add Ceiling Management Record"
+    },
+    {
+      "id": 453,
+      "content_type_id": 113,
+      "codename": "change_ceilingmanagement",
+      "name": "Can change Ceiling Management Record"
+    },
+    {
+      "id": 454,
+      "content_type_id": 113,
+      "codename": "delete_ceilingmanagement",
+      "name": "Can delete Ceiling Management Record"
+    },
+    {
+      "id": 455,
+      "content_type_id": 113,
+      "codename": "view_ceilingmanagement",
+      "name": "Can view Ceiling Management Record"
+    },
+    {
+      "id": 456,
+      "content_type_id": 114,
+      "codename": "add_maoquarterlyreport",
+      "name": "Can add mao quarterly report"
+    },
+    {
+      "id": 457,
+      "content_type_id": 114,
+      "codename": "change_maoquarterlyreport",
+      "name": "Can change mao quarterly report"
+    },
+    {
+      "id": 458,
+      "content_type_id": 114,
+      "codename": "delete_maoquarterlyreport",
+      "name": "Can delete mao quarterly report"
+    },
+    {
+      "id": 459,
+      "content_type_id": 114,
+      "codename": "view_maoquarterlyreport",
+      "name": "Can view mao quarterly report"
+    },
+    {
+      "id": 460,
+      "content_type_id": 115,
+      "codename": "add_calendarresource",
+      "name": "Can add Calendar Resource"
+    },
+    {
+      "id": 461,
+      "content_type_id": 115,
+      "codename": "change_calendarresource",
+      "name": "Can change Calendar Resource"
+    },
+    {
+      "id": 462,
+      "content_type_id": 115,
+      "codename": "delete_calendarresource",
+      "name": "Can delete Calendar Resource"
+    },
+    {
+      "id": 463,
+      "content_type_id": 115,
+      "codename": "view_calendarresource",
+      "name": "Can view Calendar Resource"
+    },
+    {
+      "id": 464,
+      "content_type_id": 116,
+      "codename": "add_recurringeventpattern",
+      "name": "Can add Recurring Event Pattern"
+    },
+    {
+      "id": 465,
+      "content_type_id": 116,
+      "codename": "change_recurringeventpattern",
+      "name": "Can change Recurring Event Pattern"
+    },
+    {
+      "id": 466,
+      "content_type_id": 116,
+      "codename": "delete_recurringeventpattern",
+      "name": "Can delete Recurring Event Pattern"
+    },
+    {
+      "id": 467,
+      "content_type_id": 116,
+      "codename": "view_recurringeventpattern",
+      "name": "Can view Recurring Event Pattern"
+    },
+    {
+      "id": 468,
+      "content_type_id": 117,
+      "codename": "add_usercalendarpreferences",
+      "name": "Can add User Calendar Preferences"
+    },
+    {
+      "id": 469,
+      "content_type_id": 117,
+      "codename": "change_usercalendarpreferences",
+      "name": "Can change User Calendar Preferences"
+    },
+    {
+      "id": 470,
+      "content_type_id": 117,
+      "codename": "delete_usercalendarpreferences",
+      "name": "Can delete User Calendar Preferences"
+    },
+    {
+      "id": 471,
+      "content_type_id": 117,
+      "codename": "view_usercalendarpreferences",
+      "name": "Can view User Calendar Preferences"
+    },
+    {
+      "id": 472,
+      "content_type_id": 118,
+      "codename": "add_staffleave",
+      "name": "Can add Staff Leave"
+    },
+    {
+      "id": 473,
+      "content_type_id": 118,
+      "codename": "change_staffleave",
+      "name": "Can change Staff Leave"
+    },
+    {
+      "id": 474,
+      "content_type_id": 118,
+      "codename": "delete_staffleave",
+      "name": "Can delete Staff Leave"
+    },
+    {
+      "id": 475,
+      "content_type_id": 118,
+      "codename": "view_staffleave",
+      "name": "Can view Staff Leave"
+    },
+    {
+      "id": 476,
+      "content_type_id": 119,
+      "codename": "add_sharedcalendarlink",
+      "name": "Can add Shared Calendar Link"
+    },
+    {
+      "id": 477,
+      "content_type_id": 119,
+      "codename": "change_sharedcalendarlink",
+      "name": "Can change Shared Calendar Link"
+    },
+    {
+      "id": 478,
+      "content_type_id": 119,
+      "codename": "delete_sharedcalendarlink",
+      "name": "Can delete Shared Calendar Link"
+    },
+    {
+      "id": 479,
+      "content_type_id": 119,
+      "codename": "view_sharedcalendarlink",
+      "name": "Can view Shared Calendar Link"
+    },
+    {
+      "id": 480,
+      "content_type_id": 120,
+      "codename": "add_externalcalendarsync",
+      "name": "Can add External Calendar Sync"
+    },
+    {
+      "id": 481,
+      "content_type_id": 120,
+      "codename": "change_externalcalendarsync",
+      "name": "Can change External Calendar Sync"
+    },
+    {
+      "id": 482,
+      "content_type_id": 120,
+      "codename": "delete_externalcalendarsync",
+      "name": "Can delete External Calendar Sync"
+    },
+    {
+      "id": 483,
+      "content_type_id": 120,
+      "codename": "view_externalcalendarsync",
+      "name": "Can view External Calendar Sync"
+    },
+    {
+      "id": 484,
+      "content_type_id": 121,
+      "codename": "add_calendarresourcebooking",
+      "name": "Can add Calendar Resource Booking"
+    },
+    {
+      "id": 485,
+      "content_type_id": 121,
+      "codename": "change_calendarresourcebooking",
+      "name": "Can change Calendar Resource Booking"
+    },
+    {
+      "id": 486,
+      "content_type_id": 121,
+      "codename": "delete_calendarresourcebooking",
+      "name": "Can delete Calendar Resource Booking"
+    },
+    {
+      "id": 487,
+      "content_type_id": 121,
+      "codename": "view_calendarresourcebooking",
+      "name": "Can view Calendar Resource Booking"
+    },
+    {
+      "id": 488,
+      "content_type_id": 122,
+      "codename": "add_calendarnotification",
+      "name": "Can add Calendar Notification"
+    },
+    {
+      "id": 489,
+      "content_type_id": 122,
+      "codename": "change_calendarnotification",
+      "name": "Can change Calendar Notification"
+    },
+    {
+      "id": 490,
+      "content_type_id": 122,
+      "codename": "delete_calendarnotification",
+      "name": "Can delete Calendar Notification"
+    },
+    {
+      "id": 491,
+      "content_type_id": 122,
+      "codename": "view_calendarnotification",
+      "name": "Can view Calendar Notification"
+    },
+    {
+      "id": 492,
+      "content_type_id": 123,
+      "codename": "add_communityevent",
+      "name": "Can add Community Event"
+    },
+    {
+      "id": 493,
+      "content_type_id": 123,
+      "codename": "change_communityevent",
+      "name": "Can change Community Event"
+    },
+    {
+      "id": 494,
+      "content_type_id": 123,
+      "codename": "delete_communityevent",
+      "name": "Can delete Community Event"
+    },
+    {
+      "id": 495,
+      "content_type_id": 123,
+      "codename": "view_communityevent",
+      "name": "Can view Community Event"
+    },
+    {
+      "id": 496,
+      "content_type_id": 124,
+      "codename": "add_tasktemplate",
+      "name": "Can add task template"
+    },
+    {
+      "id": 497,
+      "content_type_id": 124,
+      "codename": "change_tasktemplate",
+      "name": "Can change task template"
+    },
+    {
+      "id": 498,
+      "content_type_id": 124,
+      "codename": "delete_tasktemplate",
+      "name": "Can delete task template"
+    },
+    {
+      "id": 499,
+      "content_type_id": 124,
+      "codename": "view_tasktemplate",
+      "name": "Can view task template"
+    },
+    {
+      "id": 500,
+      "content_type_id": 125,
+      "codename": "add_tasktemplateitem",
+      "name": "Can add task template item"
+    },
+    {
+      "id": 501,
+      "content_type_id": 125,
+      "codename": "change_tasktemplateitem",
+      "name": "Can change task template item"
+    },
+    {
+      "id": 502,
+      "content_type_id": 125,
+      "codename": "delete_tasktemplateitem",
+      "name": "Can delete task template item"
+    },
+    {
+      "id": 503,
+      "content_type_id": 125,
+      "codename": "view_tasktemplateitem",
+      "name": "Can view task template item"
+    },
+    {
+      "id": 504,
+      "content_type_id": 126,
+      "codename": "add_projectworkflow",
+      "name": "Can add Project Workflow"
+    },
+    {
+      "id": 505,
+      "content_type_id": 126,
+      "codename": "change_projectworkflow",
+      "name": "Can change Project Workflow"
+    },
+    {
+      "id": 506,
+      "content_type_id": 126,
+      "codename": "delete_projectworkflow",
+      "name": "Can delete Project Workflow"
+    },
+    {
+      "id": 507,
+      "content_type_id": 126,
+      "codename": "view_projectworkflow",
+      "name": "Can view Project Workflow"
+    },
+    {
+      "id": 508,
+      "content_type_id": 127,
+      "codename": "add_budgetscenario",
+      "name": "Can add Budget Scenario"
+    },
+    {
+      "id": 509,
+      "content_type_id": 127,
+      "codename": "change_budgetscenario",
+      "name": "Can change Budget Scenario"
+    },
+    {
+      "id": 510,
+      "content_type_id": 127,
+      "codename": "delete_budgetscenario",
+      "name": "Can delete Budget Scenario"
+    },
+    {
+      "id": 511,
+      "content_type_id": 127,
+      "codename": "view_budgetscenario",
+      "name": "Can view Budget Scenario"
+    },
+    {
+      "id": 512,
+      "content_type_id": 128,
+      "codename": "add_budgetceiling",
+      "name": "Can add Budget Ceiling"
+    },
+    {
+      "id": 513,
+      "content_type_id": 128,
+      "codename": "change_budgetceiling",
+      "name": "Can change Budget Ceiling"
+    },
+    {
+      "id": 514,
+      "content_type_id": 128,
+      "codename": "delete_budgetceiling",
+      "name": "Can delete Budget Ceiling"
+    },
+    {
+      "id": 515,
+      "content_type_id": 128,
+      "codename": "view_budgetceiling",
+      "name": "Can view Budget Ceiling"
+    },
+    {
+      "id": 516,
+      "content_type_id": 129,
+      "codename": "add_alert",
+      "name": "Can add Alert"
+    },
+    {
+      "id": 517,
+      "content_type_id": 129,
+      "codename": "change_alert",
+      "name": "Can change Alert"
+    },
+    {
+      "id": 518,
+      "content_type_id": 129,
+      "codename": "delete_alert",
+      "name": "Can delete Alert"
+    },
+    {
+      "id": 519,
+      "content_type_id": 129,
+      "codename": "view_alert",
+      "name": "Can view Alert"
+    },
+    {
+      "id": 520,
+      "content_type_id": 130,
+      "codename": "add_eventattendance",
+      "name": "Can add event attendance"
+    },
+    {
+      "id": 521,
+      "content_type_id": 130,
+      "codename": "change_eventattendance",
+      "name": "Can change event attendance"
+    },
+    {
+      "id": 522,
+      "content_type_id": 130,
+      "codename": "delete_eventattendance",
+      "name": "Can delete event attendance"
+    },
+    {
+      "id": 523,
+      "content_type_id": 130,
+      "codename": "view_eventattendance",
+      "name": "Can view event attendance"
+    },
+    {
+      "id": 524,
+      "content_type_id": 131,
+      "codename": "add_budgetapprovalstage",
+      "name": "Can add Budget Approval Stage"
+    },
+    {
+      "id": 525,
+      "content_type_id": 131,
+      "codename": "change_budgetapprovalstage",
+      "name": "Can change Budget Approval Stage"
+    },
+    {
+      "id": 526,
+      "content_type_id": 131,
+      "codename": "delete_budgetapprovalstage",
+      "name": "Can delete Budget Approval Stage"
+    },
+    {
+      "id": 527,
+      "content_type_id": 131,
+      "codename": "view_budgetapprovalstage",
+      "name": "Can view Budget Approval Stage"
+    },
+    {
+      "id": 528,
+      "content_type_id": 132,
+      "codename": "add_accessattempt",
+      "name": "Can add access attempt"
+    },
+    {
+      "id": 529,
+      "content_type_id": 132,
+      "codename": "change_accessattempt",
+      "name": "Can change access attempt"
+    },
+    {
+      "id": 530,
+      "content_type_id": 132,
+      "codename": "delete_accessattempt",
+      "name": "Can delete access attempt"
+    },
+    {
+      "id": 531,
+      "content_type_id": 132,
+      "codename": "view_accessattempt",
+      "name": "Can view access attempt"
+    },
+    {
+      "id": 532,
+      "content_type_id": 133,
+      "codename": "add_accesslog",
+      "name": "Can add access log"
+    },
+    {
+      "id": 533,
+      "content_type_id": 133,
+      "codename": "change_accesslog",
+      "name": "Can change access log"
+    },
+    {
+      "id": 534,
+      "content_type_id": 133,
+      "codename": "delete_accesslog",
+      "name": "Can delete access log"
+    },
+    {
+      "id": 535,
+      "content_type_id": 133,
+      "codename": "view_accesslog",
+      "name": "Can view access log"
+    },
+    {
+      "id": 536,
+      "content_type_id": 134,
+      "codename": "add_accessfailurelog",
+      "name": "Can add access failure"
+    },
+    {
+      "id": 537,
+      "content_type_id": 134,
+      "codename": "change_accessfailurelog",
+      "name": "Can change access failure"
+    },
+    {
+      "id": 538,
+      "content_type_id": 134,
+      "codename": "delete_accessfailurelog",
+      "name": "Can delete access failure"
+    },
+    {
+      "id": 539,
+      "content_type_id": 134,
+      "codename": "view_accessfailurelog",
+      "name": "Can view access failure"
+    },
+    {
+      "id": 540,
+      "content_type_id": 135,
+      "codename": "add_logentry",
+      "name": "Can add log entry"
+    },
+    {
+      "id": 541,
+      "content_type_id": 135,
+      "codename": "change_logentry",
+      "name": "Can change log entry"
+    },
+    {
+      "id": 542,
+      "content_type_id": 135,
+      "codename": "delete_logentry",
+      "name": "Can delete log entry"
+    },
+    {
+      "id": 543,
+      "content_type_id": 135,
+      "codename": "view_logentry",
+      "name": "Can view log entry"
+    },
+    {
+      "id": 544,
+      "content_type_id": 136,
+      "codename": "add_blacklistedtoken",
+      "name": "Can add Blacklisted Token"
+    },
+    {
+      "id": 545,
+      "content_type_id": 136,
+      "codename": "change_blacklistedtoken",
+      "name": "Can change Blacklisted Token"
+    },
+    {
+      "id": 546,
+      "content_type_id": 136,
+      "codename": "delete_blacklistedtoken",
+      "name": "Can delete Blacklisted Token"
+    },
+    {
+      "id": 547,
+      "content_type_id": 136,
+      "codename": "view_blacklistedtoken",
+      "name": "Can view Blacklisted Token"
+    },
+    {
+      "id": 548,
+      "content_type_id": 137,
+      "codename": "add_outstandingtoken",
+      "name": "Can add Outstanding Token"
+    },
+    {
+      "id": 549,
+      "content_type_id": 137,
+      "codename": "change_outstandingtoken",
+      "name": "Can change Outstanding Token"
+    },
+    {
+      "id": 550,
+      "content_type_id": 137,
+      "codename": "delete_outstandingtoken",
+      "name": "Can delete Outstanding Token"
+    },
+    {
+      "id": 551,
+      "content_type_id": 137,
+      "codename": "view_outstandingtoken",
+      "name": "Can view Outstanding Token"
+    },
+    {
+      "id": 552,
+      "content_type_id": 138,
+      "codename": "add_workitem",
+      "name": "Can add Work Item"
+    },
+    {
+      "id": 553,
+      "content_type_id": 138,
+      "codename": "change_workitem",
+      "name": "Can change Work Item"
+    },
+    {
+      "id": 554,
+      "content_type_id": 138,
+      "codename": "delete_workitem",
+      "name": "Can delete Work Item"
+    },
+    {
+      "id": 555,
+      "content_type_id": 138,
+      "codename": "view_workitem",
+      "name": "Can view Work Item"
+    },
+    {
+      "id": 556,
+      "content_type_id": 139,
+      "codename": "add_eventproxy",
+      "name": "Can add Event"
+    },
+    {
+      "id": 557,
+      "content_type_id": 139,
+      "codename": "change_eventproxy",
+      "name": "Can change Event"
+    },
+    {
+      "id": 558,
+      "content_type_id": 139,
+      "codename": "delete_eventproxy",
+      "name": "Can delete Event"
+    },
+    {
+      "id": 559,
+      "content_type_id": 139,
+      "codename": "view_eventproxy",
+      "name": "Can view Event"
+    },
+    {
+      "id": 560,
+      "content_type_id": 140,
+      "codename": "add_projectworkflowproxy",
+      "name": "Can add Project Workflow"
+    },
+    {
+      "id": 561,
+      "content_type_id": 140,
+      "codename": "change_projectworkflowproxy",
+      "name": "Can change Project Workflow"
+    },
+    {
+      "id": 562,
+      "content_type_id": 140,
+      "codename": "delete_projectworkflowproxy",
+      "name": "Can delete Project Workflow"
+    },
+    {
+      "id": 563,
+      "content_type_id": 140,
+      "codename": "view_projectworkflowproxy",
+      "name": "Can view Project Workflow"
+    },
+    {
+      "id": 564,
+      "content_type_id": 141,
+      "codename": "add_stafftaskproxy",
+      "name": "Can add Staff Task"
+    },
+    {
+      "id": 565,
+      "content_type_id": 141,
+      "codename": "change_stafftaskproxy",
+      "name": "Can change Staff Task"
+    },
+    {
+      "id": 566,
+      "content_type_id": 141,
+      "codename": "delete_stafftaskproxy",
+      "name": "Can delete Staff Task"
+    },
+    {
+      "id": 567,
+      "content_type_id": 141,
+      "codename": "view_stafftaskproxy",
+      "name": "Can view Staff Task"
+    },
+    {
+      "id": 568,
+      "content_type_id": 142,
+      "codename": "add_aiconversation",
+      "name": "Can add ai conversation"
+    },
+    {
+      "id": 569,
+      "content_type_id": 142,
+      "codename": "change_aiconversation",
+      "name": "Can change ai conversation"
+    },
+    {
+      "id": 570,
+      "content_type_id": 142,
+      "codename": "delete_aiconversation",
+      "name": "Can delete ai conversation"
+    },
+    {
+      "id": 571,
+      "content_type_id": 142,
+      "codename": "view_aiconversation",
+      "name": "Can view ai conversation"
+    },
+    {
+      "id": 572,
+      "content_type_id": 143,
+      "codename": "add_aiusagemetrics",
+      "name": "Can add ai usage metrics"
+    },
+    {
+      "id": 573,
+      "content_type_id": 143,
+      "codename": "change_aiusagemetrics",
+      "name": "Can change ai usage metrics"
+    },
+    {
+      "id": 574,
+      "content_type_id": 143,
+      "codename": "delete_aiusagemetrics",
+      "name": "Can delete ai usage metrics"
+    },
+    {
+      "id": 575,
+      "content_type_id": 143,
+      "codename": "view_aiusagemetrics",
+      "name": "Can view ai usage metrics"
+    },
+    {
+      "id": 576,
+      "content_type_id": 144,
+      "codename": "add_aiinsight",
+      "name": "Can add ai insight"
+    },
+    {
+      "id": 577,
+      "content_type_id": 144,
+      "codename": "change_aiinsight",
+      "name": "Can change ai insight"
+    },
+    {
+      "id": 578,
+      "content_type_id": 144,
+      "codename": "delete_aiinsight",
+      "name": "Can delete ai insight"
+    },
+    {
+      "id": 579,
+      "content_type_id": 144,
+      "codename": "view_aiinsight",
+      "name": "Can view ai insight"
+    },
+    {
+      "id": 580,
+      "content_type_id": 145,
+      "codename": "add_aigenerateddocument",
+      "name": "Can add ai generated document"
+    },
+    {
+      "id": 581,
+      "content_type_id": 145,
+      "codename": "change_aigenerateddocument",
+      "name": "Can change ai generated document"
+    },
+    {
+      "id": 582,
+      "content_type_id": 145,
+      "codename": "delete_aigenerateddocument",
+      "name": "Can delete ai generated document"
+    },
+    {
+      "id": 583,
+      "content_type_id": 145,
+      "codename": "view_aigenerateddocument",
+      "name": "Can view ai generated document"
+    },
+    {
+      "id": 584,
+      "content_type_id": 146,
+      "codename": "add_aioperation",
+      "name": "Can add ai operation"
+    },
+    {
+      "id": 585,
+      "content_type_id": 146,
+      "codename": "change_aioperation",
+      "name": "Can change ai operation"
+    },
+    {
+      "id": 586,
+      "content_type_id": 146,
+      "codename": "delete_aioperation",
+      "name": "Can delete ai operation"
+    },
+    {
+      "id": 587,
+      "content_type_id": 146,
+      "codename": "view_aioperation",
+      "name": "Can view ai operation"
+    },
+    {
+      "id": 588,
+      "content_type_id": 147,
+      "codename": "add_documentembedding",
+      "name": "Can add document embedding"
+    },
+    {
+      "id": 589,
+      "content_type_id": 147,
+      "codename": "change_documentembedding",
+      "name": "Can change document embedding"
+    },
+    {
+      "id": 590,
+      "content_type_id": 147,
+      "codename": "delete_documentembedding",
+      "name": "Can delete document embedding"
+    },
+    {
+      "id": 591,
+      "content_type_id": 147,
+      "codename": "view_documentembedding",
+      "name": "Can view document embedding"
+    },
+    {
+      "id": 592,
+      "content_type_id": 148,
+      "codename": "add_chatmessage",
+      "name": "Can add Chat Message"
+    },
+    {
+      "id": 593,
+      "content_type_id": 148,
+      "codename": "change_chatmessage",
+      "name": "Can change Chat Message"
+    },
+    {
+      "id": 594,
+      "content_type_id": 148,
+      "codename": "delete_chatmessage",
+      "name": "Can delete Chat Message"
+    },
+    {
+      "id": 595,
+      "content_type_id": 148,
+      "codename": "view_chatmessage",
+      "name": "Can view Chat Message"
+    },
+    {
+      "id": 596,
+      "content_type_id": 7,
+      "codename": "can_approve_moa_users",
+      "name": "Can approve MOA user registrations"
+    },
+    {
+      "id": 597,
+      "content_type_id": 149,
+      "codename": "add_coordinationnote",
+      "name": "Can add Coordination Note"
+    },
+    {
+      "id": 598,
+      "content_type_id": 149,
+      "codename": "change_coordinationnote",
+      "name": "Can change Coordination Note"
+    },
+    {
+      "id": 599,
+      "content_type_id": 149,
+      "codename": "delete_coordinationnote",
+      "name": "Can delete Coordination Note"
+    },
+    {
+      "id": 600,
+      "content_type_id": 149,
+      "codename": "view_coordinationnote",
+      "name": "Can view Coordination Note"
+    },
+    {
+      "id": 601,
+      "content_type_id": 150,
+      "codename": "add_monitoringrequestattachment",
+      "name": "Can add Request Attachment"
+    },
+    {
+      "id": 602,
+      "content_type_id": 150,
+      "codename": "change_monitoringrequestattachment",
+      "name": "Can change Request Attachment"
+    },
+    {
+      "id": 603,
+      "content_type_id": 150,
+      "codename": "delete_monitoringrequestattachment",
+      "name": "Can delete Request Attachment"
+    },
+    {
+      "id": 604,
+      "content_type_id": 150,
+      "codename": "view_monitoringrequestattachment",
+      "name": "Can view Request Attachment"
+    },
+    {
+      "id": 605,
+      "content_type_id": 151,
+      "codename": "add_strategicplan",
+      "name": "Can add Strategic Plan"
+    },
+    {
+      "id": 606,
+      "content_type_id": 151,
+      "codename": "change_strategicplan",
+      "name": "Can change Strategic Plan"
+    },
+    {
+      "id": 607,
+      "content_type_id": 151,
+      "codename": "delete_strategicplan",
+      "name": "Can delete Strategic Plan"
+    },
+    {
+      "id": 608,
+      "content_type_id": 151,
+      "codename": "view_strategicplan",
+      "name": "Can view Strategic Plan"
+    },
+    {
+      "id": 609,
+      "content_type_id": 152,
+      "codename": "add_strategicgoal",
+      "name": "Can add Strategic Goal"
+    },
+    {
+      "id": 610,
+      "content_type_id": 152,
+      "codename": "change_strategicgoal",
+      "name": "Can change Strategic Goal"
+    },
+    {
+      "id": 611,
+      "content_type_id": 152,
+      "codename": "delete_strategicgoal",
+      "name": "Can delete Strategic Goal"
+    },
+    {
+      "id": 612,
+      "content_type_id": 152,
+      "codename": "view_strategicgoal",
+      "name": "Can view Strategic Goal"
+    },
+    {
+      "id": 613,
+      "content_type_id": 153,
+      "codename": "add_annualworkplan",
+      "name": "Can add Annual Work Plan"
+    },
+    {
+      "id": 614,
+      "content_type_id": 153,
+      "codename": "change_annualworkplan",
+      "name": "Can change Annual Work Plan"
+    },
+    {
+      "id": 615,
+      "content_type_id": 153,
+      "codename": "delete_annualworkplan",
+      "name": "Can delete Annual Work Plan"
+    },
+    {
+      "id": 616,
+      "content_type_id": 153,
+      "codename": "view_annualworkplan",
+      "name": "Can view Annual Work Plan"
+    },
+    {
+      "id": 617,
+      "content_type_id": 154,
+      "codename": "add_workplanobjective",
+      "name": "Can add Work Plan Objective"
+    },
+    {
+      "id": 618,
+      "content_type_id": 154,
+      "codename": "change_workplanobjective",
+      "name": "Can change Work Plan Objective"
+    },
+    {
+      "id": 619,
+      "content_type_id": 154,
+      "codename": "delete_workplanobjective",
+      "name": "Can delete Work Plan Objective"
+    },
+    {
+      "id": 620,
+      "content_type_id": 154,
+      "codename": "view_workplanobjective",
+      "name": "Can view Work Plan Objective"
+    },
+    {
+      "id": 621,
+      "content_type_id": 155,
+      "codename": "add_auditlog",
+      "name": "Can add Audit Log"
+    },
+    {
+      "id": 622,
+      "content_type_id": 155,
+      "codename": "change_auditlog",
+      "name": "Can change Audit Log"
+    },
+    {
+      "id": 623,
+      "content_type_id": 155,
+      "codename": "delete_auditlog",
+      "name": "Can delete Audit Log"
+    },
+    {
+      "id": 624,
+      "content_type_id": 155,
+      "codename": "view_auditlog",
+      "name": "Can view Audit Log"
+    },
+    {
+      "id": 625,
+      "content_type_id": 156,
+      "codename": "add_budgetproposal",
+      "name": "Can add Budget Proposal"
+    },
+    {
+      "id": 626,
+      "content_type_id": 156,
+      "codename": "change_budgetproposal",
+      "name": "Can change Budget Proposal"
+    },
+    {
+      "id": 627,
+      "content_type_id": 156,
+      "codename": "delete_budgetproposal",
+      "name": "Can delete Budget Proposal"
+    },
+    {
+      "id": 628,
+      "content_type_id": 156,
+      "codename": "view_budgetproposal",
+      "name": "Can view Budget Proposal"
+    },
+    {
+      "id": 629,
+      "content_type_id": 157,
+      "codename": "add_programbudget",
+      "name": "Can add Program Budget"
+    },
+    {
+      "id": 630,
+      "content_type_id": 157,
+      "codename": "change_programbudget",
+      "name": "Can change Program Budget"
+    },
+    {
+      "id": 631,
+      "content_type_id": 157,
+      "codename": "delete_programbudget",
+      "name": "Can delete Program Budget"
+    },
+    {
+      "id": 632,
+      "content_type_id": 157,
+      "codename": "view_programbudget",
+      "name": "Can view Program Budget"
+    },
+    {
+      "id": 633,
+      "content_type_id": 158,
+      "codename": "add_budgetlineitem",
+      "name": "Can add Budget Line Item"
+    },
+    {
+      "id": 634,
+      "content_type_id": 158,
+      "codename": "change_budgetlineitem",
+      "name": "Can change Budget Line Item"
+    },
+    {
+      "id": 635,
+      "content_type_id": 158,
+      "codename": "delete_budgetlineitem",
+      "name": "Can delete Budget Line Item"
+    },
+    {
+      "id": 636,
+      "content_type_id": 158,
+      "codename": "view_budgetlineitem",
+      "name": "Can view Budget Line Item"
+    },
+    {
+      "id": 637,
+      "content_type_id": 159,
+      "codename": "add_budgetjustification",
+      "name": "Can add Budget Justification"
+    },
+    {
+      "id": 638,
+      "content_type_id": 159,
+      "codename": "change_budgetjustification",
+      "name": "Can change Budget Justification"
+    },
+    {
+      "id": 639,
+      "content_type_id": 159,
+      "codename": "delete_budgetjustification",
+      "name": "Can delete Budget Justification"
+    },
+    {
+      "id": 640,
+      "content_type_id": 159,
+      "codename": "view_budgetjustification",
+      "name": "Can view Budget Justification"
+    },
+    {
+      "id": 641,
+      "content_type_id": 160,
+      "codename": "add_disbursement",
+      "name": "Can add Disbursement"
+    },
+    {
+      "id": 642,
+      "content_type_id": 160,
+      "codename": "change_disbursement",
+      "name": "Can change Disbursement"
+    },
+    {
+      "id": 643,
+      "content_type_id": 160,
+      "codename": "delete_disbursement",
+      "name": "Can delete Disbursement"
+    },
+    {
+      "id": 644,
+      "content_type_id": 160,
+      "codename": "view_disbursement",
+      "name": "Can view Disbursement"
+    },
+    {
+      "id": 645,
+      "content_type_id": 161,
+      "codename": "add_disbursementlineitem",
+      "name": "Can add Disbursement Line Item"
+    },
+    {
+      "id": 646,
+      "content_type_id": 161,
+      "codename": "change_disbursementlineitem",
+      "name": "Can change Disbursement Line Item"
+    },
+    {
+      "id": 647,
+      "content_type_id": 161,
+      "codename": "delete_disbursementlineitem",
+      "name": "Can delete Disbursement Line Item"
+    },
+    {
+      "id": 648,
+      "content_type_id": 161,
+      "codename": "view_disbursementlineitem",
+      "name": "Can view Disbursement Line Item"
+    },
+    {
+      "id": 649,
+      "content_type_id": 162,
+      "codename": "add_obligation",
+      "name": "Can add Obligation"
+    },
+    {
+      "id": 650,
+      "content_type_id": 162,
+      "codename": "change_obligation",
+      "name": "Can change Obligation"
+    },
+    {
+      "id": 651,
+      "content_type_id": 162,
+      "codename": "delete_obligation",
+      "name": "Can delete Obligation"
+    },
+    {
+      "id": 652,
+      "content_type_id": 162,
+      "codename": "view_obligation",
+      "name": "Can view Obligation"
+    },
+    {
+      "id": 653,
+      "content_type_id": 163,
+      "codename": "add_allotment",
+      "name": "Can add Allotment"
+    },
+    {
+      "id": 654,
+      "content_type_id": 163,
+      "codename": "change_allotment",
+      "name": "Can change Allotment"
+    },
+    {
+      "id": 655,
+      "content_type_id": 163,
+      "codename": "delete_allotment",
+      "name": "Can delete Allotment"
+    },
+    {
+      "id": 656,
+      "content_type_id": 163,
+      "codename": "view_allotment",
+      "name": "Can view Allotment"
+    },
+    {
+      "id": 657,
+      "content_type_id": 164,
+      "codename": "add_feature",
+      "name": "Can add Feature"
+    },
+    {
+      "id": 658,
+      "content_type_id": 164,
+      "codename": "change_feature",
+      "name": "Can change Feature"
+    },
+    {
+      "id": 659,
+      "content_type_id": 164,
+      "codename": "delete_feature",
+      "name": "Can delete Feature"
+    },
+    {
+      "id": 660,
+      "content_type_id": 164,
+      "codename": "view_feature",
+      "name": "Can view Feature"
+    },
+    {
+      "id": 661,
+      "content_type_id": 165,
+      "codename": "add_permission",
+      "name": "Can add Permission"
+    },
+    {
+      "id": 662,
+      "content_type_id": 165,
+      "codename": "change_permission",
+      "name": "Can change Permission"
+    },
+    {
+      "id": 663,
+      "content_type_id": 165,
+      "codename": "delete_permission",
+      "name": "Can delete Permission"
+    },
+    {
+      "id": 664,
+      "content_type_id": 165,
+      "codename": "view_permission",
+      "name": "Can view Permission"
+    },
+    {
+      "id": 665,
+      "content_type_id": 166,
+      "codename": "add_role",
+      "name": "Can add Role"
+    },
+    {
+      "id": 666,
+      "content_type_id": 166,
+      "codename": "change_role",
+      "name": "Can change Role"
+    },
+    {
+      "id": 667,
+      "content_type_id": 166,
+      "codename": "delete_role",
+      "name": "Can delete Role"
+    },
+    {
+      "id": 668,
+      "content_type_id": 166,
+      "codename": "view_role",
+      "name": "Can view Role"
+    },
+    {
+      "id": 669,
+      "content_type_id": 167,
+      "codename": "add_rolepermission",
+      "name": "Can add Role Permission"
+    },
+    {
+      "id": 670,
+      "content_type_id": 167,
+      "codename": "change_rolepermission",
+      "name": "Can change Role Permission"
+    },
+    {
+      "id": 671,
+      "content_type_id": 167,
+      "codename": "delete_rolepermission",
+      "name": "Can delete Role Permission"
+    },
+    {
+      "id": 672,
+      "content_type_id": 167,
+      "codename": "view_rolepermission",
+      "name": "Can view Role Permission"
+    },
+    {
+      "id": 673,
+      "content_type_id": 168,
+      "codename": "add_userpermission",
+      "name": "Can add User Permission"
+    },
+    {
+      "id": 674,
+      "content_type_id": 168,
+      "codename": "change_userpermission",
+      "name": "Can change User Permission"
+    },
+    {
+      "id": 675,
+      "content_type_id": 168,
+      "codename": "delete_userpermission",
+      "name": "Can delete User Permission"
+    },
+    {
+      "id": 676,
+      "content_type_id": 168,
+      "codename": "view_userpermission",
+      "name": "Can view User Permission"
+    },
+    {
+      "id": 677,
+      "content_type_id": 169,
+      "codename": "add_userrole",
+      "name": "Can add User Role"
+    },
+    {
+      "id": 678,
+      "content_type_id": 169,
+      "codename": "change_userrole",
+      "name": "Can change User Role"
+    },
+    {
+      "id": 679,
+      "content_type_id": 169,
+      "codename": "delete_userrole",
+      "name": "Can delete User Role"
+    },
+    {
+      "id": 680,
+      "content_type_id": 169,
+      "codename": "view_userrole",
+      "name": "Can view User Role"
+    },
+    {
+      "id": 681,
+      "content_type_id": 170,
+      "codename": "add_organization",
+      "name": "Can add Organization"
+    },
+    {
+      "id": 682,
+      "content_type_id": 170,
+      "codename": "change_organization",
+      "name": "Can change Organization"
+    },
+    {
+      "id": 683,
+      "content_type_id": 170,
+      "codename": "delete_organization",
+      "name": "Can delete Organization"
+    },
+    {
+      "id": 684,
+      "content_type_id": 170,
+      "codename": "view_organization",
+      "name": "Can view Organization"
+    },
+    {
+      "id": 685,
+      "content_type_id": 171,
+      "codename": "add_organizationmembership",
+      "name": "Can add Organization Membership"
+    },
+    {
+      "id": 686,
+      "content_type_id": 171,
+      "codename": "change_organizationmembership",
+      "name": "Can change Organization Membership"
+    },
+    {
+      "id": 687,
+      "content_type_id": 171,
+      "codename": "delete_organizationmembership",
+      "name": "Can delete Organization Membership"
+    },
+    {
+      "id": 688,
+      "content_type_id": 171,
+      "codename": "view_organizationmembership",
+      "name": "Can view Organization Membership"
+    },
+    {
+      "id": 689,
+      "content_type_id": 172,
+      "codename": "add_intermoapartnership",
+      "name": "Can add Inter-MOA Partnership"
+    },
+    {
+      "id": 690,
+      "content_type_id": 172,
+      "codename": "change_intermoapartnership",
+      "name": "Can change Inter-MOA Partnership"
+    },
+    {
+      "id": 691,
+      "content_type_id": 172,
+      "codename": "delete_intermoapartnership",
+      "name": "Can delete Inter-MOA Partnership"
+    },
+    {
+      "id": 692,
+      "content_type_id": 172,
+      "codename": "view_intermoapartnership",
+      "name": "Can view Inter-MOA Partnership"
+    },
+    {
+      "id": 693,
+      "content_type_id": 173,
+      "codename": "add_ocmaccess",
+      "name": "Can add OCM Access"
+    },
+    {
+      "id": 694,
+      "content_type_id": 173,
+      "codename": "change_ocmaccess",
+      "name": "Can change OCM Access"
+    },
+    {
+      "id": 695,
+      "content_type_id": 173,
+      "codename": "delete_ocmaccess",
+      "name": "Can delete OCM Access"
+    },
+    {
+      "id": 696,
+      "content_type_id": 173,
+      "codename": "view_ocmaccess",
+      "name": "Can view OCM Access"
+    },
+    {
+      "id": 697,
+      "content_type_id": 173,
+      "codename": "view_ocm_dashboard",
+      "name": "Can view OCM aggregated dashboard"
+    },
+    {
+      "id": 698,
+      "content_type_id": 173,
+      "codename": "view_consolidated_budget",
+      "name": "Can view consolidated budget across MOAs"
+    },
+    {
+      "id": 699,
+      "content_type_id": 173,
+      "codename": "view_planning_overview",
+      "name": "Can view planning overview across MOAs"
+    },
+    {
+      "id": 700,
+      "content_type_id": 173,
+      "codename": "view_coordination_matrix",
+      "name": "Can view coordination matrix across MOAs"
+    },
+    {
+      "id": 701,
+      "content_type_id": 173,
+      "codename": "generate_ocm_reports",
+      "name": "Can generate OCM reports"
+    },
+    {
+      "id": 702,
+      "content_type_id": 173,
+      "codename": "export_ocm_data",
+      "name": "Can export OCM data"
+    }
+  ]
+}

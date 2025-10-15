@@ -1,0 +1,125 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108cdc6a0>",
+    "<sqlite3.Row object at 0x108cdc940>",
+    "<sqlite3.Row object at 0x108cdd5a0>",
+    "<sqlite3.Row object at 0x108cde320>",
+    "<sqlite3.Row object at 0x108cdf0d0>",
+    "<sqlite3.Row object at 0x108cdd8a0>",
+    "<sqlite3.Row object at 0x108cdf340>",
+    "<sqlite3.Row object at 0x108cddd80>",
+    "<sqlite3.Row object at 0x108cde470>"
+  ],
+  "data": [
+    {
+      "id": "52f327a4c18246fb8c05588e04faa992",
+      "codename": "view_mana",
+      "name": "View MANA Module",
+      "description": "View MANA Module permission",
+      "permission_type": "view",
+      "is_active": 1,
+      "created_at": "2025-10-12 21:08:49.598764",
+      "updated_at": "2025-10-12 21:08:49.598772",
+      "feature_id": "b226d12b03cd4b7f87ef061fdf2ffedf"
+    },
+    {
+      "id": "38bd609bfb974ec1815c0d14ee6f7f8b",
+      "codename": "view_recommendations",
+      "name": "View Recommendations Module",
+      "description": "View Recommendations Module permission",
+      "permission_type": "view",
+      "is_active": 1,
+      "created_at": "2025-10-12 21:08:49.599214",
+      "updated_at": "2025-10-12 21:08:49.599219",
+      "feature_id": "5eb11ce4b28c47c0b0adba77f14c403a"
+    },
+    {
+      "id": "db6b0c460e62407a8012a1f1fa36011f",
+      "codename": "view_planning_budgeting",
+      "name": "View Planning & Budgeting",
+      "description": "View Planning & Budgeting permission",
+      "permission_type": "view",
+      "is_active": 1,
+      "created_at": "2025-10-12 21:08:49.599479",
+      "updated_at": "2025-10-12 21:08:49.599484",
+      "feature_id": "7d0b44d1855042478c087f917e306e6b"
+    },
+    {
+      "id": "ac250b7367f440c4a36fabe8fbaf25d7",
+      "codename": "view_project_management",
+      "name": "View Project Management",
+      "description": "View Project Management permission",
+      "permission_type": "view",
+      "is_active": 1,
+      "created_at": "2025-10-12 21:08:49.599697",
+      "updated_at": "2025-10-12 21:08:49.599700",
+      "feature_id": "dd793ca88ef540d6b856dc514c0406df"
+    },
+    {
+      "id": "db1ccf6fbf784ee2a1da11abcb8552d9",
+      "codename": "view_user_approvals",
+      "name": "View User Approvals",
+      "description": "View User Approvals permission",
+      "permission_type": "view",
+      "is_active": 1,
+      "created_at": "2025-10-12 21:08:49.599908",
+      "updated_at": "2025-10-12 21:08:49.599912",
+      "feature_id": "79709b0187d54d0091d50522c96bc155"
+    },
+    {
+      "id": "3355bc2ff9ee44059ba6e7e0bb74d0f2",
+      "codename": "oobc_management.manage_user_permissions",
+      "name": "Manage User Permissions",
+      "description": "View and manage user permissions and roles",
+      "permission_type": "manage",
+      "is_active": 1,
+      "created_at": "2025-10-13 02:01:57.444464",
+      "updated_at": "2025-10-13 02:01:57.444473",
+      "feature_id": "ce8f7107c9b64f69823ea761feb67c59"
+    },
+    {
+      "id": "a91b93c9dd294037a543423ed5876af7",
+      "codename": "oobc_management.assign_user_roles",
+      "name": "Assign User Roles",
+      "description": "Assign and remove roles from users",
+      "permission_type": "edit",
+      "is_active": 1,
+      "created_at": "2025-10-13 02:01:57.445577",
+      "updated_at": "2025-10-13 02:01:57.445582",
+      "feature_id": "ce8f7107c9b64f69823ea761feb67c59"
+    },
+    {
+      "id": "89cfb2352f6144fcbb3a490b19be5d61",
+      "codename": "oobc_management.manage_feature_access",
+      "name": "Manage Feature Access",
+      "description": "Enable or disable feature access for users",
+      "permission_type": "manage",
+      "is_active": 1,
+      "created_at": "2025-10-13 02:01:57.445800",
+      "updated_at": "2025-10-13 02:01:57.445805",
+      "feature_id": "ce8f7107c9b64f69823ea761feb67c59"
+    },
+    {
+      "id": "5a916856809f41d08153d5dce820c09c",
+      "codename": "oobc_management.view_rbac_config",
+      "name": "View RBAC Configuration",
+      "description": "View roles, features, and permission configuration",
+      "permission_type": "view",
+      "is_active": 1,
+      "created_at": "2025-10-13 02:01:57.446004",
+      "updated_at": "2025-10-13 02:01:57.446008",
+      "feature_id": "ce8f7107c9b64f69823ea761feb67c59"
+    },
+    {
+      "id": "5693ca8a177f4b0a861880b6f72fdb0e",
+      "codename": "view_monitoring",
+      "name": "View M&E Module",
+      "description": "Can view monitoring and evaluation dashboards",
+      "permission_type": "view",
+      "is_active": 1,
+      "created_at": "2025-10-13 03:10:08.849050",
+      "updated_at": "2025-10-13 03:10:08.849057",
+      "feature_id": "c71f1518bf8d477faa0982d3f226dc27"
+    }
+  ]
+}

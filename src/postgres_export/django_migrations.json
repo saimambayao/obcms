@@ -1,0 +1,1372 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108c7f6d0>",
+    "<sqlite3.Row object at 0x108c7f700>",
+    "<sqlite3.Row object at 0x108c7f760>",
+    "<sqlite3.Row object at 0x108c7f7c0>"
+  ],
+  "data": [
+    {
+      "id": 1,
+      "app": "contenttypes",
+      "name": "0001_initial",
+      "applied": "2025-09-22 05:17:22.952394"
+    },
+    {
+      "id": 2,
+      "app": "contenttypes",
+      "name": "0002_remove_content_type_name",
+      "applied": "2025-09-22 05:17:22.954920"
+    },
+    {
+      "id": 3,
+      "app": "auth",
+      "name": "0001_initial",
+      "applied": "2025-09-22 05:17:22.959521"
+    },
+    {
+      "id": 4,
+      "app": "auth",
+      "name": "0002_alter_permission_name_max_length",
+      "applied": "2025-09-22 05:17:22.961386"
+    },
+    {
+      "id": 5,
+      "app": "auth",
+      "name": "0003_alter_user_email_max_length",
+      "applied": "2025-09-22 05:17:22.963059"
+    },
+    {
+      "id": 6,
+      "app": "auth",
+      "name": "0004_alter_user_username_opts",
+      "applied": "2025-09-22 05:17:22.964418"
+    },
+    {
+      "id": 7,
+      "app": "auth",
+      "name": "0005_alter_user_last_login_null",
+      "applied": "2025-09-22 05:17:22.965638"
+    },
+    {
+      "id": 8,
+      "app": "auth",
+      "name": "0006_require_contenttypes_0002",
+      "applied": "2025-09-22 05:17:22.966148"
+    },
+    {
+      "id": 9,
+      "app": "auth",
+      "name": "0007_alter_validators_add_error_messages",
+      "applied": "2025-09-22 05:17:22.967607"
+    },
+    {
+      "id": 10,
+      "app": "auth",
+      "name": "0008_alter_user_username_max_length",
+      "applied": "2025-09-22 05:17:22.969137"
+    },
+    {
+      "id": 11,
+      "app": "auth",
+      "name": "0009_alter_user_last_name_max_length",
+      "applied": "2025-09-22 05:17:22.970473"
+    },
+    {
+      "id": 12,
+      "app": "auth",
+      "name": "0010_alter_group_name_max_length",
+      "applied": "2025-09-22 05:17:22.972735"
+    },
+    {
+      "id": 13,
+      "app": "auth",
+      "name": "0011_update_proxy_permissions",
+      "applied": "2025-09-22 05:17:22.974074"
+    },
+    {
+      "id": 14,
+      "app": "auth",
+      "name": "0012_alter_user_first_name_max_length",
+      "applied": "2025-09-22 05:17:22.975315"
+    },
+    {
+      "id": 15,
+      "app": "common",
+      "name": "0001_initial",
+      "applied": "2025-09-22 05:17:22.977848"
+    },
+    {
+      "id": 16,
+      "app": "admin",
+      "name": "0001_initial",
+      "applied": "2025-09-22 05:17:22.980058"
+    },
+    {
+      "id": 17,
+      "app": "admin",
+      "name": "0002_logentry_remove_auto_add",
+      "applied": "2025-09-22 05:17:22.983296"
+    },
+    {
+      "id": 18,
+      "app": "admin",
+      "name": "0003_logentry_add_action_flag_choices",
+      "applied": "2025-09-22 05:17:23.010846"
+    },
+    {
+      "id": 19,
+      "app": "common",
+      "name": "0002_region_province_municipality_barangay",
+      "applied": "2025-09-22 05:17:23.014500"
+    },
+    {
+      "id": 20,
+      "app": "common",
+      "name": "0003_add_population_fields",
+      "applied": "2025-09-22 05:17:23.022145"
+    },
+    {
+      "id": 21,
+      "app": "common",
+      "name": "0004_ensure_population_columns",
+      "applied": "2025-09-22 05:17:23.030302"
+    },
+    {
+      "id": 22,
+      "app": "communities",
+      "name": "0001_initial",
+      "applied": "2025-09-22 05:17:23.036436"
+    },
+    {
+      "id": 23,
+      "app": "communities",
+      "name": "0002_stakeholder_stakeholderengagement",
+      "applied": "2025-09-22 05:17:23.043957"
+    },
+    {
+      "id": 24,
+      "app": "communities",
+      "name": "0003_remove_community_name",
+      "applied": "2025-09-22 05:17:23.064701"
+    },
+    {
+      "id": 25,
+      "app": "communities",
+      "name": "0004_remove_obccommunity_cultural_background_and_more",
+      "applied": "2025-09-22 05:17:23.346101"
+    },
+    {
+      "id": 26,
+      "app": "communities",
+      "name": "0005_obccommunity_religious_csos_count_and_more",
+      "applied": "2025-09-22 05:17:23.359181"
+    },
+    {
+      "id": 27,
+      "app": "communities",
+      "name": "0006_remove_obccommunity_employment_opportunities_and_more",
+      "applied": "2025-09-22 05:17:23.422660"
+    },
+    {
+      "id": 28,
+      "app": "communities",
+      "name": "0007_municipalitycoverage",
+      "applied": "2025-09-22 05:17:23.428386"
+    },
+    {
+      "id": 29,
+      "app": "communities",
+      "name": "0008_municipalitycoverage_auto_sync",
+      "applied": "2025-09-22 05:17:23.432258"
+    },
+    {
+      "id": 30,
+      "app": "communities",
+      "name": "0009_municipalitycoverage_access_als_and_more",
+      "applied": "2025-09-22 05:17:23.924766"
+    },
+    {
+      "id": 31,
+      "app": "communities",
+      "name": "0010_alter_municipalitycoverage_options_and_more",
+      "applied": "2025-09-22 05:17:23.967196"
+    },
+    {
+      "id": 32,
+      "app": "communities",
+      "name": "0011_remove_municipalitycoverage_has_madrasah_and_more",
+      "applied": "2025-09-22 05:17:24.065267"
+    },
+    {
+      "id": 33,
+      "app": "communities",
+      "name": "0012_remove_municipalitycoverage_children_0_12_and_more",
+      "applied": "2025-09-22 05:17:24.105725"
+    },
+    {
+      "id": 34,
+      "app": "communities",
+      "name": "0013_alter_municipalitycoverage_primary_ethnolinguistic_group_and_more",
+      "applied": "2025-09-22 05:17:24.111625"
+    },
+    {
+      "id": 35,
+      "app": "communities",
+      "name": "0014_remove_municipalitycoverage_elderly_count_and_more",
+      "applied": "2025-09-22 05:17:24.164811"
+    },
+    {
+      "id": 36,
+      "app": "communities",
+      "name": "0015_municipalitycoverage_asatidz_count_and_more",
+      "applied": "2025-09-22 05:17:24.192539"
+    },
+    {
+      "id": 37,
+      "app": "mana",
+      "name": "0001_initial",
+      "applied": "2025-09-22 05:17:24.374583"
+    },
+    {
+      "id": 38,
+      "app": "mana",
+      "name": "0002_needscategory_needsprioritization_need_and_more",
+      "applied": "2025-09-22 05:17:24.426809"
+    },
+    {
+      "id": 39,
+      "app": "mana",
+      "name": "0003_geographicdatalayer_mapvisualization_and_more",
+      "applied": "2025-09-22 05:17:24.529841"
+    },
+    {
+      "id": 40,
+      "app": "mana",
+      "name": "0004_baselinestudy_baselinestudyteammember_and_more",
+      "applied": "2025-09-22 05:17:24.692724"
+    },
+    {
+      "id": 41,
+      "app": "coordination",
+      "name": "0001_initial",
+      "applied": "2025-09-22 05:17:24.870189"
+    },
+    {
+      "id": 45,
+      "app": "data_imports",
+      "name": "0001_initial",
+      "applied": "2025-09-22 05:17:25.698337"
+    },
+    {
+      "id": 46,
+      "app": "documents",
+      "name": "0001_initial",
+      "applied": "2025-09-22 05:17:26.084049"
+    },
+    {
+      "id": 47,
+      "app": "documents",
+      "name": "0002_document_original_filename_documentaccess_granted_by_and_more",
+      "applied": "2025-09-22 05:17:26.224939"
+    },
+    {
+      "id": 48,
+      "app": "documents",
+      "name": "0003_alter_document_document_type",
+      "applied": "2025-09-22 05:17:26.249581"
+    },
+    {
+      "id": 52,
+      "app": "policy_tracking",
+      "name": "0001_initial",
+      "applied": "2025-09-22 05:17:27.439305"
+    },
+    {
+      "id": 53,
+      "app": "policy_tracking",
+      "name": "0002_alter_policyrecommendation_category",
+      "applied": "2025-09-22 05:17:27.475364"
+    },
+    {
+      "id": 56,
+      "app": "municipal_profiles",
+      "name": "0001_initial",
+      "applied": "2025-09-22 05:17:28.114870"
+    },
+    {
+      "id": 57,
+      "app": "sessions",
+      "name": "0001_initial",
+      "applied": "2025-09-22 05:17:28.117161"
+    },
+    {
+      "id": 58,
+      "app": "sites",
+      "name": "0001_initial",
+      "applied": "2025-09-22 05:17:28.118458"
+    },
+    {
+      "id": 59,
+      "app": "sites",
+      "name": "0002_alter_domain_unique",
+      "applied": "2025-09-22 05:17:28.124944"
+    },
+    {
+      "id": 60,
+      "app": "municipal_profiles",
+      "name": "0002_municipalobcprofile_last_reported_by_and_more",
+      "applied": "2025-09-22 06:13:09.725239"
+    },
+    {
+      "id": 61,
+      "app": "communities",
+      "name": "0016_obccommunity_unique_obccommunity_per_barangay",
+      "applied": "2025-09-22 06:22:19.432706"
+    },
+    {
+      "id": 62,
+      "app": "communities",
+      "name": "0017_rename_cooperatives_to_peoples_organizations",
+      "applied": "2025-09-22 15:38:08.725755"
+    },
+    {
+      "id": 63,
+      "app": "communities",
+      "name": "0018_remove_municipalitycoverage_development_status_and_more",
+      "applied": "2025-09-22 17:10:13.453177"
+    },
+    {
+      "id": 64,
+      "app": "communities",
+      "name": "0019_add_cooperatives_field",
+      "applied": "2025-09-23 00:33:13.332681"
+    },
+    {
+      "id": 65,
+      "app": "common",
+      "name": "0005_add_geographic_boundaries",
+      "applied": "2025-09-23 01:37:26.238505"
+    },
+    {
+      "id": 67,
+      "app": "communities",
+      "name": "0020_alter_municipalitycoverage_other_cultural_facilities_and_more",
+      "applied": "2025-09-23 01:48:56.807642"
+    },
+    {
+      "id": 71,
+      "app": "coordination",
+      "name": "0002_organization_organizationcontact_and_more",
+      "applied": "2025-09-25 09:06:26.539648"
+    },
+    {
+      "id": 72,
+      "app": "coordination",
+      "name": "0003_event_actionitem_eventparticipant_eventdocument_and_more",
+      "applied": "2025-09-25 09:06:26.920441"
+    },
+    {
+      "id": 73,
+      "app": "coordination",
+      "name": "0004_partnership_partnershipsignatory_and_more",
+      "applied": "2025-09-25 09:06:27.178799"
+    },
+    {
+      "id": 79,
+      "app": "common",
+      "name": "0006_fix_region_xii_coordinates",
+      "applied": "2025-09-26 07:10:51.137391"
+    },
+    {
+      "id": 80,
+      "app": "common",
+      "name": "0007_staffteam_stafftask_staffteammembership",
+      "applied": "2025-09-26 07:10:51.227779"
+    },
+    {
+      "id": 81,
+      "app": "common",
+      "name": "0008_staff_profile_and_development",
+      "applied": "2025-09-27 15:15:45.477165"
+    },
+    {
+      "id": 83,
+      "app": "common",
+      "name": "0009_staff_profile_job_design",
+      "applied": "2025-09-27 16:22:18.888492"
+    },
+    {
+      "id": 84,
+      "app": "common",
+      "name": "0010_stafftask_board_position",
+      "applied": "2025-09-27 16:22:19.029303"
+    },
+    {
+      "id": 85,
+      "app": "common",
+      "name": "0011_alter_stafftask_options_remove_stafftask_assignee_and_more",
+      "applied": "2025-09-28 12:22:50.195651"
+    },
+    {
+      "id": 86,
+      "app": "common",
+      "name": "0012_add_multiple_teams_to_stafftask",
+      "applied": "2025-09-28 14:16:24.607670"
+    },
+    {
+      "id": 92,
+      "app": "coordination",
+      "name": "0005_alter_organization_created_by",
+      "applied": "2025-09-30 02:44:27.714562"
+    },
+    {
+      "id": 100,
+      "app": "coordination",
+      "name": "0006_organization_mandate_and_more",
+      "applied": "2025-09-30 13:22:30.974377"
+    },
+    {
+      "id": 103,
+      "app": "coordination",
+      "name": "0007_event_fiscal_year_event_is_quarterly_coordination_and_more",
+      "applied": "2025-10-01 04:15:42.976502"
+    },
+    {
+      "id": 105,
+      "app": "policy_tracking",
+      "name": "0003_policyimplementationmilestone",
+      "applied": "2025-10-01 04:15:43.689180"
+    },
+    {
+      "id": 113,
+      "app": "common",
+      "name": "0013_calendarresource_recurringeventpattern_and_more",
+      "applied": "2025-10-01 11:03:01.546281"
+    },
+    {
+      "id": 116,
+      "app": "documents",
+      "name": "0004_alter_document_file",
+      "applied": "2025-10-01 11:03:02.328329"
+    },
+    {
+      "id": 131,
+      "app": "axes",
+      "name": "0001_initial",
+      "applied": "2025-10-02 17:31:16.856529"
+    },
+    {
+      "id": 132,
+      "app": "axes",
+      "name": "0002_auto_20151217_2044",
+      "applied": "2025-10-02 17:31:16.941587"
+    },
+    {
+      "id": 133,
+      "app": "axes",
+      "name": "0003_auto_20160322_0929",
+      "applied": "2025-10-02 17:31:16.956024"
+    },
+    {
+      "id": 134,
+      "app": "axes",
+      "name": "0004_auto_20181024_1538",
+      "applied": "2025-10-02 17:31:16.968988"
+    },
+    {
+      "id": 135,
+      "app": "axes",
+      "name": "0005_remove_accessattempt_trusted",
+      "applied": "2025-10-02 17:31:16.977301"
+    },
+    {
+      "id": 136,
+      "app": "axes",
+      "name": "0006_remove_accesslog_trusted",
+      "applied": "2025-10-02 17:31:16.985739"
+    },
+    {
+      "id": 137,
+      "app": "axes",
+      "name": "0007_alter_accessattempt_unique_together",
+      "applied": "2025-10-02 17:31:17.037664"
+    },
+    {
+      "id": 138,
+      "app": "axes",
+      "name": "0008_accessfailurelog",
+      "applied": "2025-10-02 17:31:17.040841"
+    },
+    {
+      "id": 139,
+      "app": "axes",
+      "name": "0009_add_session_hash",
+      "applied": "2025-10-02 17:31:17.048222"
+    },
+    {
+      "id": 140,
+      "app": "auditlog",
+      "name": "0001_initial",
+      "applied": "2025-10-02 17:31:23.889028"
+    },
+    {
+      "id": 141,
+      "app": "auditlog",
+      "name": "0002_auto_support_long_primary_keys",
+      "applied": "2025-10-02 17:31:23.971492"
+    },
+    {
+      "id": 142,
+      "app": "auditlog",
+      "name": "0003_logentry_remote_addr",
+      "applied": "2025-10-02 17:31:24.017783"
+    },
+    {
+      "id": 143,
+      "app": "auditlog",
+      "name": "0004_logentry_detailed_object_repr",
+      "applied": "2025-10-02 17:31:24.064697"
+    },
+    {
+      "id": 144,
+      "app": "auditlog",
+      "name": "0005_logentry_additional_data_verbose_name",
+      "applied": "2025-10-02 17:31:24.150744"
+    },
+    {
+      "id": 145,
+      "app": "auditlog",
+      "name": "0006_object_pk_index",
+      "applied": "2025-10-02 17:31:24.201870"
+    },
+    {
+      "id": 146,
+      "app": "auditlog",
+      "name": "0007_object_pk_type",
+      "applied": "2025-10-02 17:31:24.246354"
+    },
+    {
+      "id": 147,
+      "app": "auditlog",
+      "name": "0008_action_index",
+      "applied": "2025-10-02 17:31:24.297668"
+    },
+    {
+      "id": 148,
+      "app": "auditlog",
+      "name": "0009_alter_logentry_additional_data",
+      "applied": "2025-10-02 17:31:24.390757"
+    },
+    {
+      "id": 149,
+      "app": "auditlog",
+      "name": "0010_alter_logentry_timestamp",
+      "applied": "2025-10-02 17:31:24.448456"
+    },
+    {
+      "id": 150,
+      "app": "auditlog",
+      "name": "0011_logentry_serialized_data",
+      "applied": "2025-10-02 17:31:24.495044"
+    },
+    {
+      "id": 151,
+      "app": "auditlog",
+      "name": "0012_add_logentry_action_access",
+      "applied": "2025-10-02 17:31:24.587905"
+    },
+    {
+      "id": 152,
+      "app": "auditlog",
+      "name": "0013_alter_logentry_timestamp",
+      "applied": "2025-10-02 17:31:24.639253"
+    },
+    {
+      "id": 153,
+      "app": "auditlog",
+      "name": "0014_logentry_cid",
+      "applied": "2025-10-02 17:31:24.685658"
+    },
+    {
+      "id": 154,
+      "app": "auditlog",
+      "name": "0015_alter_logentry_changes",
+      "applied": "2025-10-02 17:31:24.836498"
+    },
+    {
+      "id": 155,
+      "app": "auditlog",
+      "name": "0016_logentry_remote_port",
+      "applied": "2025-10-02 17:31:24.884041"
+    },
+    {
+      "id": 156,
+      "app": "auditlog",
+      "name": "0017_add_actor_email",
+      "applied": "2025-10-02 17:31:24.930068"
+    },
+    {
+      "id": 157,
+      "app": "token_blacklist",
+      "name": "0001_initial",
+      "applied": "2025-10-02 17:33:28.836474"
+    },
+    {
+      "id": 158,
+      "app": "token_blacklist",
+      "name": "0002_outstandingtoken_jti_hex",
+      "applied": "2025-10-02 17:33:28.902315"
+    },
+    {
+      "id": 159,
+      "app": "token_blacklist",
+      "name": "0003_auto_20171017_2007",
+      "applied": "2025-10-02 17:33:28.955893"
+    },
+    {
+      "id": 160,
+      "app": "token_blacklist",
+      "name": "0004_auto_20171017_2013",
+      "applied": "2025-10-02 17:33:29.053052"
+    },
+    {
+      "id": 161,
+      "app": "token_blacklist",
+      "name": "0005_remove_outstandingtoken_jti",
+      "applied": "2025-10-02 17:33:29.105466"
+    },
+    {
+      "id": 162,
+      "app": "token_blacklist",
+      "name": "0006_auto_20171017_2113",
+      "applied": "2025-10-02 17:33:29.161896"
+    },
+    {
+      "id": 163,
+      "app": "token_blacklist",
+      "name": "0007_auto_20171017_2214",
+      "applied": "2025-10-02 17:33:29.327510"
+    },
+    {
+      "id": 164,
+      "app": "token_blacklist",
+      "name": "0008_migrate_to_bigautofield",
+      "applied": "2025-10-02 17:33:29.397526"
+    },
+    {
+      "id": 165,
+      "app": "token_blacklist",
+      "name": "0010_fix_migrate_to_bigautofield",
+      "applied": "2025-10-02 17:33:29.468395"
+    },
+    {
+      "id": 166,
+      "app": "token_blacklist",
+      "name": "0011_linearizes_history",
+      "applied": "2025-10-02 17:33:29.469840"
+    },
+    {
+      "id": 167,
+      "app": "token_blacklist",
+      "name": "0012_alter_outstandingtoken_user",
+      "applied": "2025-10-02 17:33:29.576237"
+    },
+    {
+      "id": 168,
+      "app": "token_blacklist",
+      "name": "0013_alter_blacklistedtoken_options_and_more",
+      "applied": "2025-10-02 17:33:29.624473"
+    },
+    {
+      "id": 171,
+      "app": "policy_tracking",
+      "name": "0004_add_promotion_of_welfare_category",
+      "applied": "2025-10-04 04:22:56.692967"
+    },
+    {
+      "id": 172,
+      "app": "policy_tracking",
+      "name": "0005_add_comprehensive_recommendation_fields",
+      "applied": "2025-10-04 04:58:23.557569"
+    },
+    {
+      "id": 173,
+      "app": "policy_tracking",
+      "name": "0006_add_secondary_categories_field",
+      "applied": "2025-10-04 05:24:13.436852"
+    },
+    {
+      "id": 205,
+      "app": "ai_assistant",
+      "name": "0001_initial",
+      "applied": "2025-10-06 04:10:42.858326"
+    },
+    {
+      "id": 206,
+      "app": "ai_assistant",
+      "name": "0002_aioperation_documentembedding",
+      "applied": "2025-10-06 04:10:43.037275"
+    },
+    {
+      "id": 225,
+      "app": "planning",
+      "name": "0001_initial",
+      "applied": "2025-10-12 17:47:15.778504"
+    },
+    {
+      "id": 229,
+      "app": "budget_execution",
+      "name": "0002_initial",
+      "applied": "2025-10-12 18:14:57.682355"
+    },
+    {
+      "id": 230,
+      "app": "budget_preparation",
+      "name": "0002_auto_20251013_0214",
+      "applied": "2025-10-12 18:15:01.104427"
+    },
+    {
+      "id": 231,
+      "app": "budget_execution",
+      "name": "0003_add_financial_triggers",
+      "applied": "2025-10-12 18:16:07.824785"
+    },
+    {
+      "id": 245,
+      "app": "organizations",
+      "name": "0001_initial",
+      "applied": "2025-10-13 14:38:49.872842"
+    },
+    {
+      "id": 246,
+      "app": "organizations",
+      "name": "0002_seed_barmm_organizations",
+      "applied": "2025-10-13 14:38:49.940973"
+    },
+    {
+      "id": 248,
+      "app": "ocm",
+      "name": "0001_initial",
+      "applied": "2025-10-13 21:57:23.041594"
+    },
+    {
+      "id": 356,
+      "app": "mana",
+      "name": "0005_assessment_assessment_level_and_more",
+      "applied": "2025-10-15 01:44:07.318261"
+    },
+    {
+      "id": 357,
+      "app": "mana",
+      "name": "0006_workshopactivity_and_more",
+      "applied": "2025-10-15 01:44:07.325328"
+    },
+    {
+      "id": 358,
+      "app": "mana",
+      "name": "0007_alter_workshopoutput_output_type",
+      "applied": "2025-10-15 01:44:07.325768"
+    },
+    {
+      "id": 359,
+      "app": "monitoring",
+      "name": "0001_initial",
+      "applied": "2025-10-15 01:44:07.326142"
+    },
+    {
+      "id": 360,
+      "app": "monitoring",
+      "name": "0002_monitoringentry_budget_obc_allocation_and_more",
+      "applied": "2025-10-15 01:44:07.326472"
+    },
+    {
+      "id": 361,
+      "app": "monitoring",
+      "name": "0003_alter_monitoringentry_implementing_moa",
+      "applied": "2025-10-15 01:44:07.326813"
+    },
+    {
+      "id": 362,
+      "app": "monitoring",
+      "name": "0004_monitoringentry_appropriation_class_and_more",
+      "applied": "2025-10-15 01:44:07.327217"
+    },
+    {
+      "id": 363,
+      "app": "monitoring",
+      "name": "0005_monitoringentryworkflowdocument",
+      "applied": "2025-10-15 01:44:07.327565"
+    },
+    {
+      "id": 364,
+      "app": "monitoring",
+      "name": "0006_monitoringentrytaskassignment",
+      "applied": "2025-10-15 01:44:07.328101"
+    },
+    {
+      "id": 365,
+      "app": "mana",
+      "name": "0008_add_administrative_relations",
+      "applied": "2025-10-15 01:44:07.328474"
+    },
+    {
+      "id": 366,
+      "app": "mana",
+      "name": "0009_remove_geographic_tables",
+      "applied": "2025-10-15 01:44:07.328821"
+    },
+    {
+      "id": 367,
+      "app": "mana",
+      "name": "0010_remove_mapvisualization_assessment_and_more",
+      "applied": "2025-10-15 01:44:07.329206"
+    },
+    {
+      "id": 368,
+      "app": "mana",
+      "name": "0011_workshopactivity_workshop_outputs",
+      "applied": "2025-10-15 01:44:07.329587"
+    },
+    {
+      "id": 369,
+      "app": "communities",
+      "name": "0021_add_geographic_models",
+      "applied": "2025-10-15 01:44:07.330001"
+    },
+    {
+      "id": 370,
+      "app": "communities",
+      "name": "0022_add_soft_delete_fields",
+      "applied": "2025-10-15 01:44:07.330525"
+    },
+    {
+      "id": 371,
+      "app": "communities",
+      "name": "0023_rename_communities_spatia_communi_8a49cd_idx_communities_communi_896657_idx_and_more",
+      "applied": "2025-10-15 01:44:07.330922"
+    },
+    {
+      "id": 372,
+      "app": "communities",
+      "name": "0024_provincecoverage",
+      "applied": "2025-10-15 01:44:07.331277"
+    },
+    {
+      "id": 373,
+      "app": "mana",
+      "name": "0012_add_province_to_assessment",
+      "applied": "2025-10-15 01:44:07.331604"
+    },
+    {
+      "id": 374,
+      "app": "mana",
+      "name": "0013_workshopparticipantaccount_workshopsynthesis_and_more",
+      "applied": "2025-10-15 01:44:07.331991"
+    },
+    {
+      "id": 375,
+      "app": "mana",
+      "name": "0014_workshopquestiondefinition",
+      "applied": "2025-10-15 01:44:07.332349"
+    },
+    {
+      "id": 376,
+      "app": "mana",
+      "name": "0015_alter_workshopparticipantaccount_options_and_more",
+      "applied": "2025-10-15 01:44:07.332814"
+    },
+    {
+      "id": 377,
+      "app": "mana",
+      "name": "0016_add_facilitator_advancement_control",
+      "applied": "2025-10-15 01:44:07.333136"
+    },
+    {
+      "id": 378,
+      "app": "mana",
+      "name": "0017_add_facilitator_assessment_assignment",
+      "applied": "2025-10-15 01:44:07.333505"
+    },
+    {
+      "id": 379,
+      "app": "mana",
+      "name": "0018_add_workshop_notification",
+      "applied": "2025-10-15 01:44:07.333947"
+    },
+    {
+      "id": 380,
+      "app": "mana",
+      "name": "0019_enhance_participant_profile",
+      "applied": "2025-10-15 01:44:07.334366"
+    },
+    {
+      "id": 381,
+      "app": "mana",
+      "name": "0020_need_budget_inclusion_date_need_community_votes_and_more",
+      "applied": "2025-10-15 01:44:07.334695"
+    },
+    {
+      "id": 382,
+      "app": "monitoring",
+      "name": "0007_monitoringentry_implementing_policies_and_more",
+      "applied": "2025-10-15 01:44:07.335036"
+    },
+    {
+      "id": 383,
+      "app": "communities",
+      "name": "0025_add_provincial_submission_tracking",
+      "applied": "2025-10-15 01:44:07.335427"
+    },
+    {
+      "id": 384,
+      "app": "services",
+      "name": "0001_initial",
+      "applied": "2025-10-15 01:44:07.335824"
+    },
+    {
+      "id": 385,
+      "app": "mana",
+      "name": "0021_add_needvote_model",
+      "applied": "2025-10-15 01:44:07.336231"
+    },
+    {
+      "id": 386,
+      "app": "monitoring",
+      "name": "0008_add_strategic_planning_models",
+      "applied": "2025-10-15 01:44:07.339545"
+    },
+    {
+      "id": 387,
+      "app": "monitoring",
+      "name": "0009_add_scenario_planning_models",
+      "applied": "2025-10-15 01:44:07.340117"
+    },
+    {
+      "id": 388,
+      "app": "monitoring",
+      "name": "0010_monitoringentry_cost_effectiveness_rating_and_more",
+      "applied": "2025-10-15 01:44:07.340493"
+    },
+    {
+      "id": 389,
+      "app": "monitoring",
+      "name": "0011_monitoringentry_approval_history_and_more",
+      "applied": "2025-10-15 01:44:07.340913"
+    },
+    {
+      "id": 390,
+      "app": "coordination",
+      "name": "0008_maoquarterlyreport_and_more",
+      "applied": "2025-10-15 01:44:07.341290"
+    },
+    {
+      "id": 391,
+      "app": "coordination",
+      "name": "0009_remove_event_recurrence_end_date_and_more",
+      "applied": "2025-10-15 01:44:07.341952"
+    },
+    {
+      "id": 392,
+      "app": "project_central",
+      "name": "0001_initial",
+      "applied": "2025-10-15 01:44:07.342350"
+    },
+    {
+      "id": 393,
+      "app": "project_central",
+      "name": "0002_alter_budgetscenario_created_by",
+      "applied": "2025-10-15 01:44:07.342691"
+    },
+    {
+      "id": 394,
+      "app": "monitoring",
+      "name": "0012_monitoringentry_milestone_dates",
+      "applied": "2025-10-15 01:44:07.343030"
+    },
+    {
+      "id": 395,
+      "app": "monitoring",
+      "name": "0013_backfill_milestone_dates",
+      "applied": "2025-10-15 01:44:07.343353"
+    },
+    {
+      "id": 396,
+      "app": "communities",
+      "name": "0026_communityevent",
+      "applied": "2025-10-15 01:44:07.343660"
+    },
+    {
+      "id": 397,
+      "app": "common",
+      "name": "0014_tasktemplate_tasktemplateitem_stafftask_actual_hours_and_more",
+      "applied": "2025-10-15 01:44:07.343987"
+    },
+    {
+      "id": 398,
+      "app": "monitoring",
+      "name": "0014_migrate_task_assignments_to_stafftask",
+      "applied": "2025-10-15 01:44:07.344324"
+    },
+    {
+      "id": 399,
+      "app": "monitoring",
+      "name": "0015_remove_monitoringentrytaskassignment",
+      "applied": "2025-10-15 01:44:07.344762"
+    },
+    {
+      "id": 400,
+      "app": "monitoring",
+      "name": "0016_alter_monitoringentry_milestone_dates",
+      "applied": "2025-10-15 01:44:07.345151"
+    },
+    {
+      "id": 401,
+      "app": "project_central",
+      "name": "0003_budgetapprovalstage",
+      "applied": "2025-10-15 01:44:07.345625"
+    },
+    {
+      "id": 402,
+      "app": "coordination",
+      "name": "0010_eventattendance",
+      "applied": "2025-10-15 01:44:07.346073"
+    },
+    {
+      "id": 403,
+      "app": "common",
+      "name": "0015_migrate_monitoring_task_assignments",
+      "applied": "2025-10-15 01:44:07.348312"
+    },
+    {
+      "id": 404,
+      "app": "common",
+      "name": "0016_stafftask_auto_generated_stafftask_linked_ppa_and_more",
+      "applied": "2025-10-15 01:44:07.348753"
+    },
+    {
+      "id": 405,
+      "app": "common",
+      "name": "0017_alter_calendarnotification_content_type_and_more",
+      "applied": "2025-10-15 01:44:07.349380"
+    },
+    {
+      "id": 406,
+      "app": "common",
+      "name": "0018_stafftask_task_context_and_more",
+      "applied": "2025-10-15 01:44:07.350402"
+    },
+    {
+      "id": 407,
+      "app": "policy_tracking",
+      "name": "0007_policyrecommendation_target_barangay_and_more",
+      "applied": "2025-10-15 01:44:07.351129"
+    },
+    {
+      "id": 408,
+      "app": "coordination",
+      "name": "0011_event_is_project_activity_and_more",
+      "applied": "2025-10-15 01:44:07.361730"
+    },
+    {
+      "id": 409,
+      "app": "coordination",
+      "name": "0012_add_model_validation_constraints",
+      "applied": "2025-10-15 01:44:07.363843"
+    },
+    {
+      "id": 410,
+      "app": "communities",
+      "name": "0027_clear_province_estimated_population",
+      "applied": "2025-10-15 01:44:07.365172"
+    },
+    {
+      "id": 411,
+      "app": "communities",
+      "name": "0028_clear_municipal_estimated_population",
+      "applied": "2025-10-15 01:44:07.365484"
+    },
+    {
+      "id": 412,
+      "app": "common",
+      "name": "0019_update_system_user_display_name",
+      "applied": "2025-10-15 01:44:07.365807"
+    },
+    {
+      "id": 413,
+      "app": "common",
+      "name": "0020_workitem",
+      "applied": "2025-10-15 01:44:07.366130"
+    },
+    {
+      "id": 414,
+      "app": "common",
+      "name": "0021_add_model_validation_constraints",
+      "applied": "2025-10-15 01:44:07.366452"
+    },
+    {
+      "id": 415,
+      "app": "monitoring",
+      "name": "0017_add_model_validation_constraints",
+      "applied": "2025-10-15 01:44:07.366824"
+    },
+    {
+      "id": 416,
+      "app": "monitoring",
+      "name": "0018_add_workitem_integration",
+      "applied": "2025-10-15 01:44:07.367811"
+    },
+    {
+      "id": 417,
+      "app": "monitoring",
+      "name": "0019_rename_workitem_indexes",
+      "applied": "2025-10-15 01:44:07.368983"
+    },
+    {
+      "id": 418,
+      "app": "common",
+      "name": "0022_eventproxy_projectworkflowproxy_stafftaskproxy",
+      "applied": "2025-10-15 01:44:07.369354"
+    },
+    {
+      "id": 419,
+      "app": "common",
+      "name": "0023_workitem_explicit_fks",
+      "applied": "2025-10-15 01:44:07.369816"
+    },
+    {
+      "id": 420,
+      "app": "common",
+      "name": "0024_rename_workitem_indexes",
+      "applied": "2025-10-15 01:44:07.370140"
+    },
+    {
+      "id": 421,
+      "app": "monitoring",
+      "name": "0020_monitoringentry_auto_sync_progress_and_more",
+      "applied": "2025-10-15 01:44:07.370461"
+    },
+    {
+      "id": 422,
+      "app": "monitoring",
+      "name": "0021_update_funding_sources",
+      "applied": "2025-10-15 01:44:07.370791"
+    },
+    {
+      "id": 423,
+      "app": "monitoring",
+      "name": "0022_monitoringentry_beneficiary_demographics_and_more",
+      "applied": "2025-10-15 01:44:07.371130"
+    },
+    {
+      "id": 424,
+      "app": "coordination",
+      "name": "0013_add_model_validation_constraints",
+      "applied": "2025-10-15 01:44:07.371454"
+    },
+    {
+      "id": 425,
+      "app": "common",
+      "name": "0025_chatmessage",
+      "applied": "2025-10-15 01:44:07.371783"
+    },
+    {
+      "id": 426,
+      "app": "common",
+      "name": "0026_work_item_performance_indexes",
+      "applied": "2025-10-15 01:44:07.372247"
+    },
+    {
+      "id": 427,
+      "app": "common",
+      "name": "0027_alter_user_user_type",
+      "applied": "2025-10-15 01:44:07.372671"
+    },
+    {
+      "id": 428,
+      "app": "common",
+      "name": "0028_promote_executives",
+      "applied": "2025-10-15 01:44:07.373064"
+    },
+    {
+      "id": 429,
+      "app": "common",
+      "name": "0029_add_work_item_isolation_fields",
+      "applied": "2025-10-15 01:44:07.373841"
+    },
+    {
+      "id": 430,
+      "app": "common",
+      "name": "0030_backfill_work_item_isolation_data",
+      "applied": "2025-10-15 01:44:07.374181"
+    },
+    {
+      "id": 431,
+      "app": "common",
+      "name": "0031_add_moa_organization_fk",
+      "applied": "2025-10-15 01:44:07.375090"
+    },
+    {
+      "id": 432,
+      "app": "common",
+      "name": "0032_backfill_moa_organization",
+      "applied": "2025-10-15 01:44:07.375533"
+    },
+    {
+      "id": 433,
+      "app": "common",
+      "name": "0033_link_sibling_related_items",
+      "applied": "2025-10-15 01:44:07.375874"
+    },
+    {
+      "id": 434,
+      "app": "common",
+      "name": "0034_user_moa_first_level_approved_and_more",
+      "applied": "2025-10-15 01:44:07.376220"
+    },
+    {
+      "id": 435,
+      "app": "common",
+      "name": "0035_alter_calendarresource_options_and_more",
+      "applied": "2025-10-15 01:44:07.376613"
+    },
+    {
+      "id": 436,
+      "app": "coordination",
+      "name": "0014_coordinationnote",
+      "applied": "2025-10-15 01:44:07.377058"
+    },
+    {
+      "id": 437,
+      "app": "common",
+      "name": "0036_workitem_activity_category_and_more",
+      "applied": "2025-10-15 01:44:07.377533"
+    },
+    {
+      "id": 438,
+      "app": "coordination",
+      "name": "0015_organization_barangay_organization_municipality_and_more",
+      "applied": "2025-10-15 01:44:07.377989"
+    },
+    {
+      "id": 439,
+      "app": "monitoring",
+      "name": "0023_monitoringentry_monitoring_entry_budget_allocation_within_ceiling_and_more",
+      "applied": "2025-10-15 01:44:07.378561"
+    },
+    {
+      "id": 440,
+      "app": "budget_preparation",
+      "name": "0001_initial",
+      "applied": "2025-10-15 01:44:07.378979"
+    },
+    {
+      "id": 441,
+      "app": "budget_execution",
+      "name": "0001_initial",
+      "applied": "2025-10-15 01:44:07.379449"
+    },
+    {
+      "id": 442,
+      "app": "common",
+      "name": "0037_seed_region_xii_admin_data",
+      "applied": "2025-10-15 01:44:07.380247"
+    },
+    {
+      "id": 443,
+      "app": "common",
+      "name": "0038_add_audit_log_model",
+      "applied": "2025-10-15 01:44:07.381832"
+    },
+    {
+      "id": 444,
+      "app": "common",
+      "name": "0039_feature_permission_role_rolepermission_and_more",
+      "applied": "2025-10-15 01:44:07.382177"
+    },
+    {
+      "id": 445,
+      "app": "common",
+      "name": "0040_add_oobc_staff_rbac_restrictions",
+      "applied": "2025-10-15 01:44:07.382512"
+    },
+    {
+      "id": 446,
+      "app": "common",
+      "name": "0041_add_rbac_management_permissions",
+      "applied": "2025-10-15 01:44:07.382841"
+    },
+    {
+      "id": 447,
+      "app": "common",
+      "name": "0042_migrate_organization_to_moa_organization",
+      "applied": "2025-10-15 01:44:07.383154"
+    },
+    {
+      "id": 448,
+      "app": "common",
+      "name": "0043_bootstrap_executive_role_assignments",
+      "applied": "2025-10-15 01:44:07.383466"
+    },
+    {
+      "id": 449,
+      "app": "common",
+      "name": "0044_assign_oobc_staff_roles",
+      "applied": "2025-10-15 01:44:07.383778"
+    },
+    {
+      "id": 450,
+      "app": "common",
+      "name": "0045_add_monitoring_access_feature",
+      "applied": "2025-10-15 01:44:07.384087"
+    },
+    {
+      "id": 451,
+      "app": "common",
+      "name": "0046_grant_monitoring_to_oobc_staff",
+      "applied": "2025-10-15 01:44:07.384494"
+    },
+    {
+      "id": 452,
+      "app": "communities",
+      "name": "0029_add_organization_field",
+      "applied": "2025-10-15 01:44:07.384903"
+    },
+    {
+      "id": 453,
+      "app": "communities",
+      "name": "0030_make_organization_required",
+      "applied": "2025-10-15 01:44:07.385271"
+    },
+    {
+      "id": 454,
+      "app": "coordination",
+      "name": "0016_intermoapartnership",
+      "applied": "2025-10-15 01:44:07.385588"
+    },
+    {
+      "id": 455,
+      "app": "mana",
+      "name": "0022_add_organization_field_nullable",
+      "applied": "2025-10-15 01:44:07.385970"
+    },
+    {
+      "id": 456,
+      "app": "mana",
+      "name": "0023_make_organization_required",
+      "applied": "2025-10-15 01:44:07.386297"
+    },
+    {
+      "id": 457,
+      "app": "municipal_profiles",
+      "name": "0003_fix_history_fk_constraint",
+      "applied": "2025-10-15 01:44:07.386618"
+    },
+    {
+      "id": 458,
+      "app": "project_central",
+      "name": "0004_alter_alert_related_workflow_delete_projectworkflow",
+      "applied": "2025-10-15 01:44:07.386972"
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x1089793c0>",
+    "<sqlite3.Row object at 0x108978eb0>",
+    "<sqlite3.Row object at 0x108c4b760>",
+    "<sqlite3.Row object at 0x1069a9ff0>",
+    "<sqlite3.Row object at 0x108cd2aa0>",
+    "<sqlite3.Row object at 0x108cd39d0>",
+    "<sqlite3.Row object at 0x108cd0ee0>",
+    "<sqlite3.Row object at 0x108cd3580>",
+    "<sqlite3.Row object at 0x108cd09d0>"
+  ],
+  "data": [
+    {
+      "id": 1,
+      "name": "MANA Team",
+      "slug": "mana-team",
+      "description": "Mapping and Needs Assessment (MANA) team overseeing geospatial and socio-economic profiling.",
+      "mission": "Deliver updated community baselines and data layers to guide OOBC interventions.",
+      "focus_areas": "[\"Community mapping refresh cycles\", \"Needs assessment data quality\", \"Field team readiness and logistics\"]",
+      "is_active": 1,
+      "created_at": "2025-09-26 07:11:25.965912",
+      "updated_at": "2025-09-26 07:11:25.965935"
+    },
+    {
+      "id": 2,
+      "name": "M&E Unit",
+      "slug": "me-unit",
+      "description": "Monitoring and Evaluation unit tracking programme outcomes and implementation fidelity.",
+      "mission": "Transform field reports into actionable insights for adaptive management and leadership decisions.",
+      "focus_areas": "[\"Indicator performance tracking\", \"Data validation and synthesis\", \"Reporting for management and partners\"]",
+      "is_active": 1,
+      "created_at": "2025-09-26 07:11:25.984661",
+      "updated_at": "2025-09-26 07:11:25.984674"
+    },
+    {
+      "id": 3,
+      "name": "Planning and Budgeting Unit",
+      "slug": "planning-and-budgeting-unit",
+      "description": "Unit aligning programme priorities with financial planning and resource mobilisation.",
+      "mission": "Translate community priorities into resourced plans and monitor execution timelines.",
+      "focus_areas": "[\"Quarterly budgeting cycles\", \"Resource alignment with MANA outputs\", \"Portfolio risk mitigation\"]",
+      "is_active": 1,
+      "created_at": "2025-09-26 07:11:25.985380",
+      "updated_at": "2025-09-26 07:11:25.985386"
+    },
+    {
+      "id": 4,
+      "name": "Coordination Unit",
+      "slug": "coordination-unit",
+      "description": "Unit orchestrating cross-agency touchpoints and commitments for OOBC communities.",
+      "mission": "Synchronise engagements with BARMM ministries, LGUs, and partners for cohesive delivery.",
+      "focus_areas": "[\"Inter-agency briefings\", \"Stakeholder alignment\", \"Calendar and follow-up management\"]",
+      "is_active": 1,
+      "created_at": "2025-09-26 07:11:25.986017",
+      "updated_at": "2025-09-26 07:11:25.986021"
+    },
+    {
+      "id": 5,
+      "name": "Community Development Unit",
+      "slug": "community-development-unit",
+      "description": "Unit crafting development packages and support services for OOBC communities.",
+      "mission": "Co-design livelihood, protection, and social support interventions with communities.",
+      "focus_areas": "[\"Livelihood programming\", \"Community consultations\", \"Capability building initiatives\"]",
+      "is_active": 1,
+      "created_at": "2025-09-26 07:11:25.986570",
+      "updated_at": "2025-09-26 07:11:25.986574"
+    },
+    {
+      "id": 6,
+      "name": "Research Unit",
+      "slug": "research-unit",
+      "description": "Research hub documenting emerging issues, indigenous knowledge, and policy evidence.",
+      "mission": "Convert field intelligence into briefs that feed policy and programme design.",
+      "focus_areas": "[\"Qualitative and quantitative studies\", \"Knowledge management\", \"Evidence synthesis\"]",
+      "is_active": 1,
+      "created_at": "2025-09-26 07:11:25.987142",
+      "updated_at": "2025-09-26 07:11:25.987147"
+    }
+  ]
+}

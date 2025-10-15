@@ -1,0 +1,64 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108d09480>",
+    "<sqlite3.Row object at 0x108d095a0>",
+    "<sqlite3.Row object at 0x108d095d0>",
+    "<sqlite3.Row object at 0x108d09660>",
+    "<sqlite3.Row object at 0x108d096f0>",
+    "<sqlite3.Row object at 0x108d096c0>",
+    "<sqlite3.Row object at 0x108d09720>",
+    "<sqlite3.Row object at 0x108d09780>",
+    "<sqlite3.Row object at 0x108d097b0>",
+    "<sqlite3.Row object at 0x108d09840>"
+  ],
+  "data": [
+    {
+      "id": 1,
+      "code": "IX",
+      "name": "Zamboanga Peninsula",
+      "description": "",
+      "is_active": 1,
+      "created_at": "2025-09-22 06:08:21.477820",
+      "updated_at": "2025-09-22 06:08:21.477838",
+      "boundary_geojson": null,
+      "bounding_box": "[123.2643754, 8.4949449, 123.5843754, 8.8149449]",
+      "center_coordinates": "[123.4243754, 8.6549449]"
+    },
+    {
+      "id": 2,
+      "code": "X",
+      "name": "Northern Mindanao",
+      "description": "",
+      "is_active": 1,
+      "created_at": "2025-09-22 06:08:22.305420",
+      "updated_at": "2025-09-22 06:08:22.305426",
+      "boundary_geojson": null,
+      "bounding_box": "[124.6547379, 8.4845491, 124.6586654, 8.4879195]",
+      "center_coordinates": "[124.656805, 8.4860705]"
+    },
+    {
+      "id": 3,
+      "code": "XI",
+      "name": "Davao Region",
+      "description": "",
+      "is_active": 1,
+      "created_at": "2025-09-22 06:08:23.018291",
+      "updated_at": "2025-09-22 06:08:23.018299",
+      "boundary_geojson": null,
+      "bounding_box": "[125.6143492, 7.0841417, 125.6178219, 7.0873176]",
+      "center_coordinates": "[125.6160832, 7.0857729]"
+    },
+    {
+      "id": 4,
+      "code": "XII",
+      "name": "SOCCSKSARGEN",
+      "description": "Region XII covers South Cotabato, Cotabato, Sultan Kudarat, Sarangani, and the highly urbanized city of General Santos. This seed dataset provides geographic centroids so integration tests can validate location services without depending on external imports.",
+      "is_active": 1,
+      "created_at": "2025-09-22 06:08:23.465047",
+      "updated_at": "2025-10-15 01:40:18.810765",
+      "boundary_geojson": null,
+      "bounding_box": "[123.7, 5.4, 125.65, 7.6]",
+      "center_coordinates": "[124.85, 6.35]"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108cde260>",
+    "<sqlite3.Row object at 0x108cde1a0>",
+    "<sqlite3.Row object at 0x108cde020>"
+  ],
+  "data": [
+    {
+      "id": 1,
+      "group_id": 1,
+      "permission_id": 385
+    },
+    {
+      "id": 2,
+      "group_id": 1,
+      "permission_id": 386
+    },
+    {
+      "id": 3,
+      "group_id": 2,
+      "permission_id": 385
+    },
+    {
+      "id": 4,
+      "group_id": 2,
+      "permission_id": 386
+    },
+    {
+      "id": 5,
+      "group_id": 2,
+      "permission_id": 395
+    },
+    {
+      "id": 6,
+      "group_id": 3,
+      "permission_id": 385
+    },
+    {
+      "id": 7,
+      "group_id": 3,
+      "permission_id": 386
+    },
+    {
+      "id": 8,
+      "group_id": 3,
+      "permission_id": 395
+    },
+    {
+      "id": 9,
+      "group_id": 3,
+      "permission_id": 381
+    },
+    {
+      "id": 10,
+      "group_id": 3,
+      "permission_id": 382
+    },
+    {
+      "id": 11,
+      "group_id": 3,
+      "permission_id": 383
+    },
+    {
+      "id": 12,
+      "group_id": 4,
+      "permission_id": 596
+    }
+  ]
+}

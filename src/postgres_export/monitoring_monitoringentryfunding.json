@@ -1,0 +1,17 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108cdc7c0>",
+    "<sqlite3.Row object at 0x108cdc070>",
+    "<sqlite3.Row object at 0x108cdfb80>",
+    "<sqlite3.Row object at 0x108cdfa30>",
+    "<sqlite3.Row object at 0x108cdc910>",
+    "<sqlite3.Row object at 0x108cde170>",
+    "<sqlite3.Row object at 0x108cdf760>",
+    "<sqlite3.Row object at 0x108cdf130>",
+    "<sqlite3.Row object at 0x108cdedd0>",
+    "<sqlite3.Row object at 0x108cdda80>",
+    "<sqlite3.Row object at 0x108cdfcd0>",
+    "<sqlite3.Row object at 0x108cdfd00>"
+  ],
+  "data": []
+}

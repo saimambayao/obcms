@@ -1,0 +1,874 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108cd05e0>",
+    "<sqlite3.Row object at 0x108cd0760>",
+    "<sqlite3.Row object at 0x108cd0dc0>"
+  ],
+  "data": [
+    {
+      "id": 1,
+      "app_label": "admin",
+      "model": "logentry"
+    },
+    {
+      "id": 2,
+      "app_label": "auth",
+      "model": "permission"
+    },
+    {
+      "id": 3,
+      "app_label": "auth",
+      "model": "group"
+    },
+    {
+      "id": 4,
+      "app_label": "contenttypes",
+      "model": "contenttype"
+    },
+    {
+      "id": 5,
+      "app_label": "sessions",
+      "model": "session"
+    },
+    {
+      "id": 6,
+      "app_label": "sites",
+      "model": "site"
+    },
+    {
+      "id": 7,
+      "app_label": "common",
+      "model": "user"
+    },
+    {
+      "id": 8,
+      "app_label": "common",
+      "model": "region"
+    },
+    {
+      "id": 9,
+      "app_label": "common",
+      "model": "province"
+    },
+    {
+      "id": 10,
+      "app_label": "common",
+      "model": "municipality"
+    },
+    {
+      "id": 11,
+      "app_label": "common",
+      "model": "barangay"
+    },
+    {
+      "id": 12,
+      "app_label": "communities",
+      "model": "obccommunity"
+    },
+    {
+      "id": 13,
+      "app_label": "communities",
+      "model": "communitylivelihood"
+    },
+    {
+      "id": 14,
+      "app_label": "communities",
+      "model": "communityinfrastructure"
+    },
+    {
+      "id": 15,
+      "app_label": "communities",
+      "model": "stakeholder"
+    },
+    {
+      "id": 16,
+      "app_label": "communities",
+      "model": "stakeholderengagement"
+    },
+    {
+      "id": 17,
+      "app_label": "communities",
+      "model": "municipalitycoverage"
+    },
+    {
+      "id": 18,
+      "app_label": "municipal_profiles",
+      "model": "municipalobcprofile"
+    },
+    {
+      "id": 19,
+      "app_label": "municipal_profiles",
+      "model": "municipalobcprofilehistory"
+    },
+    {
+      "id": 20,
+      "app_label": "municipal_profiles",
+      "model": "obccommunityhistory"
+    },
+    {
+      "id": 21,
+      "app_label": "mana",
+      "model": "assessment"
+    },
+    {
+      "id": 22,
+      "app_label": "mana",
+      "model": "assessmentcategory"
+    },
+    {
+      "id": 23,
+      "app_label": "mana",
+      "model": "survey"
+    },
+    {
+      "id": 24,
+      "app_label": "mana",
+      "model": "surveyresponse"
+    },
+    {
+      "id": 25,
+      "app_label": "mana",
+      "model": "mappingactivity"
+    },
+    {
+      "id": 26,
+      "app_label": "mana",
+      "model": "assessmentteammember"
+    },
+    {
+      "id": 27,
+      "app_label": "mana",
+      "model": "surveyquestion"
+    },
+    {
+      "id": 28,
+      "app_label": "mana",
+      "model": "needscategory"
+    },
+    {
+      "id": 29,
+      "app_label": "mana",
+      "model": "needsprioritization"
+    },
+    {
+      "id": 30,
+      "app_label": "mana",
+      "model": "need"
+    },
+    {
+      "id": 31,
+      "app_label": "mana",
+      "model": "needsprioritizationitem"
+    },
+    {
+      "id": 32,
+      "app_label": "mana",
+      "model": "geographicdatalayer"
+    },
+    {
+      "id": 33,
+      "app_label": "mana",
+      "model": "mapvisualization"
+    },
+    {
+      "id": 34,
+      "app_label": "mana",
+      "model": "spatialdatapoint"
+    },
+    {
+      "id": 35,
+      "app_label": "mana",
+      "model": "baselinestudy"
+    },
+    {
+      "id": 36,
+      "app_label": "mana",
+      "model": "baselinestudyteammember"
+    },
+    {
+      "id": 37,
+      "app_label": "mana",
+      "model": "baselineindicator"
+    },
+    {
+      "id": 38,
+      "app_label": "mana",
+      "model": "baselinedatacollection"
+    },
+    {
+      "id": 39,
+      "app_label": "mana",
+      "model": "communityprofile"
+    },
+    {
+      "id": 40,
+      "app_label": "mana",
+      "model": "communitygovernance"
+    },
+    {
+      "id": 41,
+      "app_label": "mana",
+      "model": "communitychallenges"
+    },
+    {
+      "id": 42,
+      "app_label": "mana",
+      "model": "communityaspirations"
+    },
+    {
+      "id": 43,
+      "app_label": "mana",
+      "model": "workshopactivity"
+    },
+    {
+      "id": 44,
+      "app_label": "mana",
+      "model": "workshopsession"
+    },
+    {
+      "id": 45,
+      "app_label": "mana",
+      "model": "workshopoutput"
+    },
+    {
+      "id": 46,
+      "app_label": "mana",
+      "model": "manareport"
+    },
+    {
+      "id": 47,
+      "app_label": "mana",
+      "model": "workshopparticipant"
+    },
+    {
+      "id": 48,
+      "app_label": "coordination",
+      "model": "engagementfacilitator"
+    },
+    {
+      "id": 49,
+      "app_label": "coordination",
+      "model": "stakeholderengagementtype"
+    },
+    {
+      "id": 50,
+      "app_label": "coordination",
+      "model": "stakeholderengagement"
+    },
+    {
+      "id": 51,
+      "app_label": "coordination",
+      "model": "engagementtracking"
+    },
+    {
+      "id": 52,
+      "app_label": "coordination",
+      "model": "consultationfeedback"
+    },
+    {
+      "id": 53,
+      "app_label": "coordination",
+      "model": "organization"
+    },
+    {
+      "id": 54,
+      "app_label": "coordination",
+      "model": "organizationcontact"
+    },
+    {
+      "id": 55,
+      "app_label": "coordination",
+      "model": "communicationtemplate"
+    },
+    {
+      "id": 56,
+      "app_label": "coordination",
+      "model": "communicationschedule"
+    },
+    {
+      "id": 57,
+      "app_label": "coordination",
+      "model": "communication"
+    },
+    {
+      "id": 58,
+      "app_label": "coordination",
+      "model": "event"
+    },
+    {
+      "id": 59,
+      "app_label": "coordination",
+      "model": "actionitem"
+    },
+    {
+      "id": 60,
+      "app_label": "coordination",
+      "model": "eventparticipant"
+    },
+    {
+      "id": 61,
+      "app_label": "coordination",
+      "model": "eventdocument"
+    },
+    {
+      "id": 62,
+      "app_label": "coordination",
+      "model": "partnership"
+    },
+    {
+      "id": 63,
+      "app_label": "coordination",
+      "model": "partnershipsignatory"
+    },
+    {
+      "id": 64,
+      "app_label": "coordination",
+      "model": "partnershipmilestone"
+    },
+    {
+      "id": 65,
+      "app_label": "coordination",
+      "model": "partnershipdocument"
+    },
+    {
+      "id": 66,
+      "app_label": "documents",
+      "model": "document"
+    },
+    {
+      "id": 67,
+      "app_label": "documents",
+      "model": "documentcategory"
+    },
+    {
+      "id": 68,
+      "app_label": "documents",
+      "model": "documentcomment"
+    },
+    {
+      "id": 69,
+      "app_label": "documents",
+      "model": "documentaccess"
+    },
+    {
+      "id": 70,
+      "app_label": "policy_tracking",
+      "model": "policyrecommendation"
+    },
+    {
+      "id": 71,
+      "app_label": "policy_tracking",
+      "model": "policyimpact"
+    },
+    {
+      "id": 72,
+      "app_label": "policy_tracking",
+      "model": "policyevidence"
+    },
+    {
+      "id": 73,
+      "app_label": "policy_tracking",
+      "model": "policydocument"
+    },
+    {
+      "id": 74,
+      "app_label": "data_imports",
+      "model": "dataimport"
+    },
+    {
+      "id": 75,
+      "app_label": "data_imports",
+      "model": "importtemplate"
+    },
+    {
+      "id": 76,
+      "app_label": "data_imports",
+      "model": "importlog"
+    },
+    {
+      "id": 77,
+      "app_label": "data_imports",
+      "model": "fieldmapping"
+    },
+    {
+      "id": 78,
+      "app_label": "monitoring",
+      "model": "monitoringentry"
+    },
+    {
+      "id": 79,
+      "app_label": "monitoring",
+      "model": "monitoringupdate"
+    },
+    {
+      "id": 80,
+      "app_label": "communities",
+      "model": "geographicdatalayer"
+    },
+    {
+      "id": 81,
+      "app_label": "communities",
+      "model": "mapvisualization"
+    },
+    {
+      "id": 82,
+      "app_label": "communities",
+      "model": "spatialdatapoint"
+    },
+    {
+      "id": 83,
+      "app_label": "common",
+      "model": "stafftask"
+    },
+    {
+      "id": 84,
+      "app_label": "common",
+      "model": "staffteam"
+    },
+    {
+      "id": 85,
+      "app_label": "common",
+      "model": "staffteammembership"
+    },
+    {
+      "id": 86,
+      "app_label": "common",
+      "model": "staffdevelopmentplan"
+    },
+    {
+      "id": 87,
+      "app_label": "common",
+      "model": "trainingprogram"
+    },
+    {
+      "id": 88,
+      "app_label": "common",
+      "model": "trainingenrollment"
+    },
+    {
+      "id": 89,
+      "app_label": "common",
+      "model": "staffprofile"
+    },
+    {
+      "id": 90,
+      "app_label": "common",
+      "model": "performancetarget"
+    },
+    {
+      "id": 91,
+      "app_label": "monitoring",
+      "model": "monitoringentryfunding"
+    },
+    {
+      "id": 92,
+      "app_label": "monitoring",
+      "model": "monitoringentryworkflowstage"
+    },
+    {
+      "id": 93,
+      "app_label": "communities",
+      "model": "provincecoverage"
+    },
+    {
+      "id": 94,
+      "app_label": "mana",
+      "model": "workshopsynthesis"
+    },
+    {
+      "id": 95,
+      "app_label": "mana",
+      "model": "workshopresponse"
+    },
+    {
+      "id": 96,
+      "app_label": "mana",
+      "model": "workshopparticipantaccount"
+    },
+    {
+      "id": 97,
+      "app_label": "mana",
+      "model": "workshopaccesslog"
+    },
+    {
+      "id": 98,
+      "app_label": "mana",
+      "model": "workshopquestiondefinition"
+    },
+    {
+      "id": 99,
+      "app_label": "mana",
+      "model": "facilitatorassessmentassignment"
+    },
+    {
+      "id": 100,
+      "app_label": "mana",
+      "model": "workshopnotification"
+    },
+    {
+      "id": 101,
+      "app_label": "monitoring",
+      "model": "monitoringentryworkflowdocument"
+    },
+    {
+      "id": 102,
+      "app_label": "monitoring",
+      "model": "monitoringentrytaskassignment"
+    },
+    {
+      "id": 103,
+      "app_label": "coordination",
+      "model": "maofocalperson"
+    },
+    {
+      "id": 104,
+      "app_label": "policy_tracking",
+      "model": "policyimplementationmilestone"
+    },
+    {
+      "id": 105,
+      "app_label": "services",
+      "model": "serviceoffering"
+    },
+    {
+      "id": 106,
+      "app_label": "services",
+      "model": "serviceapplication"
+    },
+    {
+      "id": 107,
+      "app_label": "mana",
+      "model": "needvote"
+    },
+    {
+      "id": 108,
+      "app_label": "monitoring",
+      "model": "strategicgoal"
+    },
+    {
+      "id": 109,
+      "app_label": "monitoring",
+      "model": "annualplanningcycle"
+    },
+    {
+      "id": 110,
+      "app_label": "monitoring",
+      "model": "budgetscenario"
+    },
+    {
+      "id": 111,
+      "app_label": "monitoring",
+      "model": "scenarioallocation"
+    },
+    {
+      "id": 112,
+      "app_label": "monitoring",
+      "model": "outcomeindicator"
+    },
+    {
+      "id": 113,
+      "app_label": "monitoring",
+      "model": "ceilingmanagement"
+    },
+    {
+      "id": 114,
+      "app_label": "coordination",
+      "model": "maoquarterlyreport"
+    },
+    {
+      "id": 115,
+      "app_label": "common",
+      "model": "calendarresource"
+    },
+    {
+      "id": 116,
+      "app_label": "common",
+      "model": "recurringeventpattern"
+    },
+    {
+      "id": 117,
+      "app_label": "common",
+      "model": "usercalendarpreferences"
+    },
+    {
+      "id": 118,
+      "app_label": "common",
+      "model": "staffleave"
+    },
+    {
+      "id": 119,
+      "app_label": "common",
+      "model": "sharedcalendarlink"
+    },
+    {
+      "id": 120,
+      "app_label": "common",
+      "model": "externalcalendarsync"
+    },
+    {
+      "id": 121,
+      "app_label": "common",
+      "model": "calendarresourcebooking"
+    },
+    {
+      "id": 122,
+      "app_label": "common",
+      "model": "calendarnotification"
+    },
+    {
+      "id": 123,
+      "app_label": "communities",
+      "model": "communityevent"
+    },
+    {
+      "id": 124,
+      "app_label": "common",
+      "model": "tasktemplate"
+    },
+    {
+      "id": 125,
+      "app_label": "common",
+      "model": "tasktemplateitem"
+    },
+    {
+      "id": 126,
+      "app_label": "project_central",
+      "model": "projectworkflow"
+    },
+    {
+      "id": 127,
+      "app_label": "project_central",
+      "model": "budgetscenario"
+    },
+    {
+      "id": 128,
+      "app_label": "project_central",
+      "model": "budgetceiling"
+    },
+    {
+      "id": 129,
+      "app_label": "project_central",
+      "model": "alert"
+    },
+    {
+      "id": 130,
+      "app_label": "coordination",
+      "model": "eventattendance"
+    },
+    {
+      "id": 131,
+      "app_label": "project_central",
+      "model": "budgetapprovalstage"
+    },
+    {
+      "id": 132,
+      "app_label": "axes",
+      "model": "accessattempt"
+    },
+    {
+      "id": 133,
+      "app_label": "axes",
+      "model": "accesslog"
+    },
+    {
+      "id": 134,
+      "app_label": "axes",
+      "model": "accessfailurelog"
+    },
+    {
+      "id": 135,
+      "app_label": "auditlog",
+      "model": "logentry"
+    },
+    {
+      "id": 136,
+      "app_label": "token_blacklist",
+      "model": "blacklistedtoken"
+    },
+    {
+      "id": 137,
+      "app_label": "token_blacklist",
+      "model": "outstandingtoken"
+    },
+    {
+      "id": 138,
+      "app_label": "common",
+      "model": "workitem"
+    },
+    {
+      "id": 139,
+      "app_label": "common",
+      "model": "eventproxy"
+    },
+    {
+      "id": 140,
+      "app_label": "common",
+      "model": "projectworkflowproxy"
+    },
+    {
+      "id": 141,
+      "app_label": "common",
+      "model": "stafftaskproxy"
+    },
+    {
+      "id": 142,
+      "app_label": "ai_assistant",
+      "model": "aiconversation"
+    },
+    {
+      "id": 143,
+      "app_label": "ai_assistant",
+      "model": "aiusagemetrics"
+    },
+    {
+      "id": 144,
+      "app_label": "ai_assistant",
+      "model": "aiinsight"
+    },
+    {
+      "id": 145,
+      "app_label": "ai_assistant",
+      "model": "aigenerateddocument"
+    },
+    {
+      "id": 146,
+      "app_label": "ai_assistant",
+      "model": "aioperation"
+    },
+    {
+      "id": 147,
+      "app_label": "ai_assistant",
+      "model": "documentembedding"
+    },
+    {
+      "id": 148,
+      "app_label": "common",
+      "model": "chatmessage"
+    },
+    {
+      "id": 149,
+      "app_label": "coordination",
+      "model": "coordinationnote"
+    },
+    {
+      "id": 150,
+      "app_label": "monitoring",
+      "model": "monitoringrequestattachment"
+    },
+    {
+      "id": 151,
+      "app_label": "planning",
+      "model": "strategicplan"
+    },
+    {
+      "id": 152,
+      "app_label": "planning",
+      "model": "strategicgoal"
+    },
+    {
+      "id": 153,
+      "app_label": "planning",
+      "model": "annualworkplan"
+    },
+    {
+      "id": 154,
+      "app_label": "planning",
+      "model": "workplanobjective"
+    },
+    {
+      "id": 155,
+      "app_label": "common",
+      "model": "auditlog"
+    },
+    {
+      "id": 156,
+      "app_label": "budget_preparation",
+      "model": "budgetproposal"
+    },
+    {
+      "id": 157,
+      "app_label": "budget_preparation",
+      "model": "programbudget"
+    },
+    {
+      "id": 158,
+      "app_label": "budget_preparation",
+      "model": "budgetlineitem"
+    },
+    {
+      "id": 159,
+      "app_label": "budget_preparation",
+      "model": "budgetjustification"
+    },
+    {
+      "id": 160,
+      "app_label": "budget_execution",
+      "model": "disbursement"
+    },
+    {
+      "id": 161,
+      "app_label": "budget_execution",
+      "model": "disbursementlineitem"
+    },
+    {
+      "id": 162,
+      "app_label": "budget_execution",
+      "model": "obligation"
+    },
+    {
+      "id": 163,
+      "app_label": "budget_execution",
+      "model": "allotment"
+    },
+    {
+      "id": 164,
+      "app_label": "common",
+      "model": "feature"
+    },
+    {
+      "id": 165,
+      "app_label": "common",
+      "model": "permission"
+    },
+    {
+      "id": 166,
+      "app_label": "common",
+      "model": "role"
+    },
+    {
+      "id": 167,
+      "app_label": "common",
+      "model": "rolepermission"
+    },
+    {
+      "id": 168,
+      "app_label": "common",
+      "model": "userpermission"
+    },
+    {
+      "id": 169,
+      "app_label": "common",
+      "model": "userrole"
+    },
+    {
+      "id": 170,
+      "app_label": "organizations",
+      "model": "organization"
+    },
+    {
+      "id": 171,
+      "app_label": "organizations",
+      "model": "organizationmembership"
+    },
+    {
+      "id": 172,
+      "app_label": "coordination",
+      "model": "intermoapartnership"
+    },
+    {
+      "id": 173,
+      "app_label": "ocm",
+      "model": "ocmaccess"
+    }
+  ]
+}

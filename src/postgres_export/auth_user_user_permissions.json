@@ -1,0 +1,14 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108d08ac0>",
+    "<sqlite3.Row object at 0x108d08b20>",
+    "<sqlite3.Row object at 0x108d08bb0>"
+  ],
+  "data": [
+    {
+      "id": 22,
+      "user_id": 162,
+      "permission_id": 597
+    }
+  ]
+}

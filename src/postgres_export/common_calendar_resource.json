@@ -1,0 +1,82 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108cdffa0>",
+    "<sqlite3.Row object at 0x108cddde0>",
+    "<sqlite3.Row object at 0x108cdded0>",
+    "<sqlite3.Row object at 0x108cdd000>",
+    "<sqlite3.Row object at 0x108cdf4c0>",
+    "<sqlite3.Row object at 0x108cdf490>",
+    "<sqlite3.Row object at 0x108a44040>",
+    "<sqlite3.Row object at 0x108a27ac0>",
+    "<sqlite3.Row object at 0x108a27b20>",
+    "<sqlite3.Row object at 0x108a27e50>",
+    "<sqlite3.Row object at 0x108a27be0>"
+  ],
+  "data": [
+    {
+      "id": 1,
+      "resource_type": "room",
+      "name": "Planning Room",
+      "description": "",
+      "capacity": null,
+      "location": "",
+      "is_available": 1,
+      "booking_requires_approval": 0,
+      "cost_per_use": null,
+      "created_at": "2025-10-01 14:05:55.065345",
+      "modified_at": "2025-10-01 14:05:55.065354"
+    },
+    {
+      "id": 2,
+      "resource_type": "room",
+      "name": "Performance Conference Room",
+      "description": "",
+      "capacity": 30,
+      "location": "",
+      "is_available": 1,
+      "booking_requires_approval": 1,
+      "cost_per_use": null,
+      "created_at": "2025-10-01 14:36:50.478814",
+      "modified_at": "2025-10-01 14:36:50.478829"
+    },
+    {
+      "id": 3,
+      "resource_type": "room",
+      "name": "Performance Conference Room",
+      "description": "",
+      "capacity": 30,
+      "location": "",
+      "is_available": 1,
+      "booking_requires_approval": 1,
+      "cost_per_use": null,
+      "created_at": "2025-10-01 14:37:04.963054",
+      "modified_at": "2025-10-01 14:37:04.963070"
+    },
+    {
+      "id": 4,
+      "resource_type": "room",
+      "name": "Performance Conference Room",
+      "description": "",
+      "capacity": 30,
+      "location": "",
+      "is_available": 1,
+      "booking_requires_approval": 1,
+      "cost_per_use": null,
+      "created_at": "2025-10-01 14:41:25.758497",
+      "modified_at": "2025-10-01 14:41:25.758513"
+    },
+    {
+      "id": 5,
+      "resource_type": "room",
+      "name": "Performance Conference Room",
+      "description": "",
+      "capacity": 30,
+      "location": "",
+      "is_available": 1,
+      "booking_requires_approval": 1,
+      "cost_per_use": null,
+      "created_at": "2025-10-01 14:41:52.631978",
+      "modified_at": "2025-10-01 14:41:52.631993"
+    }
+  ]
+}

@@ -25,13 +25,12 @@ RUN npm run build:css && \
 # Stage 2: Python Base - Common dependencies for Sevalla
 FROM python:3.12-slim as base
 
-# Set environment variables for production deployment
+# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PYTHONPATH=/app/src \
-    DJANGO_SETTINGS_MODULE=obc_management.settings.production
+    PYTHONPATH=/app/src
 
 # Install system dependencies for production
 RUN apt-get update && apt-get install -y \

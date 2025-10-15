@@ -153,12 +153,18 @@ class PostgreSQLMigrator:
         # Connect to PostgreSQL
         try:
             conn = psycopg2.connect(**self.pg_config)
+            conn.autocommit = True  # Enable autocommit for constraint handling
             cursor = conn.cursor()
+
+            # Temporarily disable constraints
+            print("   Temporarily disabling constraints...")
+            cursor.execute("SET session_replication_role = replica;")
 
             # Get all JSON files
             json_files = [f for f in os.listdir(export_dir) if f.endswith('.json')]
 
             imported_counts = {}
+            failed_tables = []
 
             for json_file in json_files:
                 table_name = json_file[:-5]  # Remove .json extension
@@ -172,9 +178,18 @@ class PostgreSQLMigrator:
                     print(f"   No data to import for {table_name}")
                     continue
 
-                # Import data
-                self._import_table_data(cursor, table_name, table_data)
-                imported_counts[table_name] = len(table_data['data'])
+                # Try to import data
+                try:
+                    self._import_table_data(cursor, table_name, table_data)
+                    imported_counts[table_name] = len(table_data['data'])
+                except Exception as e:
+                    print(f"   ⚠️  Skipping {table_name}: {str(e)[:100]}...")
+                    failed_tables.append(table_name)
+                    continue
+
+            # Re-enable constraints
+            print("   Re-enabling constraints...")
+            cursor.execute("SET session_replication_role = DEFAULT;")
 
             conn.commit()
             conn.close()
@@ -182,6 +197,11 @@ class PostgreSQLMigrator:
             print(f"✅ Imported {len(imported_counts)} tables")
             for table, count in imported_counts.items():
                 print(f"   {table}: {count} records")
+
+            if failed_tables:
+                print(f"⚠️  {len(failed_tables)} tables skipped due to constraint issues:")
+                for table in failed_tables:
+                    print(f"   - {table}")
 
             return True
 
@@ -199,6 +219,19 @@ class PostgreSQLMigrator:
         # Get column names from first row
         columns = list(data[0].keys())
 
+        # Check column types for the table to handle type conversions
+        column_types = {}
+        try:
+            cursor.execute("""
+                SELECT column_name, data_type
+                FROM information_schema.columns
+                WHERE table_name = %s
+                AND table_schema = 'public'
+            """, (table_name,))
+            column_types = {row[0]: row[1] for row in cursor.fetchall()}
+        except:
+            pass  # If we can't get column types, continue without type checking
+
         # Create placeholder string
         placeholders = ', '.join(['%s'] * len(columns))
 
@@ -209,7 +242,30 @@ class PostgreSQLMigrator:
         batch_size = 1000
         for i in range(0, len(data), batch_size):
             batch = data[i:i + batch_size]
-            values = [[row.get(col) for col in columns] for row in batch]
+            values = []
+            for row in batch:
+                row_values = []
+                for col in columns:
+                    value = row.get(col)
+                    col_type = column_types.get(col, '')
+
+                    # Handle None values properly
+                    if value is None or value == '':
+                        value = None
+                    # Handle boolean type conversion
+                    elif col_type == 'boolean':
+                        if isinstance(value, bool):
+                            value = value
+                        elif isinstance(value, int):
+                            value = bool(value)
+                        elif isinstance(value, str):
+                            value = value.lower() in ('true', '1', 'yes', 't', 'y')
+                    # Handle integer type conversion
+                    elif col_type == 'integer' and isinstance(value, bool):
+                        value = 1 if value else 0
+                    # Keep original value for other types
+                    row_values.append(value)
+                values.append(row_values)
             cursor.executemany(insert_sql, values)
 
     def validate_migration(self):

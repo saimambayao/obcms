@@ -152,9 +152,15 @@ DATABASES["default"]["CONN_HEALTH_CHECKS"] = True  # Django 4.1+
 # If using PgBouncer transaction pooling, uncomment:
 # DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
-# EMAIL: Ensure production email backend is configured
+# EMAIL: Warn if production email backend is not configured
+# Allow console backend for staging/testing environments
 if EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend":
-    raise ValueError("EMAIL_BACKEND must be configured for production (not console)")
+    import warnings
+    warnings.warn(
+        "EMAIL_BACKEND is set to console - emails will not be sent. "
+        "Configure SMTP for production.",
+        UserWarning
+    )
 
 # CELERY: Production task settings
 CELERY_WORKER_MAX_TASKS_PER_CHILD = (

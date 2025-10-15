@@ -1,0 +1,79 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108cde710>",
+    "<sqlite3.Row object at 0x108cdf280>",
+    "<sqlite3.Row object at 0x108cdc7f0>",
+    "<sqlite3.Row object at 0x108cdc250>",
+    "<sqlite3.Row object at 0x108cdc610>",
+    "<sqlite3.Row object at 0x108cdcaf0>",
+    "<sqlite3.Row object at 0x108cdeb90>",
+    "<sqlite3.Row object at 0x108cdcb50>",
+    "<sqlite3.Row object at 0x108cdc5b0>",
+    "<sqlite3.Row object at 0x108cdfd30>",
+    "<sqlite3.Row object at 0x108cdd6c0>",
+    "<sqlite3.Row object at 0x108cde380>",
+    "<sqlite3.Row object at 0x108cde170>"
+  ],
+  "data": [
+    {
+      "id": "c10f18690c6a4ec6892a4c2f421f80f4",
+      "name": "OOBC Staff",
+      "slug": "oobc-staff",
+      "description": "Regular OOBC staff members with restricted access to sensitive modules",
+      "scope": "system",
+      "level": 2,
+      "is_active": 1,
+      "is_system_role": 1,
+      "created_at": "2025-10-12 21:08:49.600282",
+      "updated_at": "2025-10-12 21:08:49.600286",
+      "created_by_id": null,
+      "organization_id": null,
+      "parent_role_id": null
+    },
+    {
+      "id": "b54978e89efc42c6a99b397456af70c4",
+      "name": "OOBC Executive Director",
+      "slug": "oobc-executive-director",
+      "description": "OOBC Executive Director with full system access",
+      "scope": "system",
+      "level": 5,
+      "is_active": 1,
+      "is_system_role": 1,
+      "created_at": "2025-10-12 21:08:49.600774",
+      "updated_at": "2025-10-12 21:08:49.600779",
+      "created_by_id": null,
+      "organization_id": null,
+      "parent_role_id": null
+    },
+    {
+      "id": "d2f9b7690459436995bacdc86cef5a52",
+      "name": "OOBC Deputy Executive Director",
+      "slug": "oobc-deputy-executive-director",
+      "description": "OOBC Deputy Executive Director with full system access",
+      "scope": "system",
+      "level": 5,
+      "is_active": 1,
+      "is_system_role": 1,
+      "created_at": "2025-10-12 21:08:49.601004",
+      "updated_at": "2025-10-12 21:08:49.601008",
+      "created_by_id": null,
+      "organization_id": null,
+      "parent_role_id": null
+    },
+    {
+      "id": "3b5ca935c5e54854b3b342573e9fdced",
+      "name": "MOA Staff",
+      "slug": "moa-staff",
+      "description": "Ministry/Office/Agency staff with access to monitoring their own PPAs",
+      "scope": "organization",
+      "level": 2,
+      "is_active": 1,
+      "is_system_role": 0,
+      "created_at": "2025-10-13 08:41:07.696583",
+      "updated_at": "2025-10-13 08:41:07.696737",
+      "created_by_id": null,
+      "organization_id": null,
+      "parent_role_id": null
+    }
+  ]
+}

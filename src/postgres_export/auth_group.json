@@ -1,0 +1,24 @@
+{
+  "schema": [
+    "<sqlite3.Row object at 0x108d0b580>",
+    "<sqlite3.Row object at 0x108d0b640>"
+  ],
+  "data": [
+    {
+      "id": 1,
+      "name": "mana_regional_participant"
+    },
+    {
+      "id": 2,
+      "name": "mana_facilitator"
+    },
+    {
+      "id": 3,
+      "name": "mana_admin"
+    },
+    {
+      "id": 4,
+      "name": "MOA Coordinator"
+    }
+  ]
+}
