@@ -38,6 +38,10 @@ backups/sqlite/db.sqlite3.pre_migration
 .env.production.local
 .env.staging
 .env.staging.local
+.env.bak
+.env.docker
+.env.docker.dev
+.env.template
 .venv
 env/
 venv/
@@ -100,6 +104,19 @@ Untitled/
 analyze_*.md
 src/BACKUP_INFO.txt
 src/obc_management/settings/minimal_test.py
+
+# Security and privacy files
+security_report_*.json
+cookies.txt
+*.cookies
+session.txt
+
+# Temporary development files
+*.tmp
+*.temp
+.DS_Store?
+ehthumbs.db
+Thumbs.db
 
 # Backup directory (already has pre_migration backup exception)
 backups/sqlite/*.backup*
