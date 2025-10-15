@@ -3,6 +3,7 @@ from .deprecated_urls import DeprecatedURLRedirectMiddleware
 from .audit import AuditMiddleware
 from .access_control import MANAAccessControlMiddleware
 from .logging import APILoggingMiddleware, DeprecationLoggingMiddleware
+from .security import ContentSecurityPolicyMiddleware
 
 __all__ = [
     'DeprecatedURLRedirectMiddleware',
@@ -10,4 +11,5 @@ __all__ = [
     'MANAAccessControlMiddleware',
     'APILoggingMiddleware',
     'DeprecationLoggingMiddleware',
+    'ContentSecurityPolicyMiddleware',
 ]
