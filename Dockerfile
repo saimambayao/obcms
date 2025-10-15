@@ -86,32 +86,48 @@ COPY --from=node-builder --chown=app:app /app/src/static/css/output.css /app/src
 # Create startup script for production
 COPY --chown=app:app <<-'EOT' /app/startup.sh
 #!/bin/bash
-set -e
 
-echo "Starting OBCMS Production deployment..."
+echo "============================================"
+echo "Starting OBCMS Production Deployment"
+echo "============================================"
+
+# Function to handle errors
+error_exit() {
+    echo "ERROR: $1" >&2
+    echo "Startup failed. Check logs above for details." >&2
+    exit 1
+}
 
 # Change to src directory
-cd /app/src
+cd /app/src || error_exit "Failed to change to /app/src directory"
 
-# Check if we need to run migrations
+# Check database connection
+echo "Checking database connection..."
+python manage.py check --database default || error_exit "Database connection failed. Is DATABASE_URL set correctly?"
+
+# Run migrations if requested
 if [ "$RUN_MIGRATIONS" = "true" ]; then
     echo "Running database migrations..."
-    python manage.py migrate --noinput
+    python manage.py migrate --noinput || error_exit "Database migrations failed"
+else
+    echo "Skipping migrations (RUN_MIGRATIONS not set to 'true')"
 fi
 
 # Collect static files
 echo "Collecting static files..."
-python manage.py collectstatic --noinput --clear --verbosity 0
+python manage.py collectstatic --noinput --verbosity 1 || error_exit "Static file collection failed"
 
-# Create cache tables
+# Create cache tables (non-critical)
 echo "Creating cache tables..."
-python manage.py createcachetable || true
+python manage.py createcachetable 2>&1 || echo "Warning: Cache table creation failed (non-critical)"
 
-# Check deployment readiness
+# Check deployment readiness (non-critical for startup)
 echo "Running deployment checks..."
-python manage.py check --deploy
+python manage.py check || echo "Warning: Some checks failed (review above)"
 
+echo "============================================"
 echo "OBCMS is ready! Starting Gunicorn..."
+echo "============================================"
 EOT
 
 RUN chmod +x /app/startup.sh

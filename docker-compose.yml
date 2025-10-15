@@ -58,8 +58,8 @@ services:
         condition: service_healthy
     command: >
       sh -c "cd src &&
-             python manage.py migrate &&
-             python manage.py collectstatic --noinput &&
+             python manage.py migrate --fake-initial &&
+             python manage.py collectstatic --noinput --clear &&
              python manage.py runserver 0.0.0.0:8000"
     restart: unless-stopped
     healthcheck:
