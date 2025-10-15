@@ -101,8 +101,9 @@ CSP_DEFAULT = (
 )
 CONTENT_SECURITY_POLICY = env.str("CONTENT_SECURITY_POLICY", default=CSP_DEFAULT)
 
-# Add CSP middleware to inject headers
+# Add CSP and diagnostic middleware
 MIDDLEWARE = [
+    "common.middleware.RequestLoggingMiddleware",  # DIAGNOSTIC: Log all requests (FIRST)
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "common.middleware.ContentSecurityPolicyMiddleware",  # CSP headers (production)
@@ -160,6 +161,21 @@ LOGGING = {
         "django": {
             "handlers": ["console"],
             "level": "INFO",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.server": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "WARNING",
             "propagate": False,
         },
         "django.security": {
