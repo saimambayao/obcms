@@ -111,18 +111,38 @@ if [ "$RUN_MIGRATIONS" = "true" ]; then
     echo "Running database migrations..."
     echo "DATABASE_URL is set: ${DATABASE_URL:0:30}..." # Show first 30 chars
 
-    # Test database connection first
-    echo "Testing database connection..."
-    python manage.py check --database default 2>&1 || {
-        echo "ERROR: Database connection check failed!"
+    # Simple Python database connectivity test
+    echo "Testing database connection with Python..."
+    python -c "
+import sys
+import os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'obc_management.settings.production')
+import django
+django.setup()
+from django.db import connection
+try:
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT 1')
+        result = cursor.fetchone()
+    print('✓ Database connection successful:', result)
+except Exception as e:
+    print('✗ Database connection failed:', str(e))
+    sys.exit(1)
+" 2>&1 || {
+        echo "ERROR: Database connection test failed!"
+        sleep 5
         exit 1
     }
-    echo "✓ Database connection successful"
 
     # Run migrations with verbose output
     echo "Starting migrations with verbose output..."
-    python manage.py migrate --noinput --skip-checks --verbosity 2 2>&1
+    set +e  # Don't exit immediately on error
+    python manage.py migrate --noinput --verbosity 2 > /tmp/migrate.log 2>&1
     MIGRATION_EXIT_CODE=$?
+    set -e  # Re-enable exit on error
+
+    # Show migration output
+    cat /tmp/migrate.log || echo "No migration log generated"
 
     if [ $MIGRATION_EXIT_CODE -ne 0 ]; then
         echo "ERROR: Migrations failed with exit code $MIGRATION_EXIT_CODE"
