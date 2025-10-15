@@ -86,43 +86,47 @@ COPY --from=node-builder --chown=app:app /app/src/static/css/output.css /app/src
 # Create startup script for production
 COPY --chown=app:app <<-'EOT' /app/startup.sh
 #!/bin/bash
+set -x  # Print all commands for debugging
 
 echo "============================================"
 echo "Starting OBCMS Production Deployment"
 echo "============================================"
-
-# Function to handle errors
-error_exit() {
-    echo "ERROR: $1" >&2
-    echo "Startup failed. Check logs above for details." >&2
-    exit 1
-}
+echo "Python version: $(python --version)"
+echo "Current directory: $(pwd)"
+echo "Environment: DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}"
 
 # Change to src directory
-cd /app/src || error_exit "Failed to change to /app/src directory"
+cd /app/src || { echo "ERROR: Cannot cd to /app/src"; exit 1; }
+echo "Changed to: $(pwd)"
+
+# Test Django can start
+echo "Testing Django imports..."
+python -c "import django; print('Django version:', django.VERSION)" || { echo "ERROR: Django import failed"; exit 1; }
 
 # Run migrations if requested
 if [ "$RUN_MIGRATIONS" = "true" ]; then
     echo "Running database migrations..."
-    python manage.py migrate --noinput --skip-checks || error_exit "Database migrations failed"
+    python manage.py migrate --noinput --skip-checks || { echo "ERROR: Migrations failed"; sleep 5; exit 1; }
 else
     echo "Skipping migrations (RUN_MIGRATIONS not set to 'true')"
 fi
 
 # Collect static files
 echo "Collecting static files..."
-python manage.py collectstatic --noinput --verbosity 1 --skip-checks || error_exit "Static file collection failed"
+python manage.py collectstatic --noinput --verbosity 1 --skip-checks || { echo "ERROR: Static collection failed"; sleep 5; exit 1; }
 
 # Create cache tables (non-critical)
 echo "Creating cache tables..."
 python manage.py createcachetable 2>&1 || echo "Warning: Cache table creation failed (non-critical)"
 
-# Skip deployment checks - they can prevent startup if URL issues exist
-echo "Skipping deployment checks (will run after app starts)"
-
 echo "============================================"
 echo "OBCMS is ready! Starting Gunicorn..."
+echo "Gunicorn location: $(which gunicorn)"
+echo "Working directory: $(pwd)"
 echo "============================================"
+
+# Start Gunicorn with exec to replace the shell process
+exec gunicorn --chdir /app/src --config /app/gunicorn.conf.py obc_management.wsgi:application
 EOT
 
 RUN chmod +x /app/startup.sh
