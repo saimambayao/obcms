@@ -111,15 +111,28 @@ if [ "$RUN_MIGRATIONS" = "true" ]; then
     echo "Running database migrations..."
     echo "DATABASE_URL is set: ${DATABASE_URL:0:30}..." # Show first 30 chars
 
-    # Simple Python database connectivity test
+    # Simple Python database connectivity test with verbose debugging
     echo "Testing database connection with Python..."
     python -c "
 import sys
 import os
+print('Step 1: Setting DJANGO_SETTINGS_MODULE')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'obc_management.settings.production')
+print('Step 2: Importing django')
 import django
-django.setup()
+print('Step 3: Running django.setup() - this loads all apps and settings')
+try:
+    django.setup()
+    print('Step 4: django.setup() completed successfully')
+except Exception as e:
+    print('ERROR during django.setup():', str(e))
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
+
+print('Step 5: Importing database connection')
 from django.db import connection
+print('Step 6: Testing database query')
 try:
     with connection.cursor() as cursor:
         cursor.execute('SELECT 1')
@@ -127,6 +140,8 @@ try:
     print('✓ Database connection successful:', result)
 except Exception as e:
     print('✗ Database connection failed:', str(e))
+    import traceback
+    traceback.print_exc()
     sys.exit(1)
 " 2>&1 || {
         echo "ERROR: Database connection test failed!"
