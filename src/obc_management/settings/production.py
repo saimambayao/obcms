@@ -35,7 +35,9 @@ for origin in CSRF_TRUSTED_ORIGINS:
         )
 
 # SECURITY: Force HTTPS redirects
-SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
+# Disabled by default when behind proxy (Sevalla/Cloudflare handles HTTPS)
+# Set SECURE_SSL_REDIRECT=True if Django needs to handle redirect
+SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)
 
 # SECURITY: HTTP Strict Transport Security (HSTS)
 SECURE_HSTS_SECONDS = 31536000  # 1 year
