@@ -151,12 +151,8 @@ COPY --chown=app:app <<-'EOT' /app/healthcheck.sh
 #!/bin/bash
 set -e
 
-# Basic health check
+# Basic health check (HTTP only - database checked in /health/ view)
 curl -f http://localhost:8000/health/ || exit 1
-
-# Optional: Check database connectivity
-cd /app/src
-python manage.py check --database default --quiet || exit 1
 
 echo "Health check passed"
 EOT
