@@ -3,9 +3,20 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
-import google.generativeai as genai
 from django.conf import settings
 from django.utils import timezone
+
+# Optional AI dependencies - gracefully handle missing packages
+try:
+    import google.generativeai as genai
+    GENAI_AVAILABLE = True
+except ImportError:
+    GENAI_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning(
+        "google-generativeai not installed. AI features will be disabled. "
+        "Install with: pip install google-generativeai"
+    )
 
 from .cultural_context import BangsomoroCulturalContext
 
@@ -17,6 +28,13 @@ class GeminiAIEngine:
 
     def __init__(self):
         """Initialize the Gemini AI engine with proper configuration."""
+        if not GENAI_AVAILABLE:
+            logger.warning("Gemini AI Engine initialized without AI libraries - AI features disabled")
+            self.model = None
+            self.cultural_context = BangsomoroCulturalContext()
+            self.system_prompts = {}
+            return
+
         # Configure Gemini API
         genai.configure(api_key=settings.GOOGLE_API_KEY)
 
@@ -199,6 +217,17 @@ Current date: {timezone.now().strftime('%Y-%m-%d')}"""
     ) -> Dict[str, Any]:
         """Generate AI response using Gemini 2.5 Flash."""
         start_time = time.time()
+
+        # Check if AI is available
+        if not GENAI_AVAILABLE or self.model is None:
+            return {
+                "success": False,
+                "error": "AI features are not available - google-generativeai package not installed",
+                "response": "AI features are currently disabled. Please install the required AI packages or contact your administrator.",
+                "model_used": "none",
+                "response_time": time.time() - start_time,
+                "timestamp": timezone.now().isoformat(),
+            }
 
         try:
             # Build conversation context
@@ -391,6 +420,14 @@ Current date: {timezone.now().strftime('%Y-%m-%d')}"""
         additional_context: Optional[Dict] = None,
     ) -> Dict[str, Any]:
         """Generate a structured document using Gemini."""
+
+        # Check if AI is available
+        if not GENAI_AVAILABLE or self.model is None:
+            return {
+                "success": False,
+                "error": "AI features are not available",
+                "response": "AI document generation is currently disabled.",
+            }
 
         prompt = self._build_document_prompt(
             document_type, policy_data, additional_context

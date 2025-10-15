@@ -13,13 +13,21 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 
-from .ai_services.cultural_validator import BangsomoroCulturalValidator
-from .ai_services.needs_extractor import NeedsExtractor
-from .ai_services.report_generator import AssessmentReportGenerator
-from .ai_services.response_analyzer import ResponseAnalyzer
-from .ai_services.theme_extractor import ThemeExtractor
 from .models import WorkshopActivity
 from .tasks import analyze_workshop_responses, generate_assessment_report
+
+# Optional AI services - gracefully handle missing dependencies
+try:
+    from .ai_services import (
+        AI_SERVICES_AVAILABLE,
+        BangsomoroCulturalValidator,
+        NeedsExtractor,
+        AssessmentReportGenerator,
+        ResponseAnalyzer,
+        ThemeExtractor,
+    )
+except ImportError:
+    AI_SERVICES_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
