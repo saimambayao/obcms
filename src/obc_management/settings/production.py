@@ -12,9 +12,34 @@ DEBUG = False
 TEMPLATE_DEBUG = False
 
 # SECURITY: Allowed hosts (strict validation)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
-if not ALLOWED_HOSTS:
+# Custom class to accept Sevalla/Kubernetes internal IPs (10.96.25.*)
+class AllowedHostsWithInternalSubnet(list):
+    """
+    Custom ALLOWED_HOSTS that accepts:
+    - Explicit domains from environment variable
+    - Sevalla/Kubernetes internal subnet (10.96.25.*)
+    """
+    def __contains__(self, host):
+        # Check explicit hosts first
+        if super().__contains__(host):
+            return True
+
+        # Extract hostname without port
+        hostname = host.split(':')[0] if ':' in host else host
+
+        # Accept Sevalla/Kubernetes internal subnet (10.96.25.*)
+        if hostname.startswith('10.96.25.'):
+            return True
+
+        return False
+
+# Load base allowed hosts from environment
+_allowed_hosts_list = env.list("ALLOWED_HOSTS", default=[])
+if not _allowed_hosts_list:
     raise ValueError("ALLOWED_HOSTS must be explicitly set in production")
+
+# Wrap in custom class that accepts internal subnet
+ALLOWED_HOSTS = AllowedHostsWithInternalSubnet(_allowed_hosts_list)
 
 # SECURITY: CSRF trusted origins (required for HTTPS behind proxy)
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
