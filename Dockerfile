@@ -176,3 +176,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
 
 # Use startup script as entrypoint
 ENTRYPOINT ["/app/startup.sh"]
+
+# Cleaned local docker build 
