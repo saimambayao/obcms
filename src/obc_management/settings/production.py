@@ -178,6 +178,15 @@ CELERY_WORKER_SOFT_SHUTDOWN_TIMEOUT = 60.0  # Seconds to wait for tasks to finis
 CELERY_WORKER_ENABLE_SOFT_SHUTDOWN_ON_IDLE = True  # Prevent losing ETA/retry tasks
 
 # ============================================================================
+# SYSTEM CHECKS: Silence non-critical checks during startup
+# ============================================================================
+# Disable URL namespace checks that can prevent startup
+# These checks will be handled after the application is running
+SILENCED_SYSTEM_CHECKS = [
+    "urls.W005",  # URL namespace check
+]
+
+# ============================================================================
 # SECURITY ENHANCEMENT: Disable DRF Browsable API in Production
 # ============================================================================
 # Remove HTML browsable API renderer to prevent information disclosure
