@@ -12,12 +12,15 @@ DEBUG = False
 TEMPLATE_DEBUG = False
 
 # SECURITY: Allowed hosts (strict validation)
-# Custom class to accept Sevalla/Kubernetes internal IPs (10.96.25.*)
+# Custom class to accept Sevalla/Kubernetes internal IPs (10.96.*.*)
 class AllowedHostsWithInternalSubnet(list):
     """
     Custom ALLOWED_HOSTS that accepts:
     - Explicit domains from environment variable
-    - Sevalla/Kubernetes internal subnet (10.96.25.*)
+    - Sevalla/Kubernetes service network (10.96.*.*)
+
+    Note: 10.96.0.0/12 is the default Kubernetes service CIDR.
+    Health check probes come from various IPs in this range.
     """
     def __contains__(self, host):
         # Check explicit hosts first
@@ -27,8 +30,8 @@ class AllowedHostsWithInternalSubnet(list):
         # Extract hostname without port
         hostname = host.split(':')[0] if ':' in host else host
 
-        # Accept Sevalla/Kubernetes internal subnet (10.96.25.*)
-        if hostname.startswith('10.96.25.'):
+        # Accept entire Kubernetes service network (10.96.*.*)
+        if hostname.startswith('10.96.'):
             return True
 
         return False
