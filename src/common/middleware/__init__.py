@@ -3,7 +3,11 @@ from .deprecated_urls import DeprecatedURLRedirectMiddleware
 from .audit import AuditMiddleware
 from .access_control import MANAAccessControlMiddleware
 from .logging import APILoggingMiddleware, DeprecationLoggingMiddleware
-from .security import ContentSecurityPolicyMiddleware, RequestLoggingMiddleware
+from .security import (
+    ContentSecurityPolicyMiddleware,
+    RequestLoggingMiddleware,
+    KubernetesInternalHostMiddleware,
+)
 
 __all__ = [
     'DeprecatedURLRedirectMiddleware',
@@ -13,4 +17,5 @@ __all__ = [
     'DeprecationLoggingMiddleware',
     'ContentSecurityPolicyMiddleware',
     'RequestLoggingMiddleware',
+    'KubernetesInternalHostMiddleware',
 ]

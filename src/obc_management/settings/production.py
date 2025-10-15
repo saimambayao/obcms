@@ -12,46 +12,11 @@ DEBUG = False
 TEMPLATE_DEBUG = False
 
 # SECURITY: Allowed hosts (strict validation)
-# Custom class to accept Sevalla/Kubernetes internal IPs (10.96.*.*)
-import logging
-logger = logging.getLogger(__name__)
-
-class AllowedHostsWithInternalSubnet(list):
-    """
-    Custom ALLOWED_HOSTS that accepts:
-    - Explicit domains from environment variable
-    - Sevalla/Kubernetes service network (10.96.*.*)
-
-    Note: 10.96.0.0/12 is the default Kubernetes service CIDR.
-    Health check probes come from various IPs in this range.
-    """
-    def __contains__(self, host):
-        logger.info(f"ALLOWED_HOSTS check: host={host}")
-
-        # Check explicit hosts first
-        if super().__contains__(host):
-            logger.info(f"ALLOWED_HOSTS: {host} matched explicit list")
-            return True
-
-        # Extract hostname without port
-        hostname = host.split(':')[0] if ':' in host else host
-        logger.info(f"ALLOWED_HOSTS: extracted hostname={hostname}")
-
-        # Accept entire Kubernetes service network (10.96.*.*)
-        if hostname.startswith('10.96.'):
-            logger.info(f"ALLOWED_HOSTS: {hostname} matched K8s subnet (10.96.*.*)")
-            return True
-
-        logger.warning(f"ALLOWED_HOSTS: {host} REJECTED - not in allowed list or K8s subnet")
-        return False
-
-# Load base allowed hosts from environment
-_allowed_hosts_list = env.list("ALLOWED_HOSTS", default=[])
-if not _allowed_hosts_list:
+# Note: Kubernetes internal IPs (10.96.*.*) are handled by
+# KubernetesInternalHostMiddleware which runs before host validation
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+if not ALLOWED_HOSTS:
     raise ValueError("ALLOWED_HOSTS must be explicitly set in production")
-
-# Wrap in custom class that accepts internal subnet
-ALLOWED_HOSTS = AllowedHostsWithInternalSubnet(_allowed_hosts_list)
 
 # SECURITY: CSRF trusted origins (required for HTTPS behind proxy)
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
@@ -112,7 +77,8 @@ CONTENT_SECURITY_POLICY = env.str("CONTENT_SECURITY_POLICY", default=CSP_DEFAULT
 
 # Add CSP and diagnostic middleware
 MIDDLEWARE = [
-    "common.middleware.RequestLoggingMiddleware",  # DIAGNOSTIC: Log all requests (FIRST)
+    "common.middleware.KubernetesInternalHostMiddleware",  # Allow K8s internal IPs (FIRST)
+    "common.middleware.RequestLoggingMiddleware",  # DIAGNOSTIC: Log all requests
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "common.middleware.ContentSecurityPolicyMiddleware",  # CSP headers (production)
