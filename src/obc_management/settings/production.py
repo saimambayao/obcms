@@ -13,6 +13,9 @@ TEMPLATE_DEBUG = False
 
 # SECURITY: Allowed hosts (strict validation)
 # Custom class to accept Sevalla/Kubernetes internal IPs (10.96.*.*)
+import logging
+logger = logging.getLogger(__name__)
+
 class AllowedHostsWithInternalSubnet(list):
     """
     Custom ALLOWED_HOSTS that accepts:
@@ -23,17 +26,23 @@ class AllowedHostsWithInternalSubnet(list):
     Health check probes come from various IPs in this range.
     """
     def __contains__(self, host):
+        logger.info(f"ALLOWED_HOSTS check: host={host}")
+
         # Check explicit hosts first
         if super().__contains__(host):
+            logger.info(f"ALLOWED_HOSTS: {host} matched explicit list")
             return True
 
         # Extract hostname without port
         hostname = host.split(':')[0] if ':' in host else host
+        logger.info(f"ALLOWED_HOSTS: extracted hostname={hostname}")
 
         # Accept entire Kubernetes service network (10.96.*.*)
         if hostname.startswith('10.96.'):
+            logger.info(f"ALLOWED_HOSTS: {hostname} matched K8s subnet (10.96.*.*)")
             return True
 
+        logger.warning(f"ALLOWED_HOSTS: {host} REJECTED - not in allowed list or K8s subnet")
         return False
 
 # Load base allowed hosts from environment
