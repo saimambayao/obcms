@@ -109,7 +109,14 @@ python -c "import django; print('Django version:', django.VERSION)" || { echo "E
 # Run migrations if requested
 if [ "$RUN_MIGRATIONS" = "true" ]; then
     echo "Running database migrations..."
-    python manage.py migrate --noinput --skip-checks || { echo "ERROR: Migrations failed"; sleep 5; exit 1; }
+    echo "DATABASE_URL is set: ${DATABASE_URL:0:30}..." # Show first 30 chars
+    python manage.py migrate --noinput --skip-checks 2>&1 || {
+        echo "ERROR: Migrations failed with exit code $?"
+        echo "Attempting to show more details..."
+        python manage.py check --database default 2>&1 || true
+        sleep 10
+        exit 1
+    }
 else
     echo "Skipping migrations (RUN_MIGRATIONS not set to 'true')"
 fi
