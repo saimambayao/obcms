@@ -138,7 +138,7 @@ class Migration(migrations.Migration):
         # Add indexes for performance on key models
         migrations.AddIndex(
             model_name='obccommunity',
-            index=models.Index(fields=['organization'], name='communities_communi_896657_idx'),
+            index=models.Index(fields=['organization'], name='communities_obccommunity_org_idx'),
         ),
         migrations.AddIndex(
             model_name='stakeholder',

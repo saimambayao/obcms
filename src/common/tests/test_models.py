@@ -1,9 +1,5 @@
-import pytest
-
-pytest.skip(
-    "Legacy model/view tests require updated templates after refactor.",
-    allow_module_level=True,
-)
+# Legacy model/view tests reactivated after migration fix
+# Tests have been verified to work with current templates and models
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command

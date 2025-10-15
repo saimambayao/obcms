@@ -55,7 +55,7 @@ if env.bool("TORCH_JIT_WARNING_DISABLE", default=False):
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env(
     "SECRET_KEY",
-    default="django-insecure-!yaxjq5)03f=tclan4d=b+^bh%(gl9@lgze9*)+fu79)-y!)k5",
+    default="ul07ouqfvodh0w7zm469dmlk4uxk2q8defl5d1uhy8bka0ciagpti9w8kx7h3zq",
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!

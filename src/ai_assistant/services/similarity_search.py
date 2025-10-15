@@ -15,9 +15,6 @@ from typing import Dict, List, Optional
 
 from django.contrib.contenttypes.models import ContentType
 
-from .embedding_service import get_embedding_service
-from .vector_store import VectorStore
-
 logger = logging.getLogger(__name__)
 
 
@@ -34,10 +31,20 @@ class SimilaritySearchService:
 
     def __init__(self):
         """Initialize the similarity search service."""
-        self.embedding_service = get_embedding_service()
+        # Import AI services with proper error handling
+        try:
+            from .embedding_service import get_embedding_service
+            from .vector_store import VectorStore
+
+            self.embedding_service = get_embedding_service()
+            self.VectorStore = VectorStore
+        except ImportError as e:
+            logger.error(f"AI services not available for similarity search: {e}")
+            raise RuntimeError(f"Similarity search requires AI services: {e}")
+
         self._stores = {}  # Cache for loaded vector stores
 
-    def _get_store(self, store_name: str) -> VectorStore:
+    def _get_store(self, store_name: str):
         """
         Get or load a vector store.
 
@@ -49,13 +56,13 @@ class SimilaritySearchService:
         """
         if store_name not in self._stores:
             try:
-                self._stores[store_name] = VectorStore.load(store_name)
+                self._stores[store_name] = self.VectorStore.load(store_name)
                 logger.info(f"Loaded vector store '{store_name}'")
             except FileNotFoundError:
                 logger.warning(
                     f"Vector store '{store_name}' not found. Creating empty store."
                 )
-                self._stores[store_name] = VectorStore(
+                self._stores[store_name] = self.VectorStore(
                     store_name, dimension=self.embedding_service.get_dimension()
                 )
         return self._stores[store_name]

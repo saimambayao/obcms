@@ -13,7 +13,8 @@ from .models import (
     CalendarResourceBooking,
     WorkItem,
 )
-from .services.deferred_geocoding import schedule_geocoding_if_needed
+# LAZY IMPORT - moved inside functions to avoid circular import
+# from .services.deferred_geocoding import schedule_geocoding_if_needed
 
 # DEPRECATED: StaffTask and Event imports removed
 # Replaced by WorkItem system
@@ -45,6 +46,9 @@ def municipality_post_save(sender, instance, created, **kwargs):
     The geocoding is performed in the background to avoid blocking Django startup.
     """
     if not instance.center_coordinates:
+        # Lazy import to avoid circular import during Django startup
+        from .services.deferred_geocoding import schedule_geocoding_if_needed
+
         # Schedule geocoding in the background (non-blocking)
         scheduled = schedule_geocoding_if_needed(instance)
         if scheduled:
@@ -66,6 +70,9 @@ def barangay_post_save(sender, instance, created, **kwargs):
     The geocoding is performed in the background to avoid blocking Django startup.
     """
     if not instance.center_coordinates:
+        # Lazy import to avoid circular import during Django startup
+        from .services.deferred_geocoding import schedule_geocoding_if_needed
+
         # Schedule geocoding in the background (non-blocking)
         scheduled = schedule_geocoding_if_needed(instance)
         if scheduled:

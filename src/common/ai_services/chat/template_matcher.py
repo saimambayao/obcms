@@ -223,7 +223,7 @@ class TemplateMatcher:
 
     def rank_templates(
         self,
-        templates: List[QueryTemplate],
+        templates: List,  # QueryTemplate - lazy type to avoid circular import
         query: str,
         entities: Dict[str, Any],
     ) -> List[Dict[str, Any]]:

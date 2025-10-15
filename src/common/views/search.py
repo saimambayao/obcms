@@ -12,8 +12,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
 
-from common.ai_services import UnifiedSearchEngine
-from common.ai_services.search_analytics import SearchAnalytics
+from common.ai_services import UnifiedSearchEngine, SearchAnalytics, HAS_UNIFIED_SEARCH
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +25,14 @@ def unified_search_view(request):
 
     GET /search/?q=query&modules=communities,mana&limit=20
     """
+    if not HAS_UNIFIED_SEARCH:
+        # Search not available
+        return render(request, 'common/search_results.html', {
+            'search_error': 'Unified search is currently unavailable. AI services are not installed.',
+            'search_unavailable': True,
+            'search_success': False,
+        })
+
     query = request.GET.get('q', '').strip()
     modules_param = request.GET.get('modules', '')
     limit = int(request.GET.get('limit', 20))
@@ -54,13 +61,14 @@ def unified_search_view(request):
         )
 
         # Log search
-        analytics = SearchAnalytics()
-        analytics.log_search(
-            query=query,
-            results_count=results['total_results'],
-            user_id=request.user.id,
-            modules_searched=modules
-        )
+        if SearchAnalytics:
+            analytics = SearchAnalytics()
+            analytics.log_search(
+                query=query,
+                results_count=results['total_results'],
+                user_id=request.user.id,
+                modules_searched=modules
+            )
 
         context.update({
             'results': results,
@@ -120,7 +128,19 @@ def search_stats(request):
 
     GET /search/stats/
     """
+    if not HAS_UNIFIED_SEARCH:
+        return render(request, 'common/search_stats.html', {
+            'error': 'Search analytics are currently unavailable. AI services are not installed.',
+            'search_unavailable': True
+        })
+
     try:
+        if not SearchAnalytics:
+            return render(request, 'common/search_stats.html', {
+                'error': 'Search analytics service is not available.',
+                'search_unavailable': True
+            })
+
         analytics = SearchAnalytics()
 
         # Get analytics data
@@ -158,6 +178,12 @@ def reindex_module(request, module):
 
     POST /search/reindex/<module>/
     """
+    if not HAS_UNIFIED_SEARCH:
+        return JsonResponse({
+            'success': False,
+            'error': 'Reindexing is not available. AI services are not installed.'
+        }, status=500)
+
     try:
         search_engine = UnifiedSearchEngine()
         stats = search_engine.reindex_module(module)

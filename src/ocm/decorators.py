@@ -14,11 +14,16 @@ logger = logging.getLogger(__name__)
 
 def _require_ocm_access_inner(view_func, request, *args, **kwargs):
     """Inner function for OCM access checking"""
-    
-    # CRITICAL: Staff and superusers bypass OCM access requirements
-    if request.user.is_staff or request.user.is_superuser:
-        logger.info(f"Staff/superuser {request.user.username} bypassing OCM access check")
-        return view_func(request, *args, **kwargs)
+
+    # SECURITY: Require explicit OCM access even for staff/superusers
+    # Superusers must have OCM access for audit trail and proper authorization
+    if request.user.is_superuser:
+        logger.warning(f"Superuser {request.user.username} accessing OCM: {request.path} - OCM access required")
+        # Superusers still need OCM access for proper audit trail
+        # Do not bypass the check - enforce same access controls
+
+    # Staff users cannot bypass OCM access requirements
+    # if request.user.is_staff:  # REMOVED - Security fix
     
     # Check if user has OCM access
     if not hasattr(request.user, 'ocm_access'):
@@ -67,11 +72,15 @@ def require_ocm_access(view_func):
 
 def _enforce_readonly_inner(view_func, request, *args, **kwargs):
     """Inner function for read-only enforcement"""
-    
-    # CRITICAL: Staff and superusers bypass read-only restrictions
-    if request.user.is_staff or request.user.is_superuser:
-        logger.info(f"Staff/superuser {request.user.username} bypassing read-only check")
-        return view_func(request, *args, **kwargs)
+
+    # SECURITY: Read-only restrictions apply to ALL users including staff/superusers
+    # This prevents accidental data modification by privileged users
+    if request.user.is_superuser:
+        logger.warning(f"Superuser {request.user.username} accessing OCM read-only: {request.path} - Enforcing read-only")
+        # Even superusers must respect read-only constraints in OCM views
+
+    # Staff users cannot bypass read-only restrictions
+    # if request.user.is_staff:  # REMOVED - Security fix
     
     # Block write methods
     if request.method not in ['GET', 'HEAD', 'OPTIONS']:
@@ -109,12 +118,13 @@ def enforce_readonly(view_func):
 def ocm_readonly_view(view_func):
     """
     Combined decorator: requires OCM access AND enforces read-only.
-    
-    CRITICAL: Use this decorator on ALL OCM views.
-    Staff and superusers bypass both checks.
-    
+
+    SECURITY: Use this decorator on ALL OCM views.
+    ALL users including staff/superusers must have OCM access.
+    Read-only restrictions apply to ALL users.
+
     This is the primary decorator you should use for OCM views.
-    
+
     Usage:
         @login_required
         @ocm_readonly_view
@@ -123,10 +133,13 @@ def ocm_readonly_view(view_func):
     """
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        # CRITICAL: Staff and superusers bypass ALL restrictions
-        if request.user.is_staff or request.user.is_superuser:
-            logger.info(f"Staff/superuser {request.user.username} bypassing all OCM restrictions")
-            return view_func(request, *args, **kwargs)
+        # SECURITY: NO BYPASSES - All users must follow OCM access controls
+        if request.user.is_superuser:
+            logger.warning(f"Superuser {request.user.username} accessing OCM: {request.path} - Full OCM checks applied")
+            # Even superusers get full OCM access validation and read-only enforcement
+
+        # Staff users cannot bypass OCM restrictions
+        # if request.user.is_staff:  # REMOVED - Security fix
         
         # First check read-only (fail fast)
         if request.method not in ['GET', 'HEAD', 'OPTIONS']:
@@ -167,10 +180,10 @@ def ocm_readonly_view(view_func):
 def require_ocm_analyst(view_func):
     """
     Decorator to require analyst or executive level access.
-    
+
     Used for report generation views.
-    Staff and superusers bypass this check.
-    
+    ALL users including staff/superusers must have proper OCM analyst access.
+
     Usage:
         @login_required
         @require_ocm_analyst
@@ -179,10 +192,13 @@ def require_ocm_analyst(view_func):
     """
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        # CRITICAL: Staff and superusers bypass
-        if request.user.is_staff or request.user.is_superuser:
-            logger.info(f"Staff/superuser {request.user.username} bypassing analyst check")
-            return view_func(request, *args, **kwargs)
+        # SECURITY: No bypasses - all users need proper OCM analyst access
+        if request.user.is_superuser:
+            logger.warning(f"Superuser {request.user.username} accessing OCM analyst: {request.path} - Analyst access required")
+            # Even superusers need analyst level OCM access
+
+        # Staff users cannot bypass analyst access requirements
+        # if request.user.is_staff:  # REMOVED - Security fix
         
         # Check OCM access first
         if not hasattr(request.user, 'ocm_access'):
@@ -211,10 +227,10 @@ def require_ocm_analyst(view_func):
 def require_ocm_executive(view_func):
     """
     Decorator to require executive level access.
-    
+
     Used for data export views.
-    Staff and superusers bypass this check.
-    
+    ALL users including staff/superusers must have proper OCM executive access.
+
     Usage:
         @login_required
         @require_ocm_executive
@@ -223,10 +239,13 @@ def require_ocm_executive(view_func):
     """
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        # CRITICAL: Staff and superusers bypass
-        if request.user.is_staff or request.user.is_superuser:
-            logger.info(f"Staff/superuser {request.user.username} bypassing executive check")
-            return view_func(request, *args, **kwargs)
+        # SECURITY: No bypasses - all users need proper OCM executive access
+        if request.user.is_superuser:
+            logger.warning(f"Superuser {request.user.username} accessing OCM executive: {request.path} - Executive access required")
+            # Even superusers need executive level OCM access
+
+        # Staff users cannot bypass executive access requirements
+        # if request.user.is_staff:  # REMOVED - Security fix
         
         # Check OCM access first
         if not hasattr(request.user, 'ocm_access'):

@@ -10,8 +10,6 @@ from typing import Any, Dict, List, Optional
 
 from django.apps import apps
 
-from ai_assistant.services import EmbeddingService, GeminiService, SimilaritySearchService
-
 logger = logging.getLogger(__name__)
 
 
@@ -67,9 +65,30 @@ class UnifiedSearchEngine:
 
     def __init__(self):
         """Initialize the unified search engine."""
-        self.similarity_search = SimilaritySearchService()
-        self.embedding_service = EmbeddingService()
-        self.gemini = GeminiService()
+        # Import AI services with proper error handling
+        try:
+            from ai_assistant.services import (
+                EmbeddingService,
+                GeminiService,
+                SimilaritySearchService,
+                HAS_EMBEDDING_SERVICE,
+                HAS_SIMILARITY_SEARCH
+            )
+
+            if not HAS_EMBEDDING_SERVICE:
+                raise ImportError("EmbeddingService not available")
+            if not HAS_SIMILARITY_SEARCH:
+                raise ImportError("SimilaritySearchService not available")
+
+            self.embedding_service = EmbeddingService()
+            self.similarity_search = SimilaritySearchService()
+            self.gemini = GeminiService()
+
+        except ImportError as e:
+            logger.error(f"AI services not available for unified search: {e}")
+            raise RuntimeError(
+                f"Unified search requires AI services. Install required dependencies: {e}"
+            )
 
         # Import query parser and ranker (lazy import to avoid circular deps)
         from .query_parser import QueryParser
@@ -168,7 +187,10 @@ class UnifiedSearchEngine:
         # Search using similarity search service
         store_name = config['vector_store']
         try:
-            from ai_assistant.services import VectorStore
+            from ai_assistant.services import VectorStore, HAS_VECTOR_STORE
+            if not HAS_VECTOR_STORE:
+                logger.warning(f"VectorStore not available. Skipping {module}.")
+                return []
             store = VectorStore.load(store_name)
         except FileNotFoundError:
             logger.warning(f"Vector store '{store_name}' not found. Skipping {module}.")
@@ -430,7 +452,15 @@ Provide helpful context about what was found. Be specific and concise.
 
         for module, config in self.SEARCHABLE_MODULES.items():
             try:
-                from ai_assistant.services import VectorStore
+                from ai_assistant.services import VectorStore, HAS_VECTOR_STORE
+                if not HAS_VECTOR_STORE:
+                    stats[module] = {
+                        'vector_count': 0,
+                        'dimension': 0,
+                        'model': config['model'],
+                        'status': 'vector_store_unavailable'
+                    }
+                    continue
                 store = VectorStore.load(config['vector_store'])
                 stats[module] = {
                     'vector_count': store.vector_count,
@@ -478,7 +508,9 @@ Provide helpful context about what was found. Be specific and concise.
         logger.info(f"Reindexing {module}: {total_count} objects")
 
         # Create/load vector store
-        from ai_assistant.services import VectorStore
+        from ai_assistant.services import VectorStore, HAS_VECTOR_STORE
+        if not HAS_VECTOR_STORE:
+            raise RuntimeError("VectorStore not available for reindexing")
         store = VectorStore(
             config['vector_store'],
             dimension=self.embedding_service.get_dimension()

@@ -1,0 +1,4 @@
+# Security scanning dependencies
+bandit>=1.7.4
+safety>=2.3.0
+pip-audit>=2.5.0

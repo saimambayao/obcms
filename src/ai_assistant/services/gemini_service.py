@@ -11,17 +11,84 @@ This service provides:
 
 import hashlib
 import logging
+import re
 import time
 from decimal import Decimal
 from typing import Any, Dict, Iterator, Optional
 
-import google.generativeai as genai
 from django.conf import settings
 from django.core.cache import cache
 
-from ai_assistant.cultural_context import BangsomoroCulturalContext
-
 logger = logging.getLogger(__name__)
+
+
+class InputValidator:
+    """Input validation and sanitization for AI services."""
+
+    # Maximum allowed lengths
+    MAX_PROMPT_LENGTH = 10000
+    MAX_USER_MESSAGE_LENGTH = 2000
+    MAX_CONTEXT_LENGTH = 5000
+
+    # Blocked content patterns
+    BLOCKED_PATTERNS = [
+        # SQL injection patterns
+        r'(?i)(union\s+select|drop\s+table|delete\s+from|insert\s+into)',
+        # Command injection patterns
+        r'(?i)(\$\(|`|eval|exec|system)',
+        # Script injection patterns
+        r'(?i)(<script|javascript:|vbscript:|onload=|onerror=)',
+        # File path injection
+        r'(?i)(\.\.[/\\]|[a-z]:[/\\]|/etc/|/proc/)',
+        # Basic XSS patterns
+        r'(?i)(<iframe|<object|<embed|<link|<meta)',
+    ]
+
+    @classmethod
+    def sanitize_input(cls, text: str, max_length: int = None) -> str:
+        """
+        Sanitize user input by removing or blocking malicious content.
+
+        Args:
+            text: Input text to sanitize
+            max_length: Maximum allowed length (defaults to class default)
+
+        Returns:
+            Sanitized text or raises ValueError if blocked content found
+        """
+        if not isinstance(text, str):
+            raise ValueError("Input must be a string")
+
+        if max_length is None:
+            max_length = cls.MAX_PROMPT_LENGTH
+
+        # Truncate if too long
+        if len(text) > max_length:
+            text = text[:max_length]
+            logger.warning(f"Input truncated to {max_length} characters")
+
+        # Check for blocked patterns
+        for pattern in cls.BLOCKED_PATTERNS:
+            if re.search(pattern, text):
+                logger.warning(f"Blocked content detected in input: {pattern}")
+                raise ValueError("Input contains potentially malicious content")
+
+        # Remove excessive whitespace
+        text = re.sub(r'\s+', ' ', text).strip()
+
+        return text
+
+    @classmethod
+    def validate_chat_message(cls, user_message: str) -> str:
+        """Validate and sanitize chat message specifically."""
+        return cls.sanitize_input(user_message, cls.MAX_USER_MESSAGE_LENGTH)
+
+    @classmethod
+    def validate_context(cls, context: str) -> str:
+        """Validate and sanitize context data."""
+        if not context:
+            return ""
+        return cls.sanitize_input(context, cls.MAX_CONTEXT_LENGTH)
 
 
 class GeminiService:
@@ -55,16 +122,40 @@ class GeminiService:
             temperature: Generation temperature 0-1 (default: 0.7)
             max_retries: Maximum retry attempts (default: 3)
         """
+        # Import Google Generative AI here to avoid heavy imports during Django startup
+        try:
+            import google.generativeai as genai
+        except ImportError as e:
+            logger.error(f"Google Generative AI library not available: {e}")
+            raise RuntimeError(f"Google Generative AI library is required but not installed: {e}")
+
         self.model_name = model_name
         self.temperature = temperature
         self.max_retries = max_retries
 
-        # Configure Gemini API
+        # Configure Gemini API with secure key handling
         api_key = getattr(settings, "GOOGLE_API_KEY", None)
         if not api_key:
             raise ValueError("GOOGLE_API_KEY not found in settings")
 
-        genai.configure(api_key=api_key)
+        # SECURITY: Validate API key format
+        if not isinstance(api_key, str) or len(api_key) < 20:
+            logger.error("Invalid API key format detected")
+            raise ValueError("Invalid API key format")
+
+        # SECURITY: Log API key status without exposing the key
+        if api_key:
+            logger.info("Google API key configured successfully")
+        else:
+            logger.error("Google API key is missing or invalid")
+            raise ValueError("GOOGLE_API_KEY not properly configured")
+
+        try:
+            genai.configure(api_key=api_key)
+            logger.info("Gemini API configured successfully")
+        except Exception as e:
+            logger.error(f"Failed to configure Gemini API: {type(e).__name__}")
+            raise RuntimeError(f"Failed to configure Gemini API: {e}")
 
         # Initialize model
         self.model = genai.GenerativeModel(
@@ -78,6 +169,7 @@ class GeminiService:
         )
 
         # Initialize cultural context
+        from ai_assistant.cultural_context import BangsomoroCulturalContext
         self.cultural_context = BangsomoroCulturalContext()
 
         logger.info(f"GeminiService initialized with model: {self.model_name}")
@@ -115,9 +207,29 @@ class GeminiService:
         """
         start_time = time.time()
 
-        # Build full prompt
+        # SECURITY: Validate and sanitize inputs
+        try:
+            sanitized_prompt = InputValidator.sanitize_input(prompt)
+            if system_context:
+                sanitized_context = InputValidator.validate_context(system_context)
+            else:
+                sanitized_context = None
+        except ValueError as e:
+            logger.warning(f"Input validation failed: {e}")
+            return {
+                "success": False,
+                "error": "Invalid input detected",
+                "text": None,
+                "tokens_used": 0,
+                "cost": 0.0,
+                "response_time": time.time() - start_time,
+                "model": self.model_name,
+                "cached": False,
+            }
+
+        # Build full prompt with sanitized inputs
         full_prompt = self._build_prompt(
-            prompt, system_context, include_cultural_context
+            sanitized_prompt, sanitized_context, include_cultural_context
         )
 
         # Check cache
@@ -323,12 +435,28 @@ class GeminiService:
             ['Show me details about these communities', 'Which provinces have the most?']
         """
         try:
+            # SECURITY: Validate and sanitize user message
+            try:
+                sanitized_message = InputValidator.validate_chat_message(user_message)
+                sanitized_context = InputValidator.validate_context(context) if context else None
+            except ValueError as e:
+                logger.warning(f"Chat input validation failed: {e}")
+                return {
+                    "success": False,
+                    "message": "I couldn't process that message. Please try rephrasing it.",
+                    "tokens_used": 0,
+                    "cost": 0.0,
+                    "response_time": 0,
+                    "suggestions": self._get_fallback_suggestions(),
+                    "cached": False,
+                }
+
             # Build OBCMS chat system context
-            system_context = self._build_chat_system_context(context)
+            system_context = self._build_chat_system_context(sanitized_context)
 
             # Build full prompt with conversation history
             full_prompt = self._build_chat_prompt(
-                user_message=user_message,
+                user_message=sanitized_message,
                 system_context=system_context,
                 conversation_history=conversation_history,
             )

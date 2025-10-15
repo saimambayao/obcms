@@ -2027,7 +2027,7 @@ def mana_provincial_overview(request):
 
     query_string = request.GET.copy()
     encoded_query = query_string.urlencode()
-    overview_base_url = reverse("common:mana_provincial_overview")
+    overview_base_url = reverse("mana:mana_provincial_overview")
     return_url = (
         f"{overview_base_url}?{encoded_query}" if encoded_query else overview_base_url
     )
@@ -2350,7 +2350,7 @@ def mana_provincial_card_detail(request, province_id):
     latest_reports = list(reports_queryset[:6])
     detailed_assessments = list(assessments_queryset[:20])
 
-    overview_link = f"{reverse('common:mana_provincial_overview')}?region={province.region_id}&province={province.id}"
+    overview_link = f"{reverse('mana:mana_provincial_overview')}?region={province.region_id}&province={province.id}"
 
     context = {
         "province": province,
@@ -2381,7 +2381,7 @@ def mana_province_edit(request, province_id):
     next_url = (
         request.GET.get("next")
         or request.POST.get("next")
-        or reverse("common:mana_provincial_overview")
+        or reverse("mana:mana_provincial_overview")
     )
 
     if request.method == "POST":
@@ -2411,7 +2411,7 @@ def mana_province_delete(request, province_id):
     """Soft delete a province from the provincial management listing."""
 
     province = get_object_or_404(Province, pk=province_id)
-    next_url = request.POST.get("next") or reverse("common:mana_provincial_overview")
+    next_url = request.POST.get("next") or reverse("mana:mana_provincial_overview")
     province_name = province.name
 
     if province.is_active:

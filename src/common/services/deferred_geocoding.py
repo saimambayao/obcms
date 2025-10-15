@@ -1,16 +1,64 @@
 """Deferred geocoding service to prevent blocking HTTP requests during Django startup."""
 
 import logging
+import sys
 from typing import Optional
 from threading import Thread
 from django.core.cache import cache
 from django.db import transaction
 from django.apps import apps
 
-# Import the actual geocoding function
-from .enhanced_geocoding import enhanced_ensure_location_coordinates
+# NOTE: DO NOT import enhanced_geocoding at module level!
+# It imports models which causes circular import deadlock during Django startup.
+# Import it lazily inside functions instead.
 
 logger = logging.getLogger(__name__)
+
+
+def is_management_command() -> bool:
+    """
+    Check if Django is running a management command or CLI utility.
+
+    Returns True for commands like migrate, makemigrations, shell, etc., AND for flags like --version, --help.
+    Returns False ONLY for server processes like runserver, gunicorn, uvicorn.
+    """
+    if len(sys.argv) < 2:
+        return False
+
+    command = sys.argv[1]
+
+    # Flags are always considered management commands (--version, --help, etc.)
+    if command.startswith('--') or command.startswith('-'):
+        return True
+
+    # Remove leading path and .py extension if present
+    if '/' in command or '\\' in command:
+        command = command.split('/')[-1].split('\\')[-1]
+    if command.endswith('.py'):
+        command = command[:-3]
+
+    # Commands that should NOT trigger geocoding
+    management_commands = {
+        'migrate', 'makemigrations', 'shell', 'shell_plus',
+        'dbshell', 'check', 'showmigrations', 'sqlmigrate',
+        'test', 'collectstatic', 'createsuperuser', 'changepassword',
+        'dumpdata', 'loaddata', 'flush', 'clearsessions',
+    }
+
+    # Geocoding should ONLY run for server commands
+    server_commands = {'runserver', 'gunicorn', 'uvicorn', 'daphne', 'hypercorn'}
+
+    # If it's explicitly a server command, return False (enable geocoding)
+    if command in server_commands:
+        return False
+
+    # If it's in management_commands list, return True (disable geocoding)
+    if command in management_commands:
+        return True
+
+    # For any other command, default to disabling geocoding (safer)
+    # This ensures geocoding only runs for known server processes
+    return True
 
 # Cache key to track geocoding tasks and prevent duplicates
 GEOCODING_TASK_LOCK_KEY = "geocoding_task_lock_{model}_{pk}"
@@ -145,15 +193,53 @@ def mark_django_startup_complete():
     Mark Django startup as complete and process any queued geocoding tasks.
 
     This should be called when Django startup is finished.
+
+    NOTE: Cache backend may not be ready during app.ready() phase.
+    All cache operations must be wrapped in try-except to avoid blocking.
+
+    NOTE: Geocoding is DISABLED during management commands (migrate, makemigrations, etc.)
+    to prevent unnecessary processing and verbose logging.
+
+    NOTE: Queue processing runs in a background thread to avoid blocking server startup.
     """
     global _django_startup_complete
+
+    # Skip geocoding for management commands (migrate, makemigrations, etc.)
+    if is_management_command():
+        _django_startup_complete = True
+        # Silently skip geocoding for management commands
+        return
+
     _django_startup_complete = True
+    # Only log for server processes (runserver, gunicorn, etc.)
     logger.info("Django startup complete - processing queued geocoding tasks")
 
-    # Process any queued geocoding tasks
+    # Process queued tasks in a background thread to avoid blocking server startup
+    try:
+        thread = Thread(target=_process_geocoding_queue, daemon=True)
+        thread.start()
+        logger.debug("Started background thread to process geocoding queue")
+    except Exception as e:
+        logger.error(f"Failed to start geocoding queue processor: {e}")
+
+
+def _process_geocoding_queue():
+    """
+    Process queued geocoding tasks in a background thread.
+
+    This function is called from mark_django_startup_complete() and runs
+    asynchronously to avoid blocking server startup.
+    """
     try:
         queue_key = "geocoding_startup_queue"
-        queue_data = cache.get(queue_key, [])
+
+        # Try to get queue data - cache may not be ready yet
+        try:
+            queue_data = cache.get(queue_key, [])
+        except Exception as cache_error:
+            # Cache not ready during startup - skip processing
+            logger.warning(f"Cache unavailable during startup completion - skipping geocoding queue: {cache_error}")
+            return
 
         if queue_data:
             logger.info(f"Processing {len(queue_data)} queued geocoding tasks")
@@ -170,8 +256,11 @@ def mark_django_startup_complete():
                 except Exception as e:
                     logger.error(f"Failed to process queued geocoding for {instance_info['model_name']} {instance_info['pk']}: {e}")
 
-            # Clear the queue
-            cache.delete(queue_key)
+            # Clear the queue - wrap in try-except
+            try:
+                cache.delete(queue_key)
+            except Exception as cache_error:
+                logger.warning(f"Failed to clear geocoding queue from cache: {cache_error}")
 
     except Exception as e:
         logger.error(f"Error processing geocoding queue: {e}")
@@ -237,6 +326,9 @@ def _geocode_location_in_background(
                 return "Already geocoded"
 
             # Perform geocoding using the enhanced service
+            # Import here to avoid circular import during Django startup
+            from .enhanced_geocoding import enhanced_ensure_location_coordinates
+
             try:
                 lat, lng, updated, source = enhanced_ensure_location_coordinates(instance)
 

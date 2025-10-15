@@ -18,7 +18,6 @@ import pickle
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-import faiss
 import numpy as np
 from django.conf import settings
 
@@ -44,6 +43,13 @@ class VectorStore:
             index_name: Name of this index (e.g., 'communities', 'assessments')
             dimension: Embedding dimension (default 384 for all-MiniLM-L6-v2)
         """
+        # Import FAISS here to avoid heavy imports during Django startup
+        try:
+            import faiss
+        except ImportError as e:
+            logger.error(f"FAISS library not available: {e}")
+            raise RuntimeError(f"FAISS library is required but not installed: {e}")
+
         self.index_name = index_name
         self.dimension = dimension
 
@@ -262,6 +268,7 @@ class VectorStore:
         filepath.parent.mkdir(parents=True, exist_ok=True)
 
         # Save FAISS index
+        import faiss
         index_file = str(filepath)
         faiss.write_index(self.index, index_file)
 
@@ -306,6 +313,7 @@ class VectorStore:
             raise FileNotFoundError(f"Index file not found: {filepath}")
 
         # Load FAISS index
+        import faiss
         index = faiss.read_index(str(filepath))
 
         # Load metadata
@@ -383,6 +391,7 @@ class VectorStore:
 
     def clear(self):
         """Clear all vectors and metadata from the index."""
+        import faiss
         self.index = faiss.IndexFlatL2(self.dimension)
         self.metadata = []
         logger.info(f"Cleared VectorStore '{self.index_name}'")

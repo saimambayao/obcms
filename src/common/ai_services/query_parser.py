@@ -8,8 +8,6 @@ import json
 import logging
 from typing import Any, Dict, List
 
-from ai_assistant.services import GeminiService
-
 logger = logging.getLogger(__name__)
 
 
@@ -26,7 +24,13 @@ class QueryParser:
 
     def __init__(self):
         """Initialize the query parser."""
-        self.gemini = GeminiService(temperature=0.2)  # Low temperature for consistency
+        # Import GeminiService here to avoid heavy imports during Django startup
+        try:
+            from ai_assistant.services import GeminiService
+            self.gemini = GeminiService(temperature=0.2)  # Low temperature for consistency
+        except ImportError as e:
+            logger.warning(f"GeminiService not available for query parsing: {e}")
+            self.gemini = None
 
     def parse(self, query: str) -> Dict[str, Any]:
         """
@@ -49,6 +53,11 @@ class QueryParser:
         """
         if not query or not query.strip():
             return self._empty_parse()
+
+        # If GeminiService is not available, use fallback parsing
+        if self.gemini is None:
+            logger.info("Using fallback query parsing (AI service not available)")
+            return self._fallback_parse(query)
 
         try:
             # Build parsing prompt

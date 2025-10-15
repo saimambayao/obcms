@@ -27,7 +27,7 @@
         <h2 class="text-2xl font-bold mb-6">Budget Forecast (Next 3 Years)</h2>
         {% if forecast.forecast_years %}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {% for year, budget in forecast.forecast_years|zip:forecast.projected_budget %}
+            {% for year, budget in forecast.zipped_data %}
             <div class="bg-white bg-opacity-20 rounded-xl p-6">
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-lg opacity-90">Fiscal Year {{ year }}</p>
@@ -94,7 +94,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Historical Budget Performance</h2>
         <div class="space-y-3">
-            {% for year, budget in forecast.historical_years|zip:forecast.historical_budgets %}
+            {% for year, budget in forecast.historical_zipped %}
             <div class="flex items-center gap-3">
                 <div class="w-20 text-sm font-medium text-gray-700">FY {{ year }}</div>
                 <div class="flex-1">

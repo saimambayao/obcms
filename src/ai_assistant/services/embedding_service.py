@@ -17,7 +17,6 @@ import logging
 from typing import List, Optional, Union
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +51,13 @@ class EmbeddingService:
         if EmbeddingService._model is None:
             logger.info(f"Loading embedding model: {self.model_name}")
             try:
+                # Import here to avoid heavy imports during Django startup
+                from sentence_transformers import SentenceTransformer
                 EmbeddingService._model = SentenceTransformer(self.model_name)
                 logger.info(f"Model loaded successfully. Embedding dimension: {self.get_dimension()}")
+            except ImportError as e:
+                logger.error(f"SentenceTransformers library not available: {e}")
+                raise RuntimeError(f"SentenceTransformers library is required but not installed: {e}")
             except Exception as e:
                 logger.error(f"Failed to load embedding model: {e}")
                 raise RuntimeError(f"Could not load embedding model: {e}")

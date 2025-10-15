@@ -21,19 +21,23 @@ from .chat.entity_resolvers import (
     NumberResolver,
 )
 
-# Unified Search (requires EmbeddingService - optional)
+# Unified Search (requires AI services - optional)
 try:
     from .unified_search import UnifiedSearchEngine
     from .query_parser import QueryParser
     from .result_ranker import ResultRanker
     from .search_analytics import SearchAnalytics
     HAS_UNIFIED_SEARCH = True
-except ImportError:
+except (ImportError, RuntimeError) as e:
+    # ImportError: Missing dependencies
+    # RuntimeError: AI services not available
     UnifiedSearchEngine = None
     QueryParser = None
     ResultRanker = None
     SearchAnalytics = None
     HAS_UNIFIED_SEARCH = False
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Unified search not available: {e}")
 
 # Conversational AI Chat (requires GeminiService)
 try:

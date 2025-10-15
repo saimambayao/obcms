@@ -5443,6 +5443,12 @@ def analytics_dashboard(request):
     sector_performance = analyze_sector_performance()
     impact_metrics = calculate_impact_metrics()
 
+    # Pre-zip the forecast data for template usage
+    forecast["zipped_data"] = list(zip(
+        forecast.get("forecast_years", []),
+        forecast.get("projected_budget", [])
+    ))
+
     context = {
         "trends": trends,
         "forecast": forecast,
@@ -5475,6 +5481,19 @@ def budget_forecasting(request):
 
     # GET request - show dashboard
     base_forecast = forecast_budget_needs(horizon_years=3)
+
+    # Pre-zip the forecast data for template usage
+    base_forecast["zipped_data"] = list(zip(
+        base_forecast.get("forecast_years", []),
+        base_forecast.get("projected_budget", [])
+    ))
+    
+    # Also zip historical data if it exists
+    if base_forecast.get("historical_years") and base_forecast.get("historical_budgets"):
+        base_forecast["historical_zipped"] = list(zip(
+            base_forecast["historical_years"],
+            base_forecast["historical_budgets"]
+        ))
 
     # Generate recommendations for next year's projected budget
     if base_forecast["projected_budget"]:
