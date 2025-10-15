@@ -33,6 +33,11 @@ backups/sqlite/db.sqlite3.pre_migration
 
 # Environment variables
 .env
+.env.local
+.env.production
+.env.production.local
+.env.staging
+.env.staging.local
 .venv
 env/
 venv/
