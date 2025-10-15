@@ -128,6 +128,8 @@ fi
 
 # Collect static files
 echo "Collecting static files..."
+# Ensure staticfiles directory is writable (Sevalla volume permission fix)
+mkdir -p /app/src/staticfiles && chmod -R 755 /app/src/staticfiles 2>/dev/null || true
 python manage.py collectstatic --noinput --verbosity 1 --skip-checks || { echo "ERROR: Static collection failed"; sleep 5; exit 1; }
 
 # Create cache tables (non-critical - skip if hangs)
