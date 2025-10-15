@@ -151,8 +151,8 @@ COPY --chown=app:app <<-'EOT' /app/healthcheck.sh
 #!/bin/bash
 set -e
 
-# Use PORT environment variable (defaults to 8000 if not set)
-PORT=${PORT:-8000}
+# Use PORT environment variable (defaults to 8080 if not set)
+PORT=${PORT:-8080}
 
 # Basic health check (HTTP only - database checked in /health/ view)
 curl -f http://localhost:${PORT}/health/ || exit 1
@@ -166,7 +166,7 @@ RUN chmod +x /app/healthcheck.sh
 USER app
 
 # Expose port
-EXPOSE 8000
+EXPOSE 8080
 
 # Enhanced health check for Sevalla
 HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \

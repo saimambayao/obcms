@@ -12,8 +12,8 @@ import os
 
 # Server Socket
 # Use PORT environment variable if set (for PaaS platforms like Sevalla)
-# Otherwise default to 8000
-port = os.getenv('PORT', '8000')
+# Otherwise default to 8080
+port = os.getenv('PORT', '8080')
 bind = f"0.0.0.0:{port}"
 backlog = 2048
 
