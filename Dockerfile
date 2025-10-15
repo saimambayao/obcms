@@ -151,8 +151,11 @@ COPY --chown=app:app <<-'EOT' /app/healthcheck.sh
 #!/bin/bash
 set -e
 
+# Use PORT environment variable (defaults to 8000 if not set)
+PORT=${PORT:-8000}
+
 # Basic health check (HTTP only - database checked in /health/ view)
-curl -f http://localhost:8000/health/ || exit 1
+curl -f http://localhost:${PORT}/health/ || exit 1
 
 echo "Health check passed"
 EOT
