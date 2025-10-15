@@ -18,9 +18,11 @@ bind = f"0.0.0.0:{port}"
 backlog = 2048
 
 # Worker Processes
-# Formula: (2 x CPU cores) + 1
+# Container environments: Use 2-4 workers max, scale containers instead
+# Formula (2 x CPU cores) + 1 causes OOM in limited-memory containers
 # Override with GUNICORN_WORKERS environment variable
-workers = int(os.getenv('GUNICORN_WORKERS', multiprocessing.cpu_count() * 2 + 1))
+default_workers = min(4, (multiprocessing.cpu_count() * 2 + 1))
+workers = int(os.getenv('GUNICORN_WORKERS', default_workers))
 
 # Worker Class
 # - sync: Default, CPU-bound tasks
@@ -109,6 +111,15 @@ def pre_fork(server, worker):
 def post_fork(server, worker):
     """Called just after a worker has been forked."""
     server.log.info(f"Worker spawned (pid: {worker.pid})")
+
+    # Close database connections from parent process when using preload_app
+    # This prevents connection errors in forked workers
+    try:
+        from django.db import connections
+        for conn in connections.all():
+            conn.close()
+    except Exception as e:
+        server.log.warning(f"Failed to close DB connections in worker {worker.pid}: {e}")
 
 
 def post_worker_init(worker):
