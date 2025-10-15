@@ -232,7 +232,7 @@ def dashboard(request):
         if request.user.has_perm("mana.can_access_regional_mana"):
             # Facilitators go to Manage Assessments dashboard
             if request.user.has_perm("mana.can_facilitate_workshop"):
-                return redirect("common:mana_manage_assessments")
+                return redirect("mana:mana_manage_assessments")
             # Participants go to their participant dashboard
             else:
                 # Get participant's assessment
@@ -249,7 +249,7 @@ def dashboard(request):
                     )
                 except WorkshopParticipantAccount.DoesNotExist:
                     # No participant account - redirect to regional overview
-                    return redirect("common:mana_regional_overview")
+                    return redirect("mana:mana_regional_overview")
 
     # Check if user has OOBC staff role (non-executive staff)
     from common.rbac_models import UserRole

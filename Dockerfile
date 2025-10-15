@@ -88,7 +88,10 @@ COPY --chown=app:app . /app/
 
 # Copy compiled assets from node-builder stage
 COPY --from=node-builder --chown=app:app /app/src/static/css/output.css /app/src/static/css/output.css
-COPY --from=node-builder --chown=app:app /app/src/static/js/output.js /app/src/static/js/output.js 2>/dev/null || true
+# Copy JS output if it exists (optional file)
+RUN --mount=type=bind,from=node-builder,source=/app/src/static/js/output.js,target=/tmp/output.js \
+    cp /tmp/output.js /app/src/static/js/output.js 2>/dev/null || echo "JS output not found, skipping..." && \
+    chown app:app /app/src/static/js/output.js 2>/dev/null || true
 
 # Create startup script for production
 COPY --chown=app:app <<-'EOT' /app/startup.sh

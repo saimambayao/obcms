@@ -59,7 +59,7 @@ django-anymail>=10.0,<11.0
 
 # Performance Monitoring
 django-debug-toolbar>=4.2.0,<5.0  # Development only
-silk>=5.0.0,<6.0  # Optional production monitoring
+# silk>=4.0.0,<6.0  # Optional production monitoring (disabled due to compatibility issues)
 
 # Health and Monitoring
 django-health-check>=3.17.0,<4.0

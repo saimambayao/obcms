@@ -1,0 +1,50 @@
+# OBCMS/BMMS Production Dockerfile
+# Optimized for 44 BARMM Ministries, Offices, and Agencies
+
+FROM python:3.12-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    libpq-dev \
+    libffi-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set work directory
+WORKDIR /app
+
+# Copy requirements
+COPY requirements/ requirements/
+COPY src/ src/
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements/base.txt
+RUN pip install --no-cache-dir -r requirements/ai.txt
+
+# Copy application
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p src/logs src/staticfiles src/media
+
+# Set permissions
+RUN chmod +x src/start_production.sh
+
+# Create non-root user for security
+RUN adduser --disabled-password --gecos '' obcms
+RUN chown -R obcms:obcms /app
+USER obcms
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health/ || exit 1
+
+# Default command (will be overridden by docker-compose)
+CMD ["python", "src/start_production.sh"]

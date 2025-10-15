@@ -46,13 +46,13 @@ class MANAAccessControlMiddleware:
         "common:communities_submit_provincial",
         "common:communities_add_province",
         # Regional MANA
-        "common:mana_regional_overview",
-        "common:mana_provincial_overview",
-        "common:mana_provincial_card_detail",
-        "common:mana_province_edit",
-        "common:mana_province_delete",
-        "common:mana_manage_assessments",
-        "common:mana_assessment_detail",
+        "mana:mana_regional_overview",
+        "mana:mana_provincial_overview",
+        "mana:mana_provincial_card_detail",
+        "mana:mana_province_edit",
+        "mana:mana_province_delete",
+        "mana:mana_manage_assessments",
+        "mana:mana_assessment_detail",
         # MANA app (all regional MANA workshop URLs)
         "mana:",  # Allow all MANA app URLs
         # Static/media files
@@ -107,7 +107,7 @@ class MANAAccessControlMiddleware:
 
                     if not is_allowed:
                         # Redirect to Regional MANA overview instead of raising PermissionDenied
-                        return redirect("common:mana_regional_overview")
+                        return redirect("mana:mana_regional_overview")
 
                 except Exception:
                     # If URL resolution fails, allow request to continue

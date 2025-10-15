@@ -102,6 +102,7 @@ services:
       target: development
     volumes:
       - .:/app
+      - celerybeat_data:/app/celerybeat-schedule
     environment:
       - DEBUG=1
       - DATABASE_URL=postgres://obcms:obcms_dev_password@db:5432/obcms
@@ -119,8 +120,6 @@ services:
       sh -c "cd src &&
              celery -A obc_management beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler"
     restart: unless-stopped
-    volumes:
-      - celerybeat_data:/app/celerybeat-schedule
 
   flower:
     build:

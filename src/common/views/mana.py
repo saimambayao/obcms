@@ -883,7 +883,7 @@ def mana_new_assessment(request):
                     request,
                     f'Assessment "{assessment.title}" was created successfully.',
                 )
-                return redirect("common:mana_manage_assessments")
+                return redirect("mana:mana_manage_assessments")
             except ValidationError as exc:
                 for field, field_errors in exc.message_dict.items():
                     for error in field_errors:
@@ -1063,7 +1063,7 @@ def mana_assessment_edit(request, assessment_id):
                 f'Assessment "{updated_assessment.title}" was updated successfully.',
             )
             return redirect(
-                "common:mana_assessment_detail", assessment_id=updated_assessment.id
+                "mana:mana_assessment_detail", assessment_id=updated_assessment.id
             )
     else:
         form = AssessmentUpdateForm(instance=assessment, user=request.user)
@@ -1116,7 +1116,7 @@ def mana_assessment_delete(request, assessment_id):
         request,
         f'Assessment "{assessment_title}" was deleted successfully.',
     )
-    return redirect("common:mana_manage_assessments")
+    return redirect("mana:mana_manage_assessments")
 
 
 @require_feature_access('mana_access')
@@ -2052,8 +2052,8 @@ def mana_provincial_overview(request):
     province_rows = []
     for card in page_cards:
         province = card["province"]
-        edit_path = reverse("common:mana_province_edit", args=[province.id])
-        delete_path = reverse("common:mana_province_delete", args=[province.id])
+        edit_path = reverse("mana:mana_province_edit", args=[province.id])
+        delete_path = reverse("mana:mana_province_delete", args=[province.id])
 
         province_rows.append(
             {
@@ -2063,7 +2063,7 @@ def mana_provincial_overview(request):
                 "needs": card["needs"],
                 "reports": card["reports"],
                 "detail_url": reverse(
-                    "common:mana_provincial_card_detail", args=[province.id]
+                    "mana:mana_provincial_card_detail", args=[province.id]
                 ),
                 "edit_url": (
                     f"{edit_path}?{urlencode({'next': return_url})}"
@@ -2440,7 +2440,7 @@ def mana_desk_review(request):
                 request,
                 f'Logged desk review "{assessment.title}" for {assessment.community}.',
             )
-            return redirect("common:mana_desk_review")
+            return redirect("mana:mana_desk_review")
         messages.error(request, "Please correct the highlighted errors below.")
     else:
         form = DeskReviewQuickEntryForm(user=request.user)
@@ -2478,7 +2478,7 @@ def mana_desk_review(request):
             "title": "Full Assessment Setup",
             "description": "Open the complete assessment wizard for comprehensive desk reviews.",
             "icon": "fas fa-clipboard-list",
-            "url": f"{reverse('common:mana_new_assessment')}?primary_methodology=desk_review",
+            "url": f"{reverse('mana:mana_new_assessment')}?primary_methodology=desk_review",
             "cta": "Launch Wizard",
             "icon_bg": "from-green-500 to-green-600",
             "cta_class": "text-green-600",
@@ -2614,7 +2614,7 @@ def mana_survey_module(request):
                 request,
                 f'Survey cycle "{assessment.title}" logged for {assessment.community}.',
             )
-            return redirect("common:mana_survey_module")
+            return redirect("mana:mana_survey_module")
         messages.error(request, "Please correct the highlighted errors below.")
     else:
         survey_form = SurveyQuickEntryForm(user=request.user)
@@ -2679,7 +2679,7 @@ def mana_survey_module(request):
             "title": "Full Survey Setup",
             "description": "Launch the full assessment wizard to configure detailed survey parameters.",
             "icon": "fas fa-clipboard-check",
-            "url": f"{reverse('common:mana_new_assessment')}?primary_methodology=survey",
+            "url": f"{reverse('mana:mana_new_assessment')}?primary_methodology=survey",
             "cta": "Launch Wizard",
             "icon_bg": "from-green-500 to-green-600",
             "cta_class": "text-green-600",
@@ -2697,7 +2697,7 @@ def mana_survey_module(request):
             "title": "Field Activity Log",
             "description": "Document daily enumerator updates and issues from the field.",
             "icon": "fas fa-clipboard",
-            "url": reverse("common:mana_activity_log"),
+            "url": reverse("mana:mana_activity_log"),
             "cta": "Open Log",
             "icon_bg": "from-purple-500 to-purple-600",
             "cta_class": "text-purple-600",
@@ -2763,7 +2763,7 @@ def mana_key_informant_interviews(request):
                 request,
                 f'KII track "{assessment.title}" logged for {assessment.community}.',
             )
-            return redirect("common:mana_kii")
+            return redirect("mana:mana_kii")
         messages.error(request, "Please correct the highlighted errors below.")
     else:
         kii_form = KIIQuickEntryForm(user=request.user)
@@ -2793,7 +2793,7 @@ def mana_key_informant_interviews(request):
             "title": "Full KII Setup",
             "description": "Launch the full wizard to configure multi-phase KII engagements.",
             "icon": "fas fa-headset",
-            "url": f"{reverse('common:mana_new_assessment')}?primary_methodology=kii",
+            "url": f"{reverse('mana:mana_new_assessment')}?primary_methodology=kii",
             "cta": "Launch Wizard",
             "icon_bg": "from-rose-500 to-rose-600",
             "cta_class": "text-rose-600",
@@ -2811,7 +2811,7 @@ def mana_key_informant_interviews(request):
             "title": "Upload Narratives",
             "description": "Move straight to activity processing to store transcripts and lessons learned.",
             "icon": "fas fa-upload",
-            "url": reverse("common:mana_activity_processing"),
+            "url": reverse("mana:mana_activity_processing"),
             "cta": "Open Workspace",
             "icon_bg": "from-purple-500 to-purple-600",
             "cta_class": "text-purple-600",
