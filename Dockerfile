@@ -17,13 +17,10 @@ COPY src/templates/ src/templates/
 
 # Build production CSS with Tailwind
 RUN npm run build:css && \
-    npm run build:js && \
-    # Verify assets were built successfully
+    # Verify CSS was built successfully
     test -f src/static/css/output.css && \
-    echo "✓ Tailwind CSS built successfully: $(wc -c < src/static/css/output.css) bytes" && \
-    test -f src/static/js/output.js || true && \
-    echo "✓ Build completed successfully" || \
-    (echo "✗ ERROR: Build failed - required files not found" && exit 1)
+    echo "✓ Tailwind CSS built successfully: $(wc -c < src/static/css/output.css) bytes" || \
+    (echo "✗ ERROR: CSS build failed - output.css not found" && exit 1)
 
 # Stage 2: Python Base - Common dependencies for Sevalla
 FROM python:3.12-slim as base
@@ -86,12 +83,8 @@ RUN mkdir -p /app/logs /app/media /app/staticfiles /app/static && \
 # Copy application code with proper permissions
 COPY --chown=app:app . /app/
 
-# Copy compiled assets from node-builder stage
+# Copy compiled CSS assets from node-builder stage
 COPY --from=node-builder --chown=app:app /app/src/static/css/output.css /app/src/static/css/output.css
-# Copy JS output if it exists (optional file)
-RUN --mount=type=bind,from=node-builder,source=/app/src/static/js/output.js,target=/tmp/output.js \
-    cp /tmp/output.js /app/src/static/js/output.js 2>/dev/null || echo "JS output not found, skipping..." && \
-    chown app:app /app/src/static/js/output.js 2>/dev/null || true
 
 # Create startup script for production
 COPY --chown=app:app <<-'EOT' /app/startup.sh

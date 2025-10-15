@@ -1189,7 +1189,7 @@ def mana_regional_overview(request):
 
             query = {"assessment": str(assessment.id), "active_tab": "workshop_1"}
             return redirect(
-                f"{reverse('common:mana_regional_overview')}?{urlencode(query)}"
+                f"{reverse('mana:mana_regional_overview')}?{urlencode(query)}"
             )
 
         messages.error(
@@ -1419,7 +1419,7 @@ def mana_regional_overview(request):
                             }
                         )
                         return redirect(
-                            f"{reverse('common:mana_regional_overview')}?{query}"
+                            f"{reverse('mana:mana_regional_overview')}?{query}"
                         )
 
                 if form is not None:
@@ -2487,7 +2487,7 @@ def mana_desk_review(request):
             "title": "Manage Desk Reviews",
             "description": "Track progress, update statuses, and coordinate deliverables.",
             "icon": "fas fa-tasks",
-            "url": f"{reverse('common:mana_manage_assessments')}?methodology=desk_review",
+            "url": f"{reverse('mana:mana_manage_assessments')}?methodology=desk_review",
             "cta": "View Pipeline",
             "icon_bg": "from-blue-500 to-blue-600",
             "cta_class": "text-blue-600",
@@ -2688,7 +2688,7 @@ def mana_survey_module(request):
             "title": "Manage Survey Pipeline",
             "description": "Monitor active survey cycles and update statuses across regions.",
             "icon": "fas fa-stream",
-            "url": f"{reverse('common:mana_manage_assessments')}?methodology=survey",
+            "url": f"{reverse('mana:mana_manage_assessments')}?methodology=survey",
             "cta": "View Pipeline",
             "icon_bg": "from-blue-500 to-blue-600",
             "cta_class": "text-blue-600",
@@ -2802,7 +2802,7 @@ def mana_key_informant_interviews(request):
             "title": "Manage KII Pipeline",
             "description": "Review active KII engagements and update interview completion status.",
             "icon": "fas fa-stream",
-            "url": f"{reverse('common:mana_manage_assessments')}?methodology=kii",
+            "url": f"{reverse('mana:mana_manage_assessments')}?methodology=kii",
             "cta": "View Pipeline",
             "icon_bg": "from-blue-500 to-blue-600",
             "cta_class": "text-blue-600",
