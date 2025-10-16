@@ -1,5 +1,5 @@
 """
-Middleware Tests for Organizations App (BMMS Phase 1).
+Enhanced Middleware Tests for Organizations App (BMMS Phase 1).
 
 Tests OrganizationMiddleware functionality including:
 - Organization extraction from URL patterns
@@ -7,6 +7,11 @@ Tests OrganizationMiddleware functionality including:
 - Thread-local storage management
 - Fallback to primary organization
 - Superuser bypass behavior
+- Enhanced audit logging
+- OCM special access patterns
+- Thread-safe concurrent requests
+- Performance and memory management
+- Integration with common middleware
 """
 
 import pytest
@@ -301,3 +306,354 @@ class TestOrganizationMiddleware:
 
         middleware.get_response = dummy_response2
         middleware(request2)
+
+
+@pytest.mark.django_db
+class TestEnhancedMiddlewareFeatures:
+    """Test enhanced middleware features."""
+
+    @pytest.fixture
+    def middleware(self):
+        """Create middleware instance."""
+        def dummy_get_response(request):
+            return None
+        return OrganizationMiddleware(dummy_get_response)
+
+    @pytest.fixture
+    def factory(self):
+        """Create request factory."""
+        return RequestFactory()
+
+    @pytest.fixture
+    def organizations(self):
+        """Create test organizations."""
+        oobc = Organization.objects.create(
+            code='OOBC',
+            name='Office for Other Bangsamoro Communities',
+            org_type='office',
+        )
+        moh = Organization.objects.create(
+            code='MOH',
+            name='Ministry of Health',
+            org_type='ministry',
+        )
+        ocm = Organization.objects.create(
+            code='OCM',
+            name='Office of the Chief Minister',
+            org_type='office',
+        )
+        return {'oobc': oobc, 'moh': moh, 'ocm': ocm}
+
+    @pytest.fixture
+    def ocm_user(self, organizations):
+        """Create OCM user."""
+        user = User.objects.create_user(
+            username='ocm_user',
+            email='ocm@example.com',
+            password='testpass123',
+            user_type='cm_office'
+        )
+        OrganizationMembership.objects.create(
+            user=user,
+            organization=organizations['ocm'],
+            role='admin',
+            is_primary=True,
+        )
+        return user
+
+    def test_ocm_user_access_any_organization(self, middleware, factory, organizations):
+        """Test OCM user can access any organization."""
+        oobc_user = User.objects.create_user(
+            username='oobc_user',
+            email='oobc@example.com',
+            password='testpass123'
+        )
+        OrganizationMembership.objects.create(
+            user=oobc_user,
+            organization=organizations['oobc'],
+            role='staff',
+            is_primary=True,
+        )
+
+        request = factory.get(f'/moa/{organizations["moh"].code}/dashboard/')
+        request.user = organizations['ocm']
+
+        def dummy_response(req):
+            assert req.organization == organizations['moh']
+            return None
+
+        middleware.get_response = dummy_response
+        response = middleware(request)
+
+        # OCM user should have access
+        assert not isinstance(response, HttpResponseForbidden)
+
+    def test_audit_logging_context_changes(self, middleware, factory, organizations):
+        """Test audit logging for organization context changes."""
+        import logging
+        from unittest.mock import Mock
+
+        # Mock audit logger
+        with patch('organizations.middleware.audit_logger') as mock_audit:
+            user = User.objects.create_user(
+                username='testuser',
+                email='test@example.com',
+                password='testpass123'
+            )
+            OrganizationMembership.objects.create(
+                user=user,
+                organization=organizations['moh'],
+                role='staff',
+                is_primary=True,
+            )
+
+            request = factory.get(f'/moa/{organizations["moh"].code}/dashboard/')
+            request.user = user
+
+            def dummy_response(req):
+                return None
+
+            middleware.get_response = dummy_response
+            middleware(request)
+
+            # Verify audit logging was called
+            mock_audit.info.assert_called()
+            call_args = mock_audit.info.call_args[0][0]
+            assert 'Organization context set' in call_args
+            assert organizations['moh'].code in call_args
+
+    def test_security_logging_unauthorized_access(self, middleware, factory, organizations):
+        """Test security logging for unauthorized access attempts."""
+        from unittest.mock import Mock
+
+        # Mock security logger
+        with patch('organizations.middleware.security_logger') as mock_security:
+            user = User.objects.create_user(
+                username='unauthorized',
+                email='unauth@example.com',
+                password='testpass123'
+            )
+
+            request = factory.get(f'/moa/{organizations["moh"].code}/dashboard/')
+            request.user = user
+
+            def dummy_response(req):
+                return None
+
+            middleware.get_response = dummy_response
+            response = middleware(request)
+
+            # Should return 403 and log security event
+            assert isinstance(response, HttpResponseForbidden)
+            mock_security.warning.assert_called()
+
+    def test_thread_context_utilities(self, middleware, factory, organizations):
+        """Test thread-local context utilities."""
+        from organizations.middleware import get_thread_context, is_ocm_context
+
+        user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        OrganizationMembership.objects.create(
+            user=user,
+            organization=organizations['moh'],
+            role='staff',
+            is_primary=True,
+        )
+
+        request = factory.get(f'/moa/{organizations["moh"].code}/dashboard/')
+        request.user = user
+
+        def dummy_response(req):
+            # Test context utilities during request
+            context = get_thread_context()
+            assert context['organization_id'] == organizations['moh'].id
+            assert context['organization_code'] == organizations['moh'].code
+            assert context['user_id'] == user.id
+            assert not context['is_ocm_user']  # Regular user
+            assert not is_ocm_context()
+            return None
+
+        middleware.get_response = dummy_response
+        middleware(request)
+
+    def test_ocm_context_detection(self, middleware, factory, organizations):
+        """Test OCM context detection."""
+        from organizations.middleware import get_thread_context, is_ocm_context
+
+        request = factory.get(f'/moa/{organizations["moh"].code}/dashboard/')
+        request.user = organizations['ocm']
+
+        def dummy_response(req):
+            # Test OCM context detection
+            context = get_thread_context()
+            assert context['is_ocm_user']  # OCM user
+            assert is_ocm_context()
+            return None
+
+        middleware.get_response = dummy_response
+        middleware(request)
+
+    def test_performance_monitoring(self, middleware, factory, organizations):
+        """Test performance monitoring features."""
+        import time
+
+        user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        OrganizationMembership.objects.create(
+            user=user,
+            organization=organizations['moh'],
+            role='staff',
+            is_primary=True,
+        )
+
+        request = factory.get(f'/moa/{organizations["moh"].code}/dashboard/')
+        request.user = user
+
+        def dummy_response(req):
+            # Simulate some processing time
+            time.sleep(0.01)
+            return None
+
+        middleware.get_response = dummy_response
+
+        # Record start time
+        start_time = time.time()
+        middleware(request)
+        end_time = time.time()
+
+        # Should complete quickly (under 100ms for simple request)
+        assert (end_time - start_time) < 0.1
+
+    def test_thread_local_cleanup_comprehensive(self, middleware, factory, organizations):
+        """Test comprehensive thread-local cleanup."""
+        from organizations.middleware import get_thread_context
+
+        user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        OrganizationMembership.objects.create(
+            user=user,
+            organization=organizations['moh'],
+            role='staff',
+            is_primary=True,
+        )
+
+        request = factory.get(f'/moa/{organizations["moh"].code}/dashboard/')
+        request.user = user
+
+        def dummy_response(req):
+            # During request, context should be populated
+            context = get_thread_context()
+            assert 'organization_id' in context
+            assert 'user_id' in context
+            return None
+
+        middleware.get_response = dummy_response
+        middleware(request)
+
+        # After request, context should be cleaned up
+        context = get_thread_context()
+        assert context == {}
+
+    def test_client_ip_extraction(self, middleware, factory, organizations):
+        """Test client IP extraction with various headers."""
+        user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        OrganizationMembership.objects.create(
+            user=user,
+            organization=organizations['moh'],
+            role='staff',
+            is_primary=True,
+        )
+
+        # Test with X-Forwarded-For header
+        request = factory.get(f'/moa/{organizations["moh"].code}/dashboard/')
+        request.user = user
+        request.META['HTTP_X_FORWARDED_FOR'] = '192.168.1.100, 10.0.0.1'
+
+        ip = middleware._get_client_ip(request)
+        assert ip == '192.168.1.100'
+
+        # Test with Cloudflare header
+        request = factory.get(f'/moa/{organizations["moh"].code}/dashboard/')
+        request.user = user
+        request.META['HTTP_CF_CONNECTING_IP'] = '203.0.113.1'
+
+        ip = middleware._get_client_ip(request)
+        assert ip == '203.0.113.1'
+
+        # Test fallback to REMOTE_ADDR
+        request = factory.get(f'/moa/{organizations["moh"].code}/dashboard/')
+        request.user = user
+        request.META['REMOTE_ADDR'] = '127.0.0.1'
+
+        ip = middleware._get_client_ip(request)
+        assert ip == '127.0.0.1'
+
+    def test_mode_aware_behavior_obcms(self, middleware, factory, organizations):
+        """Test OBCMS mode auto-injection of default organization."""
+        from unittest.mock import patch
+
+        user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+
+        request = factory.get('/dashboard/')
+        request.user = user
+
+        with patch('organizations.middleware.is_obcms_mode', return_value=True):
+            with patch('organizations.middleware.get_or_create_default_organization') as mock_default:
+                mock_default.return_value = (organizations['oobc'], None)
+
+                def dummy_response(req):
+                    assert req.organization == organizations['oobc']
+                    return None
+
+                middleware.get_response = dummy_response
+                middleware(request)
+
+                # Should call default organization creation
+                mock_default.assert_called_once()
+
+    def test_error_handling_and_logging(self, middleware, factory, organizations):
+        """Test error handling and logging."""
+        from unittest.mock import patch
+
+        user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+
+        request = factory.get(f'/moa/{organizations["moh"].code}/dashboard/')
+        request.user = user
+
+        # Mock get_response to raise an exception
+        def failing_response(req):
+            raise ValueError("Test error")
+
+        middleware.get_response = failing_response
+
+        with patch('organizations.middleware.security_logger') as mock_security:
+            # Should re-raise the exception
+            with pytest.raises(ValueError):
+                middleware(request)
+
+            # Should log the error
+            mock_security.error.assert_called()
+            call_args = mock_security.error.call_args[0][0]
+            assert 'Organization context error' in call_args
+            assert 'Test error' in call_args

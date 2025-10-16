@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} - OBCMS{% endblock %}
+
+{% block extra_css %}
+<style>
+.organization-switcher {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.organization-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+
+.organization-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.organization-card.current {
+    border-color: #059669;
+    background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+}
+
+.organization-card.primary {
+    border-color: #1e40af;
+    background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+}
+
+.organization-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.organization-info h3 {
+    margin: 0 0 0.5rem 0;
+    color: #1f2937;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.organization-code {
+    display: inline-block;
+    background: #f3f4f6;
+    color: #374151;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.organization-type {
+    display: inline-block;
+    background: #e5e7eb;
+    color: #4b5563;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.organization-badges {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.badge-current {
+    background: #10b981;
+    color: white;
+}
+
+.badge-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.role-badge {
+    background: #f59e0b;
+    color: white;
+}
+
+.organization-details {
+    margin-bottom: 1rem;
+}
+
+.modules-enabled {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.module-badge {
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.organization-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.btn-switch {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-switch:hover {
+    background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-switch:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-view {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-view:hover {
+    background: #e5e7eb;
+    color: #1f2937;
+    text-decoration: none;
+}
+
+.switcher-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.switcher-header h1 {
+    margin-bottom: 0.5rem;
+    color: #1f2937;
+}
+
+.switcher-header p {
+    color: #6b7280;
+    font-size: 1.125rem;
+}
+
+.current-org-info {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #0ea5e9;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.current-org-info h2 {
+    margin: 0 0 0.5rem 0;
+    color: #0369a1;
+}
+
+.current-org-info p {
+    margin: 0;
+    color: #0c4a6e;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 2px dashed #d1d5db;
+}
+
+.empty-state h3 {
+    color: #6b7280;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: #9ca3af;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .organization-switcher {
+        margin: 1rem auto;
+        padding: 0 0.5rem;
+    }
+
+    .organization-card {
+        padding: 1rem;
+    }
+
+    .organization-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .organization-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .btn-switch,
+    .btn-view {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="organization-switcher">
+    <!-- Header -->
+    <div class="switcher-header">
+        <h1>
+            <i class="fas fa-building"></i>
+            {{ page_title }}
+        </h1>
+        <p>Select an organization to work with</p>
+    </div>
+
+    <!-- Current Organization -->
+    {% if current_organization %}
+    <div class="current-org-info">
+        <h2>
+            <i class="fas fa-check-circle"></i>
+            Currently Working With
+        </h2>
+        <p>
+            <strong>{{ current_organization.name }}</strong> ({{ current_organization.code }})
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Organization Cards -->
+    {% if user_memberships %}
+        {% for membership in user_memberships %}
+            <div class="organization-card
+                {% if current_organization and current_organization.id == membership.organization.id %}current{% endif %}
+                {% if membership.is_primary %}primary{% endif %}"
+                onclick="window.location.href='{% url 'organizations:switch' membership.organization.code %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}'">
+
+                <div class="organization-header">
+                    <div class="organization-info">
+                        <h3>{{ membership.organization.name }}</h3>
+                        <div class="organization-code">{{ membership.organization.code }}</div>
+                        <div class="organization-type">{{ membership.organization.get_org_type_display }}</div>
+                    </div>
+
+                    <div class="organization-badges">
+                        {% if current_organization and current_organization.id == membership.organization.id %}
+                            <span class="badge badge-current">
+                                <i class="fas fa-circle"></i> Current
+                            </span>
+                        {% endif %}
+                        {% if membership.is_primary %}
+                            <span class="badge badge-primary">
+                                <i class="fas fa-star"></i> Primary
+                            </span>
+                        {% endif %}
+                        <span class="badge role-badge">
+                            {{ membership.get_role_display }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="organization-details">
+                    <p><strong>Enabled Modules:</strong></p>
+                    <div class="modules-enabled">
+                        {% for module in membership.organization.enabled_modules %}
+                            <span class="module-badge">{{ module }}</span>
+                        {% empty %}
+                            <span class="text-muted">No modules enabled</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="organization-actions">
+                    {% if current_organization and current_organization.id == membership.organization.id %}
+                        <button class="btn-switch" disabled>
+                            <i class="fas fa-check"></i>
+                            Current Organization
+                        </button>
+                    {% else %}
+                        <a href="{% url 'organizations:switch' membership.organization.code %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}"
+                           class="btn-switch">
+                            <i class="fas fa-exchange-alt"></i>
+                            Switch to {{ membership.organization.code }}
+                        </a>
+                    {% endif %}
+
+                    <a href="{% url 'organizations:detail' membership.organization.code %}"
+                       class="btn-view">
+                        <i class="fas fa-info-circle"></i>
+                        View Details
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <h3>
+                <i class="fas fa-building"></i>
+                No Organizations Available
+            </h3>
+            <p>You don't have access to any organizations yet.</p>
+            <p>Please contact your system administrator to get assigned to an organization.</p>
+            <a href="{% url 'common:dashboard' %}" class="btn-switch">
+                <i class="fas fa-arrow-left"></i>
+                Back to Dashboard
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        window.location.href = "{% url 'common:dashboard' %}";
+    }
+});
+
+// Add smooth transitions
+document.querySelectorAll('.organization-card').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-2px)';
+    });
+
+    card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0)';
+    });
+});
+
+// Auto-hide success messages after 3 seconds
+setTimeout(function() {
+    const messages = document.querySelectorAll('.alert-success');
+    messages.forEach(msg => {
+        msg.style.transition = 'opacity 0.5s';
+        msg.style.opacity = '0';
+        setTimeout(() => msg.remove(), 500);
+    });
+}, 3000);
+</script>
+{% endblock %}

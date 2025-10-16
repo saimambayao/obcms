@@ -267,3 +267,34 @@ urlpatterns += [
     path('api/query-builder/preview/', query_builder_preview, name='query_builder_preview'),
     path('api/query-builder/execute/', query_builder_execute, name='query_builder_execute'),
 ]
+
+# ============================================================================
+# MULTI-TENANT ORGANIZATION MANAGEMENT
+# ============================================================================
+from common.views.multi_tenant_urls import (
+    switch_organization,
+    organization_selection,
+    validate_organization,
+    current_organization,
+    set_organization_preference,
+    organization_dashboard,
+    organization_switcher_partial,
+    quick_switch_organization,
+)
+
+urlpatterns += [
+    # Organization switching and management
+    path('switch-organization/', switch_organization, name='switch_organization'),
+    path('switch-organization/<str:org_code>/', switch_organization, name='switch_organization_code'),
+    path('organization-selection/', organization_selection, name='organization_selection'),
+    path('organization-dashboard/<str:org_code>/', organization_dashboard, name='organization_dashboard'),
+
+    # API endpoints for organization management
+    path('api/validate-organization/<str:org_code>/', validate_organization, name='validate_organization'),
+    path('api/current-organization/', current_organization, name='current_organization'),
+    path('api/set-organization-preference/', set_organization_preference, name='set_organization_preference'),
+
+    # HTMX endpoints for instant UI updates
+    path('partial/organization-switcher/', organization_switcher_partial, name='organization_switcher_partial'),
+    path('quick-switch-organization/', quick_switch_organization, name='quick_switch_organization'),
+]

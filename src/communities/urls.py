@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import views, data_utils
+from common.views import communities as communities_views
 
 app_name = "communities"
 
@@ -122,7 +123,7 @@ urlpatterns = [
     # Stakeholders & Location URLs
     path(
         "stakeholders/",
-        communities_views.communities_stakeholders,
+        views.communities_stakeholders,
         name="communities_stakeholders",
     ),
     path("locations/centroid/", communities_views.location_centroid, name="location_centroid"),

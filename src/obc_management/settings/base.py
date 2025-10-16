@@ -187,6 +187,7 @@ TEMPLATES = [
                 "common.context_processors.location_api",
                 "common.context_processors.feature_flags",
                 "project_central.context_processors.project_central_context",
+                "organizations.views.organization_switcher_context",
             ],
         },
     },
