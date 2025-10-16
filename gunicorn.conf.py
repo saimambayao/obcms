@@ -29,7 +29,8 @@ workers = int(os.getenv('GUNICORN_WORKERS', default_workers))
 # - gthread: I/O-bound tasks (recommended for Django ORM-heavy apps)
 # - gevent: Async I/O (requires greenlet)
 # - uvicorn.workers.UvicornWorker: ASGI (Django Channels, async views)
-worker_class = os.getenv('GUNICORN_WORKER_CLASS', 'sync')
+# For container environments with Django ORM workloads, gthread often performs better
+worker_class = os.getenv('GUNICORN_WORKER_CLASS', 'gthread')
 
 # Threads per worker (only used with gthread worker class)
 threads = int(os.getenv('GUNICORN_THREADS', 2))
@@ -40,7 +41,7 @@ worker_connections = 1000
 # Worker Lifecycle
 max_requests = 1000  # Restart worker after N requests (memory leak protection)
 max_requests_jitter = 100  # Randomize restart to avoid thundering herd
-timeout = 120  # Request timeout in seconds (increase for long-running operations)
+timeout = 60  # Request timeout in seconds (optimized for container environments)
 graceful_timeout = 30  # Graceful shutdown timeout
 keepalive = 2  # Seconds to wait for requests on Keep-Alive connection
 
@@ -96,11 +97,25 @@ def when_ready(server):
 def worker_int(worker):
     """Called when a worker received SIGINT or SIGQUIT."""
     worker.log.info(f"Worker {worker.pid} received SIGINT/SIGQUIT")
+    # Graceful shutdown cleanup
+    try:
+        from django.db import connections
+        for conn in connections.all():
+            conn.close()
+    except Exception:
+        pass  # Ignore cleanup errors during shutdown
 
 
 def worker_abort(worker):
     """Called when a worker received SIGABRT (timeout)."""
     worker.log.warning(f"Worker {worker.pid} aborted (timeout after {timeout}s)")
+    # In container environments, ensure proper cleanup
+    try:
+        from django.db import connections
+        for conn in connections.all():
+            conn.close()
+    except Exception:
+        pass  # Ignore cleanup errors during abort
 
 
 def pre_fork(server, worker):

@@ -5,23 +5,31 @@ import multiprocessing
 import os
 
 # Server Socket
-bind = "0.0.0.0:8000"
+# Use PORT environment variable if set (for PaaS platforms like Sevalla)
+# Otherwise default to 8080
+port = os.getenv('PORT', '8080')
+bind = f"0.0.0.0:{port}"
 backlog = 2048
 
 # Worker Processes
-# Formula: (2 × CPU cores) + 1
-# Auto-calculate with minimum of 4 workers for BMMS multi-tenant load
-workers = max(4, (2 * multiprocessing.cpu_count()) + 1)
+# Container environments: Use 2-4 workers max, scale containers instead
+# Override with GUNICORN_WORKERS environment variable
+default_workers = min(4, (2 * multiprocessing.cpu_count()) + 1)
+workers = int(os.getenv('GUNICORN_WORKERS', default_workers))
 
 # Worker Class
-worker_class = "sync"
+# For container environments with Django ORM workloads, gthread often performs better
+worker_class = os.getenv('GUNICORN_WORKER_CLASS', 'gthread')
 worker_connections = 1000
+
+# Threads per worker (only used with gthread worker class)
+threads = int(os.getenv('GUNICORN_THREADS', 2))
 
 # Worker Settings
 max_requests = 1000
 max_requests_jitter = 100
 preload_app = True
-timeout = 300
+timeout = 60  # Optimized for container environments
 keepalive = 5
 
 # Logging

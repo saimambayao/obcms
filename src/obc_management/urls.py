@@ -30,7 +30,8 @@ from rest_framework_simplejwt.views import (
 # Import admin customizations
 from . import admin as admin_customizations
 from common.admin_views import group_changelist_view
-from common.views.health import health_check, readiness_check
+from common.views.health import health_check
+from .views.health import liveness_probe, readiness_probe
 
 # API docs import removed - documentation now backend-only
 
@@ -40,7 +41,9 @@ api_router = DefaultRouter()
 urlpatterns = [
     # Health check endpoints (no authentication required)
     path("health/", health_check, name="health"),
-    path("ready/", readiness_check, name="readiness"),
+    # Kubernetes/Docker health probes
+    path("live/", liveness_probe, name="liveness"),
+    path("ready/", readiness_probe, name="readiness_probe"),
     # Custom admin views (must come before admin.site.urls)
     path("admin/auth/group/", group_changelist_view, name="custom_group_changelist"),
     path("admin/", admin.site.urls),

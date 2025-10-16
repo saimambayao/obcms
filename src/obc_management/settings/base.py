@@ -95,6 +95,7 @@ THIRD_PARTY_APPS = [
     "auditlog",  # Audit logging for compliance
     "axes",  # Failed login tracking and account lockout
     "mptt",  # Django MPTT for hierarchical work items
+    "django_structlog",  # Structured JSON logging for production
 ]
 
 LOCAL_APPS = [

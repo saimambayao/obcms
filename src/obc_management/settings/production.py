@@ -5,6 +5,8 @@ DO NOT use this in development.
 Enforces security best practices and production-grade configurations.
 """
 
+import os
+import structlog
 from .base import *  # noqa
 
 # SECURITY: Force DEBUG off in production (no environment override)
@@ -14,12 +16,14 @@ TEMPLATE_DEBUG = False
 # SECURITY: Allowed hosts (strict validation)
 # Note: Kubernetes internal IPs (10.96.*.*) are handled by
 # KubernetesInternalHostMiddleware which runs before host validation
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+# Parse comma-separated environment variable for Sevalla compatibility
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get("ALLOWED_HOSTS", "").split(",") if host.strip()]
 if not ALLOWED_HOSTS:
     raise ValueError("ALLOWED_HOSTS must be explicitly set in production")
 
 # SECURITY: CSRF trusted origins (required for HTTPS behind proxy)
-CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+# Parse comma-separated environment variable for Sevalla compatibility
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if origin.strip()]
 if not CSRF_TRUSTED_ORIGINS:
     raise ValueError(
         "CSRF_TRUSTED_ORIGINS must be set for production HTTPS\n"
@@ -102,7 +106,8 @@ USE_X_FORWARDED_HOST = True
 
 # SECURITY: CORS Configuration for Production
 # Override base.py localhost settings with production domain
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
+# Parse comma-separated environment variable for Sevalla compatibility
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",") if origin.strip()]
 if not CORS_ALLOWED_ORIGINS:
     # WARNING: CORS_ALLOWED_ORIGINS must be set in production .env
     # Example: CORS_ALLOWED_ORIGINS=https://obcms.example.gov.ph,https://api.obcms.example.gov.ph
@@ -114,59 +119,23 @@ CORS_ALLOW_ALL_ORIGINS = False
 # ADMIN: Restrict admin access by IP if needed
 # ALLOWED_ADMIN_IPS = env.list('ALLOWED_ADMIN_IPS', default=[])
 
-# LOGGING: Production logging (stdout/stderr for Docker)
+# LOGGING: Structured JSON logging for production (Sevalla container debugging)
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": {
-            "format": "[{levelname}] {asctime} {name} {message}",
-            "style": "{",
+        "json": {
+            "()": "structlog.stdlib.ProcessorFormatter",
+            "processor": structlog.processors.JSONRenderer(),
         },
     },
     "handlers": {
-        "console": {
-            "level": "INFO",
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-            "stream": "ext://sys.stdout",
-        },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": env.str("LOG_LEVEL", default="INFO"),
+        "console": {"class": "logging.StreamHandler", "formatter": "json"},
     },
     "loggers": {
-        "django": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "django.request": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "django.server": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "django.db.backends": {
-            "handlers": ["console"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "django.security": {
-            "handlers": ["console"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "celery": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
+        "django": {"handlers": ["console"], "level": "INFO"},
+        "django_structlog": {"handlers": ["console"], "level": "INFO"},
+        "obc_management": {"handlers": ["console"], "level": "INFO"},
     },
 }
 

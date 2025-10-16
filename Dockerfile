@@ -140,9 +140,13 @@ echo "============================================"
 echo "OBCMS is ready! Starting Gunicorn..."
 echo "Gunicorn location: $(which gunicorn)"
 echo "Working directory: $(pwd)"
+echo "PORT environment variable: ${PORT:-8080}"
+echo "Gunicorn worker class: ${GUNICORN_WORKER_CLASS:-gthread}"
+echo "Gunicorn workers: ${GUNICORN_WORKERS:-auto}"
 echo "============================================"
 
 # Start Gunicorn with exec to replace the shell process
+# Use PORT environment variable for Sevalla compatibility
 exec gunicorn --chdir /app/src --config /app/gunicorn.conf.py obc_management.wsgi:application
 EOT
 
@@ -167,14 +171,14 @@ RUN chmod +x /app/healthcheck.sh
 # Switch to non-root user
 USER app
 
-# Expose port
+# Expose port 8080 for Sevalla platform
 EXPOSE 8080
 
 # Enhanced health check for Sevalla
 HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
     CMD /app/healthcheck.sh || exit 1
 
-# Use startup script as entrypoint
+# Use startup script as entrypoint for Sevalla compatibility
 ENTRYPOINT ["/app/startup.sh"]
 
 # Cleaned local docker build 
