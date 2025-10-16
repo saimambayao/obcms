@@ -1,5 +1,6 @@
 from django.urls import path
 
+from common.views import mana as mana_views
 from . import ai_views, facilitator_views, participant_views, views
 
 app_name = "mana"
@@ -185,66 +186,66 @@ urlpatterns = [
     # ============================================================================
     # Phase 0.3: MANA Module URLs (migrated from common/urls.py)
     # ============================================================================
-    path("", views.mana_home, name="mana_home"),
-    path("stats-cards/", views.mana_stats_cards, name="mana_stats_cards"),
-    path("regional/", views.mana_regional_overview, name="mana_regional_overview"),
+    path("", mana_views.mana_home, name="mana_home"),
+    path("stats-cards/", mana_views.mana_stats_cards, name="mana_stats_cards"),
+    path("regional/", mana_views.mana_regional_overview, name="mana_regional_overview"),
     path(
         "provincial/",
-        views.mana_provincial_overview,
+        mana_views.mana_provincial_overview,
         name="mana_provincial_overview",
     ),
     path(
         "provincial/<int:province_id>/",
-        views.mana_provincial_card_detail,
+        mana_views.mana_provincial_card_detail,
         name="mana_provincial_card_detail",
     ),
     path(
         "provincial/<int:province_id>/edit/",
-        views.mana_province_edit,
+        mana_views.mana_province_edit,
         name="mana_province_edit",
     ),
     path(
         "provincial/<int:province_id>/delete/",
-        views.mana_province_delete,
+        mana_views.mana_province_delete,
         name="mana_province_delete",
     ),
-    path("desk-review/", views.mana_desk_review, name="mana_desk_review"),
-    path("survey/", views.mana_survey_module, name="mana_survey_module"),
-    path("kii/", views.mana_key_informant_interviews, name="mana_kii"),
-    path("playbook/", views.mana_playbook, name="mana_playbook"),
+    path("desk-review/", mana_views.mana_desk_review, name="mana_desk_review"),
+    path("survey/", mana_views.mana_survey_module, name="mana_survey_module"),
+    path("kii/", mana_views.mana_key_informant_interviews, name="mana_kii"),
+    path("playbook/", mana_views.mana_playbook, name="mana_playbook"),
     path(
         "activity-planner/",
-        views.mana_activity_planner,
+        mana_views.mana_activity_planner,
         name="mana_activity_planner",
     ),
-    path("activity-log/", views.mana_activity_log, name="mana_activity_log"),
+    path("activity-log/", mana_views.mana_activity_log, name="mana_activity_log"),
     path(
         "activity-processing/",
-        views.mana_activity_processing,
+        mana_views.mana_activity_processing,
         name="mana_activity_processing",
     ),
-    path("new-assessment/", views.mana_new_assessment, name="mana_new_assessment"),
+    path("new-assessment/", mana_views.mana_new_assessment, name="mana_new_assessment"),
     path(
         "manage-assessments/",
-        views.mana_manage_assessments,
+        mana_views.mana_manage_assessments,
         name="mana_manage_assessments",
     ),
     path(
         "manage-assessments/<uuid:assessment_id>/",
-        views.mana_assessment_detail,
+        mana_views.mana_assessment_detail,
         name="mana_assessment_detail",
     ),
     path(
         "manage-assessments/<uuid:assessment_id>/edit/",
-        views.mana_assessment_edit,
+        mana_views.mana_assessment_edit,
         name="mana_assessment_edit",
     ),
     path(
         "manage-assessments/<uuid:assessment_id>/delete/",
-        views.mana_assessment_delete,
+        mana_views.mana_assessment_delete,
         name="mana_assessment_delete",
     ),
     path(
-        "geographic-data/", views.mana_geographic_data, name="mana_geographic_data"
+        "geographic-data/", mana_views.mana_geographic_data, name="mana_geographic_data"
     ),
 ]
