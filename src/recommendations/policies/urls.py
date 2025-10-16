@@ -12,7 +12,7 @@ Phase 0.2 URL Refactoring:
 """
 
 from django.urls import path
-from common.views import recommendations as views
+from recommendations import views
 
 app_name = "policies"
 
@@ -20,17 +20,19 @@ urlpatterns = [
     # Recommendations Module URLs (migrated from common:recommendations_*)
     # Using simplified names in policies namespace (e.g., 'home' instead of 'recommendations_home')
     path("", views.recommendations_home, name="home"),
-    path("stats-cards/", views.recommendations_stats_cards, name="stats_cards"),
     path("new/", views.recommendations_new, name="new"),
-    path("create/", views.recommendations_create, name="create"),
-    path("autosave/", views.recommendations_autosave, name="autosave"),
     path("manage/", views.recommendations_manage, name="manage"),
-    path("programs/", views.recommendations_programs, name="programs"),
-    path("services/", views.recommendations_services, name="services"),
-    path("<uuid:pk>/view/", views.recommendations_view, name="view"),
-    path("<uuid:pk>/edit/", views.recommendations_edit, name="edit"),
-    path("<uuid:pk>/delete/", views.recommendations_delete, name="delete"),
     path("area/<str:area_slug>/", views.recommendations_by_area, name="by_area"),
+
+    # TODO: Implement these views and uncomment corresponding URL patterns
+    # path("stats-cards/", views.recommendations_stats_cards, name="stats_cards"),
+    # path("create/", views.recommendations_create, name="create"),
+    # path("autosave/", views.recommendations_autosave, name="autosave"),
+    # path("programs/", views.recommendations_programs, name="programs"),
+    # path("services/", views.recommendations_services, name="services"),
+    # path("<uuid:pk>/view/", views.recommendations_view, name="view"),
+    # path("<uuid:pk>/edit/", views.recommendations_edit, name="edit"),
+    # path("<uuid:pk>/delete/", views.recommendations_delete, name="delete"),
 
     # AI Intelligence Endpoints - TODO: Implement these views
     # path(

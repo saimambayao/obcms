@@ -1960,3 +1960,166 @@ def moa_calendar_feed(request, organization_id):
         events.append(event)
 
     return JsonResponse(events, safe=False)
+
+
+# ============================================================================
+# EXTRACTED COORDINATION VIEWS FROM common/views.py
+# ============================================================================
+
+@login_required
+def coordination_home(request):
+    """OBC Coordination module home page."""
+
+    context = {
+        'page_title': 'Coordination Hub',
+        'page_heading': 'Coordination Hub',
+        'stats': {
+            'total_organizations': Organization.objects.count(),
+            'active_partnerships': Partnership.objects.filter(status='active').count(),
+            'upcoming_events': WorkItem.objects.filter(
+                work_type='activity',
+                start_date__gte=timezone.now().date()
+            ).count()[:5],
+            'recent_engagements': StakeholderEngagement.objects.filter(
+                created_at__gte=timezone.now() - timedelta(days=30)
+            ).count(),
+        }
+    }
+    return render(request, 'coordination/home.html', context)
+
+
+@login_required
+def coordination_organizations(request):
+    """Organizations directory view."""
+
+    organizations = Organization.objects.all().order_by('name')
+
+    # Filter by organization type
+    org_type = request.GET.get('type')
+    if org_type:
+        organizations = organizations.filter(organization_type=org_type)
+
+    # Search functionality
+    search = request.GET.get('search')
+    if search:
+        organizations = organizations.filter(
+            Q(name__icontains=search) |
+            Q(acronym__icontains=search) |
+            Q(description__icontains=search)
+        )
+
+    paginator = Paginator(organizations, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_title': 'Organizations Directory',
+        'page_heading': 'Organizations Directory',
+        'organizations': page_obj,
+        'org_types': Organization.ORGANIZATION_TYPES,
+        'current_filters': {
+            'type': org_type,
+            'search': search,
+        }
+    }
+    return render(request, 'coordination/organizations.html', context)
+
+
+@login_required
+def coordination_partnerships(request):
+    """Partnerships management view."""
+
+    partnerships = Partnership.objects.select_related(
+        'lead_organization',
+        'created_by'
+    ).prefetch_related('organizations').order_by('-created_at')
+
+    # Filter by status
+    status = request.GET.get('status')
+    if status:
+        partnerships = partnerships.filter(status=status)
+
+    # Filter by partnership type
+    partnership_type = request.GET.get('type')
+    if partnership_type:
+        partnerships = partnerships.filter(partnership_type=partnership_type)
+
+    paginator = Paginator(partnerships, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_title': 'Partnerships Management',
+        'page_heading': 'Partnerships Management',
+        'partnerships': page_obj,
+        'status_choices': Partnership.STATUS_CHOICES,
+        'type_choices': Partnership.PARTNERSHIP_TYPES,
+        'current_filters': {
+            'status': status,
+            'type': partnership_type,
+        }
+    }
+    return render(request, 'coordination/partnerships.html', context)
+
+
+@login_required
+def coordination_events(request):
+    """Coordination events and activities calendar view."""
+
+    # Get activities (work items with work_type='activity')
+    activities = WorkItem.objects.filter(
+        work_type='activity'
+    ).select_related('created_by').prefetch_related('assignees', 'teams')
+
+    # Filter by date range
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    if start_date:
+        activities = activities.filter(start_date__gte=start_date)
+    if end_date:
+        activities = activities.filter(start_date__lte=end_date)
+
+    # Filter by status
+    status = request.GET.get('status')
+    if status:
+        activities = activities.filter(status=status)
+
+    activities = activities.order_by('-start_date')[:50]
+
+    context = {
+        'page_title': 'Coordination Activities',
+        'page_heading': 'Coordination Activities',
+        'activities': activities,
+        'status_choices': WorkItem.STATUS_CHOICES,
+        'current_filters': {
+            'start_date': start_date,
+            'end_date': end_date,
+            'status': status,
+        }
+    }
+    return render(request, 'coordination/events.html', context)
+
+
+@login_required
+def coordination_view_all(request):
+    """Comprehensive view of all coordination data."""
+
+    context = {
+        'page_title': 'Coordination Overview',
+        'page_heading': 'Coordination Overview',
+        'organizations_count': Organization.objects.count(),
+        'partnerships_count': Partnership.objects.count(),
+        'active_partnerships': Partnership.objects.filter(status='active').count(),
+        'activities_count': WorkItem.objects.filter(work_type='activity').count(),
+        'upcoming_activities': WorkItem.objects.filter(
+            work_type='activity',
+            start_date__gte=timezone.now().date()
+        ).count()[:10],
+        'recent_partnerships': Partnership.objects.select_related(
+            'lead_organization', 'created_by'
+        ).order_by('-created_at')[:5],
+        'recent_activities': WorkItem.objects.filter(
+            work_type='activity'
+        ).select_related('created_by').order_by('-created_at')[:10],
+    }
+    return render(request, 'coordination/view_all.html', context)
