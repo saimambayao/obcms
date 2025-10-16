@@ -8,10 +8,12 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.db.models import Count, Q, Sum, Avg
 
 from common.decorators.rbac import require_feature_access
 from common.utils.moa_permissions import moa_no_access
 from communities.models import OBCCommunity
+from common.models import Region
 
 from .models import (
     Assessment,
@@ -886,3 +888,173 @@ def needs_export(request):
 
     wb.save(response)
     return response
+
+
+# ============================================================================
+# EXTRACTED VIEWS FROM common/views.py - MANA MODULE
+# ============================================================================
+
+@login_required
+def mana_home(request):
+    """MANA module home page."""
+    from .models import Assessment, Need, BaselineStudy
+    from django.db.models import Count, Q
+
+    # Get MANA statistics
+    assessments = Assessment.objects.select_related("community", "category")
+    needs = Need.objects.select_related("category", "assessment")
+    baseline_studies = BaselineStudy.objects.select_related("community")
+
+    # Calculate assessment metrics
+    total_assessments = assessments.count()
+    completed_assessments = assessments.filter(status="completed").count()
+    in_progress_assessments = assessments.filter(
+        status__in=["data_collection", "analysis"]
+    ).count()
+    planned_assessments = assessments.filter(
+        status__in=["planning", "preparation"]
+    ).count()
+
+    # Calculate assessments by area/category (based on category name containing keywords)
+    education_assessments = assessments.filter(
+        Q(category__name__icontains="education")
+        | Q(category__category_type__icontains="education")
+    ).count()
+    economic_assessments = assessments.filter(
+        Q(category__name__icontains="economic")
+        | Q(category__category_type__icontains="economic")
+    ).count()
+    social_assessments = assessments.filter(
+        Q(category__name__icontains="social")
+        | Q(category__category_type__icontains="social")
+    ).count()
+    cultural_assessments = assessments.filter(
+        Q(category__name__icontains="cultural")
+        | Q(category__category_type__icontains="cultural")
+    ).count()
+    infrastructure_assessments = assessments.filter(
+        Q(category__name__icontains="infrastructure")
+        | Q(category__category_type__icontains="infrastructure")
+    ).count()
+
+    stats = {
+        "mana": {
+            "total_assessments": total_assessments,
+            "completed": completed_assessments,
+            "in_progress": in_progress_assessments,
+            "planned": planned_assessments,
+            "by_area": {
+                "education": education_assessments,
+                "economic": economic_assessments,
+                "social": social_assessments,
+                "cultural": cultural_assessments,
+                "infrastructure": infrastructure_assessments,
+            },
+        },
+        "assessments": {
+            "total": total_assessments,
+            "completed": completed_assessments,
+            "ongoing": in_progress_assessments,
+            "by_status": assessments.values("status").annotate(count=Count("id")),
+            "recent": assessments.order_by("-created_at")[:10],
+        },
+        "needs": {
+            "total": needs.count(),
+            "critical": needs.filter(urgency_level="immediate").count(),
+            "by_category": needs.values("category__name").annotate(count=Count("id"))[
+                :10
+            ],
+            "recent": needs.order_by("-created_at")[:10],
+        },
+        "baseline_studies": {
+            "total": baseline_studies.count(),
+            "completed": baseline_studies.filter(status="completed").count(),
+            "ongoing": baseline_studies.filter(
+                status__in=["data_collection", "analysis"]
+            ).count(),
+        },
+    }
+
+    context = {
+        "stats": stats,
+    }
+    return render(request, "mana/mana_home.html", context)
+
+
+@login_required
+def mana_new_assessment(request):
+    """New MANA assessment page."""
+    from .models import Assessment, NeedsCategory
+
+    # Get recent assessments for reference
+    recent_assessments = Assessment.objects.order_by("-created_at")[:5]
+    communities = OBCCommunity.objects.filter(is_active=True).order_by("barangay__name")
+    categories = NeedsCategory.objects.all().order_by("name")
+
+    context = {
+        "recent_assessments": recent_assessments,
+        "communities": communities,
+        "categories": categories,
+    }
+    return render(request, "mana/mana_new_assessment.html", context)
+
+
+@login_required
+def mana_manage_assessments(request):
+    """Manage MANA assessments page."""
+    from .models import Assessment, Need
+    from django.db.models import Count
+
+    # Get all assessments with related data
+    assessments = (
+        Assessment.objects.select_related("community", "category", "lead_assessor")
+        .annotate(needs_count=Count("identified_needs"))
+        .order_by("-created_at")
+    )
+
+    # Filter functionality
+    status_filter = request.GET.get("status")
+    community_filter = request.GET.get("community")
+
+    if status_filter:
+        assessments = assessments.filter(status=status_filter)
+
+    if community_filter:
+        assessments = assessments.filter(community__id=community_filter)
+
+    # Get filter options
+    communities = OBCCommunity.objects.order_by("barangay__name")
+    status_choices = (
+        Assessment.STATUS_CHOICES if hasattr(Assessment, "STATUS_CHOICES") else []
+    )
+
+    # Statistics
+    stats = {
+        "total_assessments": assessments.count(),
+        "completed": assessments.filter(status="completed").count(),
+        "in_progress": assessments.filter(
+            status__in=["data_collection", "analysis"]
+        ).count(),
+        "pending": assessments.filter(status="pending").count(),
+    }
+
+    context = {
+        "assessments": assessments,
+        "communities": communities,
+        "status_choices": status_choices,
+        "current_status": status_filter,
+        "current_community": community_filter,
+        "stats": stats,
+    }
+    return render(request, "mana/mana_manage_assessments.html", context)
+
+
+@login_required
+def mana_geographic_data(request):
+    """MANA geographic data view."""
+    # This is a placeholder for the actual geographic data view
+    # which would be implemented in the mana module
+    context = {
+        "message": "MANA Geographic Data - to be implemented",
+    }
+    return render(request, "mana/mana_geographic_data.html", context)

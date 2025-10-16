@@ -114,7 +114,7 @@ def get_bmms_urlpatterns():
 
             # Organization-specific dashboard (default to common dashboard)
             path("", lambda request: redirect("common:dashboard"), name="org_dashboard"),
-        ], namespace='moa')),
+        ])),
 
         # OCM Aggregation Layer (separate from organization URLs)
         path("ocm/", include(("ocm.urls", "ocm"), namespace="ocm")),
