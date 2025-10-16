@@ -592,6 +592,36 @@ LOGGING["loggers"]["api"] = {
     "propagate": False,
 }
 
+# ========== ORGANIZATION CONTEXT LOGGING ==========
+# Enhanced logging for BMMS multi-tenant organization context
+
+# Organization audit logger
+LOGGING["loggers"]["organizations.audit"] = {
+    "handlers": ["console", "file"],
+    "level": "INFO",
+    "propagate": False,
+}
+
+# Organization security logger
+LOGGING["loggers"]["organizations.security"] = {
+    "handlers": ["rbac_security", "console"],
+    "level": "WARNING",
+    "propagate": False,
+}
+
+# Add rotating file handler for organization audit logs
+LOGGING["handlers"]["organizations_audit"] = {
+    "level": "INFO",
+    "class": "logging.handlers.RotatingFileHandler",
+    "filename": BASE_DIR / "logs" / "organizations_audit.log",
+    "maxBytes": 52428800,  # 50MB
+    "backupCount": 20,  # Keep 20 backup files (~1GB total)
+    "formatter": "security_audit",
+}
+
+# Update organization audit logger to use dedicated handler
+LOGGING["loggers"]["organizations.audit"]["handlers"] = ["organizations_audit", "console"]
+
 # ========== AI CONFIGURATION ==========
 # Google Gemini API Key for AI features
 GOOGLE_API_KEY = env.str("GOOGLE_API_KEY", default="")

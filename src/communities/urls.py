@@ -1,7 +1,6 @@
 from django.urls import path
 
 from . import views, data_utils
-from common.views import communities as communities_views
 
 app_name = "communities"
 
@@ -10,8 +9,8 @@ urlpatterns = [
     # PHASE 0.4: Communities URLs migrated from common/urls.py
     # ============================================================================
     # Core Communities URLs
-    path("", communities_views.communities_home, name="communities_home"),
-    path("add/", communities_views.communities_add, name="communities_add"),
+    path("", views.communities_home, name="communities_home"),
+    path("add/", views.communities_add, name="communities_add"),
     path(
         "add-municipality/",
         communities_views.communities_add_municipality,
@@ -44,7 +43,7 @@ urlpatterns = [
     ),
 
     # Management URLs
-    path("manage/", communities_views.communities_manage, name="communities_manage"),
+    path("manage/", views.communities_manage, name="communities_manage"),
     path(
         "managemunicipal/",
         communities_views.communities_manage_municipal,
@@ -52,12 +51,12 @@ urlpatterns = [
     ),
     path(
         "managebarangayobc/",
-        communities_views.communities_manage,
+        views.communities_manage_barangay_obc,
         name="communities_manage_barangay_obc",
     ),
     path(
         "managemunicipalobc/",
-        communities_views.communities_manage_municipal,
+        views.communities_manage_municipal_obc,
         name="communities_manage_municipal_obc",
     ),
     path(
