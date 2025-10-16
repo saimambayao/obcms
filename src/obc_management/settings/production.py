@@ -119,6 +119,30 @@ CORS_ALLOW_ALL_ORIGINS = False
 # ADMIN: Restrict admin access by IP if needed
 # ALLOWED_ADMIN_IPS = env.list('ALLOWED_ADMIN_IPS', default=[])
 
+# DATABASE: Configure for Sevalla PostgreSQL from individual environment variables
+# Sevalla provides DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT instead of DATABASE_URL
+if all([
+    os.environ.get("DB_HOST"),
+    os.environ.get("DB_USER"),
+    os.environ.get("DB_PASSWORD"),
+    os.environ.get("DB_NAME")
+]):
+    # Construct database URL from Sevalla environment variables
+    db_port = os.environ.get("DB_PORT", "5432")
+    DATABASES["default"] = {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ["DB_NAME"],
+        "USER": os.environ["DB_USER"],
+        "PASSWORD": os.environ["DB_PASSWORD"],
+        "HOST": os.environ["DB_HOST"],
+        "PORT": db_port,
+        "CONN_MAX_AGE": 600,  # 10 minutes connection pooling
+        "CONN_HEALTH_CHECKS": True,  # Django 4.1+ connection health checks
+        "OPTIONS": {
+            "connect_timeout": 60,  # Connection timeout in seconds
+        },
+    }
+
 # LOGGING: Structured JSON logging for production (Sevalla container debugging)
 LOGGING = {
     "version": 1,
@@ -139,9 +163,7 @@ LOGGING = {
     },
 }
 
-# PERFORMANCE: Database connection pooling
-DATABASES["default"]["CONN_MAX_AGE"] = 600  # 10 minutes
-DATABASES["default"]["CONN_HEALTH_CHECKS"] = True  # Django 4.1+
+# PERFORMANCE: Database connection pooling is now configured above
 
 # If using PgBouncer transaction pooling, uncomment:
 # DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
