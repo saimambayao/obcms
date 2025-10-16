@@ -12,7 +12,7 @@ Phase 0.2 URL Refactoring:
 """
 
 from django.urls import path
-from recommendations import views
+from common.views import recommendations as views
 
 app_name = "policies"
 
@@ -28,8 +28,8 @@ urlpatterns = [
     # path("stats-cards/", views.recommendations_stats_cards, name="stats_cards"),
     # path("create/", views.recommendations_create, name="create"),
     # path("autosave/", views.recommendations_autosave, name="autosave"),
-    # path("programs/", views.recommendations_programs, name="programs"),
-    # path("services/", views.recommendations_services, name="services"),
+    path("programs/", views.recommendations_programs, name="programs"),
+    path("services/", views.recommendations_services, name="services"),
     # path("<uuid:pk>/view/", views.recommendations_view, name="view"),
     # path("<uuid:pk>/edit/", views.recommendations_edit, name="edit"),
     # path("<uuid:pk>/delete/", views.recommendations_delete, name="delete"),
