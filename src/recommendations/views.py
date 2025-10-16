@@ -314,3 +314,62 @@ def recommendations_by_area(request, area_slug):
         "current_filter": status_filter,
     }
     return render(request, "recommendations/recommendations_by_area.html", context)
+
+
+@login_required
+def recommendations_programs(request):
+    """Program recommendations page."""
+    from policy_tracking.models import PolicyRecommendation, PolicyEvidence
+    from django.db.models import Count
+
+    # Get program-related recommendations
+    program_categories = [
+        "education", "economic_development", "social_development", "cultural_development"
+    ]
+    recommendations = (
+        PolicyRecommendation.objects.filter(category__in=program_categories)
+        .select_related("proposed_by", "lead_author")
+        .annotate(evidence_count=Count("evidence"))
+        .order_by("-created_at")
+    )
+
+    # Define status mappings
+    submitted_statuses = [
+        "submitted", "under_consideration", "approved", "in_implementation", "implemented"
+    ]
+    proposed_statuses = ["draft", "under_review", "needs_revision"]
+
+    # Calculate metrics
+    total_programs = recommendations.count()
+    implemented_programs = recommendations.filter(status="implemented").count()
+    submitted_programs = recommendations.filter(status__in=submitted_statuses).count()
+    proposed_programs = recommendations.filter(status__in=proposed_statuses).count()
+
+    # Get filter parameter
+    status_filter = request.GET.get("status")
+    if status_filter:
+        if status_filter == "proposed":
+            recommendations = recommendations.filter(status__in=proposed_statuses)
+        elif status_filter == "submitted":
+            recommendations = recommendations.filter(status__in=submitted_statuses)
+        elif status_filter == "implemented":
+            recommendations = recommendations.filter(status="implemented")
+
+    # Recent recommendations
+    recent_recommendations = recommendations.order_by("-created_at")[:10]
+
+    stats = {
+        "total": total_programs,
+        "implemented": implemented_programs,
+        "submitted": submitted_programs,
+        "proposed": proposed_programs,
+        "current_filter": status_filter,
+    }
+
+    context = {
+        "stats": stats,
+        "recommendations": recent_recommendations,
+        "current_filter": status_filter,
+        "areas_data": RECOMMENDATIONS_AREAS,
+    }
+    return render(request, "recommendations/recommendations_programs.html", context)

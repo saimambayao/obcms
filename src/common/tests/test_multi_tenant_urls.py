@@ -209,7 +209,7 @@ class MultiTenantURLTestCase(TestCase):
 
     def test_url_patterns_integration(self):
         """Test integration with Django URL patterns."""
-        from obc_management.urls.multi_tenant_urls import (
+        from obc_management.url_utilities.multi_tenant_urls import (
             get_obcms_urlpatterns,
             get_bmms_urlpatterns,
             get_multi_tenant_urlpatterns,
