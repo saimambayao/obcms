@@ -168,6 +168,42 @@ LOGGING = {
 # If using PgBouncer transaction pooling, uncomment:
 # DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
+# STORAGE: Handle S3 configuration for static files (Sevalla Object Storage)
+# Only override staticfiles storage if S3 is properly configured
+if (
+    env.bool("USE_S3", default=False) and
+    env.str("AWS_ACCESS_KEY_ID", default="") and
+    env.str("AWS_SECRET_ACCESS_KEY", default="") and
+    env.str("AWS_STORAGE_BUCKET_NAME", default="") and
+    env.str("AWS_S3_ENDPOINT_URL", default="")
+):
+    # S3 is configured - use S3 storage for static files
+    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+    # S3 Configuration
+    AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = env.str("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME")
+    AWS_S3_ENDPOINT_URL = env.str("AWS_S3_ENDPOINT_URL")
+    AWS_S3_CUSTOM_DOMAIN = env.str("AWS_S3_CUSTOM_DOMAIN", default="")
+    AWS_S3_REGION_NAME = env.str("AWS_S3_REGION_NAME", default="auto")
+    AWS_S3_FILE_OVERWRITE = env.bool("AWS_S3_FILE_OVERWRITE", default=False)
+    AWS_DEFAULT_ACL = env.str("AWS_DEFAULT_ACL", default="private")
+
+    # Override STORAGES configuration for S3
+    STORAGES["staticfiles"] = {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    }
+    STORAGES["default"] = {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    }
+else:
+    # S3 is not configured - use local file storage
+    # This prevents collectstatic errors when S3 credentials are missing
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+
 # EMAIL: Warn if production email backend is not configured
 # Allow console backend for staging/testing environments
 if EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend":
