@@ -186,7 +186,6 @@ urlpatterns = [
     # ============================================================================
     # Phase 0.3: MANA Module URLs (migrated from common/urls.py)
     # ============================================================================
-<<<<<<< Updated upstream
     path("", mana_views.mana_home, name="mana_home"),
     path("stats-cards/", mana_views.mana_stats_cards, name="mana_stats_cards"),
     path("regional/", mana_views.mana_regional_overview, name="mana_regional_overview"),
@@ -249,12 +248,4 @@ urlpatterns = [
     path(
         "geographic-data/", mana_views.mana_geographic_data, name="mana_geographic_data"
     ),
-=======
-    # NOTE: These URLs are commented out due to missing view functions
-    # TODO: Implement missing views or migrate required functionality
-    path("", views.mana_home, name="mana_home"),
-    # path("new-assessment/", views.mana_new_assessment, name="mana_new_assessment"),
-    # path("manage-assessments/", views.mana_manage_assessments, name="mana_manage_assessments"),
-    # path("geographic-data/", views.mana_geographic_data, name="mana_geographic_data")
->>>>>>> Stashed changes
 ]
