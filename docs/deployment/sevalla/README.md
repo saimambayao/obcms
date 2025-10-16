@@ -33,6 +33,8 @@ docs/deployment/sevalla/
 ├── SEVALLA_TROUBLESHOOTING.md          # Troubleshooting and maintenance
 ├── .env.production.template             # Environment variables template (copy to project root)
 ├── docker-compose.sevalla.yml           # Local testing configuration
+├── issues/                              # Known issues and resolutions
+│   └── CRASHED_STATUS_WITH_HEALTHY_CONTAINER.md  # ⚠️ Current investigation
 └── scripts/                             # Deployment and monitoring scripts
     ├── sevalla-deploy.sh               # ⚡ Deployment automation script
     ├── sevalla-health-check.sh         # 🏥 Health monitoring script
@@ -288,6 +290,14 @@ Apply Sevalla-specific configuration:
 
 ## 🚨 Support and Troubleshooting
 
+### Known Issues
+
+⚠️ **[ACTIVE ISSUE: Container Marked "Crashed" Despite Healthy State](./issues/CRASHED_STATUS_WITH_HEALTHY_CONTAINER.md)**
+- **Status:** Under Investigation
+- **Symptoms:** Application runs successfully but Sevalla shows "Crashed" status and returns 503 errors
+- **Current Hypothesis:** Kubernetes readiness probe misconfiguration
+- **See full documentation** for timeline, evidence, and recommended actions
+
 ### Quick Issues Resolution
 
 | Issue | Solution |
@@ -297,6 +307,7 @@ Apply Sevalla-specific configuration:
 | **Static files not loading** | Check AWS credentials and bucket permissions |
 | **Performance issues** | Check resource usage, optimize queries |
 | **Security errors** | Verify SSL configuration and security headers |
+| **Crashed status** | See [known issue documentation](./issues/CRASHED_STATUS_WITH_HEALTHY_CONTAINER.md) |
 
 ### Health Checks
 
@@ -343,6 +354,14 @@ curl https://your-domain.sevalla.app/health/ | jq '.status'
    - Common issues and solutions
    - Maintenance procedures
    - Emergency response
+
+### Known Issues Documentation
+
+1. **[Container Marked Crashed Despite Healthy State](./issues/CRASHED_STATUS_WITH_HEALTHY_CONTAINER.md)** ⚠️
+   - Comprehensive investigation of "Crashed" status paradox
+   - Timeline of troubleshooting steps
+   - Root cause analysis and recommended fixes
+   - Status: Under active investigation
 
 ### Reference Documentation
 

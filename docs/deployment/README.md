@@ -77,6 +77,7 @@
 | **[Sevalla Settings Config](./sevalla/SEVALLA_SETTINGS_CONFIG.md)** | Django settings configuration | ✅ **NEW** |
 | **[Sevalla Cost Analysis](./sevalla/SEVALLA_COST_ANALYSIS.md)** | Cost breakdown and optimization | ✅ **NEW** |
 | **[Sevalla Troubleshooting](./sevalla/SEVALLA_TROUBLESHOOTING.md)** | Support and maintenance guide | ✅ **NEW** |
+| **[Known Issue: Crashed Status](./sevalla/issues/CRASHED_STATUS_WITH_HEALTHY_CONTAINER.md)** | Active investigation - "Crashed" despite healthy container | ⚠️ **INVESTIGATING** |
 
 ### 🐳 Docker Deployment
 

@@ -542,6 +542,17 @@ This comprehensive guide consolidates all UI standards covering:
 
 ## System Architecture
 
+### 📋 [Complete Architecture Documentation](architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md) ⭐ **NEW - Comprehensive Technical Guide**
+
+**Full system architecture including:**
+- Complete technology stack analysis
+- Module structure following client interface navigation
+- Database and security architecture details
+- Performance and deployment considerations
+- BMMS transition roadmap
+
+---
+
 The OBC Management System is built using modern web technologies:
 
 - **Backend**: Django 4.2+ (Python web framework)
