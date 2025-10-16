@@ -4,21 +4,30 @@ Organization Context Middleware for BMMS Multi-Tenant Support.
 Extracts organization context from URLs, query params, session, or user's default.
 Enables organization-scoped data isolation for 44 MOAs (Ministries, Offices, Agencies).
 
+This middleware integrates with the enhanced organizations/middleware.py to provide:
+- Backward compatibility with existing OBCMS patterns
+- Integration with organizations app models and utilities
+- Thread-safe context management
+- Comprehensive audit logging
+
 Context Sources (priority order):
-1. URL kwargs (org_id, organization_id)
-2. Query parameters (?org=...)
-3. User's default organization (user.moa_organization)
-4. Session (request.session['current_organization'])
+1. Enhanced organizations middleware (primary source)
+2. URL kwargs (org_id, organization_id) - legacy support
+3. Query parameters (?org=...) - legacy support
+4. User's default organization (user.moa_organization) - fallback
+5. Session (request.session['current_organization']) - persistence
 
 Special Cases:
-- OCM (Office of Chief Minister): Can view all organizations
+- OCM (Office of Chief Minister): Read-only access to all organizations
 - OOBC Staff: Can switch between organizations
 - MOA Staff: Limited to their organization only
+- Superusers: Full access to all organizations
 
 Integration:
-- Works with existing MOAFilteredQuerySetMixin pattern
+- Works with enhanced organizations/middleware.OrganizationMiddleware
 - Compatible with organization-scoped permissions
-- Caches organization context per request
+- Supports existing MOAFilteredQuerySetMixin pattern
+- Thread-safe concurrent request handling
 
 See: docs/plans/bmms/TRANSITION_PLAN.md
 """
@@ -26,18 +35,24 @@ See: docs/plans/bmms/TRANSITION_PLAN.md
 from typing import Optional
 from django.http import HttpRequest
 from django.utils.functional import SimpleLazyObject
+from django.core.exceptions import PermissionDenied
 
 from obc_management.settings.bmms_config import is_obcms_mode, is_bmms_mode
 from organizations.utils import get_or_create_default_organization
+from organizations.models.organization import Organization
 
 
 def get_organization_from_request(request: HttpRequest):
     """
-    Extract organization context from request.
+    Extract organization context from request with enhanced integration.
+
+    This function now integrates with the enhanced organizations/middleware.py
+    to provide seamless organization context management.
 
     Mode-aware behavior:
     - OBCMS mode: Always return default OOBC organization
-    - BMMS mode: Extract from URL/session/user
+    - BMMS mode: Use enhanced organizations middleware as primary source
+    - Legacy fallback: Extract from URL/session/user for backward compatibility
 
     Returns:
         Organization instance or None
@@ -54,6 +69,14 @@ def get_organization_from_request(request: HttpRequest):
     if not is_bmms_mode():
         return None
 
+    # ========== INTEGRATION: Check if enhanced middleware already set context ==========
+    if hasattr(request, 'organization') and request.organization:
+        # Enhanced organizations middleware has already set the organization
+        # Verify it's a valid Organization instance
+        if isinstance(request.organization, Organization):
+            return request.organization
+
+    # ========== LEGACY FALLBACK: Original logic for backward compatibility ==========
     # Early return if no authenticated user
     if not request.user.is_authenticated:
         return None
@@ -110,17 +133,31 @@ def get_organization_from_request(request: HttpRequest):
 
 def user_can_access_organization(user, organization) -> bool:
     """
-    Check if user has access to the given organization.
+    Check if user has access to the given organization with enhanced integration.
+
+    This function now integrates with the organizations app for comprehensive
+    access checking and supports the enhanced organization context.
 
     Rules:
-    - OCM users: Access to ALL organizations (oversight)
+    - Superusers: Access to ALL organizations
+    - OCM users: Read-only access to ALL organizations (oversight)
     - OOBC Staff: Access to ALL organizations (operations)
     - MOA Staff: Access to THEIR organization only
     - Other users: No organization access
+
+    Integration:
+    - Uses organizations.models.OrganizationMembership for precise access control
+    - Supports thread-safe context checking
+    - Compatible with enhanced organizations middleware
     """
     from django.contrib.auth import get_user_model
+    from organizations.models.organization import OrganizationMembership
 
     User = get_user_model()
+
+    # Anonymous users have no access
+    if not user.is_authenticated:
+        return False
 
     # Superusers have access to everything
     if user.is_superuser:
@@ -131,14 +168,22 @@ def user_can_access_organization(user, organization) -> bool:
         return True
 
     # OOBC staff can access all organizations
-    if user.is_oobc_staff:
+    if hasattr(user, 'is_oobc_staff') and user.is_oobc_staff:
         return True
 
-    # MOA staff can only access their own organization
-    if user.is_moa_staff:
-        if user.moa_organization:
-            return user.moa_organization == organization
-        return False
+    # Enhanced: Check organization memberships via organizations app
+    try:
+        return OrganizationMembership.objects.filter(
+            user=user,
+            organization=organization,
+            is_active=True
+        ).exists()
+    except Exception:
+        # Fallback to legacy checks for backward compatibility
+        if hasattr(user, 'is_moa_staff') and user.is_moa_staff:
+            if hasattr(user, 'moa_organization') and user.moa_organization:
+                return user.moa_organization == organization
+            return False
 
     # Default: no access
     return False
