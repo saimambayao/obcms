@@ -8,6 +8,7 @@ from .security import (
     AdminIPWhitelistMiddleware,
     MetricsAuthenticationMiddleware,
 )
+from .kubernetes_health import KubernetesHealthCheckMiddleware
 
 __all__ = [
     'DeprecatedURLRedirectMiddleware',
@@ -18,4 +19,5 @@ __all__ = [
     'ContentSecurityPolicyMiddleware',
     'AdminIPWhitelistMiddleware',
     'MetricsAuthenticationMiddleware',
+    'KubernetesHealthCheckMiddleware',
 ]

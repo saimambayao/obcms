@@ -17,43 +17,13 @@ if not ALLOWED_HOSTS:
     raise ValueError("ALLOWED_HOSTS must be explicitly set in production")
 
 # Allow internal Kubernetes/Docker IPs for health checks
-# Kubernetes pod network typically uses 10.x.x.x or 172.x.x.x
-# This allows health check probes to succeed without compromising security
-# Can be customized via INTERNAL_IPS environment variable if needed
-import re
-
-INTERNAL_IPS = env.list("INTERNAL_IPS", default=['127.0.0.1', 'localhost'])
-
-# Custom ALLOWED_HOSTS validation that accepts internal Kubernetes IPs
-class AllowInternalIPsValidator:
-    """Allow requests from Kubernetes internal pod network for health checks."""
-
-    def __init__(self, allowed_hosts, internal_networks=None):
-        self.allowed_hosts = allowed_hosts
-        # Default Kubernetes pod networks (10.x.x.x, 172.16-31.x.x)
-        self.internal_networks = internal_networks or [
-            r'^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$',           # 10.0.0.0/8
-            r'^172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}$',  # 172.16.0.0/12
-            r'^192\.168\.\d{1,3}\.\d{1,3}$',              # 192.168.0.0/16
-        ]
-
-    def __contains__(self, host):
-        # Remove port from host if present
-        host_without_port = host.split(':')[0]
-
-        # Check against configured ALLOWED_HOSTS
-        if host in self.allowed_hosts or host_without_port in self.allowed_hosts:
-            return True
-
-        # Check if it's an internal IP (for health checks)
-        for pattern in self.internal_networks:
-            if re.match(pattern, host_without_port):
-                return True
-
-        return False
-
-# Wrap ALLOWED_HOSTS with validator that accepts internal IPs
-ALLOWED_HOSTS = AllowInternalIPsValidator(ALLOWED_HOSTS + INTERNAL_IPS)
+# Add common localhost and internal network addresses
+INTERNAL_IPS = env.list("INTERNAL_IPS", default=[
+    '127.0.0.1',
+    'localhost',
+    '.internal',  # Kubernetes internal domain suffix
+])
+ALLOWED_HOSTS = ALLOWED_HOSTS + INTERNAL_IPS
 
 # SECURITY: CSRF trusted origins (required for HTTPS behind proxy)
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
@@ -170,6 +140,7 @@ _base_middleware = [
 ]
 
 MIDDLEWARE = [
+    "common.middleware.KubernetesHealthCheckMiddleware",  # Allow K8s health checks (must be first)
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "common.middleware.ContentSecurityPolicyMiddleware",  # CSP headers (production)
