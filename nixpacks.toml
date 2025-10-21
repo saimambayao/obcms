@@ -1,0 +1,30 @@
+# Nixpacks Configuration for Sevalla Deployment
+# https://docs.sevalla.com/
+
+[phases.setup]
+# System packages required for building and running OBCMS
+nixPkgs = [
+    'python313',       # Python 3.13
+    'postgresql',      # PostgreSQL client libraries
+    'gcc',            # C compiler for Python packages
+    'libmagic',       # python-magic dependency
+]
+
+[phases.install]
+# Install Python dependencies
+cmds = [
+    'pip install --upgrade pip setuptools wheel',
+    'pip install -r requirements/base.txt',
+]
+
+[phases.build]
+# Collect static files during build
+# Note: Migrations run in Procfile release phase
+cmds = [
+    'cd src && python manage.py collectstatic --noinput',
+]
+
+[start]
+# Start command (Procfile takes precedence)
+# This is a fallback if Procfile is not found
+cmd = 'cd src && gunicorn obc_management.wsgi:application --bind 0.0.0.0:$PORT'

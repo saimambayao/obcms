@@ -129,3 +129,5 @@ backup_before_legacy_cleanup_*.json
 *_data_fixed.json
 *_backup.json
 users_*.json
+.sevallaignore
+.gitignore
