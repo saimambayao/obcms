@@ -27,6 +27,9 @@ def health_check(request):
 
     This is a lightweight check that doesn't test dependencies.
     """
+    # Log health check requests for debugging
+    logger.info(f"Health check requested from {request.META.get('REMOTE_ADDR', 'unknown')}")
+
     return JsonResponse(
         {
             "status": "healthy",
