@@ -45,10 +45,12 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 def get_template_registry():
-    """Return the global registry, re-registering templates if cleared."""
+    """Return the global registry, lazy-loading templates if needed."""
     registry = _get_template_registry_base()
     if not registry.get_all_templates():
+        # Lazy-load templates on first request (not at startup)
         _register_all_templates(registry=registry)
+        logger.info("Templates lazy-loaded on first access")
     return registry
 
 
@@ -197,7 +199,10 @@ def _register_all_templates(registry=None):
 
 
 # Auto-register templates when module is imported
-_register_all_templates()
+# Skip during app startup if SKIP_TEMPLATE_INIT is set (speeds up deployment)
+import os
+if os.getenv('SKIP_TEMPLATE_INIT') != '1':
+    _register_all_templates()
 
 
 __all__ = [
