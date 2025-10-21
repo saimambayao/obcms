@@ -11,11 +11,13 @@ from django.core.cache import cache
 from django.db import connection
 from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
 logger = logging.getLogger(__name__)
 
 
+@csrf_exempt
 @require_GET
 @never_cache
 def health_check(request):

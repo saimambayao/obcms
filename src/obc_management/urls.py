@@ -50,7 +50,10 @@ if not admin_url.endswith('/'):
 
 urlpatterns = [
     # Health check endpoints (no authentication required)
+    # Root path also serves as health check for platforms that default to /
+    path("", health_check, name="root_health"),
     path("health/", health_check, name="health"),
+    path("healthz/", health_check, name="healthz"),
     path("ready/", readiness_check, name="readiness"),
     # Prometheus metrics endpoint (for monitoring infrastructure)
     path("metrics/", include("django_prometheus.urls")),
