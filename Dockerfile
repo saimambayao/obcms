@@ -70,10 +70,12 @@ COPY --from=node-builder --chown=app:app /app/src/static/css/output.css /app/src
 
 # Health check for container orchestration (Kubernetes, Docker Swarm, etc.)
 # Waits 40 seconds for app startup, checks every 30 seconds, allows 3 failures before marking unhealthy
+# Uses PORT env var for Sevalla compatibility (defaults to 8000 for local Docker)
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=40s \
-    CMD curl -f http://localhost:8000/health/ || exit 1
+    CMD curl -f http://localhost:${PORT:-8000}/health/ || exit 1
 
 USER app
 
 # Use gunicorn with production configuration file
+# gunicorn.conf.py automatically reads PORT env var (Sevalla injects this)
 CMD ["gunicorn", "--chdir", "src", "--config", "/app/gunicorn.conf.py", "obc_management.wsgi:application"]
