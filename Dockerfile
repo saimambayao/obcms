@@ -76,6 +76,11 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=40s \
 
 USER app
 
+# Create staticfiles directory (collectstatic runs in Procfile release phase)
+# This prevents Django startup warnings about missing directory
+RUN mkdir -p /app/src/staticfiles
+
 # Use gunicorn with production configuration file
 # gunicorn.conf.py automatically reads PORT env var (Sevalla injects this)
+# Note: collectstatic is handled by Procfile release phase, not here
 CMD ["gunicorn", "--chdir", "src", "--config", "/app/gunicorn.conf.py", "obc_management.wsgi:application"]
