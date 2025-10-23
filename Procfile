@@ -1,11 +1,12 @@
 # Sevalla Procfile for OBCMS Deployment
 # Defines how to run web server, background workers, and release tasks
 
-# Release Phase: Runs ONCE before deployment to apply migrations and collect static files
+# Release Phase: Runs ONCE before deployment to apply migrations
 # This must run BEFORE web processes start to avoid:
 # - Migration lock contention between processes
 # - Readiness probe timeouts during app startup
-release: cd src && python manage.py migrate --noinput && python manage.py collectstatic --noinput
+# NOTE: collectstatic NOT needed - WhiteNoise serves static files directly from source
+release: cd src && python manage.py migrate --noinput
 
 # Web Process: Gunicorn WSGI server
 # IMPORTANT: Must bind to $PORT (auto-injected by Sevalla)
