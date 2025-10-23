@@ -18,11 +18,11 @@ cmds = [
 ]
 
 [phases.build]
-# Collect static files during build
-# Note: Migrations run in Procfile release phase
-cmds = [
-    'cd src && python manage.py collectstatic --noinput',
-]
+# No build-phase commands needed
+# - Static files: Served by WhiteNoise directly from src/static/
+# - Migrations: Run manually after deployment (see Procfile for details)
+# - Collectstatic: Not needed with WhiteNoise
+cmds = []
 
 [start]
 # Start command (Procfile takes precedence)
