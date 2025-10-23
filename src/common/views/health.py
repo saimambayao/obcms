@@ -6,6 +6,8 @@ application health and readiness.
 """
 
 import logging
+import signal
+from contextlib import contextmanager
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
@@ -16,6 +18,30 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def timeout(seconds):
+    """
+    Context manager for enforcing a timeout on code execution.
+
+    Raises TimeoutError if the code block takes longer than the specified time.
+    Only works on Unix systems with signal support.
+    """
+    def timeout_handler(signum, frame):
+        raise TimeoutError(f"Operation timed out after {seconds} seconds")
+
+    # Store the old signal handler
+    old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+    # Set the alarm
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        # Cancel the alarm
+        signal.alarm(0)
+        # Restore the old signal handler
+        signal.signal(signal.SIGALRM, old_handler)
 
 
 @csrf_exempt
@@ -50,52 +76,72 @@ def readiness_check(request):
 
     Used by load balancers to route traffic only to ready instances.
 
-    Returns 200 OK if the app is running. Complex dependency checks
-    (database, cache) are logged but don't block readiness, as they
-    may timeout during initial startup and cause deployment failures.
+    Returns 200 OK if the app can actually serve requests (database is accessible).
+    Returns 503 if the app cannot serve requests (database is unavailable).
+
+    This validates that the app can actually function, not just that the
+    HTTP server is listening. Database connectivity is essential for OBCMS
+    to serve requests.
 
     Returns:
-        200 if the app process is running
-        503 only in critical failure cases
+        200 if the app is ready and can serve requests
+        503 if the app cannot serve requests (database unavailable)
     """
-    # Always return 200 if this endpoint is reachable
-    # The app is running if it can respond to HTTP requests
-    # Detailed health checks should use dedicated monitoring
-    return JsonResponse(
-        {
-            "status": "ready",
-            "service": "obcms",
-            "timestamp": str(timezone.now()),
-        },
-        status=200,
-    )
+    # Check database connectivity with strict timeout
+    # This ensures the app can actually serve requests, not just listen
+    if check_database():
+        return JsonResponse(
+            {
+                "status": "ready",
+                "service": "obcms",
+                "timestamp": str(timezone.now()),
+            },
+            status=200,
+        )
+    else:
+        # Database is unavailable - app cannot serve requests
+        return JsonResponse(
+            {
+                "status": "unhealthy",
+                "service": "obcms",
+                "reason": "database_unavailable",
+                "timestamp": str(timezone.now()),
+            },
+            status=503,
+        )
 
 
 def check_database():
     """
-    Check database connectivity.
+    Check database connectivity with strict timeout.
 
     Returns:
-        True if database is accessible, False otherwise
+        True if database is accessible within timeout, False otherwise
+
+    Timeout is set to 2 seconds to ensure readiness probes don't hang.
+    If the database is slow to respond, we mark the app as not ready
+    rather than blocking the probe indefinitely.
     """
     try:
-        # Use a short timeout for the connection
-        # Django's connection has a timeout parameter in settings
-        connection.ensure_connection()
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
-            result = cursor.fetchone()
-            is_healthy = result[0] == 1
-            if is_healthy:
-                logger.debug("Database health check passed")
-            return is_healthy
+        # Use a 2-second timeout for database health check
+        # This ensures readiness probes complete quickly
+        with timeout(2):
+            connection.ensure_connection()
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                result = cursor.fetchone()
+                is_healthy = result[0] == 1
+                if is_healthy:
+                    logger.debug("Database health check passed")
+                return is_healthy
+    except TimeoutError:
+        logger.warning("Database health check timed out (2 second limit)")
+        return False
     except Exception as e:
         logger.warning(f"Database health check failed: {e}")
-        # Return False so we can identify database issues
-        # But in Kubernetes, liveness and readiness probes are separate
-        # Liveness = kill container if database is down
-        # Readiness = remove from load balancer if database is down
-        # For now, treat database failures as non-ready
+        # Return False to indicate the app cannot serve requests
+        # This allows Kubernetes to remove the pod from the load balancer
+        # and eventually restart it when it becomes healthy
         return False
 
 
