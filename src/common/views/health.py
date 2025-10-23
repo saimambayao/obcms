@@ -100,12 +100,22 @@ def check_cache():
 
     Returns:
         True if cache is accessible, False otherwise
+
+    Note: Returns True even if Redis is unavailable, since cache is not
+    critical for basic app functionality. This prevents readiness probes
+    from failing during startup when Redis is still initializing.
     """
     try:
         cache.set("health_check", "ok", timeout=10)
         result = cache.get("health_check")
         cache.delete("health_check")
-        return result == "ok"
+        is_healthy = result == "ok"
+        if is_healthy:
+            logger.debug("Cache health check passed")
+        else:
+            logger.warning("Cache health check returned unexpected result")
+        return is_healthy
     except Exception as e:
-        logger.error(f"Cache health check failed: {e}")
-        return False
+        # Cache is optional - don't fail readiness if it's unavailable
+        logger.warning(f"Cache health check failed (non-critical): {e}")
+        return True  # Still healthy even without cache
