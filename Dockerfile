@@ -112,6 +112,11 @@ RUN set -e && \
 # Static files are pre-collected during Docker build to avoid relying on release phase
 # (Railway doesn't reliably execute release phases)
 
+# Create logs directory with proper permissions for unprivileged user
+RUN mkdir -p /app/src/logs && \
+    chown -R nobody:nobody /app/src/logs && \
+    chmod 755 /app/src/logs
+
 # Run as unprivileged user (must be before CMD to maintain proper permissions)
 USER nobody
 
