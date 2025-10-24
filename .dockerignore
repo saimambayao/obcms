@@ -20,6 +20,7 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+site-packages/
 
 # Virtual environments
 venv/
@@ -27,12 +28,17 @@ env/
 ENV/
 env.bak/
 venv.bak/
+.venv/
+.env.venv/
 
 # IDEs
 .vscode/
 .idea/
+.sublime/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
 # OS
 .DS_Store
@@ -42,31 +48,44 @@ venv.bak/
 .Trashes
 ehthumbs.db
 Thumbs.db
+.AppleDouble
+.LSOverride
 
 # Git
 .git
 .gitignore
-README.md
+.gitattributes
 
 # Django
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+.django_db_sqlite3
 
 # Media files (these should be handled by volumes)
 src/media/
 src/staticfiles/
+media/
 
 # Environment files
 .env
 .env.local
 .env.*.local
+.env.production.local
 
-# Documentation (exclude to reduce image size)
+# Documentation (NOT needed in production)
 docs/
+*.md
+!README.md
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
 
-# Testing & coverage (exclude to reduce image size - not needed in production)
+# Testing & coverage (NOT needed in production)
+tests/
+test_*.py
+*_test.py
 .coverage
 htmlcov/
 .tox/
@@ -74,59 +93,83 @@ htmlcov/
 coverage.xml
 test-results/
 .pytest_cache
+pytest.ini
+conftest.py
 
-# Node.js artifacts (exclude - already built into CSS)
+# Node.js artifacts (already built into CSS)
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .npm
 .eslintcache
+package-lock.json
+yarn.lock
 
 # Temporary files
 *.tmp
 *.temp
 .tmp/
 .temp/
+*.swp
+*.swo
+~*
 
 # Deployment
 deployment/
 scripts/
 .railway
+Procfile
+.railway.toml
 
-# Backup and cache files (exclude to reduce image size)
+# Backup and cache files
 backups/
 *.backup
 *.bak
-*.swp
-*.swo
-~*
 
 # Celery
 celerybeat-schedule
 dump.rdb
 
-# Development tools
+# Development & build tools
 .pre-commit-config.yaml
 .flake8
 .pylintrc
 .isort.cfg
 pyproject.toml
+setup.py
 setup.cfg
+poetry.lock
+Pipfile
+Pipfile.lock
 
 # CI/CD
 .github/
 .gitlab-ci.yml
 .travis.yml
 .circleci/
+azure-pipelines.yml
 
 # Large documentation files
 *.pdf
 *.docx
+*.xlsx
+
+# Jupyter & notebooks
+*.ipynb
+.ipynb_checkpoints/
+*.ipynb_checkpoints
 
 # Miscellaneous
 .env.example
-CHANGELOG.md
-CONTRIBUTING.md
-LICENSE
 .editorconfig
+.nvmrc
+.ruby-version
+.python-version
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+*.pem
+*.key
+*.crt

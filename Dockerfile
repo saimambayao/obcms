@@ -22,70 +22,90 @@ RUN npm run build:css && \
     echo "✓ Tailwind CSS built successfully: $(wc -c < src/static/css/output.css) bytes" || \
     (echo "✗ ERROR: Tailwind CSS build failed - output.css not found" && exit 1)
 
-# Stage 2: Python Base - Common dependencies
-FROM python:3.12-slim as base
+# Stage 2: Python Base - Common dependencies (Alpine-based for size optimization)
+FROM python:3.12-alpine as base
 
-# Set environment variables
+# Set environment variables for maximum compatibility and performance
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies including curl for healthchecks and libmagic for MIME validation
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpq-dev \
+# Install build dependencies and runtime dependencies in one layer, cleanup after compilation
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    postgresql-dev \
     gettext \
     curl \
-    libmagic1 \
-    && rm -rf /var/lib/apt/lists/*
+    libmagic \
+    && pip install --upgrade pip setuptools wheel && \
+    pip install -r /dev/null || true  # Dummy command for layer consistency
 
-# Create app user
-RUN useradd --create-home --shell /bin/bash app
-
-# Set work directory
+# Create work directory
 WORKDIR /app
 
-# Install Python dependencies with aggressive cleanup
+# Copy requirements and install Python dependencies
 COPY requirements/ requirements/
-RUN pip install -r requirements/base.txt && \
-    pip cache purge && \
+RUN apk add --no-cache --virtual .build-deps \
+    gcc \
+    musl-dev \
+    postgresql-dev \
+    python3-dev \
+    && pip install -r requirements/base.txt && \
+    apk del .build-deps && \
     find /usr/local -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true && \
     find /usr/local -type f -name "*.pyc" -delete && \
     rm -rf /tmp/* /var/tmp/*
 
 # Stage 3: Development
 FROM base as development
-RUN pip install -r requirements/development.txt
-USER app
+RUN apk add --no-cache --virtual .dev-deps \
+    gcc \
+    musl-dev \
+    postgresql-dev \
+    python3-dev && \
+    pip install -r requirements/development.txt
+USER nobody
 
-# Stage 4: Production - Combine Python app + compiled CSS
-FROM base as production
+# Stage 4: Production - Combine Python app + compiled CSS (Alpine-based)
+FROM python:3.12-alpine as production
 
-# CRITICAL: Set production settings module to protect ad-hoc container launches
-# This prevents CSRF 403 errors when containers run without docker-compose env vars
-ENV DJANGO_SETTINGS_MODULE=obc_management.settings.production
+# Set production environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DJANGO_SETTINGS_MODULE=obc_management.settings.production
+
+# Install only runtime dependencies (no build tools)
+RUN apk add --no-cache \
+    postgresql-client \
+    curl \
+    libmagic
+
+# Set work directory
+WORKDIR /app
+
+# Copy pre-compiled Python dependencies from base stage
+COPY --from=base /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=base /usr/local/bin /usr/local/bin
 
 # Copy application code
-COPY --chown=app:app . /app/
+COPY --chown=nobody:nobody . /app/
 
 # Copy compiled CSS from node-builder stage
-COPY --from=node-builder --chown=app:app /app/src/static/css/output.css /app/src/static/css/output.css
+COPY --from=node-builder --chown=nobody:nobody /app/src/static/css/output.css /app/src/static/css/output.css
 
-# NOTE: Docker HEALTHCHECK disabled in favor of Kubernetes/Sevalla readiness probes
-# Kubernetes handles container health monitoring through:
-# - /ready/ endpoint for readiness probe
-# - /health/ endpoint for liveness probe
-# Having both Docker HEALTHCHECK and Kubernetes probes can cause conflicts in deployment
+# NOTE: Docker HEALTHCHECK disabled in favor of Railway health checks
+# Railway uses built-in health probe configuration
 # For local Docker development, use: docker-compose ps to monitor container status
 
-USER app
-
 # Create staticfiles directory (collectstatic runs in Procfile release phase)
-# This prevents Django startup warnings about missing directory
-RUN mkdir -p /app/src/staticfiles
+RUN mkdir -p /app/src/staticfiles && chmod -R 755 /app/src/staticfiles
+
+# Run as unprivileged user
+USER nobody
 
 # Use gunicorn with production configuration file
-# gunicorn.conf.py automatically reads PORT env var (Sevalla injects this)
+# gunicorn.conf.py automatically reads PORT env var (Railway injects this)
 # Note: collectstatic is handled by Procfile release phase, not here
 CMD ["gunicorn", "--chdir", "src", "--config", "/app/gunicorn.conf.py", "obc_management.wsgi:application"]
