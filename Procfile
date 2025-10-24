@@ -1,13 +1,12 @@
 # Sevalla Procfile for OBCMS Deployment
 # Defines how to run web server, background workers, and release tasks
 
-# Release Phase: Collect static files for WhiteNoise serving (backup)
-# Note: Static files are primarily collected during Docker build (see Dockerfile)
-# This release phase runs as a fallback but is typically redundant
+# Release Phase: Run database migrations and collect static files
+# Note: This runs automatically before each deployment on Railway
+# Migrations: Updates database schema to match current code
+# Static files: Collected during Docker build but also here as backup
 # Railway timeout is generous (~30+ minutes), so this is safe
-# Note: Migrations must be run manually via Railway CLI before first deployment
-#   railway run python src/manage.py migrate --noinput
-release: cd src && python manage.py collectstatic --noinput
+release: cd src && python manage.py migrate --noinput --settings obc_management.settings.production && python manage.py collectstatic --noinput
 
 # Web Process: Gunicorn WSGI server
 # IMPORTANT: Must bind to $PORT (auto-injected by Railway)
