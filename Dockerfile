@@ -88,13 +88,27 @@ COPY --from=node-builder --chown=nobody:nobody /app/src/static/css/output.css /a
 # Railway uses built-in health probe configuration
 # For local Docker development, use: docker-compose ps to monitor container status
 
-# Create staticfiles directory (collectstatic runs in Procfile release phase)
-RUN mkdir -p /app/src/staticfiles && chmod -R 755 /app/src/staticfiles
+# Collect static files BEFORE running as unprivileged user
+# (Django collectstatic needs write permissions to staticfiles directory)
+# This ensures static files are available immediately when container starts
+# WARNING: Must run as root before switching to unprivileged user
+RUN cd /app/src && python manage.py collectstatic --noinput && \
+    echo "✓ Static files collected successfully" && \
+    # Verify output.css was collected
+    test -f /app/src/staticfiles/css/output.css && \
+    echo "✓ Tailwind CSS found in staticfiles" && \
+    # Verify favicon.svg was collected
+    test -f /app/src/staticfiles/favicon.svg && \
+    echo "✓ favicon.svg found in staticfiles" || \
+    echo "WARNING: Some expected static files may be missing"
+
+# Set appropriate permissions on staticfiles directory
+RUN chmod -R 755 /app/src/staticfiles
 
 # Run as unprivileged user
 USER nobody
 
 # Use gunicorn with production configuration file
 # gunicorn.conf.py automatically reads PORT env var (Railway injects this)
-# Note: collectstatic is handled by Procfile release phase, not here
+# Static files are now pre-collected in the Docker image
 CMD ["gunicorn", "--chdir", "src", "--config", "/app/gunicorn.conf.py", "obc_management.wsgi:application"]
