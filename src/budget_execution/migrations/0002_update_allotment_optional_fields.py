@@ -74,7 +74,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 related_name='obligations',
-                to='budget_execution.workitem',
+                to='budget_execution.WorkItem',  # Fixed: Changed from 'workitem' to 'WorkItem' for case-sensitivity
             ),
         ),
         AlterFieldIfExists(
