@@ -95,7 +95,8 @@ COPY --from=node-builder --chown=nobody:nobody /app/src/static/css/output.css /a
 # NOTE: Use development settings for collectstatic since production requires
 #       environment variables that aren't available during Docker build
 # Provide minimal environment variables just for the collectstatic build step
-RUN cd /app/src && SECRET_KEY="django-insecure-build-only-key-not-for-production" \
+# SECRET_KEY must be at least 50 characters (temporary build-only key)
+RUN cd /app/src && SECRET_KEY="django-insecure-build-only-temporary-key-for-docker-build-12345" \
     python manage.py collectstatic --noinput --settings=obc_management.settings.development && \
     echo "✓ Static files collected successfully"
 
