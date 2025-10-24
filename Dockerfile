@@ -58,7 +58,7 @@ RUN pip install -r requirements/development.txt
 USER nobody
 
 # Stage 4: Production - Combine Python app + compiled CSS
-FROM python:3.12-slim as production
+FROM base as production
 
 # Build argument for cache busting (allows forcing fresh builds)
 # Pass with: docker build --build-arg CACHE_BUSTER="$(date +%s)" ...
@@ -66,23 +66,10 @@ FROM python:3.12-slim as production
 ARG CACHE_BUSTER=20251024-203000
 
 # Set production environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    DJANGO_SETTINGS_MODULE=obc_management.settings.production
-
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    postgresql-client \
-    curl \
-    libmagic1 \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+ENV DJANGO_SETTINGS_MODULE=obc_management.settings.production
 
 # Set work directory
 WORKDIR /app
-
-# Copy pre-compiled Python dependencies from base stage
-COPY --from=base /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=base /usr/local/bin /usr/local/bin
 
 # Copy application code
 COPY --chown=nobody:nobody . /app/
