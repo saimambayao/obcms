@@ -84,6 +84,10 @@ COPY --chown=nobody:nobody . /app/
 # Copy compiled CSS from node-builder stage
 COPY --from=node-builder --chown=nobody:nobody /app/src/static/css/output.css /app/src/static/css/output.css
 
+# Copy entrypoint script
+COPY --chown=nobody:nobody docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Collect static files during Docker build
 # We set temporary environment variables just for the build step.
 # These are NOT included in the final container runtime.
@@ -116,10 +120,13 @@ RUN set -e && \
 RUN mkdir -p /app/src/logs && \
     chmod 777 /app/src/logs
 
-# Run as unprivileged user (must be before CMD to maintain proper permissions)
+# Run as unprivileged user (must be before ENTRYPOINT to maintain proper permissions)
 USER nobody
 
-# Use gunicorn with production configuration file
+# Use docker-entrypoint.sh to run migrations then start gunicorn
+# The entrypoint script:
+#   1. Runs Django migrations
+#   2. Starts gunicorn with production configuration
 # gunicorn.conf.py automatically reads PORT env var (Railway injects this)
 # Static files served by WhiteNoise from src/staticfiles/ (pre-collected during Docker build)
-CMD ["gunicorn", "--chdir", "src", "--config", "/app/gunicorn.conf.py", "obc_management.wsgi:application"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
