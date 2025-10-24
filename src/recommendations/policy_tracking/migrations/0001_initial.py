@@ -401,7 +401,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         help_text="Specific assessed needs addressed by this policy",
                         related_name="policy_recommendations",
-                        to="mana.need",
+                        to="mana.Need",
                     ),
                 ),
                 (

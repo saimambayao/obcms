@@ -186,7 +186,7 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="children",
-                        to="common.workitem",
+                        to="common.WorkItem",
                     ),
                 ),
                 (
@@ -205,7 +205,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         help_text="Related work items (dependencies, references)",
                         related_name="related_to",
-                        to="common.workitem",
+                        to="common.WorkItem",
                     ),
                 ),
                 (

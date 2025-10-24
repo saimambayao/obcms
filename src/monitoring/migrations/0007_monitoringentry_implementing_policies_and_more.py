@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='monitoringentry',
             name='needs_addressed',
-            field=models.ManyToManyField(blank=True, help_text='Community needs this PPA addresses', related_name='implementing_ppas', to='mana.need'),
+            field=models.ManyToManyField(blank=True, help_text='Community needs this PPA addresses', related_name='implementing_ppas', to='mana.Need'),
         ),
         migrations.AlterField(
             model_name='monitoringentry',

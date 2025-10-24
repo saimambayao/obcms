@@ -68,7 +68,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='stafftask',
             name='recurrence_parent',
-            field=models.ForeignKey(blank=True, help_text='Parent task if this is a recurrence instance', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='recurrence_instances', to='common.stafftask'),
+            field=models.ForeignKey(blank=True, help_text='Parent task if this is a recurrence instance', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='recurrence_instances', to='common.StaffTask'),
         ),
         migrations.CreateModel(
             name='UserCalendarPreferences',

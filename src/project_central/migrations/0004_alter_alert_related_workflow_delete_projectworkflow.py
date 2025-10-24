@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name="project_alerts",
-                to="common.workitem",
+                to="common.WorkItem",
             ),
         ),
         migrations.DeleteModel(

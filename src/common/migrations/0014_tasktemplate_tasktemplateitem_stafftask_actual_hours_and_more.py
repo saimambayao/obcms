@@ -72,7 +72,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='stafftask',
             name='depends_on',
-            field=models.ManyToManyField(blank=True, help_text='Tasks this task depends on', related_name='dependent_tasks', to='common.stafftask'),
+            field=models.ManyToManyField(blank=True, help_text='Tasks this task depends on', related_name='dependent_tasks', to='common.StaffTask'),
         ),
         migrations.AddField(
             model_name='stafftask',
@@ -162,7 +162,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='stafftask',
             name='related_need',
-            field=models.ForeignKey(blank=True, help_text='Related identified need', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='tasks', to='mana.need'),
+            field=models.ForeignKey(blank=True, help_text='Related identified need', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='tasks', to='mana.Need'),
         ),
         migrations.AddField(
             model_name='stafftask',

@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
                 related_name='ppa_entry',
-                to='common.workitem',
+                to='common.WorkItem',
                 help_text='Optional WorkItem for tracking project execution tasks and milestones',
             ),
         ),

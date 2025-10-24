@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
                 ('created_by', models.ForeignKey(help_text='User who created this workflow', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_workflows', to=settings.AUTH_USER_MODEL)),
                 ('mao_focal_person', models.ForeignKey(blank=True, help_text='MAO focal person coordinating this project', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='coordinated_projects', to='coordination.maofocalperson')),
                 ('ppa', models.OneToOneField(blank=True, help_text='PPA implementing this project (created during budget planning stage)', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='project_workflow', to='monitoring.monitoringentry')),
-                ('primary_need', models.OneToOneField(help_text='Primary need driving this project', on_delete=django.db.models.deletion.CASCADE, related_name='project_workflow', to='mana.need')),
+                ('primary_need', models.OneToOneField(help_text='Primary need driving this project', on_delete=django.db.models.deletion.CASCADE, related_name='project_workflow', to='mana.Need')),
                 ('project_lead', models.ForeignKey(help_text='OOBC staff leading this project', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='led_projects', to=settings.AUTH_USER_MODEL)),
             ],
             options={
@@ -127,7 +127,7 @@ class Migration(migrations.Migration):
                 ('expires_at', models.DateTimeField(blank=True, help_text='When this alert should expire (optional)', null=True)),
                 ('acknowledged_by', models.ForeignKey(blank=True, help_text='User who acknowledged this alert', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='acknowledged_alerts', to=settings.AUTH_USER_MODEL)),
                 ('related_mao', models.ForeignKey(blank=True, help_text='Related MAO (if applicable)', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='alerts', to='coordination.organization')),
-                ('related_need', models.ForeignKey(blank=True, help_text='Related need (if applicable)', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='alerts', to='mana.need')),
+                ('related_need', models.ForeignKey(blank=True, help_text='Related need (if applicable)', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='alerts', to='mana.Need')),
                 ('related_policy', models.ForeignKey(blank=True, help_text='Related policy (if applicable)', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='alerts', to='policy_tracking.policyrecommendation')),
                 ('related_ppa', models.ForeignKey(blank=True, help_text='Related PPA (if applicable)', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='alerts', to='monitoring.monitoringentry')),
                 ('related_workflow', models.ForeignKey(blank=True, help_text='Related project workflow (if applicable)', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='alerts', to='project_central.projectworkflow')),

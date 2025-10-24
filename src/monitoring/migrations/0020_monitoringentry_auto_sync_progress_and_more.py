@@ -35,6 +35,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='monitoringentry',
             name='execution_project',
-            field=models.OneToOneField(blank=True, help_text='Root WorkItem project for execution tracking', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='ppa_source', to='common.workitem'),
+            field=models.OneToOneField(blank=True, help_text='Root WorkItem project for execution tracking', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='ppa_source', to='common.WorkItem'),
         ),
     ]

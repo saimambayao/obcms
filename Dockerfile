@@ -59,6 +59,10 @@ USER nobody
 # Stage 4: Production - Combine Python app + compiled CSS
 FROM python:3.12-slim as production
 
+# Build argument for cache busting (allows forcing fresh builds)
+# Pass with: docker build --build-arg CACHE_BUSTER="$(date +%s)" ...
+ARG CACHE_BUSTER=default
+
 # Set production environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

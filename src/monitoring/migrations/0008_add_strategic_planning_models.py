@@ -75,7 +75,7 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('created_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_planning_cycles', to=settings.AUTH_USER_MODEL)),
                 ('monitoring_entries', models.ManyToManyField(blank=True, help_text='PPAs included in this annual cycle', related_name='planning_cycles', to='monitoring.monitoringentry')),
-                ('needs_addressed', models.ManyToManyField(blank=True, help_text='Community needs addressed in this cycle', related_name='planning_cycles', to='mana.need')),
+                ('needs_addressed', models.ManyToManyField(blank=True, help_text='Community needs addressed in this cycle', related_name='planning_cycles', to='mana.Need')),
                 ('strategic_goals', models.ManyToManyField(blank=True, help_text='Strategic goals addressed in this annual cycle', related_name='annual_cycles', to='monitoring.strategicgoal')),
             ],
             options={

@@ -215,7 +215,7 @@ class Migration(migrations.Migration):
                         help_text="Linked coordination activity (WorkItem with work_type='activity').",
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="coordination_notes",
-                        to="common.workitem",
+                        to="common.WorkItem",
                     ),
                 ),
             ],

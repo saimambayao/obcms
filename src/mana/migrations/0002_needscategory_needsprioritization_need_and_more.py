@@ -480,7 +480,7 @@ class Migration(migrations.Migration):
                         help_text="Need being prioritized",
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="prioritization_items",
-                        to="mana.need",
+                        to="mana.Need",
                     ),
                 ),
                 (

@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('voted_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('ip_address', models.GenericIPAddressField(blank=True, help_text='IP address for fraud detection', null=True)),
-                ('need', models.ForeignKey(help_text='The community need being voted for', on_delete=django.db.models.deletion.CASCADE, related_name='votes', to='mana.need')),
+                ('need', models.ForeignKey(help_text='The community need being voted for', on_delete=django.db.models.deletion.CASCADE, related_name='votes', to='mana.Need')),
                 ('user', models.ForeignKey(help_text='The user who cast this vote', on_delete=django.db.models.deletion.CASCADE, related_name='need_votes', to=settings.AUTH_USER_MODEL)),
                 ('voter_community', models.ForeignKey(blank=True, help_text='Community the voter belongs to (if applicable)', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='community_votes', to='communities.obccommunity')),
             ],
