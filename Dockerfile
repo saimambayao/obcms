@@ -59,12 +59,6 @@ USER nobody
 # Stage 4: Production - Combine Python app + compiled CSS
 FROM python:3.12-slim as production
 
-# Accept build arguments for Django settings validation
-# These are passed via: docker build --build-arg SECRET_KEY=... --build-arg ALLOWED_HOSTS=...
-ARG SECRET_KEY
-ARG ALLOWED_HOSTS
-ARG CSRF_TRUSTED_ORIGINS
-
 # Set production environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -94,21 +88,19 @@ COPY --from=node-builder --chown=nobody:nobody /app/src/static/css/output.css /a
 # Railway uses built-in health probe configuration
 # For local Docker development, use: docker-compose ps to monitor container status
 
-# Collect static files during Docker build with environment variables
-# Build arguments (SECRET_KEY, ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS) are passed at build time
-# This ensures staticfiles/ is pre-baked into the image before runtime
-RUN SECRET_KEY=${SECRET_KEY} \
-    ALLOWED_HOSTS=${ALLOWED_HOSTS} \
-    CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS} \
-    DJANGO_SETTINGS_MODULE=obc_management.settings.production \
-    python src/manage.py collectstatic --noinput && \
-    echo "✓ Static files collected successfully: $(du -sh src/staticfiles/ | cut -f1)" || \
-    (echo "✗ ERROR: Static files collection failed" && exit 1)
+# Static files are collected during Railway's release phase (see Procfile)
+# This happens AFTER Docker build but BEFORE web process starts
+# The release phase has access to all required environment variables:
+# - SECRET_KEY (validated: 50+ chars, no django-insecure prefix)
+# - ALLOWED_HOSTS (required for production settings validation)
+# - CSRF_TRUSTED_ORIGINS (required for production settings validation)
+#
+# WhiteNoise middleware serves collected static files at runtime from src/staticfiles/
 
 # Run as unprivileged user
 USER nobody
 
 # Use gunicorn with production configuration file
 # gunicorn.conf.py automatically reads PORT env var (Railway injects this)
-# Static files are now pre-collected in the Docker image
+# Static files served by WhiteNoise from src/staticfiles/ (collected during release phase)
 CMD ["gunicorn", "--chdir", "src", "--config", "/app/gunicorn.conf.py", "obc_management.wsgi:application"]
