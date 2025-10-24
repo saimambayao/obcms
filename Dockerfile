@@ -68,11 +68,12 @@ COPY --chown=app:app . /app/
 # Copy compiled CSS from node-builder stage
 COPY --from=node-builder --chown=app:app /app/src/static/css/output.css /app/src/static/css/output.css
 
-# Health check for container orchestration (Kubernetes, Docker Swarm, etc.)
-# Waits 40 seconds for app startup, checks every 30 seconds, allows 3 failures before marking unhealthy
-# Uses PORT env var for Sevalla compatibility (defaults to 8000 for local Docker)
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=40s \
-    CMD curl -f http://localhost:${PORT:-8000}/health/ || exit 1
+# NOTE: Docker HEALTHCHECK disabled in favor of Kubernetes/Sevalla readiness probes
+# Kubernetes handles container health monitoring through:
+# - /ready/ endpoint for readiness probe
+# - /health/ endpoint for liveness probe
+# Having both Docker HEALTHCHECK and Kubernetes probes can cause conflicts in deployment
+# For local Docker development, use: docker-compose ps to monitor container status
 
 USER app
 
