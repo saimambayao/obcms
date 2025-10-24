@@ -46,9 +46,13 @@ RUN useradd --create-home --shell /bin/bash app
 # Set work directory
 WORKDIR /app
 
-# Install Python dependencies
+# Install Python dependencies with aggressive cleanup
 COPY requirements/ requirements/
-RUN pip install -r requirements/base.txt
+RUN pip install -r requirements/base.txt && \
+    pip cache purge && \
+    find /usr/local -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true && \
+    find /usr/local -type f -name "*.pyc" -delete && \
+    rm -rf /tmp/* /var/tmp/*
 
 # Stage 3: Development
 FROM base as development

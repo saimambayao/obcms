@@ -63,20 +63,26 @@ src/staticfiles/
 .env.local
 .env.*.local
 
-# Documentation (keep in image for reference)
+# Documentation (exclude to reduce image size)
 docs/
 
-# Testing
+# Testing & coverage (exclude to reduce image size - not needed in production)
 .coverage
 htmlcov/
 .tox/
 .pytest_cache/
+coverage.xml
+test-results/
+.pytest_cache
 
-# Node.js (if any)
+# Node.js artifacts (exclude - already built into CSS)
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.npm
+.eslintcache
+package-lock.json
 
 # Temporary files
 *.tmp
@@ -87,3 +93,41 @@ yarn-error.log*
 # Deployment
 deployment/
 scripts/
+.railway
+
+# Backup and cache files (exclude to reduce image size)
+backups/
+*.backup
+*.bak
+*.swp
+*.swo
+~*
+
+# Celery
+celerybeat-schedule
+dump.rdb
+
+# Development tools
+.pre-commit-config.yaml
+.flake8
+.pylintrc
+.isort.cfg
+pyproject.toml
+setup.cfg
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Large documentation files
+*.pdf
+*.docx
+
+# Miscellaneous
+.env.example
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+.editorconfig
