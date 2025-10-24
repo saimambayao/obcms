@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='obligation',
             name='work_item',
-            field=models.ForeignKey(blank=True, help_text='Execution work item covered by this obligation', null=True, on_delete=django.db.models.deletion.PROTECT, related_name='obligations', to='budget_execution.workitem'),
+            field=models.ForeignKey(blank=True, help_text='Execution work item covered by this obligation', null=True, on_delete=django.db.models.deletion.PROTECT, related_name='obligations', to='budget_execution.WorkItem'),
         ),
         migrations.AddIndex(
             model_name='allotment',
