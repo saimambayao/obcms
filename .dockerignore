@@ -1,174 +1,55 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-site-packages/
-
 # Virtual environments
 venv/
 env/
 ENV/
-env.bak/
-venv.bak/
 .venv/
-.env.venv/
 
-# IDEs
+# Python cache
+__pycache__/
+*.py[cod]
+*.so
+.Python
+*.egg-info/
+*.egg
+site-packages/
+
+# Version control
+.git
+.gitignore
+
+# IDE
 .vscode/
 .idea/
-.sublime/
 *.swp
 *.swo
-*.sublime-project
-*.sublime-workspace
 
 # OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-.AppleDouble
-.LSOverride
-
-# Git
-.git
-.gitignore
-.gitattributes
-
-# Django
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-.django_db_sqlite3
-
-# Media files (these should be handled by volumes)
-src/media/
-src/staticfiles/
-media/
-
-# Environment files
-.env
 .env.local
-.env.*.local
-.env.production.local
 
-# Documentation (NOT needed in production)
-docs/
-*.md
-!README.md
-CHANGELOG.md
-CONTRIBUTING.md
-LICENSE
-
-# Testing & coverage (NOT needed in production)
+# Tests & coverage (not needed in production)
 tests/
 test_*.py
 *_test.py
 .coverage
 htmlcov/
-.tox/
 .pytest_cache/
-coverage.xml
-test-results/
-.pytest_cache
-pytest.ini
-conftest.py
 
-# Node.js artifacts (already built into CSS)
+# Node modules (rebuilt during npm ci)
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.npm
-.eslintcache
-yarn.lock
 
-# Temporary files
-*.tmp
-*.temp
-.tmp/
-.temp/
-*.swp
-*.swo
-~*
-
-# Deployment
-deployment/
-scripts/
-.railway
-Procfile
-.railway.toml
-
-# Backup and cache files
-backups/
-*.backup
-*.bak
-
-# Celery
-celerybeat-schedule
-dump.rdb
-
-# Development & build tools
-.pre-commit-config.yaml
-.flake8
-.pylintrc
-.isort.cfg
-pyproject.toml
-setup.py
-setup.cfg
-poetry.lock
-Pipfile
-Pipfile.lock
+# Documentation
+docs/
+README.md
+!README.md
 
 # CI/CD
 .github/
 .gitlab-ci.yml
 .travis.yml
-.circleci/
-azure-pipelines.yml
 
-# Large documentation files
-*.pdf
-*.docx
-*.xlsx
-
-# Jupyter & notebooks
-*.ipynb
-.ipynb_checkpoints/
-*.ipynb_checkpoints
-
-# Miscellaneous
-.env.example
-.editorconfig
-.nvmrc
-.ruby-version
-.python-version
-.dockerignore
-Dockerfile*
-docker-compose*.yml
-.dockerignore
-*.pem
-*.key
-*.crt
+# Misc
+.git/
+.env
+*.log
+.cache/

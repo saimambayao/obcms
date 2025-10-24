@@ -22,8 +22,8 @@ RUN npm run build:css && \
     echo "✓ Tailwind CSS built successfully: $(wc -c < src/static/css/output.css) bytes" || \
     (echo "✗ ERROR: Tailwind CSS build failed - output.css not found" && exit 1)
 
-# Stage 2: Python Base - Common dependencies (Alpine-based for size optimization)
-FROM python:3.12-alpine as base
+# Stage 2: Python Base - Common dependencies
+FROM python:3.12-slim as base
 
 # Set environment variables for maximum compatibility and performance
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -31,56 +31,45 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install build dependencies and runtime dependencies in one layer, cleanup after compilation
-RUN apk add --no-cache \
+# Install system dependencies and Python packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
-    musl-dev \
-    postgresql-dev \
+    postgresql-client \
     gettext \
     curl \
-    libmagic \
-    && pip install --upgrade pip setuptools wheel && \
-    pip install -r /dev/null || true  # Dummy command for layer consistency
+    libmagic1 \
+    && pip install --upgrade pip setuptools wheel \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create work directory
 WORKDIR /app
 
 # Copy requirements and install Python dependencies
 COPY requirements/ requirements/
-RUN apk add --no-cache --virtual .build-deps \
-    gcc \
-    musl-dev \
-    postgresql-dev \
-    python3-dev \
-    && pip install -r requirements/base.txt && \
-    apk del .build-deps && \
-    find /usr/local -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true && \
-    find /usr/local -type f -name "*.pyc" -delete && \
-    rm -rf /tmp/* /var/tmp/*
+RUN pip install -r requirements/base.txt \
+    && find /usr/local -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true \
+    && find /usr/local -type f -name "*.pyc" -delete \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Stage 3: Development
 FROM base as development
-RUN apk add --no-cache --virtual .dev-deps \
-    gcc \
-    musl-dev \
-    postgresql-dev \
-    python3-dev && \
-    pip install -r requirements/development.txt
+RUN pip install -r requirements/development.txt
 USER nobody
 
-# Stage 4: Production - Combine Python app + compiled CSS (Alpine-based)
-FROM python:3.12-alpine as production
+# Stage 4: Production - Combine Python app + compiled CSS
+FROM python:3.12-slim as production
 
 # Set production environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DJANGO_SETTINGS_MODULE=obc_management.settings.production
 
-# Install only runtime dependencies (no build tools)
-RUN apk add --no-cache \
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
     curl \
-    libmagic
+    libmagic1 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set work directory
 WORKDIR /app
