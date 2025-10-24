@@ -88,29 +88,10 @@ COPY --from=node-builder --chown=nobody:nobody /app/src/static/css/output.css /a
 # Railway uses built-in health probe configuration
 # For local Docker development, use: docker-compose ps to monitor container status
 
-# Collect static files BEFORE running as unprivileged user
-# (Django collectstatic needs write permissions to staticfiles directory)
-# This ensures static files are available immediately when container starts
-# WARNING: Must run as root before switching to unprivileged user
-# NOTE: Use development settings for collectstatic since production requires
-#       environment variables that aren't available during Docker build
-# Provide minimal environment variables just for the collectstatic build step
-# SECRET_KEY must be at least 50 characters (temporary build-only key)
-RUN cd /app/src && SECRET_KEY="django-insecure-build-only-temporary-key-for-docker-build-12345" \
-    python manage.py collectstatic --noinput --settings=obc_management.settings.development && \
-    echo "✓ Static files collected successfully"
-
-# Verify critical static files were collected
-RUN test -f /app/src/staticfiles/css/output.css && \
-    echo "✓ Tailwind CSS found in staticfiles" || \
-    (echo "✗ ERROR: Tailwind CSS not found in staticfiles" && exit 1)
-
-RUN test -f /app/src/staticfiles/favicon.svg && \
-    echo "✓ favicon.svg found in staticfiles" || \
-    (echo "✗ ERROR: favicon.svg not found in staticfiles" && exit 1)
-
-# Set appropriate permissions on staticfiles directory
-RUN chmod -R 755 /app/src/staticfiles
+# NOTE: Static files are collected during Railway release phase (see Procfile)
+# The release phase has access to all required environment variables (SECRET_KEY, etc.)
+# WhiteNoise will serve collected static files from staticfiles/ directory at runtime
+# Do NOT collect staticfiles here during Docker build - wait for release phase
 
 # Run as unprivileged user
 USER nobody
