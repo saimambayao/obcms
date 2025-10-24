@@ -92,15 +92,19 @@ COPY --from=node-builder --chown=nobody:nobody /app/src/static/css/output.css /a
 # (Django collectstatic needs write permissions to staticfiles directory)
 # This ensures static files are available immediately when container starts
 # WARNING: Must run as root before switching to unprivileged user
-RUN cd /app/src && python manage.py collectstatic --noinput && \
-    echo "✓ Static files collected successfully" && \
-    # Verify output.css was collected
-    test -f /app/src/staticfiles/css/output.css && \
-    echo "✓ Tailwind CSS found in staticfiles" && \
-    # Verify favicon.svg was collected
-    test -f /app/src/staticfiles/favicon.svg && \
+# NOTE: Use development settings for collectstatic since production requires
+#       environment variables that aren't available during Docker build
+RUN cd /app/src && python manage.py collectstatic --noinput --settings=obc_management.settings.development && \
+    echo "✓ Static files collected successfully"
+
+# Verify critical static files were collected
+RUN test -f /app/src/staticfiles/css/output.css && \
+    echo "✓ Tailwind CSS found in staticfiles" || \
+    (echo "✗ ERROR: Tailwind CSS not found in staticfiles" && exit 1)
+
+RUN test -f /app/src/staticfiles/favicon.svg && \
     echo "✓ favicon.svg found in staticfiles" || \
-    echo "WARNING: Some expected static files may be missing"
+    (echo "✗ ERROR: favicon.svg not found in staticfiles" && exit 1)
 
 # Set appropriate permissions on staticfiles directory
 RUN chmod -R 755 /app/src/staticfiles
