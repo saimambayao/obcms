@@ -1,0 +1,31 @@
+name: Create Superuser on Railway Deployment
+
+on:
+  push:
+    branches:
+      - staging
+      - main
+
+jobs:
+  create-superuser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Authenticate with Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway login --token $RAILWAY_TOKEN
+
+      - name: Create Superuser
+        env:
+          RAILWAY_PROJECT_ID: cc928634-8d60-44fc-8ea1-9adfcdedb02f
+        run: |
+          railway service obcms
+          railway run python src/manage.py createsu \
+            --username=saidamen.oobc \
+            --email=saidamen@oobc.ph \
+            --password='${{ secrets.SUPERUSER_PASSWORD }}'
