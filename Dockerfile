@@ -39,7 +39,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libmagic1 \
     && pip install --upgrade pip setuptools wheel \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && echo "Build timestamp: 2025-10-24 20:39 UTC - Force complete Docker rebuild"
 
 # Create work directory
 WORKDIR /app
