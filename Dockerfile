@@ -94,7 +94,9 @@ COPY --from=node-builder --chown=nobody:nobody /app/src/static/css/output.css /a
 # WARNING: Must run as root before switching to unprivileged user
 # NOTE: Use development settings for collectstatic since production requires
 #       environment variables that aren't available during Docker build
-RUN cd /app/src && python manage.py collectstatic --noinput --settings=obc_management.settings.development && \
+# Provide minimal environment variables just for the collectstatic build step
+RUN cd /app/src && SECRET_KEY="django-insecure-build-only-key-not-for-production" \
+    python manage.py collectstatic --noinput --settings=obc_management.settings.development && \
     echo "✓ Static files collected successfully"
 
 # Verify critical static files were collected
