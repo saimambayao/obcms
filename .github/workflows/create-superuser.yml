@@ -20,12 +20,20 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: railway login --token $RAILWAY_TOKEN
 
-      - name: Create Superuser
+      - name: Wait for Railway Deployment
         env:
           RAILWAY_PROJECT_ID: cc928634-8d60-44fc-8ea1-9adfcdedb02f
         run: |
-          railway service obcms
-          railway run python src/manage.py createsu \
+          railway link --project cc928634-8d60-44fc-8ea1-9adfcdedb02f --environment production
+          sleep 30
+
+      - name: Create Superuser
+        env:
+          RAILWAY_PROJECT_ID: cc928634-8d60-44fc-8ea1-9adfcdedb02f
+          SUPERUSER_PASSWORD: ${{ secrets.SUPERUSER_PASSWORD }}
+        run: |
+          railway link --project cc928634-8d60-44fc-8ea1-9adfcdedb02f --environment production
+          railway run -s obcms python src/manage.py createsu \
             --username=saidamen.oobc \
             --email=saidamen@oobc.ph \
-            --password='${{ secrets.SUPERUSER_PASSWORD }}'
+            --password="${SUPERUSER_PASSWORD}"
