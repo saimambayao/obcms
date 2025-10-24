@@ -79,7 +79,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    "django_prometheus",  # Must be first for metrics collection
+    "django_prometheus",
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",  # JWT token blacklisting
@@ -134,7 +134,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # ============================================================================
 
 MIDDLEWARE = [
-    "django_prometheus.middleware.PrometheusBeforeMiddleware",  # Must be first for metrics
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files in production
     "common.middleware.DeprecatedURLRedirectMiddleware",  # Phase 0: URL refactoring backward compatibility (TEMPORARY - remove after 30 days)
