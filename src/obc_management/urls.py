@@ -21,6 +21,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import redirect
 from django.views.generic import RedirectView
+from django.views.static import serve
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -49,6 +50,9 @@ if not admin_url.endswith('/'):
     admin_url += '/'
 
 urlpatterns = [
+    # Favicon endpoint (browsers request this by default)
+    path("favicon.ico", lambda request: redirect("/static/favicon.svg", permanent=True)),
+
     # Health check endpoints (no authentication required)
     # Root path also serves as health check for platforms that default to /
     path("", health_check, name="root_health"),
