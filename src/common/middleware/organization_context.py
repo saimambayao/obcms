@@ -43,11 +43,17 @@ def get_organization_from_request(request: HttpRequest):
         Organization instance or None
     """
     from organizations.models import Organization
+    from django.db import OperationalError
 
     # ========== OBCMS MODE: Auto-inject default organization ==========
     if is_obcms_mode():
         if not hasattr(request, "_cached_default_org"):
-            request._cached_default_org, _ = get_or_create_default_organization()
+            try:
+                request._cached_default_org, _ = get_or_create_default_organization()
+            except OperationalError:
+                # Database table doesn't exist yet (migrations not run)
+                # Return None gracefully to prevent crashes
+                request._cached_default_org = None
         return request._cached_default_org
 
     # Fail-safe: if not explicitly in BMMS mode, do not resolve organization
