@@ -61,7 +61,8 @@ FROM python:3.12-slim as production
 
 # Build argument for cache busting (allows forcing fresh builds)
 # Pass with: docker build --build-arg CACHE_BUSTER="$(date +%s)" ...
-ARG CACHE_BUSTER=default
+# Updated: 2025-10-24 20:30:00 UTC to force Docker cache invalidation
+ARG CACHE_BUSTER=20251024-203000
 
 # Set production environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
