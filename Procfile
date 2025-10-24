@@ -1,17 +1,15 @@
 # Sevalla Procfile for OBCMS Deployment
 # Defines how to run web server, background workers, and release tasks
 
-# Release Phase: EMPTY (commented out)
-# Migrations are run manually via Sevalla console or before deployment
-# Why? Sevalla release phase has strict timeout (~3-5 min). With 246 migrations,
-# a fresh database deployment would exceed this timeout.
-#
-# For production deployments, run migrations manually:
-#   sevalla run --app obcms-app -- cd src && python manage.py migrate --noinput
+# Release Phase: Collect static files for WhiteNoise serving
+# Railway timeout is generous (~30+ minutes), so this is safe
+# Note: Migrations must be run manually via Railway CLI before first deployment
+#   railway run python src/manage.py migrate --noinput
+release: cd src && python manage.py collectstatic --noinput
 
 # Web Process: Gunicorn WSGI server
-# IMPORTANT: Must bind to $PORT (auto-injected by Sevalla)
-# Static files: Served by WhiteNoise
+# IMPORTANT: Must bind to $PORT (auto-injected by Railway)
+# Static files: Served by WhiteNoise (using collected staticfiles from release phase)
 web: cd src && gunicorn obc_management.wsgi:application --bind 0.0.0.0:$PORT --workers=${GUNICORN_WORKERS:-4} --threads=${GUNICORN_THREADS:-2} --worker-class=${GUNICORN_WORKER_CLASS:-gthread} --log-level=${GUNICORN_LOG_LEVEL:-info} --access-logfile - --error-logfile -
 
 # Worker Process: Celery background task processor
