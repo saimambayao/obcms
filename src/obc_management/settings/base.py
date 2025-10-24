@@ -278,13 +278,14 @@ STATICFILES_DIRS = [
 ]
 
 # Django 4.2+ STORAGES configuration
+# In production, use simple storage (no hashing) - WhiteNoise provides cache-busting via headers
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
         "BACKEND": (
-            "whitenoise.storage.CompressedStaticFilesStorage"
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
             if not DEBUG
             else "django.contrib.staticfiles.storage.StaticFilesStorage"
         ),
