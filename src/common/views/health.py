@@ -6,8 +6,6 @@ application health and readiness.
 """
 
 import logging
-import signal
-from contextlib import contextmanager
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
@@ -18,30 +16,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
 logger = logging.getLogger(__name__)
-
-
-@contextmanager
-def timeout(seconds):
-    """
-    Context manager for enforcing a timeout on code execution.
-
-    Raises TimeoutError if the code block takes longer than the specified time.
-    Only works on Unix systems with signal support.
-    """
-    def timeout_handler(signum, frame):
-        raise TimeoutError(f"Operation timed out after {seconds} seconds")
-
-    # Store the old signal handler
-    old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-    # Set the alarm
-    signal.alarm(seconds)
-    try:
-        yield
-    finally:
-        # Cancel the alarm
-        signal.alarm(0)
-        # Restore the old signal handler
-        signal.signal(signal.SIGALRM, old_handler)
 
 
 @csrf_exempt
@@ -77,43 +51,21 @@ def readiness_check(request):
 
     Used by load balancers to route traffic only to ready instances.
 
-    Returns 200 OK if the HTTP server is running and can respond.
-
-    This is a fast, non-blocking check that confirms the app is operational.
-    Database connectivity checks are logged separately and don't affect readiness.
-
-    Sevalla deployment requires fast readiness probes (<5 seconds) to succeed.
-    Complex health checks cause timeouts and deployment failures. If the app
-    can respond to HTTP requests, it's ready to serve traffic.
+    Returns 200 OK if the app is running. The readiness check should be
+    fast and non-blocking - if this endpoint can respond to HTTP requests,
+    the app is ready to serve traffic.
 
     Returns:
-        200 if the app is running and can respond to requests
+        200 if the app process is running
     """
-    # Log readiness check for monitoring
-    logger.debug("Readiness check requested")
-
-    # Check database and cache connectivity in background (non-blocking)
-    # These are logged for observability but don't affect readiness status
-    db_ok = check_database()
-    cache_ok = check_cache()
-
-    if db_ok and cache_ok:
-        logger.debug("All dependencies healthy: database OK, cache OK")
-    elif db_ok:
-        logger.warning("Database OK but cache unavailable (non-critical)")
-    else:
-        logger.warning("Database unavailable - app may have limited functionality")
-
-    # Return 200 OK - the HTTP server is responding (proof of readiness)
-    # Database issues are logged above for monitoring and will be caught
-    # when users try to access features that require the database
+    # Always return 200 if this endpoint is reachable
+    # The app is running if it can respond to HTTP requests
+    # Detailed health checks should use dedicated monitoring endpoints
     return JsonResponse(
         {
             "status": "ready",
             "service": "obcms",
             "timestamp": str(timezone.now()),
-            "database": "ok" if db_ok else "degraded",
-            "cache": "ok" if cache_ok else "unavailable",
         },
         status=200,
     )
@@ -121,35 +73,22 @@ def readiness_check(request):
 
 def check_database():
     """
-    Check database connectivity with strict timeout.
+    Check database connectivity.
 
     Returns:
-        True if database is accessible within timeout, False otherwise
-
-    Timeout is set to 2 seconds to ensure readiness probes don't hang.
-    If the database is slow to respond, we mark the app as not ready
-    rather than blocking the probe indefinitely.
+        True if database is accessible, False otherwise
     """
     try:
-        # Use a 2-second timeout for database health check
-        # This ensures readiness probes complete quickly
-        with timeout(2):
-            connection.ensure_connection()
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT 1")
-                result = cursor.fetchone()
-                is_healthy = result[0] == 1
-                if is_healthy:
-                    logger.debug("Database health check passed")
-                return is_healthy
-    except TimeoutError:
-        logger.warning("Database health check timed out (2 second limit)")
-        return False
+        connection.ensure_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            result = cursor.fetchone()
+            is_healthy = result[0] == 1
+            if is_healthy:
+                logger.debug("Database health check passed")
+            return is_healthy
     except Exception as e:
         logger.warning(f"Database health check failed: {e}")
-        # Return False to indicate the app cannot serve requests
-        # This allows Kubernetes to remove the pod from the load balancer
-        # and eventually restart it when it becomes healthy
         return False
 
 
