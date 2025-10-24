@@ -93,7 +93,7 @@ RUN set -e && \
     export SECRET_KEY="django-build-temporary-$(head -c 40 /dev/urandom | base64)" && \
     export ALLOWED_HOSTS="localhost,127.0.0.1,.internal" && \
     export CSRF_TRUSTED_ORIGINS="https://localhost" && \
-    export EMAIL_BACKEND="django.core.mail.backends.console.EmailBackend" && \
+    export EMAIL_BACKEND="django.core.mail.backends.dummy.EmailBackend" && \
     # Run collectstatic with production settings
     cd /app/src && python manage.py collectstatic --noinput --clear && \
     # Verify static files were collected
