@@ -13,6 +13,7 @@ This is useful when:
 from django.core.management.base import BaseCommand
 from django.db import connection
 from django.core.management import call_command
+from django.apps import apps
 
 
 class Command(BaseCommand):
@@ -21,52 +22,77 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write('🔍 Checking for migration state mismatches...')
 
-        # Check if ai_assistant_aioperation table exists
+        # Get all tables from database
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT EXISTS (
-                    SELECT FROM information_schema.tables
-                    WHERE table_schema = 'public'
-                    AND table_name = 'ai_assistant_aioperation'
-                );
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_type = 'BASE TABLE'
+                AND table_name NOT IN ('django_migrations', 'spatial_ref_sys')
+                ORDER BY table_name;
             """)
-            aioperation_exists = cursor.fetchone()[0]
+            existing_tables = {row[0] for row in cursor.fetchall()}
 
-        if aioperation_exists:
-            self.stdout.write(
-                self.style.WARNING(
-                    '📋 Detected existing ai_assistant tables - syncing migration state...'
-                )
-            )
+        if not existing_tables:
+            self.stdout.write(self.style.SUCCESS('✅ Fresh database detected - no sync needed'))
+            return
 
+        self.stdout.write(f'   Found {len(existing_tables)} existing tables')
+
+        # Get all Django apps
+        apps_to_check = {}
+        for app_config in apps.get_app_configs():
+            if app_config.name.startswith('django.'):
+                continue  # Skip Django built-in apps
+
+            app_label = app_config.label
+            # Get models for this app
+            models = app_config.get_models()
+            for model in models:
+                table_name = model._meta.db_table
+                if table_name in existing_tables:
+                    if app_label not in apps_to_check:
+                        apps_to_check[app_label] = []
+                    apps_to_check[app_label].append(table_name)
+
+        if not apps_to_check:
+            self.stdout.write(self.style.SUCCESS('✅ All migrations in sync'))
+            return
+
+        # Check and fake migrations for each app
+        synced_apps = []
+        for app_label, tables in apps_to_check.items():
             # Check if migrations are already applied
             with connection.cursor() as cursor:
                 cursor.execute("""
-                    SELECT EXISTS (
-                        SELECT FROM django_migrations
-                        WHERE app = 'ai_assistant'
-                        AND name = '0001_initial'
-                    );
-                """)
-                migration_applied = cursor.fetchone()[0]
+                    SELECT name FROM django_migrations
+                    WHERE app = %s
+                    ORDER BY name;
+                """, [app_label])
+                applied_migrations = {row[0] for row in cursor.fetchall()}
 
-            if not migration_applied:
-                self.stdout.write('   Faking ai_assistant.0001_initial...')
+            if not applied_migrations:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f'📋 {app_label}: Found {len(tables)} tables but no migrations applied'
+                    )
+                )
+
+                # Fake all migrations for this app
                 try:
-                    call_command('migrate', 'ai_assistant', '0001_initial', fake=True, verbosity=0)
-                    self.stdout.write(self.style.SUCCESS('   ✅ Faked 0001_initial'))
+                    self.stdout.write(f'   Faking migrations for {app_label}...')
+                    call_command('migrate', app_label, fake=True, verbosity=0)
+                    synced_apps.append(app_label)
+                    self.stdout.write(self.style.SUCCESS(f'   ✅ Synced {app_label}'))
                 except Exception as e:
-                    self.stdout.write(self.style.ERROR(f'   ⚠️  Could not fake 0001_initial: {e}'))
+                    self.stdout.write(self.style.ERROR(f'   ⚠️  Error syncing {app_label}: {e}'))
 
-                self.stdout.write('   Faking ai_assistant.0002_initial...')
-                try:
-                    call_command('migrate', 'ai_assistant', '0002_initial', fake=True, verbosity=0)
-                    self.stdout.write(self.style.SUCCESS('   ✅ Faked 0002_initial'))
-                except Exception as e:
-                    self.stdout.write(self.style.ERROR(f'   ⚠️  Could not fake 0002_initial: {e}'))
-
-                self.stdout.write(self.style.SUCCESS('✅ Migration state synchronized'))
-            else:
-                self.stdout.write(self.style.SUCCESS('✅ Migrations already in sync'))
+        if synced_apps:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f'✅ Migration state synchronized for {len(synced_apps)} apps: {", ".join(synced_apps)}'
+                )
+            )
         else:
-            self.stdout.write(self.style.SUCCESS('✅ Fresh database detected - no sync needed'))
+            self.stdout.write(self.style.SUCCESS('✅ All migrations already in sync'))
