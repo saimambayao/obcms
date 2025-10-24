@@ -34,6 +34,7 @@ class AlterFieldIfExists(migrations.AlterField):
 
 
 class Migration(migrations.Migration):
+    # DEPLOYMENT_MARKER_20251024_1610: This migration has been fixed
 
     dependencies = [
         ('budget_execution', '0001_initial'),
