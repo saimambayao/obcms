@@ -114,8 +114,7 @@ RUN set -e && \
 
 # Create logs directory with proper permissions for unprivileged user
 RUN mkdir -p /app/src/logs && \
-    chown -R nobody:nobody /app/src/logs && \
-    chmod 755 /app/src/logs
+    chmod 777 /app/src/logs
 
 # Run as unprivileged user (must be before CMD to maintain proper permissions)
 USER nobody
