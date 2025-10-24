@@ -10,6 +10,11 @@ echo "🚀 Starting OBCMS..."
 cd /app/src
 
 echo "🗄️  Running database migrations..."
+
+# Sync migration state with database (handles migration conflicts)
+python manage.py sync_migrations --settings obc_management.settings.production
+
+# Run all migrations normally
 python manage.py migrate --noinput --settings obc_management.settings.production
 
 echo "✅ Migrations completed successfully"
