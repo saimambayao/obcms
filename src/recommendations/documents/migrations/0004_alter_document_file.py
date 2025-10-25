@@ -8,7 +8,7 @@ import recommendations.documents.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('documents', '0003_alter_document_document_type'),
+        ('recommendations.documents', '0003_alter_document_document_type'),
     ]
 
     operations = [

@@ -8,8 +8,8 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('project_central', '0001_initial'),
-        ('monitoring', '0011_monitoringentry_approval_history_and_more'),
-        ('common', '0015_migrate_monitoring_task_assignments'),
+        ('monitoring', '0014_migrate_task_assignments_to_stafftask'),
+        ('common', '0014_tasktemplate_tasktemplateitem_stafftask_actual_hours_and_more'),
     ]
 
     operations = [

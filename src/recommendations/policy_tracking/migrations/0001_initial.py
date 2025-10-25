@@ -126,7 +126,7 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('assigned_to', models.ForeignKey(blank=True, help_text='User assigned to oversee this milestone', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='assigned_policy_milestones', to=settings.AUTH_USER_MODEL)),
                 ('created_by', models.ForeignKey(help_text='User who created this milestone', on_delete=django.db.models.deletion.PROTECT, related_name='created_policy_milestones', to=settings.AUTH_USER_MODEL)),
-                ('policy', models.ForeignKey(help_text='Policy recommendation this milestone belongs to', on_delete=django.db.models.deletion.CASCADE, related_name='milestones', to='policy_tracking.policyrecommendation')),
+                ('policy', models.ForeignKey(help_text='Policy recommendation this milestone belongs to', on_delete=django.db.models.deletion.CASCADE, related_name='milestones', to='recommendations.policy_tracking.policyrecommendation')),
             ],
             options={
                 'verbose_name': 'Policy Implementation Milestone',
@@ -161,7 +161,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('measured_by', models.ForeignKey(blank=True, help_text='User who conducted the impact measurement', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='measured_impacts', to=settings.AUTH_USER_MODEL)),
-                ('policy', models.ForeignKey(help_text='Policy this impact relates to', on_delete=django.db.models.deletion.CASCADE, related_name='impacts', to='policy_tracking.policyrecommendation')),
+                ('policy', models.ForeignKey(help_text='Policy this impact relates to', on_delete=django.db.models.deletion.CASCADE, related_name='impacts', to='recommendations.policy_tracking.policyrecommendation')),
             ],
             options={
                 'ordering': ['impact_type', 'title'],
@@ -194,7 +194,7 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('added_by', models.ForeignKey(help_text='User who added this evidence', on_delete=django.db.models.deletion.PROTECT, related_name='added_evidence', to=settings.AUTH_USER_MODEL)),
                 ('verified_by', models.ForeignKey(blank=True, help_text='User who verified this evidence', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='verified_evidence', to=settings.AUTH_USER_MODEL)),
-                ('policy', models.ForeignKey(help_text='Policy recommendation this evidence supports', on_delete=django.db.models.deletion.CASCADE, related_name='evidence', to='policy_tracking.policyrecommendation')),
+                ('policy', models.ForeignKey(help_text='Policy recommendation this evidence supports', on_delete=django.db.models.deletion.CASCADE, related_name='evidence', to='recommendations.policy_tracking.policyrecommendation')),
             ],
             options={
                 'ordering': ['-date_added'],
@@ -217,7 +217,7 @@ class Migration(migrations.Migration):
                 ('upload_date', models.DateTimeField(auto_now_add=True)),
                 ('notes', models.TextField(blank=True, help_text='Additional notes')),
                 ('uploaded_by', models.ForeignKey(help_text='User who uploaded this document', on_delete=django.db.models.deletion.PROTECT, related_name='uploaded_policy_documents', to=settings.AUTH_USER_MODEL)),
-                ('policy', models.ForeignKey(help_text='Policy this document belongs to', on_delete=django.db.models.deletion.CASCADE, related_name='documents', to='policy_tracking.policyrecommendation')),
+                ('policy', models.ForeignKey(help_text='Policy this document belongs to', on_delete=django.db.models.deletion.CASCADE, related_name='documents', to='recommendations.policy_tracking.policyrecommendation')),
             ],
             options={
                 'ordering': ['-upload_date'],

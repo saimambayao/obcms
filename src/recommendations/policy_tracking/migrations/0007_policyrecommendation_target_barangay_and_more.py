@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('common', '0018_stafftask_task_context_and_more'),
-        ('policy_tracking', '0006_add_secondary_categories_field'),
+        ('recommendations.policy_tracking', '0006_add_secondary_categories_field'),
     ]
 
     operations = [

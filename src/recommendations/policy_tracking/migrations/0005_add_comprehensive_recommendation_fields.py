@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('policy_tracking', '0004_add_promotion_of_welfare_category'),
+        ('recommendations.policy_tracking', '0004_add_promotion_of_welfare_category'),
     ]
 
     operations = [

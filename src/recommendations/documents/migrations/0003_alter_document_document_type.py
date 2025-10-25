@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         (
-            "documents",
+            "recommendations.documents",
             "0002_document_original_filename_documentaccess_granted_by_and_more",
         ),
     ]

@@ -328,12 +328,12 @@ def communities_home(request):
     vulnerable_sectors = communities.aggregate(
         total_women=Sum("women_count"),
         total_pwd=Sum("pwd_count"),
-        total_elderly=Sum("elderly_count"),
+        total_elderly=Sum("seniors_60_plus"),
         total_idps=Sum("idps_count"),
         total_farmers=Sum("farmers_count"),
         total_fisherfolk=Sum("fisherfolk_count"),
-        total_teachers_asatidz=Sum("teachers_asatidz_count"),
-        total_religious_leaders_ulama=Sum("religious_leaders_ulama_count"),
+        total_teachers_asatidz=Sum("asatidz_count"),
+        total_religious_leaders_ulama=Sum("religious_leaders_count"),
         total_csos=Sum("csos_count"),
         total_associations=Sum("associations_count"),
     )

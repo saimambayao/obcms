@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("policy_tracking", "0001_initial"),
+        ("recommendations.policy_tracking", "0001_initial"),
     ]
 
     operations = [

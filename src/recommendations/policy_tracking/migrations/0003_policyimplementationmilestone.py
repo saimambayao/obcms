@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('policy_tracking', '0002_alter_policyrecommendation_category'),
+        ('recommendations.policy_tracking', '0002_alter_policyrecommendation_category'),
     ]
 
     operations = [
@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('assigned_to', models.ForeignKey(blank=True, help_text='User assigned to oversee this milestone', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='assigned_policy_milestones', to=settings.AUTH_USER_MODEL)),
                 ('created_by', models.ForeignKey(help_text='User who created this milestone', on_delete=django.db.models.deletion.PROTECT, related_name='created_policy_milestones', to=settings.AUTH_USER_MODEL)),
-                ('policy', models.ForeignKey(help_text='Policy recommendation this milestone belongs to', on_delete=django.db.models.deletion.CASCADE, related_name='milestones', to='policy_tracking.policyrecommendation')),
+                ('policy', models.ForeignKey(help_text='Policy recommendation this milestone belongs to', on_delete=django.db.models.deletion.CASCADE, related_name='milestones', to='recommendations.policy_tracking.policyrecommendation')),
             ],
             options={
                 'verbose_name': 'Policy Implementation Milestone',
