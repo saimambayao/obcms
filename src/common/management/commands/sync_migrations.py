@@ -41,20 +41,26 @@ class Command(BaseCommand):
         self.stdout.write(f'   Found {len(existing_tables)} existing tables')
 
         # Get all Django apps
+        # Store both app_label (for django_migrations table) and app_name (for migrate command)
         apps_to_check = {}
         for app_config in apps.get_app_configs():
             if app_config.name.startswith('django.'):
                 continue  # Skip Django built-in apps
 
             app_label = app_config.label
+            app_name = app_config.name  # Full dotted path (e.g., "recommendations.policy_tracking")
+
             # Get models for this app
             models = app_config.get_models()
             for model in models:
                 table_name = model._meta.db_table
                 if table_name in existing_tables:
                     if app_label not in apps_to_check:
-                        apps_to_check[app_label] = []
-                    apps_to_check[app_label].append(table_name)
+                        apps_to_check[app_label] = {
+                            'app_name': app_name,
+                            'tables': []
+                        }
+                    apps_to_check[app_label]['tables'].append(table_name)
 
         if not apps_to_check:
             self.stdout.write(self.style.SUCCESS('✅ All migrations in sync'))
@@ -62,7 +68,10 @@ class Command(BaseCommand):
 
         # Check and fake migrations for each app
         synced_apps = []
-        for app_label, tables in apps_to_check.items():
+        for app_label, app_info in apps_to_check.items():
+            app_name = app_info['app_name']
+            tables = app_info['tables']
+
             # Check if migrations are already applied
             with connection.cursor() as cursor:
                 cursor.execute("""
@@ -80,13 +89,14 @@ class Command(BaseCommand):
                 )
 
                 # Fake all migrations for this app
+                # Use app_name (full dotted path) for nested apps like "recommendations.policy_tracking"
                 try:
-                    self.stdout.write(f'   Faking migrations for {app_label}...')
-                    call_command('migrate', app_label, fake=True, verbosity=0)
-                    synced_apps.append(app_label)
-                    self.stdout.write(self.style.SUCCESS(f'   ✅ Synced {app_label}'))
+                    self.stdout.write(f'   Faking migrations for {app_name}...')
+                    call_command('migrate', app_name, fake=True, verbosity=0)
+                    synced_apps.append(app_name)
+                    self.stdout.write(self.style.SUCCESS(f'   ✅ Synced {app_name}'))
                 except Exception as e:
-                    self.stdout.write(self.style.ERROR(f'   ⚠️  Error syncing {app_label}: {e}'))
+                    self.stdout.write(self.style.ERROR(f'   ⚠️  Error syncing {app_name}: {e}'))
 
         if synced_apps:
             self.stdout.write(
