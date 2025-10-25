@@ -47,7 +47,7 @@ WORKDIR /app
 
 # Copy requirements and install Python dependencies
 COPY requirements/ requirements/
-RUN pip install -r requirements/base.txt \
+RUN pip install --timeout=1000 --retries=5 -r requirements/base.txt \
     && find /usr/local -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true \
     && find /usr/local -type f -name "*.pyc" -delete \
     && rm -rf /tmp/* /var/tmp/*
