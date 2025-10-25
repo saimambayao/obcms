@@ -68,10 +68,13 @@ class OBCMSOrganizationMiddleware:
         Args:
             get_response: Next middleware/view in chain
         """
+        from django.apps import apps
+
         self.get_response = get_response
 
         # Ensure OOBC exists on startup (OBCMS mode only)
-        if is_obcms_mode():
+        # Don't access database during app initialization
+        if is_obcms_mode() and apps.ready:
             try:
                 org = ensure_default_organization_exists()
                 if org:
@@ -102,8 +105,14 @@ class OBCMSOrganizationMiddleware:
         Returns:
             HttpResponse instance
         """
+        from django.apps import apps
+
         # Skip in BMMS mode - let OrganizationMiddleware handle it
         if not is_obcms_mode():
+            return self.get_response(request)
+
+        # Don't access database during app initialization
+        if not apps.ready:
             return self.get_response(request)
 
         # OBCMS mode: auto-inject OOBC

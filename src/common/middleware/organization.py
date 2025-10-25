@@ -458,6 +458,13 @@ class OrganizationMiddleware:
         Returns:
             Organization instance or None
         """
+        from django.apps import apps
+
+        # Don't access database during app initialization
+        # This prevents RuntimeWarning about database access during startup
+        if not apps.ready:
+            return None
+
         # Early return if no authenticated user
         if not request.user.is_authenticated:
             return None

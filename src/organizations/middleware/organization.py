@@ -96,6 +96,12 @@ class OrganizationMiddleware:
         Returns:
             HttpResponse instance
         """
+        from django.apps import apps
+
+        # Don't access database during app initialization
+        if not apps.ready:
+            return self.get_response(request)
+
         # Skip in OBCMS mode - OBCMSOrganizationMiddleware already handled it
         if is_obcms_mode():
             # Organization already set by OBCMSOrganizationMiddleware

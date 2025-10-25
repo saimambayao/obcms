@@ -30,5 +30,6 @@ django-prometheus>=2.2.0
 # Vector store and semantic search
 faiss-cpu>=1.7.4
 sentence-transformers>=2.2.0
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch>=2.0.0
 numpy>=1.24.0

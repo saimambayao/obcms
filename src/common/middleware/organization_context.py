@@ -42,8 +42,14 @@ def get_organization_from_request(request: HttpRequest):
     Returns:
         Organization instance or None
     """
+    from django.apps import apps
     from organizations.models import Organization
     from django.db import OperationalError
+
+    # Don't access database during app initialization
+    # This prevents RuntimeWarning about database access during startup
+    if not apps.ready:
+        return None
 
     # ========== OBCMS MODE: Auto-inject default organization ==========
     if is_obcms_mode():

@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("mana", "0010_remove_mapvisualization_assessment_and_more"),
+        ("mana", "0009_remove_geographic_tables"),
     ]
 
     operations = [
