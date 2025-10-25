@@ -14,6 +14,7 @@ from django.core.management.base import BaseCommand
 from django.db import connection
 from django.core.management import call_command
 from django.apps import apps
+from django.db.migrations.loader import MigrationLoader
 
 
 class Command(BaseCommand):
@@ -62,6 +63,8 @@ class Command(BaseCommand):
 
         # Check and fake migrations for each app
         synced_apps = []
+        loader = MigrationLoader(connection)
+
         for app_label, tables in apps_to_check.items():
             # Check if migrations are already applied
             with connection.cursor() as cursor:
@@ -72,16 +75,23 @@ class Command(BaseCommand):
                 """, [app_label])
                 applied_migrations = {row[0] for row in cursor.fetchall()}
 
-            if not applied_migrations:
+            # Get all migrations for this app from migration files
+            all_migrations = {key[1] for key in loader.graph.nodes if key[0] == app_label}
+
+            # Find unapplied migrations
+            unapplied_migrations = all_migrations - applied_migrations
+
+            if unapplied_migrations:
                 self.stdout.write(
                     self.style.WARNING(
-                        f'📋 {app_label}: Found {len(tables)} tables but no migrations applied'
+                        f'📋 {app_label}: Found {len(tables)} tables but {len(unapplied_migrations)} unapplied migrations'
                     )
                 )
+                self.stdout.write(f'   Unapplied: {", ".join(sorted(unapplied_migrations))}')
 
-                # Fake all migrations for this app
+                # Fake unapplied migrations for this app
                 try:
-                    self.stdout.write(f'   Faking migrations for {app_label}...')
+                    self.stdout.write(f'   Faking unapplied migrations for {app_label}...')
                     call_command('migrate', app_label, fake=True, verbosity=0)
                     synced_apps.append(app_label)
                     self.stdout.write(self.style.SUCCESS(f'   ✅ Synced {app_label}'))
