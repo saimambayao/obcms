@@ -11,8 +11,8 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("communities", "0002_stakeholder_stakeholderengagement"),
-        ("mana", "0002_needscategory_needsprioritization_need_and_more"),
+        ("communities", "0002_initial"),
+        ("mana", "0002_initial"),
     ]
 
     operations = [

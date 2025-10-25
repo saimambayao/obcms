@@ -11,10 +11,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("communities", "0002_stakeholder_stakeholderengagement"),
+        ("communities", "0002_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("mana", "0004_baselinestudy_baselinestudyteammember_and_more"),
-        ("coordination", "0002_organization_organizationcontact_and_more"),
+        ("coordination", "0002_initial"),
     ]
 
     operations = [

@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("common", "0002_region_province_municipality_barangay"),
+        ("common", "0002_initial"),
         ("communities", "0006_remove_obccommunity_employment_opportunities_and_more"),
     ]
 

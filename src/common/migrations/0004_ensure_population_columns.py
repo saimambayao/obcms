@@ -46,7 +46,7 @@ def ensure_population_fields(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("common", "0003_add_population_fields"),
+        ("common", "0003_initial"),
     ]
 
     operations = [migrations.RunPython(ensure_population_fields, migrations.RunPython.noop)]

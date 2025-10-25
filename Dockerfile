@@ -87,19 +87,23 @@ RUN chmod +x /app/docker-entrypoint.sh
 # Production settings require these for validation, but they're only used during collectstatic.
 RUN set -e && \
     # Set temporary environment variables for collectstatic validation
-    export SECRET_KEY="django-build-temporary-$(head -c 40 /dev/urandom | base64)" && \
+    # Generate SECRET_KEY with 50+ characters (base64 of 40 bytes = ~54 chars)
+    export SECRET_KEY="$(head -c 40 /dev/urandom | base64 | tr -d '\n=' | head -c 50)" && \
     export ALLOWED_HOSTS="localhost,127.0.0.1,.internal" && \
     export CSRF_TRUSTED_ORIGINS="https://localhost" && \
     export EMAIL_BACKEND="django.core.mail.backends.dummy.EmailBackend" && \
     # Run collectstatic with production settings
-    cd /app/src && python manage.py collectstatic --noinput --clear && \
+    cd /app/src && \
+    echo "Running collectstatic..." && \
+    python manage.py collectstatic --noinput --clear && \
     # Verify static files were collected
+    echo "Verifying staticfiles directory..." && \
     test -d /app/src/staticfiles && \
     echo "✓ Static files collected successfully" && \
     # Verify key static files exist
+    echo "Verifying Tailwind CSS..." && \
     test -f /app/src/staticfiles/css/output.css && \
-    echo "✓ Tailwind CSS included in staticfiles" || \
-    (echo "✗ ERROR: collectstatic failed or staticfiles directory not created" && exit 1)
+    echo "✓ Tailwind CSS included in staticfiles"
 
 # NOTE: Docker HEALTHCHECK disabled in favor of Railway health checks
 # Railway uses built-in health probe configuration

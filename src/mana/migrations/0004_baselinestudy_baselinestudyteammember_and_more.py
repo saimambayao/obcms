@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("communities", "0002_stakeholder_stakeholderengagement"),
+        ("communities", "0002_initial"),
         ("mana", "0003_geographicdatalayer_mapvisualization_and_more"),
     ]
 

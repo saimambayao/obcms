@@ -10,7 +10,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('budget_preparation', '0002_budget_model_updates'),
+        ('budget_preparation', '0002_initial'),
         ('organizations', '0002_seed_barmm_organizations'),
         ('planning', '0001_initial'),
     ]
