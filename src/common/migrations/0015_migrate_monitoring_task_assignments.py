@@ -1,6 +1,9 @@
 """Data migration to migrate MonitoringEntryTaskAssignment to StaffTask."""
 
+import logging
 from django.db import migrations
+
+logger = logging.getLogger(__name__)
 
 
 def _safe_get_model(apps, app_label, model_name):
@@ -21,7 +24,10 @@ def migrate_monitoring_tasks(apps, schema_editor):
 
     if not MonitoringEntryTaskAssignment or not StaffTask:
         # Historical model removed in new deployments; nothing to migrate.
-        print("MonitoringEntryTaskAssignment model unavailable; skipping migration.")
+        logger.warning(
+            "MonitoringEntryTaskAssignment model not found. "
+            "Skipping task assignment migration."
+        )
         return
 
     migrated_count = 0
@@ -49,8 +55,10 @@ def migrate_monitoring_tasks(apps, schema_editor):
             task.assignees.add(mta.assigned_to)
         
         migrated_count += 1
-    
-    print(f"Migrated {migrated_count} MonitoringEntryTaskAssignment records to StaffTask")
+
+    logger.info(
+        f"Migrated {migrated_count} MonitoringEntryTaskAssignment records to StaffTask"
+    )
 
 
 def reverse_migration(apps, schema_editor):
@@ -61,7 +69,7 @@ def reverse_migration(apps, schema_editor):
     
     # Delete all monitoring domain tasks (those migrated from MonitoringEntryTaskAssignment)
     deleted_count = StaffTask.objects.filter(domain='monitoring').delete()[0]
-    print(f"Deleted {deleted_count} migrated StaffTask records")
+    logger.info(f"Deleted {deleted_count} migrated StaffTask records")
 
 
 class Migration(migrations.Migration):

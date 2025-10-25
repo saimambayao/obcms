@@ -95,10 +95,12 @@ def migrate_organization_to_moa_organization(apps, schema_editor):
                     not_found_count += 1
                     continue
                 except Organization.MultipleObjectsReturned:
+                    print(f"Warning: Multiple organizations found for acronym {org_text}")
                     not_found_orgs.add(org_text)
                     not_found_count += 1
                     continue
             except Organization.MultipleObjectsReturned:
+                print(f"Warning: Multiple organizations found for name {org_text}")
                 not_found_orgs.add(org_text)
                 not_found_count += 1
                 continue

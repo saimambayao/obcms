@@ -123,6 +123,7 @@ def reverse_executive_roles(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('common', '0040_add_oobc_staff_rbac_restrictions'),
         ('common', '0041_add_rbac_management_permissions'),
         ('common', '0042_migrate_organization_to_moa_organization'),
     ]

@@ -144,7 +144,7 @@ class Assessment(models.Model):
 
     province = models.ForeignKey(
         Province,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name="assessments",
         null=True,
         blank=True,

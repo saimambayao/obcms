@@ -23,10 +23,21 @@ def backfill_moa_organization(apps, schema_editor):
             user.moa_organization = org
             user.save(update_fields=['moa_organization'])
             updated_count += 1
+        except Organization.MultipleObjectsReturned:
+            # Multiple orgs found - use the oldest one
+            org = Organization.objects.filter(
+                name__iexact=user.organization.strip(),
+                organization_type='bmoa'
+            ).order_by('created_at').first()
+            if org:
+                user.moa_organization = org
+                user.save(update_fields=['moa_organization'])
+                updated_count += 1
+                print(f"Warning: Multiple orgs found for user {user.username}, using oldest")
+            else:
+                print(f"Warning: No org found for user {user.username} (org: {user.organization})")
         except Organization.DoesNotExist:
             print(f"Warning: No org found for user {user.username} (org: {user.organization})")
-        except Organization.MultipleObjectsReturned:
-            print(f"Warning: Multiple orgs found for user {user.username} (org: {user.organization})")
 
     print(f"Backfilled moa_organization for {updated_count} MOA users")
 

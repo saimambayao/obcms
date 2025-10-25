@@ -27,8 +27,8 @@ def backfill_work_item_isolation_fields(apps, schema_editor):
         # Find PPA source by traversing hierarchy
         ppa = None
 
-        # Check direct related_ppa
-        if work_item.related_ppa:
+        # Check direct related_ppa (defensive check in case field doesn't exist)
+        if hasattr(work_item, 'related_ppa') and work_item.related_ppa:
             ppa = work_item.related_ppa
         # Check if this is execution_project (reverse OneToOne)
         elif hasattr(work_item, 'ppa_source'):

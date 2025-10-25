@@ -109,6 +109,7 @@ def reverse_oobc_staff_roles(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('common', '0040_add_oobc_staff_rbac_restrictions'),
         ('common', '0043_bootstrap_executive_role_assignments'),
     ]
 

@@ -6,10 +6,39 @@ from django.db import connection, migrations, models
 
 def recreate_table_with_nullable_fk(apps, schema_editor):
     """Recreate the table with nullable community_id and ON DELETE SET NULL."""
-    if schema_editor.connection.vendor != "sqlite":
-        # For non-SQLite databases, use standard AlterField
+    vendor = schema_editor.connection.vendor
+
+    if vendor == "postgresql":
+        # PostgreSQL: Use ALTER TABLE to modify constraint
+        with connection.cursor() as cursor:
+            # Drop existing foreign key constraint if it exists
+            cursor.execute("""
+                ALTER TABLE municipal_profiles_obccommunityhistory
+                DROP CONSTRAINT IF EXISTS municipal_profiles_obccommunityhistory_community_id_dcaebbfc_fk
+            """)
+
+            # Make the column nullable
+            cursor.execute("""
+                ALTER TABLE municipal_profiles_obccommunityhistory
+                ALTER COLUMN community_id DROP NOT NULL
+            """)
+
+            # Add new foreign key constraint with ON DELETE SET NULL
+            cursor.execute("""
+                ALTER TABLE municipal_profiles_obccommunityhistory
+                ADD CONSTRAINT municipal_profiles_obccommunityhistory_community_id_dcaebbfc_fk
+                FOREIGN KEY (community_id)
+                REFERENCES communities_obccommunity(id)
+                ON DELETE SET NULL
+                DEFERRABLE INITIALLY DEFERRED
+            """)
         return
 
+    if vendor != "sqlite":
+        # For other databases, skip (no changes needed)
+        return
+
+    # SQLite: Recreate table with new schema
     with connection.cursor() as cursor:
         cursor.execute("PRAGMA foreign_keys=ON;")
 
@@ -59,9 +88,44 @@ def recreate_table_with_nullable_fk(apps, schema_editor):
 
 def revert_table(apps, schema_editor):
     """Revert to non-nullable community_id and ON DELETE CASCADE."""
-    if schema_editor.connection.vendor != "sqlite":
+    vendor = schema_editor.connection.vendor
+
+    if vendor == "postgresql":
+        # PostgreSQL: Use ALTER TABLE to revert constraint
+        with connection.cursor() as cursor:
+            # Remove rows where community_id is NULL (data cleanup before making NOT NULL)
+            cursor.execute("""
+                DELETE FROM municipal_profiles_obccommunityhistory
+                WHERE community_id IS NULL
+            """)
+
+            # Drop existing foreign key constraint if it exists
+            cursor.execute("""
+                ALTER TABLE municipal_profiles_obccommunityhistory
+                DROP CONSTRAINT IF EXISTS municipal_profiles_obccommunityhistory_community_id_dcaebbfc_fk
+            """)
+
+            # Make the column NOT NULL
+            cursor.execute("""
+                ALTER TABLE municipal_profiles_obccommunityhistory
+                ALTER COLUMN community_id SET NOT NULL
+            """)
+
+            # Add foreign key constraint with default ON DELETE CASCADE
+            cursor.execute("""
+                ALTER TABLE municipal_profiles_obccommunityhistory
+                ADD CONSTRAINT municipal_profiles_obccommunityhistory_community_id_dcaebbfc_fk
+                FOREIGN KEY (community_id)
+                REFERENCES communities_obccommunity(id)
+                DEFERRABLE INITIALLY DEFERRED
+            """)
         return
 
+    if vendor != "sqlite":
+        # For other databases, skip (no changes needed)
+        return
+
+    # SQLite: Recreate table with original schema
     with connection.cursor() as cursor:
         cursor.execute("PRAGMA foreign_keys=ON;")
 

@@ -381,8 +381,8 @@ def communities_home(request):
             .order_by("-count"),
             "recent": communities.order_by("-created_at")[:10],
             "unemployment_rates": unemployment_rates,
-            "with_madrasah": communities.filter(has_madrasah=True).count(),
-            "with_mosque": communities.filter(has_mosque=True).count(),
+            "with_madrasah": communities.filter(madrasah_count__gt=0).count(),
+            "with_mosque": communities.filter(mosques_count__gt=0).count(),
             # New statistics for the requested stat cards
             "total_obc_population_database": total_obc_population,
             "total_barangay_obcs_database": total_barangay_obcs,

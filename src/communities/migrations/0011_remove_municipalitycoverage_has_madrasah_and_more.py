@@ -9,6 +9,9 @@ def copy_religious_facilities_forward(apps, schema_editor):
     OBCCommunity = apps.get_model('communities', 'OBCCommunity')
     MunicipalityCoverage = apps.get_model('communities', 'MunicipalityCoverage')
 
+    # Note: OBCCommunity never had has_mosque/has_madrasah fields (they were only
+    # added to MunicipalityCoverage in migration 0009), so getattr returns False
+    # by default, resulting in mosques_count=0 and madrasah_count=0.
     for community in OBCCommunity.objects.all():
         mosques = 1 if getattr(community, 'has_mosque', False) else 0
         madrasah = 1 if getattr(community, 'has_madrasah', False) else 0
@@ -30,16 +33,10 @@ def copy_religious_facilities_forward(apps, schema_editor):
 def copy_religious_facilities_backward(apps, schema_editor):
     """Restore boolean fields based on count values when rolling back."""
 
-    OBCCommunity = apps.get_model('communities', 'OBCCommunity')
-    MunicipalityCoverage = apps.get_model('communities', 'MunicipalityCoverage')
+    # Note: OBCCommunity never had has_mosque/has_madrasah fields, so we only
+    # restore them for MunicipalityCoverage during rollback
 
-    for community in OBCCommunity.objects.all():
-        has_mosque = bool(getattr(community, 'mosques_count', 0))
-        has_madrasah = bool(getattr(community, 'madrasah_count', 0))
-        OBCCommunity.objects.filter(pk=community.pk).update(
-            has_mosque=has_mosque,
-            has_madrasah=has_madrasah,
-        )
+    MunicipalityCoverage = apps.get_model('communities', 'MunicipalityCoverage')
 
     for coverage in MunicipalityCoverage.objects.all():
         has_mosque = bool(getattr(coverage, 'mosques_count', 0))
@@ -89,14 +86,10 @@ class Migration(migrations.Migration):
             model_name='municipalitycoverage',
             name='has_mosque',
         ),
-        migrations.RemoveField(
-            model_name='obccommunity',
-            name='has_madrasah',
-        ),
-        migrations.RemoveField(
-            model_name='obccommunity',
-            name='has_mosque',
-        ),
+        # Note: OBCCommunity never had has_madrasah/has_mosque fields added
+        # (migration 0009 only added them to MunicipalityCoverage), so we don't
+        # remove them here. The count fields are added to both models via the
+        # base class CommunityProfileBase.
         migrations.AlterField(
             model_name='municipalitycoverage',
             name='religious_leaders_count',

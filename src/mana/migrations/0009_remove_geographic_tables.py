@@ -10,22 +10,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # Drop the old geographic tables from MANA app
+        # Delete the old geographic models from MANA app
         # These models have been moved to the communities app
-        migrations.RunSQL(
-            "DROP TABLE IF EXISTS mana_spatialdatapoint;",
-            reverse_sql="-- Cannot reverse this operation automatically"
+        migrations.DeleteModel(
+            name="SpatialDataPoint",
         ),
-        migrations.RunSQL(
-            "DROP TABLE IF EXISTS mana_mapvisualization_layers;",
-            reverse_sql="-- Cannot reverse this operation automatically"
+        migrations.DeleteModel(
+            name="MapVisualization",
         ),
-        migrations.RunSQL(
-            "DROP TABLE IF EXISTS mana_mapvisualization;",
-            reverse_sql="-- Cannot reverse this operation automatically"
-        ),
-        migrations.RunSQL(
-            "DROP TABLE IF EXISTS mana_geographicdatalayer;",
-            reverse_sql="-- Cannot reverse this operation automatically"
+        migrations.DeleteModel(
+            name="GeographicDataLayer",
         ),
     ]

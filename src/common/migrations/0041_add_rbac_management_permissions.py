@@ -79,12 +79,23 @@ def create_rbac_management_permissions(apps, schema_editor):
             print(f"Permission '{perm_data['codename']}' already exists")
 
     # Grant these permissions to Executive roles
+    # Try to get executive role
     try:
         executive_role = Role.objects.get(slug='oobc-executive-director')
-        deputy_role = Role.objects.get(slug='oobc-deputy-executive-director')
+    except Role.DoesNotExist:
+        print("Executive Director role not found, skipping its permissions")
+        executive_role = None
 
+    # Try to get deputy role
+    try:
+        deputy_role = Role.objects.get(slug='oobc-deputy-executive-director')
+    except Role.DoesNotExist:
+        print("Deputy Executive Director role not found, skipping its permissions")
+        deputy_role = None
+
+    # Assign permissions to executive role if it exists
+    if executive_role:
         for permission in created_permissions:
-            # Grant to Executive Director
             RolePermission.objects.get_or_create(
                 role=executive_role,
                 permission=permission,
@@ -92,8 +103,11 @@ def create_rbac_management_permissions(apps, schema_editor):
                     'is_active': True,
                 }
             )
+        print(f"Granted RBAC management permissions to Executive Director role")
 
-            # Grant to Deputy Executive Director
+    # Assign permissions to deputy role if it exists
+    if deputy_role:
+        for permission in created_permissions:
             RolePermission.objects.get_or_create(
                 role=deputy_role,
                 permission=permission,
@@ -101,11 +115,7 @@ def create_rbac_management_permissions(apps, schema_editor):
                     'is_active': True,
                 }
             )
-
-        print(f"Granted RBAC management permissions to Executive and Deputy roles")
-
-    except Role.DoesNotExist:
-        print("Executive roles not found - skipping permission grants")
+        print(f"Granted RBAC management permissions to Deputy Executive Director role")
 
 
 def reverse_rbac_management_permissions(apps, schema_editor):
