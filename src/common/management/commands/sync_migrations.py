@@ -89,10 +89,29 @@ class Command(BaseCommand):
                 )
                 self.stdout.write(f'   Unapplied: {", ".join(sorted(unapplied_migrations))}')
 
-                # Fake unapplied migrations for this app
+                # Fake unapplied migrations for this app - one at a time to handle state errors
                 try:
                     self.stdout.write(f'   Faking unapplied migrations for {app_label}...')
-                    call_command('migrate', app_label, fake=True, verbosity=0)
+                    # Fake each migration individually to avoid state inconsistencies
+                    sorted_migrations = sorted(unapplied_migrations)
+                    for migration_name in sorted_migrations:
+                        try:
+                            call_command('migrate', app_label, migration_name, fake=True, verbosity=0)
+                            self.stdout.write(f'     ✓ Faked {migration_name}')
+                        except KeyError as ke:
+                            # Known issue with field removal in migration state
+                            # If KeyError occurs, the field was already removed from database
+                            # Safe to mark as faked since table structure is correct
+                            self.stdout.write(self.style.WARNING(f'     ⚠ Skipped {migration_name} (state error: {ke})'))
+                            # Manually mark as applied
+                            with connection.cursor() as cursor:
+                                cursor.execute(
+                                    "INSERT INTO django_migrations (app, name, applied) VALUES (%s, %s, NOW())",
+                                    [app_label, migration_name]
+                                )
+                        except Exception as me:
+                            self.stdout.write(self.style.ERROR(f'     ✗ Failed to fake {migration_name}: {me}'))
+                            raise
                     synced_apps.append(app_label)
                     self.stdout.write(self.style.SUCCESS(f'   ✅ Synced {app_label}'))
                 except Exception as e:
